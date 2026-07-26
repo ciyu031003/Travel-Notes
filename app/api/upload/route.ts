@@ -6,8 +6,39 @@ import path from 'path'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
+function findProjectRoot(): string {
+  const envRoot = process.env.PROJECT_ROOT
+  if (envRoot && fs.existsSync(path.join(envRoot, 'public'))) {
+    return envRoot
+  }
+
+  const cwd = process.cwd()
+  if (fs.existsSync(path.join(cwd, 'public'))) {
+    return cwd
+  }
+
+  const candidates = [
+    path.join(cwd),
+    path.join(cwd, '.next', '..'),
+    path.resolve(cwd, '..'),
+    '/home/code/Travel-Notes',
+  ]
+
+  for (const candidate of candidates) {
+    try {
+      const real = fs.realpathSync(candidate)
+      if (fs.existsSync(path.join(real, 'public'))) {
+        return real
+      }
+    } catch {}
+  }
+
+  return cwd
+}
+
 function getUploadDir(): string {
-  return path.join(process.cwd(), 'public', 'uploads')
+  const projectRoot = findProjectRoot()
+  return path.join(projectRoot, 'public', 'uploads')
 }
 
 export async function POST(request: NextRequest) {
@@ -17,6 +48,7 @@ export async function POST(request: NextRequest) {
   }
 
   const uploadDir = getUploadDir()
+  console.log('[Upload] Project root:', findProjectRoot())
   console.log('[Upload] Upload directory:', uploadDir)
   console.log('[Upload] process.cwd():', process.cwd())
 
