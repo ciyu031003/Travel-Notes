@@ -1,4 +1,4 @@
-import { createPool, Pool, PoolConnection, RowDataPacket, ResultSetHeader } from 'mysql2/promise'
+import { createPool, Pool, PoolConnection, RowDataPacket, ResultSetHeader, FieldPacket } from 'mysql2/promise'
 
 const ColumnTypeEnum = {
   Int32: 0,
@@ -18,6 +18,8 @@ const ColumnTypeEnum = {
   Set: 14,
   Uuid: 15,
 }
+
+const BINARY_FLAG = 0x80
 
 type ArgScalarType = 'string' | 'int' | 'bigint' | 'float' | 'decimal' | 'boolean' | 'enum' | 'uuid' | 'json' | 'datetime' | 'bytes' | 'unknown'
 
@@ -72,7 +74,7 @@ interface Transaction extends PrismaAdapter {
   releaseSavepoint?(name: string): Promise<void>
 }
 
-function mapColumnType(mysqlType: number): number {
+function mapColumnType(mysqlType: number, flags?: number): number {
   switch (mysqlType) {
     case 0: return ColumnTypeEnum.Numeric
     case 1: return ColumnTypeEnum.Int32
@@ -87,17 +89,17 @@ function mapColumnType(mysqlType: number): number {
     case 10: return ColumnTypeEnum.Date
     case 11: return ColumnTypeEnum.Time
     case 12: return ColumnTypeEnum.DateTime
-    case 13: return ColumnTypeEnum.DateTime
+    case 13: return ColumnTypeEnum.Int32
     case 15: return ColumnTypeEnum.Text
     case 16: return ColumnTypeEnum.Boolean
     case 245: return ColumnTypeEnum.Json
     case 246: return ColumnTypeEnum.Numeric
     case 247: return ColumnTypeEnum.Enum
     case 248: return ColumnTypeEnum.Set
-    case 249: return ColumnTypeEnum.Bytes
-    case 250: return ColumnTypeEnum.Bytes
-    case 251: return ColumnTypeEnum.Bytes
-    case 252: return ColumnTypeEnum.Bytes
+    case 249: return (flags !== undefined && (flags & BINARY_FLAG)) ? ColumnTypeEnum.Bytes : ColumnTypeEnum.Text
+    case 250: return (flags !== undefined && (flags & BINARY_FLAG)) ? ColumnTypeEnum.Bytes : ColumnTypeEnum.Text
+    case 251: return (flags !== undefined && (flags & BINARY_FLAG)) ? ColumnTypeEnum.Bytes : ColumnTypeEnum.Text
+    case 252: return (flags !== undefined && (flags & BINARY_FLAG)) ? ColumnTypeEnum.Bytes : ColumnTypeEnum.Text
     case 253: return ColumnTypeEnum.Text
     case 254: return ColumnTypeEnum.Text
     case 255: return ColumnTypeEnum.Text
@@ -109,6 +111,7 @@ export class PrismaMariaDB {
   readonly provider = 'mysql' as const
   readonly adapterName = '@prisma/adapter-mariadb' as const
   private pool: Pool | null = null
+  private connecting: Promise<PrismaAdapter> | null = null
   private url: string
 
   constructor(options: { url: string } | { connectionString: string }) {
@@ -116,20 +119,76 @@ export class PrismaMariaDB {
   }
 
   async connect(): Promise<PrismaAdapter> {
+    if (this.pool) {
+      return createAdapter(this.pool, this.getDatabaseName())
+    }
+    if (this.connecting) {
+      return this.connecting
+    }
+    this.connecting = this._connect()
+    return this.connecting
+  }
+
+  private getDatabaseName(): string {
+    const url = new URL(this.url)
+    return decodeURIComponent(url.pathname.slice(1))
+  }
+
+  private async _connect(): Promise<PrismaAdapter> {
     const url = new URL(this.url)
     const config = {
       host: url.hostname || 'localhost',
       port: parseInt(url.port || '3306'),
       user: decodeURIComponent(url.username || 'root'),
       password: decodeURIComponent(url.password),
-      database: url.pathname.slice(1),
+      database: decodeURIComponent(url.pathname.slice(1)),
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      dateStrings: false,
     }
+    console.log('[PrismaMariaDB] Connecting to MySQL:', `${config.host}:${config.port}/${config.database}`)
     this.pool = createPool(config)
+    try {
+      const conn = await this.pool.getConnection()
+      await conn.ping()
+      conn.release()
+      console.log('[PrismaMariaDB] Connected successfully')
+    } catch (error: any) {
+      console.error('[PrismaMariaDB] Connection failed:', error.message)
+      throw error
+    }
     return createAdapter(this.pool, config.database)
   }
+}
+
+function processRows(rows: any, fields: FieldPacket[] | undefined): SqlResultSet {
+  const columnNames: string[] = fields ? fields.map((f: any) => f.name) : []
+  const columnTypes: number[] = fields ? fields.map((f: any) => mapColumnType(f.type, f.flags)) : []
+
+  const isSelectRows = Array.isArray(rows)
+  const dataRows: Array<Array<unknown>> = isSelectRows
+    ? rows.map((row: any) => {
+        return columnNames.map((col: string) => {
+          const val = row[col]
+          if (val === null || val === undefined) return null
+          if (Buffer.isBuffer(val)) return val
+          if (val instanceof Date) return val
+          if (typeof val === 'bigint') return val.toString()
+          return val
+        })
+      })
+    : []
+
+  let lastInsertId: string | undefined
+  if (!isSelectRows && rows && typeof rows === 'object') {
+    const rsh = rows as ResultSetHeader
+    if (rsh.insertId !== undefined && rsh.insertId !== null) {
+      lastInsertId = String(rsh.insertId)
+    }
+  }
+
+  return { columnTypes, columnNames, rows: dataRows, lastInsertId }
 }
 
 function createAdapter(pool: Pool, databaseName: string): PrismaAdapter {
@@ -137,36 +196,14 @@ function createAdapter(pool: Pool, databaseName: string): PrismaAdapter {
   const adapterName = '@prisma/adapter-mariadb' as const
 
   async function queryRaw(params: SqlQuery): Promise<SqlResultSet> {
-    const result = await pool.execute(params.sql, params.args as any)
-    const isResultSet = Array.isArray(result)
-    const rows = isResultSet ? result[0] : result
-    const fields = isResultSet ? result[1] : undefined
-
-    const columnNames: string[] = fields ? fields.map((f: any) => f.name) : []
-    const columnTypes: number[] = fields ? fields.map((f: any) => mapColumnType(f.type)) : []
-    const lastInsertId = !isResultSet && (rows as ResultSetHeader).insertId !== undefined
-      ? String((rows as ResultSetHeader).insertId)
-      : undefined
-    const dataRows: Array<Array<unknown>> = isResultSet && Array.isArray(rows)
-      ? rows.map((row: any) => {
-          return columnNames.map((col: string) => {
-            const val = row[col]
-            if (val === null || val === undefined) return null
-            if (Buffer.isBuffer(val)) return val
-            if (val instanceof Date) return val
-            if (typeof val === 'bigint') return val.toString()
-            if (typeof val === 'object') return JSON.stringify(val)
-            return val
-          })
-        })
-      : []
-    return { columnTypes, columnNames, rows: dataRows, lastInsertId }
+    const [rows, fields] = await pool.execute(params.sql, params.args as any)
+    return processRows(rows, fields)
   }
 
   async function executeRaw(params: SqlQuery): Promise<number> {
-    const result = await pool.execute(params.sql, params.args as any)
+    const [result] = await pool.execute(params.sql, params.args as any)
     if (Array.isArray(result)) {
-      return (result[0] as ResultSetHeader).affectedRows ?? 0
+      return result.length
     }
     return (result as ResultSetHeader).affectedRows ?? 0
   }
@@ -220,36 +257,14 @@ function createTransaction(conn: PoolConnection, databaseName: string): Transact
   const adapterName = '@prisma/adapter-mariadb' as const
 
   async function queryRaw(params: SqlQuery): Promise<SqlResultSet> {
-    const result = await conn.execute(params.sql, params.args as any)
-    const isResultSet = Array.isArray(result)
-    const rows = isResultSet ? result[0] : result
-    const fields = isResultSet ? result[1] : undefined
-
-    const columnNames: string[] = fields ? fields.map((f: any) => f.name) : []
-    const columnTypes: number[] = fields ? fields.map((f: any) => mapColumnType(f.type)) : []
-    const lastInsertId = !isResultSet && (rows as ResultSetHeader).insertId !== undefined
-      ? String((rows as ResultSetHeader).insertId)
-      : undefined
-    const dataRows: Array<Array<unknown>> = isResultSet && Array.isArray(rows)
-      ? rows.map((row: any) => {
-          return columnNames.map((col: string) => {
-            const val = row[col]
-            if (val === null || val === undefined) return null
-            if (Buffer.isBuffer(val)) return val
-            if (val instanceof Date) return val
-            if (typeof val === 'bigint') return val.toString()
-            if (typeof val === 'object') return JSON.stringify(val)
-            return val
-          })
-        })
-      : []
-    return { columnTypes, columnNames, rows: dataRows, lastInsertId }
+    const [rows, fields] = await conn.execute(params.sql, params.args as any)
+    return processRows(rows, fields)
   }
 
   async function executeRaw(params: SqlQuery): Promise<number> {
-    const result = await conn.execute(params.sql, params.args as any)
+    const [result] = await conn.execute(params.sql, params.args as any)
     if (Array.isArray(result)) {
-      return (result[0] as ResultSetHeader).affectedRows ?? 0
+      return result.length
     }
     return (result as ResultSetHeader).affectedRows ?? 0
   }

@@ -11,24 +11,38 @@ export async function getPosts(directory: string): Promise<any[]> {
 
   const dbType = typeMap[directory] || directory
 
+  const allPosts: any[] = []
+
   try {
     const dbPosts = await getDBPosts(dbType)
-    if (dbPosts.length > 0) {
-      return dbPosts.map(post => ({
-        slug: post.slug,
-        title: post.title,
-        date: post.date,
-        description: post.description,
-        cover: post.cover,
-        images: post.images,
-        tags: post.tags,
-        location: post.location,
-        category: post.type,
-      }))
-    }
+    allPosts.push(...dbPosts.map(post => ({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      date: post.date,
+      description: post.description,
+      cover: post.cover,
+      images: post.images,
+      tags: post.tags,
+      location: post.location,
+      category: post.type,
+    })))
+  } catch (error: any) {
+    console.error('[getPosts] getDBPosts failed:', error?.message || error)
+  }
+
+  try {
+    const markdownPosts = await getMarkdownPosts(directory)
+    const dbSlugs = new Set(allPosts.map(p => p.slug))
+    markdownPosts.forEach(post => {
+      if (!dbSlugs.has(post.slug)) {
+        allPosts.push(post)
+      }
+    })
   } catch {}
 
-  return getMarkdownPosts(directory)
+  allPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  return allPosts
 }
 
 export async function getPostBySlug(directory: string, slug: string) {
@@ -45,6 +59,7 @@ export async function getPostBySlug(directory: string, slug: string) {
     const dbPost = await getDBPostBySlug(dbType, slug)
     if (dbPost) {
       return {
+        id: dbPost.id,
         slug: dbPost.slug,
         title: dbPost.title,
         date: dbPost.date,
@@ -57,7 +72,9 @@ export async function getPostBySlug(directory: string, slug: string) {
         contentHtml: dbPost.contentHtml,
       }
     }
-  } catch {}
+  } catch (error: any) {
+    console.error('[getPostBySlug] getDBPostBySlug failed:', error?.message || error)
+  }
 
   return await getMarkdownPost(directory, slug)
 }

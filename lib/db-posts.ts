@@ -50,6 +50,16 @@ function serializeImages(images: string[]): string {
   return JSON.stringify(images)
 }
 
+function toISOString(date: any): string {
+  if (date instanceof Date) return date.toISOString()
+  if (typeof date === 'string') {
+    const d = new Date(date)
+    if (!isNaN(d.getTime())) return d.toISOString()
+    return date
+  }
+  return new Date().toISOString()
+}
+
 export async function getDBPosts(type: string): Promise<PostMetaDB[]> {
   try {
     const posts = await prisma.post.findMany({
@@ -61,7 +71,7 @@ export async function getDBPosts(type: string): Promise<PostMetaDB[]> {
       id: post.id,
       slug: post.slug,
       title: post.title,
-      date: post.date.toISOString(),
+      date: toISOString(post.date),
       description: post.summary || undefined,
       cover: post.cover || undefined,
       images: parseImages(post.images),
@@ -70,7 +80,8 @@ export async function getDBPosts(type: string): Promise<PostMetaDB[]> {
       type: post.type,
       published: post.published,
     }))
-  } catch {
+  } catch (error: any) {
+    console.error('[getDBPosts] Database query failed:', error?.message || error)
     return []
   }
 }
@@ -92,7 +103,7 @@ export async function getDBPostBySlug(type: string, slug: string): Promise<PostD
       id: post.id,
       slug: post.slug,
       title: post.title,
-      date: post.date.toISOString(),
+      date: toISOString(post.date),
       description: post.summary || undefined,
       cover: post.cover || undefined,
       images: parseImages(post.images),
@@ -102,7 +113,8 @@ export async function getDBPostBySlug(type: string, slug: string): Promise<PostD
       published: post.published,
       contentHtml: processedContent.toString(),
     }
-  } catch {
+  } catch (error: any) {
+    console.error('[getDBPostBySlug] Database query failed:', error?.message || error)
     return null
   }
 }
@@ -176,9 +188,14 @@ export async function deleteDBPost(id: number) {
 }
 
 export async function getAllDBPosts(type?: string) {
-  const where = type ? { type: type as any } : {}
-  return prisma.post.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-  })
+  try {
+    const where = type ? { type: type as any } : {}
+    return await prisma.post.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    })
+  } catch (error: any) {
+    console.error('[getAllDBPosts] Database query failed:', error?.message || error)
+    return []
+  }
 }

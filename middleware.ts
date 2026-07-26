@@ -12,6 +12,9 @@ const PUBLIC_PATHS = [
   '/api/admin/logout',
   '/api/admin/settings',
   '/api/forgot-password',
+  '/api/notes',
+  '/api/repos',
+  '/uploads',
   '/_next',
 ]
 

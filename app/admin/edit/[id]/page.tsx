@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown, ZoomIn, XCircle } from 'lucide-react'
 import TravelPreviewModal from '@/components/TravelPreviewModal'
 
 const typeIcons: Record<string, any> = {
@@ -39,6 +39,7 @@ export default function AdminEditPage() {
     published: true,
   })
   const [preview, setPreview] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -376,34 +377,41 @@ export default function AdminEditPage() {
                         <img
                           src={img.startsWith('/') ? img : img}
                           alt={`图片 ${index + 1}`}
-                          className="w-full h-32 object-cover"
+                          className="w-full h-32 object-cover cursor-pointer"
+                          onClick={() => setImagePreview(img)}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement
                             target.src = `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=travel&image_size=square`
                           }}
                         />
 
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center opacity-0 group-hover:opacity-100">
-                          <div className="flex gap-1 mb-2">
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setImagePreview(img)}
+                              className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white transition-colors"
+                              title="预览"
+                            >
+                              <ZoomIn className="w-4 h-4" />
+                            </button>
                             <button
                               type="button"
                               onClick={() => setAsCover(index)}
-                              className={`px-2 py-1 text-xs rounded ${
+                              className={`px-2 py-1 text-xs rounded transition-colors ${
                                 formData.cover === img
                                   ? 'bg-primary-500 text-white'
                                   : 'bg-white/90 text-gray-700 hover:bg-white'
                               }`}
                               title="设为封面"
                             >
-                              {formData.cover === img ? '封面' : '设为封面'}
+                              {formData.cover === img ? '封面' : '封面'}
                             </button>
-                          </div>
-                          <div className="flex gap-1">
                             <button
                               type="button"
                               onClick={() => moveImage(index, 'up')}
                               disabled={index === 0}
-                              className="p-1 bg-white/90 rounded text-gray-700 hover:bg-white disabled:opacity-30"
+                              className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white disabled:opacity-30"
                               title="上移"
                             >
                               <ChevronUp className="w-4 h-4" />
@@ -412,7 +420,7 @@ export default function AdminEditPage() {
                               type="button"
                               onClick={() => moveImage(index, 'down')}
                               disabled={index === formData.images.length - 1}
-                              className="p-1 bg-white/90 rounded text-gray-700 hover:bg-white disabled:opacity-30"
+                              className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white disabled:opacity-30"
                               title="下移"
                             >
                               <ChevronDown className="w-4 h-4" />
@@ -420,23 +428,13 @@ export default function AdminEditPage() {
                             <button
                               type="button"
                               onClick={() => removeImage(index)}
-                              className="p-1 bg-red-500 rounded text-white hover:bg-red-600"
+                              className="p-1.5 bg-red-500 rounded text-white hover:bg-red-600 transition-colors"
                               title="删除"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
-
-                        <div className="absolute top-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
-                          {index + 1}
-                        </div>
-
-                        {formData.cover === img && (
-                          <div className="absolute top-1 right-1 bg-primary-500 text-white text-xs px-1.5 py-0.5 rounded">
-                            封面
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -587,6 +585,27 @@ export default function AdminEditPage() {
         onClose={() => setPreview(false)}
         formData={formData}
       />
+
+      {imagePreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setImagePreview(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setImagePreview(null)}
+            className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+          >
+            <XCircle className="w-8 h-8" />
+          </button>
+          <img
+            src={imagePreview}
+            alt="预览"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }
