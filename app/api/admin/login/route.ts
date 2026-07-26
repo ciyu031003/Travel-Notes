@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const response = NextResponse.json({ success: true, username })
     response.cookies.set('admin_session', sessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
