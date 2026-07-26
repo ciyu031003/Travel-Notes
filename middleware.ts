@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const PUBLIC_PATHS = [
   '/login',
   '/admin/login',
+  '/admin/change-password',
   '/forgot-password',
   '/api/login',
   '/api/check-auth',
@@ -11,6 +12,7 @@ const PUBLIC_PATHS = [
   '/api/admin/check',
   '/api/admin/logout',
   '/api/admin/settings',
+  '/api/admin/force-change-password',
   '/api/forgot-password',
   '/api/notes',
   '/api/repos',

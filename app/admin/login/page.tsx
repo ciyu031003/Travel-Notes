@@ -24,7 +24,12 @@ export default function AdminLoginPage() {
       })
 
       if (res.ok) {
-        router.push('/admin')
+        const data = await res.json()
+        if (data.requirePasswordChange) {
+          router.push('/admin/change-password')
+        } else {
+          router.push('/admin')
+        }
       } else {
         const data = await res.json()
         setError(data.error || '登录失败')
@@ -103,7 +108,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-gray-500 text-xs mt-6">
-          如未配置管理员密码，请在 .env 文件中设置 ADMIN_PASSWORD_HASH
+          默认账号：yuanabd，首次登录需修改密码
         </p>
       </div>
     </div>

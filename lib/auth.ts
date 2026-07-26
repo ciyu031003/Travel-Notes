@@ -3,11 +3,15 @@ import { hashPassword, verifyPassword, signSession, verifySession, getSessionPay
 
 export { hashPassword, verifyPassword, signSession, verifySession, getSessionPayload }
 
+const DEFAULT_USERNAME = 'yuanabd'
+const DEFAULT_PASSWORD = 'Abd123456.'
+
 export interface SiteSettings {
   username: string
   passwordHash: string
   email: string | null
   emailVerified: boolean
+  requirePasswordChange: boolean
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -21,47 +25,91 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         passwordHash: setting.passwordHash,
         email: setting.email,
         emailVerified: setting.emailVerified,
+        requirePasswordChange: setting.requirePasswordChange,
       }
     }
   } catch {}
 
-  const envUsername = process.env.ADMIN_USERNAME || 'admin'
-  const envPasswordHash = process.env.ADMIN_PASSWORD_HASH
+  await initializeDefaultAdmin()
+
+  try {
+    const setting = await prisma.siteSetting.findFirst({
+      orderBy: { id: 'asc' },
+    })
+    if (setting) {
+      return {
+        username: setting.username,
+        passwordHash: setting.passwordHash,
+        email: setting.email,
+        emailVerified: setting.emailVerified,
+        requirePasswordChange: setting.requirePasswordChange,
+      }
+    }
+  } catch {}
+
   return {
-    username: envUsername,
-    passwordHash: envPasswordHash || '',
+    username: DEFAULT_USERNAME,
+    passwordHash: '',
     email: null,
     emailVerified: false,
+    requirePasswordChange: false,
   }
 }
 
-export async function getCredentials(): Promise<{ username: string; passwordHash: string }> {
-  const settings = await getSiteSettings()
-  return { username: settings.username, passwordHash: settings.passwordHash }
+async function initializeDefaultAdmin(): Promise<void> {
+  try {
+    const count = await prisma.siteSetting.count()
+    if (count === 0) {
+      const envPasswordHash = process.env.ADMIN_PASSWORD_HASH
+      if (envPasswordHash) {
+        await prisma.siteSetting.create({
+          data: {
+            username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME,
+            passwordHash: envPasswordHash,
+            requirePasswordChange: false,
+          },
+        })
+      } else {
+        const defaultPasswordHash = await hashPassword(DEFAULT_PASSWORD)
+        await prisma.siteSetting.create({
+          data: {
+            username: DEFAULT_USERNAME,
+            passwordHash: defaultPasswordHash,
+            requirePasswordChange: true,
+          },
+        })
+      }
+    }
+  } catch (error) {
+    console.error('[initializeDefaultAdmin] Failed:', error)
+  }
 }
 
 export async function initializeCredentialsFromEnv(): Promise<void> {
   try {
     const count = await prisma.siteSetting.count()
     if (count === 0) {
-      const envUsername = process.env.ADMIN_USERNAME || 'admin'
-      const envPasswordHash = process.env.ADMIN_PASSWORD_HASH
-      if (envPasswordHash) {
-        await prisma.siteSetting.create({
-          data: {
-            username: envUsername,
-            passwordHash: envPasswordHash,
-          },
-        })
-      }
+      await initializeDefaultAdmin()
     }
-  } catch {}
+  } catch (error) {
+    console.error('[initializeCredentialsFromEnv] Failed:', error)
+  }
+}
+
+export async function getCredentials(): Promise<{ username: string; passwordHash: string; requirePasswordChange: boolean }> {
+  const settings = await getSiteSettings()
+  return {
+    username: settings.username,
+    passwordHash: settings.passwordHash,
+    requirePasswordChange: settings.requirePasswordChange,
+  }
 }
 
 export async function updateCredentials(
   username: string,
   passwordHash: string,
-  email?: string | null
+  email?: string | null,
+  clearRequireChange: boolean = false
 ): Promise<void> {
   try {
     const setting = await prisma.siteSetting.findFirst({
@@ -70,6 +118,9 @@ export async function updateCredentials(
     if (setting) {
       const now = new Date()
       const updateData: any = { username, passwordHash, updatedAt: now }
+      if (clearRequireChange) {
+        updateData.requirePasswordChange = false
+      }
       if (email !== undefined) {
         updateData.email = email
         if (!email) {
@@ -87,10 +138,46 @@ export async function updateCredentials(
           passwordHash,
           email: email || null,
           emailVerified: email ? true : false,
+          requirePasswordChange: false,
         },
       })
     }
-  } catch {}
+  } catch (error) {
+    console.error('[updateCredentials] Failed:', error)
+  }
+}
+
+export async function forceChangePassword(newPassword: string): Promise<boolean> {
+  try {
+    const setting = await prisma.siteSetting.findFirst({
+      orderBy: { id: 'asc' },
+    })
+    if (!setting) return false
+
+    const passwordHash = await hashPassword(newPassword)
+    await prisma.siteSetting.update({
+      where: { id: setting.id },
+      data: {
+        passwordHash,
+        requirePasswordChange: false,
+        updatedAt: new Date(),
+      },
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function isRequirePasswordChange(): Promise<boolean> {
+  try {
+    const setting = await prisma.siteSetting.findFirst({
+      orderBy: { id: 'asc' },
+    })
+    return setting?.requirePasswordChange ?? false
+  } catch {
+    return false
+  }
 }
 
 export async function updateEmail(email: string | null, verified?: boolean): Promise<void> {
@@ -203,6 +290,7 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
         passwordHash,
         resetToken: null,
         resetTokenExp: null,
+        requirePasswordChange: false,
         updatedAt: now,
       },
     })

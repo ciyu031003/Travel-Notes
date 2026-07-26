@@ -74,10 +74,10 @@ interface Transaction extends PrismaAdapter {
   releaseSavepoint?(name: string): Promise<void>
 }
 
-function mapColumnType(mysqlType: number, flags?: number): number {
+function mapColumnType(mysqlType: number, flags?: number, columnLength?: number): number {
   switch (mysqlType) {
     case 0: return ColumnTypeEnum.Numeric
-    case 1: return ColumnTypeEnum.Int32
+    case 1: return (columnLength === 1) ? ColumnTypeEnum.Boolean : ColumnTypeEnum.Int32
     case 2: return ColumnTypeEnum.Int32
     case 3: return ColumnTypeEnum.Int32
     case 4: return ColumnTypeEnum.Float
@@ -164,7 +164,7 @@ export class PrismaMariaDB {
 
 function processRows(rows: any, fields: FieldPacket[] | undefined): SqlResultSet {
   const columnNames: string[] = fields ? fields.map((f: any) => f.name) : []
-  const columnTypes: number[] = fields ? fields.map((f: any) => mapColumnType(f.type, f.flags)) : []
+  const columnTypes: number[] = fields ? fields.map((f: any) => mapColumnType(f.type, f.flags, f.length)) : []
 
   const isSelectRows = Array.isArray(rows)
   const dataRows: Array<Array<unknown>> = isSelectRows

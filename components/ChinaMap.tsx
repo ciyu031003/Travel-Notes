@@ -111,6 +111,11 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
   const selectedProvinceInfo = selectedProvince
     ? getProvince(selectedProvince)
     : null
+  const selectedHeaderImage = useMemo(() => {
+    if (selectedPosts.length === 0) return getProvinceImage(selectedProvince || '')
+    const firstPost = selectedPosts[0]
+    return firstPost.images?.[0] || firstPost.cover || getProvinceImage(selectedProvince || '')
+  }, [selectedPosts, selectedProvince])
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect()
@@ -321,7 +326,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
             return (
               <div className="rounded-xl border border-[#D8DDD8]/80 bg-[#FAFBF7]/95 shadow-xl backdrop-blur overflow-hidden" style={{ width: '260px' }}>
                 {previewImage && (
-                  <div className="relative h-36 overflow-hidden bg-[#D8DDD8]/30">
+                  <div className="relative h-36 overflow-hidden bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]">
                     <img
                       src={previewImage}
                       alt={p?.name || ''}
@@ -392,13 +397,17 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* 头部图片 */}
-            <div className="relative h-44 overflow-hidden">
+            <div className="relative h-44 overflow-hidden bg-gradient-to-br from-[#F5DCE0] via-[#D6E8F0] to-[#E8D5E0]">
               <img
-                src={getProvinceImage(selectedProvinceInfo.id)}
+                src={selectedHeaderImage}
                 alt={selectedProvinceInfo.name}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.style.opacity = '0'
+                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
               <button
                 onClick={() => setSelectedProvince(null)}
                 className="absolute top-4 right-4 w-9 h-9 bg-white/30 hover:bg-white/40 backdrop-blur rounded-full flex items-center justify-center transition-colors"
@@ -424,11 +433,14 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
                   href={`/travel/${post.slug}`}
                   className="flex gap-4 p-3 rounded-lg border border-[#D8DDD8]/60 hover:border-[#E8B8C2] hover:bg-[#F5DCE0]/20 transition-all group"
                 >
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-[#D8DDD8]/30">
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]">
                     <img
-                      src={post.cover || getProvinceImage(selectedProvinceInfo.id)}
+                      src={post.cover || post.images?.[0] || getProvinceImage(selectedProvinceInfo.id)}
                       alt={post.title}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none'
+                      }}
                     />
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">

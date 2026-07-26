@@ -27,15 +27,16 @@ model Post {
 }
 
 model SiteSetting {
-  id              Int      @id @default(autoincrement())
-  username        String   @unique @db.VarChar(255)
-  passwordHash    String   @db.Text
-  email           String?  @db.VarChar(255)
-  emailVerified   Boolean  @default(false)
-  resetToken      String?  @db.VarChar(255)
-  resetTokenExp   DateTime? @db.Timestamp(3)
-  createdAt       DateTime @default(now()) @db.Timestamp(3)
-  updatedAt       DateTime @updatedAt @db.Timestamp(3)
+  id                    Int      @id @default(autoincrement())
+  username              String   @unique @db.VarChar(255)
+  passwordHash          String   @db.Text
+  email                 String?  @db.VarChar(255)
+  emailVerified         Boolean  @default(false)
+  resetToken            String?  @db.VarChar(255)
+  resetTokenExp         DateTime? @db.Timestamp(3)
+  requirePasswordChange Boolean  @default(false)
+  createdAt             DateTime @default(now()) @db.Timestamp(3)
+  updatedAt             DateTime @updatedAt @db.Timestamp(3)
 }
 
 enum PostType {

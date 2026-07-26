@@ -143,24 +143,20 @@ export default function TravelClient({ posts }: TravelClientProps) {
                   className="group rounded-xl border border-[#D8DDD8]/60 bg-[#FAFBF7] overflow-hidden hover:shadow-[0_10px_30px_rgba(90,102,112,0.12)] hover:border-[#E8B8C2]/60 transition-all hover:-translate-y-0.5"
                 >
                   {/* 封面图 */}
-                  <div className="relative aspect-[16/10] overflow-hidden bg-[#D8DDD8]/20">
-                    {post.cover ? (
+                  <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
+                    {(post.cover || post.images?.[0]) ? (
                       <img
-                        src={post.cover}
+                        src={post.cover || post.images?.[0]}
                         alt={post.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
-                        style={{
-                          backgroundImage: `url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=beautiful%20travel%20landscape%20${encodeURIComponent(
-                            post.title
-                          )}%20${encodeURIComponent(
-                            post.location || ''
-                          )}&image_size=landscape_16_9')`,
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none'
                         }}
                       />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <MapPin className="w-12 h-12 text-white/40" />
+                      </div>
                     )}
                     {post.location && (
                       <div className="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 bg-[#FAFBF7]/85 backdrop-blur rounded-full text-xs text-[#5A6670]">

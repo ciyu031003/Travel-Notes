@@ -35,7 +35,11 @@ export async function POST(request: Request) {
       exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
     })
 
-    const response = NextResponse.json({ success: true, username })
+    const response = NextResponse.json({
+      success: true,
+      username,
+      requirePasswordChange: credentials.requirePasswordChange,
+    })
     response.cookies.set('admin_session', sessionToken, {
       httpOnly: true,
       secure: process.env.COOKIE_SECURE === 'true',
