@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getPosts } from '@/lib/content'
 import { BrainCircuit } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: '思维导图 | 知识体系',
   description: '系统化知识梳理，构建完整知识体系',

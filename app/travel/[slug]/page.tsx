@@ -5,6 +5,8 @@ import { Calendar, MapPin } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
 
+export const dynamic = 'force-dynamic'
+
 export async function generateStaticParams() {
   const posts = await getPosts('travel')
   return posts.map(post => ({ slug: post.slug }))

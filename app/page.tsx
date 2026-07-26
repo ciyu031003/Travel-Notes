@@ -3,6 +3,8 @@ import { Heart, BookOpen, MapPin, Globe2, Sparkles, ArrowRight } from 'lucide-re
 import { getPosts } from '@/lib/content'
 import { findProvinceByLocation } from '@/lib/province-map'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: '个人博客 | 旅行记录 & 学习笔记',
   description: '记录旅行足迹，分享学习笔记、思维导图和项目代码',

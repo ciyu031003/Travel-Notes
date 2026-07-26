@@ -5,6 +5,8 @@ import { Calendar, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 
+export const dynamic = 'force-dynamic'
+
 export async function generateStaticParams() {
   const posts = await getPosts('tech/blog')
   return posts.map(post => ({ slug: post.slug }))

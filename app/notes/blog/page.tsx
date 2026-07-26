@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getPosts } from '@/lib/content'
 import BlogListWithFilter from '@/components/BlogListWithFilter'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: '技术博客 | 学习笔记',
   description: '技术学习笔记、问题排查、经验总结',
