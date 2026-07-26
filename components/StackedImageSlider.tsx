@@ -99,7 +99,7 @@ export default function StackedImageSlider({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
         {images.map((img, index) => (
           <div
             key={`${img}-${index}`}
@@ -113,16 +113,18 @@ export default function StackedImageSlider({
               }
             }}
           >
-            <img
-              src={img.startsWith('/') ? img : img}
-              alt={`图片 ${index + 1}`}
-              className="w-full h-full object-cover"
-              draggable={false}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=travel%20landscape&image_size=landscape_4_3`
-              }}
-            />
+            {img && (
+              <img
+                src={img.startsWith('/') ? img : img}
+                alt={`图片 ${index + 1}`}
+                className="w-full h-full object-cover"
+                draggable={false}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                }}
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent rounded-2xl pointer-events-none" />
             <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5 dark:ring-white/10 pointer-events-none" />
           </div>

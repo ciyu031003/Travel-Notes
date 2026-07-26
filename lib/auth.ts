@@ -25,7 +25,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         passwordHash: setting.passwordHash,
         email: setting.email,
         emailVerified: setting.emailVerified,
-        requirePasswordChange: setting.requirePasswordChange,
+        requirePasswordChange: (setting as any).requirePasswordChange ?? false,
       }
     }
   } catch {}
@@ -42,7 +42,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         passwordHash: setting.passwordHash,
         email: setting.email,
         emailVerified: setting.emailVerified,
-        requirePasswordChange: setting.requirePasswordChange,
+        requirePasswordChange: (setting as any).requirePasswordChange ?? false,
       }
     }
   } catch {}
@@ -174,7 +174,7 @@ export async function isRequirePasswordChange(): Promise<boolean> {
     const setting = await prisma.siteSetting.findFirst({
       orderBy: { id: 'asc' },
     })
-    return setting?.requirePasswordChange ?? false
+    return (setting as any)?.requirePasswordChange ?? false
   } catch {
     return false
   }

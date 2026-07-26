@@ -368,22 +368,24 @@ export default function AdminEditPage() {
                         onDragStart={() => handleDragStart(index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => handleDragOverImage(e, index)}
-                        className={`group relative rounded-lg overflow-hidden border-2 transition-all ${
+                        className={`group relative rounded-lg overflow-hidden border-2 transition-all bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] ${
                           formData.cover === img
                             ? 'border-primary-500 ring-2 ring-primary-500/30'
                             : 'border-transparent'
                         } ${draggedIndex === index ? 'opacity-50' : ''} cursor-move`}
                       >
-                        <img
-                          src={img.startsWith('/') ? img : img}
-                          alt={`图片 ${index + 1}`}
-                          className="w-full h-32 object-cover cursor-pointer"
-                          onClick={() => setImagePreview(img)}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.src = `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=travel&image_size=square`
-                          }}
-                        />
+                        {img && (
+                          <img
+                            src={img.startsWith('/') ? img : img}
+                            alt={`图片 ${index + 1}`}
+                            className="w-full h-32 object-cover cursor-pointer"
+                            onClick={() => setImagePreview(img)}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                            }}
+                          />
+                        )}
 
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                           <div className="flex gap-1">

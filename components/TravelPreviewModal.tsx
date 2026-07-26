@@ -106,36 +106,40 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
               {images.length > 0 && (
                 <div className="mb-8">
                   {images.length === 1 ? (
-                    <div className="relative rounded-2xl overflow-hidden shadow-lg">
-                      <img
-                        src={images[0].startsWith('/') ? images[0] : images[0]}
-                        alt={formData.title || '旅行照片'}
-                        className="w-full max-h-[500px] object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=travel&image_size=landscape_16_9`
-                        }}
-                      />
+                    <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
+                      {images[0] && (
+                        <img
+                          src={images[0].startsWith('/') ? images[0] : images[0]}
+                          alt={formData.title || '旅行照片'}
+                          className="w-full max-h-[500px] object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                          }}
+                        />
+                      )}
                     </div>
                   ) : (
                     <>
-                      <div className="relative rounded-2xl overflow-hidden shadow-lg">
+                      <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
                         <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800">
                           {images.map((img, index) => (
-                            <img
-                              key={`${img}-${index}`}
-                              src={img.startsWith('/') ? img : img}
-                              alt={`旅行照片 ${index + 1}`}
-                              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-                                index === currentIndex
-                                  ? 'opacity-100 scale-100'
-                                  : 'opacity-0 scale-105'
-                              }`}
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.src = `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=travel&image_size=landscape_16_9`
-                              }}
-                            />
+                            img && (
+                              <img
+                                key={`${img}-${index}`}
+                                src={img.startsWith('/') ? img : img}
+                                alt={`旅行照片 ${index + 1}`}
+                                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+                                  index === currentIndex
+                                    ? 'opacity-100 scale-100'
+                                    : 'opacity-0 scale-105'
+                                }`}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                }}
+                              />
+                            )
                           ))}
 
                           <button
@@ -176,21 +180,23 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                           <button
                             key={`thumb-${img}-${index}`}
                             onClick={() => setCurrentIndex(index)}
-                            className={`relative aspect-square rounded-lg overflow-hidden transition-all ${
+                            className={`relative aspect-square rounded-lg overflow-hidden transition-all bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] ${
                               index === currentIndex
                                 ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900'
                                 : 'opacity-60 hover:opacity-100'
                             }`}
                           >
-                            <img
-                              src={img.startsWith('/') ? img : img}
-                              alt={`缩略图 ${index + 1}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.src = `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=travel&image_size=square`
-                              }}
-                            />
+                            {img && (
+                              <img
+                                src={img.startsWith('/') ? img : img}
+                                alt={`缩略图 ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                }}
+                              />
+                            )}
                           </button>
                         ))}
                       </div>

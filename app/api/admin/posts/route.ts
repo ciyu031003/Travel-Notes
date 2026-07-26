@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const posts = await getAllDBPosts(type)
-    const processedPosts = posts.map(post => ({
+    const processedPosts = posts.map((post: any) => ({
       ...post,
       images: parseImages(post.images),
       tags: parseTags(post.tags),
