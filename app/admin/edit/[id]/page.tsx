@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown, ZoomIn, XCircle } from 'lucide-react'
+import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown, ZoomIn, XCircle, ImageOff } from 'lucide-react'
 import TravelPreviewModal from '@/components/TravelPreviewModal'
 
 const typeIcons: Record<string, any> = {
@@ -40,6 +40,11 @@ export default function AdminEditPage() {
   })
   const [preview, setPreview] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+
+  const handleImageError = (imgUrl: string) => {
+    setImageErrors(prev => new Set(prev).add(imgUrl))
+  }
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -78,14 +83,22 @@ export default function AdminEditPage() {
   }
 
   const generateSlugFromTitle = (title: string): string => {
-    const baseSlug = title
-      .toLowerCase()
-      .replace(/[\s\u4e00-\u9fa5]+/g, '-')
-      .replace(/[^\w-]/g, '')
-      .replace(/-+/g, '-')
-      .trim()
     const timestamp = Date.now().toString(36)
-    return baseSlug || `post-${timestamp}`
+
+    const englishPart = title
+      .toLowerCase()
+      .replace(/[\u4e00-\u9fa5]/g, ' ')
+      .replace(/[^\w\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+
+    if (englishPart && englishPart.length >= 2) {
+      return `${englishPart}-${timestamp}`
+    }
+
+    return `post-${timestamp}`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -390,17 +403,20 @@ export default function AdminEditPage() {
                             : 'border-transparent'
                         } ${draggedIndex === index ? 'opacity-50' : ''} cursor-move`}
                       >
-                        {img && (
+                        {img && !imageErrors.has(img) && (
                           <img
                             src={img}
                             alt={`图片 ${index + 1}`}
                             className="w-full h-full object-cover cursor-pointer"
                             onClick={() => setImagePreview(img)}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.style.display = 'none'
-                            }}
+                            onError={() => handleImageError(img)}
                           />
+                        )}
+                        {imageErrors.has(img) && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 text-red-500">
+                            <ImageOff className="w-8 h-8 mb-1" />
+                            <span className="text-xs">加载失败</span>
+                          </div>
                         )}
 
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">

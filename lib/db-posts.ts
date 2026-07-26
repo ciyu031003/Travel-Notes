@@ -67,7 +67,7 @@ export async function getDBPosts(type: string): Promise<PostMetaDB[]> {
       orderBy: { date: 'desc' },
     })
 
-    return posts.map(post => ({
+    return posts.map((post: any) => ({
       id: post.id,
       slug: post.slug,
       title: post.title,
@@ -77,7 +77,7 @@ export async function getDBPosts(type: string): Promise<PostMetaDB[]> {
       images: parseImages(post.images),
       tags: parseTags(post.tags),
       location: post.location || undefined,
-      type: post.type,
+      type: post.type as string,
       published: post.published,
     }))
   } catch (error: any) {
@@ -88,7 +88,7 @@ export async function getDBPosts(type: string): Promise<PostMetaDB[]> {
 
 export async function getDBPostBySlug(type: string, slug: string): Promise<PostDB | null> {
   try {
-    const post = await prisma.post.findFirst({
+    const post: any = await prisma.post.findFirst({
       where: { type: type as any, slug, published: true },
     })
 
@@ -109,7 +109,7 @@ export async function getDBPostBySlug(type: string, slug: string): Promise<PostD
       images: parseImages(post.images),
       tags: parseTags(post.tags),
       location: post.location || undefined,
-      type: post.type,
+      type: post.type as string,
       published: post.published,
       contentHtml: processedContent.toString(),
     }
@@ -142,7 +142,7 @@ export async function createDBPost(data: {
       images: serializeImages(data.images || []),
       tags: serializeTags(data.tags || []),
       location: data.location || null,
-      type: data.type,
+      type: data.type as any,
       summary: data.summary || null,
       published: data.published ?? true,
     },
