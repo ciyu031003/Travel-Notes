@@ -10,7 +10,7 @@ import {
   type GeoFeature,
 } from '@/lib/geo'
 import { getProvince } from '@/data/provinces'
-import { findProvinceByLocation, getProvinceImage } from '@/lib/province-map'
+import { findProvinceByLocation } from '@/lib/province-map'
 import { X, MapPin, Calendar, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
@@ -112,9 +112,9 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     ? getProvince(selectedProvince)
     : null
   const selectedHeaderImage = useMemo(() => {
-    if (selectedPosts.length === 0) return getProvinceImage(selectedProvince || '')
+    if (selectedPosts.length === 0) return null
     const firstPost = selectedPosts[0]
-    return firstPost.images?.[0] || firstPost.cover || getProvinceImage(selectedProvince || '')
+    return firstPost.images?.[0] || firstPost.cover || null
   }, [selectedPosts, selectedProvince])
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -321,7 +321,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
             const provincePosts = postsByProvince.get(hoveredProvince) || []
             const hasPosts = provincePosts.length > 0
             const firstPost = provincePosts[0]
-            const previewImage = firstPost?.images?.[0] || firstPost?.cover || (hasPosts ? getProvinceImage(hoveredProvince) : null)
+            const previewImage = firstPost?.images?.[0] || firstPost?.cover || null
 
             return (
               <div className="rounded-xl border border-[#D8DDD8]/80 bg-[#FAFBF7]/95 shadow-xl backdrop-blur overflow-hidden" style={{ width: '260px' }}>
@@ -397,16 +397,18 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* 头部图片 */}
-            <div className="relative h-44 overflow-hidden bg-gradient-to-br from-[#F5DCE0] via-[#D6E8F0] to-[#E8D5E0]">
-              <img
-                src={selectedHeaderImage}
-                alt={selectedProvinceInfo.name}
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.style.opacity = '0'
-                }}
-              />
+            <div className="relative h-44 overflow-hidden bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
+              {selectedHeaderImage && (
+                <img
+                  src={selectedHeaderImage}
+                  alt={selectedProvinceInfo.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                  }}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
               <button
                 onClick={() => setSelectedProvince(null)}
@@ -434,14 +436,16 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
                   className="flex gap-4 p-3 rounded-lg border border-[#D8DDD8]/60 hover:border-[#E8B8C2] hover:bg-[#F5DCE0]/20 transition-all group"
                 >
                   <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]">
-                    <img
-                      src={post.cover || post.images?.[0] || getProvinceImage(selectedProvinceInfo.id)}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none'
-                      }}
-                    />
+                    {(post.cover || post.images?.[0]) && (
+                      <img
+                        src={post.cover || post.images?.[0]}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none'
+                        }}
+                      />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <h3 className="font-semibold text-[#5A6670] group-hover:text-[#5A6670] transition-colors truncate">

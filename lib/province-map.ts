@@ -88,9 +88,5 @@ export const provinceImagePrompts: Record<string, string> = {
 };
 
 export function getProvinceImage(provinceId: string): string {
-  const prompt =
-    provinceImagePrompts[provinceId] ||
-    `${provinceId} China travel landscape beautiful scenery`;
-  const encodedPrompt = encodeURIComponent(prompt);
-  return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodedPrompt}&image_size=landscape_16_9`;
+  return '';
 }
