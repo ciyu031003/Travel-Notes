@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { 
   ArrowLeft, User, Key, Mail, Save, Eye, EyeOff, 
-  CheckCircle2, XCircle, Loader2, Shield, ExternalLink
+  CheckCircle2, XCircle, Loader2, Shield, ExternalLink, Home
 } from 'lucide-react'
 
 type TabType = 'profile' | 'password' | 'email'
@@ -50,19 +51,29 @@ export default function AdminSettingsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 h-16">
-            <button
-              onClick={() => router.push('/admin')}
-              className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>返回后台</span>
-            </button>
-            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600" />
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-primary-500" />
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">账号设置</h1>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push('/admin')}
+                className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>返回后台</span>
+              </button>
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600" />
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary-500" />
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-white">账号设置</h1>
+              </div>
             </div>
+            <Link
+              href="/"
+              target="_blank"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <Home className="w-4 h-4" />
+              回到首页
+            </Link>
           </div>
         </div>
       </header>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Plus, Edit2, Trash2, LogOut, MapPin, BookOpen, BrainCircuit, 
-  Code2, Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings
+  Code2, Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home
 } from 'lucide-react'
 interface Post {
   id: number
@@ -113,6 +113,14 @@ export default function AdminDashboard() {
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white">后台管理</h1>
             </div>
             <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                target="_blank"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <Home className="w-4 h-4" />
+                回到首页
+              </Link>
               <Link
                 href="/admin/settings"
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown, ZoomIn, XCircle, ImageOff } from 'lucide-react'
+import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown, ZoomIn, XCircle, ImageOff, Home } from 'lucide-react'
 import TravelPreviewModal from '@/components/TravelPreviewModal'
 
 const typeIcons: Record<string, any> = {
@@ -284,6 +284,14 @@ export default function AdminEditPage() {
               </h1>
             </div>
             <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                target="_blank"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                回到首页
+              </Link>
               <button
                 type="button"
                 onClick={() => setPreview(true)}
