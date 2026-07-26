@@ -1,0 +1,19 @@
+=== MySQL Setup Log === 
+ 
+Step 1: Setting root password... 
+ERROR 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+Exit: 1 
+ 
+Step 2: Testing connection... 
+ERROR 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+Exit: 1 
+ 
+Step 3: Creating Travel_And_Study database... 
+ERROR 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+Exit: 1 
+ 
+Step 4: Verifying databases... 
+ERROR 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+Exit: 1 
+ 
+=== All done! === 

@@ -1,0 +1,486 @@
+﻿
+> personal-blog@1.0.0 dev
+> next dev
+
+  ▲ Next.js 15.0.0
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 18.8s
+ ○ Compiling /travel ...
+ ✓ Compiled /travel in 24.1s (1489 modules)
+ GET /travel 200 in 39013ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.6s (1369 modules)
+ GET / 200 in 3774ms
+ ✓ Compiled /_not-found in 238ms (1358 modules)
+ GET /@vite/client 404 in 319ms
+ ✓ Compiled /travel in 144ms (1060 modules)
+ GET /travel 200 in 192ms
+ GET / 200 in 41ms
+ GET / 200 in 48ms
+ GET /travel 200 in 14ms
+ GET / 200 in 22ms
+ ✓ Compiled /admin in 413ms (1525 modules)
+ GET /admin 200 in 456ms
+ ○ Compiling /api/admin/posts ...
+ ✓ Compiled /api/admin/posts in 649ms (1545 modules)
+ GET /api/admin/check 200 in 762ms
+ GET /api/admin/posts 200 in 775ms
+ ○ Compiling /admin/login ...
+ ✓ Compiled /admin/login in 540ms (1551 modules)
+ GET /api/admin/check 200 in 612ms
+ GET /api/admin/posts 200 in 610ms
+ GET /admin/login 200 in 640ms
+ GET /admin/login 200 in 14ms
+ ✓ Compiled /api/admin/login in 499ms (1553 modules)
+ POST /api/admin/login 200 in 704ms
+ GET /admin 200 in 27ms
+ GET /api/admin/check 200 in 15ms
+ GET /api/admin/posts 200 in 49ms
+ GET /api/admin/check 200 in 42ms
+ GET /api/admin/posts 200 in 16ms
+ ○ Compiling /travel/[slug] ...
+ ✓ Compiled /travel/[slug] in 8.5s (4510 modules)
+ GET /travel/guangzhou-concert-test 200 in 9953ms
+ ○ Compiling /admin/edit/[id] ...
+ ✓ Compiled /admin/edit/[id] in 552ms (4525 modules)
+ GET /admin/edit/2 200 in 1112ms
+ ○ Compiling /api/admin/posts/[id] ...
+ ✓ Compiled /api/admin/posts/[id] in 564ms (4527 modules)
+ GET /api/admin/posts/2 200 in 1353ms
+ GET /api/admin/posts/2 200 in 42ms
+ ✓ Compiled in 815ms (1937 modules)
+ ✓ Compiled in 291ms (1937 modules)
+ ✓ Compiled in 2.1s (3026 modules)
+ ✓ Compiled in 727ms (3026 modules)
+ ✓ Compiled in 483ms (3026 modules)
+ ✓ Compiled in 4s (3812 modules)
+node.exe : <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory,
+ rename 'F:\CodeFiles\user-brower\personal-blog\.next\cache\webpack\client-development\1.pack.gz_' -> 'F:\CodeFiles\use
+r-brower\personal-blog\.next\cache\webpack\client-development\1.pack.gz'
+At line:1 char:1
++ & "D:\Program Files\nodejs/node.exe" "C:\Users\yuan\AppData\Roaming\n ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (<w> [webpack.ca...ment\1.pack.gz':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ ⨯ ./app/page.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4mF:\CodeFiles\user-brower\personal-blog\app\page.tsx[0m:26:1]
+ [2m23[0m |   const totalPosts = travelPosts.length + blogPosts.length
+ [2m24[0m | 
+ [2m25[0m |   return (
+ [2m26[0m |     <div className="relative min-h-screen bg-[#FAFBF7] text-[#5A6670]">
+    : [35;1m     ^^^[0m
+ [2m27[0m |       {/* 底部雾气带 - 与旅行记录页一致 */}
+ [2m28[0m |       <div
+ [2m29[0m |         className="fixed inset-x-0 bottom-0 h-[40vh] pointer-events-none opacity-40"
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/page.tsx
+ ✓ Compiled in 5.7s (3812 modules)
+ GET / 200 in 483ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 884ms (3801 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /@vite/client 404 in 978ms
+ GET /_next/static/webpack/115d49de7000ea85.webpack.hot-update.json 404 in 395ms
+ GET / 200 in 126ms
+ GET /@vite/client 404 in 15ms
+ GET /travel 200 in 191ms
+ GET /@vite/client 404 in 32ms
+ ○ Compiling /travel/[slug] ...
+ ✓ Compiled /travel/[slug] in 4.4s (2968 modules)
+ GET /travel/guangzhou-concert-test 200 in 4797ms
+ GET /travel/guangzhou-concert-test 200 in 37ms
+ GET /travel/guangzhou-concert-test 200 in 36ms
+ GET /travel/guangzhou-concert-test 200 in 24ms
+ GET /travel 200 in 31ms
+ GET /travel/guangzhou-concert-test 200 in 43ms
+ GET /travel 200 in 14ms
+ GET /travel/guangzhou-concert-test 200 in 40ms
+ ✓ Compiled in 2.2s (5280 modules)
+ GET /travel/guangzhou-concert-test 200 in 254ms
+ ⨯ ./app/travel/[slug]/page.tsx
+Error:   [31mx[0m Expected '}', got '<eof>'
+    ,-[[36;1;4mF:\CodeFiles\user-brower\personal-blog\app\travel\[slug]\page.tsx[0m:13:1]
+ [2m10[0m |   return posts.map(post => ({ slug: post.slug }))
+ [2m11[0m | }
+ [2m12[0m | 
+ [2m13[0m | export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+    : [35;1m                                                                                          ^[0m
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/travel/[slug]/page.tsx
+ ⨯ ./app/travel/[slug]/page.tsx
+Error:   [31mx[0m Unexpected eof
+    ,-[[36;1;4mF:\CodeFiles\user-brower\personal-blog\app\travel\[slug]\page.tsx[0m:34:1]
+ [2m31[0m |   const images = (post as any).images || []
+ [2m32[0m | 
+ [2m33[0m |   const imageProps = {
+ [2m34[0m |     images:
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/travel/[slug]/page.tsx
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 14.3s (5515 modules)
+ GET /travel/guangzhou-concert-test 500 in 17780ms
+ GET /travel/guangzhou-concert-test 200 in 459ms
+ GET /travel/guangzhou-concert-test 200 in 82ms
+ GET /travel/guangzhou-concert-test 200 in 78ms
+ GET /travel/guangzhou-concert-test 200 in 85ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /travel/guangzhou-concert-test 200 in 281ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 2.2s (5518 modules)
+ GET /@vite/client 404 in 2279ms
+ GET /travel/guangzhou-concert-test 200 in 101ms
+ GET /travel 200 in 416ms
+ GET /@vite/client 404 in 15ms
+ GET /travel/guangzhou-concert-test 200 in 84ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'F:
+\CodeFiles\user-brower\personal-blog\.next\cache\webpack\server-development\3.pack.gz_' -> 'F:\CodeFiles\user-brower\pe
+rsonal-blog\.next\cache\webpack\server-development\3.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'F:
+\CodeFiles\user-brower\personal-blog\.next\cache\webpack\client-development\1.pack.gz_' -> 'F:\CodeFiles\user-brower\pe
+rsonal-blog\.next\cache\webpack\client-development\1.pack.gz'
+ ✓ Compiled in 1022ms (5513 modules)
+ GET /travel/guangzhou-concert-test 200 in 356ms
+ GET /travel/guangzhou-concert-test 200 in 188ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 861ms (5502 modules)
+ GET /@vite/client 404 in 923ms
+ ✓ Compiled in 860ms (5516 modules)
+ GET /travel/guangzhou-concert-test 200 in 122ms
+ ✓ Compiled in 1180ms (5513 modules)
+ ⨯ TypeError: Cannot read properties of undefined (reading 'entryCSSFiles')
+    at getLinkAndScriptTags (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\app-pag
+e.runtime.dev.js:157:9213)
+    at layerAssets.preloadCallbacks.preloadCallbacks (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\com
+piled\next-server\app-page.runtime.dev.js:157:14830)
+    at createComponentTreeInternal (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\
+app-page.runtime.dev.js:157:16476)
+    at F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:157:1
+3425
+    at F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\server\lib\trace\tracer.js:171:36
+    at NoopContextManager.with (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\@opentelemetry\a
+pi\index.js:1:7062)
+    at ContextAPI.with (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\@opentelemetry\api\index
+.js:1:518)
+    at NoopTracer.startActiveSpan (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\@opentelemetr
+y\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\@opentelemet
+ry\api\index.js:1:18854)
+    at F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\server\lib\trace\tracer.js:153:103
+    at NoopContextManager.with (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\@opentelemetry\a
+pi\index.js:1:7062)
+    at ContextAPI.with (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\@opentelemetry\api\index
+.js:1:518)
+    at NextTracerImpl.trace (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\server\lib\trace\tracer.js:1
+53:28)
+    at createComponentTree (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\app-page
+.runtime.dev.js:157:13348)
+    at walkTreeWithFlightRouterState (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-serve
+r\app-page.runtime.dev.js:157:29095)
+    at generateDynamicRSCPayload (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\ap
+p-page.runtime.dev.js:161:2621)
+    at generateDynamicFlightRenderResult (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-s
+erver\app-page.runtime.dev.js:161:3919)
+    at renderToHTMLOrFlightImpl (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\app
+-page.runtime.dev.js:161:17555)
+    at F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:161:2
+6230
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at withWorkStore (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\app-page.runti
+me.dev.js:154:85914)
+    at F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:161:2
+6051
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at renderToHTMLOrFlight (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\app-pag
+e.runtime.dev.js:161:26030)
+    at AppPageRouteModule.render (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\compiled\next-server\ap
+p-page.runtime.dev.js:163:5115)
+    at doRender (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\server\base-server.js:1587:48)
+    at responseGenerator (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\server\base-server.js:1834:34)
+    at ResponseCache.get (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\server\response-cache\index.js:
+49:20)
+    at DevServer.renderToResponseWithComponentsImpl (F:\CodeFiles\user-brower\personal-blog\node_modules\next\dist\serv
+er\base-server.js:1878:53) {
+  page: '/travel/guangzhou-concert-test'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 643ms (5501 modules)
+ GET /travel/guangzhou-concert-test 500 in 990ms
+ GET /travel/guangzhou-concert-test 200 in 271ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 525ms (5504 modules)
+ GET /@vite/client 404 in 583ms
+ GET /travel/guangzhou-concert-test 200 in 115ms
+ GET /@vite/client 404 in 20ms
+ ✓ Compiled in 2.7s (5513 modules)
+ GET /travel/guangzhou-concert-test 200 in 819ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1377ms (5502 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /@vite/client 404 in 1516ms
+ GET /_next/static/webpack/d8e42f145c5302bf.webpack.hot-update.json 404 in 828ms
+ GET /travel/guangzhou-concert-test 200 in 197ms
+ GET /@vite/client 404 in 32ms
+ ✓ Compiled in 1438ms (5516 modules)
+ GET /travel/guangzhou-concert-test 200 in 129ms
+ GET /travel/guangzhou-concert-test 200 in 80ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1493ms (5504 modules)
+ GET /@vite/client 404 in 1566ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /_next/static/webpack/1438cf3617fad16c.webpack.hot-update.json 404 in 1209ms
+ GET /travel/guangzhou-concert-test 200 in 113ms
+ GET /@vite/client 404 in 24ms
+ ✓ Compiled in 1882ms (5516 modules)
+ GET /travel/guangzhou-concert-test 200 in 124ms
+ ✓ Compiled in 1175ms (5513 modules)
+ GET /travel/guangzhou-concert-test 200 in 79ms
+ GET /travel/guangzhou-concert-test 200 in 87ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1042ms (5502 modules)
+ GET /@vite/client 404 in 1112ms
+ GET /travel/guangzhou-concert-test 200 in 115ms
+ ✓ Compiled in 1228ms (5516 modules)
+ GET /travel/guangzhou-concert-test 200 in 281ms
+ GET /travel/guangzhou-concert-test 200 in 84ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1383ms (5504 modules)
+ GET /@vite/client 404 in 1465ms
+ GET /@vite/client 404 in 42ms
+ GET /travel/guangzhou-concert-test 200 in 110ms
+ GET /@vite/client 404 in 30ms
+ GET /@vite/client 404 in 15ms
+ GET /travel/guangzhou-concert-test 200 in 61ms
+ GET /@vite/client 404 in 26ms
+ GET /@vite/client 404 in 21ms
+ ✓ Compiled in 1501ms (5516 modules)
+ GET /travel/guangzhou-concert-test 200 in 108ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 797ms (5504 modules)
+ GET /@vite/client 404 in 845ms
+ GET /travel 200 in 52ms
+ GET /travel/guangzhou-concert-test 200 in 51ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1046ms (3010 modules)
+ GET / 200 in 1270ms
+ GET /travel/guangzhou-concert-test 200 in 306ms
+ GET /travel 200 in 22ms
+ ○ Compiling /notes ...
+ ✓ Compiled /notes in 992ms (5519 modules)
+ GET /notes 200 in 1121ms
+ GET /travel 200 in 22ms
+ GET / 200 in 30ms
+ GET /notes 200 in 18ms
+ ○ Compiling /notes/blog ...
+ ✓ Compiled /notes/blog in 800ms (5508 modules)
+ GET /notes/blog 200 in 884ms
+ GET /notes 200 in 21ms
+ GET /travel 200 in 38ms
+ GET / 200 in 25ms
+ GET /notes 200 in 19ms
+ ○ Compiling /notes/repo ...
+ ✓ Compiled /notes/repo in 1180ms (5108 modules)
+ GET /notes/repo 200 in 1269ms
+ GET /notes 200 in 160ms
+ GET /notes/repo 200 in 13ms
+ GET /notes/blog 200 in 19ms
+ GET /travel 200 in 31ms
+ GET / 200 in 28ms
+ GET / 200 in 16ms
+ GET /notes 200 in 15ms
+ GET /travel 200 in 15ms
+ GET /travel/guangzhou-concert-test 200 in 63ms
+ GET /travel 200 in 13ms
+ GET /travel/guangzhou-concert-test 200 in 33ms
+ GET /travel 200 in 12ms
+ GET / 200 in 16ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 558ms (2622 modules)
+ GET /admin 200 in 604ms
+ ✓ Compiled /api/admin/posts in 442ms (2640 modules)
+ ✓ Compiled (2642 modules)
+ GET /api/admin/check 200 in 874ms
+ GET /api/admin/posts 200 in 919ms
+ GET /api/admin/check 200 in 14ms
+ GET /api/admin/posts 200 in 21ms
+ GET /notes 200 in 31ms
+ GET /travel 200 in 26ms
+ GET / 200 in 22ms
+ GET / 200 in 18ms
+ GET /travel 200 in 19ms
+ ✓ Compiled in 1936ms (5131 modules)
+ GET /travel 200 in 271ms
+ GET / 200 in 276ms
+ GET /travel/guangzhou-concert-test 200 in 81ms
+ ✓ Compiled in 906ms (5131 modules)
+ GET / 200 in 173ms
+ GET /travel/guangzhou-concert-test 200 in 175ms
+ ✓ Compiled in 1078ms (5131 modules)
+ GET / 200 in 148ms
+ GET /travel/guangzhou-concert-test 200 in 150ms
+ GET /travel 200 in 41ms
+ ✓ Compiled in 1117ms (5131 modules)
+ GET /travel 200 in 99ms
+ GET / 200 in 108ms
+ GET / 200 in 18ms
+ ✓ Compiled in 1419ms (5131 modules)
+ GET / 200 in 69ms
+ GET / 200 in 72ms
+ GET /travel 200 in 35ms
+ GET / 200 in 16ms
+ GET /notes 200 in 21ms
+ ✓ Compiled /notes/blog in 327ms (2618 modules)
+ GET /notes/blog 200 in 385ms
+ ○ Compiling /notes/blog/[slug] ...
+ ✓ Compiled /notes/blog/[slug] in 604ms (5126 modules)
+ GET / 200 in 75ms
+ GET /notes/blog/nextjs-deploy 200 in 1730ms
+ GET /notes/blog/nextjs-deploy 200 in 218ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1543ms (5129 modules)
+ GET /@vite/client 404 in 1761ms
+ GET /travel 200 in 49ms
+ GET / 200 in 33ms
+ ✓ Compiled in 1727ms (5116 modules)
+ GET / 200 in 204ms
+ GET / 200 in 208ms
+ ✓ Compiled /_not-found in 486ms (5105 modules)
+ GET /notes 404 in 529ms
+ GET /notes 200 in 70ms
+ GET /@vite/client 404 in 17ms
+ GET /notes/blog 200 in 27ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 1647ms (2615 modules)
+ GET /admin 200 in 1807ms
+ ○ Compiling /api/admin/posts ...
+ ✓ Compiled /api/admin/posts in 1196ms (2633 modules)
+ ✓ Compiled (2635 modules)
+ GET /api/admin/check 200 in 2429ms
+ GET /api/admin/posts 200 in 2430ms
+ GET /api/admin/check 200 in 25ms
+ GET /api/admin/posts 200 in 37ms
+ ✓ Compiled in 761ms (2517 modules)
+ GET /admin 200 in 187ms
+ ✓ Compiled in 395ms (2517 modules)
+ GET /admin 200 in 19ms
+ ✓ Compiled in 1040ms (5131 modules)
+ GET /admin 200 in 198ms
+ ✓ Compiled /api/admin/posts in 310ms (2629 modules)
+ ✓ Compiled (2631 modules)
+ GET /api/admin/check 200 in 653ms
+ GET /api/admin/posts 200 in 654ms
+ GET /api/admin/check 200 in 11ms
+ GET /api/admin/posts 200 in 17ms
+ GET /notes/blog 200 in 78ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1226ms (5120 modules)
+ GET /@vite/client 404 in 1335ms
+ GET /notes/blog/mysql-index-optimization 200 in 1071ms
+ GET /notes/blog/mysql-index-optimization 200 in 25ms
+ GET /notes/blog/nextjs-deploy-guide 200 in 50ms
+ GET / 200 in 27ms
+ GET /travel 200 in 26ms
+ GET / 200 in 15ms
+ GET /admin 200 in 16ms
+ ○ Compiling /api/admin/posts ...
+ ✓ Compiled /api/admin/posts in 1181ms (2629 modules)
+ ✓ Compiled (2631 modules)
+ GET /api/admin/check 200 in 1592ms
+ GET /api/admin/posts 200 in 1593ms
+ GET /api/admin/posts 200 in 12ms
+ GET /api/admin/check 200 in 18ms
+ GET / 200 in 33ms
+ ✓ Compiled /notes in 467ms (2638 modules)
+ GET /notes 200 in 541ms
+ ✓ Compiled /notes/repo in 480ms (2642 modules)
+ GET /notes/repo 200 in 528ms
+ ○ Compiling /notes/repo/[repo] ...
+ ⨯ ./lib/repos.ts:1:1
+Module not found: Can't resolve 'fs'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m fs [36mfrom[39m [32m'fs'[39m[0m
+[0m [90m   |[39m [31m[1m^[22m[39m[0m
+[0m [90m 2 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[0m
+[0m [90m 3 |[39m[0m
+[0m [90m 4 |[39m [36mexport[39m [36minterface[39m [33mFileNode[39m {[0m
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./app/notes/repo/[repo]/page.tsx
+ ⨯ ./lib/repos.ts:1:1
+Module not found: Can't resolve 'fs'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m fs [36mfrom[39m [32m'fs'[39m[0m
+[0m [90m   |[39m [31m[1m^[22m[39m[0m
+[0m [90m 2 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[0m
+[0m [90m 3 |[39m[0m
+[0m [90m 4 |[39m [36mexport[39m [36minterface[39m [33mFileNode[39m {[0m
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./app/notes/repo/[repo]/page.tsx
+ GET /notes/repo/network-utils 500 in 2443ms
+ GET /notes/repo/network-utils 500 in 19ms
+ ⨯ ./lib/repos.ts:1:1
+Module not found: Can't resolve 'fs'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m fs [36mfrom[39m [32m'fs'[39m[0m
+[0m [90m   |[39m [31m[1m^[22m[39m[0m
+[0m [90m 2 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[0m
+[0m [90m 3 |[39m[0m
+[0m [90m 4 |[39m [36mexport[39m [36minterface[39m [33mFileNode[39m {[0m
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./app/notes/repo/[repo]/page.tsx
+ GET /@vite/client 500 in 1231ms
+ GET /notes/repo 500 in 563ms
+ GET /@vite/client 500 in 7ms
+ GET /notes 500 in 9ms
+ GET /@vite/client 500 in 7ms
+ GET / 500 in 15ms
+ GET /@vite/client 500 in 14ms
+ ⨯ ./lib/province-map.ts
+Error:   [31mx[0m Expected '}', got '<eof>'
+   ,-[[36;1;4mF:\CodeFiles\user-brower\personal-blog\lib\province-map.ts[0m:1:1]
+ [2m1[0m | import { provinces,
+   : [35;1m                  ^[0m
+   `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/province-map.ts
+./app/travel/TravelClient.tsx
+ ⨯ ./lib/repos.ts:1:1
+Module not found: Can't resolve 'fs'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m fs [36mfrom[39m [32m'fs'[39m[0m
+[0m [90m   |[39m [31m[1m^[22m[39m[0m
+[0m [90m 2 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[0m
+[0m [90m 3 |[39m[0m
+[0m [90m 4 |[39m [36mexport[39m [36minterface[39m [33mFileNode[39m {[0m
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./app/notes/repo/[repo]/page.tsx

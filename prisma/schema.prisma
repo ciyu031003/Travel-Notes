@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique @db.VarChar(255)
+  title      String   @db.VarChar(255)
+  content   String   @db.Text
+  date      DateTime @db.Timestamp(3)
+  cover     String?  @db.VarChar(500)
+  images    String?  @db.Text
+  tags      String?  @db.Text
+  location  String?  @db.VarChar(255)
+  type      PostType @default(travel)
+  summary   String?  @db.Text
+  published Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+  updatedAt DateTime @updatedAt @db.Timestamp(3)
+
+  @@index([type])
+  @@index([date])
+}
+
+model SiteSetting {
+  id              Int      @id @default(autoincrement())
+  username        String   @unique @db.VarChar(255)
+  passwordHash    String   @db.Text
+  email           String?  @db.VarChar(255)
+  emailVerified   Boolean  @default(false)
+  resetToken      String?  @db.VarChar(255)
+  resetTokenExp   DateTime? @db.Timestamp(3)
+  createdAt       DateTime @default(now()) @db.Timestamp(3)
+  updatedAt       DateTime @updatedAt @db.Timestamp(3)
+}
+
+enum PostType {
+  travel
+  blog
+  mindmap
+  repo
+}
