@@ -142,7 +142,7 @@ export async function createDBPost(data: {
       images: serializeImages(data.images || []),
       tags: serializeTags(data.tags || []),
       location: data.location || null,
-      type: data.type as any,
+      type: data.type,
       summary: data.summary || null,
       published: data.published ?? true,
     },

@@ -47,21 +47,37 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
+    console.log('[POST /api/admin/posts] Received data:', {
+      slug: body.slug,
+      title: body.title,
+      contentLength: body.content?.length,
+      date: body.date,
+      cover: body.cover,
+      imagesCount: body.images?.length,
+      tags: body.tags,
+      location: body.location,
+      type: body.type,
+      summaryLength: body.summary?.length,
+      published: body.published,
+    })
+
     const post = await createDBPost({
       slug: body.slug,
       title: body.title,
-      content: body.content,
+      content: body.content || '',
       date: new Date(body.date),
-      cover: body.cover,
+      cover: body.cover || undefined,
       images: body.images || [],
-      tags: body.tags,
-      location: body.location,
+      tags: body.tags || [],
+      location: body.location || undefined,
       type: body.type || 'travel',
-      summary: body.summary,
+      summary: body.summary || undefined,
       published: body.published ?? true,
     })
+    console.log('[POST /api/admin/posts] Created post with id:', post.id)
     return NextResponse.json({ post })
   } catch (error: any) {
+    console.error('[POST /api/admin/posts] Error:', error?.message, error?.code, error?.stack)
     return NextResponse.json({ error: error.message || '创建失败' }, { status: 500 })
   }
 }

@@ -16,7 +16,7 @@ model Post {
   images    String?  @db.Text
   tags      String?  @db.Text
   location  String?  @db.VarChar(255)
-  type      PostType @default(travel)
+  type      String   @default("travel") @db.VarChar(50)
   summary   String?  @db.Text
   published Boolean  @default(true)
   createdAt DateTime @default(now()) @db.Timestamp(3)
@@ -37,11 +37,4 @@ model SiteSetting {
   requirePasswordChange Boolean  @default(false)
   createdAt             DateTime @default(now()) @db.Timestamp(3)
   updatedAt             DateTime @updatedAt @db.Timestamp(3)
-}
-
-enum PostType {
-  travel
-  blog
-  mindmap
-  repo
 }

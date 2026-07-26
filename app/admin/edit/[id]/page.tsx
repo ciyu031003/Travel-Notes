@@ -77,6 +77,17 @@ export default function AdminEditPage() {
     }
   }
 
+  const generateSlugFromTitle = (title: string): string => {
+    const baseSlug = title
+      .toLowerCase()
+      .replace(/[\s\u4e00-\u9fa5]+/g, '-')
+      .replace(/[^\w-]/g, '')
+      .replace(/-+/g, '-')
+      .trim()
+    const timestamp = Date.now().toString(36)
+    return baseSlug || `post-${timestamp}`
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -86,28 +97,38 @@ export default function AdminEditPage() {
       .map(t => t.trim())
       .filter(Boolean)
 
+    const finalSlug = formData.slug || generateSlugFromTitle(formData.title)
+
     const payload = {
       ...formData,
+      slug: finalSlug,
       tags: tagsArray,
       date: new Date(formData.date),
-      slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, '-'),
     }
 
     try {
+      let res: Response
       if (isNew) {
-        await fetch('/api/admin/posts', {
+        res = await fetch('/api/admin/posts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         })
       } else {
-        await fetch(`/api/admin/posts/${params.id}`, {
+        res = await fetch(`/api/admin/posts/${params.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         })
       }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || `保存失败 (HTTP ${res.status})`)
+      }
+
       router.push('/admin')
+      router.refresh()
     } catch (error: any) {
       alert(error.message || '保存失败')
     } finally {
@@ -116,12 +137,7 @@ export default function AdminEditPage() {
   }
 
   const generateSlug = () => {
-    const slug = formData.title
-      .toLowerCase()
-      .replace(/[\s\u4e00-\u9fa5]+/g, '-')
-      .replace(/[^\w-]/g, '')
-      .replace(/-+/g, '-')
-      .trim()
+    const slug = generateSlugFromTitle(formData.title)
     setFormData({ ...formData, slug })
   }
 
@@ -368,17 +384,17 @@ export default function AdminEditPage() {
                         onDragStart={() => handleDragStart(index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => handleDragOverImage(e, index)}
-                        className={`group relative rounded-lg overflow-hidden border-2 transition-all bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] ${
+                        className={`group relative h-32 rounded-lg overflow-hidden border-2 transition-all bg-gradient-to-br from-gray-100 to-gray-200 ${
                           formData.cover === img
-                            ? 'border-primary-500 ring-2 ring-primary-500/30'
+                            ? 'border-sky-500 ring-2 ring-sky-500/30'
                             : 'border-transparent'
                         } ${draggedIndex === index ? 'opacity-50' : ''} cursor-move`}
                       >
                         {img && (
                           <img
-                            src={img.startsWith('/') ? img : img}
+                            src={img}
                             alt={`图片 ${index + 1}`}
-                            className="w-full h-32 object-cover cursor-pointer"
+                            className="w-full h-full object-cover cursor-pointer"
                             onClick={() => setImagePreview(img)}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
