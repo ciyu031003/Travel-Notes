@@ -162,6 +162,38 @@ export class PrismaMariaDB {
   }
 }
 
+function mysqlDateFormat(date: Date): string {
+  const pad = (n: number, len = 2) => String(n).padStart(len, '0')
+  const year = date.getFullYear()
+  const month = pad(date.getMonth() + 1)
+  const day = pad(date.getDate())
+  const hours = pad(date.getHours())
+  const minutes = pad(date.getMinutes())
+  const seconds = pad(date.getSeconds())
+  const milliseconds = pad(date.getMilliseconds(), 3)
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`
+}
+
+function convertArgToMySQLFormat(arg: unknown): unknown {
+  if (arg instanceof Date) {
+    return mysqlDateFormat(arg)
+  }
+  if (typeof arg === 'string') {
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/
+    if (isoDateRegex.test(arg)) {
+      const date = new Date(arg)
+      if (!isNaN(date.getTime())) {
+        return mysqlDateFormat(date)
+      }
+    }
+  }
+  return arg
+}
+
+function processArgs(args: Array<unknown>): Array<unknown> {
+  return args.map(convertArgToMySQLFormat)
+}
+
 function processRows(rows: any, fields: FieldPacket[] | undefined): SqlResultSet {
   const columnNames: string[] = fields ? fields.map((f: any) => f.name) : []
   const columnTypes: number[] = fields ? fields.map((f: any) => mapColumnType(f.type, f.flags, f.length)) : []
@@ -196,12 +228,14 @@ function createAdapter(pool: Pool, databaseName: string): PrismaAdapter {
   const adapterName = '@prisma/adapter-mariadb' as const
 
   async function queryRaw(params: SqlQuery): Promise<SqlResultSet> {
-    const [rows, fields] = await pool.execute(params.sql, params.args as any)
+    const processedArgs = processArgs(params.args)
+    const [rows, fields] = await pool.execute(params.sql, processedArgs as any)
     return processRows(rows, fields)
   }
 
   async function executeRaw(params: SqlQuery): Promise<number> {
-    const [result] = await pool.execute(params.sql, params.args as any)
+    const processedArgs = processArgs(params.args)
+    const [result] = await pool.execute(params.sql, processedArgs as any)
     if (Array.isArray(result)) {
       return result.length
     }
@@ -257,12 +291,14 @@ function createTransaction(conn: PoolConnection, databaseName: string): Transact
   const adapterName = '@prisma/adapter-mariadb' as const
 
   async function queryRaw(params: SqlQuery): Promise<SqlResultSet> {
-    const [rows, fields] = await conn.execute(params.sql, params.args as any)
+    const processedArgs = processArgs(params.args)
+    const [rows, fields] = await conn.execute(params.sql, processedArgs as any)
     return processRows(rows, fields)
   }
 
   async function executeRaw(params: SqlQuery): Promise<number> {
-    const [result] = await conn.execute(params.sql, params.args as any)
+    const processedArgs = processArgs(params.args)
+    const [result] = await conn.execute(params.sql, processedArgs as any)
     if (Array.isArray(result)) {
       return result.length
     }
