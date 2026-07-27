@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
   ArrowLeft, User, Key, Mail, Save, Eye, EyeOff, 
-  CheckCircle2, XCircle, Loader2, Shield, ExternalLink, Home
+  CheckCircle2, XCircle, Loader2, Shield, ExternalLink, Home, Heart, Calendar, Settings
 } from 'lucide-react'
 
-type TabType = 'profile' | 'password' | 'email'
+type TabType = 'profile' | 'password' | 'email' | 'travel'
 
 export default function AdminSettingsPage() {
   const router = useRouter()
@@ -115,6 +115,17 @@ export default function AdminSettingsPage() {
                 <Mail className="w-4 h-4 inline mr-2" />
                 邮箱绑定
               </button>
+              <button
+                onClick={() => setActiveTab('travel')}
+                className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'travel'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <Heart className="w-4 h-4 inline mr-2" />
+                旅行设置
+              </button>
             </nav>
           </div>
 
@@ -148,6 +159,9 @@ export default function AdminSettingsPage() {
             )}
             {activeTab === 'email' && (
               <EmailTab onMessage={setMessage} />
+            )}
+            {activeTab === 'travel' && (
+              <TravelTab onMessage={setMessage} />
             )}
           </div>
         </div>
@@ -761,5 +775,176 @@ function EmailTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' 
         </div>
       </form>
     </div>
+  )
+}
+
+function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' | 'info'; text: string } | null) => void }) {
+  const [anniversaryStart, setAnniversaryStart] = useState<string>('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [calculatedDays, setCalculatedDays] = useState<number | null>(null)
+
+  useEffect(() => {
+    loadCurrentSettings()
+  }, [])
+
+  useEffect(() => {
+    if (anniversaryStart) {
+      const start = new Date(anniversaryStart)
+      if (!isNaN(start.getTime())) {
+        const now = new Date()
+        const days = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+        setCalculatedDays(days)
+      } else {
+        setCalculatedDays(null)
+      }
+    } else {
+      setCalculatedDays(null)
+    }
+  }, [anniversaryStart])
+
+  const loadCurrentSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings/anniversary')
+      if (res.ok) {
+        const data = await res.json()
+        setAnniversaryStart(data.anniversaryStart || '')
+      }
+    } catch {}
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    onMessage(null)
+
+    if (!currentPassword) {
+      onMessage({ type: 'error', text: '请输入当前密码以验证身份' })
+      return
+    }
+
+    if (anniversaryStart && !/^\d{4}-\d{2}-\d{2}$/.test(anniversaryStart)) {
+      onMessage({ type: 'error', text: '日期格式不正确' })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/admin/settings/anniversary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anniversaryStart: anniversaryStart || null,
+          currentPassword,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setAnniversaryStart(data.anniversaryStart || '')
+        setCurrentPassword('')
+        onMessage({ type: 'success', text: '旅行设置保存成功！' })
+      } else {
+        const data = await res.json()
+        onMessage({ type: 'error', text: data.error || '保存失败' })
+      }
+    } catch {
+      onMessage({ type: 'error', text: '网络错误，请重试' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
+      <div>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">旅行设置</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">设置恋爱纪念日开始日期，旅行地图页面将自动计算相恋天数</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          恋爱纪念日
+        </label>
+        <div className="relative">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="date"
+            value={anniversaryStart}
+            onChange={(e) => setAnniversaryStart(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="选择日期"
+          />
+        </div>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          选择你们开始恋爱的日期，系统将自动计算相恋天数
+        </p>
+      </div>
+
+      {calculatedDays !== null && (
+        <div className="bg-gradient-to-r from-pink-50 to-blue-50 dark:from-pink-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-pink-100 dark:border-pink-800">
+          <div className="flex items-center gap-2 mb-2">
+            <Heart className="w-4 h-4 text-pink-500" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">预览效果</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
+              {calculatedDays}
+            </span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">天</span>
+            <span className="text-xs text-gray-500 dark:text-gray-500 ml-2">
+              从 {anniversaryStart} 开始
+            </span>
+          </div>
+        </div>
+      )}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          当前密码 <span className="text-red-500">*</span>
+        </label>
+        <div className="relative">
+          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full pl-10 pr-12 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="必须输入当前密码以验证身份"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          {loading ? '保存中...' : '保存设置'}
+        </button>
+        {anniversaryStart && (
+          <button
+            type="button"
+            onClick={() => {
+              setAnniversaryStart('')
+              setCalculatedDays(null)
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg transition-colors"
+          >
+            清除
+          </button>
+        )}
+      </div>
+    </form>
   )
 }

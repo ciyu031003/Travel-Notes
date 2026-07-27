@@ -30,7 +30,7 @@ const DECOR_POSITIONS: Omit<DecorItem, 'type' | 'color'>[] = [
 
 export default function TravelImageCarousel({
   images,
-  intervalMs = 30000,
+  intervalMs = 5000,
 }: TravelImageCarouselProps) {
   const total = images.length
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -46,8 +46,8 @@ export default function TravelImageCarousel({
       setTimeout(() => {
         setCurrentIndex(next)
         setAnimState('enter')
-        setTimeout(() => setAnimState('idle'), 1200)
-      }, 500)
+        setTimeout(() => setAnimState('idle'), 1500)
+      }, 800)
     },
     [currentIndex, total],
   )
@@ -60,14 +60,14 @@ export default function TravelImageCarousel({
     if (total <= 1) return
     const timer = setInterval(() => {
       next()
-    }, intervalMs)
+    }, intervalMs + 800 + 1500)
     return () => clearInterval(timer)
   }, [total, intervalMs, next])
 
   useEffect(() => {
     if (total > 0 && animState === 'idle') {
       setAnimState('enter')
-      setTimeout(() => setAnimState('idle'), 1200)
+      setTimeout(() => setAnimState('idle'), 1500)
     }
   }, [])
 
@@ -85,18 +85,18 @@ export default function TravelImageCarousel({
       return {
         transform: 'scale(1) rotate(0deg)',
         opacity: 1,
-        transition: 'transform 1.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.2s ease-out',
+        transition: 'transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 1.5s ease-out',
       }
     }
     if (animState === 'exit') {
       return {
-        transform: 'scale(1.2) rotate(3deg)',
+        transform: 'scale(1.15) rotate(2deg)',
         opacity: 0,
-        transition: 'transform 0.5s ease-in, opacity 0.5s ease-in',
+        transition: 'transform 0.8s ease-in, opacity 0.8s ease-in',
       }
     }
     return {
-      transform: 'scale(0.3) rotate(-8deg)',
+      transform: 'scale(0.2) rotate(-10deg)',
       opacity: 0,
       transition: 'none',
     }

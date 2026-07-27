@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { getCredentials, verifyPassword, hashPassword, updateCredentials, getSiteSettings, updateAnniversaryStart } from '@/lib/auth'
+import { verifyPassword, getSiteSettings, updateAnniversaryStart } from '@/lib/auth'
 
 export async function GET(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -10,7 +10,6 @@ export async function GET(request: Request) {
 
   const settings = await getSiteSettings()
   return NextResponse.json({ 
-    username: settings.username,
     anniversaryStart: settings.anniversaryStart,
   })
 }
@@ -23,29 +22,28 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { currentPassword, newUsername, newPassword } = body
-
-    const credentials = await getCredentials()
+    const { anniversaryStart, currentPassword } = body
 
     if (!currentPassword) {
-      return NextResponse.json({ error: '请输入当前密码' }, { status: 400 })
+      return NextResponse.json({ error: '请输入当前密码以验证身份' }, { status: 400 })
     }
 
-    const valid = await verifyPassword(currentPassword, credentials.passwordHash)
+    const settings = await getSiteSettings()
+    const valid = await verifyPassword(currentPassword, settings.passwordHash)
     if (!valid) {
       return NextResponse.json({ error: '当前密码错误' }, { status: 401 })
     }
 
-    const username = newUsername && newUsername.trim() ? newUsername.trim() : credentials.username
-
-    if (newPassword && newPassword.trim()) {
-      const passwordHash = await hashPassword(newPassword.trim())
-      await updateCredentials(username, passwordHash)
-    } else {
-      await updateCredentials(username, credentials.passwordHash)
+    if (anniversaryStart && !/^\d{4}-\d{2}-\d{2}$/.test(anniversaryStart)) {
+      return NextResponse.json({ error: '日期格式不正确' }, { status: 400 })
     }
 
-    return NextResponse.json({ success: true, username })
+    await updateAnniversaryStart(anniversaryStart || null)
+
+    return NextResponse.json({ 
+      success: true, 
+      anniversaryStart: anniversaryStart || null,
+    })
   } catch {
     return NextResponse.json({ error: '更新失败' }, { status: 500 })
   }

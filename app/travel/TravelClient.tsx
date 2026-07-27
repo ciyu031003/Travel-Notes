@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info } from 'lucide-react'
@@ -29,7 +29,19 @@ export default function TravelClient({ posts }: TravelClientProps) {
   const [showAll, setShowAll] = useState(false)
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
+  const [anniversaryStart, setAnniversaryStart] = useState<string | undefined>(undefined)
   const visiblePosts = showAll ? posts : posts.slice(0, 6)
+
+  useEffect(() => {
+    fetch('/api/travel/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.anniversaryStart) {
+          setAnniversaryStart(data.anniversaryStart)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const provincesVisited = useMemo(() => {
     const set = new Set<string>()
@@ -141,7 +153,7 @@ export default function TravelClient({ posts }: TravelClientProps) {
               <div className="w-64 xl:w-72 h-full p-2">
                 <TravelImageCarousel
                   images={carouselImages}
-                  intervalMs={15000}
+                  intervalMs={5000}
                 />
               </div>
               {/* 收起按钮 */}
@@ -175,7 +187,7 @@ export default function TravelClient({ posts }: TravelClientProps) {
             <div className="h-full flex items-stretch flex-row-reverse">
               <div className="w-64 xl:w-72 h-full p-2">
                 <TravelInfoPanel
-                  anniversaryStart="2025-01-01"
+                  anniversaryStart={anniversaryStart}
                   cities={weatherCities.length > 0 ? weatherCities : ['北京', '上海', '广州']}
                   provincesLit={provincesVisited.size}
                   totalProvinces={34}

@@ -35,6 +35,7 @@ model SiteSetting {
   resetToken            String?  @db.VarChar(255)
   resetTokenExp         DateTime? @db.Timestamp(3)
   requirePasswordChange Boolean  @default(false)
+  anniversaryStart      String?  @db.VarChar(50)
   createdAt             DateTime @default(now()) @db.Timestamp(3)
   updatedAt             DateTime @updatedAt @db.Timestamp(3)
 }

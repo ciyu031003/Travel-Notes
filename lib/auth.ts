@@ -12,6 +12,7 @@ export interface SiteSettings {
   email: string | null
   emailVerified: boolean
   requirePasswordChange: boolean
+  anniversaryStart: string | null
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -26,6 +27,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         email: setting.email,
         emailVerified: setting.emailVerified,
         requirePasswordChange: (setting as any).requirePasswordChange ?? false,
+        anniversaryStart: (setting as any).anniversaryStart ?? null,
       }
     }
   } catch {}
@@ -43,6 +45,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         email: setting.email,
         emailVerified: setting.emailVerified,
         requirePasswordChange: (setting as any).requirePasswordChange ?? false,
+        anniversaryStart: (setting as any).anniversaryStart ?? null,
       }
     }
   } catch {}
@@ -53,6 +56,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     email: null,
     emailVerified: false,
     requirePasswordChange: false,
+    anniversaryStart: null,
   }
 }
 
@@ -316,4 +320,23 @@ export async function clearResetToken(): Promise<void> {
       })
     }
   } catch {}
+}
+
+export async function updateAnniversaryStart(date: string | null): Promise<void> {
+  try {
+    const setting = await prisma.siteSetting.findFirst({
+      orderBy: { id: 'asc' },
+    })
+    if (setting) {
+      await prisma.siteSetting.update({
+        where: { id: setting.id },
+        data: {
+          anniversaryStart: date,
+          updatedAt: new Date(),
+        },
+      })
+    }
+  } catch (error) {
+    console.error('[updateAnniversaryStart] Failed:', error)
+  }
 }

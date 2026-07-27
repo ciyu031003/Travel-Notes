@@ -98,7 +98,7 @@ function daysBetween(fromIso: string, now: Date) {
 }
 
 export default function TravelInfoPanel({
-  anniversaryStart = '2025-01-01',
+  anniversaryStart,
   cities = ['北京', '上海', '广州'],
   provincesLit = 0,
   totalProvinces = 34,
@@ -120,9 +120,10 @@ export default function TravelInfoPanel({
   const secondsStr = pad2(now.getSeconds())
   const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 ${WEEKDAY_CN[now.getDay()]}`
 
+  const hasAnniversary = !!anniversaryStart
   const daysTogether = useMemo(
-    () => daysBetween(anniversaryStart, now),
-    [anniversaryStart, now]
+    () => (hasAnniversary ? daysBetween(anniversaryStart!, now) : 0),
+    [anniversaryStart, now, hasAnniversary]
   )
 
   const weathers = useMemo(
@@ -225,27 +226,39 @@ export default function TravelInfoPanel({
             style={{ color: colors.bloom, fill: colors.bloom }}
           />
         </div>
-        <div className="flex items-baseline gap-2">
-          <span
-            className="text-5xl font-bold tabular-nums"
-            style={{ color: colors.ink }}
+        {hasAnniversary ? (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span
+                className="text-5xl font-bold tabular-nums"
+                style={{ color: colors.ink }}
+              >
+                {daysTogether}
+              </span>
+              <span
+                className="text-base font-medium"
+                style={{ color: colors.ink, opacity: 0.7 }}
+              >
+                天
+              </span>
+            </div>
+            <div
+              className="mt-2 text-xs flex items-center gap-1.5"
+              style={{ color: colors.ink, opacity: 0.6 }}
+            >
+              <Sparkles className="w-3.5 h-3.5" style={{ color: colors.bloom }} />
+              从 {formatAnniversaryDate(anniversaryStart!)} 开始
+            </div>
+          </>
+        ) : (
+          <div
+            className="py-3 text-center"
+            style={{ color: colors.ink, opacity: 0.5 }}
           >
-            {daysTogether}
-          </span>
-          <span
-            className="text-base font-medium"
-            style={{ color: colors.ink, opacity: 0.7 }}
-          >
-            天
-          </span>
-        </div>
-        <div
-          className="mt-2 text-xs flex items-center gap-1.5"
-          style={{ color: colors.ink, opacity: 0.6 }}
-        >
-          <Sparkles className="w-3.5 h-3.5" style={{ color: colors.bloom }} />
-          从 {formatAnniversaryDate(anniversaryStart)} 开始
-        </div>
+            <p className="text-sm">还没有设置恋爱纪念日</p>
+            <p className="text-xs mt-1">请联系管理员在后台设置</p>
+          </div>
+        )}
       </section>
 
       {/* 3. 天气 */}
