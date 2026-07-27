@@ -60,6 +60,18 @@ function toISOString(date: any): string {
   return new Date().toISOString()
 }
 
+function ensureDate(date: any): Date {
+  if (date instanceof Date) return date
+  if (typeof date === 'string') {
+    const d = new Date(date)
+    if (!isNaN(d.getTime())) return d
+  }
+  if (typeof date === 'number') {
+    return new Date(date)
+  }
+  return new Date()
+}
+
 export async function getDBPosts(type: string): Promise<PostMetaDB[]> {
   try {
     const posts = await prisma.post.findMany({
@@ -137,7 +149,7 @@ export async function createDBPost(data: {
       slug: data.slug,
       title: data.title,
       content: data.content,
-      date: data.date,
+      date: ensureDate(data.date),
       cover: data.cover || null,
       images: serializeImages(data.images || []),
       tags: serializeTags(data.tags || []),
@@ -166,7 +178,7 @@ export async function updateDBPost(id: number, data: Partial<{
   if (data.slug !== undefined) updateData.slug = data.slug
   if (data.title !== undefined) updateData.title = data.title
   if (data.content !== undefined) updateData.content = data.content
-  if (data.date !== undefined) updateData.date = data.date
+  if (data.date !== undefined) updateData.date = ensureDate(data.date)
   if (data.cover !== undefined) updateData.cover = data.cover
   if (data.images !== undefined) updateData.images = serializeImages(data.images)
   if (data.tags !== undefined) updateData.tags = serializeTags(data.tags)

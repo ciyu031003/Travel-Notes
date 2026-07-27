@@ -39,7 +39,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params
   try {
     const body = await request.json()
-    const post = await updateDBPost(parseInt(id), body)
+    const updateData = {
+      ...body,
+      date: body.date ? new Date(body.date) : undefined,
+    }
+    const post = await updateDBPost(parseInt(id), updateData)
     return NextResponse.json({ post })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || '更新失败' }, { status: 500 })
