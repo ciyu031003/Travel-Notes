@@ -10,8 +10,12 @@ import {
   type GeoFeature,
 } from '@/lib/geo'
 import { getProvince } from '@/data/provinces'
+import { getCitiesByProvince, findCityByName, type City } from '@/data/cities'
 import { findProvinceByLocation } from '@/lib/province-map'
-import { X, MapPin, Calendar, ArrowRight } from 'lucide-react'
+import {
+  X, MapPin, Calendar, ArrowRight, Plus, Camera,
+  ChevronLeft, ChevronRight, Sparkles, Pencil, Image as ImageIcon,
+} from 'lucide-react'
 import Link from 'next/link'
 
 interface PostMeta {
@@ -52,6 +56,8 @@ const easyTapProvinceIds = new Set(['hongkong', 'macau'])
 
 export default function ChinaMap({ posts }: ChinaMapProps) {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
+  const [selectedCity, setSelectedCity] = useState<City | null>(null)
+  const [showCityModal, setShowCityModal] = useState(false)
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null)
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({
     x: 0,
@@ -75,6 +81,22 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
       }
     }
     return map
+  }, [posts])
+
+  const citiesByPostLocation = useMemo(() => {
+    const cityPostMap = new Map<string, PostMeta[]>()
+    for (const post of posts) {
+      if (!post.location) continue
+      const city = findCityByName(post.location)
+      if (city) {
+        const key = `${city.name}-${findProvinceByLocation(post.location)?.id || ''}`
+        if (!cityPostMap.has(key)) {
+          cityPostMap.set(key, [])
+        }
+        cityPostMap.get(key)!.push(post)
+      }
+    }
+    return cityPostMap
   }, [posts])
 
   const { paths, dashPath } = useMemo(() => {
@@ -109,19 +131,46 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     ? postsByProvince.get(selectedProvince) || []
     : []
   const selectedProvinceInfo = selectedProvince
-    ? getProvince(selectedProvince)
+    ? getProvince(selectedProvince) ?? null
     : null
+  const selectedProvinceCities = selectedProvince
+    ? getCitiesByProvince(selectedProvince)
+    : []
   const selectedHeaderImage = useMemo(() => {
     if (selectedPosts.length === 0) return null
     const firstPost = selectedPosts[0]
     return firstPost.images?.[0] || firstPost.cover || null
   }, [selectedPosts, selectedProvince])
 
+  const cityPosts = useMemo(() => {
+    if (!selectedCity || !selectedProvince) return []
+    const key = `${selectedCity.name}-${selectedProvince}`
+    return citiesByPostLocation.get(key) || []
+  }, [selectedCity, selectedProvince, citiesByPostLocation])
+
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect()
     if (rect) {
       setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
     }
+  }
+
+  const handleProvinceClick = (provinceId: string) => {
+    setSelectedProvince(provinceId)
+    setSelectedCity(null)
+  }
+
+  const handleCityClick = (city: City) => {
+    setSelectedCity(city)
+    setShowCityModal(true)
+  }
+
+  const closeCityModal = () => {
+    setShowCityModal(false)
+  }
+
+  const backToProvinceList = () => {
+    setSelectedCity(null)
   }
 
   return (
@@ -193,7 +242,6 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
           rx="12"
         />
 
-        {/* 外发光层 — lit 省份的柔光晕 */}
         {paths.map((path) =>
           path.lit ? (
             <path
@@ -209,33 +257,28 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
           ) : null
         )}
 
-        {/* 省份路径 */}
         {paths.map((path) => {
           const isHovered = hoveredProvince === path.id
+          const isSelected = selectedProvince === path.id
           return (
             <path
               key={path.id}
               d={path.d}
-              fill={path.lit ? colors.sakura : colors.dim}
-              fillOpacity={path.lit ? 0.68 : 0.34}
+              fill={isSelected ? colors.bloom : path.lit ? colors.sakura : colors.dim}
+              fillOpacity={isSelected ? 0.75 : path.lit ? 0.68 : 0.34}
               stroke={path.lit ? colors.bloom : colors.ink}
               strokeOpacity={path.lit ? 0.95 : 0.24}
-              strokeWidth={path.lit ? 2.2 : 1.25}
+              strokeWidth={isSelected ? 3 : path.lit ? 2.2 : 1.25}
               strokeLinejoin="round"
               className="cursor-pointer transition-all duration-300"
-              filter={path.lit || isHovered ? 'url(#visitedGlow)' : undefined}
+              filter={path.lit || isHovered || isSelected ? 'url(#visitedGlow)' : undefined}
               onMouseEnter={() => setHoveredProvince(path.id)}
               onMouseLeave={() => setHoveredProvince(null)}
-              onClick={() => {
-                if (postsByProvince.has(path.id)) {
-                  setSelectedProvince(path.id)
-                }
-              }}
+              onClick={() => handleProvinceClick(path.id)}
             />
           )
         })}
 
-        {/* 像素纹理层 — lit 省份的复古像素感 */}
         {paths.map((path) =>
           path.lit ? (
             <path
@@ -252,7 +295,6 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
           ) : null
         )}
 
-        {/* 南海九段线 */}
         {dashPath && (
           <path
             d={dashPath}
@@ -264,7 +306,6 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
           />
         )}
 
-        {/* 香港/澳门易点击圆圈 */}
         {paths.map((path) => {
           if (!easyTapProvinceIds.has(path.id) || !path.centroid) return null
           const isHK = path.id === 'hongkong'
@@ -274,11 +315,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
               className="cursor-pointer transition-all duration-300"
               onMouseEnter={() => setHoveredProvince(path.id)}
               onMouseLeave={() => setHoveredProvince(null)}
-              onClick={() => {
-                if (postsByProvince.has(path.id)) {
-                  setSelectedProvince(path.id)
-                }
-              }}
+              onClick={() => handleProvinceClick(path.id)}
             >
               <circle
                 cx={path.centroid[0]}
@@ -303,10 +340,8 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
         })}
       </svg>
 
-      {/* 南海诸岛 inset 小框 */}
       <SouthChinaSeaInset />
 
-      {/* 悬浮提示 - 带图片预览 */}
       {hoveredProvince && (
         <div
           className="pointer-events-none absolute z-20 transition-opacity duration-200"
@@ -347,6 +382,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`inline-block h-2 w-2 rounded-sm ${hasPosts ? 'bg-[#E8B8C2]' : 'bg-[#B9BEC3]'}`} />
                     <span className="font-semibold text-[#5A6670] text-sm">{p?.name}</span>
+                    <span className="text-xs text-[#5A6670]/40">点击查看城市</span>
                   </div>
                   {hasPosts && firstPost ? (
                     <>
@@ -365,7 +401,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
                       </div>
                     </>
                   ) : (
-                    <p className="text-xs text-[#5A6670]/50">{p?.nameEn}</p>
+                    <p className="text-xs text-[#5A6670]/50">{p?.nameEn} · {getCitiesByProvince(hoveredProvince).length} 个城市</p>
                   )}
                 </div>
               </div>
@@ -374,7 +410,6 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
         </div>
       )}
 
-      {/* 图例 */}
       <div className="absolute bottom-4 right-4 flex items-center gap-4 rounded-lg border border-[#D8DDD8]/80 bg-[#FAFBF7]/85 px-4 py-2 text-xs text-[#5A6670] backdrop-blur">
         <span className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-[#E8B8C2] shadow-[0_0_8px_rgba(232,184,194,0.5)]" />
@@ -386,98 +421,309 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
         </span>
       </div>
 
-      {/* 选中省份弹窗 */}
-      {selectedProvinceInfo && selectedPosts.length > 0 && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setSelectedProvince(null)}
-        >
-          <div
-            className="bg-[#FAFBF7] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col border border-[#D8DDD8]/60"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* 头部图片 */}
-            <div className="relative h-44 overflow-hidden bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
-              {selectedHeaderImage && (
-                <img
-                  src={selectedHeaderImage}
-                  alt={selectedProvinceInfo.name}
-                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.style.display = 'none'
-                  }}
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-              <button
-                onClick={() => setSelectedProvince(null)}
-                className="absolute top-4 right-4 w-9 h-9 bg-white/30 hover:bg-white/40 backdrop-blur rounded-full flex items-center justify-center transition-colors"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-              <div className="absolute bottom-4 left-6 right-6">
-                <div className="flex items-center gap-2 text-white/85 text-sm mb-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{selectedProvinceInfo.nameEn}</span>
-                </div>
-                <h2 className="text-2xl font-bold text-white">
-                  {selectedProvinceInfo.name} · {selectedPosts.length} 篇旅行记录
-                </h2>
-              </div>
-            </div>
+      {selectedProvinceInfo && !selectedCity && (
+        <ProvinceCityPanel
+          provinceInfo={selectedProvinceInfo}
+          cities={selectedProvinceCities}
+          posts={selectedPosts}
+          citiesWithPosts={citiesByPostLocation}
+          onClose={() => setSelectedProvince(null)}
+          onCityClick={handleCityClick}
+        />
+      )}
 
-            {/* 旅行记录列表 */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-3">
-              {selectedPosts.map((post) => (
-                <Link
-                  key={post.slug}
-                  href={`/travel/${post.slug}`}
-                  className="flex gap-4 p-3 rounded-lg border border-[#D8DDD8]/60 hover:border-[#E8B8C2] hover:bg-[#F5DCE0]/20 transition-all group"
-                >
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]">
-                    {(post.cover || post.images?.[0]) && (
-                      <img
-                        src={post.cover || post.images?.[0]}
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none'
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <h3 className="font-semibold text-[#5A6670] group-hover:text-[#5A6670] transition-colors truncate">
-                      {post.title}
-                    </h3>
-                    <div className="flex items-center gap-3 text-xs text-[#5A6670]/60 mt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(post.date).toLocaleDateString('zh-CN')}
-                      </span>
-                      {post.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {post.location}
-                        </span>
-                      )}
+      {showCityModal && selectedCity && (
+        <CityModal
+          city={selectedCity}
+          provinceInfo={selectedProvinceInfo}
+          cityPosts={cityPosts}
+          onClose={closeCityModal}
+          onBack={backToProvinceList}
+        />
+      )}
+    </div>
+  )
+}
+
+function ProvinceCityPanel({
+  provinceInfo,
+  cities,
+  posts,
+  citiesWithPosts,
+  onClose,
+  onCityClick,
+}: {
+  provinceInfo: { id: string; name: string; nameEn: string }
+  cities: City[]
+  posts: PostMeta[]
+  citiesWithPosts: Map<string, PostMeta[]>
+  onClose: () => void
+  onCityClick: (city: City) => void
+}) {
+  return (
+    <div className="absolute top-0 right-0 bottom-0 w-[380px] bg-[#FAFBF7]/97 backdrop-blur-md border-l border-[#D8DDD8]/60 shadow-[-12px_0_40px_-8px_rgba(90,102,112,0.12)] flex flex-col z-30 animate-[slideIn_0.3s_ease-out]">
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
+
+      <div className="flex items-center justify-between p-4 border-b border-[#D8DDD8]/60">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-[#5A6670]">{provinceInfo.name}</h3>
+            <p className="text-xs text-[#5A6670]/50">{provinceInfo.nameEn} · {cities.length} 个城市</p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-lg hover:bg-[#D8DDD8]/40 flex items-center justify-center transition-colors"
+        >
+          <X className="w-4 h-4 text-[#5A6670]/60" />
+        </button>
+      </div>
+
+      {posts.length > 0 && (
+        <div className="p-4 bg-gradient-to-br from-[#F5DCE0]/30 to-[#D6E8F0]/30 border-b border-[#D8DDD8]/60">
+          <div className="flex items-center gap-2 text-xs text-[#5A6670]/60 mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#E8B8C2]" />
+            <span>该省旅行记录</span>
+            <span className="ml-auto font-medium text-[#E8B8C2]">{posts.length}</span>
+          </div>
+          <div className="space-y-2">
+            {posts.slice(0, 2).map((post) => (
+              <Link
+                key={post.slug}
+                href={`/travel/${post.slug}`}
+                className="flex items-center gap-3 p-2 rounded-lg bg-[#FAFBF7]/80 hover:bg-white transition-colors group"
+              >
+                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] flex-shrink-0">
+                  {(post.cover || post.images?.[0]) ? (
+                    <img
+                      src={post.cover || post.images?.[0]}
+                      alt={post.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none'
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <MapPin className="w-4 h-4 text-white/50" />
                     </div>
-                    {post.description && (
-                      <p className="text-sm text-[#5A6670]/70 mt-1 line-clamp-1">
-                        {post.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center">
-                    <ArrowRight className="w-5 h-5 text-[#D8DDD8] group-hover:text-[#E8B8C2] group-hover:translate-x-1 transition-all" />
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#5A6670] truncate group-hover:text-[#E8B8C2]">{post.title}</p>
+                  <p className="text-xs text-[#5A6670]/50">{post.location}</p>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       )}
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-3 text-xs font-medium text-[#5A6670]/50">
+          <span>点击城市添加旅行记录</span>
+        </div>
+        <div className="px-3 pb-3 space-y-1">
+          {cities.map((city) => {
+            const key = `${city.name}-${provinceInfo.id}`
+            const hasPosts = citiesWithPosts.has(key)
+            const cityPostCount = citiesWithPosts.get(key)?.length || 0
+            return (
+              <button
+                key={city.id}
+                onClick={() => onCityClick(city)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
+                  hasPosts
+                    ? 'bg-[#F5DCE0]/30 hover:bg-[#F5DCE0]/50 border border-[#E8B8C2]/30'
+                    : 'hover:bg-[#D8DDD8]/30 border border-transparent'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  hasPosts ? 'bg-[#E8B8C2] text-white' : 'bg-[#D8DDD8]/50 text-[#5A6670]/40'
+                }`}>
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${hasPosts ? 'text-[#5A6670]' : 'text-[#5A6670]/70'}`}>
+                    {city.name}
+                  </p>
+                  <p className="text-xs text-[#5A6670]/40">{city.nameEn}</p>
+                </div>
+                {hasPosts ? (
+                  <span className="px-2 py-0.5 rounded-full bg-[#E8B8C2] text-white text-xs font-medium">
+                    {cityPostCount}
+                  </span>
+                ) : (
+                  <Plus className="w-4 h-4 text-[#5A6670]/30" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CityModal({
+  city,
+  provinceInfo,
+  cityPosts,
+  onClose,
+  onBack,
+}: {
+  city: City
+  provinceInfo: { id: string; name: string; nameEn: string } | null
+  cityPosts: PostMeta[]
+  onClose: () => void
+  onBack: () => void
+}) {
+  const [activeTab, setActiveTab] = useState<'view' | 'add'>('view')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-[#FAFBF7] rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-[#D8DDD8]/60 animate-[fadeIn_0.2s_ease-out]">
+        <style>{`
+          @keyframes fadeIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+          }
+        `}</style>
+
+        <div className="relative h-32 overflow-hidden bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 bg-white/30 hover:bg-white/40 backdrop-blur rounded-full flex items-center justify-center transition-colors"
+          >
+            <X className="w-4 h-4 text-white" />
+          </button>
+          {provinceInfo && (
+            <button
+              onClick={onBack}
+              className="absolute top-3 left-3 px-3 py-1.5 bg-white/30 hover:bg-white/40 backdrop-blur rounded-lg flex items-center gap-1 text-sm text-white transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {provinceInfo.name}
+            </button>
+          )}
+          <div className="absolute bottom-3 left-4 right-4">
+            <div className="flex items-center gap-2 text-white/80 text-xs mb-1">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>{city.nameEn}</span>
+            </div>
+            <h2 className="text-xl font-bold text-white">{city.name}</h2>
+          </div>
+        </div>
+
+        <div className="flex border-b border-[#D8DDD8]/60">
+          <button
+            onClick={() => setActiveTab('view')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'view'
+                ? 'text-[#E8B8C2] border-b-2 border-[#E8B8C2]'
+                : 'text-[#5A6670]/60 hover:text-[#5A6670]'
+            }`}
+          >
+            已有记录 ({cityPosts.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('add')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'add'
+                ? 'text-[#E8B8C2] border-b-2 border-[#E8B8C2]'
+                : 'text-[#5A6670]/60 hover:text-[#5A6670]'
+            }`}
+          >
+            <Plus className="w-4 h-4 inline mr-1" />
+            添加新记录
+          </button>
+        </div>
+
+        {activeTab === 'view' && (
+          <div className="p-4 max-h-[400px] overflow-y-auto">
+            {cityPosts.length > 0 ? (
+              <div className="space-y-3">
+                {cityPosts.map((post) => (
+                  <Link
+                    key={post.slug}
+                    href={`/travel/${post.slug}`}
+                    onClick={onClose}
+                    className="flex gap-3 p-3 rounded-lg border border-[#D8DDD8]/60 hover:border-[#E8B8C2] hover:bg-[#F5DCE0]/20 transition-all group"
+                  >
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]">
+                      {(post.cover || post.images?.[0]) && (
+                        <img
+                          src={post.cover || post.images?.[0]}
+                          alt={post.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none'
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-[#5A6670] text-sm truncate">{post.title}</h3>
+                      <div className="flex items-center gap-2 text-xs text-[#5A6670]/50 mt-1">
+                        <span>{new Date(post.date).toLocaleDateString('zh-CN')}</span>
+                      </div>
+                      {post.description && (
+                        <p className="text-xs text-[#5A6670]/60 mt-1 line-clamp-1">{post.description}</p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#F5DCE0]/30 flex items-center justify-center">
+                  <ImageIcon className="w-8 h-8 text-[#E8B8C2]/60" />
+                </div>
+                <p className="text-[#5A6670]/50 text-sm mb-4">该城市暂无旅行记录</p>
+                <button
+                  onClick={() => setActiveTab('add')}
+                  className="px-4 py-2 bg-[#E8B8C2] text-white rounded-lg text-sm font-medium hover:bg-[#E8B8C2]/90 transition-colors"
+                >
+                  <Plus className="w-4 h-4 inline mr-1" />
+                  添加第一条记录
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'add' && (
+          <div className="p-4">
+            <div className="rounded-xl border border-dashed border-[#D8DDD8] p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] flex items-center justify-center">
+                <Camera className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-semibold text-[#5A6670] mb-2">在 {city.name} 添加旅行记录</h3>
+              <p className="text-sm text-[#5A6670]/60 mb-4">
+                点击下方按钮前往后台创建新的旅行文章，系统会自动关联到该城市
+              </p>
+              <Link
+                href={`/admin/new?location=${encodeURIComponent(city.name)}`}
+                onClick={onClose}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8B8C2] text-white rounded-lg font-medium hover:bg-[#E8B8C2]/90 transition-colors"
+              >
+                <Pencil className="w-4 h-4" />
+                前往创建文章
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

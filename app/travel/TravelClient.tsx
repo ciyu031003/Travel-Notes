@@ -5,7 +5,10 @@ import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { MapPin, Calendar, ArrowRight, ChevronDown } from 'lucide-react'
 import ChinaMap from '@/components/ChinaMap'
+import TravelImageCarousel from '@/components/TravelImageCarousel'
+import TravelInfoPanel from '@/components/TravelInfoPanel'
 import { findProvinceByLocation } from '@/lib/province-map'
+import { findCityByName } from '@/data/cities'
 
 interface PostMeta {
   slug: string
@@ -35,6 +38,47 @@ export default function TravelClient({ posts }: TravelClientProps) {
       }
     }
     return set
+  }, [posts])
+
+  const carouselImages = useMemo(() => {
+    const images: string[] = []
+    const seen = new Set<string>()
+    for (const post of posts) {
+      const urls = [post.cover, ...(post.images || [])].filter(Boolean) as string[]
+      for (const url of urls) {
+        if (!seen.has(url)) {
+          seen.add(url)
+          images.push(url)
+        }
+      }
+    }
+    return images
+  }, [posts])
+
+  const citiesWithMemories = useMemo(() => {
+    const set = new Set<string>()
+    for (const post of posts) {
+      if (post.location) {
+        const city = findCityByName(post.location)
+        if (city) set.add(city.name)
+      }
+    }
+    return set.size
+  }, [posts])
+
+  const weatherCities = useMemo(() => {
+    const cityNames: string[] = []
+    const seen = new Set<string>()
+    for (const post of posts) {
+      if (post.location) {
+        const city = findCityByName(post.location)
+        if (city && !seen.has(city.name)) {
+          seen.add(city.name)
+          cityNames.push(city.name)
+        }
+      }
+    }
+    return cityNames.slice(0, 3)
   }, [posts])
 
   if (posts.length === 0) {
@@ -115,9 +159,34 @@ export default function TravelClient({ posts }: TravelClientProps) {
 
         {/* 地图区 */}
         <section className="px-6 pb-12">
-          <div className="max-w-6xl mx-auto">
-            <div className="rounded-2xl border border-[#D8DDD8]/60 bg-[#FAFBF7] p-4 md:p-6 shadow-[0_10px_28px_rgba(90,102,112,0.08)]">
-              <ChinaMap posts={posts} />
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* 左侧：图片轮播 */}
+              <div className="lg:w-72 xl:w-80 flex-shrink-0">
+                <TravelImageCarousel
+                  images={carouselImages}
+                  intervalMs={15000}
+                />
+              </div>
+
+              {/* 中间：地图 */}
+              <div className="flex-1 min-w-0">
+                <div className="rounded-2xl border border-[#D8DDD8]/60 bg-[#FAFBF7] p-4 md:p-6 shadow-[0_10px_28px_rgba(90,102,112,0.08)]">
+                  <ChinaMap posts={posts} />
+                </div>
+              </div>
+
+              {/* 右侧：信息面板 */}
+              <div className="lg:w-72 xl:w-80 flex-shrink-0">
+                <TravelInfoPanel
+                  anniversaryStart="2025-01-01"
+                  cities={weatherCities.length > 0 ? weatherCities : ['北京', '上海', '广州']}
+                  provincesLit={provincesVisited.size}
+                  totalProvinces={34}
+                  citiesWithMemories={citiesWithMemories}
+                  totalCities={300}
+                />
+              </div>
             </div>
           </div>
         </section>
