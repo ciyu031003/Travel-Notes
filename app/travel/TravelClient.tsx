@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
-import { MapPin, Calendar, ArrowRight, ChevronDown } from 'lucide-react'
+import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info } from 'lucide-react'
 import ChinaMap from '@/components/ChinaMap'
 import TravelImageCarousel from '@/components/TravelImageCarousel'
 import TravelInfoPanel from '@/components/TravelInfoPanel'
@@ -27,6 +27,8 @@ interface TravelClientProps {
 
 export default function TravelClient({ posts }: TravelClientProps) {
   const [showAll, setShowAll] = useState(false)
+  const [leftOpen, setLeftOpen] = useState(true)
+  const [rightOpen, setRightOpen] = useState(true)
   const visiblePosts = showAll ? posts : posts.slice(0, 6)
 
   const provincesVisited = useMemo(() => {
@@ -81,17 +83,6 @@ export default function TravelClient({ posts }: TravelClientProps) {
     return cityNames.slice(0, 3)
   }, [posts])
 
-  if (posts.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFBF7]">
-        <div className="text-center text-[#5A6670]">
-          <MapPin className="w-16 h-16 mx-auto mb-4 opacity-30" />
-          <p className="text-xl">还没有旅行记录，开启你们的第一段旅程吧~</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="relative min-h-screen bg-[#FAFBF7] text-[#5A6670]">
       {/* 底部雾气带 */}
@@ -105,7 +96,7 @@ export default function TravelClient({ posts }: TravelClientProps) {
 
       {/* 顶部导航 */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#FAFBF7]/80 backdrop-blur-md border-b border-[#D8DDD8]/50">
-        <nav className="max-w-7xl mx-auto h-14 flex items-center justify-between px-6">
+        <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
           <Link
             href="/"
             className="font-bold text-lg text-[#5A6670]"
@@ -130,54 +121,59 @@ export default function TravelClient({ posts }: TravelClientProps) {
       </header>
 
       {/* 主要内容 */}
-      <div className="relative z-10 pt-20">
-        {/* 标题区 */}
-        <section className="px-6 py-10">
-          <div className="max-w-5xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#F5DCE0]/40 border border-[#E8B8C2]/50 text-[#5A6670] rounded-full text-sm mb-6">
-              <MapPin className="w-3.5 h-3.5 text-[#E8B8C2]" />
-              <span>走遍中国 · Travel Map</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[#5A6670]">
-              我们的旅行地图
-            </h1>
-            <p className="text-base text-[#5A6670]/60 max-w-xl mx-auto mb-6">
-              点击高亮的省份，查看我们在那里留下的旅行记忆
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-2 bg-[#FAFBF7] border border-[#D8DDD8]/80 rounded-full text-sm">
-                <span className="w-2 h-2 rounded-full bg-[#E8B8C2] shadow-[0_0_6px_rgba(232,184,194,0.5)]" />
-                <span>{provincesVisited.size} 个省份已探索</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-[#FAFBF7] border border-[#D8DDD8]/80 rounded-full text-sm">
-                <Calendar className="w-3.5 h-3.5 text-[#5A6670]/50" />
-                <span>{posts.length} 篇旅行记录</span>
-              </div>
+      <div className="relative z-10 pt-14">
+        {/* 地图区 - 可收起侧边栏布局 */}
+        <section className="relative h-[calc(100vh-56px)] overflow-hidden">
+          {/* 地图容器 */}
+          <div className="absolute inset-0 p-2 md:p-4">
+            <div className="w-full h-full rounded-2xl border border-[#D8DDD8]/60 bg-[#FAFBF7] p-3 md:p-5 shadow-[0_10px_28px_rgba(90,102,112,0.08)]">
+              <ChinaMap posts={posts} />
             </div>
           </div>
-        </section>
 
-        {/* 地图区 */}
-        <section className="px-6 pb-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* 左侧：图片轮播 */}
-              <div className="lg:w-72 xl:w-80 flex-shrink-0">
+          {/* 左侧可收起面板 */}
+          <div
+            className={`absolute left-0 top-0 h-full transition-all duration-300 z-20 ${
+              leftOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            <div className="h-full flex items-stretch">
+              <div className="w-64 xl:w-72 h-full p-2">
                 <TravelImageCarousel
                   images={carouselImages}
                   intervalMs={15000}
                 />
               </div>
+              {/* 收起按钮 */}
+              <button
+                onClick={() => setLeftOpen(false)}
+                className="w-6 h-12 self-center bg-[#FAFBF7] border border-[#D8DDD8] rounded-r-lg flex items-center justify-center hover:bg-[#F5DCE0]/30 transition-colors shadow-md"
+                aria-label="收起左侧面板"
+              >
+                <ChevronLeft className="w-4 h-4 text-[#5A6670]" />
+              </button>
+            </div>
+          </div>
 
-              {/* 中间：地图 */}
-              <div className="flex-1 min-w-0">
-                <div className="rounded-2xl border border-[#D8DDD8]/60 bg-[#FAFBF7] p-4 md:p-6 shadow-[0_10px_28px_rgba(90,102,112,0.08)]">
-                  <ChinaMap posts={posts} />
-                </div>
-              </div>
+          {/* 左侧展开按钮 */}
+          {!leftOpen && (
+            <button
+              onClick={() => setLeftOpen(true)}
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-[#FAFBF7] border border-[#D8DDD8] border-l-0 rounded-r-lg flex items-center justify-center hover:bg-[#F5DCE0]/30 transition-colors shadow-md z-30"
+              aria-label="展开左侧面板"
+            >
+              <ChevronRight className="w-4 h-4 text-[#5A6670]" />
+            </button>
+          )}
 
-              {/* 右侧：信息面板 */}
-              <div className="lg:w-72 xl:w-80 flex-shrink-0">
+          {/* 右侧可收起面板 */}
+          <div
+            className={`absolute right-0 top-0 h-full transition-all duration-300 z-20 ${
+              rightOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          >
+            <div className="h-full flex items-stretch flex-row-reverse">
+              <div className="w-64 xl:w-72 h-full p-2">
                 <TravelInfoPanel
                   anniversaryStart="2025-01-01"
                   cities={weatherCities.length > 0 ? weatherCities : ['北京', '上海', '广州']}
@@ -187,8 +183,27 @@ export default function TravelClient({ posts }: TravelClientProps) {
                   totalCities={300}
                 />
               </div>
+              {/* 收起按钮 */}
+              <button
+                onClick={() => setRightOpen(false)}
+                className="w-6 h-12 self-center bg-[#FAFBF7] border border-[#D8DDD8] rounded-l-lg flex items-center justify-center hover:bg-[#D6E8F0]/30 transition-colors shadow-md"
+                aria-label="收起右侧面板"
+              >
+                <ChevronRight className="w-4 h-4 text-[#5A6670]" />
+              </button>
             </div>
           </div>
+
+          {/* 右侧展开按钮 */}
+          {!rightOpen && (
+            <button
+              onClick={() => setRightOpen(true)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-[#FAFBF7] border border-[#D8DDD8] border-r-0 rounded-l-lg flex items-center justify-center hover:bg-[#D6E8F0]/30 transition-colors shadow-md z-30"
+              aria-label="展开右侧面板"
+            >
+              <ChevronLeft className="w-4 h-4 text-[#5A6670]" />
+            </button>
+          )}
         </section>
 
         {/* 旅行记录列表 */}

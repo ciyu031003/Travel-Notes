@@ -104,7 +104,7 @@ export default function TravelImageCarousel({
 
   if (total === 0) {
     return (
-      <div className="relative w-full h-full min-h-[420px] rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] via-[#FAFBF7] to-[#D6E8F0] flex items-center justify-center">
+      <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] via-[#FAFBF7] to-[#D6E8F0] flex items-center justify-center">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {decorItems.map((d, i) => (
             <div
@@ -155,7 +155,7 @@ export default function TravelImageCarousel({
   const hasError = imageError[currentIndex]
 
   return (
-    <div className="relative w-full h-full min-h-[420px] rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] via-[#FAFBF7] to-[#D6E8F0]">
+    <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] via-[#FAFBF7] to-[#D6E8F0]">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {decorItems.map((d, i) => (
           <div

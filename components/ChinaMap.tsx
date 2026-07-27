@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import {
   chinaFeatures,
   dashLineFeature,
@@ -63,7 +63,13 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     x: 0,
     y: 0,
   })
+  const [scale, setScale] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [initialOffset, setInitialOffset] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
 
   const width = 1100
   const height = 860
@@ -153,7 +159,58 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     if (rect) {
       setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
     }
+    if (isDragging) {
+      const dx = e.clientX - dragStart.x
+      const dy = e.clientY - dragStart.y
+      setOffset({
+        x: initialOffset.x + dx,
+        y: initialOffset.y + dy,
+      })
+    }
   }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return
+    setIsDragging(true)
+    setDragStart({ x: e.clientX, y: e.clientY })
+    setInitialOffset({ ...offset })
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleMouseLeave = () => {
+    setIsDragging(false)
+    setHoveredProvince(null)
+  }
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    setScale((prev) => Math.max(0.5, Math.min(4, prev + delta)))
+  }
+
+  const zoomIn = () => setScale((prev) => Math.min(4, prev + 0.3))
+  const zoomOut = () => setScale((prev) => Math.max(0.5, prev - 0.3))
+  const resetZoom = () => {
+    setScale(1)
+    setOffset({ x: 0, y: 0 })
+  }
+
+  const handleWheelNative = useCallback((e: WheelEvent) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    setScale((prev) => Math.max(0.5, Math.min(4, prev + delta)))
+  }, [])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    container.addEventListener('wheel', handleWheelNative, { passive: false })
+    return () => {
+      container.removeEventListener('wheel', handleWheelNative)
+    }
+  }, [handleWheelNative])
 
   const handleProvinceClick = (provinceId: string) => {
     setSelectedProvince(provinceId)
@@ -176,19 +233,34 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full"
+      className="relative w-full h-full overflow-hidden"
       onMouseMove={handleMouseMove}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      onWheel={handleWheel}
+      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-auto"
+      {/* 缩放的地图容器 */}
+      <div
+        className="absolute inset-0"
         style={{
-          aspectRatio: `${width} / ${height}`,
-          filter: 'drop-shadow(0 16px 26px rgba(168,200,220,0.18))',
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+          transformOrigin: 'center center',
+          transition: isDragging ? 'none' : 'transform 0.1s ease-out',
         }}
-        role="img"
-        aria-label="中国旅行地图"
       >
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${width} ${height}`}
+          className="w-full h-full"
+          style={{
+            filter: 'drop-shadow(0 16px 26px rgba(168,200,220,0.18))',
+            pointerEvents: 'auto',
+          }}
+          role="img"
+          aria-label="中国旅行地图"
+        >
         <defs>
           <filter
             id="visitedGlow"
@@ -340,7 +412,44 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
         })}
       </svg>
 
-      <SouthChinaSeaInset />
+        <SouthChinaSeaInset />
+      </div>
+
+      {/* 缩放控制按钮 */}
+      <div className="absolute top-4 left-4 flex flex-col gap-1 z-40">
+        <button
+          onClick={(e) => { e.stopPropagation(); zoomIn() }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-9 h-9 bg-[#FAFBF7]/95 border border-[#D8DDD8] rounded-lg flex items-center justify-center hover:bg-[#F5DCE0]/30 transition-colors shadow-md"
+          title="放大"
+        >
+          <Plus className="w-4 h-4 text-[#5A6670]" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); zoomOut() }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-9 h-9 bg-[#FAFBF7]/95 border border-[#D8DDD8] rounded-lg flex items-center justify-center hover:bg-[#F5DCE0]/30 transition-colors shadow-md"
+          title="缩小"
+        >
+          <span className="text-lg text-[#5A6670]">-</span>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); resetZoom() }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-9 h-9 bg-[#FAFBF7]/95 border border-[#D8DDD8] rounded-lg flex items-center justify-center hover:bg-[#F5DCE0]/30 transition-colors shadow-md"
+          title="重置"
+        >
+          <span className="text-xs text-[#5A6670]">1:1</span>
+        </button>
+        <div className="px-1 pt-1 text-center text-xs text-[#5A6670]/60 bg-[#FAFBF7]/80 rounded">
+          {Math.round(scale * 100)}%
+        </div>
+      </div>
+
+      {/* 操作提示 */}
+      <div className="absolute top-4 right-4 text-xs text-[#5A6670]/50 bg-[#FAFBF7]/80 px-3 py-2 rounded-lg backdrop-blur z-40 pointer-events-none">
+        滚轮缩放 · 拖拽移动
+      </div>
 
       {hoveredProvince && (
         <div
