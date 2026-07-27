@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
     const sessionToken = await signSession({
       username,
-      exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      exp: Date.now() + 5 * 60 * 60 * 1000,
     })
 
     const response = NextResponse.json({
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       httpOnly: true,
       secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: 5 * 60 * 60,
       path: '/',
     })
 
