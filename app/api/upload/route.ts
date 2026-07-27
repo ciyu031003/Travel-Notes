@@ -6,39 +6,9 @@ import path from 'path'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
-function findProjectRoot(): string {
-  const envRoot = process.env.PROJECT_ROOT
-  if (envRoot && fs.existsSync(path.join(envRoot, 'public'))) {
-    return envRoot
-  }
-
-  const cwd = process.cwd()
-  if (fs.existsSync(path.join(cwd, 'public'))) {
-    return cwd
-  }
-
-  const candidates = [
-    path.join(cwd),
-    path.join(cwd, '.next', '..'),
-    path.resolve(cwd, '..'),
-    '/home/code/Travel-Notes',
-  ]
-
-  for (const candidate of candidates) {
-    try {
-      const real = fs.realpathSync(candidate)
-      if (fs.existsSync(path.join(real, 'public'))) {
-        return real
-      }
-    } catch {}
-  }
-
-  return cwd
-}
-
 function getUploadDir(): string {
-  const projectRoot = findProjectRoot()
-  return path.join(projectRoot, 'public', 'uploads')
+  const cwd = process.cwd()
+  return path.join(cwd, 'public', 'uploads')
 }
 
 export async function POST(request: NextRequest) {
@@ -48,7 +18,6 @@ export async function POST(request: NextRequest) {
   }
 
   const uploadDir = getUploadDir()
-  console.log('[Upload] Project root:', findProjectRoot())
   console.log('[Upload] Upload directory:', uploadDir)
   console.log('[Upload] process.cwd():', process.cwd())
 
@@ -109,7 +78,8 @@ export async function POST(request: NextRequest) {
     console.log('[Upload] All files uploaded successfully:', urls)
     return NextResponse.json({ urls })
   } catch (error: any) {
-    console.error('[Upload] Error:', error?.message, error?.stack)
+    console.error('[Upload] Error:', error?.message)
+    console.error('[Upload] Stack:', error?.stack)
     return NextResponse.json({ error: error.message || '上传失败' }, { status: 500 })
   }
 }
@@ -142,7 +112,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('[Upload DELETE] Error:', error?.message, error?.stack)
+    console.error('[Upload DELETE] Error:', error?.message)
     return NextResponse.json({ error: error.message || '删除失败' }, { status: 500 })
   }
 }
