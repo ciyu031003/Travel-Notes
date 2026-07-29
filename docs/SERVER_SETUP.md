@@ -457,12 +457,13 @@ chmod +x deploy.sh  # 首次使用需赋执行权限
 5. **数据库备份**：部署前自动 `mysqldump` 备份，保留最近 10 份
 6. **依赖安装**：使用 `--legacy-peer-deps` 解决 React 19 依赖冲突
 7. **Prisma 同步**：先 `prisma generate`（生成类型），再 `prisma db push`（同步表结构）
-8. **项目构建**：失败时提供常见原因排查建议
-9. **PM2 重启**：自动识别首次启动或重启，使用 ecosystem.config.js
-10. **Nginx 检查**：验证配置语法、检查 `client_max_body_size`、自动重载
-11. **健康检查**：部署后轮询 `http://localhost:3000` 确认应用正常
-12. **失败回滚**：构建失败时自动回退到上一个 Git 版本并重新构建
-13. **部署日志**：所有输出记录到 `logs/deploy-YYYYMMDD-HHMMSS.log`
+8. **资源检测与交换分区配置**：构建前自动检测服务器内存，物理内存不足 2GB 且无交换分区时，自动提示创建 2GB 交换分区，确保构建顺利进行
+9. **项目构建**：失败时提供常见原因排查建议
+10. **PM2 重启**：自动识别首次启动或重启，使用 ecosystem.config.js
+11. **Nginx 检查**：验证配置语法、检查 `client_max_body_size`、自动重载
+12. **健康检查**：部署后轮询 `http://localhost:3000` 确认应用正常
+13. **失败回滚**：构建失败时自动回退到上一个 Git 版本并重新构建
+14. **部署日志**：所有输出记录到 `logs/deploy-YYYYMMDD-HHMMSS.log`
 
 ---
 

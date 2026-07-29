@@ -420,6 +420,124 @@ sync_database() {
     log_info "数据库结构同步完成"
 }
 
+# ======================== 服务器资源检测与交换分区配置 ========================
+
+check_and_setup_swap() {
+    local min_memory_mb=2048  # 建议至少 2GB 内存
+    local swap_size_mb=2048   # 交换分区大小 2GB
+
+    log_step "检查服务器资源"
+
+    # 获取物理内存（MB）
+    local total_mem_kb
+    total_mem_kb=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
+    local total_mem_mb=$((total_mem_kb / 1024))
+
+    # 获取当前交换分区
+    local swap_total_kb
+    swap_total_kb=$(grep SwapTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
+    local swap_total_mb=$((swap_total_kb / 1024))
+
+    log_info "物理内存: ${total_mem_mb}MB"
+    log_info "交换分区: ${swap_total_mb}MB"
+
+    # 检查内存是否充足
+    if [ "$total_mem_mb" -ge "$min_memory_mb" ]; then
+        log_info "内存充足 (${total_mem_mb}MB >= ${min_memory_mb}MB)，无需添加交换分区"
+        return 0
+    fi
+
+    # 内存不足，检查是否已有交换分区
+    if [ "$swap_total_mb" -gt 0 ]; then
+        log_warn "物理内存不足 (${total_mem_mb}MB < ${min_memory_mb}MB)，但已有 ${swap_total_mb}MB 交换分区"
+        log_info "建议关闭部分应用或增加物理内存"
+        return 0
+    fi
+
+    # 内存不足且无交换分区，创建交换分区
+    log_warn "物理内存不足且无交换分区！"
+    log_warn "Next.js 构建可能需要较多内存"
+
+    if confirm "是否创建 ${swap_size_mb}MB 交换分区以保证构建顺利？"; then
+        local swap_file="/swapfile"
+
+        # 检查磁盘空间是否足够
+        local available_space_kb
+        available_space_kb=$(df / | awk 'NR==2 {print $4}')
+        local available_space_mb=$((available_space_kb / 1024))
+
+        if [ "$available_space_mb" -lt "$((swap_size_mb + 512))" ]; then
+            log_error "磁盘空间不足 (可用 ${available_space_mb}MB)，无法创建 ${swap_size_mb}MB 交换分区"
+            log "  请清理磁盘空间或减少交换分区大小后重试"
+            return 1
+        fi
+
+        log_info "创建 ${swap_size_mb}MB 交换分区..."
+
+        # 创建交换分区文件
+        if [ -f "$swap_file" ]; then
+            log_warn "交换分区文件已存在，先移除..."
+            sudo swapoff "$swap_file" 2>/dev/null || true
+            sudo rm -f "$swap_file"
+        fi
+
+        # 使用 fallocate 创建文件（比 dd 更快）
+        if sudo fallocate -l "${swap_size_mb}M" "$swap_file" 2>/dev/null; then
+            log_info "交换分区文件创建成功"
+        elif sudo dd if=/dev/zero of="$swap_file" bs=1M count="$swap_size_mb" 2>/dev/null; then
+            log_info "交换分区文件创建成功 (使用 dd)"
+        else
+            log_error "创建交换分区文件失败"
+            return 1
+        fi
+
+        # 设置权限
+        sudo chmod 600 "$swap_file"
+
+        # 设置为交换分区
+        sudo mkswap "$swap_file" 2>&1 | tee -a "$DEPLOY_LOG"
+
+        # 启用交换分区
+        sudo swapon "$swap_file" 2>&1 | tee -a "$DEPLOY_LOG"
+
+        # 验证
+        local new_swap_kb
+        new_swap_kb=$(grep SwapTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
+        local new_swap_mb=$((new_swap_kb / 1024))
+
+        if [ "$new_swap_mb" -ge "$swap_size_mb" ]; then
+            log_info "交换分区已启用 (${new_swap_mb}MB)"
+
+            # 添加到 /etc/fstab 使其永久生效
+            if ! grep -q "$swap_file" /etc/fstab 2>/dev/null; then
+                log_info "配置开机自动挂载..."
+                echo "$swap_file none swap sw 0 0" | sudo tee -a /etc/fstab > /dev/null
+                log_info "已添加到 /etc/fstab"
+            fi
+
+            # 设置 swappiness（让系统更倾向于使用交换分区）
+            if ! grep -q "vm.swappiness" /etc/sysctl.conf 2>/dev/null; then
+                echo "vm.swappiness=60" | sudo tee -a /etc/sysctl.conf > /dev/null
+                sudo sysctl -w vm.swappiness=60 2>/dev/null || true
+                log_info "已设置 swappiness=60"
+            fi
+
+            log_success "交换分区配置完成"
+            return 0
+        else
+            log_error "交换分区验证失败"
+            return 1
+        fi
+    else
+        log_warn "用户拒绝创建交换分区"
+        if ! confirm "内存不足可能导致构建失败，是否继续？"; then
+            log_error "已取消部署"
+            exit 1
+        fi
+        return 0
+    fi
+}
+
 # ======================== 构建项目 ========================
 
 build_project() {
@@ -632,6 +750,7 @@ main() {
     backup_database
     install_deps
     sync_database
+    check_and_setup_swap
     build_project
     restart_pm2
     check_nginx
