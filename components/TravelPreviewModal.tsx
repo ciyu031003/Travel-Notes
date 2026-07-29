@@ -1,10 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { X, ChevronLeft, ChevronRight, Calendar, MapPin, Tag, ArrowLeft } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { X, ChevronLeft, ChevronRight, Calendar, MapPin, Tag, ArrowLeft, Play } from 'lucide-react'
 import { remark } from 'remark'
 import remarkGfm from 'remark-gfm'
 import remarkHtml from 'remark-html'
+
+interface VideoInfo {
+  url: string
+  thumbnail?: string
+  duration?: number
+  width?: number
+  height?: number
+}
 
 interface PreviewFormData {
   title: string
@@ -12,6 +20,7 @@ interface PreviewFormData {
   date: string
   cover?: string
   images: string[]
+  videos?: VideoInfo[]
   tags: string
   location: string
   type: string
@@ -24,9 +33,25 @@ interface TravelPreviewModalProps {
   formData: PreviewFormData
 }
 
+type MediaItem =
+  | { type: 'image'; url: string }
+  | { type: 'video'; url: string; thumbnail?: string }
+
 export default function TravelPreviewModal({ isOpen, onClose, formData }: TravelPreviewModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [contentHtml, setContentHtml] = useState('')
+
+  const mediaItems = useMemo<MediaItem[]>(() => {
+    const items: MediaItem[] = []
+    const imgs = formData.images.length > 0
+      ? formData.images
+      : formData.cover
+      ? [formData.cover]
+      : []
+    imgs.forEach((url) => items.push({ type: 'image', url }))
+    ;(formData.videos || []).forEach((v) => items.push({ type: 'video', url: v.url, thumbnail: v.thumbnail }))
+    return items
+  }, [formData.images, formData.cover, formData.videos])
 
   useEffect(() => {
     if (!isOpen) return
@@ -56,12 +81,12 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
   }, [isOpen])
 
   const next = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % formData.images.length)
-  }, [formData.images.length])
+    setCurrentIndex((prev) => (prev + 1) % mediaItems.length)
+  }, [mediaItems.length])
 
   const prev = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + formData.images.length) % formData.images.length)
-  }, [formData.images.length])
+    setCurrentIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length)
+  }, [mediaItems.length])
 
   const tagsArray = formData.tags
     .split(',')
@@ -69,12 +94,6 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
     .filter(Boolean)
 
   if (!isOpen) return null
-
-  const images = formData.images.length > 0
-    ? formData.images
-    : formData.cover
-    ? [formData.cover]
-    : []
 
   return (
     <div
@@ -103,13 +122,13 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
         <div className="flex-1 overflow-y-auto">
           <div className="container-custom py-8 px-6">
             <article className="max-w-3xl mx-auto">
-              {images.length > 0 && (
+              {mediaItems.length > 0 && (
                 <div className="mb-8">
-                  {images.length === 1 ? (
+                  {mediaItems.length === 1 ? (
                     <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
-                      {images[0] && (
+                      {mediaItems[0].type === 'image' ? (
                         <img
-                          src={images[0].startsWith('/') ? images[0] : images[0]}
+                          src={mediaItems[0].url.startsWith('/') ? mediaItems[0].url : mediaItems[0].url}
                           alt={formData.title || '旅行照片'}
                           className="w-full max-h-[500px] object-cover"
                           onError={(e) => {
@@ -117,27 +136,55 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                             target.style.display = 'none'
                           }}
                         />
+                      ) : (
+                        <video
+                          src={mediaItems[0].url.startsWith('/') ? mediaItems[0].url : mediaItems[0].url}
+                          poster={mediaItems[0].thumbnail}
+                          className="w-full max-h-[500px] object-cover bg-black"
+                          controls
+                          muted
+                          loop
+                          playsInline
+                        />
                       )}
                     </div>
                   ) : (
                     <>
                       <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
                         <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800">
-                          {images.map((img, index) => (
-                            img && (
-                              <img
-                                key={`${img}-${index}`}
-                                src={img.startsWith('/') ? img : img}
-                                alt={`旅行照片 ${index + 1}`}
+                          {mediaItems.map((item, index) => (
+                            item.type === 'image' ? (
+                              item.url && (
+                                <img
+                                  key={`img-${index}`}
+                                  src={item.url.startsWith('/') ? item.url : item.url}
+                                  alt={`旅行照片 ${index + 1}`}
+                                  className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+                                    index === currentIndex
+                                      ? 'opacity-100 scale-100'
+                                      : 'opacity-0 scale-105'
+                                  }`}
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.style.display = 'none'
+                                  }}
+                                />
+                              )
+                            ) : (
+                              <video
+                                key={`video-${index}`}
+                                src={item.url.startsWith('/') ? item.url : item.url}
+                                poster={item.thumbnail}
                                 className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
                                   index === currentIndex
                                     ? 'opacity-100 scale-100'
                                     : 'opacity-0 scale-105'
                                 }`}
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement
-                                  target.style.display = 'none'
-                                }}
+                                controls={index === currentIndex}
+                                muted
+                                loop
+                                playsInline
+                                autoPlay={index === currentIndex}
                               />
                             )
                           ))}
@@ -156,7 +203,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                           </button>
 
                           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                            {images.map((_, index) => (
+                            {mediaItems.map((_, index) => (
                               <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}
@@ -169,16 +216,22 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                             ))}
                           </div>
 
-                          <div className="absolute top-4 right-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full backdrop-blur-sm">
-                            {currentIndex + 1} / {images.length}
+                          <div className="absolute top-4 right-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full backdrop-blur-sm flex items-center gap-2">
+                            <span>{currentIndex + 1} / {mediaItems.length}</span>
+                            {mediaItems[currentIndex]?.type === 'video' && (
+                              <span className="flex items-center gap-1 text-sky-300">
+                                <Play className="w-3 h-3" />
+                                视频
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
 
                       <div className="mt-4 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                        {images.map((img, index) => (
+                        {mediaItems.map((item, index) => (
                           <button
-                            key={`thumb-${img}-${index}`}
+                            key={`thumb-${index}`}
                             onClick={() => setCurrentIndex(index)}
                             className={`relative aspect-square rounded-lg overflow-hidden transition-all bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] ${
                               index === currentIndex
@@ -186,16 +239,22 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                                 : 'opacity-60 hover:opacity-100'
                             }`}
                           >
-                            {img && (
-                              <img
-                                src={img.startsWith('/') ? img : img}
-                                alt={`缩略图 ${index + 1}`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement
-                                  target.style.display = 'none'
-                                }}
-                              />
+                            {item.type === 'image' ? (
+                              item.url && (
+                                <img
+                                  src={item.url.startsWith('/') ? item.url : item.url}
+                                  alt={`缩略图 ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.style.display = 'none'
+                                  }}
+                                />
+                              )
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                                <Play className="w-5 h-5 text-white/70" />
+                              </div>
                             )}
                           </button>
                         ))}

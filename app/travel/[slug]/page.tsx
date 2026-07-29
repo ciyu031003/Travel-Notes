@@ -1,19 +1,16 @@
 import { notFound } from 'next/navigation'
-import { getPostBySlug, getPosts } from '@/lib/content'
+import { getPostBySlug } from '@/lib/content'
 import { formatDate } from '@/lib/utils'
 import { Calendar, MapPin } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
+import VideoPlayer from '@/components/VideoPlayer'
 
 export const dynamic = 'force-dynamic'
 
-export async function generateStaticParams() {
-  const posts = await getPosts('travel')
-  return posts.map(post => ({ slug: post.slug }))
-}
-
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+  const { slug: rawSlug } = await params
+  const slug = decodeURIComponent(rawSlug)
   const post = await getPostBySlug('travel', slug)
   if (!post) return { title: '文章不存在' }
   return {
@@ -23,7 +20,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function TravelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+  const { slug: rawSlug } = await params
+  const slug = decodeURIComponent(rawSlug)
   const post = await getPostBySlug('travel', slug)
 
   if (!post) {
@@ -31,9 +29,11 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
   }
 
   const images = (post as any).images || []
+  const videos = (post as any).videos || []
 
   const imageProps = {
     images: images.length > 0 ? images : (post.cover ? [post.cover] : []),
+    videos: videos,
     title: post.title,
     description: post.description,
     location: post.location ?? undefined,
@@ -43,7 +43,7 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
 
   return (
     <div className="bg-[#FAFBF7] min-h-screen">
-      {imageProps.images.length > 0 && (
+      {(imageProps.images.length > 0 || imageProps.videos.length > 0) && (
         <TravelDetailClient {...imageProps} />
       )}
 
@@ -73,6 +73,12 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
               </div>
             )}
           </header>
+
+          {videos.length > 0 && (
+            <div className="mb-8">
+              <VideoPlayer videos={videos} className="aspect-video" />
+            </div>
+          )}
 
           <div
             className="prose prose-lg max-w-none prose-headings:text-[#5A6670] prose-p:text-[#5A6670]/80 prose-a:text-[#E8B8C2]"

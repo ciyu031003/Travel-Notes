@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getAllDBPosts, createDBPost } from '@/lib/db-posts'
+import { ok, fail, unauthorized } from '@/lib/api-response'
+import { clearAllPostCache, clearPostCacheByType } from '@/lib/content'
 
 function parseImages(images: string | null): string[] {
   if (!images) return []
@@ -22,6 +24,20 @@ function parseTags(tags: string | null): string[] {
   }
 }
 
+function parseVideos(videos: string | null): Array<{ url: string; thumbnail?: string; duration?: number }> {
+  if (!videos) return []
+  try {
+    const parsed = JSON.parse(videos)
+    if (!Array.isArray(parsed)) return []
+    return parsed.map((v: any) => {
+      if (typeof v === 'string') return { url: v }
+      return { url: v.url, thumbnail: v.thumbnail, duration: v.duration }
+    })
+  } catch {
+    return []
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type') || undefined
@@ -31,18 +47,20 @@ export async function GET(request: NextRequest) {
     const processedPosts = posts.map((post: any) => ({
       ...post,
       images: parseImages(post.images),
+      videos: parseVideos(post.videos),
       tags: parseTags(post.tags),
     }))
-    return NextResponse.json({ posts: processedPosts })
-  } catch {
-    return NextResponse.json({ posts: [] })
+    return ok({ posts: processedPosts })
+  } catch (error: any) {
+    console.error('[GET /api/admin/posts] Error:', error?.message)
+    return ok({ posts: [] })
   }
 }
 
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
+    return unauthorized('未授权')
   }
 
   try {
@@ -54,6 +72,7 @@ export async function POST(request: NextRequest) {
       date: body.date,
       cover: body.cover,
       imagesCount: body.images?.length,
+      videosCount: body.videos?.length,
       tags: body.tags,
       location: body.location,
       type: body.type,
@@ -68,16 +87,20 @@ export async function POST(request: NextRequest) {
       date: new Date(body.date),
       cover: body.cover || undefined,
       images: body.images || [],
+      videos: body.videos || [],
       tags: body.tags || [],
       location: body.location || undefined,
       type: body.type || 'travel',
       summary: body.summary || undefined,
       published: body.published ?? true,
     })
+
+    clearPostCacheByType(body.type || 'travel')
+
     console.log('[POST /api/admin/posts] Created post with id:', post.id)
-    return NextResponse.json({ post })
+    return ok({ post })
   } catch (error: any) {
-    console.error('[POST /api/admin/posts] Error:', error?.message, error?.code, error?.stack)
-    return NextResponse.json({ error: error.message || '创建失败' }, { status: 500 })
+    console.error('[POST /api/admin/posts] Error:', error?.message, error?.code)
+    return fail(error.message || '创建失败', 500)
   }
 }

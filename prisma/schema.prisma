@@ -8,12 +8,13 @@ datasource db {
 
 model Post {
   id        Int      @id @default(autoincrement())
-  slug      String   @unique @db.VarChar(255)
+  slug      String   @db.VarChar(255)
   title      String   @db.VarChar(255)
   content   String   @db.Text
   date      DateTime @db.Timestamp(3)
   cover     String?  @db.VarChar(500)
   images    String?  @db.Text
+  videos    String?  @db.Text
   tags      String?  @db.Text
   location  String?  @db.VarChar(255)
   type      String   @default("travel") @db.VarChar(50)
@@ -22,8 +23,26 @@ model Post {
   createdAt DateTime @default(now()) @db.Timestamp(3)
   updatedAt DateTime @updatedAt @db.Timestamp(3)
 
-  @@index([type])
-  @@index([date])
+  postImages PostImage[]
+
+  @@unique([type, slug])
+  @@index([type, published, date])
+  @@index([published, date])
+  @@index([location])
+  @@index([createdAt])
+}
+
+model PostImage {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  data      Bytes   @db.LongBlob
+  mimeType  String   @db.VarChar(100)
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, order])
 }
 
 model SiteSetting {
@@ -38,4 +57,6 @@ model SiteSetting {
   anniversaryStart      String?  @db.VarChar(50)
   createdAt             DateTime @default(now()) @db.Timestamp(3)
   updatedAt             DateTime @updatedAt @db.Timestamp(3)
+
+  @@index([resetToken])
 }

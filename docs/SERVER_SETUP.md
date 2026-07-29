@@ -381,7 +381,7 @@ sudo certbot renew --dry-run
 
 ## 八、日常更新部署
 
-### 8.1 手动更新
+### 8.1 手动更新（了解原理即可，推荐使用 8.2 一键脚本）
 
 ```bash
 cd /home/code/Travel-Notes
@@ -392,7 +392,10 @@ git pull
 # 安装新依赖（如有）
 npm install --legacy-peer-deps
 
-# 同步数据库变更（如有）
+# 生成 Prisma Client（每次都执行，避免 TypeScript 类型错误）
+npx prisma generate
+
+# 同步数据库变更（如有表结构修改）
 npx prisma db push
 
 # 重新构建
@@ -402,40 +405,64 @@ npm run build
 pm2 restart travel-notes
 ```
 
-### 8.2 一键部署脚本
+### 8.2 一键部署脚本（推荐）
+
+项目根目录已内置 `deploy.sh` 脚本，自动完成环境检测、代码拉取、依赖安装、Prisma Client 生成、数据库结构同步、项目构建、PM2 重启、Nginx 检查和健康检查。
+
+#### 基本用法
 
 ```bash
 cd /home/code/Travel-Notes
-nano deploy.sh
-```
-
-```bash
-#!/bin/bash
-set -e
-
-echo ">>> 拉取最新代码..."
-git pull
-
-echo ">>> 安装依赖..."
-npm install --legacy-peer-deps
-
-echo ">>> 同步数据库..."
-npx prisma db push
-
-echo ">>> 构建项目..."
-npm run build
-
-echo ">>> 重启服务..."
-pm2 restart travel-notes
-
-echo ">>> ✅ 部署完成！"
-pm2 status
-```
-
-```bash
-chmod +x deploy.sh
+git pull          # 先拉取最新代码（含 deploy.sh 本身的更新）
+chmod +x deploy.sh  # 首次使用需赋执行权限
 ./deploy.sh
 ```
+
+#### 命令选项
+
+| 选项 | 说明 |
+|------|------|
+| `--clean` | 清理 node_modules 后重新安装（解决依赖损坏问题） |
+| `--skip-pull` | 跳过 git pull（已手动拉取代码时使用） |
+| `--no-backup` | 跳过数据库备份（首次部署可用） |
+| `--skip-build` | 跳过构建步骤（仅重启服务时使用） |
+| `--force` | 跳过所有确认提示，直接执行 |
+| `--help` | 显示帮助信息 |
+
+#### 常见场景
+
+```bash
+# 标准部署（最常用）
+./deploy.sh
+
+# 依赖损坏，清理后重新安装
+./deploy.sh --clean
+
+# 已手动 git pull，仅构建+重启
+./deploy.sh --skip-pull
+
+# 全自动部署（CI/CD 场景）
+./deploy.sh --force
+
+# 首次部署（无需备份已有数据库）
+./deploy.sh --no-backup --force
+```
+
+#### 脚本功能说明
+
+1. **操作系统检测**：自动识别 Ubuntu/Debian/CentOS/RHEL 等，选择正确的包管理器
+2. **Node.js 检查**：版本过低时自动提示升级（需要 >= v18，推荐 v20）
+3. **PM2 检查**：未安装时自动提示安装并配置开机自启
+4. **Git 拉取**：自动处理本地未提交修改（stash → pull → pop）
+5. **数据库备份**：部署前自动 `mysqldump` 备份，保留最近 10 份
+6. **依赖安装**：使用 `--legacy-peer-deps` 解决 React 19 依赖冲突
+7. **Prisma 同步**：先 `prisma generate`（生成类型），再 `prisma db push`（同步表结构）
+8. **项目构建**：失败时提供常见原因排查建议
+9. **PM2 重启**：自动识别首次启动或重启，使用 ecosystem.config.js
+10. **Nginx 检查**：验证配置语法、检查 `client_max_body_size`、自动重载
+11. **健康检查**：部署后轮询 `http://localhost:3000` 确认应用正常
+12. **失败回滚**：构建失败时自动回退到上一个 Git 版本并重新构建
+13. **部署日志**：所有输出记录到 `logs/deploy-YYYYMMDD-HHMMSS.log`
 
 ---
 
@@ -571,6 +598,8 @@ free -h
 ├── .env.example            # 环境变量模板
 ├── package.json            # 项目依赖
 ├── next.config.js          # Next.js 配置
+├── ecosystem.config.js     # PM2 进程配置
+├── deploy.sh               # 一键部署脚本（★ 核心部署工具）
 ├── prisma/
 │   └── schema.prisma       # 数据库 Schema
 ├── app/                    # Next.js App Router 页面
@@ -578,7 +607,9 @@ free -h
 ├── lib/                    # 工具库（数据库、认证等）
 ├── content/                # Markdown 内容
 ├── public/                 # 静态资源
-├── deploy.sh               # 一键部署脚本
+│   └── uploads/            # 用户上传的图片（不提交到 Git）
+├── logs/                   # PM2 及部署日志（自动生成）
+├── .deploy-backup/         # 部署备份（数据库备份等，自动生成）
 └── docs/                   # 文档
 ```
 

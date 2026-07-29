@@ -13,11 +13,12 @@ export default function LayoutContent({
   const isTravelPage = pathname.startsWith('/travel')
   const isHomePage = pathname === '/'
   const isLoginPage = pathname === '/login'
+  const isAlbumPage = pathname.startsWith('/album')
   const isAdminPage = pathname.startsWith('/admin')
   const isForgotPasswordPage = pathname.startsWith('/forgot-password')
   const isNotesPage = pathname.startsWith('/notes')
 
-  if (isLoginPage || isAdminPage || isForgotPasswordPage) {
+  if (isLoginPage || isAdminPage || isForgotPasswordPage || isAlbumPage) {
     return <>{children}</>
   }
 

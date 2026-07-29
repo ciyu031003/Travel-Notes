@@ -1,5 +1,6 @@
 import { prisma } from './db'
 import { hashPassword, verifyPassword, signSession, verifySession, getSessionPayload } from './auth-utils'
+import { getCachedSiteSettings, invalidateSiteSettingsCache } from './cache'
 
 export { hashPassword, verifyPassword, signSession, verifySession, getSessionPayload }
 
@@ -15,22 +16,47 @@ export interface SiteSettings {
   anniversaryStart: string | null
 }
 
-export async function getSiteSettings(): Promise<SiteSettings> {
+function mapSetting(setting: any): SiteSettings {
+  return {
+    username: setting.username,
+    passwordHash: setting.passwordHash,
+    email: setting.email,
+    emailVerified: setting.emailVerified,
+    requirePasswordChange: (setting as any).requirePasswordChange ?? false,
+    anniversaryStart: (setting as any).anniversaryStart ?? null,
+  }
+}
+
+async function fetchSiteSettingsFromDB(): Promise<SiteSettings> {
   try {
     const setting = await prisma.siteSetting.findFirst({
       orderBy: { id: 'asc' },
     })
     if (setting) {
+      return mapSetting(setting)
+    }
+  } catch {
+    const envPasswordHash = process.env.ADMIN_PASSWORD_HASH
+    if (envPasswordHash) {
       return {
-        username: setting.username,
-        passwordHash: setting.passwordHash,
-        email: setting.email,
-        emailVerified: setting.emailVerified,
-        requirePasswordChange: (setting as any).requirePasswordChange ?? false,
-        anniversaryStart: (setting as any).anniversaryStart ?? null,
+        username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME,
+        passwordHash: envPasswordHash,
+        email: null,
+        emailVerified: false,
+        requirePasswordChange: false,
+        anniversaryStart: null,
       }
     }
-  } catch {}
+    const defaultPasswordHash = await hashPassword(DEFAULT_PASSWORD)
+    return {
+      username: DEFAULT_USERNAME,
+      passwordHash: defaultPasswordHash,
+      email: null,
+      emailVerified: false,
+      requirePasswordChange: false,
+      anniversaryStart: null,
+    }
+  }
 
   await initializeDefaultAdmin()
 
@@ -39,25 +65,35 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       orderBy: { id: 'asc' },
     })
     if (setting) {
-      return {
-        username: setting.username,
-        passwordHash: setting.passwordHash,
-        email: setting.email,
-        emailVerified: setting.emailVerified,
-        requirePasswordChange: (setting as any).requirePasswordChange ?? false,
-        anniversaryStart: (setting as any).anniversaryStart ?? null,
-      }
+      return mapSetting(setting)
     }
   } catch {}
 
+  const envPasswordHash = process.env.ADMIN_PASSWORD_HASH
+  if (envPasswordHash) {
+    return {
+      username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME,
+      passwordHash: envPasswordHash,
+      email: null,
+      emailVerified: false,
+      requirePasswordChange: false,
+      anniversaryStart: null,
+    }
+  }
+
+  const defaultPasswordHash = await hashPassword(DEFAULT_PASSWORD)
   return {
     username: DEFAULT_USERNAME,
-    passwordHash: '',
+    passwordHash: defaultPasswordHash,
     email: null,
     emailVerified: false,
     requirePasswordChange: false,
     anniversaryStart: null,
   }
+}
+
+export async function getSiteSettings(): Promise<SiteSettings> {
+  return getCachedSiteSettings(fetchSiteSettingsFromDB)
 }
 
 async function initializeDefaultAdmin(): Promise<void> {
@@ -146,6 +182,7 @@ export async function updateCredentials(
         },
       })
     }
+    invalidateSiteSettingsCache()
   } catch (error) {
     console.error('[updateCredentials] Failed:', error)
   }
@@ -167,6 +204,7 @@ export async function forceChangePassword(newPassword: string): Promise<boolean>
         updatedAt: new Date(),
       },
     })
+    invalidateSiteSettingsCache()
     return true
   } catch {
     return false
@@ -204,6 +242,7 @@ export async function updateEmail(email: string | null, verified?: boolean): Pro
         where: { id: setting.id },
         data: updateData,
       })
+      invalidateSiteSettingsCache()
     }
   } catch {}
 }
@@ -218,6 +257,7 @@ export async function setEmailVerified(): Promise<void> {
         where: { id: setting.id },
         data: { emailVerified: true },
       })
+      invalidateSiteSettingsCache()
     }
   } catch {}
 }
@@ -299,6 +339,7 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
       },
     })
 
+    invalidateSiteSettingsCache()
     return true
   } catch {
     return false
@@ -318,6 +359,7 @@ export async function clearResetToken(): Promise<void> {
           resetTokenExp: null,
         },
       })
+      invalidateSiteSettingsCache()
     }
   } catch {}
 }
@@ -335,6 +377,7 @@ export async function updateAnniversaryStart(date: string | null): Promise<void>
           updatedAt: new Date(),
         },
       })
+      invalidateSiteSettingsCache()
     }
   } catch (error) {
     console.error('[updateAnniversaryStart] Failed:', error)

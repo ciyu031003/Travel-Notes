@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown, ZoomIn, XCircle, ImageOff, Home } from 'lucide-react'
+import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown, ZoomIn, XCircle, ImageOff, Home, Video, Play } from 'lucide-react'
 import TravelPreviewModal from '@/components/TravelPreviewModal'
 
 const typeIcons: Record<string, any> = {
@@ -32,6 +32,7 @@ export default function AdminEditPage() {
     date: new Date().toISOString().split('T')[0],
     cover: '',
     images: [] as string[],
+    videos: [] as Array<{ url: string; thumbnail?: string; duration?: number }>,
     tags: '',
     location: '',
     type: 'travel',
@@ -40,6 +41,7 @@ export default function AdminEditPage() {
   })
   const [preview, setPreview] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
 
   const handleImageError = (imgUrl: string) => {
@@ -47,9 +49,12 @@ export default function AdminEditPage() {
   }
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [videoUploading, setVideoUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoFileInputRef = useRef<HTMLInputElement>(null)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [videoDraggedIndex, setVideoDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (!isNew) {
@@ -63,6 +68,13 @@ export default function AdminEditPage() {
       if (res.ok) {
         const data = await res.json()
         const post = data.post
+        const videosData = Array.isArray(post.videos) 
+          ? post.videos.map((v: any) => {
+              if (typeof v === 'string') return { url: v }
+              return { url: v.url, thumbnail: v.thumbnail, duration: v.duration }
+            })
+          : []
+        
         setFormData({
           title: post.title,
           slug: post.slug,
@@ -70,6 +82,7 @@ export default function AdminEditPage() {
           date: new Date(post.date).toISOString().split('T')[0],
           cover: post.cover || '',
           images: post.images || [],
+          videos: videosData,
           tags: post.tags ? (Array.isArray(post.tags) ? post.tags.join(', ') : JSON.parse(post.tags).join(', ')) : '',
           location: post.location || '',
           type: post.type,
@@ -113,9 +126,17 @@ export default function AdminEditPage() {
     const finalSlug = formData.slug || generateSlugFromTitle(formData.title)
 
     const payload = {
-      ...formData,
+      title: formData.title,
       slug: finalSlug,
+      content: formData.content,
+      cover: formData.cover,
+      images: formData.images,
+      videos: formData.videos,
       tags: tagsArray,
+      location: formData.location,
+      type: formData.type,
+      summary: formData.summary,
+      published: formData.published,
       date: new Date(formData.date),
     }
 
@@ -164,6 +185,10 @@ export default function AdminEditPage() {
       fileArray.forEach(file => {
         formUpload.append('files', file)
       })
+
+      if (!isNew && params.id) {
+        formUpload.append('postId', String(params.id))
+      }
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -220,7 +245,7 @@ export default function AdminEditPage() {
       cover: prev.cover === imageUrl ? (newImages[0] || '') : prev.cover,
     }))
 
-    if (imageUrl.startsWith('/uploads/')) {
+    if (imageUrl.startsWith('/api/images/')) {
       try {
         await fetch('/api/upload', {
           method: 'DELETE',
@@ -264,6 +289,91 @@ export default function AdminEditPage() {
     newImages.splice(index, 0, removed)
     setFormData(prev => ({ ...prev, images: newImages }))
     setDraggedIndex(index)
+  }
+
+  const handleVideoUpload = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files)
+    if (fileArray.length === 0) return
+
+    setVideoUploading(true)
+    try {
+      const formUpload = new FormData()
+      fileArray.forEach(file => {
+        formUpload.append('files', file)
+      })
+
+      const res = await fetch('/api/admin/videos/upload', {
+        method: 'POST',
+        body: formUpload,
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || '视频上传失败')
+      }
+
+      const data = await res.json()
+      const newVideos = data.videos.map((v: any) => ({ url: v.url }))
+      setFormData(prev => ({
+        ...prev,
+        videos: [...prev.videos, ...newVideos],
+      }))
+    } catch (error: any) {
+      alert(error.message || '视频上传失败')
+    } finally {
+      setVideoUploading(false)
+      if (videoFileInputRef.current) {
+        videoFileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const removeVideo = async (index: number) => {
+    const video = formData.videos[index]
+    const newVideos = formData.videos.filter((_, i) => i !== index)
+
+    setFormData(prev => ({
+      ...prev,
+      videos: newVideos,
+    }))
+
+    if (video && video.url.startsWith('/uploads/videos/')) {
+      try {
+        await fetch('/api/admin/videos/upload', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: video.url }),
+        })
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+  }
+
+  const moveVideo = (index: number, direction: 'up' | 'down') => {
+    const newVideos = [...formData.videos]
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= newVideos.length) return
+    ;[newVideos[index], newVideos[targetIndex]] = [newVideos[targetIndex], newVideos[index]]
+    setFormData(prev => ({ ...prev, videos: newVideos }))
+  }
+
+  const handleVideoDragStart = (index: number) => {
+    setVideoDraggedIndex(index)
+  }
+
+  const handleVideoDragEnd = () => {
+    setVideoDraggedIndex(null)
+  }
+
+  const handleDragOverVideo = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (videoDraggedIndex === null || videoDraggedIndex === index) return
+    const newVideos = [...formData.videos]
+    const [removed] = newVideos.splice(videoDraggedIndex, 1)
+    newVideos.splice(index, 0, removed)
+    setFormData(prev => ({ ...prev, videos: newVideos }))
+    setVideoDraggedIndex(index)
   }
 
   return (
@@ -346,6 +456,7 @@ export default function AdminEditPage() {
             </div>
 
             {formData.type === 'travel' && (
+              <>
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -482,6 +593,239 @@ export default function AdminEditPage() {
                   </div>
                 )}
               </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Video className="w-4 h-4 inline mr-2" />
+                    旅行视频管理
+                  </label>
+                  <span className="text-xs text-gray-500">{formData.videos.length} 个视频</span>
+                </div>
+
+                <div
+                  onClick={() => videoFileInputRef.current?.click()}
+                  className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                    videoUploading
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  }`}
+                >
+                  <input
+                    ref={videoFileInputRef}
+                    type="file"
+                    multiple
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleVideoUpload(e.target.files)
+                      }
+                    }}
+                  />
+                  {videoUploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm text-gray-500">视频上传中...</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload className="w-10 h-10 text-gray-400" />
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        点击上传视频文件
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        支持 MP4 / WebM / MOV 等格式，单个视频最大 500MB
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {formData.videos.length > 0 && (
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {formData.videos.map((video, index) => (
+                      <div
+                        key={`video-${index}`}
+                        draggable
+                        onDragStart={() => handleVideoDragStart(index)}
+                        onDragEnd={handleVideoDragEnd}
+                        onDragOver={(e) => handleDragOverVideo(e, index)}
+                        className={`group relative rounded-lg overflow-hidden border-2 transition-all bg-gray-900 ${
+                          videoDraggedIndex === index ? 'opacity-50' : ''
+                        } cursor-move`}
+                      >
+                        <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 relative">
+                          <video
+                            src={video.url.startsWith('/') ? video.url : video.url}
+                            poster={video.thumbnail}
+                            className="w-full h-full object-cover"
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                            onMouseEnter={(e) => { const v = e.target as HTMLVideoElement; v.play().catch(() => {}) }}
+                            onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0 }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                              <Play className="w-5 h-5 text-white ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveVideo(index, 'up')}
+                            disabled={index === 0}
+                            className="p-1.5 bg-white/80 rounded text-gray-700 hover:bg-white disabled:opacity-30 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="上移"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveVideo(index, 'down')}
+                            disabled={index === formData.videos.length - 1}
+                            className="p-1.5 bg-white/80 rounded text-gray-700 hover:bg-white disabled:opacity-30 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="下移"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeVideo(index)}
+                            className="p-1.5 bg-red-500 rounded text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="删除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                          <p className="text-xs text-white/80 truncate">
+                            {video.url.split('/').pop() || `视频 ${index + 1}`}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Video className="w-4 h-4 inline mr-2" />
+                  旅行视频管理
+                </label>
+                  <span className="text-xs text-gray-500">{formData.videos.length} 个视频</span>
+                </div>
+
+                <div
+                  onClick={() => videoFileInputRef.current?.click()}
+                  className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                    videoUploading
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  }`}
+                >
+                  <input
+                    ref={videoFileInputRef}
+                    type="file"
+                    multiple
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleVideoUpload(e.target.files)
+                      }
+                    }}
+                  />
+                  {videoUploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm text-gray-500">视频上传中...</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Video className="w-10 h-10 text-gray-400" />
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        点击上传视频
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        支持 MP4 / WebM / MOV 等格式，单个文件不超过 500MB
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {formData.videos.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    {formData.videos.map((video, index) => (
+                      <div
+                        key={`${video.url}-${index}`}
+                        draggable
+                        onDragStart={() => handleVideoDragStart(index)}
+                        onDragEnd={handleVideoDragEnd}
+                        onDragOver={(e) => handleDragOverVideo(e, index)}
+                        className={`group flex items-center gap-3 p-3 border rounded-lg transition-all bg-gray-50 dark:bg-gray-700/50 ${
+                          videoDraggedIndex === index ? 'opacity-50 border-primary-500' : 'border-gray-200 dark:border-gray-600'
+                        } cursor-move`}
+                      >
+                        <div className="flex-shrink-0 w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center">
+                          <Video className="w-6 h-6 text-gray-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                            {video.url.split('/').pop()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            视频 {index + 1}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setVideoPreview(video.url)}
+                            className="p-1.5 bg-white dark:bg-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
+                            title="预览"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveVideo(index, 'up')}
+                            disabled={index === 0}
+                            className="p-1.5 bg-white dark:bg-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500 disabled:opacity-30 transition-colors"
+                            title="上移"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveVideo(index, 'down')}
+                            disabled={index === formData.videos.length - 1}
+                            className="p-1.5 bg-white dark:bg-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500 disabled:opacity-30 transition-colors"
+                            title="下移"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeVideo(index)}
+                            className="p-1.5 bg-red-500 rounded text-white hover:bg-red-600 transition-colors"
+                            title="删除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              </>
             )}
           </div>
 

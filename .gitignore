@@ -11,3 +11,6 @@ node_modules/
 npm-debug.log
 .env*
 .env.local
+# 部署脚本产生的日志和备份
+logs/
+.deploy-backup/
