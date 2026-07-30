@@ -67,7 +67,7 @@ export default function AdminEditPage() {
       const res = await fetch(`/api/admin/posts/${params.id}`)
       if (res.ok) {
         const data = await res.json()
-        const post = data.post
+        const post = data.data?.post
         const videosData = Array.isArray(post.videos) 
           ? post.videos.map((v: any) => {
               if (typeof v === 'string') return { url: v }

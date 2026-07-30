@@ -70,7 +70,7 @@ export default function AdminDashboard() {
     try {
       const res = await fetch('/api/admin/posts')
       const data = await res.json()
-      setPosts(data.posts || [])
+      setPosts(data.data?.posts || [])
     } catch {
       console.error('Failed to fetch posts')
     } finally {

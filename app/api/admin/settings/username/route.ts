@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { getCredentials, verifyPassword, updateCredentials, getSiteSettings } from '@/lib/auth'
+import { getSiteService } from '@/lib/container'
 
 export async function POST(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -20,21 +20,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '请输入当前密码' }, { status: 400 })
     }
 
-    const settings = await getSiteSettings()
-
-    const valid = await verifyPassword(currentPassword, settings.passwordHash)
-    if (!valid) {
-      return NextResponse.json({ error: '当前密码错误' }, { status: 401 })
+    const siteService = getSiteService()
+    const result = await siteService.updateUsername(newUsername.trim(), currentPassword)
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || '更新失败' }, { status: 401 })
     }
 
-    const username = newUsername.trim()
-    if (username === settings.username) {
-      return NextResponse.json({ error: '新用户名与当前用户名相同' }, { status: 400 })
-    }
-
-    await updateCredentials(username, settings.passwordHash, settings.email)
-
-    return NextResponse.json({ success: true, username })
+    return NextResponse.json({ success: true, username: newUsername.trim() })
   } catch {
     return NextResponse.json({ error: '更新失败' }, { status: 500 })
   }

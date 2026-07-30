@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { jwtVerify } from 'jose'
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || process.env.SESSION_SECRET || 'your-secret-key-change-in-production'
+)
 
 const PUBLIC_PATHS = [
   '/login',
@@ -20,12 +25,24 @@ const PUBLIC_PATHS = [
   '/api/admin/force-change-password',
   '/api/forgot-password',
   '/api/notes',
+  '/api/danmaku',
   '/api/repos',
   '/uploads',
   '/_next',
 ]
 
-export function middleware(request: NextRequest) {
+async function verifyJWT(token: string): Promise<boolean> {
+  try {
+    await jwtVerify(token, JWT_SECRET, {
+      issuer: 'travel-notes',
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
@@ -35,6 +52,16 @@ export function middleware(request: NextRequest) {
   const adminSession = request.cookies.get('admin_session')
 
   if (!adminSession || !adminSession.value) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  const isValid = await verifyJWT(adminSession.value)
+  if (!isValid) {
+    const response = NextResponse.next()
+    response.cookies.set('admin_session', '', { maxAge: 0, path: '/' })
+    
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)

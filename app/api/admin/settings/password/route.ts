@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { verifyPassword, hashPassword, updateCredentials, getSiteSettings } from '@/lib/auth'
+import { getSiteService } from '@/lib/container'
 
 export async function POST(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -20,19 +20,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '新密码至少需要 6 位字符' }, { status: 400 })
     }
 
-    const settings = await getSiteSettings()
-
-    const valid = await verifyPassword(currentPassword, settings.passwordHash)
-    if (!valid) {
-      return NextResponse.json({ error: '当前密码错误' }, { status: 401 })
-    }
-
     if (newPassword === currentPassword) {
       return NextResponse.json({ error: '新密码不能与当前密码相同' }, { status: 400 })
     }
 
-    const passwordHash = await hashPassword(newPassword)
-    await updateCredentials(settings.username, passwordHash, settings.email)
+    const siteService = getSiteService()
+    const result = await siteService.updatePassword(currentPassword, newPassword)
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || '更新失败' }, { status: 401 })
+    }
 
     return NextResponse.json({ success: true })
   } catch {

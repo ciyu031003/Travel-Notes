@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, MapPin, Image as ImageIcon, Calendar, Sparkles, Heart, X, Lock } from 'lucide-react'
+import AlbumUnlockModal from '@/components/AlbumUnlockModal'
 
 interface CityAlbum {
   name: string
@@ -92,29 +93,38 @@ export default function AlbumPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [checkingLock, setCheckingLock] = useState(true)
+  const [showUnlockModal, setShowUnlockModal] = useState(false)
 
-  useEffect(() => {
-    const checkLock = () => {
-      const hasCookie = document.cookie.split('; ').some(row => row.startsWith('album_token='))
-      setIsUnlocked(hasCookie)
-      setCheckingLock(false)
-    }
-    checkLock()
-  }, [])
-
-  useEffect(() => {
-    if (!isUnlocked) return
-    fetch('/api/album')
-      .then((res) => res.json())
-      .then((data) => {
+  const loadAlbumData = async () => {
+    try {
+      const res = await fetch('/api/album')
+      if (res.ok) {
+        const data = await res.json()
+        setIsUnlocked(true)
         setCities(data.cities || [])
         if (data.cities && data.cities.length > 0) {
           setSelectedCity(data.cities[0])
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [isUnlocked])
+      } else {
+        setIsUnlocked(false)
+      }
+    } catch {
+      setIsUnlocked(false)
+    } finally {
+      setCheckingLock(false)
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadAlbumData()
+  }, [])
+
+  const handleUnlockSuccess = () => {
+    setShowUnlockModal(false)
+    setLoading(true)
+    loadAlbumData()
+  }
 
   const getCityGradient = (provinceId: string) => {
     const gradients: Record<string, string> = {
@@ -193,17 +203,32 @@ export default function AlbumPage() {
           </div>
           <h2 className="text-2xl font-bold text-[#5A4A3A]">相册已上锁</h2>
           <p className="text-sm text-[#8B7355]/70 mt-3 leading-relaxed">
-            这是我们的秘密相册<br />请先回到登录页解锁
+            这是我们的秘密相册<br />请输入恋爱纪念日解锁
           </p>
           <button
             type="button"
-            onClick={() => router.push('/login')}
+            onClick={() => setShowUnlockModal(true)}
             className="mt-6 w-full py-3 bg-gradient-to-r from-[#E8B8C2] to-[#D4A5B0] text-white font-semibold rounded-2xl hover:from-[#D8A8B2] hover:to-[#C495A0] transition-all shadow-lg shadow-[#E8B8C2]/30 flex items-center justify-center gap-2"
           >
-            返回登录页
+            解锁相册
             <ArrowLeft className="w-4 h-4 rotate-180" />
           </button>
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            className="mt-3 w-full py-2.5 bg-white/60 hover:bg-white border border-[#E8DDD4] text-[#8B7355]/70 rounded-2xl hover:text-[#5A4A3A] transition-all text-sm flex items-center justify-center gap-1.5"
+          >
+            返回首页
+          </button>
         </div>
+
+        {/* 解锁弹窗 */}
+        <AlbumUnlockModal
+          isOpen={showUnlockModal}
+          onClose={() => setShowUnlockModal(false)}
+          onSuccess={handleUnlockSuccess}
+          redirectToAlbum={false}
+        />
       </div>
     )
   }

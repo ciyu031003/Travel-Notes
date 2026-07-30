@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { updateEmail } from '@/lib/auth'
+import { getSiteService } from '@/lib/container'
 import { verifyVerificationCode, consumeVerificationCode } from '@/lib/verification'
 
 export async function POST(request: Request) {
@@ -28,7 +28,8 @@ export async function POST(request: Request) {
 
     consumeVerificationCode(email)
 
-    await updateEmail(email, true)
+    const siteService = getSiteService()
+    await siteService.updateEmail(email, undefined, true)
 
     return NextResponse.json({
       success: true,

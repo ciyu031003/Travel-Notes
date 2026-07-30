@@ -45,6 +45,15 @@ model PostImage {
   @@index([postId, order])
 }
 
+model Danmaku {
+  id        Int      @id @default(autoincrement())
+  text      String   @db.VarChar(255)
+  color     String   @db.VarChar(20)
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  @@index([createdAt])
+}
+
 model SiteSetting {
   id                    Int      @id @default(autoincrement())
   username              String   @unique @db.VarChar(255)

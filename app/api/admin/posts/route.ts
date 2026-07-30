@@ -1,56 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { getAllDBPosts, createDBPost } from '@/lib/db-posts'
+import { getPostService } from '@/lib/container'
 import { ok, fail, unauthorized } from '@/lib/api-response'
-import { clearAllPostCache, clearPostCacheByType } from '@/lib/content'
-
-function parseImages(images: string | null): string[] {
-  if (!images) return []
-  try {
-    const parsed = JSON.parse(images)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function parseTags(tags: string | null): string[] {
-  if (!tags) return []
-  try {
-    const parsed = JSON.parse(tags)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function parseVideos(videos: string | null): Array<{ url: string; thumbnail?: string; duration?: number }> {
-  if (!videos) return []
-  try {
-    const parsed = JSON.parse(videos)
-    if (!Array.isArray(parsed)) return []
-    return parsed.map((v: any) => {
-      if (typeof v === 'string') return { url: v }
-      return { url: v.url, thumbnail: v.thumbnail, duration: v.duration }
-    })
-  } catch {
-    return []
-  }
-}
+import { validateCreatePost, validateUpdatePost } from '@/lib/validators/post.validator'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type') || undefined
 
   try {
-    const posts = await getAllDBPosts(type)
-    const processedPosts = posts.map((post: any) => ({
-      ...post,
-      images: parseImages(post.images),
-      videos: parseVideos(post.videos),
-      tags: parseTags(post.tags),
-    }))
-    return ok({ posts: processedPosts })
+    const postService = getPostService()
+    const posts = await postService.getAllPosts(type)
+    return ok({ posts })
   } catch (error: any) {
     console.error('[GET /api/admin/posts] Error:', error?.message)
     return ok({ posts: [] })
@@ -65,42 +26,30 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    console.log('[POST /api/admin/posts] Received data:', {
-      slug: body.slug,
-      title: body.title,
-      contentLength: body.content?.length,
-      date: body.date,
-      cover: body.cover,
-      imagesCount: body.images?.length,
-      videosCount: body.videos?.length,
-      tags: body.tags,
-      location: body.location,
-      type: body.type,
-      summaryLength: body.summary?.length,
-      published: body.published,
+    const validation = validateCreatePost(body)
+    if (!validation.success) {
+      return fail(validation.error.message, 400)
+    }
+
+    const postService = getPostService()
+    const post = await postService.createPost({
+      slug: validation.data.slug,
+      title: validation.data.title,
+      content: validation.data.content,
+      date: new Date(validation.data.date || Date.now()),
+      cover: validation.data.cover || undefined,
+      images: validation.data.images || [],
+      videos: validation.data.videos || [],
+      tags: validation.data.tags || [],
+      location: validation.data.location || undefined,
+      type: validation.data.type || 'travel',
+      summary: validation.data.summary || undefined,
+      published: validation.data.published ?? true,
     })
 
-    const post = await createDBPost({
-      slug: body.slug,
-      title: body.title,
-      content: body.content || '',
-      date: new Date(body.date),
-      cover: body.cover || undefined,
-      images: body.images || [],
-      videos: body.videos || [],
-      tags: body.tags || [],
-      location: body.location || undefined,
-      type: body.type || 'travel',
-      summary: body.summary || undefined,
-      published: body.published ?? true,
-    })
-
-    clearPostCacheByType(body.type || 'travel')
-
-    console.log('[POST /api/admin/posts] Created post with id:', post.id)
     return ok({ post })
   } catch (error: any) {
-    console.error('[POST /api/admin/posts] Error:', error?.message, error?.code)
+    console.error('[POST /api/admin/posts] Error:', error?.message)
     return fail(error.message || '创建失败', 500)
   }
 }

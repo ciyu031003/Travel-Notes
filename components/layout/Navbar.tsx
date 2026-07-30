@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, MapPin, BookOpen, Menu, X, Moon, Sun, Settings, LogOut } from 'lucide-react'
+import { Home, MapPin, BookOpen, Menu, X, Moon, Sun, Settings, LogOut, Heart } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -99,18 +99,14 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
         <Link
           href="/"
           className={cn(
-            'font-bold text-xl bg-gradient-to-r from-primary-500 to-purple-500 bg-clip-text text-transparent',
-            useDarkText && '!text-white'
+            'font-bold text-xl flex items-center gap-2',
+            useDarkText ? '!text-white' : 'text-[#3D4852]'
           )}
-          style={useDarkText ? { backgroundImage: 'linear-gradient(to right, #67e8f9, #818cf8)' } : {}}
         >
-          {useDarkText ? (
-            <span className="bg-gradient-to-r from-cyan-300 to-indigo-300 bg-clip-text text-transparent">
-              My Blog
-            </span>
-          ) : (
-            'My Blog'
-          )}
+          <span className="w-8 h-8 bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] rounded-xl flex items-center justify-center shadow-sm">
+            <Heart className="w-4 h-4 text-white fill-white" />
+          </span>
+          <span>我们的小家</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
@@ -123,10 +119,10 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 isActive(item.href)
                   ? useDarkText
                     ? 'bg-white/20 text-white'
-                    : 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                    : 'bg-[#F5DCE0]/50 text-[#8B4A5A]'
                   : useDarkText
                     ? 'text-white/70 hover:bg-white/10 hover:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852]'
               )}
             >
               <item.icon className="w-4 h-4" />
@@ -139,7 +135,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors ml-2',
               useDarkText
                 ? 'text-white/70 hover:bg-white/10'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
             )}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -150,7 +146,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70 hover:bg-white/10'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
             )}
             title="管理后台"
           >
@@ -160,7 +156,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             <div className="flex items-center gap-2 ml-2 pl-3 border-l border-gray-200 dark:border-gray-700">
               <span className={cn(
                 'text-sm font-medium',
-                useDarkText ? 'text-white' : 'text-gray-700 dark:text-gray-300'
+                useDarkText ? 'text-white' : 'text-[#3D4852]'
               )}>
                 {username}
               </span>
@@ -170,7 +166,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                   'p-2 rounded-lg transition-colors',
                   useDarkText
                     ? 'text-white/70 hover:bg-white/10'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
                 )}
                 title="退出登录"
               >
@@ -187,7 +183,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
             )}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -198,7 +194,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
             )}
             title="管理后台"
           >
@@ -210,7 +206,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
             )}
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -236,8 +232,8 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 className={cn(
                   'px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3',
                   isActive(item.href)
-                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-[#F5DCE0]/50 text-[#8B4A5A]'
+                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852]'
                 )}
               >
                 <item.icon className="w-5 h-5" />
@@ -247,7 +243,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             <Link
               href="/admin"
               onClick={() => setIsMenuOpen(false)}
-              className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-2 pt-3"
+              className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852] border-t border-gray-200 dark:border-gray-700 mt-2 pt-3"
             >
               <Settings className="w-5 h-5" />
               管理后台

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getPosts } from '@/lib/content'
+import { getPostService } from '@/lib/container'
 import BlogListWithFilter from '@/components/BlogListWithFilter'
 
 export const dynamic = 'force-dynamic'
@@ -10,7 +10,8 @@ export const metadata = {
 }
 
 export default async function TechBlogPage() {
-  const posts = await getPosts('tech/blog')
+  const postService = getPostService()
+  const posts = await postService.getPostsHybrid('tech/blog')
 
   return (
     <div className="container-custom">

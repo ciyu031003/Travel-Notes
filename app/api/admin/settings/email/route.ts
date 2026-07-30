@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { getSiteSettings, updateEmail } from '@/lib/auth'
+import { getSiteService } from '@/lib/container'
 
 export async function GET(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -8,10 +8,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
 
-  const settings = await getSiteSettings()
+  const siteService = getSiteService()
+  const config = await siteService.getSiteConfig()
   return NextResponse.json({
-    email: settings.email,
-    emailVerified: settings.emailVerified,
+    email: config.email,
+    emailVerified: config.emailVerified,
   })
 }
 
@@ -22,7 +23,19 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    await updateEmail(null)
+    const body = await request.json()
+    const { currentPassword } = body
+
+    if (!currentPassword) {
+      return NextResponse.json({ error: '请输入当前密码' }, { status: 400 })
+    }
+
+    const siteService = getSiteService()
+    const result = await siteService.updateEmail(null, currentPassword)
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || '操作失败' }, { status: 401 })
+    }
+
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: '操作失败' }, { status: 500 })

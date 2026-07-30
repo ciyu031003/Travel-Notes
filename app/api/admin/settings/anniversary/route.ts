@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { verifyPassword, getSiteSettings, updateAnniversaryStart } from '@/lib/auth'
+import { getSiteService } from '@/lib/container'
 
 export async function GET(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -8,9 +8,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
 
-  const settings = await getSiteSettings()
-  return NextResponse.json({ 
-    anniversaryStart: settings.anniversaryStart,
+  const siteService = getSiteService()
+  const config = await siteService.getSiteConfig()
+  return NextResponse.json({
+    anniversaryStart: config.anniversaryStart,
   })
 }
 
@@ -28,9 +29,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '请输入当前密码以验证身份' }, { status: 400 })
     }
 
-    const settings = await getSiteSettings()
-    const valid = await verifyPassword(currentPassword, settings.passwordHash)
-    if (!valid) {
+    const siteService = getSiteService()
+
+    const verifyResult = await siteService.verifyPassword(currentPassword)
+    if (!verifyResult.success) {
       return NextResponse.json({ error: '当前密码错误' }, { status: 401 })
     }
 
@@ -38,10 +40,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '日期格式不正确' }, { status: 400 })
     }
 
-    await updateAnniversaryStart(anniversaryStart || null)
+    await siteService.updateAnniversaryStart(anniversaryStart || null)
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       anniversaryStart: anniversaryStart || null,
     })
   } catch {

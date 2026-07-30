@@ -1,7 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { MapPin, Heart, ImageOff } from 'lucide-react'
+
+const DISPLAY_DURATION = 6000
+const CROSSFADE_DURATION = 800
 
 interface TravelImageCarouselProps {
   images: string[]
@@ -30,26 +33,68 @@ const DECOR_POSITIONS: Omit<DecorItem, 'type' | 'color'>[] = [
 
 export default function TravelImageCarousel({
   images,
-  intervalMs = 5000,
+  intervalMs,
 }: TravelImageCarouselProps) {
   const total = images.length
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [animState, setAnimState] = useState<'enter' | 'idle' | 'exit'>('idle')
-  const [imageError, setImageError] = useState<Record<number, boolean>>({})
+  const [prevIndex, setPrevIndex] = useState(-1)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [imageError, setImageError] = useState<Record<string, boolean>>({})
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const preloadRef = useRef<HTMLImageElement | null>(null)
+
+  const displayDuration = intervalMs ? Math.min(intervalMs, 8000) : DISPLAY_DURATION
+
+  const preloadNext = useCallback(
+    (nextIdx: number) => {
+      if (total === 0) return
+      const nextUrl = images[nextIdx]
+      if (!nextUrl) return
+      const img = new Image()
+      img.src = nextUrl
+      preloadRef.current = img
+      return img
+    },
+    [images, total],
+  )
 
   const goTo = useCallback(
     (index: number) => {
-      if (total === 0) return
+      if (total <= 1 || isTransitioning) return
       const next = ((index % total) + total) % total
       if (next === currentIndex) return
-      setAnimState('exit')
-      setTimeout(() => {
+
+      setPrevIndex(currentIndex)
+      setIsTransitioning(false)
+
+      const preloadImg = preloadNext(next)
+
+      const startTransition = () => {
         setCurrentIndex(next)
-        setAnimState('enter')
-        setTimeout(() => setAnimState('idle'), 1500)
-      }, 800)
+
+        requestAnimationFrame(() => {
+          setIsTransitioning(true)
+
+          setTimeout(() => {
+            setPrevIndex(-1)
+            setIsTransitioning(false)
+          }, CROSSFADE_DURATION)
+        })
+      }
+
+      if (preloadImg && preloadImg.complete) {
+        startTransition()
+      } else if (preloadImg) {
+        const onLoad = () => startTransition()
+        const onError = () => startTransition()
+        preloadImg.addEventListener('load', onLoad)
+        preloadImg.addEventListener('error', onError)
+        setTimeout(startTransition, 1500)
+      } else {
+        startTransition()
+      }
     },
-    [currentIndex, total],
+    [total, currentIndex, isTransitioning, preloadNext],
   )
 
   const next = useCallback(() => {
@@ -58,18 +103,21 @@ export default function TravelImageCarousel({
 
   useEffect(() => {
     if (total <= 1) return
-    const timer = setInterval(() => {
-      next()
-    }, intervalMs + 800 + 1500)
-    return () => clearInterval(timer)
-  }, [total, intervalMs, next])
+    timerRef.current = setInterval(() => {
+      if (!isTransitioning) {
+        next()
+      }
+    }, displayDuration + CROSSFADE_DURATION)
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [total, displayDuration, next, isTransitioning])
 
   useEffect(() => {
-    if (total > 0 && animState === 'idle') {
-      setAnimState('enter')
-      setTimeout(() => setAnimState('idle'), 1500)
+    if (total > 0) {
+      preloadNext((currentIndex + 1) % total)
     }
-  }, [])
+  }, [currentIndex, total, preloadNext])
 
   const decorItems = useMemo<DecorItem[]>(() => {
     const palette: DecorItem['color'][] = ['#F5DCE0', '#E8B8C2', '#A8C8DC', '#D6E8F0']
@@ -79,28 +127,6 @@ export default function TravelImageCarousel({
       color: palette[i % palette.length],
     }))
   }, [])
-
-  const getImageAnimationStyle = (): React.CSSProperties => {
-    if (animState === 'enter') {
-      return {
-        transform: 'scale(1) rotate(0deg)',
-        opacity: 1,
-        transition: 'transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 1.5s ease-out',
-      }
-    }
-    if (animState === 'exit') {
-      return {
-        transform: 'scale(1.15) rotate(2deg)',
-        opacity: 0,
-        transition: 'transform 0.8s ease-in, opacity 0.8s ease-in',
-      }
-    }
-    return {
-      transform: 'scale(0.2) rotate(-10deg)',
-      opacity: 0,
-      transition: 'none',
-    }
-  }
 
   if (total === 0) {
     return (
@@ -152,7 +178,9 @@ export default function TravelImageCarousel({
   }
 
   const currentImage = images[currentIndex]
-  const hasError = imageError[currentIndex]
+  const prevImage = prevIndex >= 0 ? images[prevIndex] : null
+  const currentHasError = imageError[currentImage]
+  const prevHasError = prevImage ? imageError[prevImage] : false
 
   return (
     <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] via-[#FAFBF7] to-[#D6E8F0]">
@@ -192,25 +220,52 @@ export default function TravelImageCarousel({
           style={{
             width: 'min(88%, 380px)',
             aspectRatio: '4 / 5',
-            ...getImageAnimationStyle(),
           }}
         >
-          {hasError ? (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-[#FAFBF7]">
+          {/* 底层：当前图片（始终可见，作为基底） */}
+          {currentHasError ? (
+            <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-3 bg-[#FAFBF7]">
               <ImageOff className="w-12 h-12 text-[#5A6670]/50" />
               <p className="text-sm text-[#5A6670]/70">图片加载失败</p>
             </div>
           ) : (
             <img
+              key={`cur-${currentIndex}`}
               src={currentImage.startsWith('/') ? currentImage : currentImage}
               alt={`旅行照片 ${currentIndex + 1}`}
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
               draggable={false}
+              style={{
+                opacity: 1,
+                transform: 'scale(1)',
+                transition: 'none',
+                animation: isTransitioning ? 'none' : `carousel-zoom-in 600ms ease-out`,
+              }}
               onError={() =>
-                setImageError((prev) => ({ ...prev, [currentIndex]: true }))
+                setImageError((prev) => ({ ...prev, [currentImage]: true }))
               }
             />
           )}
+
+          {/* 顶层：上一张图片（正在淡出，覆盖在当前图片之上） */}
+          {prevImage && !prevHasError && (
+            <img
+              key={`prev-${prevIndex}`}
+              src={prevImage.startsWith('/') ? prevImage : prevImage}
+              alt={`上一张 ${prevIndex + 1}`}
+              className="absolute inset-0 w-full h-full object-cover"
+              draggable={false}
+              style={{
+                opacity: isTransitioning ? 0 : 1,
+                transform: isTransitioning ? 'scale(1.04)' : 'scale(1)',
+                transition: `opacity ${CROSSFADE_DURATION}ms ease-out, transform ${CROSSFADE_DURATION}ms ease-out`,
+              }}
+              onError={() =>
+                setImageError((prev) => ({ ...prev, [prevImage]: true }))
+              }
+            />
+          )}
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
           <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5 pointer-events-none" />
         </div>
@@ -242,6 +297,10 @@ export default function TravelImageCarousel({
         @keyframes carousel-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-12px); }
+        }
+        @keyframes carousel-zoom-in {
+          0% { transform: scale(0.94); }
+          100% { transform: scale(1); }
         }
       `}</style>
     </div>

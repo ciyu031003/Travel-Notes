@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getPostBySlug } from '@/lib/content'
+import { getPostService } from '@/lib/container'
 import { formatDate } from '@/lib/utils'
 import { Calendar, MapPin } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic'
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params
   const slug = decodeURIComponent(rawSlug)
-  const post = await getPostBySlug('travel', slug)
+  const postService = getPostService()
+  const post = await postService.getPostBySlugHybrid('travel', slug)
   if (!post) return { title: '文章不存在' }
   return {
     title: post.title,
@@ -22,7 +23,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function TravelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params
   const slug = decodeURIComponent(rawSlug)
-  const post = await getPostBySlug('travel', slug)
+  const postService = getPostService()
+  const post = await postService.getPostBySlugHybrid('travel', slug)
 
   if (!post) {
     notFound()

@@ -49,8 +49,10 @@ export async function GET(
   if (!rangeHeader) {
     responseHeaders['Content-Length'] = String(fileSize)
     responseHeaders['Content-Disposition'] = `inline; filename="${filename}"`
+    
     const stream = fs.createReadStream(filePath)
-    return new NextResponse(Readable.toWeb(stream) as BodyInit, {
+    const webStream = Readable.toWeb(stream) as any
+    return new NextResponse(webStream, {
       headers: responseHeaders,
       status: 200,
     })
@@ -68,16 +70,14 @@ export async function GET(
   let end = parseInt(rangeMatch[2], 10)
 
   if (isNaN(start)) {
-    const suffixLength = fileSize - end
     start = Math.max(0, fileSize - end)
     end = fileSize - 1
     responseHeaders['Content-Range'] = `bytes ${start}-${end}/${fileSize}`
     responseHeaders['Content-Length'] = String(end - start + 1)
+    
     const stream = fs.createReadStream(filePath, { start, end })
-    return new NextResponse(Readable.toWeb(stream) as BodyInit, {
-      headers: responseHeaders,
-      status: 206,
-    })
+    const webStream = Readable.toWeb(stream) as any
+    return new NextResponse(webStream, { headers: responseHeaders, status: 206 })
   }
 
   if (isNaN(end) || end >= fileSize) {
@@ -96,10 +96,8 @@ export async function GET(
   responseHeaders['Content-Length'] = String(end - start + 1)
 
   const stream = fs.createReadStream(filePath, { start, end })
-  return new NextResponse(Readable.toWeb(stream) as BodyInit, {
-    headers: responseHeaders,
-    status: 206,
-  })
+  const webStream = Readable.toWeb(stream) as any
+  return new NextResponse(webStream, { headers: responseHeaders, status: 206 })
 }
 
 export async function OPTIONS() {

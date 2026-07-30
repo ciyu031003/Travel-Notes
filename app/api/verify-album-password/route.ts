@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSiteSettings } from '@/lib/auth'
+import { getSiteService } from '@/lib/container'
 import { generateAlbumToken, ALBUM_COOKIE } from '@/lib/album-auth'
 
 export async function POST(request: Request) {
@@ -11,8 +11,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: '请输入日期' }, { status: 400 })
     }
 
-    const settings = await getSiteSettings()
-    const expectedDate = settings.anniversaryStart
+    const siteService = getSiteService()
+    const config = await siteService.getSiteConfig()
+    const expectedDate = config.anniversaryStart
 
     if (!expectedDate) {
       return NextResponse.json({ success: false, error: '系统未设置纪念日' }, { status: 400 })

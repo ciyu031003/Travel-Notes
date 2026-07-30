@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { forceChangePassword, isRequirePasswordChange } from '@/lib/auth'
+import { getAuthService } from '@/lib/container'
 
 export async function GET() {
   try {
-    const requireChange = await isRequirePasswordChange()
-    return NextResponse.json({ requirePasswordChange: requireChange })
+    const authService = getAuthService()
+    const settings = await authService.adminGetConfig()
+    return NextResponse.json({ requirePasswordChange: settings.requirePasswordChange })
   } catch {
     return NextResponse.json({ requirePasswordChange: false })
   }
@@ -25,7 +26,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '新密码至少 6 位' }, { status: 400 })
     }
 
-    const success = await forceChangePassword(newPassword)
+    const authService = getAuthService()
+    const success = await authService.adminChangePassword(newPassword)
     if (success) {
       return NextResponse.json({ success: true })
     } else {

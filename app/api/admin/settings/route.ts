@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { getCredentials, verifyPassword, hashPassword, updateCredentials, getSiteSettings, updateAnniversaryStart } from '@/lib/auth'
+import { getSiteService } from '@/lib/container'
 
 export async function GET(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -8,10 +8,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
 
-  const settings = await getSiteSettings()
-  return NextResponse.json({ 
-    username: settings.username,
-    anniversaryStart: settings.anniversaryStart,
+  const siteService = getSiteService()
+  const config = await siteService.getSiteConfig()
+  return NextResponse.json({
+    username: config.username,
+    anniversaryStart: config.anniversaryStart,
   })
 }
 
@@ -25,27 +26,28 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { currentPassword, newUsername, newPassword } = body
 
-    const credentials = await getCredentials()
-
     if (!currentPassword) {
       return NextResponse.json({ error: '请输入当前密码' }, { status: 400 })
     }
 
-    const valid = await verifyPassword(currentPassword, credentials.passwordHash)
-    if (!valid) {
-      return NextResponse.json({ error: '当前密码错误' }, { status: 401 })
-    }
-
-    const username = newUsername && newUsername.trim() ? newUsername.trim() : credentials.username
+    const siteService = getSiteService()
 
     if (newPassword && newPassword.trim()) {
-      const passwordHash = await hashPassword(newPassword.trim())
-      await updateCredentials(username, passwordHash)
-    } else {
-      await updateCredentials(username, credentials.passwordHash)
+      const result = await siteService.updatePassword(currentPassword, newPassword.trim())
+      if (!result.success) {
+        return NextResponse.json({ error: result.error || '更新失败' }, { status: 401 })
+      }
     }
 
-    return NextResponse.json({ success: true, username })
+    if (newUsername && newUsername.trim()) {
+      const result = await siteService.updateUsername(newUsername.trim(), currentPassword)
+      if (!result.success) {
+        return NextResponse.json({ error: result.error || '更新失败' }, { status: 401 })
+      }
+      return NextResponse.json({ success: true, username: newUsername.trim() })
+    }
+
+    return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: '更新失败' }, { status: 500 })
   }

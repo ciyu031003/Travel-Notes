@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getSiteSettings } from '@/lib/auth'
+import { getSiteService } from '@/lib/container'
 
 export async function GET() {
   try {
-    const settings = await getSiteSettings()
-    return NextResponse.json({ 
-      anniversaryStart: settings.anniversaryStart,
+    const siteService = getSiteService()
+    const config = await siteService.getSiteConfig()
+    return NextResponse.json({
+      anniversaryStart: config.anniversaryStart,
     })
   } catch {
     return NextResponse.json({ anniversaryStart: null })

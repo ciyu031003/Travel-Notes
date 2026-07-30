@@ -1,4 +1,4 @@
-import { getPosts } from '@/lib/content'
+import { getPostService } from '@/lib/container'
 import TravelClient from './TravelClient'
 
 export const dynamic = 'force-dynamic'
@@ -9,7 +9,8 @@ export const metadata = {
 }
 
 export default async function TravelPage() {
-  const posts = await getPosts('travel')
-  
+  const postService = getPostService()
+  const posts = await postService.getPostsHybrid('travel')
+
   return <TravelClient posts={posts} />
 }

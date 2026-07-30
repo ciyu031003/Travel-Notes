@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getPosts } from '@/lib/content'
+import { getPostService } from '@/lib/container'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
 import { verifyAlbumToken, ALBUM_COOKIE } from '@/lib/album-auth'
@@ -17,7 +17,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const posts = await getPosts('travel')
+    const postService = getPostService()
+    const posts = await postService.getPostsHybrid('travel')
 
     const cityMap = new Map<
       string,

@@ -161,3 +161,18 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: rgba(139, 115, 85, 0.4);
 }
+
+/* 飘动弹幕动画 */
+@keyframes floatRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(100vw + 100%));
+  }
+}
+
+/* 弹幕动画类 */
+.danmaku-text {
+  animation: floatRight linear forwards;
+}

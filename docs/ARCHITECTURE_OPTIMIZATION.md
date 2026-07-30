@@ -1,22 +1,22 @@
 # Travel-Notes 架构优化设计文档
 
-> **文档版本**: v2.0  
-> **最后更新**: 2026-07-29  
+> **文档版本**: v3.0  
+> **最后更新**: 2026-07-31  
 > **项目**: 个人旅行笔记系统 (Travel-Notes)  
 > **目标读者**: 负责技术实施的工程师  
-> **状态**: 数据层优化已完成，进入服务层与组件层优化阶段
+> **状态**: 阶段一~三已完成，阶段四~五为后续规划
 
 ---
 
 ## 0. 优化进度总览
 
-| 阶段 | 内容 | 状态 | 负责人 | 备注 |
-|------|------|------|--------|------|
-| **阶段一** | 安全加固 | 🔄 进行中 | 后端 | JWT 改造待完成 |
-| **阶段二** | 数据层重构 | ✅ 已完成 | 后端 | 数据库链接与模型已优化 |
-| **阶段三** | 服务层引入 | ⏳ 待开始 | 全栈 | 本文档重点 |
-| **阶段四** | 组件拆分与优化 | ⏳ 待开始 | 前端 | 本文档重点 |
-| **阶段五** | 基础设施增强 | ⏳ 待开始 | DevOps | 按需实施 |
+| 阶段 | 内容 | 状态 | 备注 |
+|------|------|------|------|
+| **阶段一** | 安全加固 | ✅ 已完成 | JWT 认证 + Token 黑名单 + 密码找回 |
+| **阶段二** | 数据层重构 | ✅ 已完成 | 官方 MySQL 适配器 + 连接池优化 + PostImage/Danmaku 模型 |
+| **阶段三** | 服务层引入 | ✅ 已完成 | Service/Repository/Validator/DI 容器 + 混合内容获取 |
+| **阶段四** | 组件拆分与优化 | ⏳ 待开始 | ChinaMap 拆分、TravelInfoPanel 拆分、Design Token |
+| **阶段五** | 基础设施增强 | ⏳ 待开始 | Redis、对象存储、监控 |
 
 ---
 
@@ -30,769 +30,411 @@
 | 语言 | TypeScript | 5.3+ | 全量 TS |
 | UI | React + Tailwind CSS | 19 / 3.4 | Server + Client Components |
 | ORM | Prisma | 7.9 | 官方 MySQL 适配器 |
-| 数据库 | MySQL / MariaDB | - | 已完成迁移 |
+| 数据库 | MySQL / MariaDB | 8.0+ | 已完成迁移 |
+| 认证 | jose (JWT) + bcryptjs | 6.2 / 3.0 | JWT Token + 黑名单注销 |
+| 验证 | Zod | 4.4 | 运行时类型验证 |
 | 地图 | d3-geo + SVG | 3.1 | 中国地图可视化 |
-| 认证 | bcryptjs + Cookie | 3.0 | 待升级 JWT |
+| Markdown | Remark + Gray Matter | - | 内容解析 |
 
-### 1.2 已完成的数据层优化
-
-根据后端团队反馈，以下优化已完成：
-
-- ✅ 数据库连接池配置优化（连接数、超时、重试策略）
-- ✅ Prisma 适配器升级（从自定义适配器迁移到官方 `@prisma/adapter-mysql`）
-- ✅ 数据模型规范化（Post、User、SiteConfig 分离）
-- ✅ 索引优化（查询性能提升）
-- ✅ 日期格式统一（UTC 存储，应用层转换）
-
-### 1.3 核心功能
+### 1.2 核心功能
 
 - **旅行地图**: 中国地图可视化，点击省份/城市查看旅行记录
-- **博客系统**: 基于 MDX 的 Markdown 博客
+- **博客系统**: 基于 Markdown 的技术博客，支持代码高亮和 Mermaid 思维导图
 - **代码仓库展示**: 文件树 + 代码查看器
-- **管理后台**: 内容管理、密码重置、系统设置
-- **实时时钟与纪念日**: 右侧信息面板动态展示
+- **管理后台**: 内容管理、密码重置、系统设置、邮箱绑定
+- **JWT 认证**: Token 签名/验证/黑名单注销、密码找回流程
+- **混合内容获取**: 数据库优先 + Markdown 回退
+- **弹幕系统**: 页面弹幕互动
 
 ---
 
-## 2. 当前架构与目标架构
+## 2. 当前架构（已实施）
 
-### 2.1 当前架构（优化后）
-
-```
-┌────────────────────────────────────────────────────────────┐
-│                     Next.js 15 App Router                    │
-├───────────────┬──────────────────┬────────────────────────┤
-│  app/         │   API Routes      │   Server Components    │
-│  (pages)      │   (app/api/*)     │                        │
-├───────────────┴──────────────────┴────────────────────────┤
-│              lib/auth.ts  │  lib/cache.ts                    │
-├────────────────────────────────────────────────────────────┤
-│              Prisma Client (官方 MySQL 适配器)               │
-├────────────────────────────────────────────────────────────┤
-│                    MySQL / MariaDB                           │
-└────────────────────────────────────────────────────────────┘
-```
-
-### 2.2 目标架构
+### 2.1 架构总览
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                       Next.js 15 App Router                    │
 ├───────────────┬───────────────────┬──────────────────────────┤
-│  Server       │   API Routes      │   Server Components      │
-│  Components   │   (app/api/*)     │   (app/*/page.tsx)       │
+│  Server       │   API Routes      │   Middleware              │
+│  Components   │   (app/api/*)     │   (JWT 鉴权 + 路由守卫)    │
+│  (app/*/)     │                   │                           │
 ├───────────────┴───────────────────┴──────────────────────────┤
-│                   Service Layer ──────────────────────────────│
-│  ┌─────────────┬─────────────┬─────────────┬──────────────┐ │
-│  │ AuthService │ PostService │ SiteService │ UploadService │ │
-│  └─────────────┴─────────────┴─────────────┴──────────────┘ │
+│                   Service Layer (服务层)                       │
+│  ┌────────────┬─────────────┬──────────────┬───────────────┐ │
+│  │ AuthService│ PostService │ SiteService  │ TokenService  │ │
+│  │ 登录/JWT/  │ CRUD/混合/  │ 设置/密码/   │ JWT签名/验证/ │ │
+│  │ 密码/找回  │ 缓存        │ 邮箱/纪念日  │ 黑名单/刷新   │ │
+│  └────────────┴─────────────┴──────────────┴───────────────┘ │
 ├──────────────────────────────────────────────────────────────┤
-│                 Data Access Layer ────────────────────────────│
-│  ┌──────────────────┬──────────────────┬──────────────────┐ │
-│  │ Repository 层    │   DTO / Validator │   CacheService   │ │
-│  └──────────────────┴──────────────────┴──────────────────┘ │
+│                 Data Access Layer (数据访问层)                 │
+│  ┌──────────────────────┬──────────────────────┐             │
+│  │ PostRepository       │ UserRepository       │             │
+│  │ 封装 db-posts.ts     │ 封装 auth.ts         │             │
+│  └──────────────────────┴──────────────────────┘             │
 ├──────────────────────────────────────────────────────────────┤
-│                   Infrastructure Layer ───────────────────────│
-│  Prisma (MySQL) │ Redis (可选) │ Object Storage (可选)        │
+│              Infrastructure (基础设施层)                      │
+│  ┌──────────────┬──────────────┬────────────────────┐       │
+│  │ CacheService │StorageService│ Validators (Zod)   │       │
+│  │ 内存TTL+标签 │ 本地文件系统 │ 请求输入验证       │       │
+│  └──────────────┴──────────────┴────────────────────┘       │
+├──────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┬──────────────────┬─────────────────┐   │
+│  │ Prisma (MySQL)  │ Markdown 内容    │ api-response    │   │
+│  │ 官方适配器      │ 回退数据源       │ 统一响应工具    │   │
+│  └─────────────────┴──────────────────┴─────────────────┘   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
+### 2.2 依赖注入容器
+
+`lib/container.ts` 提供单例 Service 工厂方法：
+
+```typescript
+// 获取 PostService 实例（PostRepository + CacheService）
+getPostService()
+
+// 获取 AuthService 实例（UserRepository + TokenService）
+getAuthService()
+
+// 获取 SiteService 实例（UserRepository + CacheService）
+getSiteService()
+```
+
+所有 Service 实例为单例，共享同一个 `MemoryCacheService` 实例。`resetServices()` 方法用于测试重置。
+
 ---
 
-## 3. 阶段三：服务层引入（当前重点）
+## 3. 阶段一：安全加固（已完成）
 
-> ⚠️ **前置条件说明**
-> 
-> 本文档中的 Service、Repository、DTO 代码示例均基于**阶段二（数据层优化）完成后的新 Prisma Schema**。
-> 新 Schema 包含以下核心变更：
-> 
-> - **新增模型**: `User`（用户）、`SiteConfig`（系统设置）、`Location`（地点/城市/省份）、`Tag`（标签）、`PostImage`（文章图片）
-> - **新增枚举**: `PostType`（TRAVEL/BLOG/REPO/NOTE）、`LocationLevel`（PROVINCE/CITY）
-> - **拆分模型**: 原 `SiteSetting` 拆分为 `User` + `SiteConfig`
-> - **关系映射**: `Post` 与 `Location`、`Tag`、`PostImage` 建立关联关系
-> 
-> 如当前代码库中的 `prisma/schema.prisma` 尚未同步以上变更，请先执行数据层迁移（`prisma db push` 或 `prisma migrate dev`），再实施本文档中的 Service 层代码。
+### 3.1 JWT 认证
 
-### 3.1 目标
+- **Token 服务**: [lib/services/token-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/token-service.ts)
+  - 使用 `jose` 库实现 JWT 签名与验证
+  - HS256 算法，5 小时过期
+  - Token 黑名单支持（内存 Map，最大 10000 条，LRU 淘汰）
+  - `sign()` / `verify()` / `verifyWithoutBlacklist()` / `blacklistToken()` / `refresh()`
 
-在 API Routes 和数据访问之间引入 Service 层，实现业务逻辑与数据访问的分离。
+- **中间件**: [middleware.ts](file:///f:/CodeFiles/Travel-Notes/middleware.ts)
+  - JWT Token 验证
+  - 公开路径白名单（登录、注册、API 公开接口等）
+  - 无效 Token 自动清除 Cookie 并重定向
 
-### 3.2 新增目录结构
+### 3.2 密码管理
+
+- bcryptjs 密码哈希（salt rounds: 10）
+- 密码修改需要验证当前密码
+- 密码找回流程（邮箱验证码）
+- 强制密码修改（`requirePasswordChange` 标志）
+
+### 3.3 安全措施
+
+- 所有敏感操作（修改用户名/邮箱/密码）均需验证当前密码
+- 邮箱绑定需验证码验证
+- Cookie `httpOnly` + `secure` 配置
+- API 路由统一使用 `requireAuth()` 中间件
+
+---
+
+## 4. 阶段二：数据层重构（已完成）
+
+### 4.1 Prisma 配置
+
+- [lib/db.ts](file:///f:/CodeFiles/Travel-Notes/lib/db.ts): PrismaClient 使用官方 `@prisma/adapter-mysql`
+- [lib/prisma-adapter.ts](file:///f:/CodeFiles/Travel-Notes/lib/prisma-adapter.ts): 自定义 `PrismaMariaDB` 适配器
+- 连接池配置: limit=25, queue=50
+- 全局单例模式，防止热重载创建多个连接
+
+### 4.2 数据库 Schema
+
+> **设计决策**: Post 表使用 JSON 字段（images、videos、tags）而非规范化关联表。
+> 这是基于项目实际需求的权衡——文章数量不大，JSON 字段简化了数据访问层逻辑。
+
+#### Post 表
+- `(type, slug)` 联合唯一约束
+- 复合索引: `(type, published, date)` 优化按类型查询已发布文章
+- 索引: `(published, date)`, `(location)`, `(createdAt)`
+- JSON 字段: `images`（图片URL数组）、`videos`（视频信息数组）、`tags`（标签数组）
+
+#### PostImage 表
+- 二进制图片存储（LongBlob），无需外部图床
+- `postId` 外键级联删除
+- `(postId, order)` 复合索引
+
+#### SiteSetting 表
+- 单行配置表（`username` 唯一）
+- 包含密码哈希、邮箱、重置令牌、纪念日等
+
+#### Danmaku 表
+- 弹幕系统数据存储
+
+---
+
+## 5. 阶段三：服务层引入（已完成）
+
+### 5.1 目录结构
 
 ```
 lib/
-├── services/              # 业务逻辑层
-│   ├── auth-service.ts    # 认证业务逻辑
-│   ├── post-service.ts    # 文章/旅行记录业务逻辑
-│   ├── site-service.ts    # 系统设置业务逻辑
-│   └── upload-service.ts  # 文件上传业务逻辑
+├── services/              # 服务层（业务逻辑）
+│   ├── auth-service.ts    # 认证服务
+│   ├── post-service.ts    # 文章服务
+│   ├── site-service.ts    # 系统设置服务
+│   └── token-service.ts   # JWT Token 服务
 ├── repositories/          # 数据访问层
-│   ├── post-repository.ts
-│   ├── user-repository.ts
-│   └── site-repository.ts
-├── dto/                   # 数据传输对象
-│   ├── auth.dto.ts
-│   ├── post.dto.ts
-│   └── site.dto.ts
-├── validators/            # 输入验证
-│   ├── auth.validator.ts
-│   ├── post.validator.ts
-│   └── upload.validator.ts
-├── infrastructure/        # 基础设施
-│   ├── cache.ts           # 缓存服务接口
-│   └── storage.ts         # 存储服务接口
-└── types/                 # 共享类型
-    └── index.ts
+│   ├── post-repository.ts # 文章数据访问
+│   └── user-repository.ts # 用户数据访问
+├── infrastructure/        # 基础设施抽象
+│   ├── cache.ts           # 缓存服务接口 + 内存实现
+│   └── storage.ts         # 存储服务接口 + 本地实现
+├── validators/            # 输入验证（Zod）
+│   ├── post.validator.ts  # 文章验证 Schema
+│   └── auth.validator.ts  # 认证验证 Schema
+├── container.ts           # 依赖注入容器
+└── api-response.ts        # 统一 API 响应工具
 ```
 
-### 3.3 Repository 层实施
+### 5.2 Repository 层
 
-#### 3.3.1 接口定义
+#### PostRepository
 
-```typescript
-// lib/repositories/post-repository.ts
-import { PrismaClient, Prisma } from '@prisma/client'
+[lib/repositories/post-repository.ts](file:///f:/CodeFiles/Travel-Notes/lib/repositories/post-repository.ts)
 
-export interface PostRepository {
-  findById(id: number): Promise<Post | null>
-  findBySlug(type: string, slug: string): Promise<Post | null>
-  findAll(params: FindAllParams): Promise<PaginatedResult<Post>>
-  create(data: CreatePostInput): Promise<Post>
-  update(id: number, data: UpdatePostInput): Promise<Post>
-  delete(id: number): Promise<void>
-}
+封装 `lib/db-posts.ts` 的数据访问逻辑，提供接口：
 
-export interface FindAllParams {
-  type?: string
-  published?: boolean
-  page?: number
-  pageSize?: number
-  tagIds?: number[]
-  locationId?: number
-  search?: string
-}
+| 方法 | 说明 |
+|------|------|
+| `findById(id)` | 按 ID 查询文章详情 |
+| `findBySlug(type, slug)` | 按类型和 slug 查询 |
+| `findAll(params)` | 分页查询（支持类型、搜索过滤） |
+| `findAllByType(type)` | 按类型查询全部 |
+| `findByLocation(location)` | 按地点查询 |
+| `create(data)` | 创建文章 |
+| `update(id, data)` | 更新文章（自动处理 Date 转换） |
+| `delete(id)` | 删除文章 |
+| `countByType(type)` | 按类型统计 |
+| `getDistinctLocations()` | 获取所有不同地点 |
 
-export interface PaginatedResult<T> {
-  data: T[]
-  total: number
-  page: number
-  pageSize: number
-}
+#### UserRepository
 
-export type Post = Prisma.PostGetPayload<{
-  include: { images: true; tags: true; location: true }
-}>
-export type CreatePostInput = Prisma.PostUncheckedCreateInput
-export type UpdatePostInput = Prisma.PostUncheckedUpdateInput
-```
+[lib/repositories/user-repository.ts](file:///f:/CodeFiles/Travel-Notes/lib/repositories/user-repository.ts)
 
-#### 3.3.2 Prisma 实现
+封装 `lib/auth.ts` 的系统设置数据访问逻辑，提供接口：
 
-```typescript
-// lib/repositories/post-repository.ts (续)
-export class PrismaPostRepository implements PostRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+| 方法 | 说明 |
+|------|------|
+| `getSettings()` | 获取系统设置 |
+| `updateCredentials(...)` | 更新用户名/密码/邮箱 |
+| `updateAnniversaryStart(date)` | 更新纪念日 |
+| `updateEmail(email, verified)` | 更新邮箱 |
+| `forceChangePassword(newPassword)` | 强制修改密码 |
+| `initializeFromEnv()` | 从环境变量初始化 |
 
-  async findById(id: number): Promise<Post | null> {
-    return this.prisma.post.findUnique({
-      where: { id },
-      include: { images: true, tags: true, location: true },
-    })
-  }
+### 5.3 Service 层
 
-  async findBySlug(type: string, slug: string): Promise<Post | null> {
-    return this.prisma.post.findUnique({
-      where: { type_slug: { type, slug } },
-      include: { images: true, tags: true, location: true },
-    })
-  }
+#### PostService
 
-  async findAll(params: FindAllParams): Promise<PaginatedResult<Post>> {
-    const { type, published, page = 1, pageSize = 20, tagIds, locationId, search } = params
-    const skip = (page - 1) * pageSize
+[lib/services/post-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/post-service.ts)
 
-    const where: Prisma.PostWhereInput = {
-      ...(type && { type }),
-      ...(published !== undefined && { published }),
-      ...(tagIds && tagIds.length > 0 && { tags: { some: { id: { in: tagIds } } } }),
-      ...(locationId && { locationId }),
-      ...(search && {
-        OR: [
-          { title: { contains: search } },
-          { summary: { contains: search } },
-          { content: { contains: search } },
-        ],
-      }),
-    }
+核心文章业务逻辑，包含：
 
-    const [data, total] = await Promise.all([
-      this.prisma.post.findMany({
-        where,
-        skip,
-        take: pageSize,
-        orderBy: { date: 'desc' },
-        include: { images: true, tags: true, location: true },
-      }),
-      this.prisma.post.count({ where }),
-    ])
+- **缓存策略**: TTL 300 秒，标签化失效（`posts`、`posts:{type}`）
+- **混合内容获取**: 
+  - `getPostsHybrid(directory)` - 合并数据库 + Markdown 文章，去重后按日期排序
+  - `getPostBySlugHybrid(directory, slug)` - 优先数据库，回退 Markdown
+- **DTO 转换**: `toDetailDTO()` 将 `PostDB` 转换为 `PostDetailDTO`
+- **缓存失效**: 创建/更新/删除时按标签批量失效
 
-    return { data, total, page, pageSize }
-  }
+核心方法列表：
 
-  async create(data: CreatePostInput): Promise<Post> {
-    return this.prisma.post.create({
-      data: {
-        ...data,
-        images: data.images
-          ? { createMany: { data: data.images as any } }
-          : undefined,
-        tags: data.tags
-          ? { connectOrCreate: (data.tags as any[]).map(t => ({
-              where: { name: t.name },
-              create: { name: t.name },
-            })) }
-          : undefined,
-      },
-      include: { images: true, tags: true, location: true },
-    })
-  }
+| 方法 | 说明 |
+|------|------|
+| `getPublishedPosts(type, filters)` | 分页获取已发布文章 |
+| `getAllPosts(type?)` | 获取全部文章 |
+| `getPostBySlug(type, slug)` | 按 slug 获取文章 |
+| `getPostById(id)` | 按 ID 获取文章 |
+| `getPostsByLocation(location)` | 按地点获取文章 |
+| `getPostCountByType(type)` | 按类型统计数量 |
+| `getDistinctLocations()` | 获取所有地点 |
+| `getPostsHybrid(directory)` | **混合获取**（DB + Markdown） |
+| `getPostBySlugHybrid(directory, slug)` | **混合获取单篇** |
+| `createPost(input)` | 创建文章 |
+| `updatePost(id, input)` | 更新文章 |
+| `deletePost(id)` | 删除文章 |
 
-  async update(id: number, data: UpdatePostInput): Promise<Post> {
-    return this.prisma.post.update({
-      where: { id },
-      data,
-      include: { images: true, tags: true, location: true },
-    })
-  }
+#### AuthService
 
-  async delete(id: number): Promise<void> {
-    await this.prisma.post.delete({ where: { id } })
-  }
-}
-```
+[lib/services/auth-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/auth-service.ts)
 
-### 3.4 Service 层实施
+认证业务逻辑：
 
-#### 3.4.1 PostService
+| 方法 | 说明 |
+|------|------|
+| `login(username, password)` | 登录验证，返回 JWT Token |
+| `verifyToken(token)` | 验证 Token（检查黑名单） |
+| `verifyTokenWithoutBlacklist(token)` | 验证 Token（不检查黑名单） |
+| `logout(token)` | 注销（加入黑名单） |
+| `changePassword(current, new)` | 修改密码（需验证当前密码） |
+| `adminChangePassword(new)` | 管理员强制修改密码 |
+| `sendResetCode(email)` | 发送密码重置验证码 |
+| `verifyResetCode(email, code)` | 验证重置验证码 |
+| `resetPassword(email, code, new)` | 重置密码 |
+
+#### SiteService
+
+[lib/services/site-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/site-service.ts)
+
+系统设置业务逻辑：
+
+| 方法 | 说明 |
+|------|------|
+| `getSiteConfig()` | 获取站点配置（缓存 600 秒） |
+| `getSiteSettings()` | 获取原始设置 |
+| `updateAnniversaryStart(date)` | 更新纪念日 |
+| `updateUsername(username, password)` | 修改用户名（需密码验证） |
+| `updatePassword(current, new)` | 修改密码（需密码验证） |
+| `updateEmail(email, password?, skip?)` | 修改邮箱（可选密码验证） |
+| `verifyPassword(password)` | 验证当前密码 |
+
+#### TokenService
+
+[lib/services/token-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/token-service.ts)
+
+JWT Token 管理：
+
+| 方法 | 说明 |
+|------|------|
+| `sign(payload, ttl?)` | 签发 JWT Token |
+| `verify(token)` | 验证 Token（含黑名单检查） |
+| `blacklistToken(token)` | 加入黑名单 |
+| `refresh(token, ttl?)` | 刷新 Token |
+
+### 5.4 基础设施层
+
+#### CacheService
+
+[lib/infrastructure/cache.ts](file:///f:/CodeFiles/Travel-Notes/lib/infrastructure/cache.ts)
+
+异步缓存接口，封装现有 `lib/cache.ts` 同步内存缓存：
 
 ```typescript
-// lib/services/post-service.ts
-import { PostRepository } from '@/lib/repositories/post-repository'
-import { CacheService } from '@/lib/infrastructure/cache'
-import { PostDTO, CreatePostInput, UpdatePostInput } from '@/lib/dto/post.dto'
-
-export class PostService {
-  constructor(
-    private readonly postRepo: PostRepository,
-    private readonly cache: CacheService,
-  ) {}
-
-  private readonly CACHE_TTL = 300 // 5 分钟
-
-  async getPublishedPosts(
-    type: string,
-    filters: { page?: number; pageSize?: number; tagIds?: number[]; locationId?: number; search?: string }
-  ): Promise<PaginatedResult<PostDTO>> {
-    const cacheKey = `posts:${type}:${JSON.stringify(filters)}`
-    const cached = await this.cache.get<PaginatedResult<PostDTO>>(cacheKey)
-    if (cached) return cached
-
-    const result = await this.postRepo.findAll({
-      ...filters,
-      type,
-      published: true,
-    })
-    const dto = { ...result, data: result.data.map(this.toDTO) }
-
-    await this.cache.set(cacheKey, dto, this.CACHE_TTL, ['posts', `posts:${type}`])
-    return dto
-  }
-
-  async getPostBySlug(type: string, slug: string): Promise<PostDTO | null> {
-    const cacheKey = `post:${type}:${slug}`
-    const cached = await this.cache.get<PostDTO>(cacheKey)
-    if (cached) return cached
-
-    const post = await this.postRepo.findBySlug(type, slug)
-    if (!post) return null
-
-    const dto = this.toDTO(post)
-    await this.cache.set(cacheKey, dto, this.CACHE_TTL, ['posts'])
-    return dto
-  }
-
-  async createPost(input: CreatePostInput, authorId: number): Promise<PostDTO> {
-    const post = await this.postRepo.create({
-      ...input,
-      published: input.published ?? true,
-    })
-    await this.invalidateCache(input.type)
-    return this.toDTO(post)
-  }
-
-  async updatePost(id: number, input: UpdatePostInput): Promise<PostDTO> {
-    const post = await this.postRepo.update(id, input)
-    await this.invalidateCache(post.type)
-    return this.toDTO(post)
-  }
-
-  async deletePost(id: number): Promise<void> {
-    const post = await this.postRepo.findById(id)
-    if (!post) throw new NotFoundError('文章不存在')
-
-    await this.postRepo.delete(id)
-    await this.invalidateCache(post.type)
-  }
-
-  private async invalidateCache(type: string): Promise<void> {
-    await this.cache.deleteByTag('posts')
-    await this.cache.deleteByTag(`posts:${type}`)
-  }
-
-  private toDTO(post: Post): PostDTO {
-    return {
-      id: post.id,
-      slug: post.slug,
-      title: post.title,
-      summary: post.summary,
-      content: post.content,
-      cover: post.cover,
-      images: post.images.map(img => ({ id: img.id, url: img.url, sort: img.sort })),
-      tags: post.tags.map(t => t.name),
-      location: post.location ? {
-        id: post.location.id,
-        name: post.location.name,
-        nameEn: post.location.nameEn,
-        level: post.location.level,
-      } : null,
-      date: post.date.toISOString(),
-      type: post.type,
-      published: post.published,
-      createdAt: post.createdAt.toISOString(),
-      updatedAt: post.updatedAt.toISOString(),
-    }
-  }
-}
-```
-
-#### 3.4.2 SiteService
-
-```typescript
-// lib/services/site-service.ts
-export class SiteService {
-  constructor(
-    private readonly siteRepo: SiteRepository,
-    private readonly cache: CacheService,
-  ) {}
-
-  async getSiteConfig(): Promise<SiteConfigDTO> {
-    const cacheKey = 'site:config'
-    const cached = await this.cache.get<SiteConfigDTO>(cacheKey)
-    if (cached) return cached
-
-    const config = await this.siteRepo.getConfig()
-    const dto = this.toDTO(config)
-    await this.cache.set(cacheKey, dto, 600, ['site'])
-    return dto
-  }
-
-  async updateAnniversaryStart(date: string | null): Promise<void> {
-    await this.siteRepo.updateConfig({ anniversaryStart: date })
-    await this.cache.deleteByTag('site')
-  }
-
-  private toDTO(config: SiteConfig): SiteConfigDTO {
-    return {
-      anniversaryStart: config.anniversaryStart,
-      siteTitle: config.siteTitle,
-      siteDescription: config.siteDescription,
-    }
-  }
-}
-```
-
-#### 3.4.3 AuthService
-
-```typescript
-// lib/services/auth-service.ts
-export class AuthService {
-  constructor(
-    private readonly userRepo: UserRepository,
-    private readonly tokenService: TokenService,
-  ) {}
-
-  async login(username: string, password: string): Promise<LoginResult> {
-    const user = await this.userRepo.findByUsername(username)
-    if (!user) throw new AuthError('用户名或密码错误')
-
-    const valid = await bcrypt.compare(password, user.passwordHash)
-    if (!valid) throw new AuthError('用户名或密码错误')
-
-    if (user.requirePasswordChange) {
-      return { requirePasswordChange: true, userId: user.id }
-    }
-
-    const token = await this.tokenService.sign({
-      sub: user.id.toString(),
-      username: user.username,
-      role: user.role,
-    })
-
-    return { token, user: this.toUserDTO(user) }
-  }
-
-  async verifyToken(token: string): Promise<TokenPayload | null> {
-    return this.tokenService.verify(token)
-  }
-
-  async logout(token: string): Promise<void> {
-    await this.tokenService.blacklist(token)
-  }
-
-  private toUserDTO(user: User): UserDTO {
-    return {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-    }
-  }
-}
-```
-
-### 3.5 验证层实施
-
-```typescript
-// lib/validators/post.validator.ts
-import { z } from 'zod'
-
-export const CreatePostSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9-]+$/, 'Slug 只能包含小写字母、数字和连字符').max(255),
-  title: z.string().min(1, '标题不能为空').max(255),
-  content: z.string().min(1, '内容不能为空'),
-  cover: z.string().url('封面地址格式错误').max(500).optional().or(z.literal('')),
-  imageUrls: z.array(z.object({
-    url: z.string().url('图片地址格式错误'),
-    sort: z.number().int().nonnegative(),
-  })).max(20).optional(),
-  tagNames: z.array(z.string().max(50)).max(10).optional(),
-  locationId: z.number().int().positive().optional(),
-  date: z.string().datetime('日期格式错误').optional(),
-  type: z.enum(['TRAVEL', 'BLOG', 'REPO', 'NOTE']),
-  published: z.boolean().optional(),
-})
-
-export const UpdatePostSchema = CreatePostSchema.partial()
-
-export function validateCreatePost(input: unknown): ValidationResult<CreatePostInput> {
-  return CreatePostSchema.safeParse(input)
-}
-
-export function validateUpdatePost(input: unknown): ValidationResult<UpdatePostInput> {
-  return UpdatePostSchema.safeParse(input)
-}
-```
-
-### 3.6 基础设施抽象层
-
-#### 3.6.1 缓存服务接口
-
-```typescript
-// lib/infrastructure/cache.ts
-export interface CacheService {
+interface CacheService {
   get<T>(key: string): Promise<T | null>
   set<T>(key: string, value: T, ttlSeconds?: number, tags?: string[]): Promise<void>
   delete(key: string): Promise<void>
   deleteByTag(tag: string): Promise<void>
   deleteByPrefix(prefix: string): Promise<void>
   clear(): Promise<void>
-}
-
-// 内存实现（开发/降级）
-export class MemoryCacheService implements CacheService {
-  private cache = new Map<string, { value: unknown; expireAt: number; tags: string[] }>()
-
-  async get<T>(key: string): Promise<T | null> {
-    const entry = this.cache.get(key)
-    if (!entry || Date.now() > entry.expireAt) {
-      if (entry) this.cache.delete(key)
-      return null
-    }
-    return entry.value as T
-  }
-
-  async set<T>(key: string, value: T, ttlSeconds = 60, tags: string[] = []): Promise<void> {
-    this.cache.set(key, { value, expireAt: Date.now() + ttlSeconds * 1000, tags })
-  }
-
-  async delete(key: string): Promise<void> {
-    this.cache.delete(key)
-  }
-
-  async deleteByTag(tag: string): Promise<void> {
-    for (const [key, entry] of this.cache) {
-      if (entry.tags.includes(tag)) this.cache.delete(key)
-    }
-  }
-
-  async deleteByPrefix(prefix: string): Promise<void> {
-    for (const key of this.cache.keys()) {
-      if (key.startsWith(prefix)) this.cache.delete(key)
-    }
-  }
-
-  async clear(): Promise<void> {
-    this.cache.clear()
-  }
-}
-
-// Redis 实现（生产环境，待 Redis 接入后启用）
-export class RedisCacheService implements CacheService {
-  constructor(private readonly redis: RedisClient) {}
-  // ... Redis 实现细节
+  getOrSet<T>(key: string, fetcher: () => Promise<T>, ttlSeconds?: number, tags?: string[]): Promise<T>
 }
 ```
 
-#### 3.6.2 存储服务接口
+- `MemoryCacheService` 实现该接口，内部委托给 `appCache`（同步内存缓存）
+- 支持标签化批量失效
+- 未来可替换为 `RedisCacheService` 实现
+
+#### StorageService
+
+[lib/infrastructure/storage.ts](file:///f:/CodeFiles/Travel-Notes/lib/infrastructure/storage.ts)
+
+文件存储抽象接口：
 
 ```typescript
-// lib/infrastructure/storage.ts
-export interface StoredFile {
-  key: string
-  url: string
-  size: number
-  contentType: string
-}
-
-export interface StorageService {
+interface StorageService {
   upload(file: Buffer, key: string, contentType: string): Promise<StoredFile>
   delete(key: string): Promise<void>
   getUrl(key: string): Promise<string>
 }
-
-// 本地文件系统实现（当前使用）
-export class LocalStorageService implements StorageService {
-  private uploadDir: string
-
-  constructor(uploadDir: string) {
-    this.uploadDir = uploadDir
-  }
-
-  async upload(file: Buffer, key: string, contentType: string): Promise<StoredFile> {
-    const path = `${this.uploadDir}/${key}`
-    await fs.promises.mkdir(path.dirname(path), { recursive: true })
-    await fs.promises.writeFile(path, file)
-    return {
-      key,
-      url: `/uploads/${key}`,
-      size: file.length,
-      contentType,
-    }
-  }
-
-  async delete(key: string): Promise<void> {
-    const path = `${this.uploadDir}/${key}`
-    await fs.promises.unlink(path).catch(() => {})
-  }
-
-  async getUrl(key: string): Promise<string> {
-    return `/uploads/${key}`
-  }
-}
-
-// 对象存储实现（未来迁移）
-export class S3StorageService implements StorageService {
-  // ... S3/OSS/COS 实现
-}
 ```
 
-### 3.7 API Route 改造
+- `LocalStorageService` 实现本地文件系统存储
+- 未来可替换为 S3/OSS/COS 实现
 
-#### 3.7.1 改造原则
+### 5.5 验证层
 
-1. **Route 层只做协议转换**：HTTP 请求 → Service 调用 → HTTP 响应
-2. **统一错误处理**：使用 `ApiResponse` 工具类
-3. **输入验证**：使用 Zod Validator
-4. **认证检查**：使用 `requireAuth()` 中间件
+#### Post Validator
 
-#### 3.7.2 示例：旅行记录 API
+[lib/validators/post.validator.ts](file:///f:/CodeFiles/Travel-Notes/lib/validators/post.validator.ts)
+
+Zod Schema 定义：
+- `CreatePostSchema` - 创建文章验证（slug 格式、标题、内容、图片/视频/标签数组限制）
+- `UpdatePostSchema` - 更新文章验证（全部可选）
+- `LoginSchema` / `ChangePasswordSchema` / `UpdateUsernameSchema` / `UpdateEmailSchema` / `UpdateAnniversarySchema`
+
+#### Auth Validator
+
+[lib/validators/auth.validator.ts](file:///f:/CodeFiles/Travel-Notes/lib/validators/auth.validator.ts)
+
+- `LoginSchema` - 登录验证
+- `ChangePasswordSchema` - 密码修改验证
+
+### 5.6 API 响应工具
+
+[lib/api-response.ts](file:///f:/CodeFiles/Travel-Notes/lib/api-response.ts)
+
+统一 API 响应格式：
 
 ```typescript
-// app/api/travel/posts/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { PostService } from '@/lib/services/post-service'
-import { requireAuth } from '@/lib/auth-middleware'
-import { validateCreatePost } from '@/lib/validators/post.validator'
-import { ApiResponse } from '@/lib/api-response'
+ok(data?, message?)           // 200 成功响应
+fail(error, status?)          // 错误响应
+notFound(message?)            // 404
+unauthorized(message?)        // 401
+forbidden(message?)           // 403
+serverError(message?)         // 500
+paginatedResponse(data, ...)  // 分页响应
+```
 
+### 5.7 API Route 迁移
+
+所有 API 路由已迁移到 Service 层调用模式：
+
+**迁移前**（直接调用数据层）:
+```typescript
+import { getPosts } from '@/lib/content'
+const posts = await getPosts('travel')
+```
+
+**迁移后**（通过 Service 层）:
+```typescript
+import { getPostService } from '@/lib/container'
 const postService = getPostService()
-
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const pageSize = parseInt(searchParams.get('pageSize') || '12')
-  const tagIds = searchParams.get('tagIds')?.split(',').map(Number)
-  const locationId = searchParams.get('locationId') ? Number(searchParams.get('locationId')) : undefined
-  const search = searchParams.get('search') || undefined
-
-  try {
-    const result = await postService.getPublishedPosts('TRAVEL', {
-      page, pageSize, tagIds, locationId, search,
-    })
-    return ApiResponse.success(result)
-  } catch (error) {
-    return ApiResponse.error(error)
-  }
-}
-
-export async function POST(request: NextRequest) {
-  const auth = await requireAuth(request)
-  if (!auth.authenticated) return ApiResponse.unauthorized()
-
-  try {
-    const body = await request.json()
-    const validation = validateCreatePost({ ...body, type: 'TRAVEL' })
-    if (!validation.success) return ApiResponse.validationError(validation.error)
-
-    const post = await postService.createPost(validation.data, auth.userId)
-    return ApiResponse.success(post, 201)
-  } catch (error) {
-    return ApiResponse.error(error)
-  }
-}
+const posts = await postService.getPostsHybrid('travel')
 ```
 
-#### 3.7.3 示例：单条记录 API
+已迁移的页面和路由：
 
-```typescript
-// app/api/travel/posts/[slug]/route.ts
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { slug: string } }
-) {
-  try {
-    const post = await postService.getPostBySlug('TRAVEL', params.slug)
-    if (!post) return ApiResponse.notFound('文章不存在')
-    return ApiResponse.success(post)
-  } catch (error) {
-    return ApiResponse.error(error)
-  }
-}
-
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { slug: string } }
-) {
-  const auth = await requireAuth(request)
-  if (!auth.authenticated) return ApiResponse.unauthorized()
-
-  try {
-    const body = await request.json()
-    const validation = validateUpdatePost(body)
-    if (!validation.success) return ApiResponse.validationError(validation.error)
-
-    const post = await postService.updateBySlug('TRAVEL', params.slug, validation.data)
-    return ApiResponse.success(post)
-  } catch (error) {
-    return ApiResponse.error(error)
-  }
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { slug: string } }
-) {
-  const auth = await requireAuth(request)
-  if (!auth.authenticated) return ApiResponse.unauthorized()
-
-  try {
-    await postService.deleteBySlug('TRAVEL', params.slug)
-    return ApiResponse.success(null, 204)
-  } catch (error) {
-    return ApiResponse.error(error)
-  }
-}
-```
-
-### 3.8 Service 容器与依赖注入
-
-```typescript
-// lib/container.ts
-import { PrismaClient } from '@prisma/client'
-import { PrismaPostRepository } from '@/lib/repositories/post-repository'
-import { PrismaUserRepository } from '@/lib/repositories/user-repository'
-import { PrismaSiteRepository } from '@/lib/repositories/site-repository'
-import { PostService } from '@/lib/services/post-service'
-import { AuthService } from '@/lib/services/auth-service'
-import { SiteService } from '@/lib/services/site-service'
-import { MemoryCacheService } from '@/lib/infrastructure/cache'
-import { LocalStorageService } from '@/lib/infrastructure/storage'
-
-// 单例 Service 实例
-let postServiceInstance: PostService | null = null
-let authServiceInstance: AuthService | null = null
-let siteServiceInstance: SiteService | null = null
-
-export function getPostService(): PostService {
-  if (!postServiceInstance) {
-    const prisma = getPrismaClient()
-    const cache = new MemoryCacheService(1000, 300)
-    const postRepo = new PrismaPostRepository(prisma)
-    postServiceInstance = new PostService(postRepo, cache)
-  }
-  return postServiceInstance
-}
-
-export function getAuthService(): AuthService {
-  if (!authServiceInstance) {
-    const prisma = getPrismaClient()
-    const userRepo = new PrismaUserRepository(prisma)
-    authServiceInstance = new AuthService(userRepo, getTokenService())
-  }
-  return authServiceInstance
-}
-
-export function getSiteService(): SiteService {
-  if (!siteServiceInstance) {
-    const prisma = getPrismaClient()
-    const cache = new MemoryCacheService(200, 600)
-    const siteRepo = new PrismaSiteRepository(prisma)
-    siteServiceInstance = new SiteService(siteRepo, cache)
-  }
-  return siteServiceInstance
-}
-
-// 重置（测试用）
-export function resetServices(): void {
-  postServiceInstance = null
-  authServiceInstance = null
-  siteServiceInstance = null
-}
-```
-
-### 3.9 交付物清单
-
-- [ ] Repository 层实现（Post、User、Site）
-- [ ] Service 层实现（PostService、AuthService、SiteService）
-- [ ] DTO 定义（PostDTO、UserDTO、SiteConfigDTO）
-- [ ] Validator 实现（zod schema）
-- [ ] 基础设施抽象层（CacheService、StorageService）
-- [ ] API Route 改造（全部迁移到 Service 层）
-- [ ] Service 容器与依赖注入
+| 文件 | 使用的 Service 方法 |
+|------|-------------------|
+| `app/page.tsx` | `getPostsHybrid('travel')`, `getPostsHybrid('tech/blog')` |
+| `app/travel/page.tsx` | `getPostsHybrid('travel')` |
+| `app/travel/[slug]/page.tsx` | `getPostBySlugHybrid('travel', slug)` |
+| `app/notes/blog/page.tsx` | `getPostsHybrid('tech/blog')` |
+| `app/notes/blog/[slug]/page.tsx` | `getPostBySlugHybrid('tech/blog', slug)` |
+| `app/notes/mindmap/page.tsx` | `getPostsHybrid('tech/mindmaps')` |
+| `app/notes/mindmap/[slug]/page.tsx` | `getPostBySlugHybrid('tech/mindmaps', slug)` |
+| `app/api/album/route.ts` | `getPostsHybrid('travel')` |
+| `app/api/notes/route.ts` | `getPostsHybrid('tech/blog')`, `getPostsHybrid('tech/mindmaps')` |
+| `app/api/admin/posts/route.ts` | `createPost()` + Zod 验证 |
+| `app/api/admin/posts/[id]/route.ts` | `getPostById()`, `updatePost()`, `deletePost()` |
+| `app/api/admin/login/route.ts` | `authService.login()` |
+| `app/api/admin/logout/route.ts` | `authService.logout()` |
+| `app/api/admin/settings/*` | `siteService` 各方法 |
+| `app/api/forgot-password/*` | `authService.sendResetCode()` 等 |
+| `app/api/check-auth/route.ts` | `requireAuth()` 中间件 |
 
 ---
 
-## 4. 阶段四：组件拆分与优化
+## 6. 阶段四：组件拆分与优化（待开始）
 
-### 4.1 目标
+### 6.1 目标
 
 将巨型组件拆分为可维护的小组件，实现 UI 与业务逻辑的分离。
 
-### 4.2 ChinaMap.tsx 拆分方案
+### 6.2 ChinaMap.tsx 拆分方案
 
 #### 当前问题
 
-- 883 行单文件
+- 单文件 883 行
 - 包含 10+ 个子组件（全部内联）
 - 地图投影、交互、渲染、数据处理高度耦合
 
@@ -802,64 +444,20 @@ export function resetServices(): void {
 components/map/
 ├── index.ts                    # 导出入口
 ├── ChinaMap.tsx                # 主容器 (~150 行)
-├── MapProvinceLayer.tsx        # 省份 SVG 渲染层 (~120 行)
-├── MapCityMarker.tsx           # 城市标记点 (~80 行)
-├── MapDashLine.tsx             # 虚线航线 (~40 行)
-├── MapInfoPanel.tsx            # 省份详情面板 (~150 行)
-├── MapCityModal.tsx            # 城市记录弹窗 (~100 行)
-├── MapNavigation.tsx           # 缩放/导航控件 (~60 行)
-├── MapTooltip.tsx              # 悬浮提示框 (~50 行)
-├── MapLegend.tsx               # 图例组件 (~40 行)
+├── MapProvinceLayer.tsx        # 省份 SVG 渲染层
+├── MapCityMarker.tsx           # 城市标记点
+├── MapDashLine.tsx             # 虚线航线
+├── MapInfoPanel.tsx            # 省份详情面板
+├── MapCityModal.tsx            # 城市记录弹窗
+├── MapNavigation.tsx           # 缩放/导航控件
+├── MapTooltip.tsx              # 悬浮提示框
+├── MapLegend.tsx               # 图例组件
 ├── MapColors.ts                # 颜色常量
 └── hooks/
     ├── useMapInteraction.ts    # 缩放/拖拽/选中逻辑
     ├── useMapViewBox.ts        # viewBox 计算
     └── useProvincePosts.ts     # 省份-文章关联
 ```
-
-#### 组件接口设计
-
-```typescript
-// components/map/ChinaMap.tsx
-interface ChinaMapProps {
-  posts: PostMeta[]
-  width?: number
-  height?: number
-}
-
-// components/map/MapProvinceLayer.tsx
-interface MapProvinceLayerProps {
-  paths: ProvincePath[]
-  hoveredId: string | null
-  selectedId: string | null
-  onHover: (id: string | null) => void
-  onClick: (id: string) => void
-  hoverPosition: { x: number; y: number } | null
-}
-
-// components/map/MapCityMarker.tsx
-interface MapCityMarkerProps {
-  postsByCity: Map<string, PostMeta[]>
-  selectedProvince: string | null
-  onCityClick: (city: City) => void
-}
-
-// components/map/MapInfoPanel.tsx
-interface MapInfoPanelProps {
-  province: ProvincePath | null
-  posts: PostMeta[]
-  onCityClick: (city: City) => void
-  onClose: () => void
-}
-```
-
-#### 拆分实施步骤
-
-1. **提取常量与工具函数** → `MapColors.ts`
-2. **提取 hooks** → `useMapInteraction.ts`, `useMapViewBox.ts`
-3. **拆分 SVG 渲染层** → `MapProvinceLayer.tsx`, `MapCityMarker.tsx`, `MapDashLine.tsx`
-4. **拆分 UI 组件** → `MapInfoPanel.tsx`, `MapCityModal.tsx`, `MapNavigation.tsx`, `MapTooltip.tsx`
-5. **组装主组件** → `ChinaMap.tsx` 只负责数据协调和状态管理
 
 #### 验收标准
 
@@ -869,171 +467,71 @@ interface MapInfoPanelProps {
 - [ ] 地图功能无退化
 - [ ] 类型检查通过
 
-### 4.3 客户端组件优化
+### 6.3 TravelInfoPanel 拆分
 
-#### 4.3.1 数据获取上移
-
-**现状**: `TravelClient.tsx` 在客户端获取数据。
-
-**目标**: Server Component 获取数据，Client Component 只负责渲染。
-
-```typescript
-// app/travel/page.tsx (Server Component)
-import { getSiteService } from '@/lib/container'
-
-export const revalidate = 3600
-
-export default async function TravelPage() {
-  const [postsResult, siteConfig] = await Promise.all([
-    fetch('/api/travel/posts?pageSize=100').then(r => r.json()),
-    getSiteService().getSiteConfig(),
-  ])
-
-  const posts = postsResult.data
-
-  return (
-    <TravelClient
-      posts={posts}
-      siteConfig={siteConfig}
-    />
-  )
-}
-
-// 或直接调用 Service
-// const posts = await getPostService().getPublishedPosts('TRAVEL', { pageSize: 100 })
 ```
-
-#### 4.3.2 TravelInfoPanel 拆分
-
-```typescript
-// components/travel/
+components/travel/
 ├── TravelInfoPanel.tsx         # 主容器 (~80 行)
-├── TravelClock.tsx             # 实时时钟 (~40 行)
-├── TravelAnniversary.tsx       # 纪念日计数器 (~60 行)
-├── TravelWeather.tsx           # 天气展示 (~50 行)
-├── TravelStats.tsx             # 旅行统计 (~80 行)
-└── TravelProgressBar.tsx       # 进度条 (~30 行)
+├── TravelClock.tsx             # 实时时钟
+├── TravelAnniversary.tsx       # 纪念日计数器
+├── TravelStats.tsx             # 旅行统计
+└── TravelProgressBar.tsx       # 进度条
 ```
 
-#### 4.3.3 TravelImageCarousel 优化
+### 6.4 Design Token 系统
+
+建立统一的颜色、字体、动画设计令牌：
 
 ```typescript
-// components/travel/
-├── TravelImageCarousel.tsx     # 主容器 (~60 行)
-├── TravelImageSlide.tsx        # 单张图片 (~40 行)
-├── TravelImageDots.tsx         # 指示点 (~30 行)
-└── hooks/
-    └── useImageCarousel.ts     # 轮播逻辑 (5s 自动切换, 动画控制)
-```
-
-### 4.4 样式系统优化
-
-#### 4.4.1 Design Token
-
-```typescript
-// tailwind.config.js
-export default {
-  theme: {
-    extend: {
-      colors: {
-        warm: {
-          50: '#FFFBF7', 100: '#FFF5EC', 200: '#FFE8D6',
-          300: '#FFD4B2', 400: '#F5A25D', 500: '#E08C3A',
-          600: '#B87333', 700: '#8B5E2A', 800: '#5E3F1D', 900: '#3D2A13',
-        },
-        cherry: {
-          50: '#FFF5F7', 100: '#FFE4E9', 200: '#FFC9D3',
-          300: '#F5DCE0', 400: '#E8B8C2', 500: '#D493A0',
-        },
-        sky: {
-          50: '#F5FAFC', 100: '#E6F1F7', 200: '#D6E8F0',
-          300: '#A8C8DC', 400: '#7AA8C4', 500: '#5B8AAA',
-        },
-        ink: {
-          DEFAULT: '#5A6670',
-          light: '#8A96A0',
-          dark: '#3A4650',
-        },
-      },
-      fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'system-ui', 'sans-serif'],
-      },
-      animation: {
-        'fade-in': 'fadeIn 0.8s ease-out',
-        'scale-up': 'scaleUp 1.5s ease-out forwards',
-        'slide-up': 'slideUp 0.4s ease-out',
-      },
-      keyframes: {
-        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-        scaleUp: { '0%': { transform: 'scale(0.2)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
-        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
-      },
-    },
-  },
+// tailwind.config.js theme.extend
+colors: {
+  warm: { 50: '#FFFBF7', ... 900: '#3D2A13' },
+  cherry: { 50: '#FFF5F7', ... 500: '#D493A0' },
+  sky: { 50: '#F5FAFC', ... 500: '#5B8AAA' },
+  ink: { DEFAULT: '#5A6670', light: '#8A96A0', dark: '#3A4650' },
 }
 ```
 
-#### 4.4.2 复用样式模式
+### 6.5 通用 UI 组件库
 
-```typescript
-// components/ui/
-├── Card.tsx             # 通用卡片容器
-├── Button.tsx           # 通用按钮
-├── Modal.tsx            # 通用弹窗
-├── Input.tsx            # 通用输入框
-├── Badge.tsx            # 通用标签
-└── Skeleton.tsx         # 通用加载骨架
 ```
-
-### 4.5 交付物清单
-
-- [ ] ChinaMap 拆分为 8+ 个子组件
-- [ ] TravelInfoPanel 拆分为 5 个子组件
-- [ ] TravelImageCarousel 优化
-- [ ] Design Token 系统建立
-- [ ] 通用 UI 组件库（Card、Button、Modal 等）
+components/ui/
+├── Card.tsx          # 通用卡片容器
+├── Button.tsx        # 通用按钮
+├── Modal.tsx         # 通用弹窗
+├── Input.tsx         # 通用输入框
+├── Badge.tsx         # 通用标签
+└── Skeleton.tsx      # 通用加载骨架
+```
 
 ---
 
-## 5. 阶段五：基础设施增强（可选）
+## 7. 阶段五：基础设施增强（可选）
 
-### 5.1 Redis 集成（未来）
+### 7.1 Redis 集成
 
 当需要以下能力时引入 Redis：
-- JWT 会话黑名单
+- JWT 会话黑名单持久化
 - 分布式验证码存储
 - 多实例缓存共享
 - API 速率限制
 
-```typescript
-// lib/infrastructure/redis.ts
-import { createClient } from 'redis'
+替换 `MemoryCacheService` 为 `RedisCacheService`，只需实现 `CacheService` 接口。
 
-export const redis = createClient({
-  url: process.env.REDIS_URL,
-})
+### 7.2 对象存储迁移
 
-redis.on('error', (err) => console.error('Redis error:', err))
-```
+当需要 CDN 加速或多服务器部署时：
+- 替换 `LocalStorageService` 为 `S3StorageService` / `OSSStorageService`
+- 只需实现 `StorageService` 接口
 
-### 5.2 对象存储迁移（未来）
-
-当需要 CDN 加速或多服务器部署时迁移：
-- 阿里云 OSS / 腾讯云 COS / AWS S3
-- 或自建 MinIO
-
-### 5.3 监控与日志
+### 7.3 监控与日志
 
 ```typescript
 // app/api/health/route.ts
 export async function GET() {
-  const checks = await Promise.all([
-    checkDatabase(),
-    checkSiteConfig(),
-  ])
-  const healthy = checks.every(c => c.ok)
+  const checks = await Promise.all([checkDatabase(), checkSiteConfig()])
   return Response.json({
-    status: healthy ? 'ok' : 'degraded',
+    status: checks.every(c => c.ok) ? 'ok' : 'degraded',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     checks,
@@ -1041,156 +539,112 @@ export async function GET() {
 }
 ```
 
-### 5.4 Next.js ISR
+### 7.4 Next.js ISR
+
+启用增量静态再生，利用 Next.js 的 tag-based revalidation：
 
 ```typescript
-// 启用增量静态再生
 export const revalidate = 3600
-
-// 在 fetch 中使用 tags
-const posts = await fetch('/api/travel/posts', {
-  next: { revalidate: 3600, tags: ['posts'] },
-})
-
-// 失效时调用
-await revalidateTag('posts')
+// 失效时调用 revalidateTag('posts')
 ```
 
 ---
 
-## 6. 实施路线图
+## 8. 构建与部署
 
-### 6.1 时间线
+### 8.1 低内存服务器优化
 
+针对 2GB RAM 服务器构建 OOM 问题：
+- 添加 Swap 分区（2GB）
+- 设置 `NODE_OPTIONS=--max-old-space-size=512`
+- 使用 `deploy.sh` 脚本自动检测和配置
+
+### 8.2 依赖说明
+
+- `--legacy-peer-deps` 必须用于 `npm install`（lucide-react 与 React 19 冲突）
+- 构建前需执行 `npx prisma generate` 生成 Prisma Client 类型
+
+### 8.3 环境变量
+
+```env
+DATABASE_URL="mysql://用户:密码@localhost:3306/Travel_And_Study"
+ADMIN_USERNAME="管理员用户名"
+ADMIN_PASSWORD_HASH="密码哈希"
+JWT_SECRET="JWT签名密钥（openssl rand -hex 32）"
+SESSION_SECRET="备用密钥"
+COOKIE_SECURE=false  # 生产环境设为 true
 ```
-Week 1-2: 阶段三（服务层）
-├── Day 1:   基础设施抽象层（CacheService, StorageService）
-├── Day 2-3: Repository 层（Post, User, Site）
-├── Day 4-5: Service 层（PostService, AuthService, SiteService）
-├── Day 6:   DTO + Validator 层
-├── Day 7-8: API Route 改造
-└── Day 9-10: 测试与联调
 
-Week 3-4: 阶段四（组件优化）
-├── Day 1-3: ChinaMap 拆分
-├── Day 4-5: TravelInfoPanel 拆分 + TravelImageCarousel 优化
-├── Day 6:   数据获取上移（Server Component）
-├── Day 7:   Design Token + UI 组件库
-└── Day 8-10: 测试与优化
-```
+---
 
-### 6.2 优先级排序
+## 9. 关键文件索引
 
-| 序号 | 任务 | 预计时间 | 价值 |
-|------|------|---------|------|
-| 1 | 基础设施抽象层 | 1 天 | 解耦存储实现 |
-| 2 | Repository 层 | 2 天 | 数据访问统一 |
-| 3 | PostService | 1 天 | 核心业务逻辑 |
-| 4 | AuthService | 1 天 | 安全认证 |
-| 5 | SiteService | 0.5 天 | 系统设置 |
-| 6 | Validator 层 | 0.5 天 | 输入验证 |
-| 7 | API Route 改造 | 2 天 | 架构落地 |
-| 8 | ChinaMap 拆分 | 3 天 | 可维护性 |
-| 9 | 其他组件优化 | 2 天 | 代码质量 |
-| 10 | Design Token | 1 天 | 样式统一 |
+### 核心架构文件
 
-### 6.3 验收检查清单
+| 文件路径 | 用途 |
+|---------|------|
+| [lib/container.ts](file:///f:/CodeFiles/Travel-Notes/lib/container.ts) | 依赖注入容器 |
+| [lib/services/post-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/post-service.ts) | 文章服务（CRUD + 混合获取） |
+| [lib/services/auth-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/auth-service.ts) | 认证服务 |
+| [lib/services/site-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/site-service.ts) | 系统设置服务 |
+| [lib/services/token-service.ts](file:///f:/CodeFiles/Travel-Notes/lib/services/token-service.ts) | JWT Token 服务 |
+| [lib/repositories/post-repository.ts](file:///f:/CodeFiles/Travel-Notes/lib/repositories/post-repository.ts) | 文章数据访问 |
+| [lib/repositories/user-repository.ts](file:///f:/CodeFiles/Travel-Notes/lib/repositories/user-repository.ts) | 用户数据访问 |
+| [lib/infrastructure/cache.ts](file:///f:/CodeFiles/Travel-Notes/lib/infrastructure/cache.ts) | 缓存服务接口 |
+| [lib/infrastructure/storage.ts](file:///f:/CodeFiles/Travel-Notes/lib/infrastructure/storage.ts) | 存储服务接口 |
+| [lib/validators/post.validator.ts](file:///f:/CodeFiles/Travel-Notes/lib/validators/post.validator.ts) | 文章验证 Schema |
+| [lib/api-response.ts](file:///f:/CodeFiles/Travel-Notes/lib/api-response.ts) | 统一 API 响应 |
+| [middleware.ts](file:///f:/CodeFiles/Travel-Notes/middleware.ts) | JWT 鉴权中间件 |
 
-#### 服务层验收
+### 底层数据文件
 
-- [ ] `lib/services/` 下至少 3 个 Service 类
-- [ ] `lib/repositories/` 下至少 3 个 Repository 类
-- [ ] `lib/dto/` 下有完整的 DTO 定义
-- [ ] `lib/validators/` 下有 zod Schema
-- [ ] 所有 Service 方法有类型签名
-- [ ] 无 `as any` 类型断言
+| 文件路径 | 用途 |
+|---------|------|
+| [lib/db.ts](file:///f:/CodeFiles/Travel-Notes/lib/db.ts) | Prisma 客户端 |
+| [lib/prisma-adapter.ts](file:///f:/CodeFiles/Travel-Notes/lib/prisma-adapter.ts) | MySQL 适配器 |
+| [lib/db-posts.ts](file:///f:/CodeFiles/Travel-Notes/lib/db-posts.ts) | 数据库文章操作 |
+| [lib/auth.ts](file:///f:/CodeFiles/Travel-Notes/lib/auth.ts) | 认证底层操作 |
+| [lib/auth-utils.ts](file:///f:/CodeFiles/Travel-Notes/lib/auth-utils.ts) | 密码哈希工具 |
+| [lib/cache.ts](file:///f:/CodeFiles/Travel-Notes/lib/cache.ts) | 内存缓存实现 |
+| [lib/markdown.ts](file:///f:/CodeFiles/Travel-Notes/lib/markdown.ts) | Markdown 解析 |
+| [lib/content.ts](file:///f:/CodeFiles/Travel-Notes/lib/content.ts) | 旧内容层（已被 PostService 替代） |
 
-#### 组件层验收
+### 配置文件
+
+| 文件路径 | 用途 |
+|---------|------|
+| [prisma/schema.prisma](file:///f:/CodeFiles/Travel-Notes/prisma/schema.prisma) | 数据库 Schema |
+| [next.config.js](file:///f:/CodeFiles/Travel-Notes/next.config.js) | Next.js 配置 |
+| [ecosystem.config.js](file:///f:/CodeFiles/Travel-Notes/ecosystem.config.js) | PM2 进程配置 |
+| [deploy.sh](file:///f:/CodeFiles/Travel-Notes/deploy.sh) | 一键部署脚本 |
+| [.env.example](file:///f:/CodeFiles/Travel-Notes/.env.example) | 环境变量模板 |
+
+---
+
+## 10. 验收检查清单
+
+### 服务层验收（已完成）
+
+- [x] `lib/services/` 下 4 个 Service 类
+- [x] `lib/repositories/` 下 2 个 Repository 类
+- [x] `lib/infrastructure/` 下 CacheService + StorageService
+- [x] `lib/validators/` 下 Zod Schema
+- [x] `lib/container.ts` 依赖注入容器
+- [x] 所有 API Route 迁移到 Service 层
+- [x] 所有页面迁移到 PostService 混合获取
+- [x] `npm run build` 无错误
+- [x] 核心页面功能正常
+
+### 组件层验收（待完成）
 
 - [ ] `ChinaMap.tsx` ≤ 150 行
 - [ ] 所有组件 ≤ 200 行
 - [ ] 组件 Props 接口定义完整
 - [ ] Client Component 不直接调用数据库
-- [ ] 无内联样式（使用 Tailwind class）
-
-#### 构建与测试
-
-- [ ] `npm run build` 无错误
-- [ ] `npm run lint` 无警告
-- [ ] 核心页面功能正常
-- [ ] API 接口响应格式统一
+- [ ] Design Token 系统建立
+- [ ] 通用 UI 组件库
 
 ---
 
-## 7. 新增依赖
-
-| 包名 | 用途 | 阶段 |
-|------|------|------|
-| `zod` | 运行时类型验证 | 阶段三 |
-| `jose` | JWT 签名与验证 | 阶段一（已规划） |
-
-> 注：Redis、对象存储 SDK 等在阶段五按需引入。
-
----
-
-## 8. 关键文件索引
-
-### 需要修改的文件
-
-| 文件路径 | 操作 | 说明 |
-|---------|------|------|
-| `lib/db.ts` | 已优化 | 官方适配器已接入 |
-| `prisma/schema.prisma` | 已优化 | 模型已规范化 |
-| `lib/auth.ts` | 重构 | 迁移到 AuthService |
-| `lib/cache.ts` | 重构 | 实现 CacheService 接口 |
-| `middleware.ts` | 重构 | JWT 验证 |
-| `components/ChinaMap.tsx` | 拆分 | 883→150 行 |
-| `components/TravelInfoPanel.tsx` | 拆分 | 300→80 行 |
-| `app/api/*/route.ts` | 重构 | 迁移到 Service 层 |
-| `app/travel/TravelClient.tsx` | 优化 | 数据获取上移 |
-
-### 新增的文件
-
-| 文件路径 | 用途 |
-|---------|------|
-| `lib/services/post-service.ts` | 文章业务逻辑 |
-| `lib/services/auth-service.ts` | 认证业务逻辑 |
-| `lib/services/site-service.ts` | 系统设置业务逻辑 |
-| `lib/repositories/post-repository.ts` | 文章数据访问 |
-| `lib/repositories/user-repository.ts` | 用户数据访问 |
-| `lib/repositories/site-repository.ts` | 站点设置数据访问 |
-| `lib/dto/post.dto.ts` | 文章 DTO |
-| `lib/dto/auth.dto.ts` | 认证 DTO |
-| `lib/validators/post.validator.ts` | 文章验证 |
-| `lib/infrastructure/cache.ts` | 缓存服务接口 |
-| `lib/infrastructure/storage.ts` | 存储服务接口 |
-| `lib/container.ts` | 依赖注入容器 |
-| `components/map/` | 地图子组件目录 |
-| `components/travel/` | 旅行相关子组件目录 |
-| `components/ui/` | 通用 UI 组件目录 |
-
----
-
-## 附录：快速实施路径
-
-如果希望快速看到效果，建议按以下顺序：
-
-### 第一周：最小服务层
-
-1. 创建 `lib/infrastructure/cache.ts`（CacheService 接口 + 内存实现）
-2. 创建 `lib/repositories/post-repository.ts`（Prisma 实现）
-3. 创建 `lib/services/post-service.ts`（核心 CRUD）
-4. 创建 `lib/validators/post.validator.ts`（zod 验证）
-5. 改造 2-3 个核心 API Route
-
-### 第二周：组件拆分
-
-1. 提取 `ChinaMap.tsx` 中的 hooks
-2. 提取 SVG 渲染为独立组件
-3. 组装新的 `ChinaMap.tsx`
-4. 优化 `TravelInfoPanel.tsx`
-
----
-
-*— 文档 v2.0 结束 —*  
+*— 文档 v3.0 结束 —*  
 *本文档将随实施进度持续更新*

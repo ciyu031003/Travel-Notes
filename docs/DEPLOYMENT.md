@@ -1,4 +1,4 @@
-﻿# 阿里云 ECS 部署指南
+# 阿里云 ECS 部署指南
 
 本文档详细介绍如何将个人博客项目部署到阿里云 ECS 服务器。
 
@@ -6,7 +6,7 @@
 
 ### 1.1 服务器要求
 - 操作系统：CentOS 7+ / Ubuntu 20.04+
-- 配置建议：2核4G 起步
+- 配置建议：2核2G 起步（2G 内存需配合 Swap 分区）
 - 带宽：1M 以上
 
 ### 1.2 安全组配置
@@ -82,13 +82,22 @@ cd blog
 
 3. **安装依赖**
 ```bash
-npm install
+npm install --legacy-peer-deps
 ```
 
 4. **构建项目**
 ```bash
 npm run build
 ```
+
+> **低内存服务器（2GB）**：构建前添加 Swap 分区，防止 OOM：
+> ```bash
+> sudo fallocate -l 2G /swapfile
+> sudo mkswap /swapfile
+> sudo swapon /swapfile
+> echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+> ```
+> 或限制 Node.js 内存：`NODE_OPTIONS=--max-old-space-size=512 npm run build`
 
 ### 方式二：本地上传
 
@@ -111,7 +120,8 @@ scp blog.tar.gz root@服务器IP:/www/wwwroot/
 cd /www/wwwroot/
 mkdir blog && tar -xzf blog.tar.gz -C blog
 cd blog
-npm install
+npm install --legacy-peer-deps
+npx prisma generate
 ```
 
 ## 四、启动项目
@@ -303,6 +313,17 @@ chmod +x deploy.sh
 
 1. **开启 Brotli 压缩**（Nginx 额外模块）
 2. **配置 CDN 加速**静态资源
-3. **使用 Redis 缓存**热门页面
+3. **使用 Redis 缓存**热门页面（替换 MemoryCacheService）
 4. **图片懒加载**和 WebP 格式
-5. **数据库优化**（如后续接入数据库）
+5. **数据库优化**（索引已优化，可按需添加）
+
+## 十一、环境变量说明
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `DATABASE_URL` | MySQL 数据库连接字符串 | `mysql://user:pass@localhost:3306/Travel_And_Study` |
+| `ADMIN_USERNAME` | 管理员用户名 | `yuanabd` |
+| `ADMIN_PASSWORD_HASH` | 管理员密码哈希（bcrypt） | `$2a$10$...` |
+| `JWT_SECRET` | JWT Token 签名密钥 | `openssl rand -hex 32` 生成 |
+| `SESSION_SECRET` | 备用密钥（兼容旧配置） | 同上 |
+| `COOKIE_SECURE` | Cookie 安全标志（生产设为 true） | `false` / `true` |

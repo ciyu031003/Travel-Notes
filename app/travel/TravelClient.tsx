@@ -3,10 +3,11 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
-import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info } from 'lucide-react'
+import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info, Lock } from 'lucide-react'
 import ChinaMap from '@/components/ChinaMap'
 import TravelImageCarousel from '@/components/TravelImageCarousel'
 import TravelInfoPanel from '@/components/TravelInfoPanel'
+import AlbumUnlockModal from '@/components/AlbumUnlockModal'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
 
@@ -30,6 +31,7 @@ export default function TravelClient({ posts }: TravelClientProps) {
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const [anniversaryStart, setAnniversaryStart] = useState<string | undefined>(undefined)
+  const [showAlbumUnlock, setShowAlbumUnlock] = useState(false)
   const visiblePosts = showAll ? posts : posts.slice(0, 6)
 
   useEffect(() => {
@@ -122,6 +124,13 @@ export default function TravelClient({ posts }: TravelClientProps) {
             >
               返回首页
             </Link>
+            <button
+              onClick={() => setShowAlbumUnlock(true)}
+              className="px-4 py-2 text-sm text-[#5A6670]/70 hover:text-[#5A6670] transition-colors flex items-center gap-1.5"
+            >
+              <ImageIcon className="w-4 h-4" />
+              相册
+            </button>
             <Link
               href="/notes"
               className="px-4 py-2 text-sm bg-[#5A6670] text-[#FAFBF7] rounded-lg hover:bg-[#5A6670]/90 transition-colors"
@@ -153,7 +162,7 @@ export default function TravelClient({ posts }: TravelClientProps) {
               <div className="w-64 xl:w-72 h-full p-2">
                 <TravelImageCarousel
                   images={carouselImages}
-                  intervalMs={5000}
+                  intervalMs={8000}
                 />
               </div>
               {/* 收起按钮 */}
@@ -314,6 +323,12 @@ export default function TravelClient({ posts }: TravelClientProps) {
           </div>
         </footer>
       </div>
+
+      {/* 相册解锁弹窗 */}
+      <AlbumUnlockModal
+        isOpen={showAlbumUnlock}
+        onClose={() => setShowAlbumUnlock(false)}
+      />
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getPostBySlug, getPosts } from '@/lib/content'
+import { getPostService } from '@/lib/container'
 import { formatDate } from '@/lib/utils'
 import { Calendar, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -8,13 +8,15 @@ import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 export const dynamic = 'force-dynamic'
 
 export async function generateStaticParams() {
-  const posts = await getPosts('tech/blog')
+  const postService = getPostService()
+  const posts = await postService.getPostsHybrid('tech/blog')
   return posts.map(post => ({ slug: post.slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await getPostBySlug('tech/blog', slug)
+  const postService = getPostService()
+  const post = await postService.getPostBySlugHybrid('tech/blog', slug)
   if (!post) return { title: '文章不存在' }
   return {
     title: post.title,
@@ -24,7 +26,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await getPostBySlug('tech/blog', slug)
+  const postService = getPostService()
+  const post = await postService.getPostBySlugHybrid('tech/blog', slug)
 
   if (!post) {
     notFound()

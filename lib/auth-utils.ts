@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs'
-
-const SESSION_SECRET = process.env.SESSION_SECRET || 'your-secret-key-change-in-production'
+import { signToken, verifyToken, blacklistToken, type TokenPayload } from './services/token-service'
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10)
@@ -11,43 +10,36 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 export async function signSession(payload: object): Promise<string> {
-  const data = Buffer.from(JSON.stringify(payload)).toString('base64')
-  const signature = await bcrypt.hash(data + SESSION_SECRET, 8)
-  const signatureB64 = Buffer.from(signature).toString('base64')
-  return `${data}.${signatureB64}`
+  const { username, exp } = payload as { username: string; exp?: number }
+  const ttlSeconds = exp ? Math.floor((exp - Date.now()) / 1000) : undefined
+
+  return signToken({ username }, ttlSeconds)
 }
 
 export async function verifySession(token: string): Promise<boolean> {
-  try {
-    const firstDotIndex = token.indexOf('.')
-    if (firstDotIndex === -1) return false
-
-    const data = token.substring(0, firstDotIndex)
-    const signatureB64 = token.substring(firstDotIndex + 1)
-
-    const decoded = Buffer.from(data, 'base64').toString('utf-8')
-    const payload = JSON.parse(decoded)
-
-    if (payload.exp && payload.exp < Date.now()) return false
-
-    const providedSignature = Buffer.from(signatureB64, 'base64').toString('utf-8')
-    const valid = await bcrypt.compare(data + SESSION_SECRET, providedSignature)
-    if (!valid) return false
-
-    return true
-  } catch {
-    return false
-  }
+  const payload = await verifyToken(token)
+  return payload !== null
 }
 
-export function getSessionPayload(token: string) {
+export function getSessionPayload(token: string): { username: string; exp: number } | null {
   try {
-    const firstDotIndex = token.indexOf('.')
-    if (firstDotIndex === -1) return null
-    const data = token.substring(0, firstDotIndex)
-    const decoded = Buffer.from(data, 'base64').toString('utf-8')
-    return JSON.parse(decoded) as { username: string; exp: number }
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+
+    const payload = JSON.parse(atob(parts[1]))
+    return {
+      username: payload.username,
+      exp: payload.exp ? payload.exp * 1000 : Date.now() + 5 * 60 * 60 * 1000,
+    }
   } catch {
     return null
   }
+}
+
+export async function blacklistSession(token: string): Promise<void> {
+  await blacklistToken(token)
+}
+
+export async function getFullSessionPayload(token: string): Promise<TokenPayload | null> {
+  return verifyToken(token)
 }

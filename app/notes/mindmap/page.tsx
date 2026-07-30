@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getPosts } from '@/lib/content'
+import { getPostService } from '@/lib/container'
 import { BrainCircuit } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -10,7 +10,8 @@ export const metadata = {
 }
 
 export default async function MindmapPage() {
-  const mindmaps = await getPosts('tech/mindmaps')
+  const postService = getPostService()
+  const mindmaps = await postService.getPostsHybrid('tech/mindmaps')
 
   return (
     <div className="container-custom">

@@ -195,8 +195,14 @@ ADMIN_USERNAME="yuanabd"
 # 管理员密码 Hash（下一步生成）
 ADMIN_PASSWORD_HASH=""
 
-# Session 密钥（用 openssl rand -hex 32 生成）
+# JWT 密钥（用于 Token 签名与验证，用 openssl rand -hex 32 生成）
+JWT_SECRET="替换为随机字符串"
+
+# 备用密钥（兼容旧配置）
 SESSION_SECRET="替换为随机字符串"
+
+# Cookie 安全（生产环境设为 true）
+COOKIE_SECURE=false
 ```
 
 #### 生成密码 Hash
@@ -240,13 +246,22 @@ npx prisma db push
 npm run build
 ```
 
-> **注意**：构建可能需要 2-5 分钟。如果服务器内存不足，可添加 Swap：
+> **注意**：构建可能需要 2-5 分钟。如果服务器内存 ≤ 2GB，构建时可能 OOM。
+> 
+> **方案一：添加 Swap 分区（推荐）**
 > ```bash
 > sudo fallocate -l 2G /swapfile
 > sudo mkswap /swapfile
 > sudo swapon /swapfile
 > echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 > ```
+> 
+> **方案二：限制 Node.js 内存**
+> ```bash
+> NODE_OPTIONS=--max-old-space-size=512 npm run build
+> ```
+> 
+> `deploy.sh` 脚本会自动检测内存并提示配置 Swap。
 
 ### 5.6 启动项目
 
@@ -646,6 +661,44 @@ free -h
 ---
 
 ## 十三、迭代记录
+
+### [2026-07-31] 服务层架构迁移完成
+
+#### 变更概述
+
+完成阶段三（服务层引入），将所有 API 路由和页面从直接调用数据层迁移到通过 Service 层访问。
+
+#### 新增架构层
+
+| 目录 | 用途 |
+|------|------|
+| `lib/services/` | 服务层（PostService、AuthService、SiteService、TokenService） |
+| `lib/repositories/` | 数据访问层（PostRepository、UserRepository） |
+| `lib/infrastructure/` | 基础设施抽象（CacheService、StorageService） |
+| `lib/validators/` | 输入验证（Zod Schema） |
+| `lib/container.ts` | 依赖注入容器 |
+| `lib/api-response.ts` | 统一 API 响应工具 |
+
+#### 关键变更
+
+- 所有页面（首页、旅行、博客、思维导图）改用 `PostService.getPostsHybrid()` / `getPostBySlugHybrid()` 获取内容
+- 所有 API 路由改用 Service 层方法 + Zod 验证
+- JWT 认证替换 Session Cookie（`jose` 库）
+- 密码找回流程迁移到 AuthService
+- 缓存统一通过 CacheService 接口管理（标签化失效）
+
+#### 环境变量变更
+
+新增 `JWT_SECRET` 环境变量（用于 JWT Token 签名），`SESSION_SECRET` 保留为备用。
+
+#### 验证结果
+
+```bash
+npm run build
+```
+✅ 构建成功：39 个页面全部生成，无 TypeScript 错误
+
+---
 
 ### [2026-07-26] 修复 Next.js 构建错误：客户端组件引入服务端模块
 

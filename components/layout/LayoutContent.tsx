@@ -29,7 +29,6 @@ export default function LayoutContent({
   if (isHomePage) {
     return (
       <>
-        <Navbar variant="transparent" />
         <main className="flex-1">
           {children}
         </main>
