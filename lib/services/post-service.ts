@@ -1,5 +1,6 @@
 import { PostRepository, type FindAllParams, type PaginatedResult, type CreatePostInput, type UpdatePostInput } from '../repositories/post-repository'
 import { CacheService } from '../infrastructure/cache'
+import { MarkdownRenderer, type TocItem } from '../infrastructure/markdown'
 import { getAllPosts as getMarkdownPosts, getPostBySlug as getMarkdownPost } from '../markdown'
 import type { PostMetaDB, PostDB, VideoInfo } from '../db-posts'
 
@@ -26,7 +27,10 @@ export interface PostDTO {
 }
 
 export interface PostDetailDTO extends PostDTO {
+  content: string
   contentHtml: string
+  readMinutes: number
+  toc: TocItem[]
 }
 
 export class PostService {
@@ -35,6 +39,7 @@ export class PostService {
   constructor(
     private readonly postRepo: PostRepository,
     private readonly cache: CacheService,
+    private readonly markdownRenderer?: MarkdownRenderer,
   ) {}
 
   async getPublishedPosts(
@@ -76,7 +81,7 @@ export class PostService {
     const post = await this.postRepo.findBySlug(type, slug)
     if (!post) return null
 
-    const dto = this.toDetailDTO(post)
+    const dto = await this.toDetailDTO(post)
     await this.cache.set(cacheKey, dto, this.CACHE_TTL, ['posts'])
     return dto
   }
@@ -89,7 +94,7 @@ export class PostService {
     const post = await this.postRepo.findById(id)
     if (!post) return null
 
-    const dto = this.toDetailDTO(post)
+    const dto = await this.toDetailDTO(post)
     await this.cache.set(cacheKey, dto, this.CACHE_TTL, ['posts'])
     return dto
   }
@@ -122,6 +127,43 @@ export class PostService {
     const locations = await this.postRepo.getDistinctLocations()
     await this.cache.set(cacheKey, locations, this.CACHE_TTL, ['posts'])
     return locations
+  }
+
+  async getAdjacentPosts(
+    type: string,
+    date: string
+  ): Promise<{ prev: PostMetaDB | null; next: PostMetaDB | null }> {
+    const cacheKey = `posts:adjacent:${type}:${date}`
+    const cached = await this.cache.get<{ prev: PostMetaDB | null; next: PostMetaDB | null }>(cacheKey)
+    if (cached) return cached
+
+    const result = await this.postRepo.findAdjacent(type, date)
+    await this.cache.set(cacheKey, result, this.CACHE_TTL, ['posts'])
+    return result
+  }
+
+  async getPostsByTag(tag: string, type?: string): Promise<PostMetaDB[]> {
+    const cacheKey = `posts:tag:${tag}:${type || 'all'}`
+    const cached = await this.cache.get<PostMetaDB[]>(cacheKey)
+    if (cached) return cached
+
+    const posts = await this.postRepo.findByTag(tag, type)
+    await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts'])
+    return posts
+  }
+
+  async getAllTags(type?: string): Promise<Array<{ name: string; count: number }>> {
+    const cacheKey = `tags:${type || 'all'}`
+    const cached = await this.cache.get<Array<{ name: string; count: number }>>(cacheKey)
+    if (cached) return cached
+
+    const tags = await this.postRepo.getAllTags(type)
+    await this.cache.set(cacheKey, tags, 600, ['posts', 'tags'])
+    return tags
+  }
+
+  async searchPosts(keyword: string, type?: string): Promise<PostMetaDB[]> {
+    return this.postRepo.search(keyword, type)
   }
 
   async getPostsHybrid(directory: string): Promise<PostMetaDB[]> {
@@ -174,7 +216,7 @@ export class PostService {
     try {
       const dbPost = await this.postRepo.findBySlug(dbType, slug)
       if (dbPost) {
-        const dto = this.toDetailDTO(dbPost)
+        const dto = await this.toDetailDTO(dbPost)
         await this.cache.set(cacheKey, dto, this.CACHE_TTL, ['posts'])
         return dto
       }
@@ -183,6 +225,16 @@ export class PostService {
     try {
       const mdPost = await getMarkdownPost(directory, slug)
       if (mdPost) {
+        const renderer = this.markdownRenderer
+        let readMinutes = 1
+        let contentHtml = mdPost.contentHtml
+        let toc: TocItem[] = []
+        if (renderer) {
+          const rendered = await renderer.render(mdPost.content, { extractToc: true })
+          contentHtml = rendered.html
+          readMinutes = rendered.readMinutes
+          toc = rendered.toc
+        }
         return {
           id: 0,
           slug: mdPost.slug,
@@ -196,7 +248,10 @@ export class PostService {
           location: mdPost.location,
           type: mdPost.category || directory,
           published: true,
-          contentHtml: mdPost.contentHtml,
+          content: mdPost.content,
+          contentHtml,
+          readMinutes,
+          toc,
         }
       }
     } catch {}
@@ -233,7 +288,21 @@ export class PostService {
     await this.cache.deleteByTag('posts')
   }
 
-  private toDetailDTO(post: PostDB): PostDetailDTO {
+  private async toDetailDTO(post: PostDB): Promise<PostDetailDTO> {
+    let contentHtml = post.contentHtml
+    let readMinutes = 1
+    let toc: TocItem[] = []
+
+    if (this.markdownRenderer) {
+      try {
+        const rendered = await this.markdownRenderer.render(post.content, { extractToc: true })
+        contentHtml = rendered.html
+        readMinutes = rendered.readMinutes
+        toc = rendered.toc
+      } catch {
+      }
+    }
+
     return {
       id: post.id,
       slug: post.slug,
@@ -247,7 +316,10 @@ export class PostService {
       location: post.location,
       type: post.type,
       published: post.published,
-      contentHtml: post.contentHtml,
+      content: post.content,
+      contentHtml,
+      readMinutes,
+      toc,
     }
   }
 }

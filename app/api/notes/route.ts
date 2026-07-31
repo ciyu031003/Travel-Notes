@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server'
-import { getAllRepos } from '@/lib/repos'
-import { getPostService } from '@/lib/container'
+import { getPostService, getRepoService } from '@/lib/container'
 
 export async function GET() {
   try {
     const postService = getPostService()
-    const [blogPosts, repos, mindmaps] = await Promise.all([
+    const repoService = getRepoService()
+    const [blogPosts, repoMetas, mindmaps] = await Promise.all([
       postService.getPostsHybrid('tech/blog'),
-      Promise.resolve(getAllRepos()),
+      repoService.getAllRepos(),
       postService.getPostsHybrid('tech/mindmaps'),
     ])
 
     return NextResponse.json({
       blogCount: blogPosts.length,
-      repoCount: repos.length,
+      repoCount: repoMetas.length,
       mindmapCount: mindmaps.length,
       recentPosts: blogPosts.slice(0, 4),
     })

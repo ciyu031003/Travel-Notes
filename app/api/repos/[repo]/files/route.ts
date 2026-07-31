@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getFileContent } from '@/lib/repos'
+import { getRepoService } from '@/lib/container'
 
 export async function GET(
   request: Request,
@@ -14,13 +14,14 @@ export async function GET(
       return NextResponse.json({ error: 'File path is required' }, { status: 400 })
     }
 
-    const content = getFileContent(repo, filePath)
+    const repoService = getRepoService()
+    const result = await repoService.getRepoFile(repo, filePath)
 
-    if (content === null) {
+    if (result === null) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ content })
+    return NextResponse.json({ content: result.content })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch file' }, { status: 500 })
   }

@@ -1,60 +1,32 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Save, MapPin, BookOpen, BrainCircuit, Code2, Calendar, Tag, Image, FileText, Eye, Trash2, Upload, X, GripVertical, ChevronUp, ChevronDown, ZoomIn, XCircle, ImageOff, Home, Video, Play } from 'lucide-react'
+import { XCircle, Video } from 'lucide-react'
 import TravelPreviewModal from '@/components/TravelPreviewModal'
+import PostEditorHeader from '@/components/admin/editor/PostEditorHeader'
+import PostTitleInput from '@/components/admin/editor/PostTitleInput'
+import PostMetaPanel from '@/components/admin/editor/PostMetaPanel'
+import ImageUploader from '@/components/admin/editor/ImageUploader'
+import VideoUploader, { VideoItem } from '@/components/admin/editor/VideoUploader'
+import MarkdownEditor from '@/components/admin/editor/MarkdownEditor'
+import DocumentImporter, { ImportedDocument } from '@/components/admin/editor/DocumentImporter'
+import { usePostForm, PostFormData } from '@/components/admin/editor/hooks/usePostForm'
 
-const typeIcons: Record<string, any> = {
-  travel: MapPin,
-  blog: BookOpen,
-  mindmap: BrainCircuit,
-  repo: Code2,
-}
-
-const typeLabels: Record<string, string> = {
-  travel: '旅行记录',
-  blog: '技术博客',
-  mindmap: '思维导图',
-  repo: '代码仓库',
-}
+type TabMode = 'manual' | 'import'
 
 export default function AdminEditPage() {
   const router = useRouter()
   const params = useParams()
-  const isNew = !params.id || params.id === 'new'
+  const idParam = Array.isArray(params.id) ? params.id[0] : params.id
+  const isNew = !idParam || idParam === 'new'
 
-  const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    content: '',
-    date: new Date().toISOString().split('T')[0],
-    cover: '',
-    images: [] as string[],
-    videos: [] as Array<{ url: string; thumbnail?: string; duration?: number }>,
-    tags: '',
-    location: '',
-    type: 'travel',
-    summary: '',
-    published: true,
-  })
+  const { formData, setFormData, setField } = usePostForm()
+
+  const [tabMode, setTabMode] = useState<TabMode>('manual')
   const [preview, setPreview] = useState(false)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [videoPreview, setVideoPreview] = useState<string | null>(null)
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
-
-  const handleImageError = (imgUrl: string) => {
-    setImageErrors(prev => new Set(prev).add(imgUrl))
-  }
   const [loading, setLoading] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [videoUploading, setVideoUploading] = useState(false)
-  const [dragOver, setDragOver] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const videoFileInputRef = useRef<HTMLInputElement>(null)
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
-  const [videoDraggedIndex, setVideoDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (!isNew) {
@@ -64,17 +36,17 @@ export default function AdminEditPage() {
 
   const fetchPost = async () => {
     try {
-      const res = await fetch(`/api/admin/posts/${params.id}`)
+      const res = await fetch(`/api/admin/posts/${idParam}`)
       if (res.ok) {
         const data = await res.json()
         const post = data.data?.post
-        const videosData = Array.isArray(post.videos) 
+        const videosData: VideoItem[] = Array.isArray(post.videos)
           ? post.videos.map((v: any) => {
               if (typeof v === 'string') return { url: v }
               return { url: v.url, thumbnail: v.thumbnail, duration: v.duration }
             })
           : []
-        
+
         setFormData({
           title: post.title,
           slug: post.slug,
@@ -83,7 +55,11 @@ export default function AdminEditPage() {
           cover: post.cover || '',
           images: post.images || [],
           videos: videosData,
-          tags: post.tags ? (Array.isArray(post.tags) ? post.tags.join(', ') : JSON.parse(post.tags).join(', ')) : '',
+          tags: post.tags
+            ? Array.isArray(post.tags)
+              ? post.tags.join(', ')
+              : JSON.parse(post.tags).join(', ')
+            : '',
           location: post.location || '',
           type: post.type,
           summary: post.summary || '',
@@ -97,7 +73,6 @@ export default function AdminEditPage() {
 
   const generateSlugFromTitle = (title: string): string => {
     const timestamp = Date.now().toString(36)
-
     const englishPart = title
       .toLowerCase()
       .replace(/[\u4e00-\u9fa5]/g, ' ')
@@ -110,8 +85,12 @@ export default function AdminEditPage() {
     if (englishPart && englishPart.length >= 2) {
       return `${englishPart}-${timestamp}`
     }
-
     return `post-${timestamp}`
+  }
+
+  const generateSlug = () => {
+    const slug = generateSlugFromTitle(formData.title)
+    setField('slug', slug)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,7 +99,7 @@ export default function AdminEditPage() {
 
     const tagsArray = formData.tags
       .split(',')
-      .map(t => t.trim())
+      .map((t) => t.trim())
       .filter(Boolean)
 
     const finalSlug = formData.slug || generateSlugFromTitle(formData.title)
@@ -149,7 +128,7 @@ export default function AdminEditPage() {
           body: JSON.stringify(payload),
         })
       } else {
-        res = await fetch(`/api/admin/posts/${params.id}`, {
+        res = await fetch(`/api/admin/posts/${idParam}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -170,800 +149,161 @@ export default function AdminEditPage() {
     }
   }
 
-  const generateSlug = () => {
-    const slug = generateSlugFromTitle(formData.title)
-    setFormData({ ...formData, slug })
+  const handleImageUploaded = (urls: string[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...urls],
+      cover: prev.cover || urls[0] || '',
+    }))
   }
 
-  const handleFileUpload = async (files: FileList | File[]) => {
-    const fileArray = Array.from(files)
-    if (fileArray.length === 0) return
-
-    setUploading(true)
-    try {
-      const formUpload = new FormData()
-      fileArray.forEach(file => {
-        formUpload.append('files', file)
-      })
-
-      if (!isNew && params.id) {
-        formUpload.append('postId', String(params.id))
-      }
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formUpload,
-      })
-
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || '上传失败')
-      }
-
-      const data = await res.json()
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...data.urls],
-        cover: prev.cover || data.urls[0] || '',
-      }))
-    } catch (error: any) {
-      alert(error.message || '图片上传失败')
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      handleFileUpload(files)
-    }
-  }, [])
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
-  }, [])
-
-  const removeImage = async (index: number) => {
+  const handleImageRemoved = (index: number) => {
     const imageUrl = formData.images[index]
     const newImages = formData.images.filter((_, i) => i !== index)
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       images: newImages,
-      cover: prev.cover === imageUrl ? (newImages[0] || '') : prev.cover,
+      cover: prev.cover === imageUrl ? newImages[0] || '' : prev.cover,
     }))
 
     if (imageUrl.startsWith('/api/images/')) {
-      try {
-        await fetch('/api/upload', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: imageUrl }),
-        })
-      } catch {
-        // ignore cleanup errors
-      }
+      fetch('/api/upload', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: imageUrl }),
+      }).catch(() => {})
     }
   }
 
-  const setAsCover = (index: number) => {
-    setFormData(prev => ({
+  const handleSetCover = (index: number) => {
+    setField('cover', formData.images[index] || '')
+  }
+
+  const handleVideoUploaded = (videos: VideoItem[]) => {
+    setFormData((prev) => ({
       ...prev,
-      cover: prev.images[index] || '',
+      videos: [...prev.videos, ...videos],
     }))
   }
 
-  const moveImage = (index: number, direction: 'up' | 'down') => {
-    const newImages = [...formData.images]
-    const targetIndex = direction === 'up' ? index - 1 : index + 1
-    if (targetIndex < 0 || targetIndex >= newImages.length) return
-    ;[newImages[index], newImages[targetIndex]] = [newImages[targetIndex], newImages[index]]
-    setFormData(prev => ({ ...prev, images: newImages }))
-  }
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index)
-  }
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null)
-  }
-
-  const handleDragOverImage = (e: React.DragEvent, index: number) => {
-    e.preventDefault()
-    if (draggedIndex === null || draggedIndex === index) return
-    const newImages = [...formData.images]
-    const [removed] = newImages.splice(draggedIndex, 1)
-    newImages.splice(index, 0, removed)
-    setFormData(prev => ({ ...prev, images: newImages }))
-    setDraggedIndex(index)
-  }
-
-  const handleVideoUpload = async (files: FileList | File[]) => {
-    const fileArray = Array.from(files)
-    if (fileArray.length === 0) return
-
-    setVideoUploading(true)
-    try {
-      const formUpload = new FormData()
-      fileArray.forEach(file => {
-        formUpload.append('files', file)
-      })
-
-      const res = await fetch('/api/admin/videos/upload', {
-        method: 'POST',
-        body: formUpload,
-      })
-
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || '视频上传失败')
-      }
-
-      const data = await res.json()
-      const newVideos = data.videos.map((v: any) => ({ url: v.url }))
-      setFormData(prev => ({
-        ...prev,
-        videos: [...prev.videos, ...newVideos],
-      }))
-    } catch (error: any) {
-      alert(error.message || '视频上传失败')
-    } finally {
-      setVideoUploading(false)
-      if (videoFileInputRef.current) {
-        videoFileInputRef.current.value = ''
-      }
-    }
-  }
-
-  const removeVideo = async (index: number) => {
+  const handleVideoRemoved = (index: number) => {
     const video = formData.videos[index]
     const newVideos = formData.videos.filter((_, i) => i !== index)
 
-    setFormData(prev => ({
-      ...prev,
-      videos: newVideos,
-    }))
+    setFormData((prev) => ({ ...prev, videos: newVideos }))
 
     if (video && video.url.startsWith('/uploads/videos/')) {
-      try {
-        await fetch('/api/admin/videos/upload', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: video.url }),
-        })
-      } catch {
-        // ignore cleanup errors
-      }
+      fetch('/api/admin/videos/upload', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: video.url }),
+      }).catch(() => {})
     }
   }
 
-  const moveVideo = (index: number, direction: 'up' | 'down') => {
-    const newVideos = [...formData.videos]
-    const targetIndex = direction === 'up' ? index - 1 : index + 1
-    if (targetIndex < 0 || targetIndex >= newVideos.length) return
-    ;[newVideos[index], newVideos[targetIndex]] = [newVideos[targetIndex], newVideos[index]]
-    setFormData(prev => ({ ...prev, videos: newVideos }))
-  }
-
-  const handleVideoDragStart = (index: number) => {
-    setVideoDraggedIndex(index)
-  }
-
-  const handleVideoDragEnd = () => {
-    setVideoDraggedIndex(null)
-  }
-
-  const handleDragOverVideo = (e: React.DragEvent, index: number) => {
-    e.preventDefault()
-    if (videoDraggedIndex === null || videoDraggedIndex === index) return
-    const newVideos = [...formData.videos]
-    const [removed] = newVideos.splice(videoDraggedIndex, 1)
-    newVideos.splice(index, 0, removed)
-    setFormData(prev => ({ ...prev, videos: newVideos }))
-    setVideoDraggedIndex(index)
+  const handleImported = (doc: ImportedDocument) => {
+    const patch: Partial<PostFormData> = {
+      title: doc.title,
+      slug: doc.slug,
+      content: doc.content,
+      date: doc.date || formData.date,
+      summary: doc.description || '',
+      cover: doc.cover || '',
+      tags: Array.isArray(doc.tags) ? doc.tags.join(', ') : '',
+    }
+    setFormData((prev) => ({ ...prev, ...patch }))
+    setTabMode('manual')
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                返回
-              </Link>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {isNew ? '新建文章' : '编辑文章'}
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                target="_blank"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                <Home className="w-4 h-4" />
-                回到首页
-              </Link>
-              <button
-                type="button"
-                onClick={() => setPreview(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                <Eye className="w-4 h-4" />
-                预览
-              </button>
-              <button
-                type="submit"
-                form="post-form"
-                disabled={loading}
-                className="inline-flex items-center gap-2 px-5 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                {loading ? '保存中...' : '保存'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PostEditorHeader
+        isNew={isNew}
+        onPreview={() => setPreview(true)}
+        loading={loading}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form id="post-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">标题</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                onBlur={() => { if (!formData.slug) generateSlug() }}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="请输入文章标题"
-                required
+        <div className="mb-6 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setTabMode('manual')}
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+              tabMode === 'manual'
+                ? 'bg-primary-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            手动编辑
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabMode('import')}
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+              tabMode === 'import'
+                ? 'bg-primary-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            文档导入发布
+          </button>
+        </div>
+
+        {tabMode === 'manual' ? (
+          <form id="post-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <PostTitleInput
+                title={formData.title}
+                slug={formData.slug}
+                date={formData.date}
+                onChange={(field, value) => setField(field as keyof PostFormData, value)}
+                onGenerateSlug={generateSlug}
               />
-            </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <FileText className="w-4 h-4 inline mr-2" />
-                正文内容 (支持 Markdown)
-              </label>
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                rows={20}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="在这里书写你的 Markdown 内容..."
-                required
+              <MarkdownEditor
+                content={formData.content}
+                onChange={(value) => setField('content', value)}
               />
-            </div>
-
-            {formData.type === 'travel' && (
-              <>
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <Image className="w-4 h-4 inline mr-2" />
-                    旅行照片管理
-                  </label>
-                  <span className="text-xs text-gray-500">{formData.images.length} 张照片</span>
-                </div>
-
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-                    dragOver
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleFileUpload(e.target.files)
-                      }
-                    }}
-                  />
-                  {uploading ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-gray-500">上传中...</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <Upload className="w-10 h-10 text-gray-400" />
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        点击或拖拽图片到此处上传
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        支持多张图片同时上传，JPG / PNG / GIF / WEBP
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {formData.images.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {formData.images.map((img, index) => (
-                      <div
-                        key={`${img}-${index}`}
-                        draggable
-                        onDragStart={() => handleDragStart(index)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleDragOverImage(e, index)}
-                        className={`group relative h-32 rounded-lg overflow-hidden border-2 transition-all bg-gradient-to-br from-gray-100 to-gray-200 ${
-                          formData.cover === img
-                            ? 'border-sky-500 ring-2 ring-sky-500/30'
-                            : 'border-transparent'
-                        } ${draggedIndex === index ? 'opacity-50' : ''} cursor-move`}
-                      >
-                        {img && !imageErrors.has(img) && (
-                          <img
-                            src={img}
-                            alt={`图片 ${index + 1}`}
-                            className="w-full h-full object-cover cursor-pointer"
-                            onClick={() => setImagePreview(img)}
-                            onError={() => handleImageError(img)}
-                          />
-                        )}
-                        {imageErrors.has(img) && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 text-red-500">
-                            <ImageOff className="w-8 h-8 mb-1" />
-                            <span className="text-xs">加载失败</span>
-                          </div>
-                        )}
-
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <div className="flex gap-1">
-                            <button
-                              type="button"
-                              onClick={() => setImagePreview(img)}
-                              className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white transition-colors"
-                              title="预览"
-                            >
-                              <ZoomIn className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setAsCover(index)}
-                              className={`px-2 py-1 text-xs rounded transition-colors ${
-                                formData.cover === img
-                                  ? 'bg-primary-500 text-white'
-                                  : 'bg-white/90 text-gray-700 hover:bg-white'
-                              }`}
-                              title="设为封面"
-                            >
-                              {formData.cover === img ? '封面' : '封面'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveImage(index, 'up')}
-                              disabled={index === 0}
-                              className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white disabled:opacity-30"
-                              title="上移"
-                            >
-                              <ChevronUp className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveImage(index, 'down')}
-                              disabled={index === formData.images.length - 1}
-                              className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white disabled:opacity-30"
-                              title="下移"
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="p-1.5 bg-red-500 rounded text-white hover:bg-red-600 transition-colors"
-                              title="删除"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <Video className="w-4 h-4 inline mr-2" />
-                    旅行视频管理
-                  </label>
-                  <span className="text-xs text-gray-500">{formData.videos.length} 个视频</span>
-                </div>
-
-                <div
-                  onClick={() => videoFileInputRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-                    videoUploading
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                  }`}
-                >
-                  <input
-                    ref={videoFileInputRef}
-                    type="file"
-                    multiple
-                    accept="video/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleVideoUpload(e.target.files)
-                      }
-                    }}
-                  />
-                  {videoUploading ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-gray-500">视频上传中...</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <Upload className="w-10 h-10 text-gray-400" />
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        点击上传视频文件
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        支持 MP4 / WebM / MOV 等格式，单个视频最大 500MB
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {formData.videos.length > 0 && (
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {formData.videos.map((video, index) => (
-                      <div
-                        key={`video-${index}`}
-                        draggable
-                        onDragStart={() => handleVideoDragStart(index)}
-                        onDragEnd={handleVideoDragEnd}
-                        onDragOver={(e) => handleDragOverVideo(e, index)}
-                        className={`group relative rounded-lg overflow-hidden border-2 transition-all bg-gray-900 ${
-                          videoDraggedIndex === index ? 'opacity-50' : ''
-                        } cursor-move`}
-                      >
-                        <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 relative">
-                          <video
-                            src={video.url.startsWith('/') ? video.url : video.url}
-                            poster={video.thumbnail}
-                            className="w-full h-full object-cover"
-                            muted
-                            loop
-                            playsInline
-                            preload="metadata"
-                            onMouseEnter={(e) => { const v = e.target as HTMLVideoElement; v.play().catch(() => {}) }}
-                            onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0 }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                              <Play className="w-5 h-5 text-white ml-0.5" />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="absolute top-2 right-2 flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => moveVideo(index, 'up')}
-                            disabled={index === 0}
-                            className="p-1.5 bg-white/80 rounded text-gray-700 hover:bg-white disabled:opacity-30 opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="上移"
-                          >
-                            <ChevronUp className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveVideo(index, 'down')}
-                            disabled={index === formData.videos.length - 1}
-                            className="p-1.5 bg-white/80 rounded text-gray-700 hover:bg-white disabled:opacity-30 opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="下移"
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeVideo(index)}
-                            className="p-1.5 bg-red-500 rounded text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="删除"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                          <p className="text-xs text-white/80 truncate">
-                            {video.url.split('/').pop() || `视频 ${index + 1}`}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <Video className="w-4 h-4 inline mr-2" />
-                  旅行视频管理
-                </label>
-                  <span className="text-xs text-gray-500">{formData.videos.length} 个视频</span>
-                </div>
-
-                <div
-                  onClick={() => videoFileInputRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-                    videoUploading
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                  }`}
-                >
-                  <input
-                    ref={videoFileInputRef}
-                    type="file"
-                    multiple
-                    accept="video/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleVideoUpload(e.target.files)
-                      }
-                    }}
-                  />
-                  {videoUploading ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-gray-500">视频上传中...</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <Video className="w-10 h-10 text-gray-400" />
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        点击上传视频
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        支持 MP4 / WebM / MOV 等格式，单个文件不超过 500MB
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {formData.videos.length > 0 && (
-                  <div className="mt-4 space-y-3">
-                    {formData.videos.map((video, index) => (
-                      <div
-                        key={`${video.url}-${index}`}
-                        draggable
-                        onDragStart={() => handleVideoDragStart(index)}
-                        onDragEnd={handleVideoDragEnd}
-                        onDragOver={(e) => handleDragOverVideo(e, index)}
-                        className={`group flex items-center gap-3 p-3 border rounded-lg transition-all bg-gray-50 dark:bg-gray-700/50 ${
-                          videoDraggedIndex === index ? 'opacity-50 border-primary-500' : 'border-gray-200 dark:border-gray-600'
-                        } cursor-move`}
-                      >
-                        <div className="flex-shrink-0 w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center">
-                          <Video className="w-6 h-6 text-gray-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
-                            {video.url.split('/').pop()}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            视频 {index + 1}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setVideoPreview(video.url)}
-                            className="p-1.5 bg-white dark:bg-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
-                            title="预览"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveVideo(index, 'up')}
-                            disabled={index === 0}
-                            className="p-1.5 bg-white dark:bg-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500 disabled:opacity-30 transition-colors"
-                            title="上移"
-                          >
-                            <ChevronUp className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveVideo(index, 'down')}
-                            disabled={index === formData.videos.length - 1}
-                            className="p-1.5 bg-white dark:bg-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500 disabled:opacity-30 transition-colors"
-                            title="下移"
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeVideo(index)}
-                            className="p-1.5 bg-red-500 rounded text-white hover:bg-red-600 transition-colors"
-                            title="删除"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              </>
-            )}
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">分类</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(typeLabels).map(([key, label]) => {
-                    const Icon = typeIcons[key]
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, type: key })}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                          formData.type === key
-                            ? 'bg-primary-500 text-white'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-2" />
-                  日期
-                </label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Slug</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="url-slug"
-                  />
-                  <button
-                    type="button"
-                    onClick={generateSlug}
-                    className="px-3 py-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
-                  >
-                    生成
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Tag className="w-4 h-4 inline mr-2" />
-                  标签 (用逗号分隔)
-                </label>
-                <input
-                  type="text"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="标签1, 标签2, 标签3"
-                />
-              </div>
 
               {formData.type === 'travel' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <MapPin className="w-4 h-4 inline mr-2" />
-                    地点
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="例如：广东广州"
+                <>
+                  <ImageUploader
+                    images={formData.images}
+                    postId={!isNew && idParam ? idParam : undefined}
+                    onUploaded={handleImageUploaded}
+                    onRemoved={handleImageRemoved}
+                    onReordered={(imgs) => setField('images', imgs)}
+                    onSetCover={handleSetCover}
+                    cover={formData.cover}
                   />
-                </div>
+                  <VideoUploader
+                    videos={formData.videos}
+                    onUploaded={handleVideoUploaded}
+                    onRemoved={handleVideoRemoved}
+                    onReordered={(vids) => setField('videos', vids)}
+                  />
+                </>
               )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Image className="w-4 h-4 inline mr-2" />
-                  封面图 URL (可选，优先使用上传图片的第一张)
-                </label>
-                <input
-                  type="text"
-                  value={formData.cover}
-                  onChange={(e) => setFormData({ ...formData, cover: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="https://example.com/image.jpg 或留空使用上传图片"
-                />
-                {formData.images.length > 0 && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    当前封面: {formData.cover || formData.images[0]}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">摘要</label>
-                <textarea
-                  value={formData.summary}
-                  onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="简短描述这篇文章..."
-                />
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="published"
-                  checked={formData.published}
-                  onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                  className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
-                />
-                <label htmlFor="published" className="text-sm text-gray-700 dark:text-gray-300">
-                  立即发布
-                </label>
-              </div>
             </div>
-          </div>
-        </form>
+
+            <div className="space-y-6">
+              <PostMetaPanel
+                type={formData.type}
+                tags={formData.tags}
+                location={formData.location}
+                cover={formData.cover}
+                summary={formData.summary}
+                published={formData.published}
+                imagesCount={formData.images.length}
+                videosCount={formData.videos.length}
+                onChange={(field, value) => setField(field as keyof PostFormData, value)}
+              />
+            </div>
+          </form>
+        ) : (
+          <DocumentImporter onImported={handleImported} />
+        )}
       </main>
 
       <TravelPreviewModal
@@ -972,22 +312,23 @@ export default function AdminEditPage() {
         formData={formData}
       />
 
-      {imagePreview && (
+      {videoPreview && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={() => setImagePreview(null)}
+          onClick={() => setVideoPreview(null)}
         >
           <button
             type="button"
-            onClick={() => setImagePreview(null)}
+            onClick={() => setVideoPreview(null)}
             className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
           >
             <XCircle className="w-8 h-8" />
           </button>
-          <img
-            src={imagePreview}
-            alt="预览"
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+          <video
+            src={videoPreview}
+            className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl"
+            controls
+            autoPlay
             onClick={(e) => e.stopPropagation()}
           />
         </div>

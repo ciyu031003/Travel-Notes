@@ -11,6 +11,10 @@ import {
   getPostsByLocation,
   getPostCountByType,
   getDistinctLocations,
+  getAdjacentPosts,
+  getPostsByTag,
+  getAllTags,
+  searchPosts,
   type VideoInfo,
   type PostMetaDB,
   type PostDB,
@@ -74,6 +78,10 @@ export interface PostRepository {
   delete(id: number): Promise<void>
   countByType(type: string): Promise<number>
   getDistinctLocations(): Promise<string[]>
+  findAdjacent(type: string, date: string): Promise<{ prev: PostMetaDB | null; next: PostMetaDB | null }>
+  findByTag(tag: string, type?: string): Promise<PostMetaDB[]>
+  getAllTags(type?: string): Promise<Array<{ name: string; count: number }>>
+  search(keyword: string, type?: string): Promise<PostMetaDB[]>
 }
 
 export class PrismaPostRepository implements PostRepository {
@@ -141,6 +149,25 @@ export class PrismaPostRepository implements PostRepository {
 
   async getDistinctLocations(): Promise<string[]> {
     return getDistinctLocations()
+  }
+
+  async findAdjacent(
+    type: string,
+    date: string
+  ): Promise<{ prev: PostMetaDB | null; next: PostMetaDB | null }> {
+    return getAdjacentPosts(type, date)
+  }
+
+  async findByTag(tag: string, type?: string): Promise<PostMetaDB[]> {
+    return getPostsByTag(tag, type)
+  }
+
+  async getAllTags(type?: string): Promise<Array<{ name: string; count: number }>> {
+    return getAllTags(type)
+  }
+
+  async search(keyword: string, type?: string): Promise<PostMetaDB[]> {
+    return searchPosts(keyword, type)
   }
 
   private mapToMeta(post: any): PostMetaDB {

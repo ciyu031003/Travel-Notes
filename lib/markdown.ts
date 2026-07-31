@@ -1,4 +1,4 @@
-﻿import fs from 'fs'
+import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import { remark } from 'remark'
@@ -17,6 +17,7 @@ export interface PostMeta {
 }
 
 export interface Post extends PostMeta {
+  content: string
   contentHtml: string
 }
 
@@ -78,6 +79,7 @@ export async function getPostBySlug(directory: string, slug: string): Promise<Po
     tags: data.tags || [],
     category: data.category,
     location: data.location,
+    content,
     contentHtml,
   }
 }

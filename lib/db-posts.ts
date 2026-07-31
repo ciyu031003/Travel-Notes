@@ -27,6 +27,7 @@ export interface PostMetaDB {
 }
 
 export interface PostDB extends PostMetaDB {
+  content: string
   contentHtml: string
 }
 
@@ -223,6 +224,7 @@ export async function getDBPostBySlug(type: string, slug: string): Promise<PostD
 
     if (!post) return null
 
+    // 待后续全量迁移到 MarkdownRenderer（当前保留避免破坏混合内容获取回退链路）
     const processedContent = await remark()
       .use(remarkGfm)
       .use(remarkHtml, { sanitize: false })
@@ -241,6 +243,7 @@ export async function getDBPostBySlug(type: string, slug: string): Promise<PostD
       location: post.location || undefined,
       type: post.type as string,
       published: post.published,
+      content: post.content || '',
       contentHtml: processedContent.toString(),
     }
   } catch (error: any) {
@@ -257,6 +260,7 @@ export async function getDBPostById(id: number): Promise<PostDB | null> {
 
     if (!post) return null
 
+    // 待后续全量迁移到 MarkdownRenderer（当前保留避免破坏混合内容获取回退链路）
     const processedContent = await remark()
       .use(remarkGfm)
       .use(remarkHtml, { sanitize: false })
@@ -275,6 +279,7 @@ export async function getDBPostById(id: number): Promise<PostDB | null> {
       location: post.location || undefined,
       type: post.type as string,
       published: post.published,
+      content: post.content || '',
       contentHtml: processedContent.toString(),
     }
   } catch (error: any) {
@@ -407,6 +412,127 @@ export async function getDistinctLocations(): Promise<string[]> {
     return posts.map((p: any) => p.location).filter(Boolean)
   } catch (error: any) {
     console.error('[getDistinctLocations] Database query failed:', error?.message || error)
+    return []
+  }
+}
+
+export async function getAdjacentPosts(
+  type: string,
+  date: string
+): Promise<{ prev: PostMetaDB | null; next: PostMetaDB | null }> {
+  try {
+    const dateObj = ensureDate(date)
+    const [prevPost, nextPost] = await Promise.all([
+      prisma.post.findFirst({
+        where: {
+          type: type as any,
+          published: true,
+          date: { lt: dateObj },
+        },
+        orderBy: { date: 'desc' },
+        take: 1,
+        select: metaSelect,
+      }),
+      prisma.post.findFirst({
+        where: {
+          type: type as any,
+          published: true,
+          date: { gt: dateObj },
+        },
+        orderBy: { date: 'asc' },
+        take: 1,
+        select: metaSelect,
+      }),
+    ])
+
+    return {
+      prev: prevPost ? mapPostMeta(prevPost) : null,
+      next: nextPost ? mapPostMeta(nextPost) : null,
+    }
+  } catch (error: any) {
+    console.error('[getAdjacentPosts] Database query failed:', error?.message || error)
+    return { prev: null, next: null }
+  }
+}
+
+export async function getPostsByTag(tag: string, type?: string): Promise<PostMetaDB[]> {
+  try {
+    const where: any = {
+      published: true,
+      tags: { contains: tag },
+    }
+    if (type) {
+      where.type = type as any
+    }
+    const posts = await prisma.post.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      select: metaSelect,
+    })
+    const mapped = posts.map(mapPostMeta)
+    return mapped.filter((p) => Array.isArray(p.tags) && p.tags.includes(tag))
+  } catch (error: any) {
+    console.error('[getPostsByTag] Database query failed:', error?.message || error)
+    return []
+  }
+}
+
+export async function getAllTags(type?: string): Promise<Array<{ name: string; count: number }>> {
+  try {
+    const where: any = { published: true }
+    if (type) {
+      where.type = type as any
+    }
+    const posts = await prisma.post.findMany({
+      where,
+      select: { tags: true },
+    })
+    const counts = new Map<string, number>()
+    for (const post of posts) {
+      const tags = parseTags(post.tags)
+      for (const t of tags) {
+        counts.set(t, (counts.get(t) || 0) + 1)
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  } catch (error: any) {
+    console.error('[getAllTags] Database query failed:', error?.message || error)
+    return []
+  }
+}
+
+export async function searchPosts(keyword: string, type?: string): Promise<PostMetaDB[]> {
+  try {
+    const where: any = {
+      published: true,
+      OR: [
+        { title: { contains: keyword } },
+        { summary: { contains: keyword } },
+        { content: { contains: keyword } },
+      ],
+    }
+    if (type) {
+      where.type = type as any
+    }
+    const posts = await prisma.post.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      take: 50,
+      select: metaSelect,
+    })
+    const mapped = posts.map(mapPostMeta)
+    const kw = keyword.toLowerCase()
+    mapped.sort((a, b) => {
+      const aTitle = (a.title || '').toLowerCase().includes(kw) ? 1 : 0
+      const bTitle = (b.title || '').toLowerCase().includes(kw) ? 1 : 0
+      if (aTitle !== bTitle) return bTitle - aTitle
+      return new Date(b.date).getTime() - new Date(a.date).getTime()
+    })
+    return mapped
+  } catch (error: any) {
+    console.error('[searchPosts] Database query failed:', error?.message || error)
     return []
   }
 }

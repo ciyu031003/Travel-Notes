@@ -14,3 +14,14 @@ npm-debug.log
 # 部署脚本产生的日志和备份
 logs/
 .deploy-backup/
+
+# 本地数据库部署文件（含数据、密码、本地路径，禁止提交）
+# 注：prisma/schema.prisma 和 migrate-db.cjs 属于建表脚本，允许上传
+mysql-data/
+setup-mysql.bat
+setup-mysql.ps1
+setup.sql
+start-mysql.bat
+# 本地数据导入脚本（含本地绝对路径和个人照片目录）
+scripts/batch-import.js
+scripts/import-images-to-db.js

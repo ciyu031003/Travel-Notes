@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getRepoFileTree, getRepoReadme } from '@/lib/repos'
+import { getRepoService } from '@/lib/container'
 
 export async function GET(
   request: Request,
@@ -7,14 +7,18 @@ export async function GET(
 ) {
   try {
     const { repo } = await params
-    const tree = getRepoFileTree(repo)
-    const readme = getRepoReadme(repo)
+    const repoService = getRepoService()
+
+    const [tree, fileResult] = await Promise.all([
+      repoService.getRepoFiles(repo),
+      repoService.getRepoFile(repo, 'README.md'),
+    ])
 
     if (!tree) {
       return NextResponse.json({ error: 'Repo not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ tree, readme })
+    return NextResponse.json({ tree, readme: fileResult?.content ?? null })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch repo' }, { status: 500 })
   }

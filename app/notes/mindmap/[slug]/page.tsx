@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import { Calendar, ArrowLeft, FileText } from 'lucide-react'
 import { getPostService } from '@/lib/container'
 import { formatDate } from '@/lib/utils'
-import { Calendar, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import MermaidRenderer from '@/components/mdx/MermaidRenderer'
+import ReadingTime from '@/components/blog/ReadingTime'
+import MindmapAutoSwitch from '@/components/mindmap/MindmapAutoSwitch'
+import MindmapHint from '@/components/mindmap/MindmapHint'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,7 +37,7 @@ export default async function MindmapDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="container-custom">
-      <article className="max-w-4xl mx-auto">
+      <article className="max-w-6xl mx-auto">
         <Link
           href="/notes/mindmap"
           className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary-500 mb-8 transition-colors"
@@ -45,21 +47,52 @@ export default async function MindmapDetailPage({ params }: { params: Promise<{ 
         </Link>
 
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h1>
-          <div className="flex items-center gap-4 text-gray-500 text-sm">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+            {post.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400 text-sm">
+            <ReadingTime minutes={post.readMinutes} />
             <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-3.5 h-3.5" />
               {formatDate(post.date)}
             </span>
           </div>
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {post.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 bg-purple-50 dark:bg-purple-900/20 text-purple-500 dark:text-purple-300 text-xs rounded-full"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
         </header>
 
-        <div
-          className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-primary-500"
-          dangerouslySetInnerHTML={{ __html: post.contentHtml }}
-        />
-        
-        <MermaidRenderer />
+        {/* 思维导图主体：默认走 markmap 渲染器 */}
+        <div className="mb-6">
+          <MindmapAutoSwitch
+            content={post.content}
+            frontMatter={{ renderer: 'markmap' }}
+            title={post.title}
+          />
+        </div>
+
+        {/* 操作提示 */}
+        <MindmapHint />
+
+        {/* 可选：原文 Markdown（折叠展开） */}
+        <details className="mt-8 group">
+          <summary className="cursor-pointer text-sm text-gray-500 hover:text-purple-500 flex items-center gap-2 transition-colors">
+            <FileText className="w-4 h-4" />
+            查看原文 Markdown
+          </summary>
+          <pre className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl overflow-x-auto text-sm text-gray-700 dark:text-gray-300">
+            {post.content}
+          </pre>
+        </details>
       </article>
     </div>
   )

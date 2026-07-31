@@ -1,14 +1,24 @@
 import { PrismaPostRepository } from './repositories/post-repository'
 import { PrismaUserRepository } from './repositories/user-repository'
+import { PrismaImageRepository } from './repositories/image-repository'
+import { PrismaRepoRepository } from './repositories/repo-repository'
 import { PostService } from './services/post-service'
 import { AuthService } from './services/auth-service'
 import { SiteService } from './services/site-service'
+import { ImageService } from './services/image-service'
+import { RepoService } from './services/repo-service'
+import { DocumentImportService } from './services/document-import-service'
+import { UnifiedMarkdownRenderer } from './infrastructure/markdown'
 import { MemoryCacheService } from './infrastructure/cache'
 import { tokenService } from './services/token-service'
 
 let postServiceInstance: PostService | null = null
 let authServiceInstance: AuthService | null = null
 let siteServiceInstance: SiteService | null = null
+let imageServiceInstance: ImageService | null = null
+let repoServiceInstance: RepoService | null = null
+let markdownRendererInstance: UnifiedMarkdownRenderer | null = null
+let documentImportServiceInstance: DocumentImportService | null = null
 let cacheServiceInstance: MemoryCacheService | null = null
 
 function getCacheService(): MemoryCacheService {
@@ -22,7 +32,8 @@ export function getPostService(): PostService {
   if (!postServiceInstance) {
     const postRepo = new PrismaPostRepository()
     const cache = getCacheService()
-    postServiceInstance = new PostService(postRepo, cache)
+    const markdownRenderer = getMarkdownRenderer()
+    postServiceInstance = new PostService(postRepo, cache, markdownRenderer)
   }
   return postServiceInstance
 }
@@ -44,9 +55,47 @@ export function getSiteService(): SiteService {
   return siteServiceInstance
 }
 
+export function getImageService(): ImageService {
+  if (!imageServiceInstance) {
+    const imgRepo = new PrismaImageRepository()
+    const postRepo = new PrismaPostRepository()
+    const cache = getCacheService()
+    imageServiceInstance = new ImageService(imgRepo, postRepo)
+  }
+  return imageServiceInstance
+}
+
+export function getRepoService(): RepoService {
+  if (!repoServiceInstance) {
+    const repoRepo = new PrismaRepoRepository()
+    const cache = getCacheService()
+    repoServiceInstance = new RepoService(repoRepo, cache)
+  }
+  return repoServiceInstance
+}
+
+export function getMarkdownRenderer(): UnifiedMarkdownRenderer {
+  if (!markdownRendererInstance) {
+    markdownRendererInstance = new UnifiedMarkdownRenderer()
+  }
+  return markdownRendererInstance
+}
+
+export function getDocumentImportService(): DocumentImportService {
+  if (!documentImportServiceInstance) {
+    const renderer = getMarkdownRenderer()
+    documentImportServiceInstance = new DocumentImportService(renderer)
+  }
+  return documentImportServiceInstance
+}
+
 export function resetServices(): void {
   postServiceInstance = null
   authServiceInstance = null
   siteServiceInstance = null
+  imageServiceInstance = null
+  repoServiceInstance = null
+  markdownRendererInstance = null
+  documentImportServiceInstance = null
   cacheServiceInstance = null
 }
