@@ -12,6 +12,8 @@ const PUBLIC_PATHS = [
   '/forgot-password',
   '/album',
   '/travel',
+  '/notes',
+  '/search',
   '/api/login',
   '/api/check-auth',
   '/api/logout',
@@ -27,6 +29,10 @@ const PUBLIC_PATHS = [
   '/api/notes',
   '/api/danmaku',
   '/api/repos',
+  '/api/search',
+  '/api/tags',
+  '/api/blog',
+  '/api/stats',
   '/uploads',
   '/_next',
 ]
@@ -45,7 +51,8 @@ async function verifyJWT(token: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
+  // 首页及公开前缀路径直接放行（首页需精确匹配，不能用 startsWith('/')）
+  if (pathname === '/' || PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next()
   }
 

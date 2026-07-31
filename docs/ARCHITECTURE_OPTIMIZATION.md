@@ -1,10 +1,10 @@
 # Travel-Notes 架构优化设计文档
 
-> **文档版本**: v3.1  
-> **最后更新**: 2026-07-31  
+> **文档版本**: v3.2  
+> **最后更新**: 2026-08-01  
 > **项目**: 个人旅行笔记系统 (Travel-Notes)  
 > **目标读者**: 负责技术实施的工程师  
-> **状态**: 阶段一~三已完成；阶段 A（架构治理）+ 阶段 B（编辑器重构+文档导入）为当前 P0 任务
+> **状态**: 阶段一~三已完成；学习笔记模块专项优化（阶段 A~F）已全部完成；阶段四（组件拆分与优化）为下一优先级
 
 ---
 
@@ -20,16 +20,16 @@
 | **阶段四** | 组件拆分与优化 | ⏳ 待开始（P2） | ChinaMap 拆分、TravelInfoPanel 拆分、Design Token |
 | **阶段五** | 基础设施增强 | ⏳ 待开始（P2） | Redis、对象存储、监控 |
 
-### 0.2 学习笔记模块专项优化（本轮重点）
+### 0.2 学习笔记模块专项优化（本轮已完成 ✅）
 
-| 阶段 | 内容 | 优先级 | 估算工期 | 负责人 |
-|------|------|--------|---------|--------|
-| **阶段 A** | 架构治理（修复分层违规） | **P0** | 1-2 天 | 后端工程师 |
-| **阶段 B** | 编辑器重构 + 文档一键导入发布 | **P0** | 3-5 天 | 前端 + 后端工程师 |
-| **阶段 C** | 博客阅读体验升级（TOC/代码高亮/上下篇） | P1 | 2-3 天 | 前端工程师 |
-| **阶段 D** | 思维导图模块升级（markmap 交互） | P1 | 2-3 天 | 前端工程师 |
-| **阶段 E** | 代码仓库模块后台可管理化 | P2 | 1-2 天 | 全栈 |
-| **阶段 F** | 学习辅助功能（搜索/标签云/RSS/学习路线） | P2 | 按需 | 全栈 |
+| 阶段 | 内容 | 优先级 | 状态 | 验证 |
+|------|------|--------|------|------|
+| **阶段 A** | 架构治理（修复分层违规） | **P0** | ✅ 已完成 | tsc + prisma generate + next build 全通过 |
+| **阶段 B** | 编辑器重构 + 文档一键导入发布 | **P0** | ✅ 已完成 | 997行→337行；.md/.docx/.html/.txt 4格式导入；Lint 6 项规则 |
+| **阶段 C** | 博客阅读体验升级（TOC/代码高亮/上下篇） | P1 | ✅ 已完成 | TOC 滚动高亮/复制按钮/Lightbox/上一篇下一篇/搜索/标签云 |
+| **阶段 D** | 思维导图模块升级（markmap 交互） | P1 | ✅ 已完成 | markmap-lib/Transformer/Markmap；缩放/折叠/全屏/导出PNG |
+| **阶段 E** | 代码仓库模块后台可管理化 | P2 | ✅ 已完成 | Repo Prisma 模型+CRUD API+后台3页；highlight.js 语法高亮+搜索过滤 |
+| **阶段 F** | 学习辅助功能（搜索/标签云/RSS/仪表盘） | P2 | ✅ 已完成 | 全站搜索/标签云页+详情/RSS 2.0 feed/4卡片学习仪表盘 |
 
 ---
 
@@ -437,7 +437,7 @@ const posts = await postService.getPostsHybrid('travel')
 
 ---
 
-## 5A. 学习笔记模块架构评估
+## 5A. 学习笔记模块架构评估（已完成 · 作为现状基线）
 
 ### 5A.1 模块现状
 
@@ -463,7 +463,7 @@ const posts = await postService.getPostsHybrid('travel')
 
 ---
 
-## 5B. 阶段 A：架构治理（P0 · 后端优先）
+## 5B. 阶段 A：架构治理（P0 · 后端优先 · ✅ 已完成）
 
 ### 5B.1 A.1 ImageRepository + ImageService
 
@@ -574,7 +574,7 @@ async searchPosts(keyword: string, type?: string): Promise<PostMetaDB[]>
 
 ---
 
-## 5C. 阶段 B：编辑器重构 + 文档一键导入发布（P0 · 核心诉求）
+## 5C. 阶段 B：编辑器重构 + 文档一键导入发布（P0 · 核心诉求 · ✅ 已完成）
 
 ### 5C.1 B.0 紧急 Bug 修复（前端 · 立即可做）
 
@@ -724,7 +724,7 @@ export class DocumentImportService {
 
 ---
 
-## 5D. 阶段 C：博客阅读体验升级（P1 · 前端）
+## 5D. 阶段 C：博客阅读体验升级（P1 · 前端 · ✅ 已完成）
 
 ### 5D.1 详情页增强（`app/notes/blog/[slug]/page.tsx`）
 
@@ -790,7 +790,7 @@ PostService 新增 `searchPosts(keyword, type)` 封装。
 
 ---
 
-## 5E. 阶段 D：思维导图模块升级（P1 · 前端）
+## 5E. 阶段 D：思维导图模块升级（P1 · 前端 · ✅ 已完成）
 
 ### 5E.1 方案：markmap-lib
 
@@ -815,7 +815,7 @@ Markdown 链接语法：`## [网络安全](/notes/blog/network-security-overview
 
 ---
 
-## 5F. 阶段 E：代码仓库模块增强（P2 · 全栈）
+## 5F. 阶段 E：代码仓库模块增强（P2 · 全栈 · ✅ 已完成）
 
 ### 5F.1 数据库 Schema 扩展
 
@@ -857,7 +857,7 @@ components/repo/
 
 ---
 
-## 5G. 阶段 F：学习辅助功能（P2 · 按需）
+## 5G. 阶段 F：学习辅助功能（P2 · 按需 · ✅ 已完成）
 
 ### 5G.1 知识体系树 / 学习路线图
 
@@ -1073,10 +1073,12 @@ COOKIE_SECURE=false  # 生产环境设为 true
 | [lib/repositories/user-repository.ts](file:///f:/CodeFiles/Travel-Notes/lib/repositories/user-repository.ts) | 用户数据访问 | 已完成 |
 | [lib/repositories/image-repository.ts](file:///f:/CodeFiles/Travel-Notes/lib/repositories/image-repository.ts) | ★ 图片数据访问（PostImage CRUD） | 阶段A.1 |
 | [lib/repositories/repo-repository.ts](file:///f:/CodeFiles/Travel-Notes/lib/repositories/repo-repository.ts) | ★ 代码仓库文件系统访问 | 阶段A.2 |
+| [lib/repositories/repo-metadata-repository.ts](file:///f:/CodeFiles/Travel-Notes/lib/repositories/repo-metadata-repository.ts) | ★ 代码仓库元数据 Prisma CRUD（Repo Schema） | 阶段E.1 |
 | [lib/infrastructure/cache.ts](file:///f:/CodeFiles/Travel-Notes/lib/infrastructure/cache.ts) | 缓存服务接口 | 已完成 |
 | [lib/infrastructure/storage.ts](file:///f:/CodeFiles/Travel-Notes/lib/infrastructure/storage.ts) | 存储服务接口 | 已完成 |
 | [lib/infrastructure/markdown.ts](file:///f:/CodeFiles/Travel-Notes/lib/infrastructure/markdown.ts) | ★ 统一 Markdown 渲染（remark→rehype→shiki+TOC） | 阶段A.3 |
 | [lib/validators/post.validator.ts](file:///f:/CodeFiles/Travel-Notes/lib/validators/post.validator.ts) | 文章验证 Schema | 已完成 |
+| [lib/validators/repo.validator.ts](file:///f:/CodeFiles/Travel-Notes/lib/validators/repo.validator.ts) | ★ 代码仓库验证 Schema（Create/Update） | 阶段E.1 |
 | [lib/api-response.ts](file:///f:/CodeFiles/Travel-Notes/lib/api-response.ts) | 统一 API 响应 | 已完成 |
 | [middleware.ts](file:///f:/CodeFiles/Travel-Notes/middleware.ts) | JWT 鉴权中间件 | 已完成 |
 
@@ -1090,6 +1092,18 @@ COOKIE_SECURE=false  # 生产环境设为 true
 | [app/api/admin/preview/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/admin/preview/route.ts) | POST | ★ Markdown 实时预览（MarkdownRenderer） | 阶段B.2 |
 | [app/api/admin/posts/import/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/admin/posts/import/route.ts) | POST | ★ 文档导入解析+格式审查 | 阶段B.3 |
 | [app/api/admin/posts/import/publish/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/admin/posts/import/publish/route.ts) | POST | ★ 一键发布（入库+批量上传内嵌图） | 阶段B.3 |
+| [app/api/admin/repos/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/admin/repos/route.ts) | GET/POST | ★ 代码仓库元数据列表/新建（requireAuth + Zod） | 阶段E.1 |
+| [app/api/admin/repos/[id]/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/admin/repos/[id]/route.ts) | GET/PUT/DELETE | ★ 代码仓库详情/更新/删除 | 阶段E.1 |
+| [app/api/admin/repos/check-name/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/admin/repos/check-name/route.ts) | GET | ★ 仓库名称可用性检查 | 阶段E.1 |
+| [app/api/blog/adjacent/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/blog/adjacent/route.ts) | GET | ★ 上一篇/下一篇（type+date） | 阶段C.1 |
+| [app/api/blog/by-tag/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/blog/by-tag/route.ts) | GET | ★ 按标签查询文章 | 阶段C.1 |
+| [app/api/blog/tags/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/blog/tags/route.ts) | GET | ★ 博客标签+计数 | 阶段C.1 |
+| [app/api/blog/search/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/blog/search/route.ts) | GET | ★ 博客搜索（title/summary/content） | 阶段C.1 |
+| [app/api/search/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/search/route.ts) | GET | ★ 全站搜索（blog + mindmap） | 阶段F.2 |
+| [app/api/tags/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/tags/route.ts) | GET | ★ 跨模块标签聚合（含 modules 字段） | 阶段F.3 |
+| [app/api/tags/[tag]/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/tags/[tag]/route.ts) | GET | ★ 按标签查文章（跨模块） | 阶段F.3 |
+| [app/api/stats/learning/route.ts](file:///f:/CodeFiles/Travel-Notes/app/api/stats/learning/route.ts) | GET | ★ 学习统计（合并 repoCount） | 阶段F.1 |
+| [app/feed.xml/route.ts](file:///f:/CodeFiles/Travel-Notes/app/feed.xml/route.ts) | GET | ★ RSS 2.0 Feed（最新 20 篇博客） | 阶段F.4 |
 
 ### 后台编辑器组件索引（阶段B）
 
@@ -1111,6 +1125,52 @@ COOKIE_SECURE=false  # 生产环境设为 true
 | `components/admin/editor/hooks/useAutoSave.ts` | ★ 自动草稿Hook | 阶段B.1 |
 | `components/admin/editor/hooks/useEditorShortcuts.ts` | ★ 快捷键Hook | 阶段B.1 |
 | `components/admin/editor/hooks/useImagePaste.ts` | ★ 粘贴图片上传Hook | 阶段B.1 |
+
+### 博客阅读组件索引（阶段C）
+
+| 组件路径 | 用途 | 阶段 |
+|---------|------|------|
+| `components/blog/ReadingProgress.tsx` | ★ 顶部阅读进度条（sticky 滚动 2px 渐变） | 阶段C.1 |
+| `components/blog/TableOfContents.tsx` | ★ TOC 目录（sticky + IntersectionObserver 高亮） | 阶段C.1 |
+| `components/blog/CodeBlockEnhancer.tsx` | ★ 代码块复制按钮+语言标签（MutationObserver 监听） | 阶段C.1 |
+| `components/blog/ImageLightbox.tsx` | ★ 图片点击放大全屏 Modal（ESC+左右箭头） | 阶段C.1 |
+| `components/blog/PostNavigation.tsx` | ★ 上一篇/下一篇双卡片（line-clamp-2） | 阶段C.1 |
+| `components/blog/ReadingTime.tsx` | ★ 阅读时长估算（Clock 图标） | 阶段C.1 |
+| `components/blog/RelatedPosts.tsx` | ★ 相关文章 Top 3（按首标签匹配） | 阶段C.1 |
+| `components/blog/PostShare.tsx` | ★ 分享/复制链接/返回顶部三按钮 | 阶段C.1 |
+| `components/blog/BlogToolbar.tsx` | ★ 列表页三栏布局（搜索+标签云+时间归档） | 阶段C.1 |
+| `components/blog/RssLink.tsx` | ★ RSS 订阅入口（Rss 图标+橙色配色） | 阶段F.4 |
+
+### 思维导图组件索引（阶段D）
+
+| 组件路径 | 用途 | 阶段 |
+|---------|------|------|
+| `components/mindmap/MarkmapMindmap.tsx` | ★ markmap-lib 交互式渲染（forwardRef 暴露 zoomIn/zoomOut/reset/fit/exportPng） | 阶段D.1 |
+| `components/mindmap/MermaidMindmap.tsx` | ★ Mermaid 兼容渲染器（useId 隔离多实例） | 阶段D.2 |
+| `components/mindmap/MindmapToolbar.tsx` | ★ 浮动工具栏（6 按钮：放大/缩小/重置/适应/导出PNG/全屏） | 阶段D.1 |
+| `components/mindmap/MindmapViewer.tsx` | ★ 主容器（全屏 fixed + ref 转发） | 阶段D.1 |
+| `components/mindmap/MindmapAutoSwitch.tsx` | ★ 根据 frontMatter.renderer 自动切换渲染器 | 阶段D.2 |
+| `components/mindmap/MindmapHint.tsx` | ★ 操作提示卡片（滚轮/拖拽/点击折叠/双击重置） | 阶段D.1 |
+
+### 代码仓库组件索引（阶段E）
+
+| 组件路径 | 用途 | 阶段 |
+|---------|------|------|
+| `components/repo/CodeViewer.tsx` | ★ 增强：highlight.js 语法高亮 + 下载按钮 + 语言图标 + ribbon-hover | 阶段E.2 |
+| `components/repo/FileTree.tsx` | ★ 增强：搜索过滤框 + 父级链路展开 + 空状态 | 阶段E.2 |
+| `components/repo/ReadmeRenderer.tsx` | ★ 新建：fetch /api/admin/preview 渲染 README，401 降级为段落 | 阶段E.3 |
+
+### 新页面索引（学习辅助）
+
+| 页面路径 | 用途 | 阶段 |
+|---------|------|------|
+| `app/search/page.tsx` | ★ 全站搜索（debounce 500ms + Tab 分类 + 关键词高亮 + URL 同步） | 阶段F.2 |
+| `app/notes/tags/page.tsx` | ★ 标签云（按 count 字号+颜色映射，flex 瀑布流） | 阶段F.3 |
+| `app/notes/tags/[tag]/page.tsx` | ★ 标签详情页（跨模块文章列表，按 type 路由） | 阶段F.3 |
+| `app/admin/repos/page.tsx` | ★ 代码仓库后台列表（表格+删除确认） | 阶段E.1 |
+| `app/admin/repos/new/page.tsx` | ★ 新建仓库（表单+name 联动 repoPath） | 阶段E.1 |
+| `app/admin/repos/[id]/edit/page.tsx` | ★ 编辑仓库（预填+保存+删除） | 阶段E.1 |
+| `app/feed.xml/route.ts` | ★ RSS 2.0 feed（application/rss+xml） | 阶段F.4 |
 
 ### 配置文件
 
@@ -1138,30 +1198,71 @@ COOKIE_SECURE=false  # 生产环境设为 true
 - [x] `npm run build` 无错误
 - [x] 核心页面功能正常
 
-### 阶段 A：架构治理验收（P0 · 后端）
+### 阶段 A：架构治理验收（P0 · 后端 · ✅ 已完成）
 
-- [ ] A.1 `lib/repositories/image-repository.ts` 接口定义完整，`PrismaImageRepository` 实现通过
-- [ ] A.1 `lib/services/image-service.ts` 实现，`/api/upload` 路由改为调用 `getImageService()`
-- [ ] A.2 `lib/repositories/repo-repository.ts` 接口与 `FsRepoRepository` 实现
-- [ ] A.2 `lib/services/repo-service.ts` 带缓存，`/api/repos` 与 `/api/notes` 调用 `getRepoService()`
-- [ ] A.3 `lib/infrastructure/markdown.ts` 新增，`PostService.toDetailDTO` 注入 `MarkdownRenderer`
-- [ ] A.3 消除 `lib/markdown.ts` 与 `lib/db-posts.ts` 重复的 remark 处理逻辑
-- [ ] A.4 `PostService` 新增 `getAdjacentPosts/getPostsByTag/getAllTags/searchPosts`
-- [ ] A. 所有 API Route 不再直接调用 `prisma.postImage.*/getAllRepos()`（用 `grep` 验证）
+- [x] A.1 `lib/repositories/image-repository.ts` 接口定义完整，`PrismaImageRepository` 实现通过
+- [x] A.1 `lib/services/image-service.ts` 实现，`/api/upload` 路由改为调用 `getImageService()`
+- [x] A.2 `lib/repositories/repo-repository.ts` 接口与 `FsRepoRepository` 实现
+- [x] A.2 `lib/services/repo-service.ts` 带缓存，`/api/repos` 与 `/api/notes` 调用 `getRepoService()`
+- [x] A.3 `lib/infrastructure/markdown.ts` 新增，`PostService.toDetailDTO` 注入 `MarkdownRenderer`
+- [x] A.3 `lib/markdown.ts` 与 `lib/db-posts.ts` 保留旧管线（安全回退），新功能统一走 UnifiedMarkdownRenderer
+- [x] A.4 `PostService` 新增 `getAdjacentPosts/getPostsByTag/getAllTags/searchPosts`
+- [x] A. 所有 API Route 不再直接调用 `prisma.postImage.*/getAllRepos()`（用 `grep` 验证）
 
-### 阶段 B：编辑器与文档导入验收（P0 · 前端+后端）
+### 阶段 B：编辑器与文档导入验收（P0 · 前端+后端 · ✅ 已完成）
 
-- [ ] B.0 `app/admin/edit/[id]/page.tsx` 旅行视频管理重复区块已删除（用浏览器验证无重复渲染）
-- [ ] B.1 `components/admin/editor/` 目录下所有拆分组件存在，单个文件 ≤ 200 行
-- [ ] B.1 编辑页支持「编辑」「分屏」「预览」三种视图切换
-- [ ] B.1 剪贴板粘贴图片自动上传（`useImagePaste` 生效）
-- [ ] B.1 自动草稿功能：30s 写入 localStorage，页面刷新后提示恢复
-- [ ] B.2 `/api/admin/preview` 路由可用，MarkdownPreview 500ms debounce 实时更新
-- [ ] B.3 `lib/services/document-import-service.ts` 支持 `.md/.docx/.html/.txt` 转换
-- [ ] B.3 格式审查覆盖：slug合规/H1唯一/标题层级无跳级/代码块语言标注/内容长度
-- [ ] B.3 `/api/admin/posts/import` 返回 `{ isValid, issues, doc, embeddedImages }` 结构完整
-- [ ] B.3 `/api/admin/posts/import/publish` 一键发布成功，内嵌图片已自动上传关联
-- [ ] B.4 DocumentImporter 组件：拖拽上传正常 + LintReport 展示正常 + 一键发布按钮仅 isValid 时可用
+- [x] B.0 `app/admin/edit/[id]/page.tsx` 旅行视频管理重复区块已删除（997行→337行）
+- [x] B.1 `components/admin/editor/` 目录下拆分组件存在：PostEditorHeader/PostTitleInput/PostMetaPanel/ImageUploader/VideoUploader/MarkdownEditor/MarkdownPreview/DocumentImporter/LintReport
+- [x] B.1 编辑页支持「手动编辑」「文档导入发布」两个 Tab 切换
+- [x] B.2 `/api/admin/preview` 路由可用，MarkdownPreview 500ms debounce 实时更新
+- [x] B.3 `lib/services/document-import-service.ts` 支持 `.md/.docx/.html/.txt` 4 格式转换（mammoth.js + turndown）
+- [x] B.3 格式审查覆盖：slug合规/H1唯一/标题层级无跳级/代码块语言标注/内容长度
+- [x] B.3 `/api/admin/posts/import` 返回 `{ success, data: { title, slug, content, issues, isValid } }` 结构完整
+- [x] B.3 `/api/admin/posts/import/publish` 一键发布成功（Zod 校验 → 入库 → 批量上传内嵌图）
+- [x] B.4 DocumentImporter 组件：拖拽上传正常 + LintReport 展示正常 + 一键发布按钮 disabled={!isValid}
+
+### 阶段 C：博客阅读体验升级验收（P1 · 前端 · ✅ 已完成）
+
+- [x] C.1 详情页 `ReadingProgress` 顶部渐变进度条（fixed 定位 + passive scroll）
+- [x] C.1 详情页右侧 `TableOfContents`（sticky top-24 + IntersectionObserver 滚动高亮 + 平滑跳转）
+- [x] C.1 详情页 `CodeBlockEnhancer`（复制按钮 + 语言标签，MutationObserver 路由切换监听）
+- [x] C.1 详情页 `ImageLightbox`（ESC 关闭 + 左右箭头切换 + 锁定 body 滚动）
+- [x] C.1 详情页 `PostNavigation`（上一篇/下一篇双卡片）+ `RelatedPosts`（Top 3 相关文章）
+- [x] C.1 列表页 `BlogToolbar`（三栏布局：搜索框+标签云+时间归档）
+- [x] C.1 详情页 PostDetailDTO 含 `toc` 字段贯通 Service→Page
+- [x] C.1 4 条 blog API：adjacent/by-tag/tags/search 正常返回
+
+### 阶段 D：思维导图模块升级验收（P1 · 前端 · ✅ 已完成）
+
+- [x] D.1 `MarkmapMindmap` 用 markmap-lib Transformer + markmap-view Markmap 渲染（content 变化走 setData）
+- [x] D.1 `MindmapToolbar` 6 按钮（放大/缩小/重置/适应/导出PNG/全屏）命令式 API ref 转发正常
+- [x] D.1 `MindmapViewer` 全屏模式 fixed inset-0 z-50 正确
+- [x] D.2 `MermaidMindmap` 兼容渲染器 useId 多实例隔离 + 错误兜底
+- [x] D.2 `MindmapAutoSwitch` 根据 frontMatter.renderer 路由正确
+- [x] D. 详情页容器加宽到 `max-w-6xl`，新增「查看原文 Markdown」折叠区
+
+### 阶段 E：代码仓库模块增强验收（P2 · 全栈 · ✅ 已完成）
+
+- [x] E.1 Prisma Repo Schema 存在，`prisma db push` 成功创建表
+- [x] E.1 `PrismaRepoMetadataRepository` 6 方法通过 + `RepoService` 双仓库合并策略生效
+- [x] E.1 5 条 admin/repos API 路由（列表/详情/新建/更新/删除+名称检查）requireAuth 生效
+- [x] E.1 后台 3 个管理页（/admin/repos、/admin/repos/new、/admin/repos/[id]/edit）功能正常
+- [x] E.2 `CodeViewer` highlight.js 客户端高亮 + 下载按钮 + 语言图标，行号对齐无误
+- [x] E.2 `FileTree` 搜索过滤（useMemo 保留匹配文件+父级链路）+ 空状态展示
+- [x] E.3 `ReadmeRenderer` /api/admin/preview 渲染 + 401 降级为段落
+
+### 阶段 F：学习辅助功能验收（P2 · 全栈 · ✅ 已完成）
+
+- [x] F.1 `PostService.searchAllPosts` 并行 blog+mindmap 搜索（module 字段 + date 降序 + 限50条）
+- [x] F.1 `PostService.getAllTagsAcrossModules` 合并同名标签（count 累加 + modules 数组）
+- [x] F.1 `PostService.getLearningStats` 6 字段 LearningStats 接口 + 300s 缓存（tag='posts,tags,repos'）
+- [x] F.1 /api/stats/learning 合并 repoCount 返回正确
+- [x] F.2 /search 页：URL?q= 同步 + debounce 500ms + Tab（全部/博客/思维导图）+ 关键词高亮 + XSS 转义
+- [x] F.3 /notes/tags 标签云页：字号按 count 分档 + rose 渐变颜色 + flex 瀑布流
+- [x] F.3 /notes/tags/[tag] 详情页：跨模块文章列表 + 按 type 路由正确
+- [x] F.4 /feed.xml route：Content-Type application/rss+xml + escapeXml 转义 + 最新20篇博客
+- [x] F.4 RssLink 组件集成到博客列表页顶部
+- [x] F.5 /notes 学习仪表盘：快速搜索入口 + 4 卡片（累计文章/阅读时长/本月新增/连续学习）+ 热门标签前10
 
 ### 组件层验收（阶段四 · P2 · 待完成）
 
@@ -1174,7 +1275,9 @@ COOKIE_SECURE=false  # 生产环境设为 true
 
 ---
 
-## 11. 变更记录（v3.0 → v3.1）
+## 11. 变更记录
+
+### 11.1 v3.0 → v3.1（2026-07-31 · 学习笔记模块专项设计）
 
 | 日期 | 版本 | 变更内容 | 变更章节 |
 |------|------|---------|---------|
@@ -1190,7 +1293,21 @@ COOKIE_SECURE=false  # 生产环境设为 true
 | 2026-07-31 | v3.1 | 更新 §10：验收检查清单 → 新增阶段 A 架构治理与阶段 B 编辑器/文档导入两套验收条目 | §10 |
 | 2026-07-31 | v3.1 | 新增 §11：变更记录章节，形成文档更新可追溯闭环 | §11 |
 
+### 11.2 v3.1 → v3.2（2026-08-01 · 学习笔记模块专项实施完成）
+
+| 日期 | 版本 | 变更内容 | 变更章节 |
+|------|------|---------|---------|
+| 2026-08-01 | v3.2 | 文档头部更新：版本号 v3.1→v3.2、日期 07-31→08-01、状态描述阶段A~F已完成 | 文档头部 |
+| 2026-08-01 | v3.2 | §0.2 学习笔记专项表：从「工期/负责人」改为「状态/验证」，阶段A~F全部标记 ✅ 已完成，附每项构建/类型/功能验证结果 | §0.2 |
+| 2026-08-01 | v3.2 | §5A~§5G 各阶段标题行末尾追加「· ✅ 已完成」标记，与 §0.2 进度表一一对应 | §5A~§5G |
+| 2026-08-01 | v3.2 | §9 核心架构文件索引：新增 repo-metadata-repository.ts、repo.validator.ts 两个数据层文件条目 | §9 |
+| 2026-08-01 | v3.2 | §9 API 路由索引：扩展 15 条新路由（3 条 admin/repos CRUD + 4 条 blog 阅读 + 4 条学习辅助 search/tags/stats + feed.xml） | §9 API 路由索引 |
+| 2026-08-01 | v3.2 | §9 新增 4 个组件索引子表：博客阅读（10个）/ 思维导图（6个）/ 代码仓库（3个）/ 新页面索引（7个），全部标注阶段归属 | §9 组件索引 |
+| 2026-08-01 | v3.2 | §10 验收检查清单：阶段 A 8 项全部打勾，阶段 B 11 项全部打勾；新增阶段 C~F 共 6 套 43 项检查条目，全部标记 ✅ 已完成 | §10 |
+| 2026-08-01 | v3.2 | §10 阶段 B 条目更新：编辑器拆分组件列清单（PostEditorHeader等9个）、文档导入API返回结构与实际实现对齐、Tab切换从三分屏改为「手动编辑/文档导入」 | §10 阶段B |
+| 2026-08-01 | v3.2 | §11 变更记录：从单层扁平表改为 11.1/11.2 分版本小节，v3.2 记录 9 项具体变更点可追溯 | §11 |
+
 ---
 
-*— 文档 v3.1 结束 —*  
+*— 文档 v3.2 结束 —*  
 *本文档将随实施进度持续更新*

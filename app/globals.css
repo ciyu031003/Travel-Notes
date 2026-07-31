@@ -5,6 +5,21 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Travel Design Tokens (CSS 变量形式，供非 Tailwind 场景使用) */
+    --color-cream: #FAFBF7;
+    --color-ink: #5A6670;
+    --color-dim: #D8DDD8;
+    --color-sakura: #F5DCE0;
+    --color-bloom: #E8B8C2;
+    --color-sky: #A8C8DC;
+    --color-mist: #D6E8F0;
+
+    /* 语义化阴影 */
+    --shadow-soft: 0 10px 28px rgba(90,102,112,0.08);
+    --shadow-card: 0 12px 40px -12px rgba(90,102,112,0.18);
+  }
+
   body {
     @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200;
   }
@@ -14,7 +29,7 @@
   .container-custom {
     @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
   }
-  
+
   .card {
     @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md;
   }
@@ -26,96 +41,6 @@
 
 pre code.hljs {
   @apply rounded-lg text-sm;
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.8s ease-out forwards;
-}
-
-@keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-.animate-fade-out {
-  animation: fade-out 0.3s ease-out forwards;
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
-}
-
-@keyframes fade-down {
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-down {
-  animation: fade-down 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-}
-
-@keyframes textReveal {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) scale(0.92);
-    letter-spacing: 0.15em;
-    filter: blur(8px);
-  }
-  50% {
-    opacity: 0.8;
-    filter: blur(2px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    letter-spacing: 0.02em;
-    filter: blur(0);
-  }
-}
-
-@keyframes fadeSlideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(24px);
-    filter: blur(4px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
 }
 
 .text-glow {
