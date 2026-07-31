@@ -2,6 +2,7 @@ import { PrismaPostRepository } from './repositories/post-repository'
 import { PrismaUserRepository } from './repositories/user-repository'
 import { PrismaImageRepository } from './repositories/image-repository'
 import { PrismaRepoRepository } from './repositories/repo-repository'
+import { PrismaRepoMetadataRepository } from './repositories/repo-metadata-repository'
 import { PostService } from './services/post-service'
 import { AuthService } from './services/auth-service'
 import { SiteService } from './services/site-service'
@@ -17,6 +18,7 @@ let authServiceInstance: AuthService | null = null
 let siteServiceInstance: SiteService | null = null
 let imageServiceInstance: ImageService | null = null
 let repoServiceInstance: RepoService | null = null
+let repoMetadataRepoInstance: PrismaRepoMetadataRepository | null = null
 let markdownRendererInstance: UnifiedMarkdownRenderer | null = null
 let documentImportServiceInstance: DocumentImportService | null = null
 let cacheServiceInstance: MemoryCacheService | null = null
@@ -26,6 +28,13 @@ function getCacheService(): MemoryCacheService {
     cacheServiceInstance = new MemoryCacheService()
   }
   return cacheServiceInstance
+}
+
+function getRepoMetadataRepository(): PrismaRepoMetadataRepository {
+  if (!repoMetadataRepoInstance) {
+    repoMetadataRepoInstance = new PrismaRepoMetadataRepository()
+  }
+  return repoMetadataRepoInstance
 }
 
 export function getPostService(): PostService {
@@ -68,8 +77,9 @@ export function getImageService(): ImageService {
 export function getRepoService(): RepoService {
   if (!repoServiceInstance) {
     const repoRepo = new PrismaRepoRepository()
+    const metadataRepo = getRepoMetadataRepository()
     const cache = getCacheService()
-    repoServiceInstance = new RepoService(repoRepo, cache)
+    repoServiceInstance = new RepoService(repoRepo, metadataRepo, cache)
   }
   return repoServiceInstance
 }
@@ -95,6 +105,7 @@ export function resetServices(): void {
   siteServiceInstance = null
   imageServiceInstance = null
   repoServiceInstance = null
+  repoMetadataRepoInstance = null
   markdownRendererInstance = null
   documentImportServiceInstance = null
   cacheServiceInstance = null

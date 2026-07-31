@@ -1,3 +1,4 @@
+// 元数据 CRUD 见 lib/repositories/repo-metadata-repository.ts
 import fs from 'fs'
 import path from 'path'
 import { getAllRepos, getRepoFileTree, getFileContent, getRepoReadme } from '../repos'
@@ -8,6 +9,10 @@ export interface RepoMeta {
   displayName?: string
   description?: string
   readmePath?: string
+  language?: string
+  stars?: number
+  cover?: string
+  tags?: string[]
 }
 
 export interface FileNode {

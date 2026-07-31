@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Folder, File } from 'lucide-react'
+import { ArrowLeft, Folder, FileText } from 'lucide-react'
 import FileTree from '@/components/repo/FileTree'
 import CodeViewer from '@/components/repo/CodeViewer'
+import ReadmeRenderer from '@/components/repo/ReadmeRenderer'
 import type { FileNode } from '@/lib/types'
 
 export default function RepoDetailPage() {
@@ -128,19 +129,15 @@ export default function RepoDetailPage() {
               language={currentNode.language || 'plaintext'}
               filename={currentNode.name}
             />
+          ) : readme ? (
+            <ReadmeRenderer content={readme} />
           ) : (
             <div className="card p-6">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <File className="w-5 h-5" />
+              <h3 className="font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                <FileText className="w-5 h-5 text-green-500" />
                 README.md
               </h3>
-              {readme ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  {readme}
-                </div>
-              ) : (
-                <p className="text-gray-500">暂无 README 文件</p>
-              )}
+              <p className="text-gray-500">暂无 README 文件</p>
             </div>
           )}
         </div>

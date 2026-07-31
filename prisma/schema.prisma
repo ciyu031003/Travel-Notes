@@ -69,3 +69,19 @@ model SiteSetting {
 
   @@index([resetToken])
 }
+
+model Repo {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  displayName String   @db.VarChar(200)
+  description String?  @db.Text
+  language    String?  @db.VarChar(50)
+  stars       Int      @default(0)
+  cover       String?  @db.VarChar(500)
+  tags        String?  @db.Text
+  repoPath    String   @db.VarChar(500)
+  createdAt   DateTime @default(now()) @db.Timestamp(3)
+  updatedAt   DateTime @updatedAt @db.Timestamp(3)
+
+  @@index([name])
+}

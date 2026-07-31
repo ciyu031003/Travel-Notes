@@ -122,6 +122,13 @@ export default function AdminDashboard() {
                 回到首页
               </Link>
               <Link
+                href="/admin/repos"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+              >
+                <Code2 className="w-4 h-4" />
+                代码仓库管理
+              </Link>
+              <Link
                 href="/admin/settings"
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
