@@ -1,5 +1,6 @@
 import { getPostService } from '@/lib/container'
 import BlogToolbar from '@/components/blog/BlogToolbar'
+import RssLink from '@/components/blog/RssLink'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,10 +20,15 @@ export default async function TechBlogPage() {
     <div className="container-custom">
       <div className="max-w-5xl mx-auto">
         <header className="mb-12">
-          <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">技术博客</h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            记录学习过程中的笔记、思考和问题解决方案
-          </p>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">技术博客</h1>
+              <p className="text-gray-600 dark:text-gray-300">
+                记录学习过程中的笔记、思考和问题解决方案
+              </p>
+            </div>
+            <RssLink />
+          </div>
         </header>
 
         {posts.length === 0 ? (

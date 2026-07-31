@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, MapPin, BookOpen, Menu, X, Moon, Sun, Settings, LogOut, Heart } from 'lucide-react'
+import { Home, MapPin, BookOpen, Menu, X, Moon, Sun, Settings, LogOut, Heart, Search } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -129,6 +129,18 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               {item.label}
             </Link>
           ))}
+          <Link
+            href="/search"
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              useDarkText
+                ? 'text-white/70 hover:bg-white/10'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-primary-500'
+            )}
+            title="搜索"
+          >
+            <Search className="w-5 h-5" />
+          </Link>
           <button
             onClick={toggleTheme}
             className={cn(
@@ -177,6 +189,18 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+          <Link
+            href="/search"
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              useDarkText
+                ? 'text-white/70'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-primary-500'
+            )}
+            title="搜索"
+          >
+            <Search className="w-5 h-5" />
+          </Link>
           <button
             onClick={toggleTheme}
             className={cn(
@@ -240,6 +264,14 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 {item.label}
               </Link>
             ))}
+            <Link
+              href="/search"
+              onClick={() => setIsMenuOpen(false)}
+              className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852]"
+            >
+              <Search className="w-5 h-5" />
+              搜索
+            </Link>
             <Link
               href="/admin"
               onClick={() => setIsMenuOpen(false)}

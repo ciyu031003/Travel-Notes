@@ -33,6 +33,14 @@ export interface PostDetailDTO extends PostDTO {
   toc: TocItem[]
 }
 
+export interface LearningStats {
+  totalPosts: number
+  totalReadingMinutes: number
+  monthlyCount: number
+  blogCount: number
+  mindmapCount: number
+}
+
 export class PostService {
   private readonly CACHE_TTL = 300
 
@@ -143,13 +151,31 @@ export class PostService {
   }
 
   async getPostsByTag(tag: string, type?: string): Promise<PostMetaDB[]> {
-    const cacheKey = `posts:tag:${tag}:${type || 'all'}`
+    if (type) {
+      const cacheKey = `posts:tag:${tag}:${type}`
+      const cached = await this.cache.get<PostMetaDB[]>(cacheKey)
+      if (cached) return cached
+
+      const posts = await this.postRepo.findByTag(tag, type)
+      await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts'])
+      return posts
+    }
+
+    // 跨模块（blog + mindmap）混合查询，包含 markdown 文章，保证与标签云一致
+    const cacheKey = `posts:tag:${tag}:hybrid`
     const cached = await this.cache.get<PostMetaDB[]>(cacheKey)
     if (cached) return cached
 
-    const posts = await this.postRepo.findByTag(tag, type)
-    await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts'])
-    return posts
+    const [blogPosts, mindmapPosts] = await Promise.all([
+      this.getPostsHybrid('tech/blog'),
+      this.getPostsHybrid('tech/mindmaps'),
+    ])
+    const filtered = [...blogPosts, ...mindmapPosts].filter(
+      (p) => Array.isArray(p.tags) && p.tags.includes(tag),
+    )
+    filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    await this.cache.set(cacheKey, filtered, this.CACHE_TTL, ['posts'])
+    return filtered
   }
 
   async getAllTags(type?: string): Promise<Array<{ name: string; count: number }>> {
@@ -257,6 +283,103 @@ export class PostService {
     } catch {}
 
     return null
+  }
+
+  async searchAllPosts(
+    keyword: string
+  ): Promise<Array<PostMetaDB & { module: 'blog' | 'mindmap' }>> {
+    const [blogPosts, mindmapPosts] = await Promise.all([
+      this.postRepo.search(keyword, 'blog'),
+      this.postRepo.search(keyword, 'mindmap'),
+    ])
+
+    const withModule: Array<PostMetaDB & { module: 'blog' | 'mindmap' }> = [
+      ...blogPosts.map((p) => ({ ...p, module: 'blog' as const })),
+      ...mindmapPosts.map((p) => ({ ...p, module: 'mindmap' as const })),
+    ]
+
+    withModule.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return withModule.slice(0, 50)
+  }
+
+  async getAllTagsAcrossModules(): Promise<
+    Array<{ name: string; count: number; modules: string[] }>
+  > {
+    const cacheKey = 'tags:across'
+    const cached = await this.cache.get<
+      Array<{ name: string; count: number; modules: string[] }>
+    >(cacheKey)
+    if (cached) return cached
+
+    const [blogTags, mindmapTags] = await Promise.all([
+      this.postRepo.getAllTags('blog'),
+      this.postRepo.getAllTags('mindmap'),
+    ])
+
+    const merged = new Map<string, { name: string; count: number; modules: string[] }>()
+    for (const t of blogTags) {
+      merged.set(t.name, { name: t.name, count: t.count, modules: ['blog'] })
+    }
+    for (const t of mindmapTags) {
+      const existing = merged.get(t.name)
+      if (existing) {
+        existing.count += t.count
+        existing.modules.push('mindmap')
+      } else {
+        merged.set(t.name, { name: t.name, count: t.count, modules: ['mindmap'] })
+      }
+    }
+
+    const result = Array.from(merged.values()).sort((a, b) => b.count - a.count)
+    await this.cache.set(cacheKey, result, 600, ['posts', 'tags'])
+    return result
+  }
+
+  async getLearningStats(): Promise<LearningStats> {
+    const cacheKey = 'stats:learning'
+    const cached = await this.cache.get<LearningStats>(cacheKey)
+    if (cached) return cached
+
+    const [blogCount, mindmapCount, blogPosts, mindmapPosts] = await Promise.all([
+      this.postRepo.countByType('blog'),
+      this.postRepo.countByType('mindmap'),
+      this.postRepo.findAllByType('blog'),
+      this.postRepo.findAllByType('mindmap'),
+    ])
+
+    const totalPosts = blogCount + mindmapCount
+    const totalReadingMinutes = blogCount * 5
+
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+    const monthlyCount = [...blogPosts, ...mindmapPosts].filter(
+      (p) => new Date(p.date).getTime() >= thirtyDaysAgo
+    ).length
+
+    const stats: LearningStats = {
+      totalPosts,
+      totalReadingMinutes,
+      monthlyCount,
+      blogCount,
+      mindmapCount,
+    }
+    await this.cache.set(cacheKey, stats, 300, ['posts', 'tags', 'repos'])
+    return stats
+  }
+
+  async getRecentPosts(limit: number = 10, type?: string): Promise<PostMetaDB[]> {
+    const cacheKey = `posts:recent:${limit}:${type || 'all'}`
+    const cached = await this.cache.get<PostMetaDB[]>(cacheKey)
+    if (cached) return cached
+
+    const result = await this.postRepo.findAll({
+      type,
+      published: true,
+      page: 1,
+      pageSize: limit,
+    })
+    const posts = result.data
+    await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts'])
+    return posts
   }
 
   async createPost(input: CreatePostInput): Promise<{ id: number }> {
