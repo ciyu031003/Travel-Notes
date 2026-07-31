@@ -1,2 +1,0 @@
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'Abd123456.';
-FLUSH PRIVILEGES;
