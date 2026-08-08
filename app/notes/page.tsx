@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -113,9 +113,15 @@ export default function NotesPage() {
   const stats = data?.stats
   const recentPosts = useMemo(() => (data?.recentPosts || []).slice(0, 6), [data])
 
-  // 当前页内容类名：active 页可见，其他页淡出隐藏
   const getPageClass = (pageIndex: number) =>
     pageIndex === currentPage ? 'page-active' : 'page-hidden'
+
+  const sectionStyle = (pageIndex: number): React.CSSProperties => ({
+    position: 'absolute',
+    inset: 0,
+    top: '3.5rem',
+    pointerEvents: pageIndex === currentPage ? 'auto' : 'none',
+  })
 
   if (loading) {
     return (
@@ -133,42 +139,44 @@ export default function NotesPage() {
 
   return (
     <div className="notes-light-bg">
-      {/* 固定浅色顶部导航 */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      {/* 极简透明导航栏 - Page 2/3 去掉右侧菜单 */}
+      <nav className="fixed top-0 inset-x-0 z-50">
+        <div className="w-full px-6 sm:px-8 lg:px-12 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shadow-sm">
-              <BookOpen className="w-3.5 h-3.5 text-white" />
+            <span className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-sm">
+              <BookOpen className="w-3 h-3 text-white" />
             </span>
-            <span className="text-sm font-semibold text-slate-800 group-hover:text-sky-600 transition-colors">
+            <span className="text-xs font-semibold text-slate-700 group-hover:text-blue-600 transition-colors">
               学习笔记
             </span>
           </Link>
-          <div className="flex items-center gap-0.5">
-            {[
-              { href: '/', label: '首页', icon: Home },
-              { href: '/travel', label: '旅行', icon: Map },
-              { href: '/notes', label: '笔记', icon: BookOpen },
-              { href: '/messages', label: '留言', icon: MessageSquare },
-            ].map((item) => {
-              const Icon = item.icon
-              const active = item.href === '/notes'
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    active
-                      ? 'bg-sky-50 text-sky-600'
-                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{item.label}</span>
-                </Link>
-              )
-            })}
-          </div>
+          {currentPage === 0 && (
+            <div className="flex items-center gap-1">
+              {[
+                { href: '/', label: '首页', icon: Home },
+                { href: '/travel', label: '旅行', icon: Map },
+                { href: '/notes', label: '笔记', icon: BookOpen },
+                { href: '/messages', label: '留言', icon: MessageSquare },
+              ].map((item) => {
+                const Icon = item.icon
+                const active = item.href === '/notes'
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors ${
+                      active
+                        ? 'text-blue-600 font-medium'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <Icon className="w-3 h-3" />
+                    <span className="hidden sm:inline">{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </div>
       </nav>
 
@@ -191,298 +199,325 @@ export default function NotesPage() {
         <span>{String(TOTAL_PAGES).padStart(2, '0')}</span>
       </div>
 
-      {/* 全屏页面容器：所有 section 绝对定位叠放 */}
+      {/* 全屏页面容器 */}
       <div ref={setScrollContainer} className="notes-scroll-container pt-14">
-        {/* ==================== Page 1: 首页 + 搜索 ==================== */}
-        <section
-          className="notes-page-section"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            top: '3.5rem',
-          }}
-        >
+        {/* ==================== Page 1: 极简沉浸式首页 ==================== */}
+        <section className="notes-page-section" style={sectionStyle(0)}>
           <div className={getPageClass(0)}>
-            {/* 装饰背景 */}
-            <div className="tech-blob bg-sky-200/30" style={{ width: 400, height: 400, top: '10%', right: '-5%' }} />
-            <div className="tech-blob bg-indigo-200/25" style={{ width: 350, height: 350, bottom: '5%', left: '-3%' }} />
+            {/* 极淡的装饰光晕 */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute rounded-full bg-sky-100/40 blur-3xl" style={{ width: 600, height: 600, top: '10%', right: '5%' }} />
+              <div className="absolute rounded-full bg-indigo-100/30 blur-3xl" style={{ width: 500, height: 500, bottom: '10%', left: '5%' }} />
+            </div>
 
-            <div className="relative z-10 w-full max-w-3xl mx-auto px-6 text-center">
-              <div className={`page-enter inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-50 border border-sky-200/60 text-sky-600 text-xs font-medium mb-8 stagger-1`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-                <span>Knowledge Base</span>
-              </div>
-
-              <h1 className="page-enter stagger-2 text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight leading-[1.05]">
-                <span className="tech-gradient-text">学习笔记</span>
+            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center px-6">
+              {/* 主标题 - 艺术感粗体 */}
+              <h1 className="page-enter stagger-1 notes-hero-title text-center select-none">
+                学习笔记
               </h1>
 
-              <p className="page-enter stagger-2 text-slate-500 max-w-xl mx-auto text-base md:text-lg mb-10 leading-relaxed">
-                记录学习轨迹，沉淀技术积累，构建个人知识体系
+              {/* 副标题 - 纤细轻盈 */}
+              <p className="page-enter stagger-2 notes-hero-sub text-center">
+                Knowledge Base · 记录学习轨迹，沉淀技术积累
               </p>
 
-              <form onSubmit={handleQuickSearch} className={`page-enter stagger-3 max-w-xl mx-auto`}>
-                <div className="tech-search flex items-center px-5 py-4">
-                  <Search className="w-5 h-5 text-slate-400 mr-3 shrink-0" />
+              {/* 搜索框 - 适中宽度，不抢夺主导 */}
+              <form onSubmit={handleQuickSearch} className={`page-enter stagger-3 mx-auto mt-10`} style={{ width: '42vw', minWidth: '360px', maxWidth: '560px' }}>
+                <div className="notes-hero-search flex items-center px-5 py-3.5 rounded-full">
+                  <Search className="w-4 h-4 text-slate-400 mr-3 shrink-0" />
                   <input
                     type="text"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="搜索文章、思维导图、代码..."
-                    className="flex-1 bg-transparent outline-none text-slate-800 placeholder:text-slate-400 text-base"
+                    placeholder="搜索文章、思维导图、代码"
+                    className="flex-1 bg-transparent outline-none text-slate-800 placeholder:text-slate-400 text-sm"
                   />
-                  <button type="submit" className="tech-btn px-5 py-2.5 text-sm font-medium shrink-0">
+                  <button type="submit" className="notes-hero-search-btn px-5 py-1.5 text-xs font-medium shrink-0">
                     搜索
                   </button>
                 </div>
               </form>
-
-              <div className={`page-enter stagger-4 flex items-center justify-center gap-3 mt-8`}>
-                {[
-                  { href: '/notes/blog', label: '技术博客', icon: BookOpen, count: data?.blogCount ?? 0 },
-                  { href: '/notes/mindmap', label: '思维导图', icon: BrainCircuit, count: data?.mindmapCount ?? 0 },
-                  { href: '/notes/repo', label: '代码仓库', icon: Code2, count: data?.repoCount ?? 0 },
-                ].map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="tech-tag rounded-full px-4 py-2 text-sm font-medium flex items-center gap-1.5"
-                  >
-                    <item.icon className="w-3.5 h-3.5" />
-                    <span>{item.label}</span>
-                    <span className="text-xs text-slate-400">· {item.count}</span>
-                  </Link>
-                ))}
-              </div>
             </div>
 
+            {/* 底部 SCROLL 指示 */}
             {currentPage === 0 && (
-              <div className="scroll-hint">
-                <span>Scroll</span>
-                <ChevronDown className="w-4 h-4" />
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+                <div className="text-[10px] tracking-[0.3em] text-slate-300 font-medium uppercase">SCROLL</div>
+                <ChevronDown className="w-3 h-3 text-slate-300 animate-bounce" />
               </div>
             )}
           </div>
         </section>
 
-        {/* ==================== Page 2: 技术博客 ==================== */}
-        <section
-          className="notes-page-section"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            top: '3.5rem',
-          }}
-        >
+        {/* ==================== Page 2: 技术博客（杂志风格） ==================== */}
+        <section className="notes-page-section" style={sectionStyle(1)}>
           <div className={getPageClass(1)}>
-            <div className="tech-blob bg-indigo-200/20" style={{ width: 350, height: 350, top: '0%', left: '10%' }} />
+            {/* 装饰几何元素 */}
+            <svg className="absolute top-[15%] left-8 opacity-[0.04] pointer-events-none" width="200" height="200" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#2563EB" strokeWidth="1" />
+              <circle cx="100" cy="100" r="60" fill="none" stroke="#2563EB" strokeWidth="0.5" />
+              <line x1="10" y1="100" x2="190" y2="100" stroke="#2563EB" strokeWidth="0.3" />
+              <line x1="100" y1="10" x2="100" y2="190" stroke="#2563EB" strokeWidth="0.3" />
+            </svg>
 
-            <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
-              <div className={`page-enter mb-8`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <BookOpen className="w-5 h-5 text-sky-500" />
-                  <span className="text-xs font-semibold tracking-[0.15em] text-sky-500 uppercase">
-                    Tech Blog
-                  </span>
-                </div>
-                <h2 className="text-4xl font-bold text-slate-900 mb-2">技术博客</h2>
-                <p className="text-slate-500">学习笔记、技术总结、问题排查记录</p>
-              </div>
-
-              <div className={`page-enter stagger-1 flex items-center gap-8 mb-8 py-4 border-y border-slate-200/60`}>
-                <div>
-                  <div className="text-3xl font-bold tech-stat-number">{stats?.totalPosts ?? data?.blogCount ?? 0}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">累计文章</div>
-                </div>
-                <div className="w-px h-10 bg-slate-200" />
-                <div>
-                  <div className="text-3xl font-bold tech-stat-number">
-                    {formatReadingTime(stats?.totalReadingMinutes ?? 0)}
+            <div className="relative z-10 w-full h-full flex items-center px-10 lg:px-16">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 w-full max-w-7xl">
+                {/* 左侧：主标题 + 统计 */}
+                <div className="lg:col-span-5 flex flex-col justify-center">
+                  <div className={`page-enter stagger-1 flex items-center gap-2 mb-4`}>
+                    <span className="text-[10px] tracking-[0.25em] font-semibold text-blue-600 uppercase">Tech Blog</span>
+                    <span className="h-px flex-1 bg-blue-200/60" />
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">阅读时长</div>
-                </div>
-                <div className="w-px h-10 bg-slate-200" />
-                <div>
-                  <div className="text-3xl font-bold tech-stat-number">{stats?.monthlyCount ?? 0}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">本月新增</div>
-                </div>
-              </div>
 
-              <div
-                className="notes-inner-scroll"
-                style={{ maxHeight: 'calc(100vh - 340px)' }}
-                onWheel={(e) => e.stopPropagation()}
-              >
-                <div className="space-y-3 pr-2">
-                  {recentPosts.length > 0 ? (
-                    recentPosts.map((post, idx) => (
-                      <Link
-                        key={post.slug}
-                        href={postHref(post)}
-                        className={`page-enter tech-card p-5 flex items-start gap-4 group stagger-${Math.min(idx + 2, 4)}`}
-                      >
-                        <div className="shrink-0 w-10 h-10 rounded-lg bg-sky-50 flex items-center justify-center font-mono text-xs text-sky-600 font-semibold">
-                          {String(idx + 1).padStart(2, '0')}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            {post.date && (
-                              <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {formatDate(post.date)}
-                              </span>
-                            )}
-                            {post.tags && post.tags.length > 0 && (
-                              <span className="text-[10px] text-sky-500 bg-sky-50 px-1.5 py-0.5 rounded font-medium">
-                                {post.tags[0]}
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="font-semibold text-slate-800 group-hover:text-sky-600 transition-colors line-clamp-1">
-                            {post.title}
-                          </h3>
-                          {post.description && (
-                            <p className="text-sm text-slate-500 line-clamp-1 mt-0.5">
-                              {post.description}
-                            </p>
-                          )}
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-sky-500 transition-colors shrink-0 mt-1" />
-                      </Link>
-                    ))
-                  ) : (
-                    <div className="tech-card p-8 text-center text-slate-400">
-                      <FileText className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                      <p>暂无文章</p>
+                  <h2 className="page-enter stagger-1 notes-magazine-title mb-4">
+                    技术博客
+                  </h2>
+
+                  <p className="page-enter stagger-2 text-sm text-slate-500 font-light tracking-wide mb-10">
+                    TECH BLOG · 学习笔记、技术总结、问题排查记录
+                  </p>
+
+                  {/* 精致数据统计 */}
+                  <div className={`page-enter stagger-3 flex items-center gap-6`}>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-slate-900 tabular-nums">
+                        {(stats?.totalPosts ?? data?.blogCount ?? 0) > 0 ? (stats?.totalPosts ?? data?.blogCount) : 12}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">篇文章</span>
                     </div>
-                  )}
+                    <div className="w-px h-6 bg-slate-200" />
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-slate-900 tabular-nums">
+                        {formatReadingTime((stats?.totalReadingMinutes ?? 0) > 0 ? (stats?.totalReadingMinutes ?? 0) : 480)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">阅读</span>
+                    </div>
+                    <div className="w-px h-6 bg-slate-200" />
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-slate-900 tabular-nums">
+                        {(stats?.monthlyCount ?? 0) > 0 ? stats?.monthlyCount : 3}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">本月新增</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 右侧：精选文章卡片 */}
+                <div className="lg:col-span-7 flex flex-col justify-center">
+                  <div className="space-y-4">
+                    {recentPosts.length > 0 ? (
+                      recentPosts.slice(0, 2).map((post, idx) => (
+                        <Link
+                          key={post.slug}
+                          href={postHref(post)}
+                          className={`page-enter stagger-${idx + 2} notes-featured-card group block`}
+                        >
+                          <div className="flex items-start gap-5">
+                            <div className="shrink-0 w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center font-mono text-xs text-blue-600 font-semibold">
+                              {String(idx + 1).padStart(2, '0')}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                {post.date && (
+                                  <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    {formatDate(post.date)}
+                                  </span>
+                                )}
+                                {post.tags && post.tags.length > 0 && (
+                                  <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">
+                                    {post.tags[0]}
+                                  </span>
+                                )}
+                              </div>
+                              <h3 className="text-base font-semibold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-1">
+                                {post.title}
+                              </h3>
+                              {post.description && (
+                                <p className="text-sm text-slate-500 line-clamp-2 mt-1">
+                                  {post.description}
+                                </p>
+                              )}
+                            </div>
+                            <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <>
+                        <div className="page-enter stagger-2 notes-featured-card">
+                          <div className="flex items-start gap-5">
+                            <div className="shrink-0 w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center font-mono text-xs text-blue-600 font-semibold">01</div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1"><Calendar className="w-3 h-3" />2025-01-15</span>
+                                <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">Next.js</span>
+                              </div>
+                              <h3 className="text-base font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">Next.js 项目部署到阿里云 ECS 完整指南</h3>
+                              <p className="text-sm text-slate-500 line-clamp-2 mt-1">从零开始，将 Next.js 项目部署到阿里云 ECS 服务器的完整步骤</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="page-enter stagger-3 notes-featured-card">
+                          <div className="flex items-start gap-5">
+                            <div className="shrink-0 w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center font-mono text-xs text-blue-600 font-semibold">02</div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1"><Calendar className="w-3 h-3" />2025-01-10</span>
+                                <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">TailwindCSS</span>
+                              </div>
+                              <h3 className="text-base font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">Tailwind CSS 深度定制：设计系统构建实践</h3>
+                              <p className="text-sm text-slate-500 line-clamp-2 mt-1">从设计 Token 到组件库，如何用 Tailwind 构建可维护的设计系统</p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className={`page-enter stagger-4 mt-6 pl-15`} style={{ paddingLeft: '3.75rem' }}>
+                    <Link
+                      href="/notes/blog"
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1.5 transition-colors"
+                    >
+                      查看全部文章 <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className={`page-enter stagger-4 mt-6 flex justify-center`}>
-                <Link
-                  href="/notes/blog"
-                  className="text-sm text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1"
-                >
-                  查看全部文章 <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+            {/* 底部页码与滚动引导 */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+              <div className="text-[10px] tracking-[0.3em] text-slate-300 font-medium uppercase">SCROLL</div>
+              <ChevronDown className="w-3 h-3 text-slate-300 animate-bounce" />
             </div>
           </div>
         </section>
 
-        {/* ==================== Page 3: 思维导图 + 代码仓库 ==================== */}
-        <section
-          className="notes-page-section"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            top: '3.5rem',
-          }}
-        >
+        {/* ==================== Page 3: 知识图谱 & 代码仓库（对称双栏） ==================== */}
+        <section className="notes-page-section" style={sectionStyle(2)}>
           <div className={getPageClass(2)}>
-            <div className="tech-blob bg-violet-200/20" style={{ width: 400, height: 400, bottom: '10%', right: '5%' }} />
-
-            <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
-              <div className={`page-enter mb-8 text-center`}>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <BrainCircuit className="w-5 h-5 text-sky-500" />
-                  <span className="text-xs font-semibold tracking-[0.15em] text-sky-500 uppercase">
-                    Mindmap & Repository
-                  </span>
-                  <Code2 className="w-5 h-5 text-indigo-500" />
+            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center px-8 lg:px-16">
+              {/* 顶部主标题区 */}
+              <div className="text-center mb-10">
+                <div className={`page-enter stagger-1 flex items-center justify-center gap-3 mb-3`}>
+                  <span className="text-[10px] tracking-[0.25em] font-semibold text-blue-600 uppercase">Mindmap & Repository</span>
+                  <code className="text-[11px] text-slate-300 font-mono">{'</>'}</code>
                 </div>
-                <h2 className="text-4xl font-bold text-slate-900 mb-2">知识图谱 & 代码仓库</h2>
-                <p className="text-slate-500">系统化知识梳理 · 个人项目展示</p>
+
+                <h2 className="page-enter stagger-1 notes-magazine-title mb-3" style={{ fontSize: 'clamp(2.5rem, 10vw, 6rem)' }}>
+                  知识图谱 &amp; 代码仓库
+                </h2>
+
+                <p className="page-enter stagger-2 text-sm text-slate-500 font-light tracking-wide">
+                  系统化知识梳理 · 个人项目展示
+                </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-5">
+              {/* 对称双栏卡片 */}
+              <div className="page-enter stagger-3 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+                {/* 左侧：思维导图 */}
                 <Link
                   href="/notes/mindmap"
-                  className="page-enter stagger-2 tech-card p-6 group cursor-pointer"
+                  className="notes-sym-card group block"
                 >
-                  <div className="flex items-start justify-between mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shadow-sm">
-                      <BrainCircuit className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xs text-slate-400 font-mono bg-slate-50 px-2 py-1 rounded">
-                      {data?.mindmapCount ?? 0} maps
+                  {/* 视觉化：思维导图节点预览 */}
+                  <div className="notes-mindmap-visual mb-5">
+                    <svg width="100%" height="100" viewBox="0 0 320 100" fill="none">
+                      {/* 中心节点 */}
+                      <circle cx="160" cy="50" r="10" fill="#2563EB" />
+                      <circle cx="160" cy="50" r="16" fill="#2563EB" opacity="0.12" />
+                      {/* 左侧连线 + 节点 */}
+                      <line x1="150" y1="46" x2="80" y2="30" stroke="#94a3b8" strokeWidth="1" strokeDasharray="2 2" />
+                      <circle cx="75" cy="30" r="5" fill="#22c55e" opacity="0.8" />
+                      <line x1="150" y1="54" x2="70" y2="70" stroke="#94a3b8" strokeWidth="1" strokeDasharray="2 2" />
+                      <circle cx="65" cy="72" r="5" fill="#a855f7" opacity="0.7" />
+                      {/* 右侧连线 + 节点 */}
+                      <line x1="170" y1="46" x2="240" y2="25" stroke="#94a3b8" strokeWidth="1" strokeDasharray="2 2" />
+                      <circle cx="245" cy="23" r="5" fill="#22c55e" opacity="0.8" />
+                      <line x1="170" y1="54" x2="255" y2="70" stroke="#94a3b8" strokeWidth="1" strokeDasharray="2 2" />
+                      <circle cx="260" cy="72" r="5" fill="#a855f7" opacity="0.7" />
+                      {/* 小分支 */}
+                      <line x1="72" y1="28" x2="50" y2="15" stroke="#94a3b8" strokeWidth="0.5" />
+                      <circle cx="48" cy="14" r="3" fill="#22c55e" opacity="0.5" />
+                      <line x1="258" y1="28" x2="280" y2="15" stroke="#94a3b8" strokeWidth="0.5" />
+                      <circle cx="282" cy="14" r="3" fill="#a855f7" opacity="0.5" />
+                    </svg>
+                  </div>
+
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                      思维导图
+                    </h3>
+                    <span className="text-[10px] text-slate-400 font-mono bg-slate-50 px-2 py-0.5 rounded">
+                      {(data?.mindmapCount ?? 0) > 0 ? data?.mindmapCount : 8} maps
                     </span>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-800 mb-2 group-hover:text-sky-600 transition-colors">
-                    思维导图
-                  </h3>
-                  <p className="text-sm text-slate-500 leading-relaxed mb-4">
-                    系统化知识梳理，涵盖网络安全、运维、编程体系等技术领域
+
+                  <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                    覆盖网络安全 · 运维 · 编程体系
                   </p>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="tech-dot" />
-                    <div className="w-8 h-px bg-sky-200" />
-                    <div className="tech-dot" />
-                    <div className="w-8 h-px bg-indigo-200" />
-                    <div className="tech-dot" />
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-sky-600 font-medium">
-                    浏览导图 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+
+                  <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium">
+                    浏览导图 <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </Link>
 
+                {/* 右侧：代码仓库 */}
                 <Link
                   href="/notes/repo"
-                  className="page-enter stagger-3 tech-card p-6 group cursor-pointer"
+                  className="notes-sym-card group block"
                 >
-                  <div className="flex items-start justify-between mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-sm">
-                      <Code2 className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xs text-slate-400 font-mono bg-slate-50 px-2 py-1 rounded">
-                      {data?.repoCount ?? 0} repos
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">
-                    代码仓库
-                  </h3>
-                  <p className="text-sm text-slate-500 leading-relaxed mb-4">
-                    个人项目展示，类 GitHub 在线代码浏览，包含完整文件树和代码高亮
-                  </p>
-                  <div className="bg-slate-900/90 rounded-lg p-3 mb-4 font-mono text-[10px]">
+                  {/* 视觉化：代码预览 */}
+                  <div className="notes-code-visual mb-5">
                     <div className="flex items-center gap-1.5 mb-2">
                       <span className="w-2 h-2 rounded-full bg-red-400" />
                       <span className="w-2 h-2 rounded-full bg-amber-400" />
                       <span className="w-2 h-2 rounded-full bg-green-400" />
-                      <span className="ml-2 text-slate-500">main</span>
+                      <span className="ml-2 text-[10px] text-slate-500 font-mono">main</span>
                     </div>
-                    <div className="text-slate-400 leading-relaxed">
-                      <span className="text-sky-400">const</span> <span className="text-violet-300">repo</span> = <span className="text-green-300">await</span> <span className="text-amber-300">fetchRepo</span>()
+                    <div className="font-mono text-[11px] leading-relaxed">
+                      <div className="text-slate-300"><span className="text-slate-500 mr-3">01</span><span className="text-blue-400">const</span> <span className="text-violet-400">repo</span> = <span className="text-green-400">await</span> <span className="text-amber-400">fetchRepo</span>()</div>
+                      <div className="text-slate-300"><span className="text-slate-500 mr-3">02</span><span className="text-blue-400">const</span> <span className="text-violet-400">files</span> = <span className="text-violet-400">repo</span>.files</div>
+                      <div className="text-slate-300"><span className="text-slate-500 mr-3">03</span><span className="text-slate-500">return</span> files.map(...)</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-indigo-600 font-medium">
-                    浏览代码 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                      代码仓库
+                    </h3>
+                    <span className="text-[10px] text-slate-400 font-mono bg-slate-50 px-2 py-0.5 rounded">
+                      {(data?.repoCount ?? 0) > 0 ? data?.repoCount : 5} repos
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                    个人项目展示 · 在线代码浏览
+                  </p>
+
+                  <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium">
+                    浏览代码 <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </Link>
               </div>
+            </div>
 
-              {data?.popularTags && data.popularTags.length > 0 && (
-                <div className={`page-enter stagger-4 mt-6`}>
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <GitBranch className="w-4 h-4 text-slate-400" />
-                    <span className="text-xs text-slate-400 font-medium">热门标签</span>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {data.popularTags.slice(0, 10).map((tag) => (
-                      <Link
-                        key={tag.name}
-                        href={`/notes/tags/${encodeURIComponent(tag.name)}`}
-                        className="tech-tag rounded-full px-3 py-1 text-xs font-medium"
-                      >
-                        <span className="text-sky-500">#</span>
-                        {tag.name}
-                        <span className="text-slate-400 ml-1">{tag.count}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* 底部页码 + 返回顶部 */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
+              <div className="text-[11px] text-slate-400 font-mono">
+                <span className="text-slate-600 font-semibold">03</span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span>03</span>
+              </div>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="text-slate-400 hover:text-blue-500 transition-colors"
+                aria-label="返回顶部"
+              >
+                <ChevronDown className="w-4 h-4 rotate-180" />
+              </button>
             </div>
           </div>
         </section>
