@@ -4,7 +4,7 @@ export const CreatePostSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/, 'Slug 只能包含小写字母、数字和连字符').max(255),
   title: z.string().min(1, '标题不能为空').max(255),
   content: z.string().min(1, '内容不能为空'),
-  cover: z.string().url('封面地址格式错误').max(500).optional().or(z.literal('')),
+  cover: z.string().max(500, '封面地址过长').optional().or(z.literal('')),
   images: z.array(z.string()).max(20).optional(),
   videos: z.array(z.object({
     url: z.string(),

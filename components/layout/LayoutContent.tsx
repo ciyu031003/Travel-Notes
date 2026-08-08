@@ -36,6 +36,17 @@ export default function LayoutContent({
     )
   }
 
+  // /notes 主页采用全屏沉浸式深色布局，由页面内置导航，跳过全局 Navbar/Footer
+  if (pathname === '/notes') {
+    return (
+      <>
+        <main className="flex-1">
+          {children}
+        </main>
+      </>
+    )
+  }
+
   return (
     <>
       <Navbar />
