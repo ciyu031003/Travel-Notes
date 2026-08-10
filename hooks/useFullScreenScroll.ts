@@ -33,7 +33,7 @@ export function useFullScreenScroll({
       lockRef.current = true
       setCurrentPage(target)
 
-      if (timerRef.current) clearTimeout(timerRef)
+      if (timerRef.current) clearTimeout(timerRef.current)
       timerRef.current = setTimeout(() => {
         lockRef.current = false
       }, lockDuration)
@@ -103,13 +103,13 @@ export function useFullScreenScroll({
       target.removeEventListener('touchstart', touchStartHandler)
       target.removeEventListener('touchend', touchEndHandler)
       window.removeEventListener('keydown', keyDownHandler)
-      if (timerRef.current) clearTimeout(timerRef)
+      if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [targetRef?.current, next, prev, goToPage, totalPages])
 
   // 清理定时器（组件卸载时）
   useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef)
+    if (timerRef.current) clearTimeout(timerRef.current)
   }, [])
 
   return {
@@ -119,3 +119,4 @@ export function useFullScreenScroll({
     prev,
   }
 }
+

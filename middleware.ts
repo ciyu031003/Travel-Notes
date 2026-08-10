@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || process.env.SESSION_SECRET || 'your-secret-key-change-in-production'
-)
+function resolveJwtSecret(): string {
+  const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      // 生产环境缺失密钥时拒绝启动，避免使用不安全的默认密钥
+      throw new Error('[FATAL] JWT_SECRET 未配置：请设置 JWT_SECRET（可用 `openssl rand -hex 32` 生成）')
+    }
+    console.warn('[WARN] JWT_SECRET 未配置：使用开发环境默认密钥，切勿用于生产')
+    return 'dev-only-insecure-secret'
+  }
+  return secret
+}
+
+const JWT_SECRET = new TextEncoder().encode(resolveJwtSecret())
 
 const PUBLIC_PATHS = [
   '/login',

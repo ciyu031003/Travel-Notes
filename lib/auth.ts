@@ -4,8 +4,7 @@ import { getCachedSiteSettings, invalidateSiteSettingsCache } from './cache'
 
 export { hashPassword, verifyPassword, signSession, verifySession, getSessionPayload }
 
-const DEFAULT_USERNAME = 'yuanabd'
-const DEFAULT_PASSWORD = 'Abd123456.'
+const DEFAULT_USERNAME = 'admin'
 
 export interface SiteSettings {
   username: string
@@ -24,6 +23,18 @@ function mapSetting(setting: any): SiteSettings {
     emailVerified: setting.emailVerified,
     requirePasswordChange: (setting as any).requirePasswordChange ?? false,
     anniversaryStart: (setting as any).anniversaryStart ?? null,
+  }
+}
+
+/** 未配置任何凭据时的安全空设置：passwordHash 为空，登录将提示"系统尚未配置访问密码"。 */
+function emptySettings(): SiteSettings {
+  return {
+    username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME,
+    passwordHash: '',
+    email: null,
+    emailVerified: false,
+    requirePasswordChange: false,
+    anniversaryStart: null,
   }
 }
 
@@ -47,15 +58,7 @@ async function fetchSiteSettingsFromDB(): Promise<SiteSettings> {
         anniversaryStart: null,
       }
     }
-    const defaultPasswordHash = await hashPassword(DEFAULT_PASSWORD)
-    return {
-      username: DEFAULT_USERNAME,
-      passwordHash: defaultPasswordHash,
-      email: null,
-      emailVerified: false,
-      requirePasswordChange: false,
-      anniversaryStart: null,
-    }
+    return emptySettings()
   }
 
   await initializeDefaultAdmin()
@@ -81,15 +84,7 @@ async function fetchSiteSettingsFromDB(): Promise<SiteSettings> {
     }
   }
 
-  const defaultPasswordHash = await hashPassword(DEFAULT_PASSWORD)
-  return {
-    username: DEFAULT_USERNAME,
-    passwordHash: defaultPasswordHash,
-    email: null,
-    emailVerified: false,
-    requirePasswordChange: false,
-    anniversaryStart: null,
-  }
+  return emptySettings()
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -97,28 +92,21 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 }
 
 async function initializeDefaultAdmin(): Promise<void> {
+  // 安全策略：仅当显式配置了 ADMIN_PASSWORD_HASH 时才创建初始账号，
+  // 绝不使用硬编码的默认密码。未配置时由 /admin/setup 引导完成初始化。
+  const envPasswordHash = process.env.ADMIN_PASSWORD_HASH
+  if (!envPasswordHash) return
+
   try {
     const count = await prisma.siteSetting.count()
     if (count === 0) {
-      const envPasswordHash = process.env.ADMIN_PASSWORD_HASH
-      if (envPasswordHash) {
-        await prisma.siteSetting.create({
-          data: {
-            username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME,
-            passwordHash: envPasswordHash,
-            requirePasswordChange: false,
-          },
-        })
-      } else {
-        const defaultPasswordHash = await hashPassword(DEFAULT_PASSWORD)
-        await prisma.siteSetting.create({
-          data: {
-            username: DEFAULT_USERNAME,
-            passwordHash: defaultPasswordHash,
-            requirePasswordChange: true,
-          },
-        })
-      }
+      await prisma.siteSetting.create({
+        data: {
+          username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME,
+          passwordHash: envPasswordHash,
+          requirePasswordChange: false,
+        },
+      })
     }
   } catch (error) {
     console.error('[initializeDefaultAdmin] Failed:', error)

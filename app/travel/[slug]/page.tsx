@@ -6,7 +6,7 @@ import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
 import VideoPlayer from '@/components/VideoPlayer'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params
@@ -93,3 +93,4 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
     </div>
   )
 }
+

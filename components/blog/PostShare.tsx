@@ -11,9 +11,13 @@ interface PostShareProps {
 export default function PostShare({ url, title }: PostShareProps) {
   const [copied, setCopied] = useState(false)
 
+  // 支持相对路径：在客户端补全为绝对 URL（便于服务端静态化/ISR）
+  const resolveUrl = (u: string) =>
+    u.startsWith('/') && typeof window !== 'undefined' ? window.location.origin + u : u
+
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(resolveUrl(url))
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -34,7 +38,7 @@ export default function PostShare({ url, title }: PostShareProps) {
   const handleShare = async () => {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title, url })
+        await navigator.share({ title, url: resolveUrl(url) })
         return
       } catch {
         // 用户取消分享，降级为复制
@@ -81,3 +85,4 @@ export default function PostShare({ url, title }: PostShareProps) {
     </div>
   )
 }
+

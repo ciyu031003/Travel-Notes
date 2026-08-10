@@ -14,6 +14,15 @@ export async function GET(
       return NextResponse.json({ error: 'File path is required' }, { status: 400 })
     }
 
+    // 路径穿越防护：拒绝绝对路径、反斜杠、.. 片段等非法输入
+    if (
+      filePath.startsWith('/') ||
+      filePath.includes('\\') ||
+      filePath.split('/').includes('..')
+    ) {
+      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 })
+    }
+
     const repoService = getRepoService()
     const result = await repoService.getRepoFile(repo, filePath)
 

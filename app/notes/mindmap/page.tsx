@@ -3,7 +3,7 @@ import { getPostService } from '@/lib/container'
 import { formatDate } from '@/lib/utils'
 import { BrainCircuit, Calendar, ArrowRight, Plus } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata = {
   title: '思维导图 | 知识体系',
@@ -85,3 +85,4 @@ export default async function MindmapPage() {
     </div>
   )
 }
+

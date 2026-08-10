@@ -5,7 +5,7 @@ import { getPostService } from '@/lib/container'
 import { formatDate } from '@/lib/utils'
 import type { PostMetaDB } from '@/lib/db-posts'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 interface PageProps {
   params: Promise<{ tag: string }>
@@ -150,3 +150,4 @@ export default async function TagDetailPage({ params }: PageProps) {
     </div>
   )
 }
+

@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { UserRepository } from '../repositories/user-repository'
 import { CacheService } from '../infrastructure/cache'
 import { verifyPassword, hashPassword } from '../auth-utils'
@@ -37,6 +38,13 @@ export class SiteService {
   async updateAnniversaryStart(date: string | null): Promise<void> {
     await this.userRepo.updateAnniversaryStart(date)
     await this.cache.deleteByTag('site')
+    try {
+      revalidatePath('/')
+      revalidatePath('/travel')
+      revalidatePath('/album')
+    } catch {
+      // 构建期或无权调用时忽略
+    }
   }
 
   async updateUsername(username: string, currentPassword: string): Promise<{ success: boolean; error?: string }> {

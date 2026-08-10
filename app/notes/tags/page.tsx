@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Tag } from 'lucide-react'
 import { getPostService } from '@/lib/container'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata = {
   title: '标签云 | 学习笔记',
@@ -88,3 +88,4 @@ export default async function TagsPage() {
     </div>
   )
 }
+

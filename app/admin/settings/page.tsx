@@ -582,11 +582,12 @@ function EmailTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' 
       })
 
       if (res.ok) {
+        const data = await res.json()
         setCodeSent(true)
         setCountdown(60)
-        onMessage({ 
-          type: 'info', 
-          text: `验证码已发送到 ${newEmail}（演示模式：验证码为 123456）。请在 60 秒内使用。` 
+        onMessage({
+          type: 'info',
+          text: data.message || `验证码已发送到 ${newEmail}，请在 5 分钟内使用`,
         })
       } else {
         const data = await res.json()

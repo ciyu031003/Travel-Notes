@@ -12,6 +12,10 @@ import { DocumentImportService } from './services/document-import-service'
 import { UnifiedMarkdownRenderer } from './infrastructure/markdown'
 import { MemoryCacheService } from './infrastructure/cache'
 import { tokenService } from './services/token-service'
+import { prismaTokenBlacklistRepository } from './repositories/token-blacklist-repository'
+
+// 服务端启动时将持久化黑名单仓库注入 TokenService（保持客户端包不含 Prisma）
+tokenService.attachBlacklistRepository(prismaTokenBlacklistRepository)
 
 let postServiceInstance: PostService | null = null
 let authServiceInstance: AuthService | null = null

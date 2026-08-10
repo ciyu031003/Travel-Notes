@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { 
-  generateVerificationCode, 
-  storeVerificationCode, 
-  getVerificationCodeStatus 
+import {
+  generateVerificationCode,
+  storeVerificationCode,
+  getVerificationCodeStatus,
+  isEmailDeliveryConfigured,
 } from '@/lib/verification'
 
 export async function POST(request: Request) {
@@ -22,21 +23,29 @@ export async function POST(request: Request) {
 
     const status = getVerificationCodeStatus(email)
     if (!status.canSend) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: `请在 ${status.remainingSeconds} 秒后重试`,
-        remainingSeconds: status.remainingSeconds 
+        remainingSeconds: status.remainingSeconds,
       }, { status: 429 })
     }
 
     const code = generateVerificationCode()
     storeVerificationCode(email, code)
 
-    console.log(`[Email Verification] Code for ${email}: ${code}`)
+    if (isEmailDeliveryConfigured()) {
+      // TODO: 接入真实邮件服务（nodemailer/Resend/阿里云邮件等）后在此发送
+      console.log(`[Email Verification] Send code to ${email}: ${code}`)
+      return NextResponse.json({
+        success: true,
+        message: '验证码已发送到您的邮箱，请在 5 分钟内完成验证',
+      })
+    }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: '验证码已发送（演示模式：123456）',
-      code 
+    // 未配置邮件服务：验证码仅写入服务端日志，不向前端回显
+    console.log(`[Email Verification] Code for ${email}: ${code}（未配置邮件服务，仅本地调试）`)
+    return NextResponse.json({
+      success: true,
+      message: '验证码已发送（未配置邮件服务，请查看服务器日志获取验证码）',
     })
   } catch {
     return NextResponse.json({ error: '发送失败' }, { status: 500 })

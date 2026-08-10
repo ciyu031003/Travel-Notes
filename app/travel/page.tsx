@@ -1,7 +1,7 @@
 import { getPostService } from '@/lib/container'
 import TravelClient from './TravelClient'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata = {
   title: '旅行记录 | 一起走过的地方',
@@ -14,3 +14,4 @@ export default async function TravelPage() {
 
   return <TravelClient posts={posts} />
 }
+

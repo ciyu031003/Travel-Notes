@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { PostRepository, type FindAllParams, type PaginatedResult, type CreatePostInput, type UpdatePostInput } from '../repositories/post-repository'
 import { CacheService } from '../infrastructure/cache'
 import { MarkdownRenderer, type TocItem } from '../infrastructure/markdown'
@@ -385,6 +386,7 @@ export class PostService {
   async createPost(input: CreatePostInput): Promise<{ id: number }> {
     const result = await this.postRepo.create(input)
     await this.invalidateCache(input.type)
+    this.invalidateIsrCache()
     return result
   }
 
@@ -395,11 +397,13 @@ export class PostService {
     } else {
       await this.invalidateAllCache()
     }
+    this.invalidateIsrCache()
   }
 
   async deletePost(id: number): Promise<void> {
     await this.postRepo.delete(id)
     await this.invalidateAllCache()
+    this.invalidateIsrCache()
   }
 
   private async invalidateCache(type: string): Promise<void> {
@@ -409,6 +413,25 @@ export class PostService {
 
   private async invalidateAllCache(): Promise<void> {
     await this.cache.deleteByTag('posts')
+  }
+
+  /** 内容变更后失效 Next.js ISR 缓存，使前台页面尽快反映最新内容。 */
+  private invalidateIsrCache(): void {
+    try {
+      revalidatePath('/')
+      revalidatePath('/travel')
+      revalidatePath('/album')
+      revalidatePath('/notes')
+      revalidatePath('/notes/blog')
+      revalidatePath('/notes/mindmap')
+      revalidatePath('/notes/tags')
+      revalidatePath('/notes/blog/[slug]', 'page')
+      revalidatePath('/notes/mindmap/[slug]', 'page')
+      revalidatePath('/travel/[slug]', 'page')
+      revalidatePath('/notes/tags/[tag]', 'page')
+    } catch {
+      // 构建期或无权调用时忽略，ISR 到期后会自动重新生成
+    }
   }
 
   private async toDetailDTO(post: PostDB): Promise<PostDetailDTO> {

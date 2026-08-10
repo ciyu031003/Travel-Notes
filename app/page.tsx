@@ -2,7 +2,7 @@ import { getPostService } from '@/lib/container'
 import { findProvinceByLocation } from '@/lib/province-map'
 import HomeClient from '@/components/HomeClient'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata = {
   title: '我们的小家 | 旅行记录 & 学习笔记',
@@ -35,3 +35,4 @@ export default async function Home() {
     />
   )
 }
+

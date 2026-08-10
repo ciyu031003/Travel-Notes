@@ -1,10 +1,10 @@
 # Travel-Notes 架构优化设计文档
 
-> **文档版本**: v3.3  
-> **最后更新**: 2026-08-01  
+> **文档版本**: v3.4  
+> **最后更新**: 2026-08-10  
 > **项目**: 个人旅行笔记系统 (Travel-Notes)  
 > **目标读者**: 负责技术实施的工程师  
-> **状态**: 阶段一~四已完成；学习笔记模块专项优化（阶段 A~F）已全部完成；阶段五（基础设施增强）为下一优先级
+> **状态**: 阶段一~四已完成；学习笔记模块专项优化（阶段 A~F）已全部完成；P0 安全加固与性能优化（v3.4）已完成；阶段五（基础设施增强）为下一优先级
 
 ---
 
@@ -1343,7 +1343,23 @@ COOKIE_SECURE=false  # 生产环境设为 true
 | 2026-08-01 | v3.3 | §10 组件层验收：从 6 项待完成条目扩展为 12 项，11 项打勾已完成，1 项（通用UI组件库）标记暂未实施 | §10 |
 | 2026-08-01 | v3.3 | §11 新增 11.3 小节，记录 v3.2→v3.3 共 9 项具体变更点 | §11 |
 
+### 11.4 v3.3 → v3.4（2026-08-10 · P0 安全加固 + 性能优化）
+
+| 日期 | 版本 | 变更内容 | 变更章节 |
+|------|------|---------|---------|
+| 2026-08-10 | v3.4 | 文档头部更新：版本号 v3.3→v3.4、日期 08-01→08-10、状态补充 P0 安全加固与性能优化已完成 | 文档头部 |
+| 2026-08-10 | v3.4 | **S1 路径穿越修复**：`lib/repos.ts` 新增 `safeRepoDir`/`safeRepoFilePath` 安全解析（resolve+relative 双校验），`app/api/repos/[repo]/files` 增加 filePath 白名单校验（拒绝绝对路径/反斜杠/`..`），仓库文件读取不再可能逃逸出 `content/tech/repos` | §5F / API |
+| 2026-08-10 | v3.4 | **S2 移除硬编码凭据**：删除源码中的 `DEFAULT_USERNAME='yuanabd'` 与 `DEFAULT_PASSWORD`，`initializeDefaultAdmin` 仅在显式配置 `ADMIN_PASSWORD_HASH` 时创建账号；未配置时返回空凭据，登录提示"系统尚未配置访问密码" | 安全 |
+| 2026-08-10 | v3.4 | **S3 验证码安全**：`lib/verification.ts` 改为 `crypto.randomInt` 生成 6 位随机码（移除固定 `123456`），失败 5 次自动作废；`send-code`/`forgot-password` 接口不再向前端回显验证码，未配置邮件服务时仅输出到服务端日志（新增 `EMAIL_ENABLED` 环境变量） | 安全 |
+| 2026-08-10 | v3.4 | **S4 JWT 密钥兜底移除**：`middleware.ts` 与 `token-service.ts` 在 `NODE_ENV=production` 且未配置 `JWT_SECRET` 时直接抛错拒绝启动，开发环境使用带告警的临时密钥 | 安全 |
+| 2026-08-10 | v3.4 | **S5 黑名单持久化**：新增 `TokenBlacklist` 表（`prisma/schema.prisma` + `migrate-db.cjs` 建表），`PrismaTokenBlacklistRepository` 落库；`TokenService` 校验时内存未命中则查询 DB，进程重启后注销仍然生效；通过 `container.ts` 注入避免 Prisma 进入客户端包 | 安全 / §3 |
+| 2026-08-10 | v3.4 | **S6 视频文件名消毒**：`app/api/video/[filename]` 仅接受纯文件名（拒绝 `/`、`\`、`..`），并校验解析路径位于上传目录内 | 安全 |
+| 2026-08-10 | v3.4 | **性能-ISR 化**：首页、`/travel`、博客/思维导图/标签 列表与详情页从 `force-dynamic` 改为 `revalidate=300`（博客详情移除 `headers()` 依赖，分享链接改由客户端补全）；写操作（Post/Repo/SiteSetting）后调用 `revalidatePath` 失效 ISR 缓存 | 性能 |
+| 2026-08-10 | v3.4 | **Bug 修复**：`hooks/useFullScreenScroll.ts` 三处 `clearTimeout(timerRef)` 改为 `clearTimeout(timerRef.current)`，修复 TypeScript 严格模式报错 | Bug |
+| 2026-08-10 | v3.4 | 验证：`npx tsc --noEmit` 通过；`next build` 通过（blog 详情 SSG、列表/首页 Static）；`prisma generate` 通过 | 验收 |
+
 ---
 
-*— 文档 v3.3 结束 —*  
+*— 文档 v3.4 结束 —*  
 *本文档将随实施进度持续更新*
+

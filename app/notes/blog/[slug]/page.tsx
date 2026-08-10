@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import Link from 'next/link'
 import { Calendar, ArrowLeft, MapPin } from 'lucide-react'
 import { getPostService } from '@/lib/container'
@@ -14,7 +13,7 @@ import PostNavigation from '@/components/blog/PostNavigation'
 import RelatedPosts from '@/components/blog/RelatedPosts'
 import ReadingTime from '@/components/blog/ReadingTime'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export async function generateStaticParams() {
   const postService = getPostService()
@@ -50,11 +49,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       .then(ps => ps.filter(p => p.slug !== slug).slice(0, 3)),
   ])
 
-  // 服务端构造当前页 URL（用于分享按钮）
-  const h = await headers()
-  const host = h.get('x-forwarded-host') || h.get('host') || 'localhost:3000'
-  const protocol = h.get('x-forwarded-proto') || 'http'
-  const shareUrl = `${protocol}://${host}/notes/blog/${slug}`
 
   return (
     <div className="container-custom">
@@ -110,7 +104,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <CodeBlockEnhancer />
           <ImageLightbox />
 
-          <PostShare url={shareUrl} title={post.title} />
+          <PostShare url={`/notes/blog/${post.slug}`} title={post.title} />
 
           <PostNavigation
             prev={adjacent.prev ? { slug: adjacent.prev.slug, title: adjacent.prev.title } : null}
@@ -138,3 +132,4 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     </div>
   )
 }
+

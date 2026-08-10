@@ -77,11 +77,12 @@ export default function ForgotPasswordPage() {
       })
 
       if (res.ok) {
+        const data = await res.json()
         setCountdown(60)
         setStep('verify')
-        setMessage({ 
-          type: 'success', 
-          text: `验证码已发送到 ${email}（演示模式：验证码为 123456）` 
+        setMessage({
+          type: 'success',
+          text: data.message || `验证码已发送到 ${email}，请查收`,
         })
       } else {
         const data = await res.json()

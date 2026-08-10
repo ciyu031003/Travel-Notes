@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { RepoRepository, RepoMeta, FileNode } from '../repositories/repo-repository'
 import {
   RepoMetadataRepository,
@@ -85,17 +86,20 @@ export class RepoService {
     }
     const result = await this.repoMetadataRepo.create(input)
     await this.cache.deleteByTag('repos')
+    this.invalidateIsrCache()
     return result
   }
 
   async updateRepo(id: number, input: UpdateRepoInput): Promise<void> {
     await this.repoMetadataRepo.update(id, input)
     await this.cache.deleteByTag('repos')
+    this.invalidateIsrCache()
   }
 
   async deleteRepo(id: number): Promise<void> {
     await this.repoMetadataRepo.delete(id)
     await this.cache.deleteByTag('repos')
+    this.invalidateIsrCache()
   }
 
   async getRepoFiles(repo: string): Promise<FileNode | null> {
@@ -106,6 +110,17 @@ export class RepoService {
       this.CACHE_TTL_REPOS,
       ['repos', `repos:${repo}`]
     )
+  }
+
+  /** 仓库元数据变更后失效 Next.js ISR 缓存。 */
+  private invalidateIsrCache(): void {
+    try {
+      revalidatePath('/notes')
+      revalidatePath('/notes/repo')
+      revalidatePath('/notes/repo/[repo]', 'page')
+    } catch {
+      // 构建期或无权调用时忽略
+    }
   }
 
   async getRepoFile(repo: string, filePath: string): Promise<{ content: string; language: string } | null> {

@@ -85,3 +85,11 @@ model Repo {
 
   @@index([name])
 }
+
+model TokenBlacklist {
+  jti       String   @id @db.VarChar(64)
+  expiresAt DateTime @db.Timestamp(3)
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  @@index([expiresAt])
+}

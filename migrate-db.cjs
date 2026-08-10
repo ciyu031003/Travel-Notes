@@ -173,6 +173,25 @@ async function migrate() {
       }
     }
 
+    const [blacklistTables] = await connection.query(
+      "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'TokenBlacklist'",
+      [dbName]
+    );
+
+    if (blacklistTables.length === 0) {
+      console.log('Creating TokenBlacklist table...');
+      await connection.query(`
+        CREATE TABLE TokenBlacklist (
+          jti VARCHAR(64) NOT NULL,
+          expiresAt DATETIME(3) NOT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (jti),
+          INDEX TokenBlacklist_expiresAt_idx (expiresAt)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('TokenBlacklist table created.');
+    }
+
     console.log('\n✓ Database migration completed successfully!');
     console.log('  Now try creating a post again.');
   } catch (error) {
@@ -184,3 +203,4 @@ async function migrate() {
 }
 
 migrate();
+

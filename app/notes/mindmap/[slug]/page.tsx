@@ -7,7 +7,7 @@ import ReadingTime from '@/components/blog/ReadingTime'
 import MindmapAutoSwitch from '@/components/mindmap/MindmapAutoSwitch'
 import MindmapHint from '@/components/mindmap/MindmapHint'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export async function generateStaticParams() {
   const postService = getPostService()
@@ -97,3 +97,4 @@ export default async function MindmapDetailPage({ params }: { params: Promise<{ 
     </div>
   )
 }
+

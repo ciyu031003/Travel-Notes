@@ -27,8 +27,23 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params
-  const videoDir = getVideoDir()
-  const filePath = path.join(videoDir, filename)
+  const videoDir = path.resolve(getVideoDir())
+
+  // 路径穿越防护：仅允许纯文件名（不含路径分隔符 / 反斜杠 / ..）
+  const safeName = path.basename(filename)
+  if (
+    safeName !== filename ||
+    filename.includes('..') ||
+    filename.includes('/') ||
+    filename.includes('\\')
+  ) {
+    return NextResponse.json({ error: '视频文件不存在' }, { status: 404 })
+  }
+
+  const filePath = path.resolve(videoDir, safeName)
+  if (!filePath.startsWith(videoDir + path.sep)) {
+    return NextResponse.json({ error: '视频文件不存在' }, { status: 404 })
+  }
 
   if (!fs.existsSync(filePath)) {
     return NextResponse.json({ error: '视频文件不存在' }, { status: 404 })
@@ -112,3 +127,4 @@ export async function OPTIONS() {
     status: 204,
   })
 }
+

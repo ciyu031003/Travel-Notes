@@ -2,7 +2,7 @@ import { getPostService } from '@/lib/container'
 import BlogToolbar from '@/components/blog/BlogToolbar'
 import RssLink from '@/components/blog/RssLink'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata = {
   title: '技术博客 | 学习笔记',
@@ -42,3 +42,4 @@ export default async function TechBlogPage() {
     </div>
   )
 }
+

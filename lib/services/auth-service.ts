@@ -92,7 +92,7 @@ export class AuthService {
     return { requirePasswordChange: settings.requirePasswordChange }
   }
 
-  async sendResetCode(email: string): Promise<{ success: boolean; code?: string; error?: string; remainingSeconds?: number }> {
+  async sendResetCode(email: string): Promise<{ success: boolean; error?: string; remainingSeconds?: number }> {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { success: false, error: '请输入有效的邮箱地址' }
     }
@@ -114,7 +114,9 @@ export class AuthService {
     const code = generateVerificationCode()
     storeResetCode(email, code)
 
-    return { success: true, code }
+    // 验证码不回显给客户端，仅写入服务端日志（未配置邮件服务时的本地调试途径）
+    console.log(`[Forgot Password] Reset code for ${email}: ${code}（未配置邮件服务，仅本地调试）`)
+    return { success: true }
   }
 
   async verifyResetCode(email: string, code: string): Promise<{ success: boolean; error?: string }> {
