@@ -2,6 +2,14 @@ import { prisma } from './db'
 import { remark } from 'remark'
 import remarkHtml from 'remark-html'
 import remarkGfm from 'remark-gfm'
+/**
+ * 低内存构建优化：构建阶段（next build）跳过数据库读取。
+ * 由部署脚本设置 SKIP_DB_ON_BUILD=1；构建期返回空数据，页面预渲染为轻量壳，
+ * 运行时由 ISR（revalidate=300）按需生成真实内容，显著降低 2C2G 服务器构建内存峰值。
+ */
+function skipDbOnBuild(): boolean {
+  return process.env.SKIP_DB_ON_BUILD === '1' && process.env.NEXT_PHASE === 'phase-production-build'
+}
 
 export interface VideoInfo {
   url: string
@@ -170,6 +178,9 @@ function mapPostMeta(post: any): PostMetaDB {
 }
 
 export async function getDBPosts(type: string, includeContent: boolean = false): Promise<PostMetaDB[]> {
+  if (skipDbOnBuild()) {
+    return []
+  }
   try {
     const select = includeContent ? fullSelect : metaSelect
     const posts = await prisma.post.findMany({
@@ -184,12 +195,14 @@ export async function getDBPosts(type: string, includeContent: boolean = false):
     return []
   }
 }
-
 export async function getDBPostsWithPagination(
   type: string,
   page: number = 1,
   pageSize: number = 20
 ): Promise<{ posts: PostMetaDB[]; total: number; hasMore: boolean }> {
+  if (skipDbOnBuild()) {
+    return { posts: [], total: 0, hasMore: false }
+  }
   try {
     const skip = (page - 1) * pageSize
     const [posts, total] = await Promise.all([
@@ -217,6 +230,9 @@ export async function getDBPostsWithPagination(
 }
 
 export async function getDBPostBySlug(type: string, slug: string): Promise<PostDB | null> {
+  if (skipDbOnBuild()) {
+    return null
+  }
   try {
     const post: any = await prisma.post.findFirst({
       where: { type: type as any, slug, published: true },
@@ -253,6 +269,9 @@ export async function getDBPostBySlug(type: string, slug: string): Promise<PostD
 }
 
 export async function getDBPostById(id: number): Promise<PostDB | null> {
+  if (skipDbOnBuild()) {
+    return null
+  }
   try {
     const post: any = await prisma.post.findUnique({
       where: { id },
@@ -361,6 +380,9 @@ export async function deleteDBPost(id: number) {
 }
 
 export async function getAllDBPosts(type?: string) {
+  if (skipDbOnBuild()) {
+    return []
+  }
   try {
     const where = type ? { type: type as any } : {}
     return await prisma.post.findMany({
@@ -375,6 +397,9 @@ export async function getAllDBPosts(type?: string) {
 }
 
 export async function getPostsByLocation(location: string): Promise<PostMetaDB[]> {
+  if (skipDbOnBuild()) {
+    return []
+  }
   try {
     const posts = await prisma.post.findMany({
       where: {
@@ -392,6 +417,9 @@ export async function getPostsByLocation(location: string): Promise<PostMetaDB[]
 }
 
 export async function getPostCountByType(type: string): Promise<number> {
+  if (skipDbOnBuild()) {
+    return 0
+  }
   try {
     return await prisma.post.count({
       where: { type: type as any, published: true },
@@ -403,6 +431,9 @@ export async function getPostCountByType(type: string): Promise<number> {
 }
 
 export async function getDistinctLocations(): Promise<string[]> {
+  if (skipDbOnBuild()) {
+    return []
+  }
   try {
     const posts = await prisma.post.findMany({
       where: { published: true, location: { not: null } },
@@ -420,6 +451,9 @@ export async function getAdjacentPosts(
   type: string,
   date: string
 ): Promise<{ prev: PostMetaDB | null; next: PostMetaDB | null }> {
+  if (skipDbOnBuild()) {
+    return { prev: null, next: null }
+  }
   try {
     const dateObj = ensureDate(date)
     const [prevPost, nextPost] = await Promise.all([
@@ -456,6 +490,9 @@ export async function getAdjacentPosts(
 }
 
 export async function getPostsByTag(tag: string, type?: string): Promise<PostMetaDB[]> {
+  if (skipDbOnBuild()) {
+    return []
+  }
   try {
     const where: any = {
       published: true,
@@ -478,6 +515,9 @@ export async function getPostsByTag(tag: string, type?: string): Promise<PostMet
 }
 
 export async function getAllTags(type?: string): Promise<Array<{ name: string; count: number }>> {
+  if (skipDbOnBuild()) {
+    return []
+  }
   try {
     const where: any = { published: true }
     if (type) {
@@ -504,6 +544,9 @@ export async function getAllTags(type?: string): Promise<Array<{ name: string; c
 }
 
 export async function searchPosts(keyword: string, type?: string): Promise<PostMetaDB[]> {
+  if (skipDbOnBuild()) {
+    return []
+  }
   try {
     const where: any = {
       published: true,

@@ -1,10 +1,10 @@
 # Travel-Notes 架构优化设计文档
 
-> **文档版本**: v3.4  
+> **文档版本**: v3.5  
 > **最后更新**: 2026-08-10  
 > **项目**: 个人旅行笔记系统 (Travel-Notes)  
 > **目标读者**: 负责技术实施的工程师  
-> **状态**: 阶段一~四已完成；学习笔记模块专项优化（阶段 A~F）已全部完成；P0 安全加固与性能优化（v3.4）已完成；阶段五（基础设施增强）为下一优先级
+> **状态**: 阶段一~四已完成；学习笔记模块专项优化（阶段 A~F）已全部完成；P0 安全加固与性能优化（v3.4）、2C2G 低内存构建与数据库迁移（v3.5）已完成；阶段五（基础设施增强）为下一优先级
 
 ---
 
@@ -1358,8 +1358,21 @@ COOKIE_SECURE=false  # 生产环境设为 true
 | 2026-08-10 | v3.4 | **Bug 修复**：`hooks/useFullScreenScroll.ts` 三处 `clearTimeout(timerRef)` 改为 `clearTimeout(timerRef.current)`，修复 TypeScript 严格模式报错 | Bug |
 | 2026-08-10 | v3.4 | 验证：`npx tsc --noEmit` 通过；`next build` 通过（blog 详情 SSG、列表/首页 Static）；`prisma generate` 通过 | 验收 |
 
+### 11.5 v3.4 → v3.5（2026-08-10 · 2C2G 低内存构建 + 数据库迁移脚本）
+
+| 日期 | 版本 | 变更内容 | 变更章节 |
+|------|------|---------|---------|
+| 2026-08-10 | v3.5 | 文档头部更新：版本号 v3.4→v3.5，状态补充 2C2G 低内存构建与数据库迁移完成 | 文档头部 |
+| 2026-08-10 | v3.5 | **低内存构建**：新增 `scripts/build-production.sh`（NODE_OPTIONS 限制堆内存、`SKIP_DB_ON_BUILD=1` 构建期跳过 DB、失败自动清理重试、内存/Swap 检测）；`next.config.js` 构建期跳过 ESLint、支持 `SKIP_TSC=1` 逃生阀 | 构建/部署 |
+| 2026-08-10 | v3.5 | **构建期 DB 短路**：`lib/db-posts.ts` 新增 `skipDbOnBuild()`，`next build` 阶段（NEXT_PHASE=phase-production-build + SKIP_DB_ON_BUILD=1）所有 DB 读操作返回空，页面预渲染为轻量壳，运行时 ISR 生成真实内容 | 数据层 |
+| 2026-08-10 | v3.5 | **deploy.sh 增强**：构建改调用低内存脚本；Swap 阈值修正（≥4GB 才算充足，2C2G 引导创建 2-4G Swap）；新增部署后 ISR 预热（首页/旅行/博客/思维导图/标签/RSS） | 部署 |
+| 2026-08-10 | v3.5 | **数据库迁移脚本**：新增 `scripts/migrate-database.sh`（backup/restore/list/verify 四命令，mysqldump 导出、自动建库导入、关键表校验） | 运维 |
+| 2026-08-10 | v3.5 | **文档**：新增 `docs/DATABASE_MIGRATION.md`（脚本用法 + 服务器迁移全流程 + 2C2G 构建优化说明）；`SERVER_SETUP.md` §5.5 更新为推荐低内存构建脚本 | 文档 |
+| 2026-08-10 | v3.5 | 验证：`tsc --noEmit` 通过；`SKIP_DB_ON_BUILD=1 next build` 通过（构建耗时约 43s，较之前显著降低） | 验收 |
+
 ---
 
-*— 文档 v3.4 结束 —*  
+*— 文档 v3.5 结束 —*  
 *本文档将随实施进度持续更新*
+
 

@@ -423,8 +423,10 @@ sync_database() {
 # ======================== 服务器资源检测与交换分区配置 ========================
 
 check_and_setup_swap() {
-    local min_memory_mb=2048  # 建议至少 2GB 内存
-    local swap_size_mb=2048   # 交换分区大小 2GB
+    # 2C2G 低配服务器构建 Next.js 需要 Swap 兜底：
+    #  - 物理内存 >= 4GB 视为充足，无需 Swap
+    #  - 物理内存 <= 2GB 建议创建 4GB Swap；2-4GB 建议 2GB Swap
+    local swap_size_mb=2048   # 实际创建的交换分区大小（按内存动态调整）
 
     log_step "检查服务器资源"
 
@@ -441,22 +443,29 @@ check_and_setup_swap() {
     log_info "物理内存: ${total_mem_mb}MB"
     log_info "交换分区: ${swap_total_mb}MB"
 
-    # 检查内存是否充足
-    if [ "$total_mem_mb" -ge "$min_memory_mb" ]; then
-        log_info "内存充足 (${total_mem_mb}MB >= ${min_memory_mb}MB)，无需添加交换分区"
+    # 内存充足（>=4GB）时无需 Swap
+    if [ "$total_mem_mb" -ge 4096 ]; then
+        log_info "内存充足 (${total_mem_mb}MB >= 4096MB)，无需额外交换分区"
         return 0
     fi
 
-    # 内存不足，检查是否已有交换分区
-    if [ "$swap_total_mb" -gt 0 ]; then
-        log_warn "物理内存不足 (${total_mem_mb}MB < ${min_memory_mb}MB)，但已有 ${swap_total_mb}MB 交换分区"
-        log_info "建议关闭部分应用或增加物理内存"
+    # 2-4GB 建议 2GB Swap；<=2GB 建议 4GB Swap
+    if [ "$total_mem_mb" -le 2048 ]; then
+        swap_size_mb=4096
+    else
+        swap_size_mb=2048
+    fi
+
+    # 已有足够 Swap 时直接放行
+    if [ "$swap_total_mb" -ge 2048 ]; then
+        log_warn "内存有限 (${total_mem_mb}MB)，已有 ${swap_total_mb}MB 交换分区"
+        log_info "建议关闭部分应用或增加物理内存；若构建仍 OOM，可增大 Swap 或使用低内存构建模式"
         return 0
     fi
 
-    # 内存不足且无交换分区，创建交换分区
-    log_warn "物理内存不足且无交换分区！"
-    log_warn "Next.js 构建可能需要较多内存"
+    # 内存不足且无足够 Swap，创建 Swap
+    log_warn "内存有限 (${total_mem_mb}MB) 且交换分区不足 (${swap_total_mb}MB)！"
+    log_warn "Next.js 构建在低内存下容易 OOM，建议创建 ${swap_size_mb}MB Swap"
 
     if confirm "是否创建 ${swap_size_mb}MB 交换分区以保证构建顺利？"; then
         local swap_file="/swapfile"
@@ -550,19 +559,32 @@ build_project() {
 
     cd "$APP_DIR"
 
-    log_info "开始构建 (npm run build)..."
-    log "  构建可能需要 2-5 分钟，请耐心等待..."
+    if [ -f "$APP_DIR/scripts/build-production.sh" ]; then
+        log_info "使用低内存构建脚本 (scripts/build-production.sh)"
+        log "  特点：限制 Node 堆内存、构建跳过数据库读取、失败自动重试"
+        log "  构建可能需要 3-8 分钟，请耐心等待..."
 
-    if npm run build 2>&1 | tee -a "$DEPLOY_LOG"; then
-        log_info "构建成功"
+        if bash "$APP_DIR/scripts/build-production.sh" 2>&1 | tee -a "$DEPLOY_LOG"; then
+            log_info "构建成功"
+        else
+            log_error "构建失败！"
+            log "  常见原因："
+            log "  1. Node.js 版本过低 (需要 >= v18)"
+            log "  2. 内存不足 (建议添加 Swap，参考 docs/SERVER_SETUP.md)"
+            log "  3. TypeScript 类型错误 (检查是否执行了 prisma generate)"
+            log "  4. 依赖损坏 (尝试 ./deploy.sh --clean)"
+            exit 1
+        fi
     else
-        log_error "构建失败！"
-        log "  常见原因："
-        log "  1. Node.js 版本过低 (需要 >= v18)"
-        log "  2. 内存不足 (建议添加 Swap)"
-        log "  3. TypeScript 类型错误 (检查是否执行了 prisma generate)"
-        log "  4. 依赖损坏 (尝试 ./deploy.sh --clean)"
-        exit 1
+        log_info "未找到低内存构建脚本，使用默认方式构建 (npm run build)"
+        log "  建议升级项目到包含 scripts/build-production.sh 的版本以支持 2C2G 低内存构建"
+
+        if npm run build 2>&1 | tee -a "$DEPLOY_LOG"; then
+            log_info "构建成功"
+        else
+            log_error "构建失败！"
+            exit 1
+        fi
     fi
 }
 
@@ -671,6 +693,36 @@ health_check() {
     return 1
 }
 
+# ======================== ISR 预热 ========================
+
+# 低内存构建（SKIP_DB_ON_BUILD=1）时页面预渲染为轻量壳，
+# 部署完成后预热首页/列表等 ISR 页面，让真实内容立即生成，避免用户首访看到空壳
+warm_up_cache() {
+    log_step "预热 ISR 缓存"
+
+    local base="http://localhost:3000"
+    local pages=("/" "/travel" "/notes/blog" "/notes/mindmap" "/notes/tags" "/feed.xml")
+    local ok=0 fail=0
+
+    for page in "${pages[@]}"; do
+        local code
+        code=$(curl -s -o /dev/null -w "%{http_code}" "$base$page" 2>/dev/null || echo "000")
+        if [ "$code" = "200" ] || [ "$code" = "302" ]; then
+            ok=$((ok+1))
+            log_info "  预热 $page → HTTP $code"
+        else
+            fail=$((fail+1))
+            log_warn "  预热 $page → HTTP $code"
+        fi
+    done
+
+    if [ "$fail" -eq 0 ]; then
+        log_info "ISR 预热完成 (${ok} 个页面)"
+    else
+        log_warn "ISR 预热部分失败 (成功 ${ok} / 失败 ${fail})，首次访问时会自动生成"
+    fi
+}
+
 # ======================== 回滚 ========================
 
 rollback() {
@@ -755,6 +807,7 @@ main() {
     restart_pm2
     check_nginx
     health_check
+    warm_up_cache
 
     # 部署完成
     log ""

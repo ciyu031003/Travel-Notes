@@ -242,26 +242,34 @@ npx prisma db push
 
 ### 5.5 构建项目
 
+> 推荐使用项目内置的**低内存构建脚本**（面向 2C2G 服务器，自动限制 Node 堆内存、构建期跳过数据库读取、失败自动重试）：
+
 ```bash
-npm run build
+./scripts/build-production.sh
 ```
 
-> **注意**：构建可能需要 2-5 分钟。如果服务器内存 ≤ 2GB，构建时可能 OOM。
-> 
-> **方案一：添加 Swap 分区（推荐）**
+> 手动构建（内存充足时）：
 > ```bash
-> sudo fallocate -l 2G /swapfile
+> npm run build
+> ```
+>
+> **注意**：构建可能需要 2-8 分钟。如果服务器内存 ≤ 4GB，构建时可能 OOM，建议：
+> 
+> **方案一：添加 Swap 分区（强烈推荐，2G 内存建议 4G Swap）**
+> ```bash
+> sudo fallocate -l 4G /swapfile
 > sudo mkswap /swapfile
 > sudo swapon /swapfile
 > echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 > ```
 > 
-> **方案二：限制 Node.js 内存**
+> **方案二：使用低内存构建脚本（推荐）**
 > ```bash
-> NODE_OPTIONS=--max-old-space-size=512 npm run build
+> BUILD_NODE_MAX_OLD_SPACE=1024 ./scripts/build-production.sh
 > ```
 > 
-> `deploy.sh` 脚本会自动检测内存并提示配置 Swap。
+> `deploy.sh` 脚本会自动检测内存、引导创建 Swap，并使用低内存构建模式（含部署后 ISR 预热）。
+> 数据库迁移脚本与服务器迁移流程见 `docs/DATABASE_MIGRATION.md`。
 
 ### 5.6 启动项目
 
