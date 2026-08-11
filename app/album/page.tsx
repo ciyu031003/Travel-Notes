@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, Image as ImageIcon, Calendar, Sparkles, Lock, Star } from 'lucide-react'
-import AlbumUnlockModal from '@/components/AlbumUnlockModal'
-import StarfieldBackground from '@/components/album/StarfieldBackground'
-import PhotoRiver from '@/components/album/PhotoRiver'
-import PhotoChatView from '@/components/album/PhotoChatView'
+import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles } from 'lucide-react'
+import PixelDeskBackground from '@/components/album/PixelDeskBackground'
+import PolaroidWall from '@/components/album/PolaroidWall'
+import PixelPhotoChat from '@/components/album/PixelPhotoChat'
+import PixelUnlockModal from '@/components/album/PixelUnlockModal'
 
 interface CityAlbum {
   name: string
@@ -22,7 +22,18 @@ interface ChatPhoto {
   url: string
   key: string
   cityName: string
+  date: string
 }
+
+// 书脊配色（循环使用）
+const SPINE_COLORS = [
+  'book-spine-red',
+  'book-spine-blue',
+  'book-spine-green',
+  'book-spine-purple',
+  'book-spine-brown',
+  'book-spine-leather',
+]
 
 function formatDate(dateStr: string) {
   try {
@@ -75,116 +86,74 @@ export default function AlbumPage() {
     loadAlbumData()
   }
 
-  const getCityGradient = (provinceId: string) => {
-    const gradients: Record<string, string> = {
-      beijing: 'from-rose-400 to-pink-500',
-      shanghai: 'from-blue-400 to-indigo-500',
-      guangdong: 'from-amber-400 to-orange-500',
-      zhejiang: 'from-pink-400 to-rose-500',
-      jiangsu: 'from-green-400 to-emerald-500',
-      sichuan: 'from-teal-400 to-cyan-500',
-      yunnan: 'from-purple-400 to-violet-500',
-      xizang: 'from-yellow-400 to-amber-500',
-      xinjiang: 'from-lime-400 to-green-500',
-      shandong: 'from-orange-400 to-red-500',
-      fujian: 'from-cyan-400 to-blue-500',
-      hunan: 'from-emerald-400 to-teal-500',
-      hubei: 'from-sky-400 to-blue-500',
-      anhui: 'from-indigo-400 to-purple-500',
-      henan: 'from-amber-400 to-yellow-500',
-      shaanxi: 'from-stone-400 to-amber-500',
-      gansu: 'from-yellow-400 to-orange-500',
-      qinghai: 'from-cyan-400 to-teal-500',
-      heilongjiang: 'from-blue-400 to-cyan-500',
-      jilin: 'from-indigo-400 to-blue-500',
-      liaoning: 'from-teal-400 to-emerald-500',
-      neimenggu: 'from-green-400 to-lime-500',
-      ningxia: 'from-stone-400 to-amber-500',
-      hainan: 'from-cyan-400 to-blue-500',
-      guangxi: 'from-emerald-400 to-green-500',
-      guizhou: 'from-lime-400 to-green-500',
-      chongqing: 'from-rose-400 to-red-500',
-      jiangxi: 'from-orange-400 to-rose-500',
-      hongkong: 'from-violet-400 to-purple-500',
-      macau: 'from-amber-400 to-rose-500',
-      taiwan: 'from-sky-400 to-indigo-500',
-      tianjin: 'from-blue-400 to-teal-500',
-      hebei: 'from-emerald-400 to-cyan-500',
-      shanxi: 'from-stone-400 to-yellow-500',
-    }
-    return gradients[provinceId] || 'from-slate-400 to-gray-500'
-  }
-
-  const getCityEmoji = (provinceId: string) => {
-    const emojis: Record<string, string> = {
-      beijing: '🏯', shanghai: '🌃', guangdong: '🏙️', zhejiang: '🏞️',
-      jiangsu: '🏮', sichuan: '🐼', yunnan: '🏔️', xizang: '🏛️',
-      xinjiang: '🌄', shandong: '⛰️', fujian: '🏝️', hunan: '🌉',
-      hubei: '🚣', anhui: '🏔️', henan: '🏛️', shaanxi: '⚔️',
-      gansu: '🏜️', qinghai: '🏞️', heilongjiang: '❄️', jilin: '🌲',
-      liaoning: '🌊', neimenggu: '🐎', ningxia: '🏜️', hainan: '🏖️',
-      guangxi: '🚣', guizhou: '💦', chongqing: '🌉', jiangxi: '🌾',
-      hongkong: '🏙️', macau: '🎰', taiwan: '🏝️', tianjin: '🌉',
-      hebei: '🏯', shanxi: '🏯',
-    }
-    return emojis[provinceId] || '📍'
-  }
+  const totalPhotos = cities.reduce((sum, city) => sum + city.images.length, 0)
 
   if (checkingLock) {
     return (
-      <div className="min-h-screen bg-[#05060f] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-indigo-300/20 border-t-indigo-300 rounded-full animate-spin" />
-        <span className="ml-3 text-indigo-200/60 text-sm">穿越星河中...</span>
+      <div className="min-h-screen pixel-desk-bg flex items-center justify-center">
+        <div className="flex items-center gap-3 text-[#dfa87a]">
+          <div className="w-6 h-6 border-2 border-[#dfa87a]/30 border-t-[#dfa87a] rounded-full animate-spin" />
+          <span className="font-zpix text-sm tracking-wider">正在翻开相册...</span>
+        </div>
       </div>
     )
   }
 
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-[#05060f] relative overflow-hidden flex items-center justify-center p-4">
-        <StarfieldBackground />
-        <div className="relative z-10 w-full max-w-sm bg-white/[0.06] backdrop-blur-xl rounded-3xl border border-white/10 p-8 text-center shadow-2xl">
-          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500/60 to-purple-600/60 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg border border-white/10">
-            <Lock className="w-10 h-10 text-white" />
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-[#0d0604]">
+        <PixelDeskBackground />
+        <div className="relative z-10 w-full max-w-md pixel-book-container rounded-sm p-8 text-center">
+          <div className="pixel-corner-gold-tl" />
+          <div className="pixel-corner-gold-tr" />
+          <div className="pixel-corner-gold-bl" />
+          <div className="pixel-corner-gold-br" />
+
+          <div className="book-cover-3d w-28 h-36 mx-auto mb-6 flex flex-col items-center justify-center gap-2 rounded-sm">
+            <Lock className="w-8 h-8 text-[#dfa87a]" />
+            <span className="text-[10px] text-[#a89f91] font-bold">相册已上锁</span>
           </div>
-          <h2 className="text-2xl font-bold text-white">相册已上锁</h2>
-          <p className="text-sm text-white/50 mt-3 leading-relaxed">
-            这是我们的秘密相册<br />请输入恋爱纪念日解锁
+          <h2 className="font-zpix text-2xl font-bold text-[#dfa87a] tracking-wider drop-shadow-[0_4px_0_rgba(0,0,0,0.7)]">
+            旅行相册 · 存档
+          </h2>
+          <p className="text-xs text-[#a89f91] mt-3 leading-relaxed">
+            这是我们的秘密相册
+            <br />
+            输入恋爱纪念日即可解锁
           </p>
           <button
             type="button"
             onClick={() => setShowUnlockModal(true)}
-            className="mt-6 w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold rounded-2xl hover:from-indigo-400 hover:to-purple-400 transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2"
+            className="mt-6 w-full mc-button mc-button-gold !py-2.5 text-xs font-bold"
           >
             解锁相册
-            <ArrowLeft className="w-4 h-4 rotate-180" />
           </button>
           <button
             type="button"
             onClick={() => router.push('/')}
-            className="mt-3 w-full py-2.5 bg-white/[0.06] hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-2xl transition-all text-sm flex items-center justify-center gap-1.5"
+            className="mt-3 w-full mc-button mc-button-parchment !py-2 text-xs font-bold"
           >
             返回首页
           </button>
         </div>
 
-        <AlbumUnlockModal
+        <PixelUnlockModal
           isOpen={showUnlockModal}
           onClose={() => setShowUnlockModal(false)}
           onSuccess={handleUnlockSuccess}
-          redirectToAlbum={false}
         />
       </div>
     )
   }
 
-  // 整页状态切换：聊天视图（粒子化照片背景 + 微信聊天 UI，卸载画廊以节省性能）
+  // 整页状态切换：像素书卷聊天视图
   if (view === 'chat' && chatPhoto) {
     return (
-      <PhotoChatView
+      <PixelPhotoChat
         image={chatPhoto.url}
         imageKey={chatPhoto.key}
         cityName={chatPhoto.cityName}
+        date={chatPhoto.date}
         onBack={() => {
           setView('gallery')
           setChatPhoto(null)
@@ -194,147 +163,177 @@ export default function AlbumPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#05060f] relative overflow-hidden">
-      {/* 深邃动态星空背景 */}
-      <StarfieldBackground />
+    <div className="min-h-screen album-pixel-root bg-[#0d0604] relative overflow-hidden">
+      {/* 像素木屋桌面背景 */}
+      <PixelDeskBackground />
 
       {/* 顶部导航 */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-black/30 backdrop-blur-md border-b border-white/10">
-        <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
-          <Link
-            href="/login"
-            className="flex items-center gap-2 text-white/50 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm">返回登录</span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-300" />
-            <span className="font-bold text-white/90">我们的相册 · 星河</span>
-          </div>
-
-          <Link
-            href="/"
-            className="px-4 py-2 text-sm bg-white/10 text-white/90 rounded-xl hover:bg-white/20 border border-white/10 transition-colors"
-          >
-            进入地图
-          </Link>
-        </nav>
+      <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 md:px-8 border-b-4 border-black bg-black/45">
+        <Link
+          href="/login"
+          className="pixel-btn pixel-border-stone px-3 py-1.5 text-[11px] font-bold rounded-sm"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+          返回登录
+        </Link>
+        <div className="font-zpix text-[#dfa87a] text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)] flex items-center gap-2">
+          <BookOpen className="w-4 h-4" />
+          我们的旅行相册 · 存档
+        </div>
+        <Link
+          href="/"
+          className="pixel-btn pixel-border-gold px-3 py-1.5 text-[11px] font-bold rounded-sm"
+        >
+          进入地图
+        </Link>
       </header>
 
-      <div className="relative z-10 pt-14 min-h-screen">
-        <div className="grid lg:grid-cols-[320px_1fr] min-h-[calc(100vh-56px)]">
-          {/* 左侧：点亮的城市列表（保留卡片样式） */}
-          <div className="border-r border-white/10 bg-black/25 backdrop-blur-md">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white/90 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-indigo-300" />
-                  点亮的城市
-                </h2>
-                <span className="text-xs text-white/40 bg-white/10 px-2 py-1 rounded-full">
-                  {cities.length} 座
-                </span>
+      <div className="relative z-10 pt-4 pb-12 min-h-screen">
+        {/* 相册封面横幅 */}
+        <div className="max-w-6xl mx-auto px-4 mb-5">
+          <div className="book-cover-3d relative rounded-sm p-4 sm:p-5 flex items-center justify-between gap-4">
+            <div className="pixel-corner-gold-tl" />
+            <div className="pixel-corner-gold-tr" />
+            <div className="pixel-corner-gold-bl" />
+            <div className="pixel-corner-gold-br" />
+
+            <div className="flex items-center gap-4">
+              <div className="item-frame w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center hidden sm:flex">
+                <BookOpen className="w-7 h-7 text-[#dfa87a]" />
+              </div>
+              <div>
+                <h1 className="font-zpix text-xl sm:text-2xl font-bold text-[#dfa87a] tracking-wider drop-shadow-[0_3px_0_rgba(0,0,0,0.7)]">
+                  我们的旅行相册
+                </h1>
+                <p className="text-[10px] sm:text-[11px] text-[#a89f91] mt-1 tracking-widest">
+                  TRAVEL ALBUM · SAVE OUR MEMORIES
+                </p>
+              </div>
+            </div>
+
+            <div className="text-right hidden sm:block select-none">
+              <p className="text-[11px] text-[#dfa87a] font-bold">{cities.length} 座城市 · {totalPhotos} 张照片</p>
+              <p className="text-[10px] text-[#a89f91] mt-1">点击照片，留下你的留言</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 grid lg:grid-cols-[280px_1fr] gap-5 items-start">
+          {/* 左侧：旅行书架 */}
+          <aside className="lg:sticky lg:top-[72px] self-start w-full">
+            <div className="pixel-book-container rounded-sm overflow-hidden">
+              <div className="p-4 border-b-4 border-black/70 bg-[#231611]">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-zpix text-sm font-bold text-[#dfa87a] tracking-wider flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    旅行书架
+                  </h2>
+                  <span className="text-[10px] text-[#a89f91] font-bold">{cities.length} 册</span>
+                </div>
               </div>
 
-              <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-2 scrollbar-thin">
+              <div className="p-4 bg-[#2c1913]">
                 {loading ? (
-                  <div className="flex items-center justify-center py-12 text-white/40 text-sm">
-                    <div className="w-5 h-5 border-2 border-indigo-300/20 border-t-indigo-300 rounded-full animate-spin mr-2" />
-                    加载中...
-                  </div>
+                  <div className="text-[#a89f91] text-xs py-6 text-center tracking-wider">装载中...</div>
                 ) : cities.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-white/40 text-sm">
-                    <ImageIcon className="w-10 h-10 mb-3 opacity-40" />
-                    <p>还没有旅行记录</p>
+                  <div className="text-[#a89f91] text-xs py-6 text-center tracking-wider">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    还没有旅行记录
                   </div>
                 ) : (
-                  cities.map((city) => (
-                    <button
-                      key={city.name}
-                      onClick={() => setSelectedCity(city)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group ${
-                        selectedCity?.name === city.name
-                          ? 'bg-white/15 border border-indigo-300/40 shadow-lg shadow-indigo-500/10'
-                          : 'hover:bg-white/10 border border-transparent hover:border-white/15'
-                      }`}
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getCityGradient(
-                          city.provinceId
-                        )} flex items-center justify-center text-lg shadow-sm flex-shrink-0`}
-                      >
-                        {getCityEmoji(city.provinceId)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-white/90 text-sm truncate">
-                            {city.name}
-                          </span>
-                          {city.province && (
-                            <span className="text-[10px] text-white/40 bg-white/10 px-1.5 py-0.5 rounded-full">
-                              {city.province}
+                  <>
+                    <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                      {cities.map((city, index) => {
+                        const selected = selectedCity?.name === city.name
+                        const spineColor = SPINE_COLORS[index % SPINE_COLORS.length]
+                        return (
+                          <button
+                            key={city.name}
+                            type="button"
+                            onClick={() => setSelectedCity(city)}
+                            title={`${city.name} · ${city.images.length} 张照片 · ${formatDate(city.date)}`}
+                            className={`relative w-12 h-32 flex flex-col items-center justify-between py-2 text-white transition-all duration-200 hover:-translate-y-1.5 group shadow-[3px_6px_8px_rgba(0,0,0,0.6)] ${spineColor} ${
+                              selected ? '-translate-y-1.5' : ''
+                            }`}
+                          >
+                            {selected && (
+                              <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-1.5 h-4 bg-[#f2b123] border border-black rounded-b-sm z-20 shadow-[1px_1px_2px_rgba(0,0,0,0.4)]" />
+                            )}
+                            <span className="w-full h-1 bg-yellow-500/20 opacity-50" />
+                            <span className="text-[9px] text-yellow-500/70 font-bold">
+                              {String(index + 1).padStart(2, '0')}
                             </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[11px] text-white/40 flex items-center gap-0.5">
-                            <Calendar className="w-2.5 h-2.5" />
-                            {formatDate(city.date)}
-                          </span>
-                          <span className="text-[11px] text-white/40">
-                            · {city.images.length} 张
-                          </span>
-                        </div>
-                      </div>
-                      <Star
-                        className={`w-4 h-4 flex-shrink-0 transition-all ${
-                          selectedCity?.name === city.name
-                            ? 'text-amber-300 fill-amber-300'
-                            : 'text-white/15 group-hover:text-indigo-300/60'
-                        }`}
-                      />
-                    </button>
-                  ))
+                            <span className="[writing-mode:vertical-rl] text-[11px] font-bold tracking-wide text-white/95 max-h-16 overflow-hidden">
+                              {city.name.slice(0, 5)}
+                            </span>
+                            <span className="text-[8px] text-white/55">{city.images.length}张</span>
+                            <span className="w-full h-1 bg-yellow-500/20 opacity-50" />
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <div className="wood-shelf w-full h-4 mt-4" />
+                  </>
                 )}
               </div>
 
-              {/* 底部提示 */}
-              <div className="mt-6 pt-4 border-t border-white/10 text-[11px] text-white/30 leading-relaxed">
-                每一张照片都拥有独立的留言空间，
+              <div className="p-3 border-t border-[#5a3b30] bg-[#1c110d] text-[10px] text-[#8a8479] text-center leading-relaxed">
+                每一本相册收录一座城市的回忆，
                 <br />
-                点击照片即可在星河中留下你的话。
+                点击照片即可在书中留言
               </div>
             </div>
-          </div>
+          </aside>
 
-          {/* 右侧：星河相片流 */}
-          <div className="relative min-h-[calc(100vh-56px)]">
+          {/* 右侧：拍立得照片墙 */}
+          <main className="min-w-0">
             {selectedCity ? (
-              <PhotoRiver
-                images={selectedCity.images}
-                cityName={selectedCity.name}
-                onPhotoClick={(index) => {
-                  const url = selectedCity.images[index]
-                  setChatPhoto({
-                    url,
-                    key: url,
-                    cityName: selectedCity.name,
-                  })
-                  setView('chat')
-                }}
-              />
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-3 select-none">
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-zpix text-lg font-bold text-[#dfa87a] tracking-wide drop-shadow-[2px_2px_0_rgba(0,0,0,0.7)]">
+                      {selectedCity.name} · 拍立得记忆
+                    </h2>
+                    <span className="text-[10px] text-[#a89f91] font-bold bg-black/40 border border-[#3c2a1a] px-2 py-0.5">
+                      {selectedCity.images.length} 张
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#a89f91] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#dfa87a]" />
+                    {formatDate(selectedCity.date)} · 点击照片开启留言
+                  </p>
+                </div>
+
+                <div className="lg:h-[calc(100vh-230px)] min-h-[420px]">
+                  <PolaroidWall
+                    images={selectedCity.images}
+                    cityName={selectedCity.name}
+                    date={formatDate(selectedCity.date)}
+                    onPhotoClick={(index) => {
+                      const url = selectedCity.images[index]
+                      setChatPhoto({
+                        url,
+                        key: url,
+                        cityName: selectedCity.name,
+                        date: formatDate(selectedCity.date),
+                      })
+                      setView('chat')
+                    }}
+                  />
+                </div>
+              </>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-white/30">
-                <MapPin className="w-12 h-12 mb-3 opacity-30" />
-                <p>选择一座城市，点亮星河</p>
+              <div className="flex flex-col items-center justify-center h-[420px] text-[#a89f91] gap-3">
+                <div className="item-frame w-20 h-20 flex items-center justify-center">
+                  <MapPin className="w-8 h-8 text-[#dfa87a] opacity-60" />
+                </div>
+                <p className="text-sm font-bold tracking-wider">从书架选择一本相册</p>
+                <p className="text-[11px] text-[#746759]">点亮属于你们的旅行记忆</p>
               </div>
             )}
-          </div>
+          </main>
         </div>
       </div>
-
     </div>
   )
 }

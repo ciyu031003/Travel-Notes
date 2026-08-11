@@ -899,3 +899,499 @@ body {
     padding-bottom: 0;
   }
 }
+
+
+/* ==========================================================================
+   ★ 像素风相册（SavePoint 风格）
+   仅用于相册模块：拍立得照片墙 / 书卷聊天 / 木屋桌面 / Minecraft 按钮
+   类名均带 pixel-/mc-/book-/polaroid- 前缀，避免污染其他页面
+   ========================================================================== */
+
+/* Zpix 像素中文字体 */
+@font-face {
+  font-family: 'Zpix';
+  src: url('/zpix.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-zpix {
+  font-family: 'Zpix', monospace, sans-serif !important;
+}
+
+/* 相册像素根作用域：像素渲染 + 复古字体 */
+.album-pixel-root {
+  font-family: 'Zpix', 'Courier New', Courier, monospace, sans-serif;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: none;
+  image-rendering: pixelated;
+}
+.album-pixel-root img {
+  image-rendering: pixelated;
+}
+
+/* 木屋桌面背景（复古像素游戏主界面） */
+.pixel-desk-bg {
+  background-color: #0d0604;
+  background-image:
+    radial-gradient(circle at center, rgba(62, 42, 33, 0.18) 0%, rgba(12, 6, 4, 0.92) 100%),
+    url('/pixel_bg_cabin.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* 像素滚动条 */
+.mc-scrollbar::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+.mc-scrollbar::-webkit-scrollbar-track {
+  background: #232323;
+  border-left: 4px solid #000000;
+}
+.mc-scrollbar::-webkit-scrollbar-thumb {
+  background: #8b8b8b;
+  border: 4px solid #000000;
+  box-shadow: inset -2px -2px 0px 0px #555555, inset 2px 2px 0px 0px #ffffff;
+}
+.mc-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c6c6c6;
+}
+.mc-scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: #8b8b8b #232323;
+}
+
+/* Minecraft 风格按钮 */
+.pixel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  line-height: 1;
+  color: #fff;
+  transition: all 0.05s;
+}
+.pixel-btn:disabled {
+  filter: grayscale(1) brightness(0.6);
+  cursor: not-allowed !important;
+}
+.pixel-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
+.pixel-border-stone {
+  background-color: #8b8b8b;
+  border: 3px solid #000;
+  border-top-color: #dbdbdb;
+  border-left-color: #dbdbdb;
+  border-bottom-color: #555;
+  border-right-color: #555;
+  text-shadow: 1.5px 1.5px 0px #000;
+}
+.pixel-border-stone:active:not(:disabled) {
+  border-top-color: #555;
+  border-left-color: #555;
+  border-bottom-color: #dbdbdb;
+  border-right-color: #dbdbdb;
+}
+.pixel-border-green {
+  background-color: #5b8731;
+  border: 3px solid #000;
+  border-top-color: #82bd47;
+  border-left-color: #82bd47;
+  border-bottom-color: #344e1c;
+  border-right-color: #344e1c;
+  text-shadow: 1.5px 1.5px 0px #000;
+}
+.pixel-border-green:active:not(:disabled) {
+  border-top-color: #344e1c;
+  border-left-color: #344e1c;
+  border-bottom-color: #82bd47;
+  border-right-color: #82bd47;
+}
+.pixel-border-red {
+  background-color: #a02a2a;
+  border: 3px solid #000;
+  border-top-color: #d14f4f;
+  border-left-color: #d14f4f;
+  border-bottom-color: #631919;
+  border-right-color: #631919;
+  text-shadow: 1.5px 1.5px 0px #000;
+}
+.pixel-border-red:active:not(:disabled) {
+  border-top-color: #631919;
+  border-left-color: #631919;
+  border-bottom-color: #d14f4f;
+  border-right-color: #d14f4f;
+}
+.pixel-border-gold {
+  background-color: #f2b123;
+  border: 3px solid #000;
+  border-top-color: #fce268;
+  border-left-color: #fce268;
+  border-bottom-color: #b07c13;
+  border-right-color: #b07c13;
+  text-shadow: 1.5px 1.5px 0px #000;
+}
+.pixel-border-gold:active:not(:disabled) {
+  border-top-color: #b07c13;
+  border-left-color: #b07c13;
+  border-bottom-color: #fce268;
+  border-right-color: #fce268;
+}
+
+/* Classic Minecraft 按钮 */
+.mc-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #8b8b8b;
+  border: 4px solid #000000;
+  box-shadow: inset -4px -4px 0px 0px #555555, inset 4px 4px 0px 0px #c6c6c6;
+  color: #e0e0e0;
+  text-shadow: 2px 2px 0px #373737;
+  font-family: 'Zpix', monospace;
+  image-rendering: pixelated;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  border-radius: 0px !important;
+  transition: none !important;
+}
+.mc-button:hover:not(:disabled) {
+  background-color: #a8a8a8;
+  box-shadow: inset -4px -4px 0px 0px #555555, inset 4px 4px 0px 0px #ffffff;
+  color: #ffff55;
+  text-shadow: 2px 2px 0px #3f3f00;
+}
+.mc-button:active:not(:disabled) {
+  background-color: #555555;
+  box-shadow: inset 4px 4px 0px 0px #212121, inset -4px -4px 0px 0px #8b8b8b;
+  color: #ffff55;
+}
+.mc-button:disabled {
+  background-color: #555555 !important;
+  border: 4px solid #000000 !important;
+  box-shadow: inset -4px -4px 0px 0px #3c3c3c, inset 4px 4px 0px 0px #7a7a7a !important;
+  color: #a0a0a0 !important;
+  text-shadow: 2px 2px 0px #212121 !important;
+  cursor: not-allowed;
+}
+.mc-button-green {
+  background-color: #5d9a2a;
+  box-shadow: inset -4px -4px 0px 0px #3c651c, inset 4px 4px 0px 0px #7ec43d;
+  color: #e0f6c2;
+  text-shadow: 2px 2px 0px #1f350c;
+}
+.mc-button-green:hover:not(:disabled) {
+  background-color: #72ba35;
+  box-shadow: inset -4px -4px 0px 0px #3c651c, inset 4px 4px 0px 0px #b7f06b;
+  color: #ffff55;
+  text-shadow: 2px 2px 0px #3f3f00;
+}
+.mc-button-gold {
+  background-color: #dcae32;
+  box-shadow: inset -4px -4px 0px 0px #947318, inset 4px 4px 0px 0px #ffd55b;
+  color: #fff6d9;
+  text-shadow: 2px 2px 0px #5c4409;
+}
+.mc-button-gold:hover:not(:disabled) {
+  background-color: #f0c34a;
+  box-shadow: inset -4px -4px 0px 0px #947318, inset 4px 4px 0px 0px #ffe78c;
+  color: #ffff55;
+  text-shadow: 2px 2px 0px #3f3f00;
+}
+.mc-button-parchment {
+  background-color: #f3d7a0;
+  box-shadow: inset -4px -4px 0px 0px #8f6a36, inset 4px 4px 0px 0px #fff0c7;
+  color: #4b341f;
+  text-shadow: 1px 1px 0px #fff0c7;
+}
+.mc-button-parchment:hover:not(:disabled) {
+  background-color: #ffe2aa;
+  box-shadow: inset -4px -4px 0px 0px #8f6a36, inset 4px 4px 0px 0px #fff7dc;
+  color: #4b341f;
+  text-shadow: 1px 1px 0px #fff7dc;
+}
+
+/* 3D 皮面书本封面 */
+.book-cover-3d {
+  background: #4a1e12;
+  border: 6px solid #1a0805;
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.8),
+    inset 0 4px 0 rgba(255, 255, 255, 0.1),
+    inset -4px -4px 0 rgba(0, 0, 0, 0.3);
+  transition: transform 0.25s ease;
+}
+.book-cover-3d:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* 打开的书本容器（羊皮纸内页） */
+.pixel-book-container {
+  background-color: #ebe1c5;
+  border: 6px solid #3c2a1a;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.85),
+    inset 0 0 16px rgba(0, 0, 0, 0.08),
+    0 0 0 4px #26170e,
+    0 12px 20px -8px rgba(0, 0, 0, 0.9);
+  position: relative;
+  background-image:
+    radial-gradient(rgba(0, 0, 0, 0.015) 1px, transparent 0),
+    radial-gradient(rgba(0, 0, 0, 0.008) 1px, transparent 0);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}
+
+/* 金色书角护角 */
+.pixel-corner-gold-tl,
+.pixel-corner-gold-tr,
+.pixel-corner-gold-bl,
+.pixel-corner-gold-br {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 30;
+}
+.pixel-corner-gold-tl { top: -6px; left: -6px; border-top: 4px solid #f2b123; border-left: 4px solid #f2b123; box-shadow: inset 2px 2px 0 #fce268, -2px -2px 0 #b07c13; }
+.pixel-corner-gold-tr { top: -6px; right: -6px; border-top: 4px solid #f2b123; border-right: 4px solid #f2b123; box-shadow: inset -2px 2px 0 #fce268, 2px -2px 0 #b07c13; }
+.pixel-corner-gold-bl { bottom: -6px; left: -6px; border-bottom: 4px solid #f2b123; border-left: 4px solid #f2b123; box-shadow: inset 2px -2px 0 #fce268, -2px 2px 0 #b07c13; }
+.pixel-corner-gold-br { bottom: -6px; right: -6px; border-bottom: 4px solid #f2b123; border-right: 4px solid #f2b123; box-shadow: inset -2px -2px 0 #fce268, 2px 2px 0 #b07c13; }
+
+/* 中缝书脊 */
+.pixel-book-spine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  margin-left: -8px;
+  background: linear-gradient(to right,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.1) 20%,
+    rgba(60, 42, 26, 0.35) 45%,
+    rgba(60, 42, 26, 0.5) 50%,
+    rgba(60, 42, 26, 0.35) 55%,
+    rgba(0, 0, 0, 0.1) 80%,
+    rgba(0, 0, 0, 0.3) 100%);
+  z-index: 25;
+  pointer-events: none;
+  border-left: 1px dashed rgba(60, 42, 26, 0.2);
+  border-right: 1px dashed rgba(60, 42, 26, 0.2);
+}
+.pixel-book-spine::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  margin-left: -1px;
+  background-image: repeating-linear-gradient(to bottom, #3c2a1a 0px, #3c2a1a 6px, transparent 6px, transparent 18px);
+  opacity: 0.65;
+}
+
+/* 悬挂书签 */
+.bookmark-ribbon {
+  position: absolute;
+  left: 50%;
+  bottom: -20px;
+  width: 10px;
+  height: 32px;
+  background-color: #a02a2a;
+  margin-left: -5px;
+  z-index: 15;
+  border: 2px solid #000;
+  border-top: none;
+  box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.4);
+  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 75%, 0% 100%);
+  animation: bookmark-sway 8s ease-in-out infinite alternate;
+  transform-origin: top center;
+  pointer-events: none;
+}
+@keyframes bookmark-sway {
+  0% { transform: rotate(-1.5deg); }
+  100% { transform: rotate(1.5deg); }
+}
+
+/* 拍立得相框 */
+.polaroid-frame {
+  background-color: #fcf8ee;
+  border: 3px solid #3c2a1a;
+  padding: 6px 6px 16px 6px;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+.polaroid-frame:hover {
+  transform: scale(1.02) rotate(1.5deg);
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.08), 0 12px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* 拍立得卡片（照片墙） */
+.polaroid-card {
+  background: #f7f1e3;
+  border: 2px solid #3c2a1a;
+  padding: 6px;
+  padding-bottom: 14px;
+  box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.polaroid-card:hover {
+  transform: translateY(-6px) rotate(2deg);
+  box-shadow: 6px 10px 18px rgba(0, 0, 0, 0.7);
+  border-color: #dfa87a;
+}
+
+/* 红色蜡封 */
+.wax-seal {
+  width: 36px;
+  height: 36px;
+  background-color: #a02a2a;
+  border-radius: 50%;
+  border: 3px solid #000;
+  box-shadow: inset 2px 2px 0 #d14f4f, inset -2px -2px 0 #631919, 3px 4px 8px rgba(0, 0, 0, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffcccc;
+  font-weight: bold;
+  text-shadow: 1.5px 1.5px 0px #000;
+  user-select: none;
+  transform: rotate(-10deg);
+}
+
+/* 书架木板 */
+.wood-shelf {
+  background: #190f0c;
+  border-bottom: 8px solid #3c251d;
+  border-top: 4px solid #100a08;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.5), 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* 书本书脊颜色 */
+.book-spine-leather { background: #46281e; border-left: 4px solid #633a2d; border-right: 4px solid #231109; box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.05); }
+.book-spine-red { background: #882222; border-left: 4px solid #aa3333; border-right: 4px solid #551111; }
+.book-spine-blue { background: #224488; border-left: 4px solid #3366cc; border-right: 4px solid #112255; }
+.book-spine-green { background: #226622; border-left: 4px solid #33aa33; border-right: 4px solid #113311; }
+.book-spine-purple { background: #552277; border-left: 4px solid #7733aa; border-right: 4px solid #331155; }
+.book-spine-brown { background: #5e3b24; border-left: 4px solid #7e5334; border-right: 4px solid #3a2212; }
+
+/* 物品框（照片底片） */
+.item-frame {
+  background-color: #211713;
+  border: 4px solid #36251f;
+  box-shadow: inset 4px 4px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* 带横线的纸张（聊天记录区） */
+.pixel-paper-rules-chat {
+  background-color: #ebe1c5;
+  background-image: repeating-linear-gradient(to bottom, transparent, transparent 23px, #dfd3b6 23px, #dfd3b6 24px);
+  background-size: 100% 24px;
+}
+.pixel-paper-rules-chat > div {
+  line-height: 24px !important;
+}
+
+/* 纸张虚线行 */
+.page-line {
+  border-bottom: 2px dashed #cfc5aa;
+  width: 100%;
+  height: 28px;
+}
+
+/* 照片底片小方块 */
+.photo-negative-container {
+  width: 80px;
+  height: 80px;
+  border: 3px solid #000;
+  position: relative;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+  background-color: #211713;
+  overflow: hidden;
+}
+.photo-negative-tag {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background-color: rgba(0, 0, 0, 0.75);
+  color: #fce268;
+  font-size: 8px !important;
+  font-weight: bold !important;
+  padding: 1px 3px;
+  border: 1px solid #3c2a1a;
+  font-family: 'Zpix', monospace !important;
+  pointer-events: none;
+  z-index: 5;
+  line-height: 10px !important;
+}
+
+/* 打字机字体（聊天正文） */
+.diary-book-font,
+.diary-book-font input,
+.diary-book-font textarea,
+.diary-book-font button {
+  font-family: 'Courier New', Courier, monospace, sans-serif !important;
+}
+
+/* 复古输入框 */
+.pixel-input {
+  background-color: #fffdf5;
+  border: 2px solid #000;
+  padding: 6px 10px;
+  color: #1c1511;
+  outline: none;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.12);
+  font-family: 'Zpix', monospace, sans-serif;
+}
+.pixel-input:focus {
+  background-color: #ffffff;
+  border-color: #f2b123;
+}
+
+/* 像素关闭按钮 */
+.pixel-close-btn {
+  width: 28px;
+  height: 28px;
+  background-color: #8b8b8b;
+  border: 2px solid #000;
+  border-top-color: #dbdbdb;
+  border-left-color: #dbdbdb;
+  border-bottom-color: #555;
+  border-right-color: #555;
+  color: #aa1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.05s;
+}
+.pixel-close-btn:hover { background-color: #9b9b9b; }
+.pixel-close-btn:active { border-top-color: #555; border-left-color: #555; border-bottom-color: #dbdbdb; border-right-color: #dbdbdb; }
+
+/* 像素悬浮炭火粒子 */
+@keyframes pixel-ember-float {
+  0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-90px) scale(0.3) rotate(45deg); opacity: 0; }
+}
+.pixel-ember {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #f2b123;
+  box-shadow: 0 0 4px #d97706;
+  pointer-events: none;
+  animation: pixel-ember-float 2.5s infinite linear;
+}
