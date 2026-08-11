@@ -33,7 +33,7 @@ export default function MomentsStrip() {
     fetch('/api/moments?page=1&pageSize=3')
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
-        if (!cancelled && json?.data) setMoments(json.data)
+        if (!cancelled && json?.data?.data) setMoments(json.data.data)
       })
       .catch(() => {})
       .finally(() => {

@@ -13,10 +13,12 @@ export interface MomentItem {
 }
 
 interface MomentsResponse {
-  data?: MomentItem[]
-  total?: number
-  page?: number
-  hasMore?: boolean
+  data?: {
+    data?: MomentItem[]
+    total?: number
+    page?: number
+    hasMore?: boolean
+  }
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -46,9 +48,9 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
       const res = await fetch(`/api/moments?page=${targetPage}&pageSize=${limit}`)
       if (res.ok) {
         const json: MomentsResponse = await res.json()
-        const data = json.data || []
+        const data = json.data?.data || []
         setMoments((prev) => (append ? [...prev, ...data] : data))
-        setHasMore(!!json.hasMore)
+        setHasMore(!!json.data?.hasMore)
         setPage(targetPage)
       }
     } catch {

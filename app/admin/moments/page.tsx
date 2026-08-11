@@ -13,9 +13,11 @@ interface MomentItem {
 }
 
 interface MomentsResponse {
-  data?: MomentItem[]
-  total?: number
-  hasMore?: boolean
+  data?: {
+    data?: MomentItem[]
+    total?: number
+    hasMore?: boolean
+  }
 }
 
 function formatTime(iso: string): string {
@@ -44,8 +46,8 @@ export default function AdminMomentsPage() {
       }
       if (res.ok) {
         const json: MomentsResponse = await res.json()
-        setMoments(json.data || [])
-        setTotal(json.total || 0)
+        setMoments(json.data?.data || [])
+        setTotal(json.data?.total || 0)
       }
     } catch {}
     setLoading(false)

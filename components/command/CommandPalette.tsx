@@ -85,7 +85,8 @@ export default function CommandPalette() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
       if (res.ok) {
         const json = await res.json()
-        setResults(Array.isArray(json.results) ? json.results.slice(0, 8) : [])
+        const list = json?.data?.results ?? []
+        setResults(Array.isArray(list) ? list.slice(0, 8) : [])
       } else {
         setResults([])
       }

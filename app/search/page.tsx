@@ -101,8 +101,9 @@ function SearchContent() {
       // 索引不可用（未生成/加载失败）时回退到服务端搜索
       const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
       if (res.ok) {
-        const json: SearchResponse = await res.json()
-        setResults(Array.isArray(json.results) ? json.results : [])
+        const json = (await res.json()) as { data?: SearchResponse }
+        const list = json?.data?.results ?? []
+        setResults(Array.isArray(list) ? list : [])
       } else {
         setResults([])
       }
