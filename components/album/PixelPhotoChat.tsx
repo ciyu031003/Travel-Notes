@@ -130,7 +130,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
 
       {/* 书本容器 */}
       <div className="relative z-10 min-h-[calc(100vh-56px)] flex items-center justify-center p-4 md:p-8">
-        <div className="w-full max-w-[900px] pixel-book-container flex flex-col md:flex-row relative rounded-sm min-h-[560px]">
+        <div className="w-full max-w-[900px] pixel-book-container flex flex-col md:flex-row relative rounded-sm min-h-[640px]">
           {/* 金色书角 */}
           <div className="pixel-corner-gold-tl" />
           <div className="pixel-corner-gold-tr" />
@@ -146,7 +146,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
             <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-[#d8c9a6]" />
             <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-[#d8c9a6]" />
 
-            <div className="flex flex-col h-[520px]">
+            <div className="flex flex-col h-[620px]">
               {/* 头部：像素精灵 */}
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#a89f91]/35 select-none">
                 <div className="flex items-center gap-2">
@@ -181,26 +181,20 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                 </button>
               </div>
 
-              {/* 拍立得照片条 */}
-              <div className="flex items-center gap-3 pb-2 mb-2 select-none">
+              {/* 大图拍立得（约占书页 2/3） */}
+              <div className="flex flex-col items-center pb-2 mb-2 select-none">
                 <div
-                  className="polaroid-frame w-20 shrink-0 cursor-pointer transition-transform hover:scale-105"
+                  className="polaroid-frame w-[72%] max-w-[300px] cursor-pointer transition-transform hover:scale-[1.02] hover:rotate-1"
                   onClick={() => setPreviewOpen(true)}
                   title="点击预览大图"
                 >
-                  <img src={image} alt={cityName || '照片'} className="w-full aspect-square object-cover border border-black/70" />
-                  <div className="pt-1 text-center">
-                    <span className="text-[9px] text-[#5a3b30] font-bold truncate block">{cityName || '记忆'}</span>
+                  <img src={image} alt={cityName || '照片'} className="w-full aspect-[4/3] object-cover border border-black/70" />
+                  <div className="pt-1.5 text-center">
+                    <span className="text-[10px] text-[#5a3b30] font-bold truncate block">{cityName || '记忆'}</span>
+                    {date && <span className="text-[9px] text-[#8a7662] mt-0.5 block">{date}</span>}
                   </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-bold text-[#1c1511] truncate">{cityName || '旅行记忆'} · 留言簿</h2>
-                  <p className="text-[10px] text-[#746759] mt-0.5 leading-relaxed">
-                    点击左侧照片预览大图，
-                    <br />
-                    留言仅与当前照片绑定。
-                  </p>
-                </div>
+                <p className="text-[9px] text-[#746759] mt-1.5 font-bold">点击照片预览大图 · 留言仅与当前照片绑定</p>
               </div>
 
               {/* 聊天记录区（横线纸） */}
@@ -282,7 +276,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
             <div className="absolute top-2 right-2 w-2 h-2 border-t border-r border-[#d8c9a6]" />
             <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-[#d8c9a6]" />
 
-            <div className="flex flex-col h-[520px] justify-between">
+            <div className="flex flex-col h-[620px] justify-between">
               {/* 日期 */}
               <div className="flex justify-end items-center pb-2 border-b border-[#a89f91]/35 text-[#8a7662] text-[10px] font-bold select-none">
                 <span className="flex items-center gap-1 text-[#8b5a2e]">
