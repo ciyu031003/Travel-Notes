@@ -93,3 +93,25 @@ model TokenBlacklist {
 
   @@index([expiresAt])
 }
+
+model Moment {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  tags      String?  @db.Text
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+  updatedAt DateTime @updatedAt @db.Timestamp(3)
+
+  @@index([createdAt])
+}
+
+model Like {
+  id         Int      @id @default(autoincrement())
+  targetType String   @db.VarChar(50)
+  targetId   String   @db.VarChar(255)
+  visitorId  String   @db.VarChar(64)
+  createdAt  DateTime @default(now()) @db.Timestamp(3)
+
+  @@unique([targetType, targetId, visitorId])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}

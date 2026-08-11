@@ -9,6 +9,10 @@ import { SiteService } from './services/site-service'
 import { ImageService } from './services/image-service'
 import { RepoService } from './services/repo-service'
 import { DocumentImportService } from './services/document-import-service'
+import { MomentService } from './services/moment-service'
+import { LikeService } from './services/like-service'
+import { PrismaMomentRepository } from './repositories/moment-repository'
+import { PrismaLikeRepository } from './repositories/like-repository'
 import { UnifiedMarkdownRenderer } from './infrastructure/markdown'
 import { MemoryCacheService } from './infrastructure/cache'
 import { tokenService } from './services/token-service'
@@ -25,6 +29,8 @@ let repoServiceInstance: RepoService | null = null
 let repoMetadataRepoInstance: PrismaRepoMetadataRepository | null = null
 let markdownRendererInstance: UnifiedMarkdownRenderer | null = null
 let documentImportServiceInstance: DocumentImportService | null = null
+let momentServiceInstance: MomentService | null = null
+let likeServiceInstance: LikeService | null = null
 let cacheServiceInstance: MemoryCacheService | null = null
 
 function getCacheService(): MemoryCacheService {
@@ -95,6 +101,24 @@ export function getMarkdownRenderer(): UnifiedMarkdownRenderer {
   return markdownRendererInstance
 }
 
+export function getMomentService(): MomentService {
+  if (!momentServiceInstance) {
+    const momentRepo = new PrismaMomentRepository()
+    const cache = getCacheService()
+    momentServiceInstance = new MomentService(momentRepo, cache)
+  }
+  return momentServiceInstance
+}
+
+export function getLikeService(): LikeService {
+  if (!likeServiceInstance) {
+    const likeRepo = new PrismaLikeRepository()
+    const cache = getCacheService()
+    likeServiceInstance = new LikeService(likeRepo, cache)
+  }
+  return likeServiceInstance
+}
+
 export function getDocumentImportService(): DocumentImportService {
   if (!documentImportServiceInstance) {
     const renderer = getMarkdownRenderer()
@@ -112,5 +136,8 @@ export function resetServices(): void {
   repoMetadataRepoInstance = null
   markdownRendererInstance = null
   documentImportServiceInstance = null
+  momentServiceInstance = null
+  likeServiceInstance = null
   cacheServiceInstance = null
 }
+

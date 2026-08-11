@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ============================================================================
 #  Travel-Notes 一键部署脚本
 #  用法: ./deploy.sh [选项]
@@ -693,6 +693,19 @@ health_check() {
     return 1
 }
 
+# ======================== 静态搜索索引生成 ========================
+
+# 部署构建完成后直连数据库生成静态全文搜索索引（public/search-index.json），
+# 前端 /search 与命令面板本地即时检索，索引不存在时自动回退服务端搜索。
+generate_search_index() {
+    log_step "生成静态搜索索引"
+    cd "$APP_DIR"
+    if node scripts/build-search-index.cjs 2>&1 | tee -a "$DEPLOY_LOG"; then
+        log_info "静态搜索索引生成完成"
+    else
+        log_warn "静态搜索索引生成失败（不影响部署，搜索将回退到服务端接口）"
+    fi
+}
 # ======================== ISR 预热 ========================
 
 # 低内存构建（SKIP_DB_ON_BUILD=1）时页面预渲染为轻量壳，
@@ -701,7 +714,7 @@ warm_up_cache() {
     log_step "预热 ISR 缓存"
 
     local base="http://localhost:3000"
-    local pages=("/" "/travel" "/notes/blog" "/notes/mindmap" "/notes/tags" "/feed.xml")
+    local pages=("/" "/travel" "/notes/blog" "/notes/mindmap" "/notes/tags" "/moments" "/dashboard" "/feed.xml")
     local ok=0 fail=0
 
     for page in "${pages[@]}"; do
@@ -804,6 +817,7 @@ main() {
     sync_database
     check_and_setup_swap
     build_project
+    generate_search_index
     restart_pm2
     check_nginx
     health_check
@@ -817,3 +831,4 @@ main() {
 }
 
 main "$@"
+

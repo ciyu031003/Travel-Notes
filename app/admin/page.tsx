@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Plus, Edit2, Trash2, LogOut, MapPin, BookOpen, BrainCircuit, 
-  Code2, Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home
+  Code2, Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home, Sparkles
 } from 'lucide-react'
 interface Post {
   id: number
@@ -127,6 +127,13 @@ export default function AdminDashboard() {
               >
                 <Code2 className="w-4 h-4" />
                 代码仓库管理
+              </Link>
+              <Link
+                href="/admin/moments"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+              >
+                <Sparkles className="w-4 h-4" />
+                碎碎念管理
               </Link>
               <Link
                 href="/admin/settings"
@@ -340,3 +347,4 @@ export default function AdminDashboard() {
     </div>
   )
 }
+

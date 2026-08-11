@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import MobileBottomNav from '@/components/layout/MobileBottomNav'
 
 export default function LayoutContent({
   children,
@@ -23,15 +24,21 @@ export default function LayoutContent({
   }
 
   if (isTravelPage) {
-    return <>{children}</>
+    return (
+      <>
+        {children}
+        <MobileBottomNav />
+      </>
+    )
   }
 
   if (isHomePage) {
     return (
       <>
-        <main className="flex-1">
+        <main className="flex-1 pb-14 md:pb-0">
           {children}
         </main>
+        <MobileBottomNav />
       </>
     )
   }
@@ -50,10 +57,12 @@ export default function LayoutContent({
   return (
     <>
       <Navbar />
-      <main className="flex-1 pt-20 pb-12">
+      <main className="flex-1 pt-20 pb-20 md:pb-12">
         {children}
       </main>
       <Footer />
+      <MobileBottomNav />
     </>
   )
 }
+

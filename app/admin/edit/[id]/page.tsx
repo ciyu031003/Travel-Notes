@@ -34,6 +34,22 @@ export default function AdminEditPage() {
     }
   }, [isNew])
 
+  // Cmd/Ctrl + S 快捷保存
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        if (loading) return
+        const form = document.getElementById('post-form') as HTMLFormElement | null
+        if (form) {
+          form.requestSubmit()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [loading])
+
   const fetchPost = async () => {
     try {
       const res = await fetch(`/api/admin/posts/${idParam}`)

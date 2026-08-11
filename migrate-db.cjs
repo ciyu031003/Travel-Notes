@@ -1,4 +1,4 @@
-const mysql = require('mysql2/promise');
+﻿const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 async function migrate() {
@@ -192,6 +192,67 @@ async function migrate() {
       console.log('TokenBlacklist table created.');
     }
 
+    const [momentTables] = await connection.query(
+      "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'Moment'",
+      [dbName]
+    );
+
+    if (momentTables.length === 0) {
+      console.log('Creating Moment table...');
+      await connection.query(`
+        CREATE TABLE Moment (
+          id INT NOT NULL AUTO_INCREMENT,
+          content TEXT NOT NULL,
+          tags TEXT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          INDEX Moment_createdAt_idx (createdAt)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('Moment table created.');
+    } else {
+      const [momentCols] = await connection.query(
+        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'Moment'",
+        [dbName]
+      );
+      const momentColNames = momentCols.map(c => c.COLUMN_NAME);
+      if (!momentColNames.includes('content')) {
+        await connection.query("ALTER TABLE Moment ADD COLUMN content TEXT NOT NULL").catch(() => {});
+      }
+      if (!momentColNames.includes('tags')) {
+        await connection.query("ALTER TABLE Moment ADD COLUMN tags TEXT NULL").catch(() => {});
+      }
+      if (!momentColNames.includes('createdAt')) {
+        await connection.query("ALTER TABLE Moment ADD COLUMN createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)").catch(() => {});
+      }
+      if (!momentColNames.includes('updatedAt')) {
+        await connection.query("ALTER TABLE Moment ADD COLUMN updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)").catch(() => {});
+      }
+    }
+
+    const [likeTables] = await connection.query(
+      "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'Like'",
+      [dbName]
+    );
+
+    if (likeTables.length === 0) {
+      console.log('Creating Like table...');
+      await connection.query(`
+        CREATE TABLE \`Like\` (
+          id INT NOT NULL AUTO_INCREMENT,
+          targetType VARCHAR(50) NOT NULL,
+          targetId VARCHAR(255) NOT NULL,
+          visitorId VARCHAR(64) NOT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          UNIQUE KEY Like_target_unique (targetType, targetId, visitorId),
+          INDEX Like_target_idx (targetType, targetId),
+          INDEX Like_createdAt_idx (createdAt)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('Like table created.');
+    }
     console.log('\n✓ Database migration completed successfully!');
     console.log('  Now try creating a post again.');
   } catch (error) {
@@ -203,4 +264,5 @@ async function migrate() {
 }
 
 migrate();
+
 

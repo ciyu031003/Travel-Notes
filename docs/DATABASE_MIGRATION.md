@@ -38,7 +38,7 @@
 | `backup` | 用 `mysqldump --single-transaction --routines --triggers` 导出当前库，默认存到 `backups/db/<库名>_<时间戳>.sql`，可用 `--dir` 指定目录 |
 | `restore <file>` | 自动创建数据库（utf8mb4），导入 `.sql` 或 `.sql.gz`，导入后自动执行 `verify` |
 | `list` | 列出备份目录下所有备份文件 |
-| `verify` | 连接当前库，列出全部表及行数，并检查 6 张关键表（Post / SiteSetting / PostImage / Danmaku / Repo / TokenBlacklist）是否存在；缺失时提示运行 `node migrate-db.cjs` 自动建表/补列 |
+| `verify` | 连接当前库，列出全部表及行数，并检查 8 张关键表（Post / SiteSetting / PostImage / Danmaku / Repo / TokenBlacklist / Moment / Like）是否存在；缺失时提示运行 `node migrate-db.cjs` 自动建表/补列 |
 
 ### 1.3 使用示例
 
@@ -166,7 +166,18 @@ sudo sysctl -w vm.swappiness=60
 
 由于低内存构建时页面是"空壳"，`deploy.sh` 在健康检查后会自动**预热**首页/旅行/博客/思维导图/标签/RSS 等 ISR 页面，让真实内容立即生成，避免用户首访看到空白。
 
-### 3.5 运行期内存
+### 3.5 静态全文搜索索引
+
+项目前端 /search 页与命令面板（Ctrl/⌘+K）默认使用**本地静态索引**即时检索，避免每次搜索都打数据库 LIKE 查询：
+
+- 部署时 deploy.sh 在构建完成后自动运行 
+ode scripts/build-search-index.cjs，直连数据库 + 读取 content/ 下的 Markdown 文章，生成 public/search-index.json
+- 索引不可用（未生成 / 加载失败）时，前端自动回退到服务端 /api/search
+- 手动重新生成：
+pm run search:index
+- 该文件已在 .gitignore 中，不会提交到仓库
+
+### 3.6 运行期内存
 
 - 运行期（PM2 单实例）占用远低于构建期，2C2G 足够
 - 项目使用内存缓存 + ISR，普通个人站流量下无需 Redis（后续升级服务器后可再引入）
@@ -179,7 +190,8 @@ sudo sysctl -w vm.swappiness=60
 |------|------|
 | `scripts/migrate-database.sh` | 数据库迁移脚本（备份/恢复/列表/校验） |
 | `scripts/build-production.sh` | 低内存构建脚本 |
+| `scripts/build-search-index.cjs` | 静态全文搜索索引生成脚本（部署后自动执行，生成 `public/search-index.json`） |
 | `deploy.sh` | 一键部署脚本（已集成低内存构建 + Swap 检测 + ISR 预热） |
-| `migrate-db.cjs` | 建表/补列脚本（Post/SiteSetting/TokenBlacklist 等） |
+| `migrate-db.cjs` | 建表/补列脚本（Post/SiteSetting/TokenBlacklist/Moment/Like 等，幂等可重复执行） |
 | `docs/SERVER_SETUP.md` | 服务器初始化与手动部署指南 |
 | `docs/DEPLOYMENT.md` | 阿里云 ECS 部署指南 |

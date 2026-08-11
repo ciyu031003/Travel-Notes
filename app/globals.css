@@ -1,4 +1,5 @@
 @import 'highlight.js/styles/github-dark.css';
+@import 'katex/dist/katex.min.css';
 
 @tailwind base;
 @tailwind components;
@@ -873,4 +874,28 @@ body {
   border-radius: 0.5rem;
   padding: 0.75rem 0.875rem;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+
+/* 移动端：表格与代码块横向滚动，避免撑破布局 */
+@media (max-width: 768px) {
+  .prose table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+  .prose pre {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* 移动端底部导航占位（防止内容被遮挡） */
+@media (max-width: 768px) {
+  body.mobile-nav-present {
+    padding-bottom: 0;
+  }
 }

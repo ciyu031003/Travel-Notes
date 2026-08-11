@@ -9,6 +9,8 @@ import TableOfContents from '@/components/blog/TableOfContents'
 import CodeBlockEnhancer from '@/components/blog/CodeBlockEnhancer'
 import ImageLightbox from '@/components/blog/ImageLightbox'
 import PostShare from '@/components/blog/PostShare'
+import LikeButton from '@/components/like/LikeButton'
+import CommentsSection from '@/components/comments/CommentsSection'
 import PostNavigation from '@/components/blog/PostNavigation'
 import RelatedPosts from '@/components/blog/RelatedPosts'
 import ReadingTime from '@/components/blog/ReadingTime'
@@ -106,6 +108,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
           <PostShare url={`/notes/blog/${post.slug}`} title={post.title} />
 
+          <div className="mt-6 flex items-center gap-4">
+            <LikeButton targetType="post" targetId={`blog-${post.slug}`} />
+          </div>
+
+          <CommentsSection term={`blog-${post.slug}`} />
+
           <PostNavigation
             prev={adjacent.prev ? { slug: adjacent.prev.slug, title: adjacent.prev.title } : null}
             next={adjacent.next ? { slug: adjacent.next.slug, title: adjacent.next.title } : null}
@@ -132,4 +140,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     </div>
   )
 }
+
+
 

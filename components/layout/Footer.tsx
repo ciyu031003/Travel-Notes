@@ -24,6 +24,8 @@ export default function Footer() {
               <li><Link href="/notes" className="hover:text-[#8B4A5A] transition-colors">学习笔记</Link></li>
               <li><Link href="/notes/blog" className="hover:text-[#8B4A5A] transition-colors">技术博客</Link></li>
               <li><Link href="/notes/mindmap" className="hover:text-[#8B4A5A] transition-colors">思维导图</Link></li>
+              <li><Link href="/moments" className="hover:text-[#8B4A5A] transition-colors">碎碎念</Link></li>
+              <li><Link href="/dashboard" className="hover:text-[#8B4A5A] transition-colors">数据看板</Link></li>
             </ul>
           </div>
           <div>
@@ -48,3 +50,4 @@ export default function Footer() {
     </footer>
   )
 }
+

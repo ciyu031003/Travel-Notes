@@ -53,9 +53,10 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
     return items
   }, [formData.images, formData.cover, formData.videos])
 
+  // 内容变更 400ms 防抖后再渲染，避免输入时预览闪烁/卡顿
   useEffect(() => {
     if (!isOpen) return
-    const processContent = async () => {
+    const timer = setTimeout(async () => {
       try {
         const processed = await remark()
           .use(remarkGfm)
@@ -65,8 +66,8 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
       } catch {
         setContentHtml(formData.content || '')
       }
-    }
-    processContent()
+    }, 400)
+    return () => clearTimeout(timer)
   }, [formData.content, isOpen])
 
   useEffect(() => {
@@ -327,3 +328,4 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
     </div>
   )
 }
+

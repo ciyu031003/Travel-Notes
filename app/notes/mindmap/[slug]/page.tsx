@@ -6,6 +6,8 @@ import { formatDate } from '@/lib/utils'
 import ReadingTime from '@/components/blog/ReadingTime'
 import MindmapAutoSwitch from '@/components/mindmap/MindmapAutoSwitch'
 import MindmapHint from '@/components/mindmap/MindmapHint'
+import LikeButton from '@/components/like/LikeButton'
+import CommentsSection from '@/components/comments/CommentsSection'
 
 export const revalidate = 300
 
@@ -80,6 +82,12 @@ export default async function MindmapDetailPage({ params }: { params: Promise<{ 
           />
         </div>
 
+        <div className="mb-6">
+          <LikeButton targetType="post" targetId={`mindmap-${post.slug}`} />
+        </div>
+
+        <CommentsSection term={`mindmap-${post.slug}`} />
+
         {/* 操作提示 */}
         <MindmapHint />
 
@@ -97,4 +105,6 @@ export default async function MindmapDetailPage({ params }: { params: Promise<{ 
     </div>
   )
 }
+
+
 

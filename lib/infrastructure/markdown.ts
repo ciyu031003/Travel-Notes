@@ -1,6 +1,8 @@
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
 import remarkRehype from 'remark-rehype'
 import rehypeSlug from 'rehype-slug'
 import rehypeHighlight from 'rehype-highlight'
@@ -44,7 +46,9 @@ export class UnifiedMarkdownRenderer implements MarkdownRenderer {
     const file = await unified()
       .use(remarkParse)
       .use(remarkGfm)
+      .use(remarkMath)
       .use(remarkRehype, { allowDangerousHtml: true })
+      .use(rehypeKatex)
       .use(rehypeSlug)
       .use(rehypeHighlight)
       .use(rehypeStringify, { allowDangerousHtml: true })
@@ -144,3 +148,4 @@ export class UnifiedMarkdownRenderer implements MarkdownRenderer {
 }
 
 export const unifiedMarkdownRenderer = new UnifiedMarkdownRenderer()
+

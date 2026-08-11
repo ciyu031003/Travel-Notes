@@ -18,6 +18,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import AlbumUnlockModal from './AlbumUnlockModal'
+import MomentsStrip from '@/components/moments/MomentsStrip'
 
 interface PostMeta {
   slug: string
@@ -732,6 +733,9 @@ export default function HomeClient({
           </div>
         </section>
 
+        {/* 碎碎念 */}
+        <MomentsStrip />
+
         {/* 其他功能卡片 */}
         <section className="px-3 md:px-5 pb-12">
           <div className="max-w-6xl mx-auto">
@@ -1016,3 +1020,5 @@ function DanmakuItem({
     </div>
   )
 }
+
+

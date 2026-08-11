@@ -25,3 +25,5 @@ start-mysql.bat
 # 本地数据导入脚本（含本地绝对路径和个人照片目录）
 scripts/batch-import.js
 scripts/import-images-to-db.js
+# 静态搜索索引（部署时生成）
+public/search-index.json

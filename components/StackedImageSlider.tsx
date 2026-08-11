@@ -114,7 +114,7 @@ export default function StackedImageSlider({
             }}
           >
             {img && (
-              <img
+              <img loading="lazy" decoding="async"
                 src={img.startsWith('/') ? img : img}
                 alt={`图片 ${index + 1}`}
                 className="w-full h-full object-cover"

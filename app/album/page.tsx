@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, MapPin, Image as ImageIcon, Calendar, Sparkles, Heart, X, Lock } from 'lucide-react'
 import AlbumUnlockModal from '@/components/AlbumUnlockModal'
+import AlbumLightbox from '@/components/album/AlbumLightbox'
 
 interface CityAlbum {
   name: string
@@ -72,6 +73,7 @@ function ParallaxImage({
           onError={() => setImgError(true)}
         />
       </div>
+
     </div>
   )
 }
@@ -94,6 +96,7 @@ export default function AlbumPage() {
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [checkingLock, setCheckingLock] = useState(true)
   const [showUnlockModal, setShowUnlockModal] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(-1)
 
   const loadAlbumData = async () => {
     try {
@@ -386,7 +389,10 @@ export default function AlbumPage() {
                 {/* 主图片展示 */}
                 {selectedCity.images.length > 0 && (
                   <div className="mb-6">
-                    <div className="relative rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]">
+                    <div
+                      className="relative rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] cursor-zoom-in group"
+                      onClick={() => setLightboxIndex(selectedImageIndex)}
+                    >
                       <ParallaxImage
                         src={selectedCity.images[selectedImageIndex]}
                         alt={`${selectedCity.name} - 主图`}
@@ -412,24 +418,33 @@ export default function AlbumPage() {
                   </div>
                 )}
 
-                {/* 图片网格 */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {/* 瀑布流图片网格（点击打开灯箱） */}
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
                   {selectedCity.images.map((img, i) => (
-                    <div
-                      key={i}
-                      onClick={() => setSelectedImageIndex(i)}
-                      className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all hover:shadow-lg ${
+                    <button
+                      key={`${img}-${i}`}
+                      type="button"
+                      onClick={() => {
+                        setSelectedImageIndex(i)
+                        setLightboxIndex(i)
+                      }}
+                      className={`relative block w-full mb-4 rounded-2xl overflow-hidden cursor-pointer transition-all hover:shadow-lg group break-inside-avoid ${
                         i === selectedImageIndex ? 'ring-2 ring-[#E8B8C2] ring-offset-2' : ''
                       }`}
                     >
-                      <ParallaxImage
+                      <img
                         src={img}
                         alt={`${selectedCity.name} ${i + 1}`}
-                        maxOffset={12}
-                        className="w-full aspect-square"
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                        className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors pointer-events-none" />
-                    </div>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-white/70 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-medium text-[#5A4A3A]">{i + 1}</span>
+                      </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -442,6 +457,18 @@ export default function AlbumPage() {
           </div>
         </div>
       </div>
+
+      {lightboxIndex >= 0 && selectedCity && (
+        <AlbumLightbox
+          images={selectedCity.images}
+          initialIndex={lightboxIndex}
+          cityName={selectedCity.name}
+          onClose={() => setLightboxIndex(-1)}
+        />
+      )}
     </div>
   )
 }
+
+
+

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Search, X, BookOpen, BrainCircuit, Tag, Loader2, ArrowRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { searchStaticIndex } from '@/lib/search-index'
 
 interface SearchResult {
   id: number
@@ -90,6 +91,14 @@ function SearchContent() {
     }
     setLoading(true)
     try {
+      // 优先使用本地静态索引（构建期生成，即时返回，减轻服务器压力）
+      const staticResults = await searchStaticIndex(trimmed)
+      if (staticResults !== null) {
+        setResults(staticResults as unknown as SearchResult[])
+        setHasSearched(true)
+        return
+      }
+      // 索引不可用（未生成/加载失败）时回退到服务端搜索
       const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
       if (res.ok) {
         const json: SearchResponse = await res.json()
@@ -346,3 +355,4 @@ function SearchContent() {
     </div>
   )
 }
+

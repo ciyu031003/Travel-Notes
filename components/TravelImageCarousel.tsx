@@ -233,6 +233,8 @@ export default function TravelImageCarousel({
               key={`cur-${currentIndex}`}
               src={currentImage.startsWith('/') ? currentImage : currentImage}
               alt={`旅行照片 ${currentIndex + 1}`}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover"
               draggable={false}
               style={{
@@ -253,6 +255,8 @@ export default function TravelImageCarousel({
               key={`prev-${prevIndex}`}
               src={prevImage.startsWith('/') ? prevImage : prevImage}
               alt={`上一张 ${prevIndex + 1}`}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover"
               draggable={false}
               style={{
@@ -306,3 +310,4 @@ export default function TravelImageCarousel({
     </div>
   )
 }
+
