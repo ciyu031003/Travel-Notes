@@ -115,3 +115,12 @@ model Like {
   @@index([targetType, targetId])
   @@index([createdAt])
 }
+
+model PhotoMessage {
+  id        Int      @id @default(autoincrement())
+  imageKey  String   @db.VarChar(500)
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  @@index([imageKey, createdAt])
+}

@@ -42,6 +42,7 @@ const PUBLIC_PATHS = [
   '/api/notes',
   '/api/moments',
   '/api/likes',
+  '/api/photo-messages',
   '/api/danmaku',
   '/api/repos',
   '/api/search',

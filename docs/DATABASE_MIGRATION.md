@@ -38,7 +38,7 @@
 | `backup` | 用 `mysqldump --single-transaction --routines --triggers` 导出当前库，默认存到 `backups/db/<库名>_<时间戳>.sql`，可用 `--dir` 指定目录 |
 | `restore <file>` | 自动创建数据库（utf8mb4），导入 `.sql` 或 `.sql.gz`，导入后自动执行 `verify` |
 | `list` | 列出备份目录下所有备份文件 |
-| `verify` | 连接当前库，列出全部表及行数，并检查 8 张关键表（Post / SiteSetting / PostImage / Danmaku / Repo / TokenBlacklist / Moment / Like）是否存在；缺失时提示运行 `node migrate-db.cjs` 自动建表/补列 |
+| `verify` | 连接当前库，列出全部表及行数，并检查 9 张关键表（Post / SiteSetting / PostImage / Danmaku / Repo / TokenBlacklist / Moment / Like / PhotoMessage）是否存在；缺失时提示运行 `node migrate-db.cjs` 自动建表/补列 |
 
 ### 1.3 使用示例
 
@@ -192,6 +192,6 @@ pm run search:index
 | `scripts/build-production.sh` | 低内存构建脚本 |
 | `scripts/build-search-index.cjs` | 静态全文搜索索引生成脚本（部署后自动执行，生成 `public/search-index.json`） |
 | `deploy.sh` | 一键部署脚本（已集成低内存构建 + Swap 检测 + ISR 预热） |
-| `migrate-db.cjs` | 建表/补列脚本（Post/SiteSetting/TokenBlacklist/Moment/Like 等，幂等可重复执行） |
+| `migrate-db.cjs` | 建表/补列脚本（Post/SiteSetting/TokenBlacklist/Moment/Like/PhotoMessage 等，幂等可重复执行） |
 | `docs/SERVER_SETUP.md` | 服务器初始化与手动部署指南 |
 | `docs/DEPLOYMENT.md` | 阿里云 ECS 部署指南 |

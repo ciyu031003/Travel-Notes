@@ -1,4 +1,4 @@
-﻿const mysql = require('mysql2/promise');
+const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 async function migrate() {
@@ -252,6 +252,25 @@ async function migrate() {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
       `);
       console.log('Like table created.');
+    }
+    const [photoMsgTables] = await connection.query(
+      "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'PhotoMessage'",
+      [dbName]
+    );
+
+    if (photoMsgTables.length === 0) {
+      console.log('Creating PhotoMessage table...');
+      await connection.query(`
+        CREATE TABLE PhotoMessage (
+          id INT NOT NULL AUTO_INCREMENT,
+          imageKey VARCHAR(500) NOT NULL,
+          content TEXT NOT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          INDEX PhotoMessage_imageKey_createdAt_idx (imageKey, createdAt)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('PhotoMessage table created.');
     }
     console.log('\n✓ Database migration completed successfully!');
     console.log('  Now try creating a post again.');

@@ -13,6 +13,8 @@ import { MomentService } from './services/moment-service'
 import { LikeService } from './services/like-service'
 import { PrismaMomentRepository } from './repositories/moment-repository'
 import { PrismaLikeRepository } from './repositories/like-repository'
+import { PhotoMessageService } from './services/photo-message-service'
+import { PrismaPhotoMessageRepository } from './repositories/photo-message-repository'
 import { UnifiedMarkdownRenderer } from './infrastructure/markdown'
 import { MemoryCacheService } from './infrastructure/cache'
 import { tokenService } from './services/token-service'
@@ -31,6 +33,7 @@ let markdownRendererInstance: UnifiedMarkdownRenderer | null = null
 let documentImportServiceInstance: DocumentImportService | null = null
 let momentServiceInstance: MomentService | null = null
 let likeServiceInstance: LikeService | null = null
+let photoMessageServiceInstance: PhotoMessageService | null = null
 let cacheServiceInstance: MemoryCacheService | null = null
 
 function getCacheService(): MemoryCacheService {
@@ -110,6 +113,15 @@ export function getMomentService(): MomentService {
   return momentServiceInstance
 }
 
+export function getPhotoMessageService(): PhotoMessageService {
+  if (!photoMessageServiceInstance) {
+    const repo = new PrismaPhotoMessageRepository()
+    const cache = getCacheService()
+    photoMessageServiceInstance = new PhotoMessageService(repo, cache)
+  }
+  return photoMessageServiceInstance
+}
+
 export function getLikeService(): LikeService {
   if (!likeServiceInstance) {
     const likeRepo = new PrismaLikeRepository()
@@ -138,6 +150,7 @@ export function resetServices(): void {
   documentImportServiceInstance = null
   momentServiceInstance = null
   likeServiceInstance = null
+  photoMessageServiceInstance = null
   cacheServiceInstance = null
 }
 

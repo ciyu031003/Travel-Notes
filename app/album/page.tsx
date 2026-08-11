@@ -1,11 +1,13 @@
-'use client'
+﻿'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, Image as ImageIcon, Calendar, Sparkles, Heart, X, Lock } from 'lucide-react'
+import { ArrowLeft, MapPin, Image as ImageIcon, Calendar, Sparkles, Lock, Star } from 'lucide-react'
 import AlbumUnlockModal from '@/components/AlbumUnlockModal'
-import AlbumLightbox from '@/components/album/AlbumLightbox'
+import StarfieldBackground from '@/components/album/StarfieldBackground'
+import PhotoRiver from '@/components/album/PhotoRiver'
+import PhotoChatDialog from '@/components/album/PhotoChatDialog'
 
 interface CityAlbum {
   name: string
@@ -16,66 +18,10 @@ interface CityAlbum {
   postSlug: string
 }
 
-function ParallaxImage({
-  src,
-  alt,
-  maxOffset = 10,
-  className = '',
-}: {
-  src: string
-  alt: string
-  maxOffset?: number
-  className?: string
-}) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [imgError, setImgError] = useState(false)
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!containerRef.current) return
-      const rect = containerRef.current.getBoundingClientRect()
-      const x = (e.clientX - rect.left) / rect.width - 0.5
-      const y = (e.clientY - rect.top) / rect.height - 0.5
-      setOffset({ x: x * maxOffset, y: y * maxOffset })
-    },
-    [maxOffset]
-  )
-
-  const handleMouseLeave = useCallback(() => {
-    setOffset({ x: 0, y: 0 })
-  }, [])
-
-  if (imgError) {
-    return (
-      <div className={`${className} flex items-center justify-center bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]`}>
-        <ImageIcon className="w-8 h-8 text-[#8B7355]/40" />
-      </div>
-    )
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className={`${className} overflow-hidden`}
-    >
-      <div
-        className="w-full h-full transition-transform duration-300 ease-out"
-        style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(1.05)` }}
-      >
-        <img
-          src={src}
-          alt={alt}
-          className="w-full h-full object-cover"
-          draggable={false}
-          onError={() => setImgError(true)}
-        />
-      </div>
-
-    </div>
-  )
+interface ChatPhoto {
+  url: string
+  key: string
+  cityName: string
 }
 
 function formatDate(dateStr: string) {
@@ -92,11 +38,10 @@ export default function AlbumPage() {
   const [cities, setCities] = useState<CityAlbum[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCity, setSelectedCity] = useState<CityAlbum | null>(null)
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [checkingLock, setCheckingLock] = useState(true)
   const [showUnlockModal, setShowUnlockModal] = useState(false)
-  const [lightboxIndex, setLightboxIndex] = useState(-1)
+  const [chatPhoto, setChatPhoto] = useState<ChatPhoto | null>(null)
 
   const loadAlbumData = async () => {
     try {
@@ -186,32 +131,29 @@ export default function AlbumPage() {
 
   if (checkingLock) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FAF6F2] via-[#F5EDE4] to-[#E8DDD4] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-[#E8B8C2]/30 border-t-[#E8B8C2] rounded-full animate-spin" />
-        <span className="ml-3 text-[#8B7355]/60 text-sm">验证中...</span>
+      <div className="min-h-screen bg-[#05060f] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-indigo-300/20 border-t-indigo-300 rounded-full animate-spin" />
+        <span className="ml-3 text-indigo-200/60 text-sm">穿越星河中...</span>
       </div>
     )
   }
 
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FAF6F2] via-[#F5EDE4] to-[#E8DDD4] relative overflow-hidden flex items-center justify-center p-4">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-[#F5DCE0]/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-[#D6E8F0]/20 rounded-full blur-3xl" />
-        </div>
-        <div className="relative z-10 w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/80 p-8 text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+      <div className="min-h-screen bg-[#05060f] relative overflow-hidden flex items-center justify-center p-4">
+        <StarfieldBackground />
+        <div className="relative z-10 w-full max-w-sm bg-white/[0.06] backdrop-blur-xl rounded-3xl border border-white/10 p-8 text-center shadow-2xl">
+          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500/60 to-purple-600/60 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg border border-white/10">
             <Lock className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-[#5A4A3A]">相册已上锁</h2>
-          <p className="text-sm text-[#8B7355]/70 mt-3 leading-relaxed">
+          <h2 className="text-2xl font-bold text-white">相册已上锁</h2>
+          <p className="text-sm text-white/50 mt-3 leading-relaxed">
             这是我们的秘密相册<br />请输入恋爱纪念日解锁
           </p>
           <button
             type="button"
             onClick={() => setShowUnlockModal(true)}
-            className="mt-6 w-full py-3 bg-gradient-to-r from-[#E8B8C2] to-[#D4A5B0] text-white font-semibold rounded-2xl hover:from-[#D8A8B2] hover:to-[#C495A0] transition-all shadow-lg shadow-[#E8B8C2]/30 flex items-center justify-center gap-2"
+            className="mt-6 w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold rounded-2xl hover:from-indigo-400 hover:to-purple-400 transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2"
           >
             解锁相册
             <ArrowLeft className="w-4 h-4 rotate-180" />
@@ -219,13 +161,12 @@ export default function AlbumPage() {
           <button
             type="button"
             onClick={() => router.push('/')}
-            className="mt-3 w-full py-2.5 bg-white/60 hover:bg-white border border-[#E8DDD4] text-[#8B7355]/70 rounded-2xl hover:text-[#5A4A3A] transition-all text-sm flex items-center justify-center gap-1.5"
+            className="mt-3 w-full py-2.5 bg-white/[0.06] hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-2xl transition-all text-sm flex items-center justify-center gap-1.5"
           >
             返回首页
           </button>
         </div>
 
-        {/* 解锁弹窗 */}
         <AlbumUnlockModal
           isOpen={showUnlockModal}
           onClose={() => setShowUnlockModal(false)}
@@ -237,62 +178,58 @@ export default function AlbumPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FAF6F2] via-[#F5EDE4] to-[#E8DDD4] relative overflow-hidden">
-      {/* 背景装饰 */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-[#F5DCE0]/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-[#D6E8F0]/20 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-[#05060f] relative overflow-hidden">
+      {/* 深邃动态星空背景 */}
+      <StarfieldBackground />
 
       {/* 顶部导航 */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-[#E8DDD4]">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-black/30 backdrop-blur-md border-b border-white/10">
         <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
           <Link
             href="/login"
-            className="flex items-center gap-2 text-[#8B7355]/70 hover:text-[#5A4A3A] transition-colors"
+            className="flex items-center gap-2 text-white/50 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm">返回登录</span>
           </Link>
 
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#E8B8C2]" />
-            <span className="font-bold text-[#5A4A3A]">我们的相册</span>
+            <Sparkles className="w-5 h-5 text-indigo-300" />
+            <span className="font-bold text-white/90">我们的相册 · 星河</span>
           </div>
 
           <Link
             href="/"
-            className="px-4 py-2 text-sm bg-[#5A4A3A] text-[#FAF6F2] rounded-xl hover:bg-[#4A3A2A] transition-colors"
+            className="px-4 py-2 text-sm bg-white/10 text-white/90 rounded-xl hover:bg-white/20 border border-white/10 transition-colors"
           >
             进入地图
           </Link>
         </nav>
       </header>
 
-      {/* 主要内容 */}
       <div className="relative z-10 pt-14 min-h-screen">
         <div className="grid lg:grid-cols-[320px_1fr] min-h-[calc(100vh-56px)]">
-          {/* 左侧城市列表 */}
-          <div className="border-r border-[#E8DDD4] bg-white/40 backdrop-blur-sm">
+          {/* 左侧：点亮的城市列表（保留卡片样式） */}
+          <div className="border-r border-white/10 bg-black/25 backdrop-blur-md">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-[#5A4A3A] flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[#E8B8C2]" />
+                <h2 className="text-lg font-bold text-white/90 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-indigo-300" />
                   点亮的城市
                 </h2>
-                <span className="text-xs text-[#8B7355]/50 bg-white/60 px-2 py-1 rounded-full">
+                <span className="text-xs text-white/40 bg-white/10 px-2 py-1 rounded-full">
                   {cities.length} 座
                 </span>
               </div>
 
-              <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto pr-2 scrollbar-thin">
+              <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-2 scrollbar-thin">
                 {loading ? (
-                  <div className="flex items-center justify-center py-12 text-[#8B7355]/50 text-sm">
-                    <div className="w-5 h-5 border-2 border-[#E8B8C2]/30 border-t-[#E8B8C2] rounded-full animate-spin mr-2" />
+                  <div className="flex items-center justify-center py-12 text-white/40 text-sm">
+                    <div className="w-5 h-5 border-2 border-indigo-300/20 border-t-indigo-300 rounded-full animate-spin mr-2" />
                     加载中...
                   </div>
                 ) : cities.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-[#8B7355]/50 text-sm">
+                  <div className="flex flex-col items-center justify-center py-12 text-white/40 text-sm">
                     <ImageIcon className="w-10 h-10 mb-3 opacity-40" />
                     <p>还没有旅行记录</p>
                   </div>
@@ -300,14 +237,11 @@ export default function AlbumPage() {
                   cities.map((city) => (
                     <button
                       key={city.name}
-                      onClick={() => {
-                        setSelectedCity(city)
-                        setSelectedImageIndex(0)
-                      }}
+                      onClick={() => setSelectedCity(city)}
                       className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group ${
                         selectedCity?.name === city.name
-                          ? 'bg-[#E8B8C2]/20 border border-[#E8B8C2]/40 shadow-sm'
-                          : 'hover:bg-white/60 border border-transparent hover:border-[#E8DDD4]'
+                          ? 'bg-white/15 border border-indigo-300/40 shadow-lg shadow-indigo-500/10'
+                          : 'hover:bg-white/10 border border-transparent hover:border-white/15'
                       }`}
                     >
                       <div
@@ -319,156 +253,80 @@ export default function AlbumPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-[#5A4A3A] text-sm truncate">
+                          <span className="font-semibold text-white/90 text-sm truncate">
                             {city.name}
                           </span>
                           {city.province && (
-                            <span className="text-[10px] text-[#8B7355]/50 bg-white/50 px-1.5 py-0.5 rounded-full">
+                            <span className="text-[10px] text-white/40 bg-white/10 px-1.5 py-0.5 rounded-full">
                               {city.province}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[11px] text-[#8B7355]/50 flex items-center gap-0.5">
+                          <span className="text-[11px] text-white/40 flex items-center gap-0.5">
                             <Calendar className="w-2.5 h-2.5" />
                             {formatDate(city.date)}
                           </span>
-                          <span className="text-[11px] text-[#8B7355]/50">
+                          <span className="text-[11px] text-white/40">
                             · {city.images.length} 张
                           </span>
                         </div>
                       </div>
-                      <Heart
+                      <Star
                         className={`w-4 h-4 flex-shrink-0 transition-all ${
                           selectedCity?.name === city.name
-                            ? 'text-[#E8B8C2] fill-[#E8B8C2]'
-                            : 'text-[#8B7355]/20 group-hover:text-[#E8B8C2]/50'
+                            ? 'text-amber-300 fill-amber-300'
+                            : 'text-white/15 group-hover:text-indigo-300/60'
                         }`}
                       />
                     </button>
                   ))
                 )}
               </div>
+
+              {/* 底部提示 */}
+              <div className="mt-6 pt-4 border-t border-white/10 text-[11px] text-white/30 leading-relaxed">
+                每一张照片都拥有独立的留言空间，
+                <br />
+                点击照片即可在星河中留下你的话。
+              </div>
             </div>
           </div>
 
-          {/* 右侧图片区域 */}
-          <div className="p-6 md:p-8">
+          {/* 右侧：星河相片流 */}
+          <div className="relative min-h-[calc(100vh-56px)]">
             {selectedCity ? (
-              <div>
-                {/* 城市信息头部 */}
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getCityGradient(
-                          selectedCity.provinceId
-                        )} flex items-center justify-center text-xl shadow-md`}
-                      >
-                        {getCityEmoji(selectedCity.provinceId)}
-                      </div>
-                      <div>
-                        <h1 className="text-2xl font-bold text-[#5A4A3A]">
-                          {selectedCity.name}
-                        </h1>
-                        <p className="text-sm text-[#8B7355]/60">
-                          {selectedCity.province} · {formatDate(selectedCity.date)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/travel/${selectedCity.postSlug}`}
-                    className="px-4 py-2 bg-white/60 hover:bg-white border border-[#E8DDD4] rounded-xl text-sm text-[#5A4A3A] transition-all hover:shadow-sm flex items-center gap-1.5"
-                  >
-                    查看游记
-                    <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-                  </Link>
-                </div>
-
-                {/* 主图片展示 */}
-                {selectedCity.images.length > 0 && (
-                  <div className="mb-6">
-                    <div
-                      className="relative rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] cursor-zoom-in group"
-                      onClick={() => setLightboxIndex(selectedImageIndex)}
-                    >
-                      <ParallaxImage
-                        src={selectedCity.images[selectedImageIndex]}
-                        alt={`${selectedCity.name} - 主图`}
-                        maxOffset={8}
-                        className="w-full aspect-[16/9]"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="px-3 py-1.5 bg-white/80 backdrop-blur rounded-full">
-                            <span className="text-xs font-medium text-[#5A4A3A]">
-                              {selectedImageIndex + 1} / {selectedCity.images.length}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="px-3 py-1.5 bg-[#E8B8C2]/80 backdrop-blur rounded-full">
-                          <span className="text-xs font-medium text-white">
-                            {selectedCity.name}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 瀑布流图片网格（点击打开灯箱） */}
-                <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-                  {selectedCity.images.map((img, i) => (
-                    <button
-                      key={`${img}-${i}`}
-                      type="button"
-                      onClick={() => {
-                        setSelectedImageIndex(i)
-                        setLightboxIndex(i)
-                      }}
-                      className={`relative block w-full mb-4 rounded-2xl overflow-hidden cursor-pointer transition-all hover:shadow-lg group break-inside-avoid ${
-                        i === selectedImageIndex ? 'ring-2 ring-[#E8B8C2] ring-offset-2' : ''
-                      }`}
-                    >
-                      <img
-                        src={img}
-                        alt={`${selectedCity.name} ${i + 1}`}
-                        loading="lazy"
-                        decoding="async"
-                        draggable={false}
-                        className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-white/70 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] font-medium text-[#5A4A3A]">{i + 1}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <PhotoRiver
+                images={selectedCity.images}
+                cityName={selectedCity.name}
+                onPhotoClick={(index) => {
+                  const url = selectedCity.images[index]
+                  setChatPhoto({
+                    url,
+                    key: url,
+                    cityName: selectedCity.name,
+                  })
+                }}
+              />
             ) : (
-              <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-[#8B7355]/50">
+              <div className="flex flex-col items-center justify-center h-full text-white/30">
                 <MapPin className="w-12 h-12 mb-3 opacity-30" />
-                <p>选择一座城市查看相册</p>
+                <p>选择一座城市，点亮星河</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {lightboxIndex >= 0 && selectedCity && (
-        <AlbumLightbox
-          images={selectedCity.images}
-          initialIndex={lightboxIndex}
-          cityName={selectedCity.name}
-          onClose={() => setLightboxIndex(-1)}
+      {/* 照片留言弹窗 */}
+      {chatPhoto && (
+        <PhotoChatDialog
+          image={chatPhoto.url}
+          imageKey={chatPhoto.key}
+          cityName={chatPhoto.cityName}
+          onClose={() => setChatPhoto(null)}
         />
       )}
     </div>
   )
 }
-
-
-
