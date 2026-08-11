@@ -3,18 +3,30 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * 深邃动态星空背景（canvas）
- * - 缓慢流动的星云光晕 + 闪烁星光 + 偶尔划过流星
- * - 性能友好：粒子数受限、DPR 上限 1.5、页面隐藏时暂停
+ * 深邃宇宙星空背景（canvas）
+ * - 大量细碎星光粒子，自由漂浮 + 缓慢旋转流动
+ * - 远近三层深度：远层小而暗、中层、近层大而亮，层次感
+ * - 星云光晕缓慢漂移 + 偶尔流星
+ * - 性能友好：粒子数受限、DPR 上限 1.5、页面隐藏暂停
  */
-interface Star {
-  x: number
-  y: number
-  r: number
+interface StarParticle {
+  // 轨道（缓慢旋转流动）
+  cx: number
+  cy: number
+  radius: number
+  angle: number
+  angularSpeed: number
+  // 自由漂浮偏移
+  driftX: number
+  driftY: number
+  driftSpeed: number
+  driftPhase: number
+  // 外观
+  size: number
   baseAlpha: number
-  phase: number
-  speed: number
-  drift: number
+  twinkleSpeed: number
+  twinklePhase: number
+  layer: 0 | 1 | 2 // 0远 1中 2近
 }
 
 interface Nebula {
@@ -50,7 +62,7 @@ export default function StarfieldBackground() {
     let width = 0
     let height = 0
     let raf = 0
-    let stars: Star[] = []
+    let stars: StarParticle[] = []
     let nebulas: Nebula[] = []
     const meteor: Meteor = { x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, active: false }
     let meteorTimer = 0
@@ -69,22 +81,36 @@ export default function StarfieldBackground() {
     }
 
     const initStars = () => {
-      const count = Math.min(220, Math.floor((width * height) / 9000))
-      stars = Array.from({ length: count }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        r: 0.4 + Math.random() * 1.3,
-        baseAlpha: 0.2 + Math.random() * 0.7,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.4 + Math.random() * 1.2,
-        drift: 0.02 + Math.random() * 0.06,
-      }))
+      const count = Math.min(340, Math.floor((width * height) / 5200))
+      stars = Array.from({ length: count }, () => {
+        // 层次分配：远 55% / 中 30% / 近 15%
+        const r = Math.random()
+        const layer: 0 | 1 | 2 = r < 0.55 ? 0 : r < 0.85 ? 1 : 2
+        const sizeBase = layer === 0 ? 0.35 : layer === 1 ? 0.7 : 1.2
+        return {
+          cx: Math.random() * width,
+          cy: Math.random() * height,
+          radius: Math.random() * Math.min(width, height) * 0.35,
+          angle: Math.random() * Math.PI * 2,
+          // 层次越近旋转越快，方向随机
+          angularSpeed: (0.008 + Math.random() * 0.03) * (layer + 0.4) * (Math.random() > 0.5 ? 1 : -1),
+          driftX: Math.random() * 30,
+          driftY: Math.random() * 30,
+          driftSpeed: 0.15 + Math.random() * 0.4,
+          driftPhase: Math.random() * Math.PI * 2,
+          size: sizeBase + Math.random() * (layer === 0 ? 0.3 : layer === 1 ? 0.6 : 1.1),
+          baseAlpha: (layer === 0 ? 0.25 : layer === 1 ? 0.5 : 0.8) + Math.random() * 0.3,
+          twinkleSpeed: 0.5 + Math.random() * 1.4,
+          twinklePhase: Math.random() * Math.PI * 2,
+          layer,
+        }
+      })
 
       const nebulaDefs = [
-        { hue: 260, alpha: 0.10, r: 0.42 },
-        { hue: 210, alpha: 0.09, r: 0.36 },
-        { hue: 330, alpha: 0.08, r: 0.30 },
-        { hue: 190, alpha: 0.07, r: 0.26 },
+        { hue: 262, alpha: 0.11, r: 0.44 },
+        { hue: 215, alpha: 0.10, r: 0.38 },
+        { hue: 330, alpha: 0.09, r: 0.32 },
+        { hue: 190, alpha: 0.08, r: 0.28 },
       ]
       nebulas = nebulaDefs.map((n) => ({
         x: Math.random() * width,
@@ -100,11 +126,11 @@ export default function StarfieldBackground() {
 
     const drawNebulas = (t: number) => {
       for (const n of nebulas) {
-        const nx = n.x + Math.sin(t * n.speedX + n.phase) * 60
-        const ny = n.y + Math.cos(t * n.speedY + n.phase) * 40
+        const nx = n.x + Math.sin(t * n.speedX + n.phase) * 70
+        const ny = n.y + Math.cos(t * n.speedY + n.phase) * 50
         const grad = ctx.createRadialGradient(nx, ny, 0, nx, ny, n.r)
-        grad.addColorStop(0, `hsla(${n.hue}, 80%, 60%, ${n.alpha})`)
-        grad.addColorStop(0.5, `hsla(${n.hue + 20}, 70%, 50%, ${n.alpha * 0.5})`)
+        grad.addColorStop(0, `hsla(${n.hue}, 85%, 62%, ${n.alpha})`)
+        grad.addColorStop(0.5, `hsla(${n.hue + 18}, 72%, 52%, ${n.alpha * 0.5})`)
         grad.addColorStop(1, 'hsla(0, 0%, 0%, 0)')
         ctx.fillStyle = grad
         ctx.fillRect(0, 0, width, height)
@@ -113,18 +139,34 @@ export default function StarfieldBackground() {
 
     const drawStars = (t: number) => {
       for (const s of stars) {
-        const twinkle = Math.sin(t * s.speed + s.phase) * 0.5 + 0.5
-        const alpha = s.baseAlpha * (0.4 + twinkle * 0.6)
+        // 旋转流动：绕轨道中心缓慢旋转
+        const ang = s.angle + t * s.angularSpeed
+        const ox = s.cx + Math.cos(ang) * s.radius
+        const oy = s.cy + Math.sin(ang) * s.radius * 0.85
+        // 自由漂浮：正弦漂移
+        const px = ox + Math.sin(t * s.driftSpeed + s.driftPhase) * s.driftX
+        const py = oy + Math.cos(t * s.driftSpeed * 1.3 + s.driftPhase) * s.driftY
+        // 闪烁
+        const twinkle = Math.sin(t * s.twinkleSpeed + s.twinklePhase) * 0.5 + 0.5
+        const alpha = s.baseAlpha * (0.45 + twinkle * 0.55)
+
+        // 近层粒子带轻微光晕
+        if (s.layer === 2) {
+          ctx.beginPath()
+          ctx.arc(px, py, s.size * 2.4, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.12})`
+          ctx.fill()
+        }
         ctx.beginPath()
-        ctx.arc(s.x + Math.sin(t * s.drift + s.phase) * 8, s.y, s.r, 0, Math.PI * 2)
+        ctx.arc(px, py, s.size, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`
         ctx.fill()
       }
     }
 
-    const drawMeteor = (t: number) => {
+    const drawMeteor = () => {
       meteorTimer += 1
-      if (!meteor.active && meteorTimer > 400 + Math.random() * 600) {
+      if (!meteor.active && meteorTimer > 500 + Math.random() * 700) {
         meteor.active = true
         meteorTimer = 0
         const fromRight = Math.random() > 0.5
@@ -145,11 +187,12 @@ export default function StarfieldBackground() {
           meteor.active = false
           return
         }
-        const tailLen = 90
+        const hyp = Math.hypot(meteor.vx, meteor.vy)
+        const tail = 90
         const grad = ctx.createLinearGradient(
           meteor.x, meteor.y,
-          meteor.x - meteor.vx * (tailLen / Math.hypot(meteor.vx, meteor.vy)),
-          meteor.y - meteor.vy * (tailLen / Math.hypot(meteor.vx, meteor.vy))
+          meteor.x - meteor.vx * (tail / hyp),
+          meteor.y - meteor.vy * (tail / hyp)
         )
         grad.addColorStop(0, `rgba(255,255,255,${0.8 * fade})`)
         grad.addColorStop(1, 'rgba(255,255,255,0)')
@@ -158,8 +201,8 @@ export default function StarfieldBackground() {
         ctx.beginPath()
         ctx.moveTo(meteor.x, meteor.y)
         ctx.lineTo(
-          meteor.x - meteor.vx * (tailLen / Math.hypot(meteor.vx, meteor.vy)),
-          meteor.y - meteor.vy * (tailLen / Math.hypot(meteor.vx, meteor.vy))
+          meteor.x - meteor.vx * (tail / hyp),
+          meteor.y - meteor.vy * (tail / hyp)
         )
         ctx.stroke()
         ctx.beginPath()
@@ -167,22 +210,20 @@ export default function StarfieldBackground() {
         ctx.fillStyle = `rgba(255,255,255,${fade})`
         ctx.fill()
       }
-      void t
     }
 
     const render = (time: number) => {
       const t = time / 1000
       ctx.clearRect(0, 0, width, height)
-      // 深空底色
       const bg = ctx.createLinearGradient(0, 0, width, height)
-      bg.addColorStop(0, '#05060f')
-      bg.addColorStop(0.5, '#0a0d1f')
-      bg.addColorStop(1, '#070a18')
+      bg.addColorStop(0, '#04050d')
+      bg.addColorStop(0.5, '#090c1e')
+      bg.addColorStop(1, '#060919')
       ctx.fillStyle = bg
       ctx.fillRect(0, 0, width, height)
       drawNebulas(t)
       drawStars(t)
-      drawMeteor(t)
+      drawMeteor()
       raf = requestAnimationFrame(render)
     }
 

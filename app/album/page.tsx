@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -7,7 +7,7 @@ import { ArrowLeft, MapPin, Image as ImageIcon, Calendar, Sparkles, Lock, Star }
 import AlbumUnlockModal from '@/components/AlbumUnlockModal'
 import StarfieldBackground from '@/components/album/StarfieldBackground'
 import PhotoRiver from '@/components/album/PhotoRiver'
-import PhotoChatDialog from '@/components/album/PhotoChatDialog'
+import PhotoChatView from '@/components/album/PhotoChatView'
 
 interface CityAlbum {
   name: string
@@ -42,6 +42,7 @@ export default function AlbumPage() {
   const [checkingLock, setCheckingLock] = useState(true)
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [chatPhoto, setChatPhoto] = useState<ChatPhoto | null>(null)
+  const [view, setView] = useState<'gallery' | 'chat'>('gallery')
 
   const loadAlbumData = async () => {
     try {
@@ -177,6 +178,21 @@ export default function AlbumPage() {
     )
   }
 
+  // 整页状态切换：聊天视图（粒子化照片背景 + 微信聊天 UI，卸载画廊以节省性能）
+  if (view === 'chat' && chatPhoto) {
+    return (
+      <PhotoChatView
+        image={chatPhoto.url}
+        imageKey={chatPhoto.key}
+        cityName={chatPhoto.cityName}
+        onBack={() => {
+          setView('gallery')
+          setChatPhoto(null)
+        }}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#05060f] relative overflow-hidden">
       {/* 深邃动态星空背景 */}
@@ -306,6 +322,7 @@ export default function AlbumPage() {
                     key: url,
                     cityName: selectedCity.name,
                   })
+                  setView('chat')
                 }}
               />
             ) : (
@@ -318,15 +335,6 @@ export default function AlbumPage() {
         </div>
       </div>
 
-      {/* 照片留言弹窗 */}
-      {chatPhoto && (
-        <PhotoChatDialog
-          image={chatPhoto.url}
-          imageKey={chatPhoto.key}
-          cityName={chatPhoto.cityName}
-          onClose={() => setChatPhoto(null)}
-        />
-      )}
     </div>
   )
 }

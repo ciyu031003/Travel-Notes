@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useRef, useMemo, useCallback } from 'react'
 import { Camera, Sparkles } from 'lucide-react'
@@ -154,7 +154,7 @@ export default function PhotoRiver({ images, cityName, onPhotoClick }: PhotoRive
             style={{ width: sizeRef.current.cardW, height: sizeRef.current.cardH }}
             aria-label={`查看照片 ${idx + 1}`}
           >
-            <div className={`w-full h-full rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.55)] border border-white/10 bg-black/30 backdrop-blur-sm transition-transform duration-300 group-hover:scale-[1.03] ${layout.depth > 1.1 ? 'ring-1 ring-amber-200/30' : ''}`}>
+            <div className={`w-full h-full rounded-2xl overflow-hidden shadow-[0_24px_60px_-12px_rgba(0,0,0,0.5)] shadow-[0_0_30px_rgba(120,130,255,0.08)] border border-white/10 bg-black/25 backdrop-blur-sm transition-transform duration-300 group-hover:scale-[1.03] ${layout.depth > 1.1 ? 'ring-1 ring-amber-200/30' : ''}`}>
               <img
                 src={img}
                 alt={`${cityName || ''} 照片 ${idx + 1}`}
