@@ -74,6 +74,18 @@ export class SpaceService {
     await requireSpaceOwner(actor, spaceId)
     await this.repo.removeMember(spaceId, memberUsername)
   }
+
+  async deleteSpace(actor: string, spaceId: number): Promise<void> {
+    await requireSpaceOwner(actor, spaceId)
+    await this.repo.delete(spaceId)
+    await writeAuditLog({
+      username: actor,
+      action: 'DELETE',
+      resourceType: 'Space',
+      resourceId: String(spaceId),
+      spaceId,
+    }).catch(() => {})
+  }
 }
 
 export const spaceService = new SpaceService(new PrismaSpaceRepository())

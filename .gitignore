@@ -27,6 +27,8 @@ scripts/batch-import.js
 scripts/import-images-to-db.js
 # 静态搜索索引（部署时生成）
 public/search-index.json
+# 本地运行期上传文件（相册/视频等）
+/public/uploads/
 
 # 本地启动日志
 start.log

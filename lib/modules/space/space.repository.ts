@@ -146,6 +146,10 @@ export class PrismaSpaceRepository {
     })
   }
 
+  async delete(spaceId: number): Promise<void> {
+    await prisma.space.delete({ where: { id: spaceId } })
+  }
+
   async slugExists(slug: string): Promise<boolean> {
     const row = await prisma.space.findUnique({ where: { slug }, select: { id: true } })
     return row !== null
