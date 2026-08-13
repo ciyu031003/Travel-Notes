@@ -31,6 +31,7 @@ const PUBLIC_PATHS = [
   '/api/logout',
   '/api/album',
   '/api/images',
+  '/api/travel',
   '/api/verify-album-password',
   '/api/admin/login',
   '/api/admin/check',
@@ -44,9 +45,6 @@ const PUBLIC_PATHS = [
   '/api/photo-messages',
   '/api/danmaku',
   '/api/search',
-  '/api/tags',
-  '/api/blog',
-  '/api/stats',
   '/uploads',
   '/_next',
 ]

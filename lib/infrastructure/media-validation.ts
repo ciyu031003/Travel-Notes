@@ -16,12 +16,6 @@ export const MAX_VIDEO_COUNT = 5
 
 export type DetectedImageType = 'jpeg' | 'png' | 'webp' | 'gif' | null
 
-const MIME_TO_EXT: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-}
-
 const EXT_TO_MIME: Record<string, string> = {
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
@@ -101,11 +95,9 @@ export async function validateAndSanitizeImage(
     throw new Error('不支持该图片格式（仅支持 JPEG/PNG/WebP）')
   }
 
-  // 若声明了 MIME，校验与 Magic Number 一致；不一致时以 Magic Number 为准（不信任客户端）
-  const expectedMime = MIME_TO_EXT[declaredMimeType || ''] || EXT_TO_MIME[detected]
+  // 若声明了 MIME，校验与 Magic Number 一致；不一致时拒绝（不信任客户端）
   const actualMime = EXT_TO_MIME[detected]
-  if (expectedMime && expectedMime !== actualMime) {
-    // 客户端声明与实际不符：拒绝而非静默转换，避免混淆攻击面
+  if (declaredMimeType && declaredMimeType !== actualMime) {
     throw new Error('文件类型声明与实际内容不符')
   }
 
