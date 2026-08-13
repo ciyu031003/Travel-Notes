@@ -42,6 +42,22 @@ npx prisma db push
 node migrate-db.cjs
 ```
 
+## P2 核心功能与规划（已完成 ✅）
+
+| 优先级 | 工作 | 实施内容 |
+|---|---|---|
+| P2 | Timeline 时间线 | 新增 `lib/modules/timeline/` + `/timeline` 页面：按年份聚合 Travel / Memory（旅行卡片可点击进入详情），导航/命令面板/中间件公开路径已接入 |
+| P2 | Anniversary 纪念日 | 新增 `Anniversary` 模型 + `lib/modules/anniversary/` + 公开 `/api/anniversaries` + 后台 `/api/admin/anniversaries`（CRUD）+ `/admin/anniversaries` 管理页；首页新增「我们的纪念日」区块（剩余天数倒计时） |
+| P2 | Album 纪念相册 | 基于独立 `Media`/`AlbumMedia` 模型：`lib/modules/album/`（上传走 Magic Number 校验 + sharp 重新编码 + 本地/S3 存储）；公开 `/albums` + `/albums/[id]`（含灯箱）；后台 `/admin/albums`（建相册、批量上传、删除媒体）；删除相册时级联清理 Media 与存储文件 |
+| P2 | Itinerary 行程 | 新增 `ItineraryItem` 模型 + `lib/modules/travel/`（旅行规划）+ `/api/admin/travels/*`（旅行/天数/行程 CRUD）+ `/admin/travels` 管理页（Day 1/2/3 + 景点/餐厅/住宿/交通/活动/其他类型） |
+| P2 | Expense 花费 | 新增 `Expense` 模型（金额/币种/分类/付款人）+ 后台旅行规划内管理，列表合计金额 |
+
+### 其它（同批纳入）
+- **Memory 回忆模块**：`lib/modules/memory/`（Repository + Service，统一 RBAC + 审计）+ `/api/spaces/[id]/memories`、`/api/memories/[id]`（CRUD）
+- **空间旅行**：`lib/modules/travel/space-travel.*` + `/api/spaces/[id]/travels`、`/api/travels/[id]`（按空间管理旅行）
+- 数据模型演进：`Album.spaceId` / `Travel.spaceId` 改为可空（P2 管理端暂不强制空间归属），`Album` 增加 `coverMedia` 封面关系
+- 部署兜底脚本 `migrate-db.cjs` 补齐 `Anniversary` / `ItineraryItem` / `Expense` 建表
+
 ## 后续（不在本次范围）
 - Next 16 大版本迁移（修复内置 postcss/sharp 审计项）
 - Timeline / Album / Anniversary / Itinerary / Expense 等 P2 产品功能

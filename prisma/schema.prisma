@@ -251,7 +251,7 @@ model SpaceInvite {
 /// 旅行
 model Travel {
   id           Int          @id @default(autoincrement())
-  spaceId      Int
+  spaceId      Int?
   title        String       @db.VarChar(255)
   slug         String       @db.VarChar(255)
   description  String?      @db.Text
@@ -264,9 +264,10 @@ model Travel {
   createdAt    DateTime     @default(now()) @db.Timestamp(3)
   updatedAt    DateTime     @updatedAt @db.Timestamp(3)
 
-  space   Space       @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  days    TravelDay[]
+  space    Space?      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  days     TravelDay[]
   memories Memory[]
+  expenses Expense[]
 
   @@unique([spaceId, slug])
   @@index([spaceId, startDate])
@@ -281,8 +282,9 @@ model TravelDay {
   summary   String?  @db.Text
   sortOrder Int      @default(0)
 
-  travel   Travel   @relation(fields: [travelId], references: [id], onDelete: Cascade)
-  memories Memory[]
+  travel        Travel          @relation(fields: [travelId], references: [id], onDelete: Cascade)
+  memories      Memory[]
+  itineraryItems ItineraryItem[]
 
   @@index([travelId, sortOrder])
 }
@@ -301,7 +303,8 @@ model Location {
   createdAt  DateTime @default(now()) @db.Timestamp(3)
   updatedAt  DateTime @updatedAt @db.Timestamp(3)
 
-  memories Memory[]
+  memories      Memory[]
+  itineraryItems ItineraryItem[]
 
   @@index([city])
   @@index([name])
@@ -354,6 +357,8 @@ model Media {
 
   spaceOwner  Space?        @relation("MediaSpace", fields: [spaceId], references: [id])
   spaceCoverOf Space?        @relation("SpaceCover")
+  anniversaryCoverOf Anniversary? @relation("AnniversaryCover")
+  albumCoverOf Album?       @relation("AlbumCover")
   memory      Memory?       @relation(fields: [memoryId], references: [id], onDelete: SetNull)
   travels     Travel[]      @relation("TravelCover")
   variants    MediaVariant[]
@@ -382,17 +387,18 @@ model MediaVariant {
 /// 相册
 model Album {
   id           Int        @id @default(autoincrement())
-  spaceId      Int
+  spaceId      Int?
   title        String     @db.VarChar(255)
   description  String?    @db.Text
-  coverMediaId Int?
+  coverMediaId Int? @unique
+  coverMedia   Media?     @relation("AlbumCover", fields: [coverMediaId], references: [id])
   date         DateTime?  @db.Timestamp(3)
   locationId   Int?
   visibility   Visibility @default(COUPLE)
   createdAt    DateTime   @default(now()) @db.Timestamp(3)
   updatedAt    DateTime   @updatedAt @db.Timestamp(3)
 
-  space Space       @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  space Space?      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   items AlbumMedia[]
 
   @@index([spaceId, createdAt])
@@ -428,4 +434,54 @@ model AuditLog {
   @@index([spaceId, createdAt])
   @@index([username, createdAt])
   @@index([action])
+}
+
+/// 纪念日（第一次见面/第一次旅行/生日等）
+model Anniversary {
+  id           Int      @id @default(autoincrement())
+  title        String   @db.VarChar(255)
+  date         DateTime @db.Timestamp(3)
+  recurring    Boolean  @default(true)
+  description  String?  @db.Text
+  coverMediaId Int? @unique
+  coverMedia   Media?   @relation("AnniversaryCover", fields: [coverMediaId], references: [id])
+  createdAt    DateTime @default(now()) @db.Timestamp(3)
+  updatedAt    DateTime @updatedAt @db.Timestamp(3)
+
+  @@index([date])
+}
+
+/// 行程项（属于某天的某个行程）
+model ItineraryItem {
+  id          Int       @id @default(autoincrement())
+  travelDayId Int
+  startTime   DateTime? @db.Timestamp(3)
+  endTime     DateTime? @db.Timestamp(3)
+  title       String    @db.VarChar(255)
+  locationId  Int?
+  type        String    @default("SPOT") @db.VarChar(50)
+  notes       String?   @db.Text
+  sortOrder   Int       @default(0)
+
+  travelDay TravelDay? @relation(fields: [travelDayId], references: [id], onDelete: Cascade)
+  location  Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  @@index([travelDayId, sortOrder])
+}
+
+/// 旅行花费（支持分类与分摊记录）
+model Expense {
+  id         Int       @id @default(autoincrement())
+  travelId   Int
+  amount     Float
+  currency   String    @default("CNY") @db.VarChar(10)
+  category   String    @db.VarChar(50)
+  payer      String?   @db.VarChar(255)
+  note       String?   @db.Text
+  happenedAt DateTime? @db.Timestamp(3)
+  createdAt  DateTime  @default(now()) @db.Timestamp(3)
+
+  travel Travel @relation(fields: [travelId], references: [id], onDelete: Cascade)
+
+  @@index([travelId])
 }

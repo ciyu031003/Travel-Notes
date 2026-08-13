@@ -1,0 +1,268 @@
+/**
+ * Travel 规划：管理新数据模型下的旅行 → 天数 → 行程项 → 花费。
+ * （面向 P2 的行程与花费管理；公开的旅行详情展示属于 P5）
+ */
+import { prisma } from '../../db'
+
+export interface TravelSummary {
+  id: number
+  title: string
+  slug: string
+  description: string | null
+  startDate: string | null
+  endDate: string | null
+  status: string
+  dayCount: number
+  expenseTotal: number
+}
+
+export interface ItineraryItemRecord {
+  id: number
+  title: string
+  startTime: string | null
+  endTime: string | null
+  type: string
+  notes: string | null
+  locationName: string | null
+}
+
+export interface TravelDayRecord {
+  id: number
+  date: string | null
+  title: string | null
+  summary: string | null
+  sortOrder: number
+  itinerary: ItineraryItemRecord[]
+}
+
+export interface ExpenseRecord {
+  id: number
+  amount: number
+  currency: string
+  category: string
+  payer: string | null
+  note: string | null
+  happenedAt: string | null
+}
+
+export interface TravelDetail {
+  id: number
+  title: string
+  slug: string
+  description: string | null
+  startDate: string | null
+  endDate: string | null
+  status: string
+  days: TravelDayRecord[]
+  expenses: ExpenseRecord[]
+}
+
+function iso(v: Date | null | undefined): string | null {
+  if (!v) return null
+  const d = v instanceof Date ? v : new Date(v)
+  return isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+export async function listTravels(): Promise<TravelSummary[]> {
+  const rows = await prisma.travel.findMany({
+    orderBy: { startDate: 'desc' },
+    include: {
+      _count: { select: { days: true } },
+      expenses: true,
+    },
+  })
+  return rows.map((t: any) => ({
+    id: t.id,
+    title: t.title,
+    slug: t.slug,
+    description: t.description,
+    startDate: iso(t.startDate),
+    endDate: iso(t.endDate),
+    status: t.status,
+    dayCount: t._count.days,
+    expenseTotal: t.expenses.reduce((s: number, e: any) => s + (e.amount || 0), 0),
+  }))
+}
+
+export async function getTravelDetail(id: number): Promise<TravelDetail | null> {
+  const travel = await prisma.travel.findUnique({
+    where: { id },
+    include: {
+      days: {
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          itineraryItems: {
+            orderBy: { sortOrder: 'asc' },
+            include: { location: { select: { name: true } } },
+          },
+        },
+      },
+      expenses: { orderBy: { happenedAt: 'asc' } },
+    },
+  })
+  if (!travel) return null
+  return {
+    id: travel.id,
+    title: travel.title,
+    slug: travel.slug,
+    description: travel.description,
+    startDate: iso(travel.startDate),
+    endDate: iso(travel.endDate),
+    status: travel.status,
+    days: travel.days.map((d: any) => ({
+      id: d.id,
+      date: iso(d.date),
+      title: d.title,
+      summary: d.summary,
+      sortOrder: d.sortOrder,
+      itinerary: d.itineraryItems.map((it: any) => ({
+        id: it.id,
+        title: it.title,
+        startTime: iso(it.startTime),
+        endTime: iso(it.endTime),
+        type: it.type,
+        notes: it.notes,
+        locationName: it.location?.name ?? null,
+      })),
+    })),
+    expenses: travel.expenses.map((e: any) => ({
+      id: e.id,
+      amount: e.amount,
+      currency: e.currency,
+      category: e.category,
+      payer: e.payer,
+      note: e.note,
+      happenedAt: iso(e.happenedAt),
+    })),
+  }
+}
+
+export async function createTravel(input: {
+  title: string
+  description?: string
+  startDate?: string
+  endDate?: string
+}): Promise<{ id: number }> {
+  const slugBase = input.title.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
+  const row = await prisma.travel.create({
+    data: {
+      title: input.title.trim(),
+      slug: slugBase || `travel-${Date.now()}`,
+      description: input.description || null,
+      startDate: input.startDate ? new Date(input.startDate) : null,
+      endDate: input.endDate ? new Date(input.endDate) : null,
+      status: 'PLANNED',
+    },
+  })
+  return { id: row.id }
+}
+
+export async function updateTravel(id: number, input: any): Promise<void> {
+  const data: any = {}
+  if (input.title !== undefined) data.title = input.title
+  if (input.description !== undefined) data.description = input.description || null
+  if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate) : null
+  if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
+  if (input.status !== undefined) data.status = input.status
+  await prisma.travel.update({ where: { id }, data })
+}
+
+export async function deleteTravel(id: number): Promise<void> {
+  await prisma.travel.delete({ where: { id } })
+}
+
+export async function addDay(travelId: number, input: { date?: string; title?: string; summary?: string }): Promise<{ id: number }> {
+  const maxOrder = await prisma.travelDay.aggregate({ where: { travelId }, _max: { sortOrder: true } })
+  const row = await prisma.travelDay.create({
+    data: {
+      travelId,
+      date: input.date ? new Date(input.date) : null,
+      title: input.title || null,
+      summary: input.summary || null,
+      sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
+    },
+  })
+  return { id: row.id }
+}
+
+export async function updateDay(id: number, input: any): Promise<void> {
+  const data: any = {}
+  if (input.date !== undefined) data.date = input.date ? new Date(input.date) : null
+  if (input.title !== undefined) data.title = input.title || null
+  if (input.summary !== undefined) data.summary = input.summary || null
+  if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder
+  await prisma.travelDay.update({ where: { id }, data })
+}
+
+export async function deleteDay(id: number): Promise<void> {
+  await prisma.travelDay.delete({ where: { id } })
+}
+
+const ITINERARY_TYPES = ['SPOT', 'RESTAURANT', 'HOTEL', 'TRANSPORT', 'ACTIVITY', 'OTHER']
+
+/** 兼容 "10:00" / "10:00:00" 时间串，转换为可解析的 Date */
+function parseTimeOrDate(value: string | undefined | null): Date | null {
+  if (!value) return null
+  const m = value.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
+  if (m) {
+    const d = new Date()
+    d.setHours(parseInt(m[1], 10), parseInt(m[2], 10), m[3] ? parseInt(m[3], 10) : 0, 0)
+    return d
+  }
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? null : d
+}
+
+export async function addItineraryItem(dayId: number, input: {
+  title: string
+  startTime?: string
+  endTime?: string
+  type?: string
+  notes?: string
+}): Promise<{ id: number }> {
+  const maxOrder = await prisma.itineraryItem.aggregate({ where: { travelDayId: dayId }, _max: { sortOrder: true } })
+  const row = await prisma.itineraryItem.create({
+    data: {
+      travelDayId: dayId,
+      title: input.title.trim(),
+      startTime: parseTimeOrDate(input.startTime),
+      endTime: parseTimeOrDate(input.endTime),
+      type: ITINERARY_TYPES.includes(input.type || '') ? input.type! : 'SPOT',
+      notes: input.notes || null,
+      sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
+    },
+  })
+  return { id: row.id }
+}
+
+export async function deleteItineraryItem(id: number): Promise<void> {
+  await prisma.itineraryItem.delete({ where: { id } })
+}
+
+export async function addExpense(travelId: number, input: {
+  amount: number
+  currency?: string
+  category?: string
+  payer?: string
+  note?: string
+  happenedAt?: string
+}): Promise<{ id: number }> {
+  const row = await prisma.expense.create({
+    data: {
+      travelId,
+      amount: input.amount,
+      currency: input.currency || 'CNY',
+      category: input.category || 'OTHER',
+      payer: input.payer || null,
+      note: input.note || null,
+      happenedAt: input.happenedAt ? new Date(input.happenedAt) : null,
+    },
+  })
+  return { id: row.id }
+}
+
+export async function deleteExpense(id: number): Promise<void> {
+  await prisma.expense.delete({ where: { id } })
+}
+
+export { ITINERARY_TYPES }

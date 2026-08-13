@@ -499,6 +499,56 @@ async function migrate() {
       },
     ];
 
+      {
+        name: 'Anniversary',
+        sql: `CREATE TABLE IF NOT EXISTS Anniversary (
+          id INT NOT NULL AUTO_INCREMENT,
+          title VARCHAR(255) NOT NULL,
+          date DATETIME(3) NOT NULL,
+          recurring BOOLEAN NOT NULL DEFAULT TRUE,
+          description TEXT NULL,
+          coverMediaId INT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          UNIQUE KEY Anniversary_coverMediaId_key (coverMediaId),
+          INDEX Anniversary_date_idx (date)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'ItineraryItem',
+        sql: `CREATE TABLE IF NOT EXISTS ItineraryItem (
+          id INT NOT NULL AUTO_INCREMENT,
+          travelDayId INT NOT NULL,
+          startTime DATETIME(3) NULL,
+          endTime DATETIME(3) NULL,
+          title VARCHAR(255) NOT NULL,
+          locationId INT NULL,
+          type VARCHAR(50) NOT NULL DEFAULT 'SPOT',
+          notes TEXT NULL,
+          sortOrder INT NOT NULL DEFAULT 0,
+          PRIMARY KEY (id),
+          INDEX ItineraryItem_travelDayId_sortOrder_idx (travelDayId, sortOrder)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'Expense',
+        sql: `CREATE TABLE IF NOT EXISTS Expense (
+          id INT NOT NULL AUTO_INCREMENT,
+          travelId INT NOT NULL,
+          amount DOUBLE NOT NULL,
+          currency VARCHAR(10) NOT NULL DEFAULT 'CNY',
+          category VARCHAR(50) NOT NULL,
+          payer VARCHAR(255) NULL,
+          note TEXT NULL,
+          happenedAt DATETIME(3) NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          INDEX Expense_travelId_idx (travelId)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+    ];
+
     for (const def of tableDefinitions) {
       const [existing] = await connection.query(
         'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',

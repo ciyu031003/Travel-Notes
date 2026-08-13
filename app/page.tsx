@@ -1,5 +1,6 @@
 import { getPostService } from '@/lib/container'
 import { findProvinceByLocation } from '@/lib/province-map'
+import { listAnniversaries } from '@/lib/modules/anniversary/anniversary.service'
 import HomeClient from '@/components/HomeClient'
 
 export const revalidate = 300
@@ -11,7 +12,10 @@ export const metadata = {
 
 export default async function Home() {
   const postService = getPostService()
-  const travelPosts = await postService.getPostsHybrid('travel')
+  const [travelPosts, anniversaries] = await Promise.all([
+    postService.getPostsHybrid('travel'),
+    listAnniversaries(),
+  ])
 
   const provincesVisited = new Set<string>()
   for (const post of travelPosts) {
@@ -25,6 +29,7 @@ export default async function Home() {
     <HomeClient
       travelPosts={travelPosts}
       provincesVisitedCount={provincesVisited.size}
+      anniversaries={anniversaries}
     />
   )
 }

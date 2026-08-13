@@ -1,0 +1,19 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth-middleware'
+import { deleteExpense } from '@/lib/modules/travel/travel.service'
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string; expenseId: string }> }) {
+  const auth = await requireAuth(request)
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: '未授权' }, { status: 401 })
+  }
+  const { expenseId } = await params
+  const id = parseInt(expenseId, 10)
+  if (isNaN(id)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })
+  try {
+    await deleteExpense(id)
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || '删除失败' }, { status: 400 })
+  }
+}

@@ -30,9 +30,36 @@ interface PostMeta {
   location?: string
 }
 
+interface AnniversaryItem {
+  id: number
+  title: string
+  date: string
+  recurring: boolean
+  description: string | null
+}
+
 interface HomeClientProps {
   travelPosts: PostMeta[]
   provincesVisitedCount: number
+  anniversaries?: AnniversaryItem[]
+}
+
+function daysUntil(date: string, recurring: boolean): number {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const target = new Date(date)
+  if (!recurring) {
+    const t = new Date(target.getFullYear(), target.getMonth(), target.getDate())
+    return Math.max(0, Math.round((t.getTime() - today.getTime()) / 86400000))
+  }
+  const next = new Date(now.getFullYear(), target.getMonth(), target.getDate())
+  if (next.getTime() < today.getTime()) next.setFullYear(next.getFullYear() + 1)
+  return Math.round((next.getTime() - today.getTime()) / 86400000)
+}
+
+function formatAnniversaryDate(date: string): string {
+  const d = new Date(date)
+  return d.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
 }
 
 const dailyQuotes = [
@@ -283,6 +310,7 @@ function CornerDecoration({ corner }: { corner: 'bl' | 'br' }) {
 export default function HomeClient({
   travelPosts,
   provincesVisitedCount,
+  anniversaries = [],
 }: HomeClientProps) {
   const [showAlbumUnlock, setShowAlbumUnlock] = useState(false)
   const [showDanmakuInput, setShowDanmakuInput] = useState(false)
@@ -782,6 +810,37 @@ export default function HomeClient({
             </div>
           </div>
         </section>
+
+        {/* 纪念日 */}
+        {anniversaries.length > 0 && (
+          <section className="px-3 md:px-5 pb-6">
+            <div className="max-w-6xl mx-auto">
+              <div className="bg-white/85 rounded-3xl p-6 shadow-lg border border-[#D8DDD8]/40">
+                <h3 className="text-lg font-semibold text-[#3D4852] mb-5 flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-[#E8B8C2] fill-[#E8B8C2]" />
+                  我们的纪念日
+                </h3>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {anniversaries.map((a) => {
+                    const days = daysUntil(a.date, a.recurring)
+                    return (
+                      <div key={a.id} className="rounded-2xl border border-[#F5DCE0]/70 bg-gradient-to-br from-[#FFF8F4] to-[#FAFBF7] p-4">
+                        <p className="text-xs text-[#A07850]">{a.recurring ? '周年纪念' : '纪念日'} · {formatAnniversaryDate(a.date)}</p>
+                        <p className="mt-1.5 font-semibold text-[#3D4852]">{a.title}</p>
+                        <p className="mt-1 text-2xl font-bold text-[#8B4A5A]">
+                          {days === 0 ? '就是今天 💕' : `还有 ${days} 天`}
+                        </p>
+                        {a.description && (
+                          <p className="mt-1 text-xs text-[#5A6670]">{a.description}</p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* 最近旅行 */}
         <section className="px-3 md:px-5 pb-16">

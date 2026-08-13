@@ -1,0 +1,237 @@
+/**
+ * Album：纪念相册（基于独立 Media 模型 + 对象/本地存储）
+ */
+import { prisma } from '../../db'
+import { getStorageService } from '../../infrastructure/storage'
+import {
+  validateAndSanitizeImage,
+  MAX_IMAGE_COUNT,
+} from '../../infrastructure/media-validation'
+
+export interface AlbumItem {
+  id: number
+  title: string
+  description: string | null
+  coverUrl: string | null
+  mediaCount: number
+  date: string | null
+  createdAt: string
+}
+
+export interface AlbumMediaItem {
+  id: number
+  url: string
+  mimeType: string
+  size: number
+  width: number | null
+  height: number | null
+  createdAt: string
+}
+
+export interface UploadFile {
+  name: string
+  buffer: Buffer
+  mimeType: string
+}
+
+const EXT_BY_MIME: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
+
+/** 根据存储配置计算媒体的公开访问 URL */
+export function mediaPublicUrl(storageKey: string): string {
+  if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) {
+    const base = (process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')
+    return `${base}/${storageKey}`
+  }
+  return `/uploads/${storageKey}`
+}
+
+function mapAlbum(a: any): AlbumItem {
+  return {
+    id: a.id,
+    title: a.title,
+    description: a.description,
+    coverUrl: a.coverMedia ? mediaPublicUrl(a.coverMedia.storageKey) : null,
+    mediaCount: a._count?.items ?? 0,
+    date: a.date ? (a.date instanceof Date ? a.date.toISOString() : String(a.date)) : null,
+    createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt),
+  }
+}
+
+export async function listAlbums(): Promise<AlbumItem[]> {
+  const rows = await prisma.album.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      coverMedia: true,
+      _count: { select: { items: true } },
+    },
+  })
+  return rows.map(mapAlbum)
+}
+
+export async function getAlbum(albumId: number): Promise<AlbumItem & { media: AlbumMediaItem[] } | null> {
+  const album = await prisma.album.findUnique({
+    where: { id: albumId },
+    include: {
+      coverMedia: true,
+      _count: { select: { items: true } },
+      items: {
+        orderBy: { sortOrder: 'asc' },
+        include: { media: true },
+      },
+    },
+  })
+  if (!album) return null
+  return {
+    ...mapAlbum(album),
+    media: album.items
+      .map((it: any) => it.media)
+      .filter(Boolean)
+      .map((m: any) => ({
+        id: m.id,
+        url: mediaPublicUrl(m.storageKey),
+        mimeType: m.mimeType,
+        size: m.size,
+        width: m.width,
+        height: m.height,
+        createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt),
+      })),
+  }
+}
+
+export interface CreateAlbumInput {
+  title: string
+  description?: string
+  date?: string
+}
+
+export async function createAlbum(input: CreateAlbumInput): Promise<{ id: number }> {
+  const row = await prisma.album.create({
+    data: {
+      title: input.title,
+      description: input.description || null,
+      date: input.date ? new Date(input.date) : null,
+    },
+  })
+  return { id: row.id }
+}
+
+export async function updateAlbum(id: number, input: Partial<CreateAlbumInput>): Promise<void> {
+  const data: any = {}
+  if (input.title !== undefined) data.title = input.title
+  if (input.description !== undefined) data.description = input.description || null
+  if (input.date !== undefined) data.date = input.date ? new Date(input.date) : null
+  await prisma.album.update({ where: { id }, data })
+}
+
+export async function deleteAlbum(id: number): Promise<void> {
+  // 先收集媒体，删除相册后一并清理 Media 记录与存储文件（避免孤儿数据）
+  const links = await prisma.albumMedia.findMany({
+    where: { albumId: id },
+    select: { mediaId: true, media: { select: { storageKey: true } } },
+  })
+  const mediaIds = links.map((l) => l.mediaId)
+  const storageKeys = links.map((l) => l.media?.storageKey).filter(Boolean) as string[]
+
+  await prisma.media.deleteMany({ where: { id: { in: mediaIds } } }).catch(() => {})
+  await prisma.album.delete({ where: { id } })
+
+  const storage = getStorageService()
+  for (const key of storageKeys) {
+    storage.delete(key).catch(() => {})
+  }
+}
+
+/** 上传图片到相册：校验 + 重新编码 → 存储 → Media + AlbumMedia 记录 */
+export async function addMediaToAlbum(albumId: number, files: UploadFile[]): Promise<AlbumMediaItem[]> {
+  if (!files || files.length === 0) throw new Error('未上传任何文件')
+  if (files.length > MAX_IMAGE_COUNT) throw new Error(`单次最多上传 ${MAX_IMAGE_COUNT} 张图片`)
+
+  const album = await prisma.album.findUnique({ where: { id: albumId } })
+  if (!album) throw new Error('相册不存在')
+
+  const storage = getStorageService()
+  const created: AlbumMediaItem[] = []
+
+  for (const file of files) {
+    const safe = await validateAndSanitizeImage(file.buffer, file.mimeType)
+    const ext = EXT_BY_MIME[safe.mimeType] || 'jpg'
+    const key = `albums/${albumId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    const stored = await storage.upload(safe.buffer, key, safe.mimeType)
+
+    const media = await prisma.media.create({
+      data: {
+        type: 'IMAGE',
+        storageKey: key,
+        mimeType: safe.mimeType,
+        size: stored.size,
+        width: safe.width,
+        height: safe.height,
+        visibility: 'COUPLE',
+      },
+    })
+    const maxOrder = await prisma.albumMedia.aggregate({
+      where: { albumId },
+      _max: { sortOrder: true },
+    })
+    await prisma.albumMedia.create({
+      data: {
+        albumId,
+        mediaId: media.id,
+        sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
+      },
+    })
+
+    // 未设置封面时使用第一张
+    if (!album.coverMediaId) {
+      await prisma.album.update({ where: { id: albumId }, data: { coverMediaId: media.id } })
+    }
+
+    created.push({
+      id: media.id,
+      url: mediaPublicUrl(key),
+      mimeType: safe.mimeType,
+      size: stored.size,
+      width: safe.width,
+      height: safe.height,
+      createdAt: media.createdAt instanceof Date ? media.createdAt.toISOString() : String(media.createdAt),
+    })
+  }
+
+  return created
+}
+
+/** 从相册移除媒体（删除关联、Media 记录与存储文件） */
+export async function removeMediaFromAlbum(albumId: number, mediaId: number): Promise<void> {
+  const link = await prisma.albumMedia.findUnique({
+    where: { albumId_mediaId: { albumId, mediaId } },
+  })
+  if (!link) throw new Error('媒体不在该相册中')
+
+  await prisma.albumMedia.delete({ where: { id: link.id } })
+
+  // 若被删除的是封面，重新挑选
+  const album = await prisma.album.findUnique({ where: { id: albumId } })
+  if (album?.coverMediaId === mediaId) {
+    const first = await prisma.albumMedia.findFirst({
+      where: { albumId },
+      orderBy: { sortOrder: 'asc' },
+      select: { mediaId: true },
+    })
+    await prisma.album.update({
+      where: { id: albumId },
+      data: { coverMediaId: first?.mediaId ?? null },
+    })
+  }
+
+  const media = await prisma.media.findUnique({ where: { id: mediaId } })
+  if (media) {
+    await prisma.media.delete({ where: { id: mediaId } }).catch(() => {})
+    if (media.storageKey) {
+      getStorageService().delete(media.storageKey).catch(() => {})
+    }
+  }
+}

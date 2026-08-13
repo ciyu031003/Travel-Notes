@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Plus, Edit2, Trash2, LogOut, MapPin, Users, ShieldCheck,
+  Plus, Edit2, Trash2, LogOut, MapPin, Users, ShieldCheck, CalendarDays, Images,
   Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home, Sparkles
 } from 'lucide-react'
 interface Post {
@@ -128,6 +128,27 @@ export default function AdminDashboard() {
               >
                 <Sparkles className="w-4 h-4" />
                 碎碎念管理
+              </Link>
+              <Link
+                href="/admin/travels"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20"
+              >
+                <MapPin className="w-4 h-4" />
+                旅行规划
+              </Link>
+              <Link
+                href="/admin/albums"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20"
+              >
+                <Images className="w-4 h-4" />
+                相册管理
+              </Link>
+              <Link
+                href="/admin/anniversaries"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+              >
+                <CalendarDays className="w-4 h-4" />
+                纪念日管理
               </Link>
               <Link
                 href="/admin/audit"

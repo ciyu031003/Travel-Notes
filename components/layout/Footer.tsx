@@ -29,7 +29,9 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-[#4A5560]">
               <li><Link href="/" className="hover:text-[#8B4A5A] transition-colors">首页</Link></li>
               <li><Link href="/travel" className="hover:text-[#8B4A5A] transition-colors">旅行记录</Link></li>
-              <li><Link href="/album" className="hover:text-[#8B4A5A] transition-colors">相册</Link></li>
+              <li><Link href="/timeline" className="hover:text-[#8B4A5A] transition-colors">时间线</Link></li>
+              <li><Link href="/albums" className="hover:text-[#8B4A5A] transition-colors">纪念相册</Link></li>
+              <li><Link href="/album" className="hover:text-[#8B4A5A] transition-colors">私密照片墙</Link></li>
               <li><Link href="/moments" className="hover:text-[#8B4A5A] transition-colors">碎碎念</Link></li>
               <li><Link href="/dashboard" className="hover:text-[#8B4A5A] transition-colors">数据看板</Link></li>
             </ul>
