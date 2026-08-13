@@ -1,7 +1,9 @@
 'use client'
 
+import Link from 'next/link'
+
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Users, Loader2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Users, Loader2, AlertCircle } from 'lucide-react'
 
 interface Space {
   id: number
@@ -122,6 +124,13 @@ export default function AdminSpacesPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          返回后台
+        </Link>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">空间管理</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">

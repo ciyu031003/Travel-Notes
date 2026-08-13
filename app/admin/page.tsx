@@ -99,79 +99,79 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-4 h-16">
+            <div className="flex items-center gap-3 shrink-0">
               <div className="w-9 h-9 bg-gradient-to-r from-primary-500 to-purple-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">AD</span>
               </div>
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white">后台管理</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <nav className="flex items-center gap-3 md:gap-4 overflow-x-auto py-1.5 whitespace-nowrap [scrollbar-width:thin]">
               <Link
                 href="/"
                 target="_blank"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <Home className="w-4 h-4" />
                 回到首页
               </Link>
               <Link
                 href="/admin/spaces"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
               >
                 <Users className="w-4 h-4" />
                 空间管理
               </Link>
               <Link
                 href="/admin/moments"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
               >
                 <Sparkles className="w-4 h-4" />
                 碎碎念管理
               </Link>
               <Link
                 href="/admin/travels"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20"
               >
                 <MapPin className="w-4 h-4" />
                 旅行规划
               </Link>
               <Link
                 href="/admin/albums"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20"
               >
                 <Images className="w-4 h-4" />
                 相册管理
               </Link>
               <Link
                 href="/admin/anniversaries"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
               >
                 <CalendarDays className="w-4 h-4" />
                 纪念日管理
               </Link>
               <Link
                 href="/admin/audit"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
               >
                 <ShieldCheck className="w-4 h-4" />
                 审计日志
               </Link>
               <Link
                 href="/admin/settings"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <Settings className="w-4 h-4" />
                 账号设置
               </Link>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
               >
                 <LogOut className="w-4 h-4" />
                 退出登录
               </button>
-            </div>
+            </nav>
           </div>
         </div>
       </header>

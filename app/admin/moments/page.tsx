@@ -109,23 +109,23 @@ export default function AdminMomentsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-4 h-16">
+            <div className="flex items-center gap-3 shrink-0">
               <div className="w-9 h-9 bg-gradient-to-r from-rose-400 to-pink-500 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white">碎碎念管理</h1>
             </div>
-            <div className="flex items-center gap-2">
-              <Link href="/admin" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <nav className="flex items-center gap-3 md:gap-4 overflow-x-auto py-1.5 whitespace-nowrap [scrollbar-width:thin]">
+              <Link href="/admin" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                 <Home className="w-4 h-4" />
                 文章管理
               </Link>
-              <Link href="/admin/spaces" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20">
+              <Link href="/admin/spaces" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20">
                 <Users className="w-4 h-4" />
                 空间管理
               </Link>
-              <Link href="/admin/settings" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              <Link href="/admin/settings" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                 <Settings className="w-4 h-4" />
                 账号设置
               </Link>
@@ -134,12 +134,12 @@ export default function AdminMomentsPage() {
                   await fetch('/api/admin/logout', { method: 'POST' })
                   router.push('/admin/login')
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
               >
                 <LogOut className="w-4 h-4" />
                 退出登录
               </button>
-            </div>
+            </nav>
           </div>
         </div>
       </header>
