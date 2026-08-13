@@ -1,5 +1,7 @@
+import { createHash, randomUUID } from 'crypto'
 import { UserRepository } from '../repositories/user-repository'
 import { TokenService } from '../services/token-service'
+import { PrismaSessionRepository } from '../repositories/session-repository'
 import { hashPassword, verifyPassword } from '../auth-utils'
 import {
   generateVerificationCode,
@@ -14,6 +16,7 @@ export interface LoginResult {
   token?: string
   username?: string
   requirePasswordChange?: boolean
+  ttlSeconds?: number
   error?: string
 }
 
@@ -21,15 +24,35 @@ export interface TokenPayload {
   username: string
   role?: string
   userId?: number
+  sid?: string
+}
+
+export interface LoginMeta {
+  userAgent?: string | null
+  ip?: string | null
+}
+
+export const DEFAULT_SESSION_SECONDS = 5 * 60 * 60 // 5 小时
+export const REMEMBER_SESSION_SECONDS = 7 * 24 * 60 * 60 // 7 天
+
+export function hashIp(ip: string | null | undefined): string | null {
+  if (!ip) return null
+  return createHash('sha256').update(String(ip)).digest('hex')
 }
 
 export class AuthService {
   constructor(
     private readonly userRepo: UserRepository,
     private readonly tokenService: TokenService,
+    private readonly sessionRepo: PrismaSessionRepository,
   ) {}
 
-  async login(username: string, password: string, rememberMe: boolean = false): Promise<LoginResult> {
+  async login(
+    username: string,
+    password: string,
+    rememberMe: boolean = false,
+    meta: LoginMeta = {},
+  ): Promise<LoginResult> {
     await this.userRepo.initializeFromEnv()
 
     const settings = await this.userRepo.getSettings()
@@ -47,13 +70,29 @@ export class AuthService {
       return { success: false, error: '用户名或密码错误' }
     }
 
-    const token = await this.tokenService.sign({ username, role: 'admin' })
+    const ttlSeconds = rememberMe ? REMEMBER_SESSION_SECONDS : DEFAULT_SESSION_SECONDS
+    const sid = randomUUID()
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
+
+    await this.sessionRepo.create({
+      id: sid,
+      username: settings.username,
+      expiresAt,
+      userAgent: meta.userAgent ?? null,
+      ipHash: hashIp(meta.ip),
+    })
+
+    const token = await this.tokenService.sign(
+      { username: settings.username, role: 'admin', sid },
+      ttlSeconds,
+    )
 
     return {
       success: true,
       token,
       username: settings.username,
       requirePasswordChange: settings.requirePasswordChange,
+      ttlSeconds,
     }
   }
 
@@ -66,10 +105,18 @@ export class AuthService {
   }
 
   async logout(token: string): Promise<void> {
+    const payload = await this.tokenService.verifyWithoutBlacklist(token)
+    if (payload?.sid) {
+      await this.sessionRepo.revoke(payload.sid)
+    }
     await this.tokenService.blacklistToken(token)
   }
 
-  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+  async changePassword(
+    currentPassword: string,
+    newPassword: string,
+    currentSid?: string | null,
+  ): Promise<{ success: boolean; error?: string }> {
     const settings = await this.userRepo.getSettings()
 
     const valid = await verifyPassword(currentPassword, settings.passwordHash)
@@ -80,11 +127,19 @@ export class AuthService {
     const newHash = await hashPassword(newPassword)
     await this.userRepo.updateCredentials(settings.username, newHash, settings.email, true)
 
+    // 密码变更后撤销其它会话，仅保留当前会话
+    await this.sessionRepo.revokeAllForUser(settings.username, currentSid ?? undefined)
+
     return { success: true }
   }
 
-  async adminChangePassword(newPassword: string): Promise<boolean> {
-    return this.userRepo.forceChangePassword(newPassword)
+  async adminChangePassword(newPassword: string, currentSid?: string | null): Promise<boolean> {
+    const ok = await this.userRepo.forceChangePassword(newPassword)
+    if (ok) {
+      const settings = await this.userRepo.getSettings()
+      await this.sessionRepo.revokeAllForUser(settings.username, currentSid ?? undefined)
+    }
+    return ok
   }
 
   async adminGetConfig(): Promise<{ requirePasswordChange: boolean }> {
@@ -161,6 +216,10 @@ export class AuthService {
 
     consumeResetCode(email)
 
+    // 密码重置后撤销该账号全部会话，强制重新登录
+    await this.sessionRepo.revokeAllForUser(settings.username)
+
     return { success: true }
   }
+
 }

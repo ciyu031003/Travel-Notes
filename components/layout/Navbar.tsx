@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, MapPin, BookOpen, Menu, X, Moon, Sun, Settings, LogOut, Heart, Search } from 'lucide-react'
+import { Home, MapPin, Image as ImageIcon, Menu, X, Moon, Sun, Settings, LogOut, Heart, Search } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -73,7 +73,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
   const navItems = [
     { href: '/', label: '首页', icon: Home },
     { href: '/travel', label: '旅行记录', icon: MapPin },
-    { href: '/notes', label: '学习笔记', icon: BookOpen },
+    { href: '/album', label: '相册', icon: ImageIcon },
   ]
 
   const isActive = (href: string) => {

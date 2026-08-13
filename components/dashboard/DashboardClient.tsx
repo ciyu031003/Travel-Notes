@@ -5,8 +5,6 @@ import Link from 'next/link'
 import {
   MapPin,
   Image as ImageIcon,
-  BookOpen,
-  BrainCircuit,
   Sparkles,
   Heart,
   BarChart3,
@@ -20,8 +18,6 @@ export interface DashboardData {
   provinceStats: Array<{ name: string; count: number }>
   provincesVisitedCount: number
   travelCount: number
-  blogCount: number
-  mindmapCount: number
   totalPhotos: number
   momentCount: number
   totalLikes: number
@@ -61,7 +57,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
     [data.provinceStats]
   )
 
-  const totalContent = data.travelCount + data.blogCount + data.mindmapCount
+  const totalContent = data.travelCount
 
   return (
     <div className="container-custom py-10">
@@ -91,20 +87,6 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           value={data.totalPhotos}
           accent="bg-gradient-to-br from-blue-400 to-indigo-500"
           href="/album"
-        />
-        <StatCard
-          icon={BookOpen}
-          label="技术文章"
-          value={data.blogCount}
-          accent="bg-gradient-to-br from-emerald-400 to-teal-500"
-          href="/notes/blog"
-        />
-        <StatCard
-          icon={BrainCircuit}
-          label="思维导图"
-          value={data.mindmapCount}
-          accent="bg-gradient-to-br from-purple-400 to-violet-500"
-          href="/notes/mindmap"
         />
         <StatCard
           icon={TrendingUp}
@@ -181,8 +163,8 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
             <div className="space-y-2">
               {[
                 { label: '旅行记录', value: data.travelCount, color: 'bg-rose-400' },
-                { label: '技术博客', value: data.blogCount, color: 'bg-blue-400' },
-                { label: '思维导图', value: data.mindmapCount, color: 'bg-purple-400' },
+                { label: '旅行照片', value: data.totalPhotos, color: 'bg-blue-400' },
+                { label: '碎碎念', value: data.momentCount, color: 'bg-purple-400' },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
                   <span className={`w-2.5 h-2.5 rounded-full ${item.color} flex-shrink-0`} />

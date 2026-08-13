@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getImageService } from '@/lib/container'
+import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { getClientIp } from '@/lib/request-utils'
+import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request)
@@ -9,6 +12,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // 上传限流：IP 每 15 分钟最多 120 次上传请求
+    const ip = getClientIp(request)
+    const limit = rateLimit({ prefix: 'upload:ip', key: ip || 'unknown', limit: 120, windowMs: 15 * 60 * 1000 })
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: '上传过于频繁，请稍后再试', retryAfterSeconds: limit.retryAfterSeconds },
+        { status: 429 }
+      )
+    }
+
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
     const postIdStr = formData.get('postId') as string | null
@@ -36,6 +49,14 @@ export async function POST(request: NextRequest) {
 
     const imageService = getImageService()
     const result = await imageService.upload(postId, imageFiles)
+    writeAuditLog({
+      username: auth.username || 'unknown',
+      action: 'UPLOAD_MEDIA',
+      resourceType: 'PostImage',
+      resourceId: String(postId),
+      ip,
+      metadata: { count: imageFiles.length },
+    }).catch(() => {})
     return NextResponse.json(result)
   } catch (error: any) {
     console.error('[Upload] Error:', error?.message)

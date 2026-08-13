@@ -7,6 +7,9 @@ import remarkRehype from 'remark-rehype'
 import rehypeSlug from 'rehype-slug'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeStringify from 'rehype-stringify'
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
+import type { Schema } from 'hast-util-sanitize'
+import rehypeRaw from 'rehype-raw'
 import matter from 'gray-matter'
 
 export interface TocItem {
@@ -29,6 +32,56 @@ export interface MarkdownRenderer {
   extractFrontMatter(content: string): { data: Record<string, any>; content: string }
 }
 
+/**
+ * Markdown 输出安全边界（XSS 防护）：
+ * - 基于 rehype-sanitize 默认白名单，剥离 <script>、事件属性、javascript: 协议、
+ *   <object>/<embed>/<iframe> 等危险内容
+ * - 额外放行：语法高亮 className、TOC id、GFM 任务列表、KaTeX MathML
+ */
+const sanitizeSchema: Schema = {
+  ...defaultSchema,
+  tagNames: [
+    ...(defaultSchema.tagNames || []),
+    // KaTeX MathML 所需标签
+    'math', 'semantics', 'mrow', 'mfrac', 'mi', 'mo', 'mn', 'msup', 'msub',
+    'msubsup', 'msqrt', 'mroot', 'mtext', 'merror', 'mpadded', 'mphantom',
+    'mspace', 'mtable', 'mtr', 'mtd', 'mover', 'munder', 'munderover',
+    'menclose', 'mstyle', 'annotation',
+  ],
+  attributes: {
+    ...(defaultSchema.attributes || {}),
+    '*': [
+      ...((defaultSchema.attributes as any)?.['*'] || []),
+      'className',
+      'data-marker',
+    ],
+    // 语法高亮 / Mermaid 代码块的语言类名
+    code: [
+      ...((defaultSchema.attributes as any)?.code || []),
+      ['className', /^language-[a-zA-Z0-9_-]+$/],
+    ],
+    // GFM 任务列表
+    input: [
+      ['type', 'checkbox'],
+      'checked',
+      'disabled',
+    ],
+    // 链接：仅允许 http(s)/mailto（默认协议白名单已限制 javascript: 等）
+    a: [
+      ...((defaultSchema.attributes as any)?.a || []),
+      'target',
+      'rel',
+    ],
+    img: [
+      ...((defaultSchema.attributes as any)?.img || []),
+      'loading',
+      'referrerPolicy',
+    ],
+    math: ['xmlns', 'display'],
+    annotation: ['encoding'],
+  },
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -48,9 +101,11 @@ export class UnifiedMarkdownRenderer implements MarkdownRenderer {
       .use(remarkGfm)
       .use(remarkMath)
       .use(remarkRehype, { allowDangerousHtml: true })
+      .use(rehypeRaw)
       .use(rehypeKatex)
       .use(rehypeSlug)
       .use(rehypeHighlight)
+      .use(rehypeSanitize, sanitizeSchema)
       .use(rehypeStringify, { allowDangerousHtml: true })
       .process(body)
 

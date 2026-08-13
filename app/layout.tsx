@@ -4,8 +4,8 @@ import LayoutContent from '@/components/layout/LayoutContent'
 import CommandPalette from '@/components/command/CommandPalette'
 
 export const metadata: Metadata = {
-  title: '个人博客 | 旅行记录 & 学习笔记',
-  description: '记录旅行足迹，分享学习笔记、思维导图和项目代码',
+  title: '我们的小家 | 旅行记录 & 共同回忆',
+  description: '记录两个人的旅行足迹与共同回忆',
 }
 
 export default function RootLayout({

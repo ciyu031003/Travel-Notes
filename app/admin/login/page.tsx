@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -10,6 +10,16 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [needsSetup, setNeedsSetup] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/check')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.needsSetup) setNeedsSetup(true)
+      })
+      .catch(() => {})
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,6 +111,13 @@ export default function AdminLoginPage() {
           </form>
 
           <div className="mt-6 text-center">
+            {needsSetup && (
+              <div className="mb-4">
+                <Link href="/admin/setup" className="inline-block text-primary-300 hover:text-primary-200 text-sm transition-colors underline underline-offset-4">
+                  首次使用？初始化管理员账号
+                </Link>
+              </div>
+            )}
             <Link href="/" className="text-gray-400 hover:text-white text-sm transition-colors">
               ← 返回首页
             </Link>
@@ -108,7 +125,6 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-gray-500 text-xs mt-6">
-          默认账号：yuanabd，首次登录需修改密码
         </p>
       </div>
     </div>

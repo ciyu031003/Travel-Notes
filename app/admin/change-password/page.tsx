@@ -45,11 +45,6 @@ export default function ForceChangePasswordPage() {
       setError('两次输入的密码不一致')
       return
     }
-    if (newPassword === 'Abd123456.') {
-      setError('新密码不能与初始密码相同')
-      return
-    }
-
     setLoading(true)
     try {
       const res = await fetch('/api/admin/force-change-password', {

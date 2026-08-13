@@ -131,12 +131,6 @@ export default function TravelClient({ posts }: TravelClientProps) {
               <ImageIcon className="w-4 h-4" />
               相册
             </button>
-            <Link
-              href="/notes"
-              className="px-4 py-2 text-sm bg-[#5A6670] text-[#FAFBF7] rounded-lg hover:bg-[#5A6670]/90 transition-colors"
-            >
-              学习笔记
-            </Link>
           </div>
         </nav>
       </header>

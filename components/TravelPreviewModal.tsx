@@ -282,7 +282,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                   )}
                   <span className="flex items-center gap-1">
                     <Tag className="w-4 h-4" />
-                    {formData.type === 'travel' ? '旅行记录' : formData.type === 'blog' ? '技术博客' : formData.type === 'mindmap' ? '思维导图' : '代码仓库'}
+                    '旅行记录'
                   </span>
                 </div>
                 {tagsArray.length > 0 && (

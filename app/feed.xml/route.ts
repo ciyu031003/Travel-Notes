@@ -15,14 +15,14 @@ export async function GET() {
   try {
     const siteTitle = process.env.NEXT_PUBLIC_SITE_TITLE || 'Travel-Notes'
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    const siteDescription = `${siteTitle} 博客文章订阅`
+    const siteDescription = `${siteTitle} 旅行记录订阅`
 
     const postService = getPostService()
-    const posts = (await postService.getPostsHybrid('tech/blog')).slice(0, 20)
+    const posts = (await postService.getPostsHybrid('travel')).slice(0, 20)
 
     const items = posts
       .map((post) => {
-        const link = `${siteUrl}/notes/blog/${post.slug}`
+        const link = `${siteUrl}/travel/${post.slug}`
         return `
       <item>
         <title>${escapeXml(post.title)}</title>

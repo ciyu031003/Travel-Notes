@@ -6,7 +6,6 @@ import {
   Search,
   Home,
   MapPin,
-  BookOpen,
   Image as ImageIcon,
   Sparkles,
   BarChart3,
@@ -16,10 +15,8 @@ import {
   ArrowUp,
   ArrowDown,
   FileText,
-  BrainCircuit,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { searchStaticIndex } from '@/lib/search-index'
 
 interface SearchResult {
   id: number
@@ -28,7 +25,6 @@ interface SearchResult {
   date: string
   description?: string
   tags?: string[]
-  module: 'blog' | 'mindmap'
 }
 
 interface QuickLink {
@@ -41,7 +37,6 @@ interface QuickLink {
 const QUICK_LINKS: QuickLink[] = [
   { href: '/', label: '首页', icon: Home },
   { href: '/travel', label: '旅行记录', icon: MapPin },
-  { href: '/notes', label: '学习笔记', icon: BookOpen },
   { href: '/album', label: '相册', icon: ImageIcon },
   { href: '/moments', label: '碎碎念', icon: Sparkles },
   { href: '/dashboard', label: '数据看板', icon: BarChart3 },
@@ -75,13 +70,6 @@ export default function CommandPalette() {
     }
     setLoading(true)
     try {
-      // 优先本地静态索引，未生成时回退服务端搜索
-      const staticResults = await searchStaticIndex(trimmed, { limit: 8 })
-      if (staticResults !== null) {
-        setResults(staticResults as unknown as SearchResult[])
-        setLoading(false)
-        return
-      }
       const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
       if (res.ok) {
         const json = await res.json()
@@ -155,7 +143,7 @@ export default function CommandPalette() {
       e.preventDefault()
       if (query.trim() && results.length > 0 && activeIndex < results.length) {
         const item = results[activeIndex]
-        router.push(item.module === 'mindmap' ? `/notes/mindmap/${item.slug}` : `/notes/blog/${item.slug}`)
+        router.push(`/travel/${item.slug}`)
         close()
       } else if (!query.trim() && QUICK_LINKS[activeIndex]) {
         router.push(QUICK_LINKS[activeIndex].href)
@@ -192,7 +180,7 @@ export default function CommandPalette() {
               setActiveIndex(0)
             }}
             onKeyDown={handleKeyDown}
-            placeholder="搜索文章、思维导图，或输入命令..."
+            placeholder="搜索旅行记录，或输入命令..."
             className="flex-1 bg-transparent text-gray-900 dark:text-white text-base outline-none placeholder-gray-400"
           />
           {loading ? (
@@ -250,13 +238,12 @@ export default function CommandPalette() {
                 </p>
               ) : (
                 results.map((item, idx) => {
-                  const isMindmap = item.module === 'mindmap'
                   return (
                     <button
-                      key={`${item.module}-${item.slug}-${item.id}`}
+                      key={`${item.slug}-${item.id}`}
                       type="button"
                       onClick={() => {
-                        router.push(isMindmap ? `/notes/mindmap/${item.slug}` : `/notes/blog/${item.slug}`)
+                        router.push(`/travel/${item.slug}`)
                         close()
                       }}
                       onMouseEnter={() => setActiveIndex(idx)}
@@ -266,13 +253,13 @@ export default function CommandPalette() {
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
-                      <span className={`mt-0.5 p-1.5 rounded-md flex-shrink-0 ${isMindmap ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-500' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-500'}`}>
-                        {isMindmap ? <BrainCircuit className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
+                      <span className="mt-0.5 p-1.5 rounded-md flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-500">
+                        <FileText className="w-3.5 h-3.5" />
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="block text-sm text-gray-800 dark:text-gray-100 truncate">{item.title}</span>
                         <span className="block text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
-                          {isMindmap ? '思维导图' : '博客'} · {formatDate(item.date)}
+                          旅行记录 · {formatDate(item.date)}
                         </span>
                       </span>
                       {idx === activeIndex && <CornerDownLeft className="w-3.5 h-3.5 mt-1 opacity-50" />}

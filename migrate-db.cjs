@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 async function migrate() {
-  const dbUrl = process.env.DATABASE_URL || 'mysql://root:Abd123456.@localhost:3306/Travel_And_Study';
+  const dbUrl = process.env.DATABASE_URL || 'mysql://root:CHANGE_ME@localhost:3306/Travel_And_Study';
   const url = new URL(dbUrl.replace('mysql://', 'http://'));
   const dbName = decodeURIComponent(url.pathname.slice(1));
   
@@ -272,6 +272,246 @@ async function migrate() {
       `);
       console.log('PhotoMessage table created.');
     }
+    // ============ 新数据模型（Phase 0/1：Session + Space/Travel/Memory/Media/AuditLog）============
+    // 说明：本脚本为部署兜底；权威迁移请使用 `npx prisma db push`。
+    // 这里只建表 + 索引，不加外键约束（避免建表顺序依赖）。
+
+    const tableDefinitions = [
+      {
+        name: 'Session',
+        sql: `CREATE TABLE IF NOT EXISTS Session (
+          id VARCHAR(64) NOT NULL,
+          username VARCHAR(255) NOT NULL,
+          expiresAt DATETIME(3) NOT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          lastUsedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          userAgent VARCHAR(500) NULL,
+          ipHash VARCHAR(128) NULL,
+          revokedAt DATETIME(3) NULL,
+          PRIMARY KEY (id),
+          INDEX Session_username_expiresAt_idx (username, expiresAt),
+          INDEX Session_expiresAt_idx (expiresAt)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'Space',
+        sql: `CREATE TABLE IF NOT EXISTS Space (
+          id INT NOT NULL AUTO_INCREMENT,
+          name VARCHAR(200) NOT NULL,
+          slug VARCHAR(200) NOT NULL,
+          description TEXT NULL,
+          coverMediaId INT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          UNIQUE KEY Space_slug_key (slug),
+          UNIQUE KEY Space_coverMediaId_key (coverMediaId),
+          INDEX Space_slug_idx (slug)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'SpaceMember',
+        sql: `CREATE TABLE IF NOT EXISTS SpaceMember (
+          id INT NOT NULL AUTO_INCREMENT,
+          spaceId INT NOT NULL,
+          username VARCHAR(255) NOT NULL,
+          role ENUM('OWNER','MEMBER','VIEWER') NOT NULL DEFAULT 'MEMBER',
+          status ENUM('ACTIVE','INVITED','REMOVED') NOT NULL DEFAULT 'ACTIVE',
+          joinedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          UNIQUE KEY SpaceMember_spaceId_username_key (spaceId, username),
+          INDEX SpaceMember_spaceId_role_idx (spaceId, role)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'SpaceInvite',
+        sql: `CREATE TABLE IF NOT EXISTS SpaceInvite (
+          id INT NOT NULL AUTO_INCREMENT,
+          spaceId INT NOT NULL,
+          tokenHash VARCHAR(128) NOT NULL,
+          role ENUM('OWNER','MEMBER','VIEWER') NOT NULL DEFAULT 'MEMBER',
+          expiresAt DATETIME(3) NOT NULL,
+          createdBy VARCHAR(255) NOT NULL,
+          usedAt DATETIME(3) NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          UNIQUE KEY SpaceInvite_tokenHash_key (tokenHash),
+          INDEX SpaceInvite_spaceId_idx (spaceId)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'Media',
+        sql: `CREATE TABLE IF NOT EXISTS Media (
+          id INT NOT NULL AUTO_INCREMENT,
+          spaceId INT NULL,
+          memoryId INT NULL,
+          type ENUM('IMAGE','VIDEO','AUDIO') NOT NULL,
+          storageKey VARCHAR(500) NOT NULL,
+          mimeType VARCHAR(100) NOT NULL,
+          size INT NOT NULL DEFAULT 0,
+          width INT NULL,
+          height INT NULL,
+          duration INT NULL,
+          hash VARCHAR(128) NULL,
+          takenAt DATETIME(3) NULL,
+          latitude DOUBLE NULL,
+          longitude DOUBLE NULL,
+          visibility ENUM('PRIVATE','COUPLE','PUBLIC') NOT NULL DEFAULT 'COUPLE',
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          INDEX Media_spaceId_type_idx (spaceId, type),
+          INDEX Media_memoryId_idx (memoryId)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'MediaVariant',
+        sql: `CREATE TABLE IF NOT EXISTS MediaVariant (
+          id INT NOT NULL AUTO_INCREMENT,
+          mediaId INT NOT NULL,
+          variant ENUM('ORIGINAL','THUMBNAIL','PREVIEW','BLUR') NOT NULL,
+          storageKey VARCHAR(500) NOT NULL,
+          width INT NULL,
+          height INT NULL,
+          size INT NOT NULL DEFAULT 0,
+          mimeType VARCHAR(100) NOT NULL,
+          PRIMARY KEY (id),
+          UNIQUE KEY MediaVariant_mediaId_variant_key (mediaId, variant)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'Travel',
+        sql: `CREATE TABLE IF NOT EXISTS Travel (
+          id INT NOT NULL AUTO_INCREMENT,
+          spaceId INT NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          slug VARCHAR(255) NOT NULL,
+          description TEXT NULL,
+          startDate DATETIME(3) NULL,
+          endDate DATETIME(3) NULL,
+          coverMediaId INT NULL,
+          status ENUM('PLANNED','ONGOING','COMPLETED') NOT NULL DEFAULT 'PLANNED',
+          visibility ENUM('PRIVATE','COUPLE','PUBLIC') NOT NULL DEFAULT 'COUPLE',
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          UNIQUE KEY Travel_spaceId_slug_key (spaceId, slug),
+          INDEX Travel_spaceId_startDate_idx (spaceId, startDate)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'TravelDay',
+        sql: `CREATE TABLE IF NOT EXISTS TravelDay (
+          id INT NOT NULL AUTO_INCREMENT,
+          travelId INT NOT NULL,
+          date DATETIME(3) NULL,
+          title VARCHAR(255) NULL,
+          summary TEXT NULL,
+          sortOrder INT NOT NULL DEFAULT 0,
+          PRIMARY KEY (id),
+          INDEX TravelDay_travelId_sortOrder_idx (travelId, sortOrder)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'Location',
+        sql: `CREATE TABLE IF NOT EXISTS Location (
+          id INT NOT NULL AUTO_INCREMENT,
+          name VARCHAR(255) NOT NULL,
+          address VARCHAR(500) NULL,
+          country VARCHAR(100) NULL,
+          city VARCHAR(100) NULL,
+          latitude DOUBLE NULL,
+          longitude DOUBLE NULL,
+          externalId VARCHAR(255) NULL,
+          metadata TEXT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          INDEX Location_city_idx (city),
+          INDEX Location_name_idx (name)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'Memory',
+        sql: `CREATE TABLE IF NOT EXISTS Memory (
+          id INT NOT NULL AUTO_INCREMENT,
+          spaceId INT NOT NULL,
+          travelId INT NULL,
+          travelDayId INT NULL,
+          title VARCHAR(255) NOT NULL,
+          content TEXT NULL,
+          happenedAt DATETIME(3) NULL,
+          locationId INT NULL,
+          mood VARCHAR(50) NULL,
+          visibility ENUM('PRIVATE','COUPLE','PUBLIC') NOT NULL DEFAULT 'COUPLE',
+          createdBy VARCHAR(255) NOT NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          INDEX Memory_spaceId_happenedAt_idx (spaceId, happenedAt),
+          INDEX Memory_spaceId_travelId_idx (spaceId, travelId)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'Album',
+        sql: `CREATE TABLE IF NOT EXISTS Album (
+          id INT NOT NULL AUTO_INCREMENT,
+          spaceId INT NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          description TEXT NULL,
+          coverMediaId INT NULL,
+          date DATETIME(3) NULL,
+          locationId INT NULL,
+          visibility ENUM('PRIVATE','COUPLE','PUBLIC') NOT NULL DEFAULT 'COUPLE',
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          INDEX Album_spaceId_createdAt_idx (spaceId, createdAt)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'AlbumMedia',
+        sql: `CREATE TABLE IF NOT EXISTS AlbumMedia (
+          id INT NOT NULL AUTO_INCREMENT,
+          albumId INT NOT NULL,
+          mediaId INT NOT NULL,
+          sortOrder INT NOT NULL DEFAULT 0,
+          PRIMARY KEY (id),
+          UNIQUE KEY AlbumMedia_albumId_mediaId_key (albumId, mediaId)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+      {
+        name: 'AuditLog',
+        sql: `CREATE TABLE IF NOT EXISTS AuditLog (
+          id INT NOT NULL AUTO_INCREMENT,
+          spaceId INT NULL,
+          username VARCHAR(255) NOT NULL,
+          action ENUM('LOGIN','LOGOUT','CREATE','UPDATE','DELETE','UPLOAD_MEDIA','DELETE_MEDIA','INVITE_MEMBER','UPDATE_PERMISSIONS','CHANGE_PASSWORD','SETTINGS_UPDATE') NOT NULL,
+          resourceType VARCHAR(100) NULL,
+          resourceId VARCHAR(255) NULL,
+          metadata TEXT NULL,
+          ipHash VARCHAR(128) NULL,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (id),
+          INDEX AuditLog_spaceId_createdAt_idx (spaceId, createdAt),
+          INDEX AuditLog_username_createdAt_idx (username, createdAt),
+          INDEX AuditLog_action_idx (action)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+      },
+    ];
+
+    for (const def of tableDefinitions) {
+      const [existing] = await connection.query(
+        'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',
+        [dbName, def.name]
+      );
+      if (existing.length === 0) {
+        await connection.query(def.sql);
+        console.log('Created ' + def.name + ' table.');
+      } else {
+        console.log('Table ' + def.name + ' exists, skip.');
+      }
+    }
+
     console.log('\n✓ Database migration completed successfully!');
     console.log('  Now try creating a post again.');
   } catch (error) {

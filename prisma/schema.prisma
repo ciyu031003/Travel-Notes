@@ -124,3 +124,308 @@ model PhotoMessage {
 
   @@index([imageKey, createdAt])
 }
+// ============================================================
+// Phase 0 (P0): Database-backed Session
+// ============================================================
+model Session {
+  id         String    @id @db.VarChar(64)
+  username   String    @db.VarChar(255)
+  expiresAt  DateTime  @db.Timestamp(3)
+  createdAt  DateTime  @default(now()) @db.Timestamp(3)
+  lastUsedAt DateTime  @default(now()) @db.Timestamp(3)
+  userAgent  String?   @db.VarChar(500)
+  ipHash     String?   @db.VarChar(128)
+  revokedAt  DateTime? @db.Timestamp(3)
+
+  @@index([username, expiresAt])
+  @@index([expiresAt])
+}
+
+// ============================================================
+// Phase 1 (P1): Space / Memory data models
+// ============================================================
+enum SpaceRole {
+  OWNER
+  MEMBER
+  VIEWER
+}
+
+enum SpaceMemberStatus {
+  ACTIVE
+  INVITED
+  REMOVED
+}
+
+enum TravelStatus {
+  PLANNED
+  ONGOING
+  COMPLETED
+}
+
+enum Visibility {
+  PRIVATE
+  COUPLE
+  PUBLIC
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+enum MediaVariantType {
+  ORIGINAL
+  THUMBNAIL
+  PREVIEW
+  BLUR
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  UPLOAD_MEDIA
+  DELETE_MEDIA
+  INVITE_MEMBER
+  UPDATE_PERMISSIONS
+  CHANGE_PASSWORD
+  SETTINGS_UPDATE
+}
+
+/// 情侣共同生活的数字空间（核心业务模型）
+model Space {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(200)
+  slug         String    @unique @db.VarChar(200)
+  description  String?   @db.Text
+  coverMediaId Int? @unique
+  coverMedia   Media?    @relation("SpaceCover", fields: [coverMediaId], references: [id])
+  createdAt    DateTime  @default(now()) @db.Timestamp(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamp(3)
+
+  members   SpaceMember[]
+  invites   SpaceInvite[]
+  travels   Travel[]
+  memories  Memory[]
+  albums    Album[]
+  media     Media[]    @relation("MediaSpace")
+  auditLogs AuditLog[]
+
+  @@index([slug])
+}
+
+/// 空间成员（角色：OWNER/MEMBER/VIEWER）
+model SpaceMember {
+  id       Int               @id @default(autoincrement())
+  spaceId  Int
+  username String            @db.VarChar(255)
+  role     SpaceRole         @default(MEMBER)
+  status   SpaceMemberStatus @default(ACTIVE)
+  joinedAt DateTime          @default(now()) @db.Timestamp(3)
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@unique([spaceId, username])
+  @@index([spaceId, role])
+}
+
+/// 空间邀请（只保存 Token Hash，不保存明文 Token）
+model SpaceInvite {
+  id        Int      @id @default(autoincrement())
+  spaceId   Int
+  tokenHash String   @unique @db.VarChar(128)
+  role      SpaceRole @default(MEMBER)
+  expiresAt DateTime @db.Timestamp(3)
+  createdBy String   @db.VarChar(255)
+  usedAt    DateTime? @db.Timestamp(3)
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId])
+}
+
+/// 旅行
+model Travel {
+  id           Int          @id @default(autoincrement())
+  spaceId      Int
+  title        String       @db.VarChar(255)
+  slug         String       @db.VarChar(255)
+  description  String?      @db.Text
+  startDate    DateTime?    @db.Timestamp(3)
+  endDate      DateTime?    @db.Timestamp(3)
+  coverMediaId Int?
+  coverMedia   Media?       @relation("TravelCover", fields: [coverMediaId], references: [id])
+  status       TravelStatus @default(PLANNED)
+  visibility   Visibility   @default(COUPLE)
+  createdAt    DateTime     @default(now()) @db.Timestamp(3)
+  updatedAt    DateTime     @updatedAt @db.Timestamp(3)
+
+  space   Space       @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  days    TravelDay[]
+  memories Memory[]
+
+  @@unique([spaceId, slug])
+  @@index([spaceId, startDate])
+}
+
+/// 旅行中的一天
+model TravelDay {
+  id        Int      @id @default(autoincrement())
+  travelId  Int
+  date      DateTime? @db.Timestamp(3)
+  title     String?  @db.VarChar(255)
+  summary   String?  @db.Text
+  sortOrder Int      @default(0)
+
+  travel   Travel   @relation(fields: [travelId], references: [id], onDelete: Cascade)
+  memories Memory[]
+
+  @@index([travelId, sortOrder])
+}
+
+/// 地点（为地图/搜索/时间线/回忆提供统一基础）
+model Location {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  address    String?  @db.VarChar(500)
+  country    String?  @db.VarChar(100)
+  city       String?  @db.VarChar(100)
+  latitude   Float?
+  longitude  Float?
+  externalId String?  @db.VarChar(255)
+  metadata   String?  @db.Text
+  createdAt  DateTime @default(now()) @db.Timestamp(3)
+  updatedAt  DateTime @updatedAt @db.Timestamp(3)
+
+  memories Memory[]
+
+  @@index([city])
+  @@index([name])
+}
+
+/// 回忆（产品核心实体）
+model Memory {
+  id          Int        @id @default(autoincrement())
+  spaceId     Int
+  travelId    Int?
+  travelDayId Int?
+  title       String     @db.VarChar(255)
+  content     String?    @db.Text
+  happenedAt  DateTime?  @db.Timestamp(3)
+  locationId  Int?
+  mood        String?    @db.VarChar(50)
+  visibility  Visibility @default(COUPLE)
+  createdBy   String     @db.VarChar(255)
+  createdAt   DateTime   @default(now()) @db.Timestamp(3)
+  updatedAt   DateTime   @updatedAt @db.Timestamp(3)
+
+  space     Space      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  travel    Travel?    @relation(fields: [travelId], references: [id], onDelete: SetNull)
+  travelDay TravelDay? @relation(fields: [travelDayId], references: [id], onDelete: SetNull)
+  location  Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  media     Media[]
+
+  @@index([spaceId, happenedAt])
+  @@index([spaceId, travelId])
+}
+
+/// 独立媒体（从 Post 中彻底独立）
+model Media {
+  id          Int       @id @default(autoincrement())
+  spaceId     Int?
+  memoryId    Int?
+  type        MediaType
+  storageKey  String    @db.VarChar(500)
+  mimeType    String    @db.VarChar(100)
+  size        Int       @default(0)
+  width       Int?
+  height      Int?
+  duration    Int?
+  hash        String?   @db.VarChar(128)
+  takenAt     DateTime? @db.Timestamp(3)
+  latitude    Float?
+  longitude   Float?
+  visibility  Visibility @default(COUPLE)
+  createdAt   DateTime  @default(now()) @db.Timestamp(3)
+
+  spaceOwner  Space?        @relation("MediaSpace", fields: [spaceId], references: [id])
+  spaceCoverOf Space?        @relation("SpaceCover")
+  memory      Memory?       @relation(fields: [memoryId], references: [id], onDelete: SetNull)
+  travels     Travel[]      @relation("TravelCover")
+  variants    MediaVariant[]
+  albums      AlbumMedia[]
+
+  @@index([spaceId, type])
+  @@index([memoryId])
+}
+
+/// 媒体变体（Original/Thumbnail/Preview/Blur）
+model MediaVariant {
+  id         Int              @id @default(autoincrement())
+  mediaId    Int
+  variant    MediaVariantType
+  storageKey String           @db.VarChar(500)
+  width      Int?
+  height     Int?
+  size       Int              @default(0)
+  mimeType   String           @db.VarChar(100)
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, variant])
+}
+
+/// 相册
+model Album {
+  id           Int        @id @default(autoincrement())
+  spaceId      Int
+  title        String     @db.VarChar(255)
+  description  String?    @db.Text
+  coverMediaId Int?
+  date         DateTime?  @db.Timestamp(3)
+  locationId   Int?
+  visibility   Visibility @default(COUPLE)
+  createdAt    DateTime   @default(now()) @db.Timestamp(3)
+  updatedAt    DateTime   @updatedAt @db.Timestamp(3)
+
+  space Space       @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  items AlbumMedia[]
+
+  @@index([spaceId, createdAt])
+}
+
+/// 相册-媒体关联
+model AlbumMedia {
+  id       Int   @id @default(autoincrement())
+  albumId  Int
+  mediaId  Int
+  sortOrder Int @default(0)
+
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([albumId, mediaId])
+}
+
+/// 审计日志
+model AuditLog {
+  id           Int         @id @default(autoincrement())
+  spaceId      Int?
+  username     String      @db.VarChar(255)
+  action       AuditAction
+  resourceType String?     @db.VarChar(100)
+  resourceId   String?     @db.VarChar(255)
+  metadata     String?     @db.Text
+  ipHash       String?     @db.VarChar(128)
+  createdAt    DateTime    @default(now()) @db.Timestamp(3)
+
+  space Space? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+
+  @@index([spaceId, createdAt])
+  @@index([username, createdAt])
+  @@index([action])
+}

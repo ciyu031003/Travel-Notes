@@ -1,19 +1,13 @@
 'use client'
 
-import { MapPin, BookOpen, BrainCircuit, Code2, Tag, Image, FileText } from 'lucide-react'
+import { MapPin, Tag, Image, FileText } from 'lucide-react'
 
 const typeIcons: Record<string, any> = {
   travel: MapPin,
-  blog: BookOpen,
-  mindmap: BrainCircuit,
-  repo: Code2,
 }
 
 const typeLabels: Record<string, string> = {
   travel: '旅行记录',
-  blog: '技术博客',
-  mindmap: '思维导图',
-  repo: '代码仓库',
 }
 
 export interface PostMetaPanelProps {

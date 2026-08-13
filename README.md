@@ -1,6 +1,7 @@
-# 个人博客系统
+# Travel-Notes · 情侣共同旅行与记忆系统
 
-一个基于 Next.js 15 的现代化个人博客，包含旅行记录和学习笔记两大模块，采用服务层架构（SoA），支持 MySQL 数据库驱动、JWT 认证与后台管理系统。
+一个基于 Next.js 15 的私人旅行记忆系统：记录两个人的旅行足迹、照片、回忆与纪念日。
+采用服务层架构（SoA），MySQL + Prisma 驱动，Database-backed Session 认证，内置完整安全基线（P0/P1）。
 
 ## ✨ 功能特性
 
@@ -13,28 +14,35 @@
 - **指示器导航**：右侧页面指示器 + 底部进度条
 - **实时时钟与纪念日**：右侧信息面板动态展示
 
-### 📖 学习笔记模块
-- **技术博客**：Markdown 文章，支持代码高亮和 Mermaid 思维导图
-- **思维导图**：Mermaid 驱动的知识图谱，分类整理知识体系
-- **代码仓库**：类 GitHub 的在线代码浏览体验
-  - 文件树导航
-  - 行号显示
-  - 一键复制
-  - 多语言支持
+### 🏠 情侣空间（Space）与权限（RBAC）
+- **Space 数据模型**：情侣共同生活数字空间（Space / SpaceMember / SpaceInvite）
+- **角色体系**：OWNER / MEMBER / VIEWER，统一权限方法（requireSpaceMember / requireSpaceRole / canRead* / canEdit*）
+- **IDOR 防护**：所有资源访问统一走 Space 成员校验
+- **后台空间管理**：`/admin/spaces` 创建空间、管理成员与角色
 
 ### 🛠️ 后台管理系统
-- **JWT 认证**：bcryptjs 密码哈希 + JWT Token 鉴权 + Token 黑名单注销
-- **文章管理**：CRUD 操作，支持分类筛选和搜索
-- **Markdown 编辑器**：在线编辑 + 实时预览
-- **分类管理**：支持旅行记录、技术博客、思维导图三种类型
+- **Database-backed Session**：登录会话落库，可撤销、可过期、多端管理，退出即失效
+- **首次初始化**：`/admin/setup` 直接创建管理员（无默认账号/密码），完成后自动关闭入口
+- **文章管理**：旅行记录 CRUD，支持分类筛选和搜索
+- **Markdown 编辑器**：在线编辑 + 实时预览（内容经 XSS 净化）
 - **系统设置**：用户名/邮箱/密码管理、纪念日配置
-- **密码找回**：邮箱验证码重置密码流程
-- **首次初始化**：`/admin/setup` 页面引导配置管理员
+- **密码找回**：邮箱验证码重置密码流程（带限流）
+- **审计日志**：`/admin/audit` 查看登录/变更/上传/权限操作记录
 
-### 🗄️ 数据库与内容管理
+### 🔒 安全基线（P0）
+- **升级 Next.js 15.5**（最新 15.x 安全版本）
+- **删除默认管理员密码**：无任何内置账号，首次启动引导初始化
+- **上传安全**：Magic Number 校验 + sharp 重新编码（剥离 EXIF/GPS）、仅允许 JPEG/PNG/WebP、大小/尺寸/数量限制
+- **Markdown XSS 防护**：rehype-sanitize 白名单 + rehype-raw，Mermaid 使用 strict 安全级别
+- **登录安全**：IP/用户名限流 + 连续失败锁定（指数退避）
+- **Security Headers**：CSP / HSTS / X-Content-Type-Options / Referrer-Policy / Permissions-Policy / Frame 防护
+- **会话安全**：HttpOnly + Secure + SameSite=Lax Cookie，密码变更/重置自动撤销其它会话
+
+### 🗄️ 数据库与内容管理### 🗄️ 数据库与内容管理
 - **MySQL + Prisma ORM**：完整的数据库持久化，官方 MySQL 适配器
-- **混合内容获取**：PostService 优先从数据库读取，数据库为空时自动从 Markdown 文件回退
 - **图片二进制存储**：PostImage 表存储图片二进制数据（LongBlob），无需外部图床
+- **对象存储抽象**：可选 S3 兼容存储（MinIO / R2 / OSS），配置 `STORAGE_*` 后自动启用
+- **新数据模型**：Session / Space / SpaceMember / Travel / TravelDay / Memory / Media / Album / AuditLog
 - **弹幕系统**：Danmaku 表支持页面弹幕互动
 
 ### 🎨 通用特性
@@ -101,10 +109,9 @@ getSiteService()   // SiteService (UserRepository + CacheService)
 ### 1. 安装依赖
 
 ```bash
-npm install --legacy-peer-deps
+npm install
 ```
 
-> `--legacy-peer-deps` 用于解决 `lucide-react` 与 React 19 的 peer dependency 冲突。
 
 ### 2. 配置环境变量
 
@@ -121,11 +128,14 @@ Copy-Item .env.example .env
 # 数据库连接
 DATABASE_URL="mysql://root:密码@localhost:3306/Travel_And_Study"
 
-# 管理员账号
-ADMIN_USERNAME="yuanabd"
-ADMIN_PASSWORD_HASH="（在 /admin/setup 页面生成后填入，注意 $ 符号需用 \$ 转义）"
+# 管理员账号（可选）：项目不再内置任何默认账号。
+# - 留空/不配置时，首次访问 /admin/setup 完成初始化（推荐）
+# - 如需通过环境变量创建初始管理员，请先运行 `node -e "console.log(require('bcryptjs').hashSync('你的强密码', 10))"`
+#   生成哈希后填入 ADMIN_PASSWORD_HASH（注意 $ 符号需用 \$ 转义）
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD_HASH=""
 
-# JWT 密钥（用于 Token 签名与验证）
+# 会话密钥（用于 Session Token 签名与验证，必填；用 openssl rand -hex 32 生成）
 JWT_SECRET="替换为随机密钥（可用 openssl rand -hex 32 生成）"
 
 # Cookie 安全（生产环境设为 true）
@@ -147,24 +157,16 @@ npm run dev
 
 访问 http://localhost:3000 查看效果
 
-### 5. 初始化管理员
+### 5. 初始化管理员（无默认账号）
 
-1. 访问 `/admin/setup` 页面
-2. 设置用户名和密码（至少 6 位）
-3. 复制生成的密码哈希到 `.env` 文件的 `ADMIN_PASSWORD_HASH`
-4. 重启服务器
+项目**不再提供任何默认账号/密码**。首次启动（数据库无管理员）时：
 
-### 🔑 默认管理员账号
+1. 访问 `/admin/setup` 页面（未初始化时自动引导）
+2. 设置用户名和强密码（至少 8 位，建议包含大小写字母、数字与符号）
+3. 系统直接创建管理员并写入数据库，初始化入口随即关闭
+4. 使用新账号登录 `/admin/login`
 
-本项目已预配置以下管理员账号：
-
-| 项目 | 值 |
-|------|------|
-| 用户名 | `yuanabd` |
-| 密码 | `Abd123456.` |
-| 登录地址 | http://localhost:3000/admin/login |
-
-> ⚠️ **安全提示**：这是开发环境默认账号，部署到生产环境前请务必通过 `/admin/setup` 页面重新生成新的密码哈希并更新 `.env` 文件。
+> 生产环境务必确保 `.env` 未配置 `ADMIN_PASSWORD_HASH`，且 `JWT_SECRET` 为随机强密钥。
 
 ### 生产构建
 
@@ -186,16 +188,13 @@ Travel-Notes/
 │   │   ├── page.tsx              # 列表页（PostService 混合获取）
 │   │   ├── TravelClient.tsx      # 客户端滚动组件
 │   │   └── [slug]/page.tsx       # 详情页（PostService 混合获取）
-│   ├── notes/                    # 学习笔记
-│   │   ├── page.tsx              # 学习笔记首页
-│   │   ├── blog/                 # 技术博客
-│   │   ├── mindmap/              # 思维导图
-│   │   └── repo/                 # 代码仓库
 │   ├── admin/                    # 后台管理
 │   │   ├── page.tsx              # 文章列表
 │   │   ├── login/page.tsx        # 登录页
 │   │   ├── setup/page.tsx        # 初始化页面
 │   │   ├── settings/page.tsx     # 系统设置
+│   │   ├── spaces/page.tsx       # 空间管理
+│   │   ├── audit/page.tsx        # 审计日志
 │   │   ├── new/page.tsx          # 新建文章跳转
 │   │   └── edit/[id]/page.tsx    # 编辑页面
 │   ├── album/                    # 相册页面
@@ -213,10 +212,9 @@ Travel-Notes/
 │       ├── forgot-password/      # 密码重置流程
 │       ├── check-auth/           # 认证检查
 │       ├── album/                # 相册数据
-│       ├── notes/                # 笔记聚合
-│       ├── repos/                # 代码仓库
+│       ├── spaces/               # Space 空间 API
 │       ├── images/[id]/          # 图片服务
-│       ├── upload/               # 文件上传
+│       ├── upload/               # 文件上传（安全校验 + 重新编码）
 │       └── video/[filename]/     # 视频流服务
 ├── components/                   # 组件
 │   ├── layout/Navbar.tsx         # 导航栏
@@ -225,16 +223,22 @@ Travel-Notes/
 │   └── repo/                     # 代码仓库组件
 ├── lib/                          # 工具库与架构层
 │   ├── services/                 # 服务层（业务逻辑）
-│   │   ├── auth-service.ts       # 认证服务（登录/JWT/密码管理/找回密码）
-│   │   ├── post-service.ts       # 文章服务（CRUD + 混合获取 + 缓存）
+│   │   ├── auth-service.ts       # 认证服务（登录/Session/密码管理/找回密码）
+│   │   ├── post-service.ts       # 文章服务（CRUD + 缓存）
 │   │   ├── site-service.ts       # 系统设置服务
 │   │   └── token-service.ts      # JWT Token 服务（签名/验证/黑名单）
+│   ├── modules/                  # 业务模块
+│   │   ├── space/                # Space 模块（repository/service/permissions）
+│   │   └── audit/                # 审计日志服务
 │   ├── repositories/             # 数据访问层
-│   │   ├── post-repository.ts    # 文章数据访问（封装 db-posts.ts）
+│   │   ├── post-repository.ts    # 文章数据访问（直接使用 Prisma）
+│   │   ├── session-repository.ts # 数据库会话
 │   │   └── user-repository.ts    # 用户数据访问（封装 auth.ts）
 │   ├── infrastructure/           # 基础设施抽象
 │   │   ├── cache.ts              # 缓存服务接口 + 内存实现
-│   │   └── storage.ts            # 存储服务接口 + 本地实现
+│   │   ├── rate-limit.ts         # 内存限流器
+│   │   ├── media-validation.ts   # 上传安全校验
+│   │   └── storage.ts            # 存储服务接口 + 本地/S3 实现
 │   ├── validators/               # 输入验证（Zod）
 │   │   ├── post.validator.ts     # 文章验证 Schema
 │   │   └── auth.validator.ts     # 认证验证 Schema

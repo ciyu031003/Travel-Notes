@@ -1,8 +1,9 @@
 import { ImageRepository } from '../repositories/image-repository'
 import { PostRepository, UpdatePostInput } from '../repositories/post-repository'
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+import {
+  validateAndSanitizeImage,
+  MAX_IMAGE_COUNT,
+} from '../infrastructure/media-validation'
 
 export interface ImageFile {
   name: string
@@ -20,27 +21,30 @@ export class ImageService {
     if (!files || files.length === 0) {
       throw new Error('未上传任何文件')
     }
+    if (files.length > MAX_IMAGE_COUNT) {
+      throw new Error(`单次最多上传 ${MAX_IMAGE_COUNT} 张图片`)
+    }
 
     const post = await this.postRepo.findById(postId)
     if (!post) {
       throw new Error('文章不存在')
     }
 
+    // 逐张校验 + 重新编码（剥离元数据），任一失败则整体拒绝
+    const sanitized: Array<{ buffer: Buffer; mimeType: string }> = []
     for (const file of files) {
-      if (!ALLOWED_TYPES.includes(file.mimeType)) {
-        throw new Error(`不支持的文件类型: ${file.mimeType}`)
-      }
-      if (file.buffer.length > MAX_FILE_SIZE) {
-        throw new Error(`文件太大: ${file.name} 超过 10MB`)
-      }
-      if (file.buffer.length === 0) {
-        throw new Error(`文件为空: ${file.name}`)
+      try {
+        const result = await validateAndSanitizeImage(file.buffer, file.mimeType)
+        sanitized.push({ buffer: result.buffer, mimeType: result.mimeType })
+      } catch (err: any) {
+        throw new Error(`${file.name}: ${err.message}`)
       }
     }
 
     const createdIds: number[] = []
 
-    for (const file of files) {
+    for (let i = 0; i < sanitized.length; i++) {
+      const file = sanitized[i]
       const maxOrder = await this.imgRepo.getMaxOrder(postId)
       const nextOrder = maxOrder + 1
       const result = await this.imgRepo.create(postId, file.buffer, file.mimeType, nextOrder)

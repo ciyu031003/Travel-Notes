@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Sparkles, Trash2, Send, Home, Settings, LogOut, Code2, Loader2, Inbox } from 'lucide-react'
+import { Sparkles, Trash2, Send, Home, Settings, LogOut, Users, Loader2, Inbox } from 'lucide-react'
 
 interface MomentItem {
   id: number
@@ -121,9 +121,9 @@ export default function AdminMomentsPage() {
                 <Home className="w-4 h-4" />
                 文章管理
               </Link>
-              <Link href="/admin/repos" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20">
-                <Code2 className="w-4 h-4" />
-                代码仓库管理
+              <Link href="/admin/spaces" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20">
+                <Users className="w-4 h-4" />
+                空间管理
               </Link>
               <Link href="/admin/settings" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                 <Settings className="w-4 h-4" />

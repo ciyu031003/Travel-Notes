@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  Plus, Edit2, Trash2, LogOut, MapPin, BookOpen, BrainCircuit, 
-  Code2, Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home, Sparkles
+import {
+  Plus, Edit2, Trash2, LogOut, MapPin, Users, ShieldCheck,
+  Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home, Sparkles
 } from 'lucide-react'
 interface Post {
   id: number
@@ -24,16 +24,10 @@ interface Post {
 
 const typeIcons: Record<string, any> = {
   travel: MapPin,
-  blog: BookOpen,
-  mindmap: BrainCircuit,
-  repo: Code2,
 }
 
 const typeLabels: Record<string, string> = {
   travel: '旅行记录',
-  blog: '技术博客',
-  mindmap: '思维导图',
-  repo: '代码仓库',
 }
 
 export default function AdminDashboard() {
@@ -122,11 +116,11 @@ export default function AdminDashboard() {
                 回到首页
               </Link>
               <Link
-                href="/admin/repos"
+                href="/admin/spaces"
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
               >
-                <Code2 className="w-4 h-4" />
-                代码仓库管理
+                <Users className="w-4 h-4" />
+                空间管理
               </Link>
               <Link
                 href="/admin/moments"
@@ -134,6 +128,13 @@ export default function AdminDashboard() {
               >
                 <Sparkles className="w-4 h-4" />
                 碎碎念管理
+              </Link>
+              <Link
+                href="/admin/audit"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                审计日志
               </Link>
               <Link
                 href="/admin/settings"
@@ -191,9 +192,6 @@ export default function AdminDashboard() {
             >
               <option value="">全部分类</option>
               <option value="travel">旅行记录</option>
-              <option value="blog">技术博客</option>
-              <option value="mindmap">思维导图</option>
-              <option value="repo">代码仓库</option>
             </select>
           </div>
         </div>

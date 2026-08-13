@@ -5,16 +5,13 @@ import HomeClient from '@/components/HomeClient'
 export const revalidate = 300
 
 export const metadata = {
-  title: '我们的小家 | 旅行记录 & 学习笔记',
-  description: '记录旅行足迹，分享学习笔记，收藏美好时光',
+  title: '我们的小家 | 旅行记录 & 共同回忆',
+  description: '记录两个人的旅行足迹与共同回忆',
 }
 
 export default async function Home() {
   const postService = getPostService()
-  const [travelPosts, blogPosts] = await Promise.all([
-    postService.getPostsHybrid('travel'),
-    postService.getPostsHybrid('tech/blog'),
-  ])
+  const travelPosts = await postService.getPostsHybrid('travel')
 
   const provincesVisited = new Set<string>()
   for (const post of travelPosts) {
@@ -24,15 +21,10 @@ export default async function Home() {
     }
   }
 
-  const totalPosts = travelPosts.length + blogPosts.length
-
   return (
     <HomeClient
       travelPosts={travelPosts}
-      blogPosts={blogPosts}
       provincesVisitedCount={provincesVisited.size}
-      totalPosts={totalPosts}
     />
   )
 }
-

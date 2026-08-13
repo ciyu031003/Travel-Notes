@@ -22,6 +22,8 @@ export interface TokenPayload extends JWTPayload {
   username: string
   role?: string
   userId?: number
+  /** Database-backed session id */
+  sid?: string
 }
 
 export interface TokenServiceConfig {

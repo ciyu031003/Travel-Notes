@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getAuthService } from '@/lib/container'
+import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 
 export async function GET() {
   try {
@@ -27,8 +28,9 @@ export async function POST(request: Request) {
     }
 
     const authService = getAuthService()
-    const success = await authService.adminChangePassword(newPassword)
+    const success = await authService.adminChangePassword(newPassword, authResult.sessionId)
     if (success) {
+      writeAuditLog({ username: authResult.username || 'unknown', action: 'CHANGE_PASSWORD' }).catch(() => {})
       return NextResponse.json({ success: true })
     } else {
       return NextResponse.json({ error: '修改密码失败' }, { status: 500 })

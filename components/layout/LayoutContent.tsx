@@ -17,8 +17,6 @@ export default function LayoutContent({
   const isAlbumPage = pathname.startsWith('/album')
   const isAdminPage = pathname.startsWith('/admin')
   const isForgotPasswordPage = pathname.startsWith('/forgot-password')
-  const isNotesPage = pathname.startsWith('/notes')
-
   if (isLoginPage || isAdminPage || isForgotPasswordPage || isAlbumPage) {
     return <>{children}</>
   }
@@ -39,17 +37,6 @@ export default function LayoutContent({
           {children}
         </main>
         <MobileBottomNav />
-      </>
-    )
-  }
-
-  // /notes 主页采用全屏沉浸式深色布局，由页面内置导航，跳过全局 Navbar/Footer
-  if (pathname === '/notes') {
-    return (
-      <>
-        <main className="flex-1">
-          {children}
-        </main>
       </>
     )
   }

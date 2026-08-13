@@ -4,17 +4,14 @@ import fs from 'fs'
 import path from 'path'
 import { pipeline } from 'stream/promises'
 import { Readable } from 'stream'
-
-const VIDEO_TYPES = [
-  'video/mp4',
-  'video/webm',
-  'video/ogg',
-  'video/quicktime',
-  'video/x-msvideo',
-  'video/x-matroska',
-]
-
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024
+import {
+  validateVideoBuffer,
+  MAX_VIDEO_SIZE,
+  MAX_VIDEO_COUNT,
+} from '@/lib/infrastructure/media-validation'
+import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { getClientIp } from '@/lib/request-utils'
+import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 
 function getVideoDir(): string {
   const cwd = process.cwd()
@@ -32,6 +29,12 @@ function formatDuration(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+/** 读取文件头部若干字节用于 Magic Number 校验，避免整文件载入内存 */
+async function readFileHeader(file: File, bytes = 4096): Promise<Buffer> {
+  const slice = file.slice(0, bytes)
+  return Buffer.from(await slice.arrayBuffer())
+}
+
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) {
@@ -39,11 +42,24 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // 上传限流：IP 每 15 分钟最多 60 次视频上传请求
+    const ip = getClientIp(request)
+    const limit = rateLimit({ prefix: 'video-upload:ip', key: ip || 'unknown', limit: 60, windowMs: 15 * 60 * 1000 })
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: '上传过于频繁，请稍后再试', retryAfterSeconds: limit.retryAfterSeconds },
+        { status: 429 }
+      )
+    }
+
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: '未上传任何文件' }, { status: 400 })
+    }
+    if (files.length > MAX_VIDEO_COUNT) {
+      return NextResponse.json({ error: `单次最多上传 ${MAX_VIDEO_COUNT} 个视频` }, { status: 400 })
     }
 
     const videoDir = getVideoDir()
@@ -65,16 +81,9 @@ export async function POST(request: NextRequest) {
       const file = files[i]
       console.log('[Video Upload] Processing:', file.name, file.type, file.size)
 
-      if (!VIDEO_TYPES.includes(file.type)) {
-        return NextResponse.json(
-          { error: `不支持的视频格式: ${file.type}` },
-          { status: 400 }
-        )
-      }
-
       if (file.size > MAX_VIDEO_SIZE) {
         return NextResponse.json(
-          { error: `视频文件过大: ${file.name} 超过 500MB` },
+          { error: `视频文件过大: ${file.name} 超过 ${Math.round(MAX_VIDEO_SIZE / 1024 / 1024)}MB` },
           { status: 400 }
         )
       }
@@ -86,16 +95,25 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Magic Number 校验：不信任客户端 MIME
+      let realMime: string
+      try {
+        const header = await readFileHeader(file)
+        realMime = validateVideoBuffer(header, file.type || undefined)
+      } catch (err: any) {
+        return NextResponse.json(
+          { error: `${file.name}: ${err.message}` },
+          { status: 400 }
+        )
+      }
+
       const extMap: Record<string, string> = {
         'video/mp4': 'mp4',
         'video/webm': 'webm',
         'video/ogg': 'ogg',
-        'video/quicktime': 'mov',
-        'video/x-msvideo': 'avi',
-        'video/x-matroska': 'mkv',
       }
 
-      const ext = extMap[file.type] || 'mp4'
+      const ext = extMap[realMime] || 'mp4'
       const filename = `${timestamp}-${i}-${Math.random().toString(36).slice(2, 8)}.${ext}`
       const filePath = path.join(videoDir, filename)
 
@@ -112,12 +130,19 @@ export async function POST(request: NextRequest) {
         url,
         filename,
         size: stat.size,
-        mimeType: file.type,
+        mimeType: realMime,
       })
 
       console.log('[Video Upload] Saved:', url, 'size:', stat.size)
     }
 
+    writeAuditLog({
+      username: auth.username || 'unknown',
+      action: 'UPLOAD_MEDIA',
+      resourceType: 'Video',
+      ip,
+      metadata: { count: results.length },
+    }).catch(() => {})
     return NextResponse.json({
       success: true,
       videos: results,

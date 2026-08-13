@@ -8,7 +8,9 @@ export default function MermaidRenderer() {
     mermaid.initialize({
       startOnLoad: true,
       theme: 'default',
-      securityLevel: 'loose',
+      // 安全边界：strict 下标签中的 HTML 按纯文本渲染，阻止 mermaid 输出中的
+      // HTML/SVG 注入（<img onerror>、<script> 等）
+      securityLevel: 'strict',
     })
 
     // 查找所有 mermaid 代码块并渲染

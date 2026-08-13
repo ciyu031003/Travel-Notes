@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Heart,
-  BookOpen,
   MapPin,
   Globe2,
   Sparkles,
@@ -33,9 +32,7 @@ interface PostMeta {
 
 interface HomeClientProps {
   travelPosts: PostMeta[]
-  blogPosts: PostMeta[]
   provincesVisitedCount: number
-  totalPosts: number
 }
 
 const dailyQuotes = [
@@ -285,9 +282,7 @@ function CornerDecoration({ corner }: { corner: 'bl' | 'br' }) {
 
 export default function HomeClient({
   travelPosts,
-  blogPosts,
   provincesVisitedCount,
-  totalPosts,
 }: HomeClientProps) {
   const [showAlbumUnlock, setShowAlbumUnlock] = useState(false)
   const [showDanmakuInput, setShowDanmakuInput] = useState(false)
@@ -501,24 +496,6 @@ export default function HomeClient({
                 <span className="hidden sm:inline">旅行地图</span>
               </span>
             </Link>
-            <Link
-              href="/notes"
-              className="group relative px-2.5 md:px-3 py-2 text-sm text-[#5A4A3A] hover:text-[#3D4852] rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 overflow-hidden"
-            >
-              <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#E8D5B8] via-[#D4C5A8] to-[#F5DCE0] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <span className="absolute inset-[1.5px] rounded-[10px] bg-[#FAFBF7]" />
-              <span className="absolute inset-[1.5px] rounded-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  background: 'linear-gradient(90deg, #E8D5B8, #D4C5A8, #F5DCE0, #E8D5B8)',
-                  backgroundSize: '300% 100%',
-                  animation: 'aurora 3s linear infinite',
-                }}
-              />
-              <span className="relative z-10 flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4" />
-                <span className="hidden sm:inline">学习笔记</span>
-              </span>
-            </Link>
             <button
               onClick={() => setShowDanmakuInput(true)}
               className="group relative px-2.5 md:px-3 py-2 text-sm text-[#5A4A3A] hover:text-[#3D4852] rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 overflow-hidden"
@@ -653,11 +630,6 @@ export default function HomeClient({
                   <span className="font-medium text-[#3D4852]">{travelPosts.length}</span>
                   <span className="text-[#5A6670]">篇旅行</span>
                 </div>
-                <div className="flex items-center gap-2 px-5 py-3 bg-white/85 border border-[#D8DDD8]/60 rounded-2xl text-sm shadow-sm hover:shadow-md transition-shadow">
-                  <BookOpen className="w-4 h-4 text-[#E8B8C2]" />
-                  <span className="font-medium text-[#3D4852]">{totalPosts}</span>
-                  <span className="text-[#5A6670]">篇笔记</span>
-                </div>
               </div>
             </div>
           </div>
@@ -773,40 +745,6 @@ export default function HomeClient({
                   </div>
                 </div>
               </button>
-
-              {/* 学习笔记 */}
-              <Link
-                href="/notes"
-                className="rainbow-card group relative bg-white/85 rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 border-2 border-transparent overflow-hidden"
-              >
-                <span className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                  style={{
-                    background: 'linear-gradient(90deg, #E8D5B8, #D4C5A8, #F5DCE0, #E8D5B8)',
-                    backgroundSize: '300% 100%',
-                    animation: 'aurora 3s linear infinite',
-                    padding: '2px',
-                    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                    WebkitMaskComposite: 'xor',
-                    maskComposite: 'exclude',
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-[#E8D5B8]/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative z-10">
-                  <div className="w-14 h-14 bg-gradient-to-br from-[#E8D5B8] to-[#D4C5A8] rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-md">
-                    <BookOpen className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-[#3D4852] mb-2">
-                    学习笔记
-                  </h3>
-                  <p className="text-sm text-[#5A6670] mb-4">
-                    技术博客与思维导图
-                  </p>
-                  <div className="flex items-center gap-1.5 text-[#A07850] text-sm font-medium">
-                    <span>开始学习</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </Link>
 
               {/* 留言板 */}
               <button
