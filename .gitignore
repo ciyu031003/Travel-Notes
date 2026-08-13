@@ -30,3 +30,5 @@ public/search-index.json
 
 # 本地启动日志
 start.log
+dev-server.log
+dev-server.err.log

@@ -108,24 +108,40 @@ export default function AdminMomentsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4 h-16">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4 h-16">
+            {/* 左：logo + 标题 */}
             <div className="flex items-center gap-3 shrink-0">
               <div className="w-9 h-9 bg-gradient-to-r from-rose-400 to-pink-500 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">碎碎念管理</h1>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white whitespace-nowrap">碎碎念管理</h1>
             </div>
-            <nav className="flex items-center gap-3 md:gap-4 overflow-x-auto py-1.5 whitespace-nowrap [scrollbar-width:thin]">
-              <Link href="/admin" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+
+            {/* 中：功能导航（水平均匀排布，无滚动条） */}
+            <nav className="flex-1 flex items-center justify-center gap-1.5 xl:gap-2.5 min-w-0">
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 <Home className="w-4 h-4" />
                 文章管理
               </Link>
-              <Link href="/admin/spaces" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20">
+              <Link
+                href="/admin/spaces"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+              >
                 <Users className="w-4 h-4" />
                 空间管理
               </Link>
-              <Link href="/admin/settings" className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            </nav>
+
+            {/* 右：账号设置 + 退出登录 */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/admin/settings"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 <Settings className="w-4 h-4" />
                 账号设置
               </Link>
@@ -134,12 +150,12 @@ export default function AdminMomentsPage() {
                   await fetch('/api/admin/logout', { method: 'POST' })
                   router.push('/admin/login')
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap"
               >
                 <LogOut className="w-4 h-4" />
                 退出登录
               </button>
-            </nav>
+            </div>
           </div>
         </div>
       </header>
