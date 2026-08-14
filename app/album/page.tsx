@@ -1,13 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles } from 'lucide-react'
+import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket } from 'lucide-react'
 import PixelDeskBackground from '@/components/album/PixelDeskBackground'
 import PolaroidWall from '@/components/album/PolaroidWall'
 import PixelPhotoChat from '@/components/album/PixelPhotoChat'
 import PixelUnlockModal from '@/components/album/PixelUnlockModal'
+import PhotoChatView from '@/components/album/PhotoChatView'
+import GalaxyAlbumScene from '@/components/album/space/GalaxyAlbumScene'
+import SpaceUnlockModal from '@/components/album/space/SpaceUnlockModal'
 
 interface CityAlbum {
   name: string
@@ -35,6 +38,8 @@ const SPINE_COLORS = [
   'book-spine-leather',
 ]
 
+const VIEW_MODE_KEY = 'album-view-mode'
+
 function formatDate(dateStr: string) {
   try {
     const d = new Date(dateStr)
@@ -54,6 +59,25 @@ export default function AlbumPage() {
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [chatPhoto, setChatPhoto] = useState<ChatPhoto | null>(null)
   const [view, setView] = useState<'gallery' | 'chat'>('gallery')
+  const [viewMode, setViewMode] = useState<'space' | 'pixel'>(() => {
+    try {
+      return localStorage.getItem(VIEW_MODE_KEY) === 'pixel' ? 'pixel' : 'space'
+    } catch {
+      return 'space'
+    }
+  })
+
+  const toggleViewMode = useCallback(() => {
+    setViewMode((prev) => {
+      const next = prev === 'space' ? 'pixel' : 'space'
+      try {
+        localStorage.setItem(VIEW_MODE_KEY, next)
+      } catch {
+        // 忽略
+      }
+      return next
+    })
+  }, [])
 
   const loadAlbumData = async () => {
     try {
@@ -86,6 +110,10 @@ export default function AlbumPage() {
     loadAlbumData()
   }
 
+  const handleWebGLFail = useCallback(() => {
+    setViewMode('pixel')
+  }, [])
+
   const totalPhotos = cities.reduce((sum, city) => sum + city.images.length, 0)
 
   if (checkingLock) {
@@ -100,6 +128,73 @@ export default function AlbumPage() {
   }
 
   if (!isUnlocked) {
+    if (viewMode === 'space') {
+      return (
+        <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-[#050508]">
+          {/* 星空氛围底（纯 CSS 星点，避免未解锁时启动 WebGL） */}
+          <div className="absolute inset-0 opacity-70" aria-hidden="true">
+            {Array.from({ length: 60 }, (_, i) => (
+              <span
+                key={i}
+                className="absolute rounded-full bg-white"
+                style={{
+                  left: `${(i * 37) % 100}%`,
+                  top: `${(i * 53) % 100}%`,
+                  width: i % 5 === 0 ? 2.5 : 1.5,
+                  height: i % 5 === 0 ? 2.5 : 1.5,
+                  opacity: 0.25 + (i % 4) * 0.18,
+                  animation: `space-twinkle ${2 + (i % 5)}s ease-in-out infinite`,
+                  animationDelay: `${(i % 7) * 0.4}s`,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="relative z-10 w-full max-w-md space-glass rounded-3xl p-8 text-center">
+            <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-[#0a0c16]/70 border border-white/15 flex items-center justify-center shadow-[0_0_40px_rgba(120,140,255,0.4)]">
+              <Lock className="w-8 h-8 text-amber-200/90" />
+            </div>
+            <h2 className="text-white/95 text-2xl font-bold tracking-[0.3em]">旅行相册 · 银河存档</h2>
+            <p className="text-white/45 text-xs mt-3 leading-relaxed">
+              这是我们的秘密相册
+              <br />
+              输入恋爱纪念日，唤醒银河中的回忆
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowUnlockModal(true)}
+              className="mt-6 w-full space-glass-btn rounded-full !py-3 text-sm font-bold text-white/95"
+            >
+              解锁相册
+            </button>
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => router.push('/')}
+                className="space-glass-btn rounded-full px-4 py-2 text-xs text-white/70"
+              >
+                返回首页
+              </button>
+              <button
+                type="button"
+                onClick={toggleViewMode}
+                className="space-glass-btn rounded-full px-4 py-2 text-xs text-white/70 flex items-center gap-1.5"
+              >
+                <Rocket className="w-3.5 h-3.5" />
+                切到像素风
+              </button>
+            </div>
+          </div>
+
+          <SpaceUnlockModal
+            isOpen={showUnlockModal}
+            onClose={() => setShowUnlockModal(false)}
+            onSuccess={handleUnlockSuccess}
+          />
+        </div>
+      )
+    }
+
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-[#0d0604]">
         <PixelDeskBackground />
@@ -146,8 +241,8 @@ export default function AlbumPage() {
     )
   }
 
-  // 整页状态切换：像素书卷聊天视图
-  if (view === 'chat' && chatPhoto) {
+  // 像素模式：书卷留言整页视图
+  if (view === 'chat' && chatPhoto && viewMode === 'pixel') {
     return (
       <PixelPhotoChat
         image={chatPhoto.url}
@@ -159,6 +254,34 @@ export default function AlbumPage() {
           setChatPhoto(null)
         }}
       />
+    )
+  }
+
+  // 银河模式：360° 全景唱片空间（留言页作为覆盖层叠在上方，返回无需重建场景）
+  if (viewMode === 'space') {
+    return (
+      <>
+        <GalaxyAlbumScene
+          cities={cities}
+          onTogglePixel={toggleViewMode}
+          onOpenChat={(photo) => {
+            setChatPhoto(photo)
+            setView('chat')
+          }}
+          onWebGLFail={handleWebGLFail}
+        />
+        {view === 'chat' && chatPhoto && (
+          <PhotoChatView
+            image={chatPhoto.url}
+            imageKey={chatPhoto.key}
+            cityName={chatPhoto.cityName}
+            onBack={() => {
+              setView('gallery')
+              setChatPhoto(null)
+            }}
+          />
+        )}
+      </>
     )
   }
 
@@ -180,12 +303,23 @@ export default function AlbumPage() {
           <BookOpen className="w-4 h-4" />
           我们的旅行相册 · 存档
         </div>
-        <Link
-          href="/"
-          className="pixel-btn pixel-border-gold px-3 py-1.5 text-[11px] font-bold rounded-sm"
-        >
-          进入地图
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleViewMode}
+            className="pixel-btn pixel-border-gold px-3 py-1.5 text-[11px] font-bold rounded-sm flex items-center gap-1.5"
+            title="一键切换到银河唱片空间"
+          >
+            <Rocket className="w-3.5 h-3.5" />
+            银河风
+          </button>
+          <Link
+            href="/"
+            className="pixel-btn pixel-border-gold px-3 py-1.5 text-[11px] font-bold rounded-sm"
+          >
+            进入地图
+          </Link>
+        </div>
       </header>
 
       <div className="relative z-10 pt-4 pb-12 min-h-screen">
