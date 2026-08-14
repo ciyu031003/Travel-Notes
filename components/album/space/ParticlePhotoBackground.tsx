@@ -4,11 +4,12 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
 /**
- * Three.js 粒子化照片背景（银河模式留言页用）：
- * - 照片像素采样为粒子，散落 → 聚合为整张照片（uProgress 过渡）
- * - 粒子颜色 = 原始像素 RGB，亮度驱动大小，带呼吸漂移与立体厚度
- * - 双粒子层：主粒子 + Additive bloom 光晕，深空黑底 #050508
- * - 自适应：移动端减粒子数，DPR 限流，页面隐藏暂停
+ * Three.js 粒子化照片背景（留言页用）：
+ * - 照片像素采样为细密粒子，散落 → 聚合为整张照片（uProgress 过渡）
+ * - 粒子颜色 = 原始像素 RGB，亮度驱动大小；粒子更小 → 照片更清晰
+ * - 径向边缘模糊：中心清晰，边缘粒子放大 + 变淡，形成柔和消融
+ * - 双粒子层（主粒子 + Additive bloom），深空黑底 #050508
+ * - 通过 onAspect 上报照片宽高比，父级据此决定窗口大小
  */
 
 const VERTEX = /* glsl */ `
@@ -22,7 +23,7 @@ uniform float uProgress;   // 0 散落 → 1 聚合为照片
 uniform float uPixel;
 uniform float uSize;
 uniform float uBloom;
-uniform vec2  uPhotoSize;  // 世界单位宽高（cover 适配画布）
+uniform vec2  uPhotoSize;  // 世界单位宽高（与画布同比例）
 uniform sampler2D uPhoto;
 uniform sampler2D uDot;
 
@@ -34,7 +35,7 @@ void main(){
   vec3 photo = vec3(
     (aUv.x - 0.5) * uPhotoSize.x,
     (aUv.y - 0.5) * uPhotoSize.y,
-    (aRand - 0.5) * 1.8
+    (aRand - 0.5) * 1.4
   );
 
   // 散落态：随机球面
@@ -46,22 +47,29 @@ void main(){
   float p = smoothstep(0.0, 1.0, uProgress);
   vec3 pos = mix(scatter, photo, p);
 
-  // 呼吸漂移 + 边缘粒子轻微外散（保留整体轮廓）
-  float breath = sin(uTime * 1.6 + aRand * 6.28) * 0.028;
+  // 呼吸漂移
+  float breath = sin(uTime * 1.6 + aRand * 6.28) * 0.024;
   pos += photo * breath;
-  pos.z += aEdge * (0.05 + fract(aRand * 9.1) * 0.12) * (1.0 - p);
+
+  // 径向边缘：中心清晰 → 边缘模糊（粒子向外微散 + 放大 + 变淡）
+  vec2 cd = (aUv - 0.5) * 2.0;
+  float edgeR = length(cd);
+  float edgeSoft = smoothstep(0.6, 1.18, edgeR);
+  pos += photo * edgeSoft * 0.028;
 
   // 颜色：照片像素 RGB
   vec2 uv = clamp(aUv, vec2(0.001), vec2(0.999));
   vec3 col = texture2D(uPhoto, uv).rgb;
   float lum = dot(col, vec3(0.299, 0.587, 0.114));
   vColor = col * (0.98 + 0.15 * lum);
-  vAlpha = 0.92 + 0.08 * p;
+  vAlpha = (0.92 + 0.08 * p) * mix(1.0, 0.1, edgeSoft);
 
   vec4 mv = modelViewMatrix * vec4(pos, 1.0);
   float dist = max(0.5, -mv.z);
-  float base = (1.05 + lum * 3.0 + aBright * 0.8) * uSize * (1.0 + uBloom * 0.55);
-  gl_PointSize = clamp(base * uPixel * (150.0 / dist), uBloom > 0.5 ? 3.0 : 1.6, uBloom > 0.5 ? 16.0 : 9.5);
+  // 细粒子：基础尺寸下调，边缘放大形成模糊感
+  float base = (0.55 + lum * 1.9 + aBright * 0.5) * uSize * (1.0 + uBloom * 0.5);
+  float sizeMul = 1.0 + edgeSoft * 0.85;
+  gl_PointSize = clamp(base * sizeMul * uPixel * (150.0 / dist), uBloom > 0.5 ? 1.1 : 0.7, uBloom > 0.5 ? 7.0 : 4.5);
   gl_Position = projectionMatrix * mv;
 }
 `
@@ -77,7 +85,7 @@ void main(){
   if (tex.a < 0.02) discard;
   float a = tex.a;
   if (uBloom > 0.5) a = a * a;
-  gl_FragColor = vec4(vColor * (uBloom > 0.5 ? 1.2 : 1.0), a * vAlpha * (uBloom > 0.5 ? 0.5 : 1.0));
+  gl_FragColor = vec4(vColor * (uBloom > 0.5 ? 1.2 : 1.0), a * vAlpha * (uBloom > 0.5 ? 0.45 : 1.0));
 }
 `
 
@@ -95,8 +103,17 @@ function makeDotTexture(): THREE.CanvasTexture {
   return new THREE.CanvasTexture(cv)
 }
 
-export default function ParticlePhotoBackground({ image, className = '' }: { image: string; className?: string }) {
+interface ParticlePhotoBackgroundProps {
+  image: string
+  className?: string
+  /** 照片加载后上报宽高比（宽/高），父级据此决定窗口尺寸 */
+  onAspect?: (aspect: number) => void
+}
+
+export default function ParticlePhotoBackground({ image, className = '', onAspect }: ParticlePhotoBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const onAspectRef = useRef(onAspect)
+  onAspectRef.current = onAspect
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -124,26 +141,29 @@ export default function ParticlePhotoBackground({ image, className = '' }: { ima
 
     const isMobile = window.innerWidth < 768 || matchMedia('(pointer: coarse)').matches
     const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2)
-    const targetCount = isMobile ? 10000 : 30000
+    const targetCount = isMobile ? 14000 : 36000
 
     const resize = () => {
       const w = canvas.clientWidth || window.innerWidth
       const h = canvas.clientHeight || window.innerHeight
+      if (w < 2 || h < 2) return
       renderer.setPixelRatio(dpr)
       renderer.setSize(w, h, false)
       camera.aspect = w / h
       camera.updateProjectionMatrix()
     }
     resize()
-    window.addEventListener('resize', resize)
+    const ro = new ResizeObserver(() => resize())
+    ro.observe(canvas)
 
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => {
       if (disposed) return
+      onAspectRef.current?.(img.width / img.height)
       // 采样画布
-      const sampleW = 360
-      const sampleH = Math.max(1, Math.min(520, Math.round(sampleW * (img.height / img.width))))
+      const sampleW = 420
+      const sampleH = Math.max(1, Math.min(560, Math.round(sampleW * (img.height / img.width))))
       const area = sampleW * sampleH
       const step = Math.max(1, Math.ceil(Math.sqrt(area / targetCount)))
       const off = document.createElement('canvas')
@@ -174,8 +194,8 @@ export default function ParticlePhotoBackground({ image, className = '' }: { ima
           rands[i] = Math.random()
           const lum = (data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114) / 255
           brights[i] = lum
-          const edgeX = x < sampleW * 0.06 || x > sampleW * 0.94
-          const edgeY = y < sampleH * 0.06 || y > sampleH * 0.94
+          const edgeX = x < sampleW * 0.05 || x > sampleW * 0.95
+          const edgeY = y < sampleH * 0.05 || y > sampleH * 0.95
           edges[i] = edgeX || edgeY ? 1 : 0
           i++
         }
@@ -193,18 +213,12 @@ export default function ParticlePhotoBackground({ image, className = '' }: { ima
       texture.needsUpdate = true
       const dot = makeDotTexture()
 
-      // cover 适配世界尺寸（相机 z=6, fov=50 → 视野高约 5.6）
+      // 照片与世界画布同比例（窗口按照片比例布局，无需裁剪）
       const w = canvas.clientWidth || window.innerWidth
       const h = canvas.clientHeight || window.innerHeight
       const canvasAspect = w / h
-      const photoAspect = img.width / img.height
-      const viewH = 2 * 6 * Math.tan((50 * Math.PI) / 360) * 1.12
-      const photoSize = new THREE.Vector2()
-      if (photoAspect >= canvasAspect) {
-        photoSize.set(viewH * canvasAspect, (viewH * canvasAspect) / photoAspect)
-      } else {
-        photoSize.set(viewH * photoAspect, viewH)
-      }
+      const viewH = 2 * 6 * Math.tan((50 * Math.PI) / 360) * 1.06
+      const photoSize = new THREE.Vector2(viewH * canvasAspect, viewH)
 
       const uniforms = {
         uTime: sharedTime,
@@ -216,7 +230,7 @@ export default function ParticlePhotoBackground({ image, className = '' }: { ima
         uPhoto: { value: texture },
         uDot: { value: dot },
       }
-      const bloomUniforms = { ...uniforms, uBloom: { value: 1 }, uSize: { value: 1.4 } }
+      const bloomUniforms = { ...uniforms, uBloom: { value: 1 }, uSize: { value: 1.45 } }
 
       const makeMaterial = (uni: typeof uniforms) =>
         new THREE.ShaderMaterial({
@@ -281,7 +295,7 @@ export default function ParticlePhotoBackground({ image, className = '' }: { ima
       disposed = true
       cancelAnimationFrame(raf)
       document.removeEventListener('visibilitychange', onVisibility)
-      window.removeEventListener('resize', resize)
+      ro.disconnect()
       geometry?.dispose()
       scene.traverse((obj) => {
         const m = obj as THREE.Mesh

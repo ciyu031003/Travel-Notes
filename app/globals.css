@@ -1453,3 +1453,9 @@ body {
   0%, 100% { opacity: 0.15; transform: scale(0.8); }
   50% { opacity: 0.9; transform: scale(1.15); }
 }
+
+/* 粒子化照片留言：中心清晰 → 边缘模糊的径向遮罩 */
+.chat-particle-mask {
+  -webkit-mask-image: radial-gradient(ellipse at center, black 58%, rgba(0, 0, 0, 0.85) 74%, transparent 97%);
+  mask-image: radial-gradient(ellipse at center, black 58%, rgba(0, 0, 0, 0.85) 74%, transparent 97%);
+}
