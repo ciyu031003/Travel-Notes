@@ -1,8 +1,8 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { ArrowLeft, Send, Moon, Loader2, MessageCircle, Sparkles } from 'lucide-react'
-import ParticleImageBg from './ParticleImageBg'
+import ParticlePhotoBackground from './space/ParticlePhotoBackground'
 
 interface Message {
   id: number
@@ -99,15 +99,15 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
 
   return (
     <div className="fixed inset-0 z-[110] overflow-hidden bg-[#04050d] flex flex-col">
-      {/* 整页粒子化照片背景 */}
+      {/* 整页粒子化照片背景（Three.js：散落 → 聚合为照片，清晰可见） */}
       <div className="absolute inset-0">
-        <ParticleImageBg image={image} />
+        <ParticlePhotoBackground image={image} />
       </div>
-      {/* 柔和的深色渐变保证文字可读性（保留粒子可见） */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/75 pointer-events-none" />
+      {/* 仅顶部/底部轻微渐变保证文字可读性，主体照片粒子保持明亮 */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 pointer-events-none" />
 
       {/* 顶部栏：返回 + 照片信息 */}
-      <header className="relative z-10 flex items-center gap-3 px-4 sm:px-6 py-3.5 border-b border-white/10 bg-black/25 backdrop-blur-md flex-shrink-0">
+      <header className="relative z-10 flex items-center gap-3 px-4 sm:px-6 py-3.5 border-b border-white/10 bg-black/20 backdrop-blur-md flex-shrink-0">
         <button
           type="button"
           onClick={onBack}
