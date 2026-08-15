@@ -33,7 +33,8 @@ export default function LayoutContent({
   if (isHomePage) {
     return (
       <>
-        <main className="flex-1 pb-14 md:pb-0">
+        <Navbar />
+        <main className="flex-1 pt-16 pb-14 md:pb-0">
           {children}
         </main>
         <MobileBottomNav />

@@ -7,13 +7,10 @@ import {
   MapPin,
   Globe2,
   ArrowRight,
-  Lock,
   MessageCircle,
   X,
   Send,
   Quote,
-  Settings,
-  LogOut,
   CalendarDays,
   Image as ImageIcon,
   Pause,
@@ -128,39 +125,6 @@ function SectionTitle({
   )
 }
 
-function HeaderAction({
-  icon: Icon,
-  label,
-  href,
-  onClick,
-}: {
-  icon: ComponentType<{ className?: string }>
-  label: string
-  href?: string
-  onClick?: () => void
-}) {
-  const cls =
-    'flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl px-2.5 text-sm text-[#5A6670] transition-colors hover:bg-[#F5DCE0]/60 hover:text-[#A64E61] md:px-3'
-  const inner = (
-    <>
-      <Icon className="h-[18px] w-[18px]" />
-      <span className="hidden sm:inline">{label}</span>
-    </>
-  )
-  if (href) {
-    return (
-      <Link href={href} className={cls} aria-label={label}>
-        {inner}
-      </Link>
-    )
-  }
-  return (
-    <button type="button" onClick={onClick} className={cls} aria-label={label}>
-      {inner}
-    </button>
-  )
-}
-
 function FeatureCard({
   icon: Icon,
   title,
@@ -237,13 +201,6 @@ export default function HomeClient({
     } catch {}
   }
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/logout', { method: 'POST' })
-      setUsername(null)
-    } catch {}
-  }
-
   useEffect(() => {
     checkAuth()
   }, [])
@@ -305,52 +262,6 @@ export default function HomeClient({
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-[#FAFBF7] via-[#FDF8F5] to-[#FAFBF7] text-[#3D4852]">
-      {/* 顶部导航栏 */}
-      <header className="fixed top-0 left-0 right-0 z-40 border-b border-[#E8DDD8]/60 bg-[#FAFBF7]/90 backdrop-blur-md">
-        <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 md:px-5">
-          <Link
-            href="/"
-            className="flex flex-shrink-0 items-center gap-2 text-lg font-bold text-[#3D4852]"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C76E80] shadow-sm">
-              <Heart className="h-4 w-4 fill-white text-white" />
-            </span>
-            <span>我们的小家</span>
-          </Link>
-          <div className="flex items-center gap-1 md:gap-2">
-            <HeaderAction href="/travel" icon={MapPin} label="旅行地图" />
-            <HeaderAction icon={MessageCircle} label="留言" onClick={() => setShowDanmakuInput(true)} />
-            <HeaderAction icon={Lock} label="相册" onClick={() => setShowAlbumUnlock(true)} />
-            {username ? (
-              <div className="ml-1 flex items-center gap-1 border-l border-[#E8DDD8]/70 pl-2 md:ml-2 md:pl-3">
-                <span className="whitespace-nowrap text-sm font-medium text-[#3D4852]">{username}</span>
-                <Link
-                  href="/admin"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5A6670] transition-colors hover:bg-[#F5DCE0]/60 hover:text-[#3D4852]"
-                  aria-label="管理后台"
-                >
-                  <Settings className="h-[18px] w-[18px]" />
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5A6670] transition-colors hover:bg-[#F5DCE0]/60 hover:text-[#C44A5A]"
-                  aria-label="退出登录"
-                >
-                  <LogOut className="h-[18px] w-[18px]" />
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="ml-1 flex h-10 flex-shrink-0 items-center whitespace-nowrap rounded-xl bg-[#A64E61] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#8B3A4C]"
-              >
-                登录
-              </Link>
-            )}
-          </div>
-        </nav>
-      </header>
-
       {/* 弹幕层 */}
       {!danmakuPaused && (
         <div
@@ -382,9 +293,9 @@ export default function HomeClient({
         </button>
       )}
 
-      <div className="relative z-10 pt-14">
+      <div className="relative z-10">
         {/* Hero 区域 */}
-        <section className="px-3 pt-14 pb-10 md:px-5 md:pt-20 md:pb-14">
+        <section className="px-3 pt-8 pb-10 md:px-5 md:pt-12 md:pb-14">
           <div className="mx-auto max-w-3xl animate-[fade-in-up_0.7s_ease-out_both] text-center">
             <h1 className="font-display text-[44px] leading-[1.15] font-bold tracking-tight text-[#2D3842] md:text-6xl">
               <span className="block">一起走过的</span>
