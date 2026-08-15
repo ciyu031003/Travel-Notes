@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ComponentType, type CSSProperties } from 'react'
+import { useState, useEffect, useRef, type ComponentType, type CSSProperties } from 'react'
 import Link from 'next/link'
 import {
   Heart,
@@ -141,10 +141,24 @@ function FeatureCard({
   href?: string
   onClick?: () => void
 }) {
+  const [spot, setSpot] = useState({ x: 50, y: 50 })
+  const onMove = (e: React.MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    setSpot({
+      x: ((e.clientX - r.left) / r.width) * 100,
+      y: ((e.clientY - r.top) / r.height) * 100,
+    })
+  }
   const cls =
     'group relative flex flex-col items-start gap-3 rounded-2xl border border-[#E8DDD8]/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 text-left shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] transition-all hover:-translate-y-0.5 hover:border-[#E8B8C2]/70 hover:shadow-[0_16px_36px_-16px_rgba(166,78,97,0.28)]'
   const body = (
     <>
+      <span
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          background: `radial-gradient(220px circle at ${spot.x}% ${spot.y}%, rgba(232,184,194,0.16), transparent 62%)`,
+        }}
+      />
       <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F5DCE0] dark:bg-[#33262E] text-[#A64E61] dark:text-[#E8B8C2] transition-transform group-hover:scale-105">
         <Icon className="h-6 w-6" />
       </span>
@@ -160,13 +174,13 @@ function FeatureCard({
   )
   if (href) {
     return (
-      <Link href={href} className={cls}>
+      <Link href={href} className={cls} onMouseMove={onMove}>
         {body}
       </Link>
     )
   }
   return (
-    <button type="button" onClick={onClick} className={cls}>
+    <button type="button" onClick={onClick} className={cls} onMouseMove={onMove}>
       {body}
     </button>
   )
@@ -374,15 +388,15 @@ export default function HomeClient({
               >
                 最近旅行
               </SectionTitle>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {travelPosts.slice(0, 4).map((post) => (
+              <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {travelPosts.slice(0, 6).map((post) => (
                   <Link
                     key={post.slug}
                     href={`/travel/${post.slug}`}
-                    className="group block overflow-hidden rounded-xl border border-[#E8DDD8]/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] transition-all hover:border-[#E8B8C2]/70 hover:shadow-md"
+                    className="group w-64 flex-shrink-0 snap-start overflow-hidden rounded-xl border border-[#E8DDD8]/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] transition-all hover:border-[#E8B8C2]/70 hover:shadow-md"
                   >
                     {post.cover ? (
-                      <div className="relative h-36 overflow-hidden bg-[#F5DCE0]/40 dark:bg-[#33262E] md:h-40">
+                      <div className="relative h-36 overflow-hidden bg-[#F5DCE0]/40 dark:bg-[#33262E]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={post.cover}
@@ -392,7 +406,7 @@ export default function HomeClient({
                         />
                       </div>
                     ) : (
-                      <div className="flex h-24 items-center justify-center bg-gradient-to-br from-[#FDF3F5] to-[#F5DCE0]/70 dark:from-[#2A2328] dark:to-[#33262E] md:h-28">
+                      <div className="flex h-36 items-center justify-center bg-gradient-to-br from-[#FDF3F5] to-[#F5DCE0]/70 dark:from-[#2A2328] dark:to-[#33262E]">
                         <MapPin className="h-7 w-7 text-[#C76E80]" />
                       </div>
                     )}
@@ -408,7 +422,7 @@ export default function HomeClient({
                   </Link>
                 ))}
                 {travelPosts.length === 0 && (
-                  <div className="py-10 text-center sm:col-span-2">
+                  <div className="flex w-full flex-col items-center justify-center py-10 text-center">
                     <p className="text-sm text-[#5A6670] dark:text-[#9BA3AE]">还没有旅行记录</p>
                     <Link
                       href="/travel"
@@ -445,8 +459,14 @@ export default function HomeClient({
                           {a.recurring ? '周年纪念' : '纪念日'} · {formatAnniversaryDate(a.date)}
                         </p>
                         <p className="mt-1.5 font-semibold text-[#3D4852] dark:text-[#E8E6E1]">{a.title}</p>
-                        <p className="mt-1 text-2xl font-bold text-[#A64E61] dark:text-[#E8B8C2]">
-                          {days === 0 ? '就是今天' : `还有 ${days} 天`}
+                        <div className="mt-2 flex items-end gap-2">
+                          <span className="font-display text-4xl font-bold leading-none text-[#A64E61] dark:text-[#E8B8C2]">
+                            {days}
+                          </span>
+                          <span className="pb-1 text-sm text-[#5A6670] dark:text-[#9BA3AE]">天</span>
+                        </div>
+                        <p className="mt-1 text-xs text-[#5A6670] dark:text-[#9BA3AE]">
+                          {days === 0 ? '就是今天' : '距离这个日子还有'}
                         </p>
                         {a.description && (
                           <p className="mt-1 text-xs text-[#5A6670] dark:text-[#9BA3AE]">{a.description}</p>
@@ -472,9 +492,14 @@ export default function HomeClient({
               <p className="mt-4 text-lg font-medium leading-relaxed text-[#3D4852] dark:text-[#E8E6E1] md:text-xl">
                 「{quote}」
               </p>
-              <p className="mt-4 text-xs text-[#5A6670] dark:text-[#9BA3AE]">
-                {new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}
-              </p>
+              <div className="mx-auto mt-5 flex h-20 w-20 rotate-[-6deg] items-center justify-center rounded-full border-2 border-dashed border-[#C76E80] dark:border-[#E8B8C2]/70">
+                <div className="text-center text-[#A64E61] dark:text-[#E8B8C2]">
+                  <p className="text-[9px] tracking-[0.25em]">DAILY</p>
+                  <p className="font-display text-base font-bold">
+                    {new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
