@@ -101,7 +101,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
           href="/"
           className={cn(
             'font-bold text-xl flex items-center gap-2',
-            useDarkText ? '!text-white' : 'text-[#3D4852]'
+            useDarkText ? '!text-white' : 'text-[#3D4852] dark:text-gray-100'
           )}
         >
           <span className="w-8 h-8 bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] rounded-xl flex items-center justify-center shadow-sm">
@@ -120,10 +120,10 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 isActive(item.href)
                   ? useDarkText
                     ? 'bg-white/20 text-white'
-                    : 'bg-[#F5DCE0]/50 text-[#8B4A5A]'
+                    : 'bg-[#F5DCE0]/50 text-[#8B4A5A] dark:bg-white/10 dark:text-rose-300'
                   : useDarkText
                     ? 'text-white/70 hover:bg-white/10 hover:text-white'
-                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852]'
+                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852] dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
               )}
             >
               <item.icon className="w-4 h-4" />
@@ -136,7 +136,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70 hover:bg-white/10'
-                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-primary-500'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-primary-500 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="搜索"
           >
@@ -148,7 +148,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors ml-2',
               useDarkText
                 ? 'text-white/70 hover:bg-white/10'
-                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
             )}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -159,7 +159,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70 hover:bg-white/10'
-                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="管理后台"
           >
@@ -169,7 +169,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             <div className="flex items-center gap-2 ml-2 pl-3 border-l border-gray-200 dark:border-gray-700">
               <span className={cn(
                 'text-sm font-medium',
-                useDarkText ? 'text-white' : 'text-[#3D4852]'
+                useDarkText ? 'text-white' : 'text-[#3D4852] dark:text-gray-100'
               )}>
                 {username}
               </span>
@@ -179,7 +179,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                   'p-2 rounded-lg transition-colors',
                   useDarkText
                     ? 'text-white/70 hover:bg-white/10'
-                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
+                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
                 )}
                 title="退出登录"
               >
@@ -196,7 +196,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-primary-500'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-primary-500 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="搜索"
           >
@@ -208,7 +208,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
             )}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -219,7 +219,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="管理后台"
           >
@@ -231,7 +231,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30'
+                : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
             )}
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -257,8 +257,8 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 className={cn(
                   'px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3',
                   isActive(item.href)
-                    ? 'bg-[#F5DCE0]/50 text-[#8B4A5A]'
-                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852]'
+                    ? 'bg-[#F5DCE0]/50 text-[#8B4A5A] dark:bg-white/10 dark:text-rose-300'
+                    : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852] dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
                 )}
               >
                 <item.icon className="w-5 h-5" />

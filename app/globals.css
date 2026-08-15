@@ -1480,3 +1480,12 @@ body {
     display: none !important;
   }
 }
+
+/* 明暗模式下浏览器原生控件的配色 */
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
