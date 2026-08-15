@@ -1501,3 +1501,14 @@ html.dark {
     opacity: 1;
   }
 }
+
+/* 首页足迹地图航线流动 */
+@keyframes route-draw {
+  to {
+    stroke-dashoffset: -600;
+  }
+}
+
+.hero-route {
+  animation: route-draw 7s linear infinite;
+}

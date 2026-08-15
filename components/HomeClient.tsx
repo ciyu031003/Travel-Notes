@@ -17,6 +17,7 @@ import {
   Play,
 } from 'lucide-react'
 import AlbumUnlockModal from './AlbumUnlockModal'
+import HeroFootprintMap from '@/components/home/HeroFootprintMap'
 import MomentsStrip from '@/components/moments/MomentsStrip'
 
 interface PostMeta {
@@ -294,85 +295,64 @@ export default function HomeClient({
       )}
 
       <div className="relative z-10">
-        {/* Hero 区域 */}
-        <section className="px-3 pt-8 pb-10 md:px-5 md:pt-12 md:pb-14">
-          <div className="mx-auto max-w-3xl animate-[fade-in-up_0.7s_ease-out_both] text-center">
-            <h1 className="font-display text-[44px] leading-[1.15] font-bold tracking-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-6xl">
-              <span className="block">一起走过的</span>
-              <span className="relative mt-1 inline-block">
-                地方
-                <svg
-                  className="absolute -bottom-1.5 left-0 h-3 w-full text-[#E8B8C2]/70"
-                  viewBox="0 0 200 12"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
+        {/* Hero 区域 - 沉浸足迹地图 */}
+        <section className="px-3 pb-10 md:px-5 md:pb-14">
+          <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-10">
+            <div className="animate-[fade-in-up_0.7s_ease-out_both] text-center md:text-left">
+              <h1 className="font-display text-[44px] leading-[1.15] font-bold tracking-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-6xl">
+                <span className="block">一起走过的</span>
+                <span className="relative mt-1 inline-block">
+                  地方
+                  <svg
+                    className="absolute -bottom-1.5 left-0 h-3 w-full text-[#E8B8C2]/70"
+                    viewBox="0 0 200 12"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M0,8 Q50,2 100,6 T200,4"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      fill="none"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+              </h1>
+              <p className="mt-6 text-sm tracking-wide text-[#A64E61] dark:text-[#E8B8C2]">
+                Travel Journal · 记录我们的美好时光
+              </p>
+              <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-[#5A6670] dark:text-[#9BA3AE] md:mx-0">
+                用文字记录生活，用照片定格瞬间 —— 在这个小小的世界里，收藏我们的每一份感动
+              </p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:justify-start">
+                <Link
+                  href="/travel"
+                  className="group inline-flex items-center gap-2 rounded-xl bg-[#A64E61] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:bg-[#8B3A4C] hover:shadow-xl"
                 >
-                  <path
-                    d="M0,8 Q50,2 100,6 T200,4"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    fill="none"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </h1>
-            <p className="mt-6 text-sm tracking-wide text-[#A64E61] dark:text-[#E8B8C2]">
-              Travel Journal · 记录我们的美好时光
-            </p>
-            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-[#5A6670] dark:text-[#9BA3AE] md:text-lg">
-              用文字记录生活，用照片定格瞬间 —— 在这个小小的世界里，收藏我们的每一份感动
-            </p>
-          </div>
-        </section>
-
-        {/* 地图入口 - 主 CTA */}
-        <section className="px-3 pb-8 md:px-5">
-          <div className="mx-auto max-w-6xl">
-            <Link
-              href="/travel"
-              className="group relative block overflow-hidden rounded-2xl border border-[#A64E61]/20 shadow-[0_24px_50px_-24px_rgba(166,78,97,0.55)]"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#C76E80] via-[#B85A6D] to-[#A64E61]" />
-              <div
-                className="absolute inset-0 opacity-40"
-                style={{
-                  backgroundImage:
-                    'radial-gradient(rgba(255,255,255,0.22) 1px, transparent 1px)',
-                  backgroundSize: '26px 26px',
-                }}
-              />
-              <div className="absolute -top-16 -right-16 h-72 w-72 rounded-full bg-white/10 blur-2xl transition-transform duration-700 group-hover:scale-110" />
-              <div className="relative z-10 flex flex-col items-center justify-between gap-6 p-8 md:flex-row md:p-10">
-                <div className="flex-1 text-center md:text-left">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-sm font-medium text-white">
-                    <MapPin className="h-4 w-4" />
-                    中国旅行地图
-                  </span>
-                  <h2 className="mt-4 text-2xl font-bold text-white md:text-3xl">
-                    点击进入旅行地图
-                  </h2>
-                  <p className="mt-2 max-w-md text-sm text-white/85 md:text-base">
-                    交互式中国地图，点击省份查看旅行记录
-                  </p>
-                  <p className="mt-4 flex items-center justify-center gap-4 text-sm text-white/90 md:justify-start">
-                    <span className="flex items-center gap-1.5">
-                      <Globe2 className="h-4 w-4" />
-                      {provincesVisitedCount} 个省份
-                    </span>
-                    <span className="h-4 w-px bg-white/30" />
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4" />
-                      {travelPosts.length} 篇旅行
-                    </span>
-                  </p>
-                </div>
-                <span className="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-white dark:bg-[#1B2128] px-6 py-3 font-semibold text-[#8B3A4C] shadow-lg transition-transform group-hover:-translate-y-0.5">
-                  打开地图
+                  <MapPin className="h-4 w-4" />
+                  打开我们的地图
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <span className="inline-flex items-center gap-2 rounded-xl border border-[#E8DDD8]/70 bg-white/85 px-4 py-3 text-sm text-[#5A6670] dark:border-[#2C343E] dark:bg-[#1B2128]/90 dark:text-[#9BA3AE]">
+                  <Globe2 className="h-4 w-4 text-[#A64E61] dark:text-[#E8B8C2]" />
+                  <span className="font-medium text-[#3D4852] dark:text-[#E8E6E1]">{provincesVisitedCount}</span>
+                  个省份
+                  <span className="mx-1 h-4 w-px bg-[#E8DDD8] dark:bg-[#2C343E]" />
+                  <span className="font-medium text-[#3D4852] dark:text-[#E8E6E1]">{travelPosts.length}</span>
+                  篇旅行
                 </span>
               </div>
-            </Link>
+            </div>
+
+            <div className="relative animate-[fade-in-up_0.7s_ease-out_0.15s_both]">
+              <div className="overflow-hidden rounded-2xl border border-[#E8DDD8]/60 bg-white/80 shadow-[0_18px_40px_-20px_rgba(166,78,97,0.35)] dark:border-[#2C343E] dark:bg-[#1B2128]/90">
+                <HeroFootprintMap posts={travelPosts} />
+              </div>
+              <span className="absolute -top-3 right-2 rotate-6 rounded-full border-2 border-dashed border-[#C76E80] bg-[#FFF8F4] px-3 py-1.5 text-xs font-medium text-[#A64E61] shadow-sm dark:border-[#E8B8C2]/70 dark:bg-[#2A1D22] dark:text-[#E8B8C2]">
+                足迹地图 · {provincesVisitedCount} 省
+              </span>
+            </div>
           </div>
         </section>
 
