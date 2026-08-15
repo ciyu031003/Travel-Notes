@@ -24,6 +24,17 @@ function timeAgo(dateStr: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
+function SkeletonCard() {
+  return (
+    <div className="animate-pulse rounded-xl border border-[#E8DDD8]/60 bg-white p-4">
+      <div className="h-3 w-full rounded bg-[#E8DDD8]/70" />
+      <div className="mt-2 h-3 w-4/5 rounded bg-[#E8DDD8]/70" />
+      <div className="mt-2 h-3 w-2/5 rounded bg-[#E8DDD8]/70" />
+      <div className="mt-4 h-2.5 w-1/4 rounded bg-[#E8DDD8]/50" />
+    </div>
+  )
+}
+
 export default function MomentsStrip() {
   const [moments, setMoments] = useState<MomentItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,9 +55,6 @@ export default function MomentsStrip() {
     }
   }, [])
 
-  if (loading) return null
-  if (moments.length === 0) return null
-
   return (
     <section className="px-3 pb-8 md:px-5">
       <div className="mx-auto max-w-6xl">
@@ -65,27 +73,47 @@ export default function MomentsStrip() {
             </Link>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
-            {moments.map((moment) => (
+          {loading ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+          ) : moments.length === 0 ? (
+            <div className="py-10 text-center">
+              <Sparkles className="mx-auto h-8 w-8 text-[#E8B8C2]" />
+              <p className="mt-3 text-sm text-[#5A6670]">还没有碎碎念，来写第一条吧</p>
               <Link
-                key={moment.id}
-                href="/moments"
-                className="group block rounded-xl border border-[#E8DDD8]/60 bg-white p-4 transition-all hover:border-[#E8B8C2]/70 hover:shadow-md"
+                href="/admin/moments"
+                className="mt-4 inline-flex items-center gap-1 rounded-xl bg-[#A64E61] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#8B3A4C]"
               >
-                <p className="text-sm leading-relaxed text-[#3D4852] line-clamp-3 whitespace-pre-wrap break-words">
-                  {moment.content}
-                </p>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-[11px] text-[#5A6670]">{timeAgo(moment.createdAt)}</span>
-                  {moment.tags && moment.tags.length > 0 && (
-                    <span className="rounded-full bg-[#F5DCE0]/50 px-1.5 py-0.5 text-[10px] text-[#A64E61]">
-                      #{moment.tags[0]}
-                    </span>
-                  )}
-                </div>
+                写一条碎碎念
+                <ArrowRight className="h-4 w-4" />
               </Link>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-3">
+              {moments.map((moment) => (
+                <Link
+                  key={moment.id}
+                  href="/moments"
+                  className="group block rounded-xl border border-[#E8DDD8]/60 bg-white p-4 transition-all hover:border-[#E8B8C2]/70 hover:shadow-md"
+                >
+                  <p className="text-sm leading-relaxed text-[#3D4852] line-clamp-3 whitespace-pre-wrap break-words">
+                    {moment.content}
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-[11px] text-[#5A6670]">{timeAgo(moment.createdAt)}</span>
+                    {moment.tags && moment.tags.length > 0 && (
+                      <span className="rounded-full bg-[#F5DCE0]/50 px-1.5 py-0.5 text-[10px] text-[#A64E61]">
+                        #{moment.tags[0]}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

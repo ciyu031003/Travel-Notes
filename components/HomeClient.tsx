@@ -16,6 +16,8 @@ import {
   LogOut,
   CalendarDays,
   Image as ImageIcon,
+  Pause,
+  Play,
 } from 'lucide-react'
 import AlbumUnlockModal from './AlbumUnlockModal'
 import MomentsStrip from '@/components/moments/MomentsStrip'
@@ -215,6 +217,7 @@ export default function HomeClient({
   const [danmakuText, setDanmakuText] = useState('')
   const [danmakus, setDanmakus] = useState<Danmaku[]>([])
   const [username, setUsername] = useState<string | null>(null)
+  const [danmakuPaused, setDanmakuPaused] = useState(false)
   const quote = getDailyQuote()
 
   const closeDanmaku = () => {
@@ -349,20 +352,35 @@ export default function HomeClient({
       </header>
 
       {/* 弹幕层 */}
-      <div
-        aria-hidden="true"
-        className="danmaku-layer fixed inset-0 z-30 pointer-events-none overflow-hidden"
-      >
-        {danmakus.map((d, index) => (
-          <DanmakuItem
-            key={d.id}
-            danmaku={d}
-            topOffset={5 + (index % 8) * 11}
-            duration={15 + (index % 5) * 3}
-            delay={(index % 10) * 2.5}
-          />
-        ))}
-      </div>
+      {!danmakuPaused && (
+        <div
+          aria-hidden="true"
+          className="danmaku-layer fixed inset-0 z-30 pointer-events-none overflow-hidden"
+        >
+          {danmakus.map((d, index) => (
+            <DanmakuItem
+              key={d.id}
+              danmaku={d}
+              topOffset={5 + (index % 8) * 11}
+              duration={15 + (index % 5) * 3}
+              delay={(index % 10) * 2.5}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* 弹幕暂停/开启开关 */}
+      {danmakus.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setDanmakuPaused((v) => !v)}
+          aria-pressed={danmakuPaused}
+          className="fixed bottom-[76px] right-4 z-40 flex items-center gap-1.5 rounded-full border border-[#E8DDD8]/70 bg-white/95 px-3.5 py-2 text-xs font-medium text-[#5A6670] shadow-lg transition-colors hover:border-[#E8B8C2]/70 hover:text-[#A64E61] md:bottom-6 md:right-6"
+        >
+          {danmakuPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+          <span>{danmakuPaused ? '开启弹幕' : '暂停弹幕'}</span>
+        </button>
+      )}
 
       <div className="relative z-10 pt-14">
         {/* Hero 区域 */}
