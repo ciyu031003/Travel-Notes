@@ -56,11 +56,11 @@ export default function MomentsStrip() {
   }, [])
 
   return (
-    <section className="px-3 pb-8 md:px-5">
-      <div className="mx-auto max-w-6xl">
+    <section className="px-3 pb-12 md:px-6 md:pb-16">
+      <div className="mx-auto max-w-7xl">
         <div className="rounded-2xl border border-[#E8DDD8]/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="flex items-center gap-2.5 text-base font-semibold text-[#3D4852] dark:text-[#E8E6E1]">
+            <h2 className="flex items-center gap-2.5 text-lg font-semibold text-[#3D4852] dark:text-[#E8E6E1]">
               <Sparkles className="h-[18px] w-[18px] text-[#A64E61] dark:text-[#E8B8C2]" />
               碎碎念
             </h2>

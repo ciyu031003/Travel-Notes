@@ -76,8 +76,8 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
   return (
     <svg
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      preserveAspectRatio="xMidYMid meet"
-      className="h-auto w-full"
+      preserveAspectRatio="xMidYMid slice"
+      className="h-full w-full"
       aria-hidden="true"
     >
       <g strokeWidth="1" strokeLinejoin="round" strokeLinecap="round">

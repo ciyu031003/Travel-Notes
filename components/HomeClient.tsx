@@ -117,7 +117,7 @@ function SectionTitle({
 }) {
   return (
     <div className="mb-5 flex items-center justify-between">
-      <h2 className="flex items-center gap-2.5 text-base font-semibold text-[#3D4852] dark:text-[#E8E6E1]">
+      <h2 className="flex items-center gap-2.5 text-lg font-semibold text-[#3D4852] dark:text-[#E8E6E1]">
         <Icon className="h-[18px] w-[18px] text-[#A64E61] dark:text-[#E8B8C2]" />
         {children}
       </h2>
@@ -150,7 +150,7 @@ function FeatureCard({
     })
   }
   const cls =
-    'group relative flex flex-col items-start gap-3 rounded-2xl border border-[#E8DDD8]/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 text-left shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] transition-all hover:-translate-y-0.5 hover:border-[#E8B8C2]/70 hover:shadow-[0_16px_36px_-16px_rgba(166,78,97,0.28)]'
+    'group relative flex flex-col items-start gap-3 rounded-2xl border border-[#E8DDD8]/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-7 text-left shadow- lg:p-8[0_10px_28px_-12px_rgba(90,102,112,0.18)] transition-all hover:-translate-y-0.5 hover:border-[#E8B8C2]/70 hover:shadow-[0_16px_36px_-16px_rgba(166,78,97,0.28)]'
   const body = (
     <>
       <span
@@ -159,8 +159,8 @@ function FeatureCard({
           background: `radial-gradient(220px circle at ${spot.x}% ${spot.y}%, rgba(232,184,194,0.16), transparent 62%)`,
         }}
       />
-      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F5DCE0] dark:bg-[#33262E] text-[#A64E61] dark:text-[#E8B8C2] transition-transform group-hover:scale-105">
-        <Icon className="h-6 w-6" />
+      <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#F5DCE0] dark:bg-[#33262E] text-[#A64E61] dark:text-[#E8B8C2] transition-transform group-hover:scale-105">
+        <Icon className="h-7 w-7" />
       </span>
       <span>
         <span className="block text-base font-semibold text-[#3D4852] dark:text-[#E8E6E1]">{title}</span>
@@ -310,10 +310,10 @@ export default function HomeClient({
 
       <div className="relative z-10">
         {/* Hero 区域 - 沉浸足迹地图 */}
-        <section className="px-3 pb-10 md:px-5 md:pb-14">
-          <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-10">
+        <section className="px-3 pt-10 pb-12 md:px-6 md:pt-16 md:pb-16">
+          <div className="mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
             <div className="animate-[fade-in-up_0.7s_ease-out_both] text-center md:text-left">
-              <h1 className="font-display text-[44px] leading-[1.15] font-bold tracking-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-6xl">
+              <h1 className="font-display text-[44px] leading-[1.12] font-bold tracking-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-6xl xl:text-7xl">
                 <span className="block">一起走过的</span>
                 <span className="relative mt-1 inline-block">
                   地方
@@ -333,16 +333,16 @@ export default function HomeClient({
                   </svg>
                 </span>
               </h1>
-              <p className="mt-6 text-sm tracking-wide text-[#A64E61] dark:text-[#E8B8C2]">
+              <p className="mt-7 text-sm tracking-[0.2em] text-[#A64E61] dark:text-[#E8B8C2] md:text-base">
                 Travel Journal · 记录我们的美好时光
               </p>
-              <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-[#5A6670] dark:text-[#9BA3AE] md:mx-0">
+              <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-[#5A6670] dark:text-[#9BA3AE] md:mx-0 md:text-lg">
                 用文字记录生活，用照片定格瞬间 —— 在这个小小的世界里，收藏我们的每一份感动
               </p>
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:justify-start">
+              <div className="mt-9 flex flex-wrap items-center justify-center gap-3 md:justify-start">
                 <Link
                   href="/travel"
-                  className="group inline-flex items-center gap-2 rounded-xl bg-[#A64E61] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:bg-[#8B3A4C] hover:shadow-xl"
+                  className="group inline-flex items-center gap-2 rounded-xl bg-[#A64E61] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:bg-[#8B3A4C] hover:shadow-xl md:text-base"
                 >
                   <MapPin className="h-4 w-4" />
                   打开我们的地图
@@ -360,10 +360,10 @@ export default function HomeClient({
             </div>
 
             <div className="relative animate-[fade-in-up_0.7s_ease-out_0.15s_both]">
-              <div className="overflow-hidden rounded-2xl border border-[#E8DDD8]/60 bg-white/80 shadow-[0_18px_40px_-20px_rgba(166,78,97,0.35)] dark:border-[#2C343E] dark:bg-[#1B2128]/90">
+              <div className="h-[340px] overflow-hidden rounded-2xl border border-[#E8DDD8]/60 bg-white/80 shadow-[0_24px_50px_-24px_rgba(166,78,97,0.4)] dark:border-[#2C343E] dark:bg-[#1B2128]/90 md:h-[420px] lg:h-[470px]">
                 <HeroFootprintMap posts={travelPosts} />
               </div>
-              <span className="absolute -top-3 right-2 rotate-6 rounded-full border-2 border-dashed border-[#C76E80] bg-[#FFF8F4] px-3 py-1.5 text-xs font-medium text-[#A64E61] shadow-sm dark:border-[#E8B8C2]/70 dark:bg-[#2A1D22] dark:text-[#E8B8C2]">
+              <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-[#C76E80] bg-[#FFF8F4] px-3 py-1.5 text-xs font-medium text-[#A64E61] shadow-sm dark:border-[#E8B8C2]/70 dark:bg-[#2A1D22] dark:text-[#E8B8C2]">
                 足迹地图 · {provincesVisitedCount} 省
               </span>
             </div>
@@ -371,8 +371,8 @@ export default function HomeClient({
         </section>
 
         {/* 最近旅行 */}
-        <section className="px-3 pb-8 md:px-5">
-          <div className="mx-auto max-w-6xl">
+        <section className="px-3 pb-12 md:px-6 md:pb-16">
+          <div className="mx-auto max-w-7xl">
             <div className="rounded-2xl border border-[#E8DDD8]/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
               <SectionTitle
                 icon={MapPin}
@@ -388,15 +388,15 @@ export default function HomeClient({
               >
                 最近旅行
               </SectionTitle>
-              <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 scrollbar-hide">
                 {travelPosts.slice(0, 6).map((post) => (
                   <Link
                     key={post.slug}
                     href={`/travel/${post.slug}`}
-                    className="group w-64 flex-shrink-0 snap-start overflow-hidden rounded-xl border border-[#E8DDD8]/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] transition-all hover:border-[#E8B8C2]/70 hover:shadow-md"
+                    className="group w-72 flex-shrink-0 snap-start lg:w-80 overflow-hidden rounded-xl border border-[#E8DDD8]/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] transition-all hover:border-[#E8B8C2]/70 hover:shadow-md"
                   >
                     {post.cover ? (
-                      <div className="relative h-36 overflow-hidden bg-[#F5DCE0]/40 dark:bg-[#33262E]">
+                      <div className="relative h-40 overflow-hidden bg-[#F5DCE0]/40 dark:bg-[#33262E]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={post.cover}
@@ -406,7 +406,7 @@ export default function HomeClient({
                         />
                       </div>
                     ) : (
-                      <div className="flex h-36 items-center justify-center bg-gradient-to-br from-[#FDF3F5] to-[#F5DCE0]/70 dark:from-[#2A2328] dark:to-[#33262E]">
+                      <div className="flex h-40 items-center justify-center bg-gradient-to-br from-[#FDF3F5] to-[#F5DCE0]/70 dark:from-[#2A2328] dark:to-[#33262E]">
                         <MapPin className="h-7 w-7 text-[#C76E80]" />
                       </div>
                     )}
@@ -443,8 +443,8 @@ export default function HomeClient({
 
         {/* 纪念日 */}
         {anniversaries.length > 0 && (
-          <section className="px-3 pb-8 md:px-5">
-            <div className="mx-auto max-w-6xl">
+          <section className="px-3 pb-12 md:px-6 md:pb-16">
+            <div className="mx-auto max-w-7xl">
               <div className="rounded-2xl border border-[#E8DDD8]/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
                 <SectionTitle icon={Heart}>我们的纪念日</SectionTitle>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -481,15 +481,15 @@ export default function HomeClient({
         )}
 
         {/* 每日一言 */}
-        <section className="px-3 pb-8 md:px-5">
+        <section className="px-3 pb-12 md:px-6 md:pb-16">
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-2xl border border-[#E8B8C2]/40 dark:border-[#5A3A44] bg-white/90 dark:bg-[#1B2128]/95 px-6 py-8 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-10">
+            <div className="rounded-2xl border border-[#E8B8C2]/40 dark:border-[#5A3A44] bg-white/90 dark:bg-[#1B2128]/95 px-6 py-10 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-12">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-[#A64E61] dark:text-[#E8B8C2]">
                 <Quote className="h-4 w-4" />
                 <span>每日一言</span>
                 <Quote className="h-4 w-4" />
               </div>
-              <p className="mt-4 text-lg font-medium leading-relaxed text-[#3D4852] dark:text-[#E8E6E1] md:text-xl">
+              <p className="mt-4 text-lg font-medium leading-relaxed text-[#3D4852] dark:text-[#E8E6E1] md:text-2xl">
                 「{quote}」
               </p>
               <div className="mx-auto mt-5 flex h-20 w-20 rotate-[-6deg] items-center justify-center rounded-full border-2 border-dashed border-[#C76E80] dark:border-[#E8B8C2]/70">
@@ -505,8 +505,8 @@ export default function HomeClient({
         </section>
 
         {/* 功能入口 */}
-        <section className="px-3 pb-12 md:px-5">
-          <div className="mx-auto max-w-6xl">
+        <section className="px-3 pb-16 md:px-6 md:pb-20">
+          <div className="mx-auto max-w-7xl">
             <div className="grid gap-4 sm:grid-cols-3">
               <FeatureCard
                 icon={ImageIcon}
@@ -535,7 +535,7 @@ export default function HomeClient({
 
         {/* 底部 */}
         <footer className="border-t border-[#E8DDD8]/60 dark:border-[#2C343E] px-3 py-10 md:px-5">
-          <div className="mx-auto max-w-6xl text-center">
+          <div className="mx-auto max-w-7xl text-center">
             <p className="flex items-center justify-center gap-1.5 text-sm text-[#5A6670] dark:text-[#9BA3AE]">
               Made with <Heart className="h-4 w-4 fill-[#C76E80] text-[#C76E80]" /> by 袁同学 & 阿比旦
             </p>
