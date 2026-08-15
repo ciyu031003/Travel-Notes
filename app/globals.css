@@ -1459,3 +1459,24 @@ body {
   -webkit-mask-image: radial-gradient(ellipse at center, black 58%, rgba(0, 0, 0, 0.85) 74%, transparent 97%);
   mask-image: radial-gradient(ellipse at center, black 58%, rgba(0, 0, 0, 0.85) 74%, transparent 97%);
 }
+
+
+/* ============ 全局可访问性 ============ */
+:focus-visible {
+  outline: 2px solid #c76e80;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .danmaku-layer {
+    display: none !important;
+  }
+}

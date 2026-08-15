@@ -37,6 +37,7 @@ module.exports = {
         danger:  { 50: '#fef2f2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c' },
       },
       fontFamily: {
+        display: ['"Noto Serif SC"', 'Noto Serif', 'Georgia', 'serif'],
         sans: ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
         zpix: ['Zpix', 'monospace', 'sans-serif'],

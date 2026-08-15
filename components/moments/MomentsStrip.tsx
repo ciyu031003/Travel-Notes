@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Sparkles, ArrowRight, Loader2 } from 'lucide-react'
+import { Sparkles, ArrowRight } from 'lucide-react'
 
 interface MomentItem {
   id: number
@@ -48,46 +48,43 @@ export default function MomentsStrip() {
   if (moments.length === 0) return null
 
   return (
-    <section className="px-3 md:px-5 pb-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="relative bg-gradient-to-br from-white/90 to-[#FDF3F5]/90 rounded-3xl p-6 md:p-8 shadow-lg border border-[#E8B8C2]/25 overflow-hidden">
-          <div className="absolute top-0 left-0 w-40 h-40 bg-[#F5DCE0]/30 rounded-full blur-3xl" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-5">
-              <div className="inline-flex items-center gap-2 text-[#5A4A3A] text-sm font-medium">
-                <Sparkles className="w-4 h-4 text-[#E8B8C2]" />
-                <span>碎碎念</span>
-              </div>
-              <Link
-                href="/moments"
-                className="inline-flex items-center gap-1 text-xs text-[#8B4A5A] hover:text-[#C495A0] transition-colors"
-              >
-                全部
-                <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
+    <section className="px-3 pb-8 md:px-5">
+      <div className="mx-auto max-w-6xl">
+        <div className="rounded-2xl border border-[#E8DDD8]/70 bg-white/85 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="flex items-center gap-2.5 text-base font-semibold text-[#3D4852]">
+              <Sparkles className="h-[18px] w-[18px] text-[#A64E61]" />
+              碎碎念
+            </h2>
+            <Link
+              href="/moments"
+              className="inline-flex items-center gap-1 text-xs text-[#A64E61] transition-colors hover:text-[#8B3A4C]"
+            >
+              全部
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
 
-            <div className="grid md:grid-cols-3 gap-3">
-              {moments.map((moment) => (
-                <Link
-                  key={moment.id}
-                  href="/moments"
-                  className="group bg-white/70 hover:bg-white rounded-2xl p-4 border border-[#E8B8C2]/20 transition-all hover:shadow-md"
-                >
-                  <p className="text-sm text-[#3D4852] leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">
-                    {moment.content}
-                  </p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <span className="text-[11px] text-[#8B7355]/50">{timeAgo(moment.createdAt)}</span>
-                    {moment.tags && moment.tags.length > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F5DCE0]/40 text-[#8B4A5A]">
-                        #{moment.tags[0]}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {moments.map((moment) => (
+              <Link
+                key={moment.id}
+                href="/moments"
+                className="group block rounded-xl border border-[#E8DDD8]/60 bg-white p-4 transition-all hover:border-[#E8B8C2]/70 hover:shadow-md"
+              >
+                <p className="text-sm leading-relaxed text-[#3D4852] line-clamp-3 whitespace-pre-wrap break-words">
+                  {moment.content}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="text-[11px] text-[#5A6670]">{timeAgo(moment.createdAt)}</span>
+                  {moment.tags && moment.tags.length > 0 && (
+                    <span className="rounded-full bg-[#F5DCE0]/50 px-1.5 py-0.5 text-[10px] text-[#A64E61]">
+                      #{moment.tags[0]}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </div>
