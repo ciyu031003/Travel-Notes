@@ -19,24 +19,12 @@ const JWT_SECRET = new TextEncoder().encode(resolveJwtSecret())
 const PUBLIC_PATHS = [
   '/login',
   '/admin/login',
-  '/admin/change-password',
   '/admin/setup',
+  '/admin/change-password',
   '/forgot-password',
-  '/album',
-  '/albums',
-  '/travel',
-  '/timeline',
-  '/search',
-  '/moments',
-  '/dashboard',
   '/api/login',
   '/api/check-auth',
   '/api/logout',
-  '/api/album',
-  '/api/albums',
-  '/api/anniversaries',
-  '/api/images',
-  '/api/travel',
   '/api/verify-album-password',
   '/api/admin/login',
   '/api/admin/check',
@@ -45,11 +33,6 @@ const PUBLIC_PATHS = [
   '/api/admin/settings',
   '/api/admin/force-change-password',
   '/api/forgot-password',
-  '/api/moments',
-  '/api/likes',
-  '/api/photo-messages',
-  '/api/danmaku',
-  '/api/search',
   '/uploads',
   '/_next',
 ]
@@ -158,7 +141,7 @@ export async function middleware(request: NextRequest) {
   if (csrfResponse) return csrfResponse
 
   // 首页及公开前缀路径直接放行（首页需精确匹配，不能用 startsWith('/')）
-  if (pathname === '/' || PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
+  if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return applySecurityHeaders(NextResponse.next())
   }
 
