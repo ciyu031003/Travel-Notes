@@ -4,6 +4,7 @@
 import { prisma } from '../../db'
 import { randomUUID } from 'crypto'
 import { getStorageService } from '../../infrastructure/storage'
+import { generateMediaVariants } from '../../infrastructure/media-variants'
 import {
   validateAndSanitizeImage,
   MAX_IMAGE_COUNT,
@@ -174,6 +175,28 @@ export async function addMediaToAlbum(albumId: number, files: UploadFile[]): Pro
         visibility: 'COUPLE',
       },
     })
+    // 生成并持久化媒体变体（缩略图/预览/模糊占位）
+    try {
+      const variants = await generateMediaVariants(safe.buffer)
+      for (const v of variants) {
+        const variantKey = key.replace(/\.[a-z0-9]+$/i, '-' + v.variant.toLowerCase() + '.jpg')
+        await storage.upload(v.buffer, variantKey, v.mimeType)
+        await prisma.mediaVariant.create({
+          data: {
+            mediaId: media.id,
+            variant: v.variant as any,
+            storageKey: variantKey,
+            width: v.width,
+            height: v.height,
+            size: v.size,
+            mimeType: v.mimeType,
+          },
+        })
+      }
+    } catch (error) {
+      console.error('[Album] 生成媒体变体失败:', error)
+    }
+
     const maxOrder = await prisma.albumMedia.aggregate({
       where: { albumId },
       _max: { sortOrder: true },
