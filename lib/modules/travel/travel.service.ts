@@ -3,6 +3,7 @@
  * （面向 P2 的行程与花费管理；公开的旅行详情展示属于 P5）
  */
 import { prisma } from '../../db'
+import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
 
 export interface TravelSummary {
@@ -153,6 +154,46 @@ export async function getTravelDetail(id: number): Promise<TravelDetail | null> 
       note: e.note,
       happenedAt: iso(e.happenedAt),
     })),
+  }
+}
+
+
+export interface TravelPublicDetail {
+  id: number
+  title: string
+  slug: string
+  description: string | null
+  startDate: string | null
+  endDate: string | null
+  status: string
+  contentHtml: string
+  tags: string[] | null
+  location: string | null
+  cover: string | null
+}
+
+export async function getTravelBySlug(slug: string): Promise<TravelPublicDetail | null> {
+  if (skipDbOnBuild()) return null
+  const t = await prisma.travel.findFirst({ where: { slug } })
+  if (!t) return null
+
+  const contentHtml = await unifiedMarkdownRenderer
+    .render(t.content || '')
+    .then((r) => r.html)
+    .catch(() => '')
+
+  return {
+    id: t.id,
+    title: t.title,
+    slug: t.slug,
+    description: t.description,
+    startDate: iso(t.startDate),
+    endDate: iso(t.endDate),
+    status: t.status,
+    contentHtml,
+    tags: t.tags ? safeParseTags(t.tags) : null,
+    location: t.location,
+    cover: t.cover,
   }
 }
 
