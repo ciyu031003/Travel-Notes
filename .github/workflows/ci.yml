@@ -8,6 +8,24 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: travel_notes_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/travel_notes_ci
+
     steps:
       - uses: actions/checkout@v4
 
@@ -28,9 +46,8 @@ jobs:
       - name: Unit & security tests
         run: npm test
 
+      - name: Push database schema
+        run: npx prisma db push --skip-generate
+
       - name: Build
         run: npm run build
-        env:
-          SKIP_DB_ON_BUILD: '1'
-          SKIP_TSC: '1'
-          DATABASE_URL: 'mysql://root:ci@localhost:3306/travel_notes_ci'

@@ -2,6 +2,7 @@
  * Timeline：把旅行与回忆按年份聚合，形成“我们的时间线”。
  */
 import { prisma } from '../../db'
+import { skipDbOnBuild } from '../../db-guard'
 
 export interface TimelineEntry {
   id: number

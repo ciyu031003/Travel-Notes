@@ -2,6 +2,7 @@
  * Anniversary：纪念日管理（第一次见面/第一次旅行/生日等）
  */
 import { prisma } from '../../db'
+import { skipDbOnBuild } from '../../db-guard'
 
 export interface AnniversaryRecord {
   id: number
