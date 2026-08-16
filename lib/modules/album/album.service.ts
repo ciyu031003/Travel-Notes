@@ -2,6 +2,7 @@
  * Album：纪念相册（基于独立 Media 模型 + 对象/本地存储）
  */
 import { prisma } from '../../db'
+import { randomUUID } from 'crypto'
 import { getStorageService } from '../../infrastructure/storage'
 import {
   validateAndSanitizeImage,
@@ -159,7 +160,7 @@ export async function addMediaToAlbum(albumId: number, files: UploadFile[]): Pro
   for (const file of files) {
     const safe = await validateAndSanitizeImage(file.buffer, file.mimeType)
     const ext = EXT_BY_MIME[safe.mimeType] || 'jpg'
-    const key = `albums/${albumId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    const key = `albums/${albumId}/${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`
     const stored = await storage.upload(safe.buffer, key, safe.mimeType)
 
     const media = await prisma.media.create({

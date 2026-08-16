@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { requireAuth } from '@/lib/auth-middleware'
 import fs from 'fs'
 import path from 'path'
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
       }
 
       const ext = extMap[realMime] || 'mp4'
-      const filename = `${timestamp}-${i}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const filename = `${timestamp}-${i}-${randomUUID().slice(0, 8)}.${ext}`
       const filePath = path.join(videoDir, filename)
 
       const stream = file.stream()

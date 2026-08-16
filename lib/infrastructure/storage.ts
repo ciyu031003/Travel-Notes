@@ -3,6 +3,7 @@
  * 配置 STORAGE_ENDPOINT + STORAGE_ACCESS_KEY + STORAGE_SECRET_KEY + STORAGE_BUCKET 后自动启用对象存储。
  */
 import fs from 'fs'
+import { randomUUID } from 'crypto'
 import path from 'path'
 import {
   S3Client,
@@ -111,7 +112,7 @@ export class S3StorageService implements StorageService {
 
   /** 生成安全随机对象键 */
   static makeKey(prefix: string, ext: string): string {
-    const rand = Math.random().toString(36).slice(2, 10)
+    const rand = randomUUID().slice(0, 8)
     const ts = Date.now()
     return `${prefix}/${ts}-${rand}.${ext}`
   }
