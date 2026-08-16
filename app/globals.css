@@ -1512,3 +1512,23 @@ html.dark {
 .hero-route {
   animation: route-draw 7s linear infinite;
 }
+
+/* ============ 旅行游记图片推进+定焦转场 ============ */
+@keyframes travel-media-enter {
+  from {
+    transform: scale(1.18);
+    filter: blur(14px) brightness(0.75);
+  }
+  to {
+    transform: scale(1);
+    filter: blur(0px) brightness(1);
+  }
+}
+
+.travel-media-enter {
+  animation: travel-media-enter 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.travel-media-parallax {
+  will-change: transform;
+}

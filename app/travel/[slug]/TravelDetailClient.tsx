@@ -129,6 +129,41 @@ export default function TravelDetailClient({
     return () => observer.disconnect()
   }, [mediaItems, playVisibleVideo, pauseAllVideos])
 
+  // 滚动视差：图片随滚动轻微上下位移，切换更连贯（rAF 直写 style，不触发 React 渲染）
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const sections = Array.from(container.querySelectorAll<HTMLElement>('[data-index]'))
+    const wraps = sections.map((section) => section.querySelector<HTMLElement>('.travel-media-parallax'))
+
+    let raf = 0
+    const update = () => {
+      raf = 0
+      const h = container.clientHeight || window.innerHeight
+      const scrollTop = container.scrollTop
+      wraps.forEach((wrap, i) => {
+        if (!wrap) return
+        const progress = (i * h - scrollTop) / h
+        const y = progress * -9
+        wrap.style.transform = `translate3d(0, ${y}%, 0)`
+      })
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update)
+    }
+
+    update()
+    container.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      container.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [mediaItems])
+
   const scrollToSection = (index: number) => {
     const container = containerRef.current
     if (!container) return
@@ -225,31 +260,33 @@ export default function TravelDetailClient({
           <section
             key={`${item.type}-${index}`}
             data-index={index}
-            className="h-screen snap-start relative"
+            className="h-screen snap-start relative overflow-hidden"
           >
-            {item.type === 'image' ? (
-              <Image
-                src={item.url}
-                alt={`${title} - ${index + 1}`}
-                fill
-                sizes="100vw"
-                className="object-cover"
-                draggable={false}
-              />
-            ) : (
-              <video
-                ref={(el) => { videoRefs.current[index] = el }}
-                src={item.url.startsWith('/') ? item.url : item.url}
-                poster={item.thumbnail}
-                className="absolute inset-0 w-full h-full object-cover"
-                muted={isMuted}
-                loop
-                playsInline
-                preload="metadata"
-                onClick={() => toggleVideoPlay(index)}
-              />
-            )}
-
+            <div className="travel-media-parallax absolute -inset-y-[14%] inset-x-0">
+              {item.type === 'image' ? (
+                <Image
+                  key={`${item.type}-${index}-${index === visibleIndex ? animationKey : 'idle'}`}
+                  src={item.url}
+                  alt={`${title} - ${index + 1}`}
+                  fill
+                  sizes="100vw"
+                  className={`object-cover ${index === visibleIndex ? 'travel-media-enter' : ''}`}
+                  draggable={false}
+                />
+              ) : (
+                <video
+                  ref={(el) => { videoRefs.current[index] = el }}
+                  src={item.url.startsWith('/') ? item.url : item.url}
+                  poster={item.thumbnail}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  muted={isMuted}
+                  loop
+                  playsInline
+                  preload="metadata"
+                  onClick={() => toggleVideoPlay(index)}
+                />
+              )}
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/50 pointer-events-none" />
 
             {index === visibleIndex && showText && (
