@@ -4,5 +4,5 @@
  * 运行时由 ISR 按需生成真实内容，降低 2C2G 服务器构建内存峰值与耗时。
  */
 export function skipDbOnBuild(): boolean {
-  return process.env.SKIP_DB_ON_BUILD === '1' && process.env.NEXT_PHASE === 'phase-production-build'
+  return process.env.SKIP_DB_ON_BUILD === '1'
 }

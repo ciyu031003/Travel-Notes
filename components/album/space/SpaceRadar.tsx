@@ -28,7 +28,7 @@ export default function SpaceRadar({ cities, currentIndex, onSelect }: SpaceRada
         {cities.map((city, i) => {
           const theta = (i / Math.max(1, count)) * Math.PI * 2 - Math.PI / 2
           const currentTheta = (currentIndex / Math.max(1, count)) * Math.PI * 2 - Math.PI / 2
-          let rel = theta - currentTheta
+          const rel = theta - currentTheta
           const dx = Math.sin(rel) * r
           const dy = -Math.cos(rel) * r
           const isCurrent = i === currentIndex

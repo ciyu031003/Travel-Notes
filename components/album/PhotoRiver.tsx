@@ -85,7 +85,7 @@ export default function PhotoRiver({ images, cityName, onPhotoClick }: PhotoRive
         // 视差：深度越大移动越快
         const flow = s * (0.5 + layout.depth * 0.9)
         const baseX = i * (cardW + gap)
-        let x = ((baseX - flow) % totalW + totalW) % totalW
+        const x = ((baseX - flow) % totalW + totalW) % totalW
         const bob = Math.sin(time / 1000 * layout.bobSpeed + layout.bobPhase) * layout.bobAmp
 
         const apply = (el: HTMLButtonElement, xPos: number) => {
