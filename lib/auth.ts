@@ -38,13 +38,40 @@ function emptySettings(): SiteSettings {
   }
 }
 
+/**
+ * 单管理员迁移：从旧 SiteSetting 回填到 User 表（幂等）。
+ * 仅在 User 表为空且 SiteSetting 存在时执行，用于平滑升级。
+ */
+async function migrateSiteSettingToUser(): Promise<void> {
+  try {
+    const [userCount, legacy] = await Promise.all([
+      prisma.user.count(),
+      prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } }),
+    ])
+    if (userCount > 0 || !legacy) return
+
+    await prisma.user.create({
+      data: {
+        username: legacy.username,
+        passwordHash: legacy.passwordHash,
+        email: legacy.email,
+        emailVerified: legacy.emailVerified,
+        requirePasswordChange: (legacy as any).requirePasswordChange ?? false,
+        anniversaryStart: (legacy as any).anniversaryStart ?? null,
+      },
+    })
+  } catch (error) {
+    console.error('[migrateSiteSettingToUser] Failed:', error)
+  }
+}
+
 async function fetchSiteSettingsFromDB(): Promise<SiteSettings> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (setting) {
-      return mapSetting(setting)
+    await migrateSiteSettingToUser()
+
+    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    if (user) {
+      return mapSetting(user)
     }
   } catch {
     const envPasswordHash = process.env.ADMIN_PASSWORD_HASH
@@ -64,11 +91,9 @@ async function fetchSiteSettingsFromDB(): Promise<SiteSettings> {
   await initializeDefaultAdmin()
 
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (setting) {
-      return mapSetting(setting)
+    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    if (user) {
+      return mapSetting(user)
     }
   } catch {}
 
@@ -98,9 +123,9 @@ async function initializeDefaultAdmin(): Promise<void> {
   if (!envPasswordHash) return
 
   try {
-    const count = await prisma.siteSetting.count()
+    const count = await prisma.user.count()
     if (count === 0) {
-      await prisma.siteSetting.create({
+      await prisma.user.create({
         data: {
           username: process.env.ADMIN_USERNAME || DEFAULT_USERNAME,
           passwordHash: envPasswordHash,
@@ -115,7 +140,8 @@ async function initializeDefaultAdmin(): Promise<void> {
 
 export async function initializeCredentialsFromEnv(): Promise<void> {
   try {
-    const count = await prisma.siteSetting.count()
+    await migrateSiteSettingToUser()
+    const count = await prisma.user.count()
     if (count === 0) {
       await initializeDefaultAdmin()
     }
@@ -140,10 +166,9 @@ export async function updateCredentials(
   clearRequireChange: boolean = false
 ): Promise<void> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (setting) {
+    await migrateSiteSettingToUser()
+    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    if (user) {
       const now = new Date()
       const updateData: any = { username, passwordHash, updatedAt: now }
       if (clearRequireChange) {
@@ -155,12 +180,9 @@ export async function updateCredentials(
           updateData.emailVerified = false
         }
       }
-      await prisma.siteSetting.update({
-        where: { id: setting.id },
-        data: updateData,
-      })
+      await prisma.user.update({ where: { id: user.id }, data: updateData })
     } else {
-      await prisma.siteSetting.create({
+      await prisma.user.create({
         data: {
           username,
           passwordHash,
@@ -178,14 +200,13 @@ export async function updateCredentials(
 
 export async function forceChangePassword(newPassword: string): Promise<boolean> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (!setting) return false
+    await migrateSiteSettingToUser()
+    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    if (!user) return false
 
     const passwordHash = await hashPassword(newPassword)
-    await prisma.siteSetting.update({
-      where: { id: setting.id },
+    await prisma.user.update({
+      where: { id: user.id },
       data: {
         passwordHash,
         requirePasswordChange: false,
@@ -201,10 +222,8 @@ export async function forceChangePassword(newPassword: string): Promise<boolean>
 
 export async function isRequirePasswordChange(): Promise<boolean> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    return (setting as any)?.requirePasswordChange ?? false
+    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    return (user as any)?.requirePasswordChange ?? false
   } catch {
     return false
   }
@@ -212,24 +231,16 @@ export async function isRequirePasswordChange(): Promise<boolean> {
 
 export async function updateEmail(email: string | null, verified?: boolean): Promise<void> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (setting) {
-      const now = new Date()
-      const updateData: any = {
-        email: email || null,
-        updatedAt: now,
-      }
+    await migrateSiteSettingToUser()
+    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    if (user) {
+      const updateData: any = { email: email || null, updatedAt: new Date() }
       if (verified !== undefined) {
         updateData.emailVerified = verified
       } else if (email) {
         updateData.emailVerified = false
       }
-      await prisma.siteSetting.update({
-        where: { id: setting.id },
-        data: updateData,
-      })
+      await prisma.user.update({ where: { id: user.id }, data: updateData })
       invalidateSiteSettingsCache()
     }
   } catch {}
@@ -237,24 +248,20 @@ export async function updateEmail(email: string | null, verified?: boolean): Pro
 
 export async function setEmailVerified(): Promise<void> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (setting) {
-      await prisma.siteSetting.update({
-        where: { id: setting.id },
-        data: { emailVerified: true },
-      })
+    await migrateSiteSettingToUser()
+    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    if (user) {
+      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } })
       invalidateSiteSettingsCache()
     }
   } catch {}
 }
 
+// ===== 以下为旧 Token 密码重置流程（已被验证码流程替代，保留以兼容旧调用）=====
+
 export async function generateResetToken(): Promise<{ token: string; exp: Date } | null> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
+    const setting = await prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } })
     if (!setting || !setting.email || !setting.emailVerified) {
       return null
     }
@@ -275,21 +282,10 @@ export async function generateResetToken(): Promise<{ token: string; exp: Date }
 
 export async function verifyResetToken(token: string): Promise<boolean> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (!setting || !setting.resetToken || !setting.resetTokenExp) {
-      return false
-    }
-
-    if (setting.resetToken !== token) {
-      return false
-    }
-
-    if (setting.resetTokenExp < new Date()) {
-      return false
-    }
-
+    const setting = await prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } })
+    if (!setting || !setting.resetToken || !setting.resetTokenExp) return false
+    if (setting.resetToken !== token) return false
+    if (setting.resetTokenExp < new Date()) return false
     return true
   } catch {
     return false
@@ -298,35 +294,17 @@ export async function verifyResetToken(token: string): Promise<boolean> {
 
 export async function resetPasswordWithToken(token: string, newPassword: string): Promise<boolean> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (!setting || !setting.resetToken || !setting.resetTokenExp) {
-      return false
-    }
-
-    if (setting.resetToken !== token) {
-      return false
-    }
-
-    if (setting.resetTokenExp < new Date()) {
-      return false
-    }
+    const setting = await prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } })
+    if (!setting || !setting.resetToken || !setting.resetTokenExp) return false
+    if (setting.resetToken !== token) return false
+    if (setting.resetTokenExp < new Date()) return false
 
     const passwordHash = await hashPassword(newPassword)
     const now = new Date()
-
     await prisma.siteSetting.update({
       where: { id: setting.id },
-      data: {
-        passwordHash,
-        resetToken: null,
-        resetTokenExp: null,
-        requirePasswordChange: false,
-        updatedAt: now,
-      },
+      data: { passwordHash, resetToken: null, resetTokenExp: null, requirePasswordChange: false, updatedAt: now },
     })
-
     invalidateSiteSettingsCache()
     return true
   } catch {
@@ -336,16 +314,11 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
 
 export async function clearResetToken(): Promise<void> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
+    const setting = await prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } })
     if (setting) {
       await prisma.siteSetting.update({
         where: { id: setting.id },
-        data: {
-          resetToken: null,
-          resetTokenExp: null,
-        },
+        data: { resetToken: null, resetTokenExp: null },
       })
       invalidateSiteSettingsCache()
     }
@@ -354,16 +327,12 @@ export async function clearResetToken(): Promise<void> {
 
 export async function updateAnniversaryStart(date: string | null): Promise<void> {
   try {
-    const setting = await prisma.siteSetting.findFirst({
-      orderBy: { id: 'asc' },
-    })
-    if (setting) {
-      await prisma.siteSetting.update({
-        where: { id: setting.id },
-        data: {
-          anniversaryStart: date,
-          updatedAt: new Date(),
-        },
+    await migrateSiteSettingToUser()
+    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    if (user) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { anniversaryStart: date, updatedAt: new Date() },
       })
       invalidateSiteSettingsCache()
     }

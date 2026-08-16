@@ -9,7 +9,7 @@ datasource db {
 model Post {
   id        Int      @id @default(autoincrement())
   slug      String   @db.VarChar(255)
-  title      String   @db.VarChar(255)
+  title     String   @db.VarChar(255)
   content   String   @db.Text
   date      DateTime @db.Timestamp(3)
   cover     String?  @db.VarChar(500)
@@ -35,12 +35,12 @@ model Post {
 model PostImage {
   id        Int      @id @default(autoincrement())
   postId    Int
-  data      Bytes   @db.LongBlob
+  data      Bytes    @db.LongBlob
   mimeType  String   @db.VarChar(100)
   order     Int      @default(0)
   createdAt DateTime @default(now()) @db.Timestamp(3)
 
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId, order])
 }
@@ -55,19 +55,39 @@ model Danmaku {
 }
 
 model SiteSetting {
+  id                    Int       @id @default(autoincrement())
+  username              String    @unique @db.VarChar(255)
+  passwordHash          String    @db.Text
+  email                 String?   @db.VarChar(255)
+  emailVerified         Boolean   @default(false)
+  resetToken            String?   @db.VarChar(255)
+  resetTokenExp         DateTime? @db.Timestamp(3)
+  requirePasswordChange Boolean   @default(false)
+  anniversaryStart      String?   @db.VarChar(50)
+  createdAt             DateTime  @default(now()) @db.Timestamp(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamp(3)
+
+  @@index([resetToken])
+}
+
+/// 用户账号（多账号基础：当前为单管理员迁移自 SiteSetting，未来支持情侣双账号）
+model User {
   id                    Int      @id @default(autoincrement())
   username              String   @unique @db.VarChar(255)
   passwordHash          String   @db.Text
   email                 String?  @db.VarChar(255)
   emailVerified         Boolean  @default(false)
-  resetToken            String?  @db.VarChar(255)
-  resetTokenExp         DateTime? @db.Timestamp(3)
   requirePasswordChange Boolean  @default(false)
   anniversaryStart      String?  @db.VarChar(50)
   createdAt             DateTime @default(now()) @db.Timestamp(3)
   updatedAt             DateTime @updatedAt @db.Timestamp(3)
 
-  @@index([resetToken])
+  sessions     Session[]
+  spaceMembers SpaceMember[]
+  memories     Memory[]      @relation("MemoryCreatedBy")
+  auditLogs    AuditLog[]
+
+  @@index([email])
 }
 
 model Repo {
@@ -110,7 +130,6 @@ model VerificationCode {
   @@index([purpose, createdAt])
 }
 
-
 model Moment {
   id        Int      @id @default(autoincrement())
   content   String   @db.Text
@@ -141,18 +160,22 @@ model PhotoMessage {
 
   @@index([imageKey, createdAt])
 }
+
 // ============================================================
 // Phase 0 (P0): Database-backed Session
 // ============================================================
 model Session {
   id         String    @id @db.VarChar(64)
   username   String    @db.VarChar(255)
+  userId     Int?
   expiresAt  DateTime  @db.Timestamp(3)
   createdAt  DateTime  @default(now()) @db.Timestamp(3)
   lastUsedAt DateTime  @default(now()) @db.Timestamp(3)
   userAgent  String?   @db.VarChar(500)
   ipHash     String?   @db.VarChar(128)
   revokedAt  DateTime? @db.Timestamp(3)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([username, expiresAt])
   @@index([expiresAt])
@@ -214,22 +237,23 @@ enum AuditAction {
 
 /// 情侣共同生活的数字空间（核心业务模型）
 model Space {
-  id           Int       @id @default(autoincrement())
-  name         String    @db.VarChar(200)
-  slug         String    @unique @db.VarChar(200)
-  description  String?   @db.Text
-  coverMediaId Int? @unique
-  coverMedia   Media?    @relation("SpaceCover", fields: [coverMediaId], references: [id])
-  createdAt    DateTime  @default(now()) @db.Timestamp(3)
-  updatedAt    DateTime  @updatedAt @db.Timestamp(3)
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(200)
+  slug         String   @unique @db.VarChar(200)
+  description  String?  @db.Text
+  coverMediaId Int?     @unique
+  coverMedia   Media?   @relation("SpaceCover", fields: [coverMediaId], references: [id])
+  createdAt    DateTime @default(now()) @db.Timestamp(3)
+  updatedAt    DateTime @updatedAt @db.Timestamp(3)
 
-  members   SpaceMember[]
-  invites   SpaceInvite[]
-  travels   Travel[]
-  memories  Memory[]
-  albums    Album[]
-  media     Media[]    @relation("MediaSpace")
-  auditLogs AuditLog[]
+  members       SpaceMember[]
+  invites       SpaceInvite[]
+  travels       Travel[]
+  memories      Memory[]
+  albums        Album[]
+  media         Media[]        @relation("MediaSpace")
+  auditLogs     AuditLog[]
+  timelineItems TimelineItem[]
 
   @@index([slug])
 }
@@ -239,11 +263,13 @@ model SpaceMember {
   id       Int               @id @default(autoincrement())
   spaceId  Int
   username String            @db.VarChar(255)
+  userId   Int?
   role     SpaceRole         @default(MEMBER)
   status   SpaceMemberStatus @default(ACTIVE)
   joinedAt DateTime          @default(now()) @db.Timestamp(3)
 
   space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@unique([spaceId, username])
   @@index([spaceId, role])
@@ -251,14 +277,14 @@ model SpaceMember {
 
 /// 空间邀请（只保存 Token Hash，不保存明文 Token）
 model SpaceInvite {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   spaceId   Int
-  tokenHash String   @unique @db.VarChar(128)
+  tokenHash String    @unique @db.VarChar(128)
   role      SpaceRole @default(MEMBER)
-  expiresAt DateTime @db.Timestamp(3)
-  createdBy String   @db.VarChar(255)
+  expiresAt DateTime  @db.Timestamp(3)
+  createdBy String    @db.VarChar(255)
   usedAt    DateTime? @db.Timestamp(3)
-  createdAt DateTime @default(now()) @db.Timestamp(3)
+  createdAt DateTime  @default(now()) @db.Timestamp(3)
 
   space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
@@ -292,15 +318,15 @@ model Travel {
 
 /// 旅行中的一天
 model TravelDay {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   travelId  Int
   date      DateTime? @db.Timestamp(3)
-  title     String?  @db.VarChar(255)
-  summary   String?  @db.Text
-  sortOrder Int      @default(0)
+  title     String?   @db.VarChar(255)
+  summary   String?   @db.Text
+  sortOrder Int       @default(0)
 
-  travel        Travel          @relation(fields: [travelId], references: [id], onDelete: Cascade)
-  memories      Memory[]
+  travel         Travel          @relation(fields: [travelId], references: [id], onDelete: Cascade)
+  memories       Memory[]
   itineraryItems ItineraryItem[]
 
   @@index([travelId, sortOrder])
@@ -320,7 +346,7 @@ model Location {
   createdAt  DateTime @default(now()) @db.Timestamp(3)
   updatedAt  DateTime @updatedAt @db.Timestamp(3)
 
-  memories      Memory[]
+  memories       Memory[]
   itineraryItems ItineraryItem[]
 
   @@index([city])
@@ -340,14 +366,16 @@ model Memory {
   mood        String?    @db.VarChar(50)
   visibility  Visibility @default(COUPLE)
   createdBy   String     @db.VarChar(255)
+  createdById Int?
   createdAt   DateTime   @default(now()) @db.Timestamp(3)
   updatedAt   DateTime   @updatedAt @db.Timestamp(3)
 
-  space     Space      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  travel    Travel?    @relation(fields: [travelId], references: [id], onDelete: SetNull)
-  travelDay TravelDay? @relation(fields: [travelDayId], references: [id], onDelete: SetNull)
-  location  Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  media     Media[]
+  space         Space      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  travel        Travel?    @relation(fields: [travelId], references: [id], onDelete: SetNull)
+  travelDay     TravelDay? @relation(fields: [travelDayId], references: [id], onDelete: SetNull)
+  location      Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  media         Media[]
+  createdByUser User?      @relation("MemoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([spaceId, happenedAt])
   @@index([spaceId, travelId])
@@ -355,31 +383,31 @@ model Memory {
 
 /// 独立媒体（从 Post 中彻底独立）
 model Media {
-  id          Int       @id @default(autoincrement())
-  spaceId     Int?
-  memoryId    Int?
-  type        MediaType
-  storageKey  String    @db.VarChar(500)
-  mimeType    String    @db.VarChar(100)
-  size        Int       @default(0)
-  width       Int?
-  height      Int?
-  duration    Int?
-  hash        String?   @db.VarChar(128)
-  takenAt     DateTime? @db.Timestamp(3)
-  latitude    Float?
-  longitude   Float?
-  visibility  Visibility @default(COUPLE)
-  createdAt   DateTime  @default(now()) @db.Timestamp(3)
+  id         Int        @id @default(autoincrement())
+  spaceId    Int?
+  memoryId   Int?
+  type       MediaType
+  storageKey String     @db.VarChar(500)
+  mimeType   String     @db.VarChar(100)
+  size       Int        @default(0)
+  width      Int?
+  height     Int?
+  duration   Int?
+  hash       String?    @db.VarChar(128)
+  takenAt    DateTime?  @db.Timestamp(3)
+  latitude   Float?
+  longitude  Float?
+  visibility Visibility @default(COUPLE)
+  createdAt  DateTime   @default(now()) @db.Timestamp(3)
 
-  spaceOwner  Space?        @relation("MediaSpace", fields: [spaceId], references: [id])
-  spaceCoverOf Space?        @relation("SpaceCover")
-  anniversaryCoverOf Anniversary? @relation("AnniversaryCover")
-  albumCoverOf Album?       @relation("AlbumCover")
-  memory      Memory?       @relation(fields: [memoryId], references: [id], onDelete: SetNull)
-  travels     Travel[]      @relation("TravelCover")
-  variants    MediaVariant[]
-  albums      AlbumMedia[]
+  spaceOwner         Space?         @relation("MediaSpace", fields: [spaceId], references: [id])
+  spaceCoverOf       Space?         @relation("SpaceCover")
+  anniversaryCoverOf Anniversary?   @relation("AnniversaryCover")
+  albumCoverOf       Album?         @relation("AlbumCover")
+  memory             Memory?        @relation(fields: [memoryId], references: [id], onDelete: SetNull)
+  travels            Travel[]       @relation("TravelCover")
+  variants           MediaVariant[]
+  albums             AlbumMedia[]
 
   @@index([spaceId, type])
   @@index([memoryId])
@@ -407,7 +435,7 @@ model Album {
   spaceId      Int?
   title        String     @db.VarChar(255)
   description  String?    @db.Text
-  coverMediaId Int? @unique
+  coverMediaId Int?       @unique
   coverMedia   Media?     @relation("AlbumCover", fields: [coverMediaId], references: [id])
   date         DateTime?  @db.Timestamp(3)
   locationId   Int?
@@ -415,7 +443,7 @@ model Album {
   createdAt    DateTime   @default(now()) @db.Timestamp(3)
   updatedAt    DateTime   @updatedAt @db.Timestamp(3)
 
-  space Space?      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  space Space?       @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   items AlbumMedia[]
 
   @@index([spaceId, createdAt])
@@ -423,9 +451,9 @@ model Album {
 
 /// 相册-媒体关联
 model AlbumMedia {
-  id       Int   @id @default(autoincrement())
-  albumId  Int
-  mediaId  Int
+  id        Int @id @default(autoincrement())
+  albumId   Int
+  mediaId   Int
   sortOrder Int @default(0)
 
   album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
@@ -439,6 +467,7 @@ model AuditLog {
   id           Int         @id @default(autoincrement())
   spaceId      Int?
   username     String      @db.VarChar(255)
+  userId       Int?
   action       AuditAction
   resourceType String?     @db.VarChar(100)
   resourceId   String?     @db.VarChar(255)
@@ -447,6 +476,7 @@ model AuditLog {
   createdAt    DateTime    @default(now()) @db.Timestamp(3)
 
   space Space? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([spaceId, createdAt])
   @@index([username, createdAt])
@@ -460,12 +490,29 @@ model Anniversary {
   date         DateTime @db.Timestamp(3)
   recurring    Boolean  @default(true)
   description  String?  @db.Text
-  coverMediaId Int? @unique
+  coverMediaId Int?     @unique
   coverMedia   Media?   @relation("AnniversaryCover", fields: [coverMediaId], references: [id])
   createdAt    DateTime @default(now()) @db.Timestamp(3)
   updatedAt    DateTime @updatedAt @db.Timestamp(3)
 
   @@index([date])
+}
+
+/// 统一时间线条目（旅行/回忆/日记/照片/相册/纪念日）
+model TimelineItem {
+  id          Int      @id @default(autoincrement())
+  spaceId     Int?
+  type        String   @db.VarChar(50)
+  sourceId    Int?
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  happenedAt  DateTime @db.Timestamp(3)
+  createdAt   DateTime @default(now()) @db.Timestamp(3)
+
+  space Space? @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId, happenedAt])
+  @@index([type, happenedAt])
 }
 
 /// 行程项（属于某天的某个行程）
