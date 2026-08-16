@@ -2,7 +2,7 @@
 
 本项目所有值得注意的变更均记录于此。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [2.5.0] - 2026-08-16
 
 ### Added
 - Travel 移动端记录（Phase 3 补充）：
