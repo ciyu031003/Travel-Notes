@@ -18,6 +18,7 @@ const NEBULA_FRAGMENT = /* glsl */ `
 precision highp float;
 varying vec3 vWorldPos;
 uniform float uTime;
+uniform float uOctaves;
 
 float hash(vec3 p){
   p = fract(p * 0.3183099 + 0.1);
@@ -35,10 +36,11 @@ float noise(vec3 x){
         mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y),
     f.z);
 }
-float fbm(vec3 p){
+float fbm(vec3 p, float octaves){
   float v = 0.0;
   float a = 0.5;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 4; i++) {
+    if (float(i) >= octaves) break;
     v += a * noise(p);
     p *= 2.03;
     a *= 0.5;
@@ -48,8 +50,8 @@ float fbm(vec3 p){
 
 void main(){
   vec3 dir = normalize(vWorldPos - cameraPosition);
-  float n1 = fbm(dir * 2.1 + vec3(0.0, uTime * 0.010, uTime * 0.006));
-  float n2 = fbm(dir * 4.2 - vec3(uTime * 0.007, 0.0, 0.0) + 5.0);
+  float n1 = fbm(dir * 2.1 + vec3(0.0, uTime * 0.010, uTime * 0.006), uOctaves);
+  float n2 = fbm(dir * 4.2 - vec3(uTime * 0.007, 0.0, 0.0) + 5.0, uOctaves);
   // 旋臂感：方位角 + 高度 + 噪声扰动
   float ang = atan(dir.x, dir.z);
   float arm = sin(ang * 3.0 + dir.y * 4.5 + n1 * 2.2);
@@ -62,10 +64,10 @@ void main(){
 }
 `
 
-export function createNebulaSkybox(sharedTime: { value: number }): THREE.Mesh {
+export function createNebulaSkybox(sharedTime: { value: number }, octaves = 3): THREE.Mesh {
   const geo = new THREE.SphereGeometry(180, 16, 12)
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uTime: sharedTime },
+    uniforms: { uTime: sharedTime, uOctaves: { value: octaves } },
     vertexShader: NEBULA_VERTEX,
     fragmentShader: NEBULA_FRAGMENT,
     side: THREE.BackSide,
@@ -76,8 +78,6 @@ export function createNebulaSkybox(sharedTime: { value: number }): THREE.Mesh {
   mesh.frustumCulled = false
   return mesh
 }
-
-const STAR_COUNT = 1600
 
 const STAR_VERTEX = /* glsl */ `
 attribute float aSeed;
@@ -138,12 +138,12 @@ void main(){
 }
 `
 
-export function createStarField(sharedTime: { value: number }): THREE.Points {
+export function createStarField(sharedTime: { value: number }, count = 1600): THREE.Points {
   const geo = new THREE.BufferGeometry()
-  const seeds = new Float32Array(STAR_COUNT)
-  const lanes = new Float32Array(STAR_COUNT)
-  const depths = new Float32Array(STAR_COUNT)
-  for (let i = 0; i < STAR_COUNT; i++) {
+  const seeds = new Float32Array(count)
+  const lanes = new Float32Array(count)
+  const depths = new Float32Array(count)
+  for (let i = 0; i < count; i++) {
     seeds[i] = Math.random() * 1000 + i * 0.37
     lanes[i] = Math.random()
     depths[i] = Math.random()
@@ -183,4 +183,134 @@ export function createStarField(sharedTime: { value: number }): THREE.Points {
   points.renderOrder = -10
   points.frustumCulled = false
   return points
+}
+
+
+// ---------- 流星划过 ----------
+const METEOR_VERTEX = /* glsl */ `
+attribute float aBirth;
+attribute float aSpeed;
+attribute float aRange;
+attribute float aLength;
+attribute vec3 aStart;
+attribute vec3 aDir;
+attribute vec3 aTint;
+attribute float aIsHead;
+uniform float uTime;
+uniform float uStrength;
+varying vec3 vColor;
+varying float vAlpha;
+
+void main(){
+  float life = fract(aBirth + uTime * aSpeed);
+  vec3 head = aStart + aDir * (life * aRange);
+  vec3 pos = head - aDir * (aLength * (1.0 - aIsHead));
+  float fade = smoothstep(0.0, 0.06, life) * (1.0 - smoothstep(0.45, 1.0, life));
+  vAlpha = fade * uStrength * (aIsHead > 0.5 ? 1.0 : 0.0);
+  vColor = aTint;
+  vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+  gl_Position = projectionMatrix * mv;
+}
+`
+
+const METEOR_FRAGMENT = /* glsl */ `
+precision highp float;
+varying vec3 vColor;
+varying float vAlpha;
+void main(){
+  if (vAlpha < 0.012) discard;
+  gl_FragColor = vec4(vColor, vAlpha);
+}
+`
+
+export function createMeteorField(sharedTime: { value: number }, count = 14): THREE.LineSegments {
+  const positions = new Float32Array(count * 2 * 3)
+  const births = new Float32Array(count * 2)
+  const speeds = new Float32Array(count * 2)
+  const ranges = new Float32Array(count * 2)
+  const lengths = new Float32Array(count * 2)
+  const starts = new Float32Array(count * 2 * 3)
+  const dirs = new Float32Array(count * 2 * 3)
+  const tints = new Float32Array(count * 2 * 3)
+  const heads = new Float32Array(count * 2)
+
+  const palette: [number, number, number][] = [
+    [1.0, 0.95, 0.88],
+    [1.0, 0.78, 0.58],
+    [0.96, 0.72, 0.76],
+  ]
+
+  for (let i = 0; i < count; i++) {
+    // 起点：相机四周大球壳
+    const theta = Math.random() * Math.PI * 2
+    const phi = Math.acos(2 * Math.random() - 1)
+    const radius = 70 + Math.random() * 90
+    const sx = radius * Math.sin(phi) * Math.cos(theta)
+    const sy = radius * Math.sin(phi) * Math.sin(theta)
+    const sz = radius * Math.cos(phi)
+
+    // 方向：斜向下为主，切向随机
+    let dx = (Math.random() - 0.5) * 2
+    let dy = -(0.6 + Math.random() * 1.1)
+    let dz = (Math.random() - 0.5) * 2
+    const dl = Math.hypot(dx, dy, dz) || 1
+    dx /= dl
+    dy /= dl
+    dz /= dl
+
+    const tint = palette[Math.floor(Math.random() * palette.length)]
+    const range = 160 + Math.random() * 140
+    const length = 16 + Math.random() * 16
+    const speed = 0.16 + Math.random() * 0.12
+    const birth = Math.random()
+
+    for (let v = 0; v < 2; v++) {
+      const idx = i * 2 + v
+      positions[idx * 3] = 0
+      positions[idx * 3 + 1] = 0
+      positions[idx * 3 + 2] = 0
+      births[idx] = birth
+      speeds[idx] = speed
+      ranges[idx] = range
+      lengths[idx] = length
+      starts[idx * 3] = sx
+      starts[idx * 3 + 1] = sy
+      starts[idx * 3 + 2] = sz
+      dirs[idx * 3] = dx
+      dirs[idx * 3 + 1] = dy
+      dirs[idx * 3 + 2] = dz
+      tints[idx * 3] = tint[0]
+      tints[idx * 3 + 1] = tint[1]
+      tints[idx * 3 + 2] = tint[2]
+      heads[idx] = v === 0 ? 1 : 0
+    }
+  }
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  geo.setAttribute('aBirth', new THREE.BufferAttribute(births, 1))
+  geo.setAttribute('aSpeed', new THREE.BufferAttribute(speeds, 1))
+  geo.setAttribute('aRange', new THREE.BufferAttribute(ranges, 1))
+  geo.setAttribute('aLength', new THREE.BufferAttribute(lengths, 1))
+  geo.setAttribute('aStart', new THREE.BufferAttribute(starts, 3))
+  geo.setAttribute('aDir', new THREE.BufferAttribute(dirs, 3))
+  geo.setAttribute('aTint', new THREE.BufferAttribute(tints, 3))
+  geo.setAttribute('aIsHead', new THREE.BufferAttribute(heads, 1))
+
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: sharedTime,
+      uStrength: { value: 1 },
+    },
+    vertexShader: METEOR_VERTEX,
+    fragmentShader: METEOR_FRAGMENT,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  })
+
+  const lines = new THREE.LineSegments(geo, mat)
+  lines.renderOrder = -9
+  lines.frustumCulled = false
+  return lines
 }

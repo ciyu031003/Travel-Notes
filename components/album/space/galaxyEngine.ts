@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import type { CityData } from './particlePhoto'
 import { buildPhotoAtlas } from './particlePhoto'
-import { createNebulaSkybox, createStarField } from './galaxyBackground'
+import { createNebulaSkybox, createStarField, createMeteorField } from './galaxyBackground'
 import { createVinylRecord, updateVinylRecordUniforms, type VinylRecord } from './vinylRecord'
 
 export interface GalaxyEngineCallbacks {
@@ -44,6 +44,8 @@ export class GalaxyAlbumEngine {
   private atlases: { dispose: () => void }[] = []
   private nebula: THREE.Mesh
   private stars: THREE.Points
+  private meteors: THREE.LineSegments | null = null
+  private reducedMotion = false
   private raf = 0
   private disposed = false
   private started = false
@@ -83,6 +85,7 @@ export class GalaxyAlbumEngine {
     this.callbacks = callbacks
 
     const isMobile = typeof window !== 'undefined' && (window.innerWidth < 768 || matchMedia('(pointer: coarse)').matches)
+    this.reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
     this.renderer.setClearColor(0x050508, 1)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2))
@@ -96,10 +99,14 @@ export class GalaxyAlbumEngine {
     this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500)
     this.camera.position.set(0, 0, 0.6)
 
-    this.nebula = createNebulaSkybox(this.sharedTime)
+    this.nebula = createNebulaSkybox(this.sharedTime, isMobile ? 2 : 3)
     this.scene.add(this.nebula)
-    this.stars = createStarField(this.sharedTime)
+    this.stars = createStarField(this.sharedTime, isMobile ? 900 : 1600)
     this.scene.add(this.stars)
+    if (!this.reducedMotion) {
+      this.meteors = createMeteorField(this.sharedTime, isMobile ? 7 : 14)
+      this.scene.add(this.meteors)
+    }
 
     this.resize()
     this.resizeObs = new ResizeObserver(() => this.resize())
@@ -233,13 +240,9 @@ export class GalaxyAlbumEngine {
 
   private tick = () => {
     if (this.disposed) return
-    if (document.hidden) {
-      this.raf = requestAnimationFrame(this.tick)
-      return
-    }
     const rawDt = this.clockDelta()
     const dt = Math.min(0.05, rawDt)
-    this.sharedTime.value += dt
+    if (!this.reducedMotion) this.sharedTime.value += dt
     this.measureQuality(rawDt)
 
 
@@ -278,8 +281,9 @@ export class GalaxyAlbumEngine {
 
   private applyQuality(level: number) {
     this.qualityLevel = Math.max(this.qualityLevel, level)
-    // 1: 关闭 bloom 粒子层
+    // 1: 关闭流星与 bloom 粒子层
     if (this.qualityLevel >= 1) {
+      if (this.meteors) this.meteors.visible = false
       for (const rec of this.records) rec.bloomPoints.visible = false
     }
     // 2: 降低星点亮度
@@ -318,12 +322,16 @@ export class GalaxyAlbumEngine {
       rec.hover = damp(rec.hover, hoverTarget, 6, dt)
       rec.opacity = damp(rec.opacity, opacityTarget, 3.2, dt)
 
-      // 自转：自动 + 拖拽惯性
-      rec.spin += (rec.autoSpin + rec.spinVel) * dt
-      rec.spinVel *= Math.pow(0.02, dt)
+      // 自转：自动 + 拖拽惯性（reduced-motion 下冻结）
+      if (!this.reducedMotion) {
+        rec.spin += (rec.autoSpin + rec.spinVel) * dt
+        rec.spinVel *= Math.pow(0.02, dt)
+      }
 
-      // 悬浮漂移
-      rec.group.position.y = rec.baseY + Math.sin(this.sharedTime.value * 0.5 + i * 1.7) * 0.06
+      // 悬浮漂移（reduced-motion 下不漂移）
+      if (!this.reducedMotion) {
+        rec.group.position.y = rec.baseY + Math.sin(this.sharedTime.value * 0.5 + i * 1.7) * 0.06
+      }
 
       updateVinylRecordUniforms(rec)
     }
@@ -337,9 +345,20 @@ export class GalaxyAlbumEngine {
     const yawT = isClose ? this.closeYaw : this.panoYaw
     const pitchT = isClose ? this.closePitch : this.panoPitch
 
-    this.yaw = dampAngle(this.yaw, yawT, isClose ? 5 : 3.5, dt)
-    this.pitch = damp(this.pitch, pitchT, isClose ? 5 : 3.5, dt)
-    this.radius = damp(this.radius, targetR, 4, dt)
+    // 特写模式下降低流星强度，避免抢照片
+    if (this.meteors) {
+      ;(this.meteors.material as THREE.ShaderMaterial).uniforms.uStrength.value = isClose ? 0.3 : 1
+    }
+
+    if (this.reducedMotion) {
+      this.yaw = yawT
+      this.pitch = pitchT
+      this.radius = targetR
+    } else {
+      this.yaw = dampAngle(this.yaw, yawT, isClose ? 5 : 3.5, dt)
+      this.pitch = damp(this.pitch, pitchT, isClose ? 5 : 3.5, dt)
+      this.radius = damp(this.radius, targetR, 4, dt)
+    }
 
     const cosP = Math.cos(this.pitch)
     this.camera.position.set(
@@ -354,7 +373,7 @@ export class GalaxyAlbumEngine {
     }
     this.camera.lookAt(targetPos)
     if (!isClose) {
-      this.camera.fov = damp(this.camera.fov, this.panoFov, 4, dt)
+      if (!this.reducedMotion) this.camera.fov = damp(this.camera.fov, this.panoFov, 4, dt)
       this.camera.updateProjectionMatrix()
     }
   }
