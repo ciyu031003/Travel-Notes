@@ -5,6 +5,15 @@
 ## [Unreleased]
 
 ### Added
+- Media 2.0（Phase 4）：
+  - 上传生成 Thumbnail/Preview/Blur 媒体变体并写入 MediaVariant
+  - 新增 scripts/migrate-media.cjs（PostImage LongBlob → 本地文件 + Media 记录）
+- Timeline 统一（Phase 5）：
+  - timeline.service 优先读取 TimelineItem，回退 Travel/Memory
+- UI/UX+性能（Phase 6）：
+  - 旅行详情页 VideoPlayer 改为动态导入
+- 工程化收尾（Phase 7）：
+  - 新增 docs/BACKUP_AND_MONITORING.md（定时备份/恢复演练/监控/错误追踪）
 - Travel 2.0 前台（Phase 3，进行中）：
   - Travel 模型增加 content/tags/location/cover 文章兼容字段
   - /travel 列表页优先读取新 Travel 模型（未迁移时回退旧 Post）

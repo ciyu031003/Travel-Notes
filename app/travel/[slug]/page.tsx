@@ -5,7 +5,9 @@ import { formatDate } from '@/lib/utils'
 import { Calendar, MapPin } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
-import VideoPlayer from '@/components/VideoPlayer'
+import dynamic from 'next/dynamic'
+
+const VideoPlayer = dynamic(() => import('@/components/VideoPlayer'))
 
 export const revalidate = 300
 
