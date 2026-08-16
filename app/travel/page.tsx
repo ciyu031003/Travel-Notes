@@ -1,4 +1,5 @@
 import { getPostService } from '@/lib/container'
+import { listTravels } from '@/lib/modules/travel/travel.service'
 import TravelClient from './TravelClient'
 
 export const revalidate = 300
@@ -9,9 +10,27 @@ export const metadata = {
 }
 
 export default async function TravelPage() {
+  // 新 Travel 模型优先；尚未迁移时回退旧 Post(type=travel)
+  const travels = await listTravels()
+  if (travels.length > 0) {
+    const posts = travels.map((t) => ({
+      id: t.id,
+      slug: t.slug,
+      title: t.title,
+      date: t.startDate ?? '',
+      description: t.description ?? undefined,
+      cover: t.cover ?? undefined,
+      images: [] as string[],
+      videos: [] as unknown[],
+      tags: t.tags ?? [],
+      location: t.location ?? undefined,
+      type: 'travel',
+      published: true,
+    }))
+    return <TravelClient posts={posts} />
+  }
+
   const postService = getPostService()
   const posts = await postService.getPostsHybrid('travel')
-
   return <TravelClient posts={posts} />
 }
-
