@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.gitignore
+mysql-data
+logs
+*.log
+.env
+.env.*
+deploy-backup
+public/uploads
+public/search-index.json
+coverage
