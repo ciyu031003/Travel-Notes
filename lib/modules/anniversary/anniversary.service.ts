@@ -2,6 +2,7 @@
  * Anniversary：纪念日管理（第一次见面/第一次旅行/生日等）
  */
 import { prisma } from '../../db'
+import { skipDbOnBuild } from '../../db-guard'
 
 export interface AnniversaryRecord {
   id: number
@@ -35,6 +36,7 @@ function map(r: any): AnniversaryRecord {
 }
 
 export async function listAnniversaries(): Promise<AnniversaryRecord[]> {
+  if (skipDbOnBuild()) return []
   const rows = await prisma.anniversary.findMany({ orderBy: { date: 'asc' } })
   return rows.map(map)
 }

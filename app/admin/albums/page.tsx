@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, Upload, Images, X } from 'lucide-react'
@@ -213,10 +214,10 @@ export default function AdminAlbumsPage() {
                       : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-rose-200'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
                     {a.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.coverUrl} alt="" className="w-full h-full object-cover" />
+                      <Image src={a.coverUrl} alt="" fill sizes="48px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                         <Images className="w-5 h-5" />
@@ -273,7 +274,7 @@ export default function AdminAlbumsPage() {
                   {detail.media.map((m) => (
                     <div key={m.id} className="relative group aspect-square rounded-lg overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={m.url} alt="" className="w-full h-full object-cover" />
+                      <Image src={m.url} alt="" fill sizes="100vw" className="object-cover" />
                       <button
                         type="button"
                         onClick={() => handleRemoveMedia(m.id)}

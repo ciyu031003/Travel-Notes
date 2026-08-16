@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { ChevronDown, ArrowLeft, MapPin, Calendar, Play, Pause } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface VideoInfo {
   url: string
@@ -227,10 +228,12 @@ export default function TravelDetailClient({
             className="h-screen snap-start relative"
           >
             {item.type === 'image' ? (
-              <img
-                src={item.url.startsWith('/') ? item.url : item.url}
+              <Image
+                src={item.url}
                 alt={`${title} - ${index + 1}`}
-                className="absolute inset-0 w-full h-full object-cover"
+                fill
+                sizes="100vw"
+                className="object-cover"
                 draggable={false}
               />
             ) : (

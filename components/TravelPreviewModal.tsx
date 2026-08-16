@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight, Calendar, MapPin, Tag, ArrowLeft, Play } from 'lucide-react'
 import { remark } from 'remark'
 import remarkGfm from 'remark-gfm'
@@ -126,12 +127,14 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
               {mediaItems.length > 0 && (
                 <div className="mb-8">
                   {mediaItems.length === 1 ? (
-                    <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
+                    <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
                       {mediaItems[0].type === 'image' ? (
-                        <img
-                          src={mediaItems[0].url.startsWith('/') ? mediaItems[0].url : mediaItems[0].url}
+                        <Image
+                          src={mediaItems[0].url}
                           alt={formData.title || '旅行照片'}
-                          className="w-full max-h-[500px] object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement
                             target.style.display = 'none'
@@ -156,11 +159,13 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                           {mediaItems.map((item, index) => (
                             item.type === 'image' ? (
                               item.url && (
-                                <img
+                                <Image
                                   key={`img-${index}`}
-                                  src={item.url.startsWith('/') ? item.url : item.url}
+                                  src={item.url}
                                   alt={`旅行照片 ${index + 1}`}
-                                  className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+                                  fill
+                                  sizes="(max-width: 768px) 100vw, 50vw"
+                                  className={`object-cover transition-all duration-700 ${
                                     index === currentIndex
                                       ? 'opacity-100 scale-100'
                                       : 'opacity-0 scale-105'
@@ -242,10 +247,12 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                           >
                             {item.type === 'image' ? (
                               item.url && (
-                                <img
-                                  src={item.url.startsWith('/') ? item.url : item.url}
+                                <Image
+                                  src={item.url}
                                   alt={`缩略图 ${index + 1}`}
-                                  className="w-full h-full object-cover"
+                                  fill
+                                  sizes="64px"
+                                  className="object-cover"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement
                                     target.style.display = 'none'
@@ -282,7 +289,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                   )}
                   <span className="flex items-center gap-1">
                     <Tag className="w-4 h-4" />
-                    '旅行记录'
+                    &apos;旅行记录&apos;
                   </span>
                 </div>
                 {tagsArray.length > 0 && (

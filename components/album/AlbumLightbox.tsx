@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight, Camera, Info } from 'lucide-react'
 
 export interface ExifInfo {
@@ -171,11 +172,13 @@ export default function AlbumLightbox({
           </>
         )}
 
-        <img
+        <Image
           key={currentImage}
           src={currentImage}
           alt={`${cityName || '相册'} 照片 ${index + 1}`}
-          className={`max-h-full max-w-full object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          fill
+          sizes="100vw"
+          className={`object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={() => setLoaded(true)}
         />
         {!loaded && (
@@ -216,11 +219,12 @@ export default function AlbumLightbox({
                   i === index ? 'ring-2 ring-white ring-offset-2 ring-offset-black' : 'opacity-60 hover:opacity-100'
                 }`}
               >
-                <img
+                <Image
                   src={img}
                   alt={`缩略图 ${i + 1}`}
-                  loading="lazy"
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="56px"
+                  className="object-cover"
                 />
               </button>
             ))}

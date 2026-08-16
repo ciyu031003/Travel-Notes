@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import Image from 'next/image'
 import { Loader2, MessageCircle, Sparkles, RotateCcw } from 'lucide-react'
 import { GalaxyAlbumEngine } from './galaxyEngine'
 import type { CityData } from './particlePhoto'
@@ -180,11 +181,12 @@ export default function GalaxyAlbumScene({
                       title={`点击查看照片并留言`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={img}
                         alt={`${city.name} ${i + 1}`}
-                        loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <span className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition-colors flex items-center justify-center">
                         <MessageCircle className="w-4 h-4 text-amber-200 opacity-0 group-hover:opacity-100 transition-opacity" />

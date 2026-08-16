@@ -7,6 +7,7 @@ import {
   isEmailDeliveryConfigured,
 } from '@/lib/verification'
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { sendMail } from '@/lib/infrastructure/mailer'
 import { getClientIp } from '@/lib/request-utils'
 
 export async function POST(request: Request) {
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '请输入有效的邮箱地址' }, { status: 400 })
     }
 
-    const status = getVerificationCodeStatus(email)
+    const status = await getVerificationCodeStatus(email)
     if (!status.canSend) {
       return NextResponse.json({
         error: `请在 ${status.remainingSeconds} 秒后重试`,
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     const code = generateVerificationCode()
-    storeVerificationCode(email, code)
+    await storeVerificationCode(email, code)
 
     if (isEmailDeliveryConfigured()) {
       // TODO: 接入真实邮件服务（nodemailer/Resend/阿里云邮件等）后在此发送

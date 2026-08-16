@@ -3,6 +3,7 @@ import { UserRepository } from '../repositories/user-repository'
 import { TokenService } from '../services/token-service'
 import { PrismaSessionRepository } from '../repositories/session-repository'
 import { hashPassword, verifyPassword } from '../auth-utils'
+import { sendMail } from '../infrastructure/mailer'
 import {
   generateVerificationCode,
   storeResetCode,
@@ -147,7 +148,7 @@ export class AuthService {
     return { requirePasswordChange: settings.requirePasswordChange }
   }
 
-  async sendResetCode(email: string): Promise<{ success: boolean; error?: string; remainingSeconds?: number }> {
+  async sendResetCode(email: string, ip?: string | null): Promise<{ success: boolean; error?: string; remainingSeconds?: number; delivered?: boolean }> {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { success: false, error: '请输入有效的邮箱地址' }
     }
@@ -161,17 +162,21 @@ export class AuthService {
       return { success: false, error: '该邮箱未验证，请联系管理员' }
     }
 
-    const status = getResetCodeStatus(email)
+    const status = await getResetCodeStatus(email)
     if (!status.canSend) {
       return { success: false, error: `请在 ${status.remainingSeconds} 秒后重试`, remainingSeconds: status.remainingSeconds }
     }
 
     const code = generateVerificationCode()
-    storeResetCode(email, code)
+    await storeResetCode(email, code, ip ? hashIp(ip) : null)
 
-    // 验证码不回显给客户端，仅写入服务端日志（未配置邮件服务时的本地调试途径）
-    console.log(`[Forgot Password] Reset code for ${email}: ${code}（未配置邮件服务，仅本地调试）`)
-    return { success: true }
+    // 验证码不回显给客户端；未配置 SMTP 时仅写入服务端日志
+    const delivered = await sendMail(
+      email,
+      '【Travel-Notes】密码重置验证码',
+      `您的验证码是 ${code}，5 分钟内有效。`
+    )
+    return { success: true, delivered }
   }
 
   async verifyResetCode(email: string, code: string): Promise<{ success: boolean; error?: string }> {
@@ -184,7 +189,7 @@ export class AuthService {
       return { success: false, error: '该邮箱未绑定账号' }
     }
 
-    const valid = verifyResetCode(email, code)
+    const valid = await verifyResetCode(email, code)
     if (!valid) {
       return { success: false, error: '验证码错误或已过期' }
     }
@@ -214,7 +219,7 @@ export class AuthService {
     const passwordHash = await hashPassword(newPassword)
     await this.userRepo.updateCredentials(settings.username, passwordHash, settings.email)
 
-    consumeResetCode(email)
+    await consumeResetCode(email)
 
     // 密码重置后撤销该账号全部会话，强制重新登录
     await this.sessionRepo.revokeAllForUser(settings.username)

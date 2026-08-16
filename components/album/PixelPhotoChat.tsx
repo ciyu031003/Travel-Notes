@@ -188,7 +188,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                   onClick={() => setPreviewOpen(true)}
                   title="点击预览大图"
                 >
-                  <img src={image} alt={cityName || '照片'} className="w-full aspect-[4/3] object-cover border border-black/70" />
+                  <img src={image} alt={cityName || '照片'} loading="lazy" decoding="async" className="w-full aspect-[4/3] object-cover border border-black/70" />
                   <div className="pt-1.5 text-center">
                     <span className="text-[10px] text-[#5a3b30] font-bold truncate block">{cityName || '记忆'}</span>
                     {date && <span className="text-[9px] text-[#8a7662] mt-0.5 block">{date}</span>}
@@ -301,7 +301,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                   title="点击预览大图"
                 >
                   <div className="photo-negative-tag">寄照底片</div>
-                  <img src={image} alt="记忆底片" className="w-full h-full object-cover" />
+                  <img src={image} alt="记忆底片" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
 
                 <p className="text-[10px] text-[#746759] mt-3 font-bold">

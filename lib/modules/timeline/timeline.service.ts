@@ -2,6 +2,7 @@
  * Timeline：把旅行与回忆按年份聚合，形成“我们的时间线”。
  */
 import { prisma } from '../../db'
+import { skipDbOnBuild } from '../../db-guard'
 
 export interface TimelineEntry {
   id: number
@@ -27,6 +28,34 @@ function toDate(value: Date | string | null | undefined): Date | null {
 }
 
 export async function getTimeline(): Promise<TimelineYear[]> {
+  if (skipDbOnBuild()) return []
+
+  // 优先使用统一时间线 TimelineItem（Phase 2 建表，Phase 5 接入）
+  const items = await prisma.timelineItem.findMany({
+    orderBy: { happenedAt: 'asc' },
+    take: 500,
+  }).catch(() => null)
+
+  if (items && items.length > 0) {
+    const grouped = new Map<number, TimelineEntry[]>()
+    for (const item of items) {
+      const date = toDate(item.happenedAt)
+      if (!date) continue
+      const year = date.getFullYear()
+      if (!grouped.has(year)) grouped.set(year, [])
+      grouped.get(year)!.push({
+        id: item.id,
+        type: item.type === 'TRIP' ? 'travel' : 'memory',
+        title: item.title,
+        date: date.toISOString(),
+        description: item.description || undefined,
+      })
+    }
+    return Array.from(grouped.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([year, entries]) => ({ year, entries: entries.sort((a, b) => a.date.localeCompare(b.date)) }))
+  }
+
   const [travels, memories] = await Promise.all([
     prisma.travel.findMany({
       where: { visibility: { in: ['COUPLE', 'PUBLIC'] } },

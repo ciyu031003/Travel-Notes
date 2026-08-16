@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Image as ImageIcon, Loader2, Images } from 'lucide-react'
+import Image from 'next/image'
+import { Image as ImageIcon, Loader2, Images, Lock } from 'lucide-react'
+import AlbumUnlockModal from '@/components/AlbumUnlockModal'
 
 interface Album {
   id: number
@@ -16,13 +18,31 @@ interface Album {
 export default function AlbumsPage() {
   const [albums, setAlbums] = useState<Album[]>([])
   const [loading, setLoading] = useState(true)
+  const [locked, setLocked] = useState(false)
+  const [showUnlock, setShowUnlock] = useState(false)
+
+  const loadAlbums = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/albums')
+      if (res.status === 403) {
+        setLocked(true)
+        setShowUnlock(true)
+        setAlbums([])
+        return
+      }
+      const data = await res.json()
+      setAlbums(data.albums || [])
+      setLocked(false)
+    } catch {
+      // 网络异常时保持空态，不误显示上锁
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    fetch('/api/albums')
-      .then((res) => res.json())
-      .then((data) => setAlbums(data.albums || []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    loadAlbums()
   }, [])
 
   return (
@@ -41,6 +61,18 @@ export default function AlbumsPage() {
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-rose-400" />
           加载中...
         </div>
+      ) : locked ? (
+        <div className="card p-12 text-center text-gray-500">
+          <Lock className="w-10 h-10 mx-auto mb-3 text-rose-200" />
+          <p>相册已上锁，请先解锁</p>
+          <button
+            type="button"
+            onClick={() => setShowUnlock(true)}
+            className="mt-4 px-5 py-2 bg-rose-500 text-white rounded-full text-sm hover:bg-rose-600 transition-colors"
+          >
+            解锁相册
+          </button>
+        </div>
       ) : albums.length === 0 ? (
         <div className="card p-12 text-center text-gray-500">
           <ImageIcon className="w-10 h-10 mx-auto mb-3 text-rose-200" />
@@ -56,10 +88,12 @@ export default function AlbumsPage() {
             >
               {album.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={album.coverUrl}
                   alt={album.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] flex items-center justify-center">
@@ -78,6 +112,16 @@ export default function AlbumsPage() {
           ))}
         </div>
       )}
+
+      <AlbumUnlockModal
+        isOpen={showUnlock}
+        onClose={() => setShowUnlock(false)}
+        redirectToAlbum={false}
+        onSuccess={() => {
+          setShowUnlock(false)
+          loadAlbums()
+        }}
+      />
     </div>
   )
 }

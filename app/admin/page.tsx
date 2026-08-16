@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Plus, Edit2, Trash2, LogOut, MapPin, Users, ShieldCheck, CalendarDays, Images,
   Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home, Sparkles
@@ -229,12 +230,14 @@ export default function AdminDashboard() {
                       <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            <div className="relative w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                               {post.cover ? (
-                                <img
-                                  src={post.cover.startsWith('/') ? post.cover : post.cover}
+                                <Image
+                                  src={post.cover}
                                   alt={post.title}
-                                  className="w-full h-full object-cover"
+                                  fill
+                                  sizes="40px"
+                                  className="object-cover"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement
                                     target.style.display = 'none'

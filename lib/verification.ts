@@ -1,109 +1,121 @@
-import { randomInt } from 'crypto'
+import { randomInt, createHash } from 'crypto'
+import { prisma } from './db'
 
-interface CodeEntry {
-  code: string
-  exp: number
-  attempts: number
-}
-
-const verificationCodes = new Map<string, CodeEntry>()
-const resetCodes = new Map<string, CodeEntry>()
-
-const CODE_EXPIRY = 5 * 60 * 1000
-const RESEND_COOLDOWN = 50 * 1000
+export const CODE_EXPIRY_MS = 5 * 60 * 1000
+const RESEND_COOLDOWN_MS = 50 * 1000
 const MAX_ATTEMPTS = 5
 
-/** 生成 6 位随机验证码（100000-999999），不再使用固定演示码。 */
+export type CodePurpose = 'BIND_EMAIL' | 'RESET'
+
+interface ActiveCode {
+  id: number
+  codeHash: string
+  expiresAt: Date
+  attempts: number
+  createdAt: Date
+}
+
+function hashCode(code: string): string {
+  return createHash('sha256').update(code).digest('hex')
+}
+
+/** 生成 6 位随机验证码（100000-999999） */
 export function generateVerificationCode(): string {
   return String(randomInt(100000, 1000000))
 }
 
+async function findActiveCode(email: string, purpose: CodePurpose): Promise<ActiveCode | null> {
+  return prisma.verificationCode.findFirst({
+    where: {
+      email,
+      purpose,
+      consumedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    orderBy: { id: 'desc' },
+  })
+}
 
-export function storeVerificationCode(email: string, code: string): { exp: number } {
-  const exp = Date.now() + CODE_EXPIRY
-  verificationCodes.set(email, { code, exp, attempts: 0 })
+async function storeCode(email: string, code: string, purpose: CodePurpose, ipHash?: string | null): Promise<{ exp: number }> {
+  const exp = Date.now() + CODE_EXPIRY_MS
+  await prisma.verificationCode.create({
+    data: {
+      email,
+      purpose,
+      codeHash: hashCode(code),
+      expiresAt: new Date(exp),
+      ipHash: ipHash || null,
+    },
+  })
   return { exp }
 }
 
-/**
- * 校验邮箱验证码。失败时累计尝试次数，超过上限即作废该验证码（需重新发送）。
- * 校验成功不自动删除，由调用方显式 consumeVerificationCode。
- */
-export function verifyVerificationCode(email: string, code: string): boolean {
-  const entry = verificationCodes.get(email)
+async function verifyCode(email: string, code: string, purpose: CodePurpose): Promise<boolean> {
+  const entry = await findActiveCode(email, purpose)
   if (!entry) return false
-  if (entry.exp < Date.now()) {
-    verificationCodes.delete(email)
-    return false
-  }
-  if (entry.code === code) {
+
+  if (entry.codeHash === hashCode(code)) {
     return true
   }
-  entry.attempts += 1
-  if (entry.attempts >= MAX_ATTEMPTS) {
-    verificationCodes.delete(email)
-  }
+
+  const nextAttempts = entry.attempts + 1
+  await prisma.verificationCode.update({
+    where: { id: entry.id },
+    data: {
+      attempts: nextAttempts,
+      consumedAt: nextAttempts >= MAX_ATTEMPTS ? new Date() : null,
+    },
+  })
   return false
 }
 
-export function consumeVerificationCode(email: string): void {
-  verificationCodes.delete(email)
+async function consumeCode(email: string, purpose: CodePurpose): Promise<void> {
+  const entry = await findActiveCode(email, purpose)
+  if (entry) {
+    await prisma.verificationCode.update({
+      where: { id: entry.id },
+      data: { consumedAt: new Date() },
+    })
+  }
 }
 
-export function getVerificationCodeStatus(email: string): { canSend: boolean; remainingSeconds: number } {
-  const entry = verificationCodes.get(email)
-  if (!entry || entry.exp < Date.now()) {
-    return { canSend: true, remainingSeconds: 0 }
-  }
+async function getStatus(email: string, purpose: CodePurpose): Promise<{ canSend: boolean; remainingSeconds: number }> {
+  const entry = await findActiveCode(email, purpose)
+  if (!entry) return { canSend: true, remainingSeconds: 0 }
   const now = Date.now()
-  const remaining = Math.ceil((entry.exp - now) / 1000)
-  const canSend = remaining > RESEND_COOLDOWN / 1000
-  return { canSend, remainingSeconds: remaining }
+  const remaining = Math.ceil((entry.expiresAt.getTime() - now) / 1000)
+  const canSend = entry.createdAt.getTime() + RESEND_COOLDOWN_MS <= now
+  return { canSend, remainingSeconds: Math.max(0, remaining) }
 }
 
-export function storeResetCode(email: string, code: string): { exp: number } {
-  const exp = Date.now() + CODE_EXPIRY
-  resetCodes.set(email, { code, exp, attempts: 0 })
-  return { exp }
+// ===== 绑定邮箱验证码 =====
+export function storeVerificationCode(email: string, code: string, ipHash?: string | null): Promise<{ exp: number }> {
+  return storeCode(email, code, 'BIND_EMAIL', ipHash)
+}
+export function verifyVerificationCode(email: string, code: string): Promise<boolean> {
+  return verifyCode(email, code, 'BIND_EMAIL')
+}
+export function consumeVerificationCode(email: string): Promise<void> {
+  return consumeCode(email, 'BIND_EMAIL')
+}
+export function getVerificationCodeStatus(email: string): Promise<{ canSend: boolean; remainingSeconds: number }> {
+  return getStatus(email, 'BIND_EMAIL')
 }
 
-/**
- * 校验密码重置验证码。失败时累计尝试次数，超过上限即作废（需重新获取）。
- * 校验成功不自动删除，由调用方显式 consumeResetCode（verify-code 步骤通过后 reset 步骤仍可使用）。
- */
-export function verifyResetCode(email: string, code: string): boolean {
-  const entry = resetCodes.get(email)
-  if (!entry) return false
-  if (entry.exp < Date.now()) {
-    resetCodes.delete(email)
-    return false
-  }
-  if (entry.code === code) {
-    return true
-  }
-  entry.attempts += 1
-  if (entry.attempts >= MAX_ATTEMPTS) {
-    resetCodes.delete(email)
-  }
-  return false
+// ===== 密码重置验证码 =====
+export function storeResetCode(email: string, code: string, ipHash?: string | null): Promise<{ exp: number }> {
+  return storeCode(email, code, 'RESET', ipHash)
+}
+export function verifyResetCode(email: string, code: string): Promise<boolean> {
+  return verifyCode(email, code, 'RESET')
+}
+export function consumeResetCode(email: string): Promise<void> {
+  return consumeCode(email, 'RESET')
+}
+export function getResetCodeStatus(email: string): Promise<{ canSend: boolean; remainingSeconds: number }> {
+  return getStatus(email, 'RESET')
 }
 
-export function consumeResetCode(email: string): void {
-  resetCodes.delete(email)
-}
-
-export function getResetCodeStatus(email: string): { canSend: boolean; remainingSeconds: number } {
-  const entry = resetCodes.get(email)
-  if (!entry || entry.exp < Date.now()) {
-    return { canSend: true, remainingSeconds: 0 }
-  }
-  const now = Date.now()
-  const remaining = Math.ceil((entry.exp - now) / 1000)
-  const canSend = remaining > RESEND_COOLDOWN / 1000
-  return { canSend, remainingSeconds: remaining }
-}
-
-/** 是否已配置真实邮件发送（未配置时验证码仅输出到服务端日志，供本地演示）。 */
 export function isEmailDeliveryConfigured(): boolean {
-  return process.env.EMAIL_ENABLED === 'true'
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
 }

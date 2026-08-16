@@ -1,6 +1,7 @@
 'use client'
 
 import { Calendar, MapPin } from 'lucide-react'
+import Image from 'next/image'
 import { getCitiesByProvince } from '@/data/cities'
 import type { PostMeta, ProvincePath } from './types'
 
@@ -32,10 +33,12 @@ export default function ProvinceTooltip({
       <div className="rounded-xl border border-[#D8DDD8]/80 bg-[#FAFBF7]/95 shadow-xl backdrop-blur overflow-hidden" style={{ width: '260px' }}>
         {previewImage && (
           <div className="relative h-36 overflow-hidden bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]">
-            <img
+            <Image
               src={previewImage}
               alt={p?.name || ''}
-              className="w-full h-full object-cover"
+              fill
+              sizes="260px"
+              className="object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none'
               }}

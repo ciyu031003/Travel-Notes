@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     }
 
     const authService = getAuthService()
-    const result = await authService.sendResetCode(email)
+    const result = await authService.sendResetCode(email, ip)
 
     if (!result.success) {
       const statusCode = result.remainingSeconds ? 429 : 400

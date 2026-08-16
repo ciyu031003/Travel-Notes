@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, type ComponentType, type CSSProperties } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   Heart,
@@ -398,11 +399,12 @@ export default function HomeClient({
                     {post.cover ? (
                       <div className="relative h-40 overflow-hidden bg-[#F5DCE0]/40 dark:bg-[#33262E]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={post.cover}
                           alt={post.title}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       </div>
                     ) : (

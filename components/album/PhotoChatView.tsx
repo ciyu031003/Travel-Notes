@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import Image from 'next/image'
 import { ArrowLeft, Send, Moon, Loader2, MessageCircle, Sparkles } from 'lucide-react'
 import ParticlePhotoBackground from './space/ParticlePhotoBackground'
 import StarfieldBackground from './StarfieldBackground'
@@ -139,7 +140,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
             返回
           </button>
           <div className="relative w-9 h-9 rounded-full overflow-hidden border border-white/15 flex-shrink-0 shadow-md">
-            <img src={image} alt={cityName || '照片'} className="w-full h-full object-cover" />
+            <Image src={image} alt={cityName || '照片'} fill sizes="36px" className="object-cover" />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-white/95 text-sm font-semibold truncate">
