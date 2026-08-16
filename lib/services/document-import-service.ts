@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import path from 'path'
 import TurndownService from 'turndown'
 import mammoth from 'mammoth'
@@ -278,7 +279,7 @@ export class DocumentImportService {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '')
 
-    const suffix = Math.random().toString(36).slice(2, 8)
+    const suffix = randomUUID().slice(0, 6)
 
     if (base.length === 0) {
       return `post-${suffix}`

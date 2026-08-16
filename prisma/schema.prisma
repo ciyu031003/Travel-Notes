@@ -94,6 +94,23 @@ model TokenBlacklist {
   @@index([expiresAt])
 }
 
+/// 邮箱验证码（密码重置 / 绑定邮箱），只保存哈希
+model VerificationCode {
+  id         Int       @id @default(autoincrement())
+  email      String    @db.VarChar(255)
+  purpose    String    @db.VarChar(50)
+  codeHash   String    @db.VarChar(128)
+  expiresAt  DateTime  @db.Timestamp(3)
+  attempts   Int       @default(0)
+  consumedAt DateTime? @db.Timestamp(3)
+  ipHash     String?   @db.VarChar(128)
+  createdAt  DateTime  @default(now()) @db.Timestamp(3)
+
+  @@index([email, purpose, createdAt])
+  @@index([purpose, createdAt])
+}
+
+
 model Moment {
   id        Int      @id @default(autoincrement())
   content   String   @db.Text

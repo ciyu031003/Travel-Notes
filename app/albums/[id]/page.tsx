@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Loader2, Image as ImageIcon, Lock } from 'lucide-react'
+import AlbumUnlockModal from '@/components/AlbumUnlockModal'
 
 interface MediaItem {
   id: number
@@ -27,14 +28,32 @@ export default function AlbumDetailPage() {
   const router = useRouter()
   const [album, setAlbum] = useState<Album | null>(null)
   const [loading, setLoading] = useState(true)
+  const [locked, setLocked] = useState(false)
+  const [showUnlock, setShowUnlock] = useState(false)
   const [lightbox, setLightbox] = useState<number | null>(null)
 
+  const loadAlbum = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/albums/${params.id}`)
+      if (res.status === 403) {
+        setLocked(true)
+        setShowUnlock(true)
+        setAlbum(null)
+        return
+      }
+      const data = await res.json()
+      setAlbum(data.album || null)
+      setLocked(false)
+    } catch {
+      setAlbum(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    fetch(`/api/albums/${params.id}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setAlbum(data.album || null))
-      .catch(() => setAlbum(null))
-      .finally(() => setLoading(false))
+    loadAlbum()
   }, [params.id])
 
   if (loading) {
@@ -42,6 +61,31 @@ export default function AlbumDetailPage() {
       <div className="container-custom py-16 text-center text-gray-500">
         <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-rose-400" />
         加载中...
+      </div>
+    )
+  }
+
+  if (locked) {
+    return (
+      <div className="container-custom py-16 text-center text-gray-500">
+        <Lock className="w-10 h-10 mx-auto mb-3 text-rose-200" />
+        <p className="mb-4">相册已上锁，请先解锁</p>
+        <button
+          type="button"
+          onClick={() => setShowUnlock(true)}
+          className="px-5 py-2 bg-rose-500 text-white rounded-full text-sm hover:bg-rose-600 transition-colors"
+        >
+          解锁相册
+        </button>
+        <AlbumUnlockModal
+          isOpen={showUnlock}
+          onClose={() => setShowUnlock(false)}
+          redirectToAlbum={false}
+          onSuccess={() => {
+            setShowUnlock(false)
+            loadAlbum()
+          }}
+        />
       </div>
     )
   }

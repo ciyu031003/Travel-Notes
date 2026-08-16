@@ -15,4 +15,9 @@ export async function verifyAlbumToken(token: string | undefined): Promise<boole
   return verifySession(token)
 }
 
+export function extractAlbumToken(request: Request): string | undefined {
+  const cookieHeader = request.headers.get('cookie') || ''
+  const tokenMatch = cookieHeader.match(new RegExp(ALBUM_COOKIE + '=([^;]+)'))
+  return tokenMatch ? decodeURIComponent(tokenMatch[1]) : undefined
+}
 export { ALBUM_COOKIE }

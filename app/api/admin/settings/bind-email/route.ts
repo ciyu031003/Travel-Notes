@@ -21,12 +21,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '请输入 6 位验证码' }, { status: 400 })
     }
 
-    const valid = verifyVerificationCode(email, code)
+    const valid = await verifyVerificationCode(email, code)
     if (!valid) {
       return NextResponse.json({ error: '验证码错误或已过期' }, { status: 401 })
     }
 
-    consumeVerificationCode(email)
+    await consumeVerificationCode(email)
 
     const siteService = getSiteService()
     await siteService.updateEmail(email, undefined, true)

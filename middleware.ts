@@ -109,8 +109,33 @@ async function verifyJWT(token: string): Promise<boolean> {
   }
 }
 
+/**
+ * CSRF 防护：非 GET/HEAD/OPTIONS 请求校验 Origin 与 Host 一致。
+ * - 无 Origin 的请求（curl/服务器间调用/移动端）放行；SameSite=Lax 已阻止跨站带 Cookie。
+ * - 跨站浏览器请求 Origin 与 Host 不一致时拒绝。
+ */
+function rejectCrossOrigin(request: NextRequest): NextResponse | null {
+  if (request.method === 'GET' || request.method === 'HEAD' || request.method === 'OPTIONS') {
+    return null
+  }
+  const origin = request.headers.get('origin')
+  const host = request.nextUrl.host
+  if (!origin || !host) return null
+  try {
+    if (new URL(origin).host !== host) {
+      return applySecurityHeaders(NextResponse.json({ error: '跨站请求被拒绝' }, { status: 403 }))
+    }
+  } catch {
+    return applySecurityHeaders(NextResponse.json({ error: '跨站请求被拒绝' }, { status: 403 }))
+  }
+  return null
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  const csrfResponse = rejectCrossOrigin(request)
+  if (csrfResponse) return csrfResponse
 
   // 首页及公开前缀路径直接放行（首页需精确匹配，不能用 startsWith('/')）
   if (pathname === '/' || PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
