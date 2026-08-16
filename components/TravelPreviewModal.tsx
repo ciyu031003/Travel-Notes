@@ -282,7 +282,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                   )}
                   <span className="flex items-center gap-1">
                     <Tag className="w-4 h-4" />
-                    '旅行记录'
+                    &apos;旅行记录&apos;
                   </span>
                 </div>
                 {tagsArray.length > 0 && (

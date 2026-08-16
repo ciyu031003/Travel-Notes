@@ -73,7 +73,7 @@ export default function StackedImageSlider({
 
     let translateX = normalizedOffset * 40
     let scale = 1 - Math.abs(normalizedOffset) * 0.08
-    let zIndex = 100 - Math.abs(normalizedOffset)
+    const zIndex = 100 - Math.abs(normalizedOffset)
     let opacity = Math.abs(normalizedOffset) > 2 ? 0 : 1 - Math.abs(normalizedOffset) * 0.2
     let rotateY = normalizedOffset * -15
 
