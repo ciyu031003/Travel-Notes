@@ -5,6 +5,15 @@
 ## [Unreleased]
 
 ### Added
+- 安全与隐私补漏（Phase 1）：
+  - 相册 API 服务端访问控制（album_token），前台解锁弹窗
+  - 邮箱验证码落库（VerificationCode，只存哈希）+ nodemailer SMTP 发送
+  - middleware CSRF Origin 校验 + 存储键 crypto.randomUUID
+- 数据模型收敛（Phase 2）：
+  - 新增 User 表（多账号基础），认证从 SiteSetting 平滑迁移到 User
+  - 新增 TimelineItem 统一时间线表
+  - Session / SpaceMember / Memory / AuditLog 增加 userId 外键
+  - 新增 scripts/migrate-phase2.cjs 数据回填脚本
 - 工程化基线（Phase 0）：
   - Vitest 测试框架 + 单元/安全回归测试（媒体校验、限流、Markdown XSS、认证、视频路径穿越、权限 IDOR、上传鉴权）
   - GitHub Actions CI（lint → typecheck → test → build）
