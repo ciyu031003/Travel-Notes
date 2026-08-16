@@ -1532,3 +1532,16 @@ html.dark {
 .travel-media-parallax {
   will-change: transform;
 }
+
+/* 游记页向下箭头舒缓上浮 */
+@keyframes chevron-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}

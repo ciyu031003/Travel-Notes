@@ -360,14 +360,14 @@ export default function TravelDetailClient({
                 className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50 hover:text-white transition-colors pointer-events-auto"
               >
                 <span className="text-xs tracking-wide">向下滚动</span>
-                <ChevronDown className="w-5 h-5 animate-bounce" />
+                <ChevronDown className="w-5 h-5 animate-[chevron-float_1.8s_ease-in-out_infinite]" />
               </button>
             )}
 
             {index === visibleIndex && index === mediaItems.length - 1 && (
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50">
                 <span className="text-xs tracking-wide">继续阅读文章</span>
-                <ChevronDown className="w-5 h-5 animate-bounce" />
+                <ChevronDown className="w-5 h-5 animate-[chevron-float_1.8s_ease-in-out_infinite]" />
               </div>
             )}
           </section>
