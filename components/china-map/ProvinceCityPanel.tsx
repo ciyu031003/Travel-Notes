@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { X, MapPin, Sparkles, Plus } from 'lucide-react'
 import type { City } from '@/data/cities'
 import type { PostMeta } from './types'
@@ -61,12 +62,14 @@ export default function ProvinceCityPanel({
                 href={`/travel/${post.slug}`}
                 className="flex items-center gap-3 p-2 rounded-lg bg-[#FAFBF7]/80 hover:bg-white transition-colors group"
               >
-                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] flex-shrink-0">
+                <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] flex-shrink-0">
                   {(post.cover || post.images?.[0]) ? (
-                    <img
-                      src={post.cover || post.images?.[0]}
+                    <Image
+                      src={post.cover || post.images?.[0] || ''}
                       alt={post.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="48px"
+                      className="object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none'
                       }}

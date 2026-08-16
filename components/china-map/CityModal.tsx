@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   X, MapPin, ArrowRight, Plus, Camera, ChevronLeft, Pencil, Image as ImageIcon,
@@ -96,10 +97,12 @@ export default function CityModal({
                   >
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0]">
                       {(post.cover || post.images?.[0]) && (
-                        <img
-                          src={post.cover || post.images?.[0]}
+                        <Image
+                          src={post.cover || post.images?.[0] || ''}
                           alt={post.title}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="64px"
+                          className="object-cover"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none'
                           }}

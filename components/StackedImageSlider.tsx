@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface StackedImageSliderProps {
@@ -114,10 +115,12 @@ export default function StackedImageSlider({
             }}
           >
             {img && (
-              <img loading="lazy" decoding="async"
-                src={img.startsWith('/') ? img : img}
+              <Image
+                src={img}
                 alt={`图片 ${index + 1}`}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
                 draggable={false}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement

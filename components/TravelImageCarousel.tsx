@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import NextImage from 'next/image'
 import { MapPin, Heart, ImageOff } from 'lucide-react'
 
 const DISPLAY_DURATION = 6000
@@ -229,13 +230,13 @@ export default function TravelImageCarousel({
               <p className="text-sm text-[#5A6670]/70">图片加载失败</p>
             </div>
           ) : (
-            <img
+            <NextImage
               key={`cur-${currentIndex}`}
-              src={currentImage.startsWith('/') ? currentImage : currentImage}
+              src={currentImage}
               alt={`旅行照片 ${currentIndex + 1}`}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 88vw, 380px"
+              className="object-cover"
               draggable={false}
               style={{
                 opacity: 1,
@@ -251,13 +252,13 @@ export default function TravelImageCarousel({
 
           {/* 顶层：上一张图片（正在淡出，覆盖在当前图片之上） */}
           {prevImage && !prevHasError && (
-            <img
+            <NextImage
               key={`prev-${prevIndex}`}
-              src={prevImage.startsWith('/') ? prevImage : prevImage}
+              src={prevImage}
               alt={`上一张 ${prevIndex + 1}`}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 88vw, 380px"
+              className="object-cover"
               draggable={false}
               style={{
                 opacity: isTransitioning ? 0 : 1,

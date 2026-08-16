@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info, Lock } from 'lucide-react'
 import ChinaMap from '@/components/ChinaMap'
@@ -244,10 +245,12 @@ export default function TravelClient({ posts }: TravelClientProps) {
                   {/* 封面图 */}
                   <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
                     {(post.cover || post.images?.[0]) ? (
-                      <img
-                        src={post.cover || post.images?.[0]}
+                      <Image
+                        src={post.cover || post.images?.[0] || ''}
                         alt={post.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none'
                         }}

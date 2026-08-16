@@ -134,11 +134,12 @@ export default function AlbumDetailPage() {
               className="group relative block aspect-square overflow-hidden rounded-xl shadow-sm hover:shadow-lg transition-all"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={m.url}
                 alt=""
-                loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </button>
           ))}
@@ -152,10 +153,12 @@ export default function AlbumDetailPage() {
           onClick={() => setLightbox(null)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={album.media.find((m) => m.id === lightbox)!.url}
             alt=""
-            className="max-w-full max-h-full object-contain rounded-lg"
+            fill
+            sizes="100vw"
+            className="object-contain rounded-lg"
           />
         </div>
       )}

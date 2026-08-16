@@ -88,10 +88,12 @@ export default function AlbumsPage() {
             >
               {album.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={album.coverUrl}
                   alt={album.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] flex items-center justify-center">

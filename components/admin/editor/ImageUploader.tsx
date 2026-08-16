@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import Image from 'next/image'
 import { Upload, ZoomIn, ChevronUp, ChevronDown, Trash2, XCircle, ImageOff } from 'lucide-react'
 
 export interface ImageUploaderProps {
@@ -184,10 +185,12 @@ export default function ImageUploader({
               } ${draggedIndex === index ? 'opacity-50' : ''} cursor-move`}
             >
               {img && !imageErrors.has(img) && (
-                <img
+                <Image
                   src={img}
                   alt={`图片 ${index + 1}`}
-                  className="w-full h-full object-cover cursor-pointer"
+                  fill
+                  sizes="128px"
+                  className="object-cover cursor-pointer"
                   onClick={() => setImagePreview(img)}
                   onError={() => handleImageError(img)}
                 />
@@ -266,10 +269,12 @@ export default function ImageUploader({
           >
             <XCircle className="w-8 h-8" />
           </button>
-          <img
+          <Image
             src={imagePreview}
             alt="预览"
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            fill
+            sizes="100vw"
+            className="object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { Camera, MessageCircle } from 'lucide-react'
+import Image from 'next/image'
 
 interface PolaroidWallProps {
   images: string[]
@@ -46,12 +47,13 @@ export default function PolaroidWall({ images, cityName, date, onPhotoClick }: P
               aria-label={`点击查看 ${cityName || '相册'} 第 ${index + 1} 张照片并留言`}
             >
               {/* 照片主体 */}
-              <div className="relative overflow-hidden border-2 border-black/80 bg-[#211713]">
-                <img
+              <div className="relative aspect-[4/5] overflow-hidden border-2 border-black/80 bg-[#211713]">
+                <Image
                   src={img}
                   alt={`${cityName || '旅行照片'} ${index + 1}`}
-                  loading="lazy"
-                  className="w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 {/* 底片标签 */}
                 <span className="photo-negative-tag">记忆底片</span>
