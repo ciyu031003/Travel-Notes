@@ -36,6 +36,7 @@ function map(r: any): AnniversaryRecord {
 }
 
 export async function listAnniversaries(): Promise<AnniversaryRecord[]> {
+  if (skipDbOnBuild()) return []
   const rows = await prisma.anniversary.findMany({ orderBy: { date: 'asc' } })
   return rows.map(map)
 }

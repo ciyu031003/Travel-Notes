@@ -28,6 +28,7 @@ function toDate(value: Date | string | null | undefined): Date | null {
 }
 
 export async function getTimeline(): Promise<TimelineYear[]> {
+  if (skipDbOnBuild()) return []
   const [travels, memories] = await Promise.all([
     prisma.travel.findMany({
       where: { visibility: { in: ['COUPLE', 'PUBLIC'] } },
