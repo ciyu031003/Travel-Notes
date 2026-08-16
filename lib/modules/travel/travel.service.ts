@@ -3,6 +3,7 @@
  * （面向 P2 的行程与花费管理；公开的旅行详情展示属于 P5）
  */
 import { prisma } from '../../db'
+import { skipDbOnBuild } from '../../db-guard'
 
 export interface TravelSummary {
   id: number
@@ -14,6 +15,9 @@ export interface TravelSummary {
   status: string
   dayCount: number
   expenseTotal: number
+  cover: string | null
+  tags: string[] | null
+  location: string | null
 }
 
 export interface ItineraryItemRecord {
@@ -57,6 +61,17 @@ export interface TravelDetail {
   expenses: ExpenseRecord[]
 }
 
+function safeParseTags(raw: string | null | undefined): string[] | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === 'string') : null
+  } catch {
+    // 旧数据可能为逗号分隔
+    return raw.split(',').map((v) => v.trim()).filter(Boolean)
+  }
+}
+
 function iso(v: Date | null | undefined): string | null {
   if (!v) return null
   const d = v instanceof Date ? v : new Date(v)
@@ -64,6 +79,7 @@ function iso(v: Date | null | undefined): string | null {
 }
 
 export async function listTravels(): Promise<TravelSummary[]> {
+  if (skipDbOnBuild()) return []
   const rows = await prisma.travel.findMany({
     orderBy: { startDate: 'desc' },
     include: {
@@ -81,6 +97,9 @@ export async function listTravels(): Promise<TravelSummary[]> {
     status: t.status,
     dayCount: t._count.days,
     expenseTotal: t.expenses.reduce((s: number, e: any) => s + (e.amount || 0), 0),
+    cover: t.cover ?? null,
+    tags: t.tags ? safeParseTags(t.tags) : null,
+    location: t.location ?? null,
   }))
 }
 

@@ -298,6 +298,10 @@ model Travel {
   title        String       @db.VarChar(255)
   slug         String       @db.VarChar(255)
   description  String?      @db.Text
+  content      String?      @db.Text
+  tags         String?      @db.Text
+  location     String?      @db.VarChar(255)
+  cover        String?      @db.VarChar(500)
   startDate    DateTime?    @db.Timestamp(3)
   endDate      DateTime?    @db.Timestamp(3)
   coverMediaId Int?

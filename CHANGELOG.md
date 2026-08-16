@@ -5,6 +5,10 @@
 ## [Unreleased]
 
 ### Added
+- Travel 2.0 前台（Phase 3，进行中）：
+  - Travel 模型增加 content/tags/location/cover 文章兼容字段
+  - /travel 列表页优先读取新 Travel 模型（未迁移时回退旧 Post）
+  - 新增 scripts/migrate-travels.cjs（Post(type=travel) → Travel）
 - 安全与隐私补漏（Phase 1）：
   - 相册 API 服务端访问控制（album_token），前台解锁弹窗
   - 邮箱验证码落库（VerificationCode，只存哈希）+ nodemailer SMTP 发送
