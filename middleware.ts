@@ -20,6 +20,7 @@ const PUBLIC_PATHS = [
   '/login',
   '/admin/login',
   '/admin/change-password',
+  '/admin/setup',
   '/forgot-password',
   '/album',
   '/albums',
@@ -62,6 +63,7 @@ const PUBLIC_PATHS = [
  */
 function applySecurityHeaders(response: NextResponse): NextResponse {
   const isProd = process.env.NODE_ENV === 'production'
+  const isHttps = (process.env.NEXT_PUBLIC_SITE_URL || '').startsWith('https://')
 
   const csp = [
     "default-src 'self'",
@@ -77,7 +79,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    ...(isProd ? ['upgrade-insecure-requests'] : []),
+    ...(isProd && isHttps ? ['upgrade-insecure-requests'] : []),
   ].join('; ')
 
   response.headers.set('Content-Security-Policy', csp)
@@ -89,7 +91,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   )
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
-  if (isProd) {
+  if (isProd && isHttps) {
     response.headers.set(
       'Strict-Transport-Security',
       'max-age=63072000; includeSubDomains; preload'
@@ -119,13 +121,31 @@ function rejectCrossOrigin(request: NextRequest): NextResponse | null {
     return null
   }
   const origin = request.headers.get('origin')
-  const host = request.nextUrl.host
-  if (!origin || !host) return null
+  // 微信/部分 WebView 可能发送字符串 "null"，这类请求没有可校验的 Origin，交给 SameSite Cookie 兜底
+  if (!origin || origin === 'null') return null
+
+  let originHostname: string
   try {
-    if (new URL(origin).host !== host) {
-      return applySecurityHeaders(NextResponse.json({ error: '跨站请求被拒绝' }, { status: 403 }))
-    }
+    originHostname = new URL(origin).hostname
   } catch {
+    // 无法解析的 Origin 不拦截，避免误伤正常登录
+    return null
+  }
+
+  const requestHostname = request.nextUrl.hostname
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || ''
+  let siteHostname = ''
+  try {
+    siteHostname = new URL(siteUrl).hostname
+  } catch {}
+
+  // 允许来源：
+  // 1. 请求实际 Host（如反向代理后为 localhost）
+  // 2. 配置中的站点域名/IP（如 http://106.55.2.197）
+  // 3. 本地调试 host
+  const allowedHostnames = new Set([requestHostname, siteHostname, 'localhost', '127.0.0.1'].filter(Boolean))
+
+  if (!allowedHostnames.has(originHostname)) {
     return applySecurityHeaders(NextResponse.json({ error: '跨站请求被拒绝' }, { status: 403 }))
   }
   return null
