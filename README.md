@@ -177,6 +177,51 @@ npm start
 
 > **低内存服务器构建优化**：如果服务器内存 ≤ 2GB，构建时可能 OOM。建议添加 Swap 分区或设置 `NODE_OPTIONS=--max-old-space-size=512` 限制 Node.js 内存。
 
+
+### 🐳 Docker 一键部署
+
+项目内置 Docker 一键部署（Next.js + MySQL 8.4 + Prisma 自动建表）。
+
+**环境要求**：Docker Engine + Docker Compose v2（Windows 用户可安装 Docker Desktop，用 Git Bash 运行脚本或直接执行 docker compose 命令）。
+
+**一键启动（Linux / macOS）**：
+
+```bash
+bash scripts/docker-deploy.sh
+```
+
+脚本会自动：从 `.env.example` 生成 `.env`（若不存在）→ 生成 `JWT_SECRET` / `SESSION_SECRET` / `MYSQL_ROOT_PASSWORD` → 构建镜像并启动。
+
+**或手动执行**：
+
+```bash
+docker compose up -d --build
+```
+
+启动完成后访问 http://localhost:3000，并前往 **/admin/setup** 完成管理员初始化。
+
+**常用命令**：
+
+```bash
+docker compose ps               # 查看容器状态
+docker compose logs -f app      # 查看应用日志
+docker compose down             # 停止（保留数据卷）
+docker compose down -v          # 停止并清空数据库/上传数据卷
+```
+
+**常用环境变量**（编辑根目录 `.env`）：
+
+| 变量 | 说明 | 默认 |
+|---|---|---|
+| `APP_PORT` | 宿主机映射端口 | 3000 |
+| `MYSQL_ROOT_PASSWORD` | MySQL root 密码 | 自动生成 |
+| `JWT_SECRET` / `SESSION_SECRET` | 会话密钥 | 自动生成 |
+| `NEXT_PUBLIC_SITE_URL` | 站点 URL | http://localhost:3000 |
+| `SMTP_*` | 邮件发送（可选） | 空 |
+| `STORAGE_*` | S3 兼容对象存储（可选） | 空 |
+
+> 数据持久化在两个命名卷：`mysql-data`（数据库）与 `uploads-data`（上传文件）。详细说明见 [docs/DOCKER_DEPLOY.md](docs/DOCKER_DEPLOY.md)。
+
 ## 📁 项目结构
 
 ```
