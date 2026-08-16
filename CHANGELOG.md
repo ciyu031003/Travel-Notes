@@ -5,6 +5,10 @@
 ## [Unreleased]
 
 ### Added
+- Travel 移动端记录（Phase 3 补充）：
+  - 新增 /travel/[slug]/record 记录页（标题/内容/心情）
+  - 新增 /api/travels/[id]/memories 与 /api/travels/by-slug/[slug]
+- UI/性能（Phase 6 补充）：相册列表/详情封面与网格图迁移到 next/image
 - Media 2.0（Phase 4）：
   - 上传生成 Thumbnail/Preview/Blur 媒体变体并写入 MediaVariant
   - 新增 scripts/migrate-media.cjs（PostImage LongBlob → 本地文件 + Media 记录）

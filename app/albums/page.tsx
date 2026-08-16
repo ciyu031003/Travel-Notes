@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Image as ImageIcon, Loader2, Images, Lock } from 'lucide-react'
 import AlbumUnlockModal from '@/components/AlbumUnlockModal'
 

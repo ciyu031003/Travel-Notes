@@ -21,7 +21,7 @@ async function ensureColumn(connection, table, column, ddl) {
     [table, column]
   );
   if (rows.length === 0) {
-    await connection.query(`ALTER TABLE \`${table}\` ADD COLUMN ${ddl}`);
+    await connection.query(`ALTER TABLE \`${table}\` ADD COLUMN ${column} ${ddl}`);
     console.log(`  + ${table}.${column}`);
   }
 }

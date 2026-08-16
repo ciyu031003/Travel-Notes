@@ -34,3 +34,5 @@ public/search-index.json
 start.log
 dev-server.log
 dev-server.err.log
+
+dev-run.log

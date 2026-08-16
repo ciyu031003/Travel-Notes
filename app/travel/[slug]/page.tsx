@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { getPostService } from '@/lib/container'
 import { getTravelBySlug } from '@/lib/modules/travel/travel.service'
 import { formatDate } from '@/lib/utils'
@@ -56,6 +57,14 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
         <TravelDetailClient {...imageProps} />
       )}
 
+      <div className="container-custom pt-6">
+        <Link
+          href={`/travel/${slug}/record`}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#F5DCE0] border border-[#E8B8C2]/50 text-[#5A6670] rounded-full text-sm font-medium hover:bg-[#EED2D8] transition-colors"
+        >
+          ✍️ 记录今日
+        </Link>
+      </div>
       <div id={`detail-${slug}`} className="container-custom">
         <article className="max-w-3xl mx-auto pt-24 pb-16">
           <header className="mb-8 text-center">
