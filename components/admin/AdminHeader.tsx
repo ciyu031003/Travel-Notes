@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -137,83 +138,87 @@ export default function AdminHeader({
         </div>
       </div>
 
-      {/* 移动端全屏抽屉菜单 */}
-      <div
-        className={`fixed inset-0 z-50 md:hidden transition-opacity duration-300 ${
-          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-        style={{ background: 'rgba(15, 18, 25, 0.45)' }}
-        onClick={close}
-        aria-hidden={!open}
-      >
+      {open && typeof document !== 'undefined' && createPortal(
         <div
-          className={`absolute right-0 top-0 h-full w-[min(86vw,340px)] bg-white dark:bg-gray-900 shadow-2xl transition-transform duration-300 ease-out ${
-            open ? 'translate-x-0' : 'translate-x-full'
-          }`}
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-[70] md:hidden"
+          style={{ background: 'rgba(10, 12, 18, 0.6)' }}
+          onClick={close}
+          aria-hidden={!open}
         >
-          <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-2.5">
-              <div className={`w-8 h-8 bg-gradient-to-r ${accent} rounded-lg flex items-center justify-center`}>
-                <Heart className="w-4 h-4 text-white" />
+          {/* 半透明遮罩层上的模糊层 */}
+          <div className="absolute inset-0 backdrop-blur-[2px]" />
+
+          {/* 抽屉面板：实底 + 自身毛玻璃，独立于头部 */}
+          <div
+            className={`absolute right-0 top-0 h-full w-[min(86vw,340px)] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl shadow-black/30 ring-1 ring-black/5 dark:ring-white/10 transition-transform duration-300 ease-out ${
+              open ? 'translate-x-0' : 'translate-x-full'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 bg-gradient-to-r ${accent} rounded-lg flex items-center justify-center shadow-md`}>
+                  <Heart className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-semibold text-gray-900 dark:text-white">甜途 · {title}</span>
               </div>
-              <span className="font-semibold text-gray-900 dark:text-white">甜途 · {title}</span>
-            </div>
-            <button
-              type="button"
-              onClick={close}
-              aria-label="关闭菜单"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <nav className="p-3 overflow-y-auto max-h-[calc(100vh-4rem)]">
-            {ADMIN_NAV.map((item, i) => {
-              const Icon = item.icon
-              const active = isActive(item.href)
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={close}
-                  style={{ transitionDelay: `${open ? i * 30 : 0}ms` }}
-                  className={`mt-1 flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all ${
-                    active
-                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300'
-                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                  } ${
-                    open ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" style={{ color: undefined }} />
-                  <span>{item.label}</span>
-                  {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-500" />}
-                </Link>
-              )
-            })}
-
-            <div className="mt-3 border-t border-gray-100 dark:border-gray-800 pt-3">
-              <Link
-                href="/admin/settings"
-                onClick={close}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                账号设置
-              </Link>
               <button
-                onClick={handleLogout}
-                className="mt-1 flex w-full items-center gap-3 px-3 py-3 rounded-xl text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                type="button"
+                onClick={close}
+                aria-label="关闭菜单"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
-                <LogOut className="w-4 h-4" />
-                退出登录
+                <X className="w-5 h-5" />
               </button>
             </div>
-          </nav>
-        </div>
-      </div>
+
+            <nav className="p-3 overflow-y-auto max-h-[calc(100vh-4rem)]">
+              {ADMIN_NAV.map((item, i) => {
+                const Icon = item.icon
+                const active = isActive(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={close}
+                    style={{ transitionDelay: `${open ? i * 30 : 0}ms` }}
+                    className={`mt-1 flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all ${
+                      active
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    } ${
+                      open ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                    {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-500" />}
+                  </Link>
+                )
+              })}
+
+              <div className="mt-3 border-t border-gray-100 dark:border-gray-800 pt-3">
+                <Link
+                  href="/admin/settings"
+                  onClick={close}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  账号设置
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="mt-1 flex w-full items-center gap-3 px-3 py-3 rounded-xl text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  退出登录
+                </button>
+              </div>
+            </nav>
+          </div>
+        </div>,
+        document.body
+      )}
     </header>
   )
 }
