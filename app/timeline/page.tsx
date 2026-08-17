@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, Sparkles, CalendarDays } from 'lucide-react'
+import TimelineCover from '@/components/timeline/TimelineCover'
 import { getTimeline } from '@/lib/modules/timeline/timeline.service'
 import { formatDate } from '@/lib/utils'
 
@@ -76,45 +77,53 @@ export default async function TimelinePage() {
 function TimelineItem({ entry }: { entry: import('@/lib/modules/timeline/timeline.service').TimelineEntry }) {
   const isTravel = entry.type === 'travel'
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <span
-          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-            isTravel
-              ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-300'
-              : 'bg-purple-50 dark:bg-purple-900/30 text-purple-500 dark:text-purple-300'
-          }`}
-        >
-          {isTravel ? <MapPin className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
-          {isTravel ? '旅行' : '回忆'}
-        </span>
-        <span className="text-xs text-gray-400 dark:text-gray-500">
-          {formatDate(entry.date)}
-        </span>
-        {!isTravel && entry.travelTitle && (
-          <span className="text-xs text-gray-400 dark:text-gray-500">· {entry.travelTitle}</span>
-        )}
-      </div>
-      <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 group-hover:text-rose-500 transition-colors">
-        {entry.title}
-      </h3>
-      {entry.description && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{entry.description}</p>
-      )}
-      {(entry.location || entry.mood) && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {entry.location && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300">
-              📍 {entry.location}
-            </span>
-          )}
-          {entry.mood && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300">
-              {entry.mood}
-            </span>
-          )}
+    <div className="flex gap-4">
+      {isTravel && entry.cover && (
+        <div className="relative hidden h-20 w-24 shrink-0 overflow-hidden rounded-xl sm:block">
+          <TimelineCover src={entry.cover} alt={entry.title} />
         </div>
       )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 mb-2">
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+              isTravel
+                ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-300'
+                : 'bg-purple-50 dark:bg-purple-900/30 text-purple-500 dark:text-purple-300'
+            }`}
+          >
+            {isTravel ? <MapPin className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+            {isTravel ? '旅行' : '回忆'}
+          </span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            {formatDate(entry.date)}
+          </span>
+          {!isTravel && entry.travelTitle && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">· {entry.travelTitle}</span>
+          )}
+        </div>
+        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 group-hover:text-rose-500 transition-colors">
+          {entry.title}
+        </h3>
+        {entry.description && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{entry.description}</p>
+        )}
+        {(entry.location || entry.mood) && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {entry.location && (
+              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300">
+                <MapPin className="w-3 h-3" />
+                {entry.location}
+              </span>
+            )}
+            {entry.mood && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300">
+                {entry.mood}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
