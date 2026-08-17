@@ -42,6 +42,16 @@ export default function TravelDetailClient({
   const [animationKey, setAnimationKey] = useState(0)
   const [isMuted, setIsMuted] = useState(true)
   const [playingVideos, setPlayingVideos] = useState<Set<number>>(new Set())
+  const [loaded, setLoaded] = useState<Set<string>>(new Set())
+
+  const markLoaded = useCallback((key: string) => {
+    setLoaded((prev) => {
+      if (prev.has(key)) return prev
+      const next = new Set(prev)
+      next.add(key)
+      return next
+    })
+  }, [])
 
   const mediaItems = useMemo<MediaItem[]>(() => {
     const items: MediaItem[] = []
@@ -263,6 +273,8 @@ export default function TravelDetailClient({
             className="h-screen snap-start relative overflow-hidden"
           >
             <div className="travel-media-parallax absolute -inset-y-[14%] inset-x-0">
+              {/* 暖色渐变占位：图片加载中/失败时显示，避免黑屏 */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#F5DCE0] via-[#E8B8C2]/50 to-[#D6E8F0] dark:from-[#3A2B31] dark:via-[#4A3640] dark:to-[#22303A]" />
               {item.type === 'image' ? (
                 <Image
                   key={`${item.type}-${index}-${index === visibleIndex ? animationKey : 'idle'}`}
@@ -270,7 +282,13 @@ export default function TravelDetailClient({
                   alt={`${title} - ${index + 1}`}
                   fill
                   sizes="100vw"
-                  className={`object-cover ${index === visibleIndex ? 'travel-media-enter' : ''}`}
+                  priority={index === 0}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
+                  className={`object-cover transition-opacity duration-700 ${
+                    loaded.has(`img-${index}`) ? 'opacity-100' : 'opacity-0'
+                  } ${`${index === visibleIndex ? 'travel-media-enter' : ''}`}`}
+                  onLoad={() => markLoaded(`img-${index}`)}
+                  onError={() => markLoaded(`img-${index}`)}
                   draggable={false}
                 />
               ) : (
@@ -287,52 +305,81 @@ export default function TravelDetailClient({
                 />
               )}
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/50 pointer-events-none" />
+            {/* 底部海报渐变遮罩（下重上轻） */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/20 pointer-events-none" />
+            {/* 轻微暗角（胶片感） */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: 'radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,0.38) 100%)' }}
+            />
+            {/* 细颗粒噪点（海报质感） */}
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+              style={{
+                backgroundImage:
+                  "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 256 256\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23n)\" /%3E%3C/svg%3E')",
+              }}
+            />
 
             {index === visibleIndex && showText && (
               <div
                 key={`text-${index}-${animationKey}`}
                 className="absolute inset-0 pointer-events-none"
               >
-                {/* Vertical title on the left side */}
-                <div className="absolute left-6 md:left-10 top-1/2 -translate-y-1/2 flex items-center h-[70vh]">
-                  <h2
-                    className="text-3xl md:text-5xl font-bold text-white drop-shadow-lg text-glow"
-                    style={{
-                      writingMode: 'vertical-rl',
-                      textOrientation: 'upright',
-                      letterSpacing: '0.15em',
-                      animation: 'textReveal 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards',
-                    }}
-                  >
-                    {title}
-                  </h2>
-                </div>
-
-                {/* Bottom-right: page counter + description */}
-                <div className="absolute bottom-24 right-6 md:right-10 max-w-md text-right">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/15 backdrop-blur-md border border-white/25 text-white rounded-full text-sm mb-4 animate-fade-down" style={{ animationDelay: '0.1s' }}>
-                    <span>{index + 1} / {mediaItems.length}</span>
-                    {item.type === 'video' && (
-                      <span className="flex items-center gap-1">
-                        <span className="w-1 h-1 bg-white/60 rounded-full" />
-                        视频
+                {/* 顶部：meta（地点 · 日期） */}
+                <div className="absolute left-6 right-6 top-20 md:left-10 md:right-10 flex items-start justify-between gap-4">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-white/90 text-sm animate-fade-down" style={{ animationDelay: '0.05s' }}>
+                    {location && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4" />
+                        {location}
+                      </span>
+                    )}
+                    {date && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(date).toLocaleDateString('zh-CN')}
                       </span>
                     )}
                   </div>
 
+                  {/* 右上角：页码 */}
+                  <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3.5 py-1.5 text-xs text-white backdrop-blur-md animate-fade-down" style={{ animationDelay: '0.1s' }}>
+                    <span>{index + 1} / {mediaItems.length}</span>
+                    {item.type === 'video' && (
+                      <span className="flex items-center gap-1">
+                        <span className="h-1 w-1 rounded-full bg-white/60" />
+                        视频
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 底部：海报文字块（左下角，不居中） */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-28 md:p-12 md:pb-32">
                   {description && (
                     <p
-                      className="text-white/85 text-sm md:text-base leading-relaxed"
+                      className="mb-3 max-w-xl text-sm leading-relaxed text-white/85 md:mb-4 md:text-base"
                       style={{
                         animation: 'fadeSlideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards',
-                        animationDelay: '0.2s',
+                        animationDelay: '0.18s',
                         opacity: 0,
                       }}
                     >
                       {description}
                     </p>
                   )}
+                  <h2
+                    className="font-display max-w-3xl text-4xl font-bold leading-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] md:text-6xl"
+                    style={{
+                      letterSpacing: '0.06em',
+                      animation: 'fadeSlideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards',
+                      animationDelay: '0.08s',
+                      opacity: 0,
+                    }}
+                  >
+                    {title}
+                  </h2>
                 </div>
               </div>
             )}

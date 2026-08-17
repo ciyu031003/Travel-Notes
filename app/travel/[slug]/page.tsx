@@ -18,11 +18,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { getCurrentUserId } = await import('@/lib/current-user')
   const userId = await getCurrentUserId()
   const travel = await getTravelBySlug(slug, userId)
-  if (!travel) return { title: '文章不存在' }
-  return {
-    title: travel.title,
-    description: travel.description ?? undefined,
+  if (travel) {
+    return { title: travel.title, description: travel.description ?? undefined }
   }
+  // 旧 Post 游记回退：标签页标题显示真实游记标题
+  try {
+    const postService = getPostService()
+    const legacyPost = await postService.getPostBySlugHybrid('travel', slug, userId)
+    if (legacyPost) {
+      return { title: legacyPost.title, description: legacyPost.description || undefined }
+    }
+  } catch {}
+  return { title: '文章不存在' }
 }
 
 export default async function TravelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -42,61 +49,32 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
   const legacyImages = (legacyPost as any)?.images || []
   const legacyVideos = (legacyPost as any)?.videos || []
 
-  // 当使用旧 Post 兜底时，直接渲染旧游记；travel 为空且无旧 Post 时 404
-  if (!travel) {
-    if (!legacyPost) {
-      notFound()
-    }
-    return (
-      <div className="bg-[#FAFBF7] min-h-screen">
-        <div className="container-custom pt-6">
-          <Link
-            href={`/travel/${slug}/record`}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#F5DCE0] border border-[#E8B8C2]/50 text-[#5A6670] rounded-full text-sm font-medium hover:bg-[#EED2D8] transition-colors"
-          >
-            ✍️ 记录今日
-          </Link>
-        </div>
-        <div id={`detail-${slug}`} className="container-custom">
-          <article className="max-w-3xl mx-auto pt-24 pb-16">
-            <header className="mb-8 text-center">
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#5A6670]">{legacyPost.title}</h1>
-              <div className="flex items-center justify-center gap-4 text-[#5A6670]/60 text-sm">
-                {(legacyPost as any).date && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {formatDate((legacyPost as any).date)}
-                  </span>
-                )}
-                {(legacyPost as any).location && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {(legacyPost as any).location}
-                  </span>
-                )}
-              </div>
-            </header>
-            <div
-              className="prose prose-lg max-w-none prose-headings:text-[#5A6670] prose-p:text-[#5A6670]/80 prose-a:text-[#E8B8C2]"
-              dangerouslySetInnerHTML={{ __html: (legacyPost as any).contentHtml || legacyPost.content }}
-            />
-            <MermaidRenderer />
-          </article>
-        </div>
-      </div>
-    )
+  // travel 为空且无旧 Post 时 404；否则统一走「全屏图廊 + 文章」布局
+  if (!travel && !legacyPost) {
+    notFound()
   }
 
-  const images = travel!.cover ? [travel!.cover, ...legacyImages] : legacyImages
+  const record: any = travel ?? legacyPost
+  const images = travel
+    ? travel.cover
+      ? [travel.cover, ...legacyImages]
+      : legacyImages
+    : legacyImages
   const videos = legacyVideos
+  const detailTitle = record.title
+  const detailDescription = travel ? travel.description ?? undefined : (legacyPost?.description || undefined)
+  const detailLocation = travel ? travel.location ?? undefined : (legacyPost?.location || undefined)
+  const detailDate = travel ? travel.startDate ?? '' : (legacyPost?.date || '')
+  const detailTags = travel?.tags ?? null
+  const contentHtml = travel ? travel.contentHtml : ((legacyPost as any)?.contentHtml || (legacyPost as any).content)
 
   const imageProps = {
     images,
     videos,
-    title: travel!.title,
-    description: travel!.description ?? undefined,
-    location: travel!.location ?? undefined,
-    date: travel!.startDate ?? '',
+    title: detailTitle,
+    description: detailDescription,
+    location: detailLocation,
+    date: detailDate,
     postSlug: slug,
   }
 
@@ -117,24 +95,24 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
       <div id={`detail-${slug}`} className="container-custom">
         <article className="max-w-3xl mx-auto pt-24 pb-16">
           <header className="mb-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#5A6670]">{travel.title}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#5A6670]">{detailTitle}</h1>
             <div className="flex items-center justify-center gap-4 text-[#5A6670]/60 text-sm">
-              {travel.startDate && (
+              {detailDate && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  {formatDate(travel.startDate)}
+                  {formatDate(detailDate)}
                 </span>
               )}
-              {travel.location && (
+              {detailLocation && (
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  {travel.location}
+                  {detailLocation}
                 </span>
               )}
             </div>
-            {travel.tags && travel.tags.length > 0 && (
+            {detailTags && detailTags.length > 0 && (
               <div className="flex justify-center gap-2 mt-4">
-                {travel.tags.map((tag: string) => (
+                {detailTags.map((tag: string) => (
                   <span key={tag} className="px-3 py-1 bg-[#F5DCE0]/40 border border-[#E8B8C2]/50 text-[#5A6670] text-xs rounded-full">
                     {tag}
                   </span>
@@ -151,7 +129,7 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
 
           <div
             className="prose prose-lg max-w-none prose-headings:text-[#5A6670] prose-p:text-[#5A6670]/80 prose-a:text-[#E8B8C2]"
-            dangerouslySetInnerHTML={{ __html: travel.contentHtml }}
+            dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
           
           <MermaidRenderer />
