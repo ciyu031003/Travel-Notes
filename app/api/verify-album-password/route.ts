@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       inputDate.replace(/-/g, '') === expectedDate.replace(/-/g, '')
 
     if (isValid) {
-      const token = await generateAlbumToken()
+      const token = await generateAlbumToken(expectedDate)
       const response = NextResponse.json({ success: true })
       response.cookies.set(ALBUM_COOKIE, token, {
         path: '/',
