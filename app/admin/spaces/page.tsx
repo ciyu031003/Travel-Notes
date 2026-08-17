@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  ArrowLeft, Plus, Users, Loader2, AlertCircle, Copy, Check, Link2, X,
+  Plus, Users, Loader2, AlertCircle, Copy, Check, Link2, X,
   Heart, Images, MapPin, Sparkles, Camera, Trash2, UserPlus, Gift, Shield,
   Clock, Ban, ChevronRight,
 } from 'lucide-react'
+import AdminShell from '@/components/admin/AdminShell'
 
 interface Space {
   id: number
@@ -270,17 +271,9 @@ export default function AdminSpacesPage() {
     'w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-400/70 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500'
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50/70 via-white to-white dark:from-gray-900 dark:via-gray-950 dark:to-gray-950">
+    <AdminShell title="空间管理">
       {/* 顶部 */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-        <Link
-          href="/admin"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors mb-5"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          返回后台
-        </Link>
-
+      <div className="mx-auto max-w-5xl px-1 py-2">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-500 via-pink-500 to-orange-400 p-7 sm:p-9 text-white shadow-xl shadow-rose-500/20">
           <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute right-16 bottom-0 h-24 w-24 rounded-full bg-white/10 blur-xl" />
@@ -702,7 +695,7 @@ export default function AdminSpacesPage() {
           {toast}
         </div>
       )}
-    </div>
+    </AdminShell>
   )
 }
 

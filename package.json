@@ -36,6 +36,7 @@
     "markmap-lib": "^0.18.12",
     "markmap-view": "^0.18.12",
     "mermaid": "^11.16.1",
+    "motion": "^13.1.0",
     "mysql2": "^3.23.1",
     "next": "^15.5.23",
     "nodemailer": "^9.0.5",

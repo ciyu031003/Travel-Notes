@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Loader2 } from 'lucide-react'
+import AdminShell from '@/components/admin/AdminShell'
 
 interface AuditItem {
   id: number
@@ -42,7 +43,8 @@ export default function AdminAuditPage() {
   }, [])
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <AdminShell title="审计日志">
+      <div className="mx-auto max-w-4xl">
         <Link
           href="/admin"
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors mb-4"
@@ -101,6 +103,7 @@ export default function AdminAuditPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AdminShell>
   )
 }

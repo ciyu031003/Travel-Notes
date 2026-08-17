@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Plus, Trash2, Loader2, MapPin, Wallet, CalendarDays, X } from 'lucide-react'
+import AdminShell from '@/components/admin/AdminShell'
 
 interface TravelSummary {
   id: number
@@ -207,7 +208,8 @@ export default function AdminTravelsPage() {
   const totalExpense = detail?.expenses.reduce((s, e) => s + e.amount, 0) || 0
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <AdminShell title="旅行规划">
+      <div className="mx-auto max-w-6xl">
         <Link
           href="/admin"
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors mb-4"
@@ -441,6 +443,7 @@ export default function AdminTravelsPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </AdminShell>
   )
 }

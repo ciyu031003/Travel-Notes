@@ -5,6 +5,7 @@ import Image from 'next/image'
 
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, Upload, Images, X } from 'lucide-react'
+import AdminShell from '@/components/admin/AdminShell'
 
 interface AlbumItem {
   id: number
@@ -144,7 +145,8 @@ export default function AdminAlbumsPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <AdminShell title="相册管理">
+      <div className="mx-auto max-w-5xl">
         <Link
           href="/admin"
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors mb-4"
@@ -290,6 +292,7 @@ export default function AdminAlbumsPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </AdminShell>
   )
 }

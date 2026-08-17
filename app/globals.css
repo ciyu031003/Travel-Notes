@@ -1555,3 +1555,12 @@ html.dark {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===== 后台登录页樱花漂浮 ===== */
+@keyframes sakuraFloat {
+  0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  50%  { transform: translateY(-45vh) translateX(24px) rotate(180deg); opacity: 0.85; }
+  90%  { opacity: 0.5; }
+  100% { transform: translateY(-88vh) translateX(-16px) rotate(360deg); opacity: 0; }
+}

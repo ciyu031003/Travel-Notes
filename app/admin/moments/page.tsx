@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Sparkles, Trash2, Send, Loader2, Inbox } from 'lucide-react'
-import AdminHeader from '@/components/admin/AdminHeader'
+import AdminShell from '@/components/admin/AdminShell'
 
 interface MomentItem {
   id: number
@@ -107,8 +107,7 @@ export default function AdminMomentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <AdminHeader title="碎碎念管理" accent="from-rose-400 to-pink-500" />
+    <AdminShell title="碎碎念管理">
 
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -200,6 +199,6 @@ export default function AdminMomentsPage() {
           </div>
         )}
       </main>
-    </div>
+    </AdminShell>
   )
 }

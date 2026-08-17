@@ -12,6 +12,7 @@ import VideoUploader, { VideoItem } from '@/components/admin/editor/VideoUploade
 import MarkdownEditor from '@/components/admin/editor/MarkdownEditor'
 import DocumentImporter, { ImportedDocument } from '@/components/admin/editor/DocumentImporter'
 import { usePostForm, PostFormData } from '@/components/admin/editor/hooks/usePostForm'
+import AdminShell from '@/components/admin/AdminShell'
 
 type TabMode = 'manual' | 'import'
 
@@ -235,22 +236,22 @@ export default function AdminEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <AdminShell title={isNew ? '新建文章' : '编辑文章'}>
       <PostEditorHeader
         isNew={isNew}
         onPreview={() => setPreview(true)}
         loading={loading}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-7xl">
         <div className="mb-6 flex gap-2">
           <button
             type="button"
             onClick={() => setTabMode('manual')}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
               tabMode === 'manual'
-                ? 'bg-primary-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-gradient-to-r from-[#A64E61] to-[#C76E80] text-white shadow-md shadow-[#A64E61]/25'
+                : 'border border-white/70 bg-white/80 text-[#5A6670] shadow-sm backdrop-blur-xl hover:text-[#A64E61] dark:border-white/10 dark:bg-white/5 dark:text-gray-300'
             }`}
           >
             手动编辑
@@ -258,10 +259,10 @@ export default function AdminEditPage() {
           <button
             type="button"
             onClick={() => setTabMode('import')}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
               tabMode === 'import'
-                ? 'bg-primary-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-gradient-to-r from-[#A64E61] to-[#C76E80] text-white shadow-md shadow-[#A64E61]/25'
+                : 'border border-white/70 bg-white/80 text-[#5A6670] shadow-sm backdrop-blur-xl hover:text-[#A64E61] dark:border-white/10 dark:bg-white/5 dark:text-gray-300'
             }`}
           >
             文档导入发布
@@ -352,6 +353,6 @@ export default function AdminEditPage() {
           />
         </div>
       )}
-    </div>
+    </AdminShell>
   )
 }

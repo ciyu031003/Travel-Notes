@@ -71,18 +71,18 @@ export default function ForceChangePasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFBF7] dark:bg-[#121316]">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
         </div>
         <div className="relative z-10 w-full max-w-md mx-4">
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/20 text-center">
-            <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-400" />
+          <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#16181C]/90 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-emerald-500" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">密码修改成功</h1>
-            <p className="text-gray-400 text-sm">正在跳转到管理后台...</p>
+            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA] mb-2">密码修改成功</h1>
+            <p className="text-sm text-[#5A6670]/80 dark:text-[#9BA3AE]">正在跳转到管理后台...</p>
           </div>
         </div>
       </div>
@@ -90,41 +90,41 @@ export default function ForceChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFBF7] dark:bg-[#121316]">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/20">
+        <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#16181C]/90">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-yellow-400" />
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-amber-500" />
             </div>
-            <h1 className="text-2xl font-bold text-white">首次登录请修改密码</h1>
-            <p className="text-gray-400 text-sm mt-2">
+            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">首次登录请修改密码</h1>
+            <p className="text-sm text-[#5A6670]/80 dark:text-[#9BA3AE] mt-2">
               您正在使用初始密码，请设置一个新密码以确保账户安全
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">新密码</label>
+              <label className="block mb-2 block text-sm font-medium text-[#5A6670] dark:text-[#9BA3AE]">新密码</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9A958F]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full rounded-xl border border-[#E8DDD4] bg-white/70 py-3 pl-11 pr-12 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#C76E80]/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]"
                   placeholder="至少 6 位"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9A958F] transition-colors hover:text-[#A64E61]"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -132,14 +132,14 @@ export default function ForceChangePasswordPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">确认新密码</label>
+              <label className="block mb-2 block text-sm font-medium text-[#5A6670] dark:text-[#9BA3AE]">确认新密码</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9A958F]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full rounded-xl border border-[#E8DDD4] bg-white/70 py-3 pl-11 pr-4 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#C76E80]/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]"
                   placeholder="再次输入新密码"
                   required
                 />
@@ -147,7 +147,7 @@ export default function ForceChangePasswordPage() {
             </div>
 
             {error && (
-              <div className="px-4 py-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm">
+              <div className="rounded-xl border border-[#E8B8C2]/50 bg-[#F5DCE0]/40 px-4 py-3 text-sm text-[#A64E61] dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-[#E8B8C2]">
                 {error}
               </div>
             )}
@@ -155,14 +155,14 @@ export default function ForceChangePasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-primary-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#A64E61] to-[#C76E80] py-3 font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
             >
               {loading ? '修改中...' : '确认修改并进入后台'}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-gray-500 text-xs mt-6">
+        <p className="text-center mt-6 text-center text-xs text-[#9A958F] dark:text-[#6E6A64]">
           为了您的账户安全，初始密码首次登录必须修改
         </p>
       </div>
