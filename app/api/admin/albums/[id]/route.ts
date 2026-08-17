@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (isNaN(albumId)) {
     return NextResponse.json({ error: '无效 ID' }, { status: 400 })
   }
-  const album = await getAlbum(albumId)
+  const album = await getAlbum(albumId, auth.payload?.userId)
   if (!album) {
     return NextResponse.json({ error: '相册不存在' }, { status: 404 })
   }
@@ -40,6 +40,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
     if (body.description !== undefined) input.description = body.description ? String(body.description) : null
     if (body.date !== undefined) input.date = body.date || null
+    if (body.isPublic !== undefined) input.isPublic = Boolean(body.isPublic)
 
     await updateAlbum(albumId, input)
     writeAuditLog({ username: auth.username, action: 'UPDATE', resourceType: 'Album', resourceId: String(albumId) }).catch(() => {})
@@ -60,6 +61,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: '无效 ID' }, { status: 400 })
   }
   try {
+    // 仅允许删除自己名下的相册
+    const owned = await getAlbum(albumId, auth.payload?.userId)
+    if (!owned) {
+      return NextResponse.json({ error: '相册不存在或无权操作' }, { status: 404 })
+    }
     await deleteAlbum(albumId)
     writeAuditLog({ username: auth.username, action: 'DELETE', resourceType: 'Album', resourceId: String(albumId) }).catch(() => {})
     return NextResponse.json({ success: true })

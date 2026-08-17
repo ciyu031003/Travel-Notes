@@ -1,0 +1,44 @@
+-- 多用户增量迁移：只新增列/索引/外键，不改动存量结构
+SET NAMES utf8mb4;
+
+ALTER TABLE Post
+  ADD COLUMN userId INT NULL AFTER published,
+  ADD COLUMN isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER userId,
+  ADD CONSTRAINT Post_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL;
+
+ALTER TABLE Travel
+  ADD COLUMN ownerId INT NULL AFTER spaceId,
+  ADD COLUMN isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER visibility,
+  ADD CONSTRAINT Travel_ownerId_fkey FOREIGN KEY (ownerId) REFERENCES User(id) ON DELETE SET NULL;
+
+ALTER TABLE Album
+  ADD COLUMN userId INT NULL AFTER spaceId,
+  ADD COLUMN isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER visibility,
+  ADD CONSTRAINT Album_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL;
+
+ALTER TABLE Media
+  ADD COLUMN userId INT NULL AFTER memoryId,
+  ADD COLUMN isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER visibility,
+  ADD CONSTRAINT Media_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL;
+
+ALTER TABLE Moment
+  ADD COLUMN userId INT NULL AFTER tags,
+  ADD COLUMN isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER userId,
+  ADD CONSTRAINT Moment_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL,
+  ADD INDEX Moment_userId_idx (userId);
+
+ALTER TABLE PhotoMessage
+  ADD COLUMN userId INT NULL AFTER content,
+  ADD COLUMN isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER userId,
+  ADD CONSTRAINT PhotoMessage_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL,
+  ADD INDEX PhotoMessage_userId_idx (userId);
+
+ALTER TABLE Anniversary
+  ADD COLUMN userId INT NULL AFTER id,
+  ADD COLUMN isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER coverMediaId,
+  ADD CONSTRAINT Anniversary_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL,
+  ADD INDEX Anniversary_userId_idx (userId);
+
+ALTER TABLE TimelineItem
+  ADD COLUMN userId INT NULL AFTER spaceId,
+  ADD CONSTRAINT TimelineItem_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL;

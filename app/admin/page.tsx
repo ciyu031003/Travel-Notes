@@ -6,8 +6,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   Plus, Edit2, Trash2, LogOut, MapPin, Users, ShieldCheck, CalendarDays, Images,
-  Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home, Sparkles
+  Search, Filter, Eye, Calendar, Tag, ImageIcon, Settings, Home, Sparkles, Globe2, Lock, Loader2
 } from 'lucide-react'
+import AdminHeader from '@/components/admin/AdminHeader'
 interface Post {
   id: number
   slug: string
@@ -20,6 +21,7 @@ interface Post {
   location: string | null
   type: string
   published: boolean
+  isPublic?: boolean
   createdAt: string
 }
 
@@ -31,19 +33,8 @@ const typeLabels: Record<string, string> = {
   travel: '旅行记录',
 }
 
-const headerNav = [
-  { href: '/', label: '回到首页', icon: Home, color: 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' },
-  { href: '/admin/spaces', label: '空间管理', icon: Users, color: 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' },
-  { href: '/admin/moments', label: '碎碎念管理', icon: Sparkles, color: 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20' },
-  { href: '/admin/travels', label: '旅行规划', icon: MapPin, color: 'text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20' },
-  { href: '/admin/albums', label: '相册管理', icon: Images, color: 'text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20' },
-  { href: '/admin/anniversaries', label: '纪念日管理', icon: CalendarDays, color: 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20' },
-  { href: '/admin/audit', label: '审计日志', icon: ShieldCheck, color: 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20' },
-]
-
 export default function AdminDashboard() {
   const router = useRouter()
-  const pathname = usePathname()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -84,11 +75,6 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleLogout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' })
-    router.push('/admin/login')
-  }
-
   const handleDelete = async () => {
     if (!deleteId) return
     try {
@@ -97,6 +83,28 @@ export default function AdminDashboard() {
       fetchPosts()
     } catch {
       console.error('Failed to delete post')
+    }
+  }
+
+  const [togglingId, setTogglingId] = useState<number | null>(null)
+
+  const togglePublic = async (post: Post) => {
+    setTogglingId(post.id)
+    try {
+      const res = await fetch(`/api/admin/posts/${post.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: !post.isPublic }),
+      })
+      if (res.ok) {
+        setPosts((prev) =>
+          prev.map((p) => (p.id === post.id ? { ...p, isPublic: !post.isPublic } : p))
+        )
+      }
+    } catch {
+      console.error('Failed to toggle public')
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -109,58 +117,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 h-16">
-            {/* 左：logo + 标题 */}
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="w-9 h-9 bg-gradient-to-r from-primary-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AD</span>
-              </div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white whitespace-nowrap">后台管理</h1>
-            </div>
+      <AdminHeader title="后台管理" />
 
-            {/* 中：功能导航（水平均匀排布，无滚动条） */}
-            <nav className="flex-1 flex items-center justify-center gap-1.5 xl:gap-2.5 min-w-0">
-              {headerNav.map((item) => {
-                const Icon = item.icon
-                const active = pathname === item.href
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    {...(item.href === '/' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap shrink-0 ${
-                      active ? `${item.color} bg-gray-100 dark:bg-gray-700/60 font-medium` : item.color
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
-                  </Link>
-                )
-              })}
-            </nav>
-
-            {/* 右：账号设置 + 退出登录 */}
-            <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href="/admin/settings"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <Settings className="w-4 h-4" />
-                账号设置
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap"
-              >
-                <LogOut className="w-4 h-4" />
-                退出登录
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -281,15 +239,36 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          {post.published ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                              已发布
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                              草稿
-                            </span>
-                          )}
+                          <div className="flex flex-col gap-1.5 items-start">
+                            {post.published ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                已发布
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                草稿
+                              </span>
+                            )}
+                            <button
+                              onClick={() => togglePublic(post)}
+                              disabled={togglingId === post.id}
+                              title={post.isPublic ? '点击设为仅自己可见' : '点击公开分享（所有人可见）'}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all active:scale-95 disabled:opacity-60 ${
+                                post.isPublic
+                                  ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-800/50'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:text-amber-600 dark:hover:text-amber-300'
+                              }`}
+                            >
+                              {togglingId === post.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : post.isPublic ? (
+                                <Globe2 className="w-3 h-3" />
+                              ) : (
+                                <Lock className="w-3 h-3" />
+                              )}
+                              {post.isPublic ? '公开' : '私密'}
+                            </button>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">

@@ -1,4 +1,5 @@
-﻿import { prisma } from '../db'
+import { prisma } from '../db'
+import { scopedWhere } from '../visibility'
 import { skipDbOnBuild } from '../db-guard'
 
 export interface PhotoMessageRecord {
@@ -9,15 +10,15 @@ export interface PhotoMessageRecord {
 }
 
 export interface PhotoMessageRepository {
-  listByImage(imageKey: string, limit: number): Promise<PhotoMessageRecord[]>
-  create(imageKey: string, content: string): Promise<{ id: number }>
+  listByImage(imageKey: string, limit: number, userId?: number | null): Promise<PhotoMessageRecord[]>
+  create(imageKey: string, content: string, userId?: number | null, isPublic?: boolean): Promise<{ id: number }>
 }
 
 export class PrismaPhotoMessageRepository implements PhotoMessageRepository {
-  async listByImage(imageKey: string, limit: number): Promise<PhotoMessageRecord[]> {
+  async listByImage(imageKey: string, limit: number, userId?: number | null): Promise<PhotoMessageRecord[]> {
     if (skipDbOnBuild()) return []
     const rows = await prisma.photoMessage.findMany({
-      where: { imageKey },
+      where: { ...scopedWhere(userId), imageKey } as any,
       orderBy: { createdAt: 'asc' },
       take: Math.min(500, Math.max(1, limit)),
     })
@@ -29,10 +30,10 @@ export class PrismaPhotoMessageRepository implements PhotoMessageRepository {
     }))
   }
 
-  async create(imageKey: string, content: string): Promise<{ id: number }> {
+  async create(imageKey: string, content: string, userId?: number | null, isPublic?: boolean): Promise<{ id: number }> {
     if (skipDbOnBuild()) return { id: 0 }
     const result = await prisma.photoMessage.create({
-      data: { imageKey, content },
+      data: { imageKey, content, userId: userId ?? null, isPublic: isPublic ?? false },
     })
     return { id: result.id }
   }

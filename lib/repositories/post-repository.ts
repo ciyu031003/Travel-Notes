@@ -1,4 +1,5 @@
 import { prisma } from '../db'
+import { scopedWhere } from '../visibility'
 
 /**
  * 低内存构建优化：构建阶段（next build）跳过数据库读取。
@@ -30,6 +31,8 @@ export interface PostMetaDB {
   location?: string
   type: string
   published: boolean
+  isPublic?: boolean
+  userId?: number | null
 }
 
 export interface PostDB extends PostMetaDB {
@@ -44,6 +47,7 @@ export interface FindAllParams {
   pageSize?: number
   search?: string
   location?: string
+  userId?: number | null
 }
 
 export interface PaginatedResult<T> {
@@ -67,6 +71,8 @@ export interface CreatePostInput {
   type: string
   summary?: string
   published?: boolean
+  userId?: number | null
+  isPublic?: boolean
 }
 
 export interface UpdatePostInput {
@@ -82,6 +88,7 @@ export interface UpdatePostInput {
   type?: string
   summary?: string
   published?: boolean
+  isPublic?: boolean
 }
 
 function parseTags(tags: string | null | undefined): string[] {
@@ -162,24 +169,26 @@ export function mapPostMeta(post: any): PostMetaDB {
     location: post.location || undefined,
     type: post.type as string,
     published: post.published,
+    isPublic: post.isPublic ?? false,
+    userId: post.userId ?? null,
   }
 }
 
 export interface PostRepository {
-  findById(id: number): Promise<PostDB | null>
-  findBySlug(type: string, slug: string): Promise<PostDB | null>
+  findById(id: number, userId?: number | null): Promise<PostDB | null>
+  findBySlug(type: string, slug: string, userId?: number | null): Promise<PostDB | null>
   findAll(params: FindAllParams): Promise<PaginatedResult<PostMetaDB>>
-  findAllByType(type: string): Promise<PostMetaDB[]>
-  findByLocation(location: string): Promise<PostMetaDB[]>
+  findAllByType(type: string, userId?: number | null): Promise<PostMetaDB[]>
+  findByLocation(location: string, userId?: number | null): Promise<PostMetaDB[]>
   create(data: CreatePostInput): Promise<{ id: number }>
   update(id: number, data: UpdatePostInput): Promise<void>
   delete(id: number): Promise<void>
-  countByType(type: string): Promise<number>
-  getDistinctLocations(): Promise<string[]>
-  findAdjacent(type: string, date: string): Promise<{ prev: PostMetaDB | null; next: PostMetaDB | null }>
-  findByTag(tag: string, type?: string): Promise<PostMetaDB[]>
-  getAllTags(type?: string): Promise<Array<{ name: string; count: number }>>
-  search(keyword: string, type?: string): Promise<PostMetaDB[]>
+  countByType(type: string, userId?: number | null): Promise<number>
+  getDistinctLocations(userId?: number | null): Promise<string[]>
+  findAdjacent(type: string, date: string, userId?: number | null): Promise<{ prev: PostMetaDB | null; next: PostMetaDB | null }>
+  findByTag(tag: string, type?: string, userId?: number | null): Promise<PostMetaDB[]>
+  getAllTags(type?: string, userId?: number | null): Promise<Array<{ name: string; count: number }>>
+  search(keyword: string, type?: string, userId?: number | null): Promise<PostMetaDB[]>
 }
 
 const metaSelect = {
@@ -205,17 +214,20 @@ const fullSelect = {
 }
 
 export class PrismaPostRepository implements PostRepository {
-  async findById(id: number): Promise<PostDB | null> {
+  async findById(id: number, userId?: number | null): Promise<PostDB | null> {
     if (skipDbOnBuild()) return null
-    const post = await prisma.post.findUnique({ where: { id }, select: fullSelect })
+    const post = await prisma.post.findFirst({
+      where: { ...scopedWhere(userId), id },
+      select: fullSelect,
+    })
     if (!post) return null
     return this.toPostDB(post)
   }
 
-  async findBySlug(type: string, slug: string): Promise<PostDB | null> {
+  async findBySlug(type: string, slug: string, userId?: number | null): Promise<PostDB | null> {
     if (skipDbOnBuild()) return null
-    const post = await prisma.post.findUnique({
-      where: { type_slug: { type, slug } },
+    const post = await prisma.post.findFirst({
+      where: { ...scopedWhere(userId), type, slug },
       select: fullSelect,
     })
     if (!post) return null
@@ -226,16 +238,18 @@ export class PrismaPostRepository implements PostRepository {
     if (skipDbOnBuild()) {
       return { data: [], total: 0, page: params.page || 1, pageSize: params.pageSize || 20, hasMore: false }
     }
-    const { type, published, page = 1, pageSize = 20, search, location } = params
+    const { type, published, page = 1, pageSize = 20, search, location, userId } = params
     const where: any = {}
     if (type) where.type = type
     if (published !== undefined) where.published = published
     if (location) where.location = location
+    Object.assign(where, scopedWhere(userId))
     if (search) {
       where.OR = [
         { title: { contains: search } },
         { summary: { contains: search } },
         { content: { contains: search } },
+        ...(Array.isArray(where.OR) ? where.OR : []),
       ]
     }
 
@@ -259,20 +273,20 @@ export class PrismaPostRepository implements PostRepository {
     }
   }
 
-  async findAllByType(type: string): Promise<PostMetaDB[]> {
+  async findAllByType(type: string, userId?: number | null): Promise<PostMetaDB[]> {
     if (skipDbOnBuild()) return []
     const posts = await prisma.post.findMany({
-      where: { type, published: true },
+      where: { ...scopedWhere(userId), type, published: true },
       orderBy: { date: 'desc' },
       select: metaSelect,
     })
     return posts.map(mapPostMeta)
   }
 
-  async findByLocation(location: string): Promise<PostMetaDB[]> {
+  async findByLocation(location: string, userId?: number | null): Promise<PostMetaDB[]> {
     if (skipDbOnBuild()) return []
     const posts = await prisma.post.findMany({
-      where: { location, published: true },
+      where: { ...scopedWhere(userId), location, published: true },
       orderBy: { date: 'desc' },
       select: metaSelect,
     })
@@ -294,6 +308,8 @@ export class PrismaPostRepository implements PostRepository {
         type: data.type,
         summary: data.summary ?? null,
         published: data.published ?? true,
+        userId: data.userId ?? null,
+        isPublic: data.isPublic ?? false,
       },
     })
     return { id: post.id }
@@ -313,6 +329,7 @@ export class PrismaPostRepository implements PostRepository {
     if (data.type !== undefined) updateData.type = data.type
     if (data.summary !== undefined) updateData.summary = data.summary || null
     if (data.published !== undefined) updateData.published = data.published
+    if (data.isPublic !== undefined) updateData.isPublic = data.isPublic
 
     await prisma.post.update({ where: { id }, data: updateData })
   }
@@ -321,15 +338,15 @@ export class PrismaPostRepository implements PostRepository {
     await prisma.post.delete({ where: { id } })
   }
 
-  async countByType(type: string): Promise<number> {
+  async countByType(type: string, userId?: number | null): Promise<number> {
     if (skipDbOnBuild()) return 0
-    return prisma.post.count({ where: { type, published: true } })
+    return prisma.post.count({ where: { ...scopedWhere(userId), type, published: true } })
   }
 
-  async getDistinctLocations(): Promise<string[]> {
+  async getDistinctLocations(userId?: number | null): Promise<string[]> {
     if (skipDbOnBuild()) return []
     const rows = await prisma.post.findMany({
-      where: { published: true, location: { not: null } },
+      where: { ...scopedWhere(userId), published: true, location: { not: null } },
       select: { location: true },
       distinct: ['location'],
     })
@@ -338,18 +355,19 @@ export class PrismaPostRepository implements PostRepository {
 
   async findAdjacent(
     type: string,
-    date: string
+    date: string,
+    userId?: number | null
   ): Promise<{ prev: PostMetaDB | null; next: PostMetaDB | null }> {
     if (skipDbOnBuild()) return { prev: null, next: null }
     const target = new Date(date)
     const [prevPost, nextPost] = await Promise.all([
       prisma.post.findFirst({
-        where: { type, published: true, date: { lt: target } },
+        where: { ...scopedWhere(userId), type, published: true, date: { lt: target } },
         orderBy: { date: 'desc' },
         select: metaSelect,
       }),
       prisma.post.findFirst({
-        where: { type, published: true, date: { gt: target } },
+        where: { ...scopedWhere(userId), type, published: true, date: { gt: target } },
         orderBy: { date: 'asc' },
         select: metaSelect,
       }),
@@ -360,9 +378,10 @@ export class PrismaPostRepository implements PostRepository {
     }
   }
 
-  async findByTag(tag: string, type?: string): Promise<PostMetaDB[]> {
+  async findByTag(tag: string, type?: string, userId?: number | null): Promise<PostMetaDB[]> {
     if (skipDbOnBuild()) return []
     const where: any = {
+      ...scopedWhere(userId),
       published: true,
       tags: { contains: tag },
     }
@@ -376,9 +395,9 @@ export class PrismaPostRepository implements PostRepository {
     return mapped.filter((p) => Array.isArray(p.tags) && p.tags.includes(tag))
   }
 
-  async getAllTags(type?: string): Promise<Array<{ name: string; count: number }>> {
+  async getAllTags(type?: string, userId?: number | null): Promise<Array<{ name: string; count: number }>> {
     if (skipDbOnBuild()) return []
-    const where: any = { published: true }
+    const where: any = { ...scopedWhere(userId), published: true }
     if (type) where.type = type
     const posts = await prisma.post.findMany({ where, select: { tags: true } })
     const counts = new Map<string, number>()
@@ -392,9 +411,10 @@ export class PrismaPostRepository implements PostRepository {
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
   }
 
-  async search(keyword: string, type?: string): Promise<PostMetaDB[]> {
+  async search(keyword: string, type?: string, userId?: number | null): Promise<PostMetaDB[]> {
     if (skipDbOnBuild()) return []
     const where: any = {
+      ...scopedWhere(userId),
       published: true,
       OR: [
         { title: { contains: keyword } },

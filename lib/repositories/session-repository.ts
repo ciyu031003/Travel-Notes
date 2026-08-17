@@ -14,6 +14,7 @@ export interface SessionRecord {
 export interface CreateSessionInput {
   id: string
   username: string
+  userId?: number | null
   expiresAt: Date
   userAgent?: string | null
   ipHash?: string | null
@@ -41,6 +42,7 @@ export class PrismaSessionRepository {
       data: {
         id: input.id,
         username: input.username,
+        userId: input.userId ?? null,
         expiresAt: input.expiresAt,
         userAgent: input.userAgent ?? null,
         ipHash: input.ipHash ?? null,

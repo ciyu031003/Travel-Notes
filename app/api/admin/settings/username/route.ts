@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     const siteService = getSiteService()
-    const result = await siteService.updateUsername(newUsername.trim(), currentPassword)
+    const result = await siteService.updateUsername(newUsername.trim(), currentPassword, authResult?.username)
     if (!result.success) {
       return NextResponse.json({ error: result.error || '更新失败' }, { status: 401 })
     }

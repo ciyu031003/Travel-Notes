@@ -15,6 +15,7 @@ export interface PostFormData {
   type: string
   summary: string
   published: boolean
+  isPublic: boolean
 }
 
 const getDefaultFormData = (): PostFormData => ({
@@ -30,6 +31,7 @@ const getDefaultFormData = (): PostFormData => ({
   type: 'travel',
   summary: '',
   published: true,
+  isPublic: false,
 })
 
 export function usePostForm(initial?: Partial<PostFormData>) {

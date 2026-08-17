@@ -80,6 +80,7 @@ export default function AdminEditPage() {
           type: post.type,
           summary: post.summary || '',
           published: post.published,
+          isPublic: post.isPublic ?? false,
         })
       }
     } catch {
@@ -132,6 +133,7 @@ export default function AdminEditPage() {
       type: formData.type,
       summary: formData.summary,
       published: formData.published,
+      isPublic: formData.isPublic,
       date: new Date(formData.date),
     }
 
@@ -311,6 +313,7 @@ export default function AdminEditPage() {
                 cover={formData.cover}
                 summary={formData.summary}
                 published={formData.published}
+                isPublic={formData.isPublic}
                 imagesCount={formData.images.length}
                 videosCount={formData.videos.length}
                 onChange={(field, value) => setField(field as keyof PostFormData, value)}

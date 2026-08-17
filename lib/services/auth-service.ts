@@ -1,3 +1,4 @@
+import { prisma } from '../db'
 import { createHash, randomUUID } from 'crypto'
 import { UserRepository } from '../repositories/user-repository'
 import { TokenService } from '../services/token-service'
@@ -56,17 +57,17 @@ export class AuthService {
   ): Promise<LoginResult> {
     await this.userRepo.initializeFromEnv()
 
-    const settings = await this.userRepo.getSettings()
+    const user = await prisma.user.findUnique({ where: { username } })
 
-    if (!settings.passwordHash) {
-      return { success: false, error: '系统尚未配置访问密码' }
-    }
-
-    if (username !== settings.username) {
+    if (!user) {
       return { success: false, error: '用户名或密码错误' }
     }
 
-    const valid = await verifyPassword(password, settings.passwordHash)
+    if (!user.passwordHash) {
+      return { success: false, error: '系统尚未配置访问密码' }
+    }
+
+    const valid = await verifyPassword(password, user.passwordHash)
     if (!valid) {
       return { success: false, error: '用户名或密码错误' }
     }
@@ -77,22 +78,85 @@ export class AuthService {
 
     await this.sessionRepo.create({
       id: sid,
-      username: settings.username,
+      username: user.username,
+      userId: user.id,
       expiresAt,
       userAgent: meta.userAgent ?? null,
       ipHash: hashIp(meta.ip),
     })
 
     const token = await this.tokenService.sign(
-      { username: settings.username, role: 'admin', sid },
+      { username: user.username, role: 'admin', userId: user.id, sid },
       ttlSeconds,
     )
 
     return {
       success: true,
       token,
-      username: settings.username,
-      requirePasswordChange: settings.requirePasswordChange,
+      username: user.username,
+      requirePasswordChange: user.requirePasswordChange,
+      ttlSeconds,
+    }
+  }
+
+  /**
+   * 注册新账号（内测开放注册）：用户名唯一，注册成功即自动登录。
+   */
+  async register(
+    username: string,
+    password: string,
+    rememberMe: boolean = false,
+    meta: LoginMeta = {},
+  ): Promise<LoginResult> {
+    const name = String(username || '').trim()
+    if (!/^[\w\u4e00-\u9fa5]{2,20}$/.test(name)) {
+      return { success: false, error: '用户名需为 2-20 位中文/字母/数字/下划线' }
+    }
+    if (!password || password.length < 6) {
+      return { success: false, error: '密码至少需要 6 位字符' }
+    }
+
+    const exists = await prisma.user.findUnique({ where: { username: name } })
+    if (exists) {
+      return { success: false, error: '该用户名已被注册' }
+    }
+
+    const passwordHash = await hashPassword(password)
+    let user
+    try {
+      user = await prisma.user.create({
+        data: { username: name, passwordHash, requirePasswordChange: false },
+      })
+    } catch (e: any) {
+      if (e && e.code === 'P2002') {
+        return { success: false, error: '该用户名已被注册' }
+      }
+      return { success: false, error: '注册失败，请稍后重试' }
+    }
+
+    const ttlSeconds = rememberMe ? REMEMBER_SESSION_SECONDS : DEFAULT_SESSION_SECONDS
+    const sid = randomUUID()
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
+
+    await this.sessionRepo.create({
+      id: sid,
+      username: user.username,
+      userId: user.id,
+      expiresAt,
+      userAgent: meta.userAgent ?? null,
+      ipHash: hashIp(meta.ip),
+    })
+
+    const token = await this.tokenService.sign(
+      { username: user.username, role: 'admin', userId: user.id, sid },
+      ttlSeconds,
+    )
+
+    return {
+      success: true,
+      token,
+      username: user.username,
+      requirePasswordChange: false,
       ttlSeconds,
     }
   }

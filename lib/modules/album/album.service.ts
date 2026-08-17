@@ -2,6 +2,7 @@
  * Album：纪念相册（基于独立 Media 模型 + 对象/本地存储）
  */
 import { prisma } from '../../db'
+import { scopedWhere } from '../../visibility'
 import { randomUUID } from 'crypto'
 import { getStorageService } from '../../infrastructure/storage'
 import { generateMediaVariants } from '../../infrastructure/media-variants'
@@ -63,8 +64,9 @@ function mapAlbum(a: any): AlbumItem {
   }
 }
 
-export async function listAlbums(): Promise<AlbumItem[]> {
+export async function listAlbums(userId?: number | null): Promise<AlbumItem[]> {
   const rows = await prisma.album.findMany({
+    where: scopedWhere(userId) as any,
     orderBy: { createdAt: 'desc' },
     include: {
       coverMedia: true,
@@ -74,9 +76,9 @@ export async function listAlbums(): Promise<AlbumItem[]> {
   return rows.map(mapAlbum)
 }
 
-export async function getAlbum(albumId: number): Promise<AlbumItem & { media: AlbumMediaItem[] } | null> {
-  const album = await prisma.album.findUnique({
-    where: { id: albumId },
+export async function getAlbum(albumId: number, userId?: number | null): Promise<AlbumItem & { media: AlbumMediaItem[] } | null> {
+  const album = await prisma.album.findFirst({
+    where: { ...scopedWhere(userId), id: albumId } as any,
     include: {
       coverMedia: true,
       _count: { select: { items: true } },
@@ -108,6 +110,8 @@ export interface CreateAlbumInput {
   title: string
   description?: string
   date?: string
+  userId?: number | null
+  isPublic?: boolean
 }
 
 export async function createAlbum(input: CreateAlbumInput): Promise<{ id: number }> {
@@ -116,6 +120,8 @@ export async function createAlbum(input: CreateAlbumInput): Promise<{ id: number
       title: input.title,
       description: input.description || null,
       date: input.date ? new Date(input.date) : null,
+      userId: input.userId ?? null,
+      isPublic: input.isPublic ?? false,
     },
   })
   return { id: row.id }
@@ -126,6 +132,7 @@ export async function updateAlbum(id: number, input: Partial<CreateAlbumInput>):
   if (input.title !== undefined) data.title = input.title
   if (input.description !== undefined) data.description = input.description || null
   if (input.date !== undefined) data.date = input.date ? new Date(input.date) : null
+  if (input.isPublic !== undefined) data.isPublic = input.isPublic
   await prisma.album.update({ where: { id }, data })
 }
 
@@ -148,7 +155,7 @@ export async function deleteAlbum(id: number): Promise<void> {
 }
 
 /** 上传图片到相册：校验 + 重新编码 → 存储 → Media + AlbumMedia 记录 */
-export async function addMediaToAlbum(albumId: number, files: UploadFile[]): Promise<AlbumMediaItem[]> {
+export async function addMediaToAlbum(albumId: number, files: UploadFile[], userId?: number | null): Promise<AlbumMediaItem[]> {
   if (!files || files.length === 0) throw new Error('未上传任何文件')
   if (files.length > MAX_IMAGE_COUNT) throw new Error(`单次最多上传 ${MAX_IMAGE_COUNT} 张图片`)
 
@@ -173,6 +180,7 @@ export async function addMediaToAlbum(albumId: number, files: UploadFile[]): Pro
         width: safe.width,
         height: safe.height,
         visibility: 'COUPLE',
+        userId: userId ?? null,
       },
     })
     // 生成并持久化媒体变体（缩略图/预览/模糊占位）

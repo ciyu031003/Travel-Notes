@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params
   const travelId = parseInt(id, 10)
   if (isNaN(travelId)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })
-  const travel = await getTravelDetail(travelId)
+  const travel = await getTravelDetail(travelId, auth.payload?.userId)
   if (!travel) return NextResponse.json({ error: '旅行不存在' }, { status: 404 })
   return NextResponse.json({ travel })
 }
@@ -26,6 +26,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (isNaN(travelId)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })
   try {
     const body = await request.json()
+    const owned = await getTravelDetail(travelId, auth.payload?.userId)
+    if (!owned) return NextResponse.json({ error: '旅行不存在或无权操作' }, { status: 404 })
     await updateTravel(travelId, body)
     writeAuditLog({ username: auth.username, action: 'UPDATE', resourceType: 'Travel', resourceId: String(travelId) }).catch(() => {})
     return NextResponse.json({ success: true })

@@ -17,8 +17,10 @@ export async function GET(request: NextRequest) {
       return fail('关键词至少 2 个字符', 400)
     }
 
+    const { getCurrentUserId } = await import('@/lib/current-user')
+    const userId = await getCurrentUserId()
     const postService = getPostService()
-    const results = await postService.searchAllPosts(q)
+    const results = await postService.searchAllPosts(q, userId)
     return ok({ results })
   } catch (error: any) {
     console.error('[GET /api/search] Error:', error?.message || error)

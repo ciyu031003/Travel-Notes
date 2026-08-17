@@ -40,7 +40,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }))
     )
 
-    const media = await addMediaToAlbum(albumId, imageFiles)
+    const media = await addMediaToAlbum(albumId, imageFiles, auth.payload?.userId)
     writeAuditLog({
       username: auth.username,
       action: 'UPLOAD_MEDIA',

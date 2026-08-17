@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '50')))
     const momentService = getMomentService()
-    const result = await momentService.getMoments(page, pageSize)
+    const result = await momentService.getMoments(page, pageSize, auth.payload?.userId)
     return ok(result)
   } catch (error: any) {
     console.error('[GET /api/admin/moments] Error:', error?.message || error)
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       .slice(0, 10)
 
     const momentService = getMomentService()
-    const result = await momentService.createMoment(content, tags.length > 0 ? tags : null)
+    const result = await momentService.createMoment(content, tags.length > 0 ? tags : null, auth.payload?.userId, Boolean(body?.isPublic))
     return ok(result, '发布成功')
   } catch (error: any) {
     console.error('[POST /api/admin/moments] Error:', error?.message || error)

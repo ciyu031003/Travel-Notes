@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
   try {
-    const albums = await listAlbums()
+    const albums = await listAlbums(auth.payload?.userId)
     return NextResponse.json({ albums })
   } catch {
     return NextResponse.json({ albums: [] })
@@ -31,6 +31,8 @@ export async function POST(request: NextRequest) {
       title,
       description: body?.description ? String(body.description) : undefined,
       date: body?.date || undefined,
+      userId: auth.payload?.userId,
+      isPublic: Boolean(body?.isPublic),
     })
     writeAuditLog({
       username: auth.username,

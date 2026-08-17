@@ -17,7 +17,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const momentService = getMomentService()
-    await momentService.deleteMoment(id)
+    await momentService.deleteMoment(id, auth.payload?.userId)
     return ok(null, '删除成功')
   } catch (error: any) {
     if (error?.message === '记录不存在') {

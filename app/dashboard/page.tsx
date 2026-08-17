@@ -8,9 +8,11 @@ export const metadata: Metadata = {
   description: '旅行足迹与共同回忆数据一览',
 }
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
+  const { getCurrentUserId } = await import('@/lib/current-user')
+  const userId = await getCurrentUserId()
   const postService = getPostService()
   const momentService = getMomentService()
   const likeService = getLikeService()
@@ -21,8 +23,8 @@ export default async function DashboardPage() {
   let totalLikes = 0
   try {
     ;[travelPosts, moments, totalLikes] = await Promise.all([
-      postService.getPostsHybrid('travel'),
-      momentService.getMoments(1, 1),
+      postService.getPostsHybrid('travel', userId),
+      momentService.getMoments(1, 1, userId),
       likeService.getTotalCount(),
     ])
   } catch (e) {

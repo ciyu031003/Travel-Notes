@@ -1,4 +1,4 @@
-﻿import { PhotoMessageRepository, PhotoMessageRecord } from '../repositories/photo-message-repository'
+import { PhotoMessageRepository, PhotoMessageRecord } from '../repositories/photo-message-repository'
 import { CacheService } from '../infrastructure/cache'
 
 export interface PhotoMessageDTO {
@@ -19,18 +19,18 @@ export class PhotoMessageService {
   ) {}
 
   /** 每一张照片独立一套聊天记录，按 imageKey 隔离 */
-  async getMessages(imageKey: string): Promise<PhotoMessageDTO[]> {
+  async getMessages(imageKey: string, userId?: number | null): Promise<PhotoMessageDTO[]> {
     const key = normalizeKey(imageKey)
-    const cacheKey = `photo-msg:${key}`
+    const cacheKey = `photo-msg:${key}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<PhotoMessageDTO[]>(cacheKey)
     if (cached) return cached
 
-    const messages = await this.repo.listByImage(key, 500)
+    const messages = await this.repo.listByImage(key, 500, userId)
     await this.cache.set(cacheKey, messages, this.CACHE_TTL, ['photo-msg'])
     return messages
   }
 
-  async addMessage(imageKey: string, content: string): Promise<PhotoMessageDTO> {
+  async addMessage(imageKey: string, content: string, userId?: number | null, isPublic?: boolean): Promise<PhotoMessageDTO> {
     const key = normalizeKey(imageKey)
     const trimmed = content.trim()
     if (!trimmed) throw new Error('留言内容不能为空')
@@ -38,7 +38,7 @@ export class PhotoMessageService {
       throw new Error(`留言过长（最多 ${MAX_CONTENT_LENGTH} 字）`)
     }
 
-    const result = await this.repo.create(key, trimmed)
+    const result = await this.repo.create(key, trimmed, userId, isPublic)
     await this.cache.deleteByTag('photo-msg')
 
     return {

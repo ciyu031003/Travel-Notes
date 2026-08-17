@@ -1,4 +1,5 @@
 import { prisma } from '../db'
+import { scopedWhere } from '../visibility'
 import { skipDbOnBuild } from '../db-guard'
 
 export interface MomentRecord {
@@ -9,11 +10,11 @@ export interface MomentRecord {
 }
 
 export interface MomentRepository {
-  create(content: string, tags: string[] | null): Promise<{ id: number }>
-  list(page: number, pageSize: number): Promise<{ data: MomentRecord[]; total: number; hasMore: boolean }>
-  findById(id: number): Promise<MomentRecord | null>
+  create(content: string, tags: string[] | null, userId?: number | null, isPublic?: boolean): Promise<{ id: number }>
+  list(page: number, pageSize: number, userId?: number | null): Promise<{ data: MomentRecord[]; total: number; hasMore: boolean }>
+  findById(id: number, userId?: number | null): Promise<MomentRecord | null>
   delete(id: number): Promise<void>
-  count(): Promise<number>
+  count(userId?: number | null): Promise<number>
 }
 
 function parseTags(raw: string | null): string[] | null {
@@ -30,26 +31,30 @@ function parseTags(raw: string | null): string[] | null {
 }
 
 export class PrismaMomentRepository implements MomentRepository {
-  async create(content: string, tags: string[] | null): Promise<{ id: number }> {
+  async create(content: string, tags: string[] | null, userId?: number | null, isPublic?: boolean): Promise<{ id: number }> {
     if (skipDbOnBuild()) return { id: 0 }
     const result = await prisma.moment.create({
       data: {
         content,
         tags: tags && tags.length > 0 ? JSON.stringify(tags) : null,
+        userId: userId ?? null,
+        isPublic: isPublic ?? false,
       },
     })
     return { id: result.id }
   }
 
-  async list(page: number, pageSize: number): Promise<{ data: MomentRecord[]; total: number; hasMore: boolean }> {
+  async list(page: number, pageSize: number, userId?: number | null): Promise<{ data: MomentRecord[]; total: number; hasMore: boolean }> {
     if (skipDbOnBuild()) return { data: [], total: 0, hasMore: false }
+    const where = scopedWhere(userId) as any
     const [rows, total] = await Promise.all([
       prisma.moment.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      prisma.moment.count(),
+      prisma.moment.count({ where }),
     ])
 
     return {
@@ -64,8 +69,8 @@ export class PrismaMomentRepository implements MomentRepository {
     }
   }
 
-  async findById(id: number): Promise<MomentRecord | null> {
-    const r = await prisma.moment.findUnique({ where: { id } })
+  async findById(id: number, userId?: number | null): Promise<MomentRecord | null> {
+    const r = await prisma.moment.findFirst({ where: { ...scopedWhere(userId), id } as any })
     if (!r) return null
     return {
       id: r.id,
@@ -79,9 +84,9 @@ export class PrismaMomentRepository implements MomentRepository {
     await prisma.moment.delete({ where: { id } })
   }
 
-  async count(): Promise<number> {
+  async count(userId?: number | null): Promise<number> {
     if (skipDbOnBuild()) return 0
-    return prisma.moment.count()
+    return prisma.moment.count({ where: scopedWhere(userId) as any })
   }
 }
 

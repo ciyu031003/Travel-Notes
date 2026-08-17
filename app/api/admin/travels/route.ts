@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
   try {
-    const travels = await listTravels()
+    const travels = await listTravels(auth.payload?.userId)
     return NextResponse.json({ travels })
   } catch {
     return NextResponse.json({ travels: [] })
@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
       description: body?.description ? String(body.description) : undefined,
       startDate: body?.startDate || undefined,
       endDate: body?.endDate || undefined,
+      ownerId: auth.payload?.userId,
+      isPublic: Boolean(body?.isPublic),
     })
     writeAuditLog({ username: auth.username, action: 'CREATE', resourceType: 'Travel', resourceId: String(result.id), metadata: { title } }).catch(() => {})
     return NextResponse.json({ success: true, id: result.id }, { status: 201 })

@@ -2,6 +2,7 @@
  * Anniversary：纪念日管理（第一次见面/第一次旅行/生日等）
  */
 import { prisma } from '../../db'
+import { scopedWhere } from '../../visibility'
 import { skipDbOnBuild } from '../../db-guard'
 
 export interface AnniversaryRecord {
@@ -35,19 +36,24 @@ function map(r: any): AnniversaryRecord {
   }
 }
 
-export async function listAnniversaries(): Promise<AnniversaryRecord[]> {
+export async function listAnniversaries(userId?: number | null): Promise<AnniversaryRecord[]> {
   if (skipDbOnBuild()) return []
-  const rows = await prisma.anniversary.findMany({ orderBy: { date: 'asc' } })
+  const rows = await prisma.anniversary.findMany({
+    where: scopedWhere(userId) as any,
+    orderBy: { date: 'asc' },
+  })
   return rows.map(map)
 }
 
-export async function createAnniversary(input: AnniversaryInput): Promise<{ id: number }> {
+export async function createAnniversary(input: AnniversaryInput & { userId?: number | null; isPublic?: boolean }): Promise<{ id: number }> {
   const row = await prisma.anniversary.create({
     data: {
       title: input.title,
       date: input.date,
       recurring: input.recurring ?? true,
       description: input.description || null,
+      userId: input.userId ?? null,
+      isPublic: input.isPublic ?? false,
     },
   })
   return { id: row.id }
@@ -59,6 +65,7 @@ export async function updateAnniversary(id: number, input: Partial<AnniversaryIn
   if (input.date !== undefined) data.date = input.date
   if (input.recurring !== undefined) data.recurring = input.recurring
   if (input.description !== undefined) data.description = input.description || null
+  if ((input as any).isPublic !== undefined) data.isPublic = (input as any).isPublic
   await prisma.anniversary.update({ where: { id }, data })
 }
 

@@ -24,12 +24,12 @@ export class MomentService {
     private readonly cache: CacheService,
   ) {}
 
-  async getMoments(page: number = 1, pageSize: number = 20): Promise<MomentPage> {
-    const cacheKey = `moments:${page}:${pageSize}`
+  async getMoments(page: number = 1, pageSize: number = 20, userId?: number | null): Promise<MomentPage> {
+    const cacheKey = `moments:${page}:${pageSize}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<MomentPage>(cacheKey)
     if (cached) return cached
 
-    const result = await this.momentRepo.list(page, pageSize)
+    const result = await this.momentRepo.list(page, pageSize, userId)
     const pageData: MomentPage = {
       data: result.data,
       total: result.total,
@@ -41,28 +41,28 @@ export class MomentService {
     return pageData
   }
 
-  async getRecentMoments(limit: number = 10): Promise<MomentDTO[]> {
-    const cacheKey = `moments:recent:${limit}`
+  async getRecentMoments(limit: number = 10, userId?: number | null): Promise<MomentDTO[]> {
+    const cacheKey = `moments:recent:${limit}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<MomentDTO[]>(cacheKey)
     if (cached) return cached
 
-    const result = await this.momentRepo.list(1, limit)
+    const result = await this.momentRepo.list(1, limit, userId)
     await this.cache.set(cacheKey, result.data, this.CACHE_TTL, ['moments'])
     return result.data
   }
 
-  async createMoment(content: string, tags: string[] | null): Promise<{ id: number }> {
+  async createMoment(content: string, tags: string[] | null, userId?: number | null, isPublic?: boolean): Promise<{ id: number }> {
     const trimmed = content.trim()
     if (!trimmed) {
       throw new Error('内容不能为空')
     }
-    const result = await this.momentRepo.create(trimmed, tags)
+    const result = await this.momentRepo.create(trimmed, tags, userId, isPublic)
     await this.invalidateCache()
     return result
   }
 
-  async deleteMoment(id: number): Promise<void> {
-    const existing = await this.momentRepo.findById(id)
+  async deleteMoment(id: number, userId?: number | null): Promise<void> {
+    const existing = await this.momentRepo.findById(id, userId)
     if (!existing) {
       throw new Error('记录不存在')
     }

@@ -36,9 +36,10 @@ export class PostService {
 
   async getPublishedPosts(
     type: string,
-    filters: { page?: number; pageSize?: number; search?: string; location?: string }
+    filters: { page?: number; pageSize?: number; search?: string; location?: string },
+    userId?: number | null
   ): Promise<PaginatedResult<PostMetaDB>> {
-    const cacheKey = `posts:${type}:${JSON.stringify(filters)}`
+    const cacheKey = `posts:${type}:${JSON.stringify(filters)}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<PaginatedResult<PostMetaDB>>(cacheKey)
     if (cached) return cached
 
@@ -46,31 +47,32 @@ export class PostService {
       ...filters,
       type,
       published: true,
+      userId,
     })
 
     await this.cache.set(cacheKey, result, this.CACHE_TTL, ['posts', `posts:${type}`])
     return result
   }
 
-  async getAllPosts(type?: string): Promise<PostMetaDB[]> {
-    const cacheKey = type ? `posts:all:${type}` : 'posts:all'
+  async getAllPosts(type?: string, userId?: number | null): Promise<PostMetaDB[]> {
+    const cacheKey = type ? `posts:all:${type}:u${userId ?? 'anon'}` : `posts:all:u${userId ?? 'anon'}`
     const cached = await this.cache.get<PostMetaDB[]>(cacheKey)
     if (cached) return cached
 
     const posts = type
-      ? await this.postRepo.findAllByType(type)
-      : (await this.postRepo.findAll({})).data
+      ? await this.postRepo.findAllByType(type, userId)
+      : (await this.postRepo.findAll({ userId })).data
 
     await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts'])
     return posts
   }
 
-  async getPostBySlug(type: string, slug: string): Promise<PostDetailDTO | null> {
-    const cacheKey = `post:${type}:${slug}`
+  async getPostBySlug(type: string, slug: string, userId?: number | null): Promise<PostDetailDTO | null> {
+    const cacheKey = `post:${type}:${slug}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<PostDetailDTO>(cacheKey)
     if (cached) return cached
 
-    const post = await this.postRepo.findBySlug(type, slug)
+    const post = await this.postRepo.findBySlug(type, slug, userId)
     if (!post) return null
 
     const dto = await this.toDetailDTO(post)
@@ -78,12 +80,12 @@ export class PostService {
     return dto
   }
 
-  async getPostById(id: number): Promise<PostDetailDTO | null> {
-    const cacheKey = `post:id:${id}`
+  async getPostById(id: number, userId?: number | null): Promise<PostDetailDTO | null> {
+    const cacheKey = `post:id:${id}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<PostDetailDTO>(cacheKey)
     if (cached) return cached
 
-    const post = await this.postRepo.findById(id)
+    const post = await this.postRepo.findById(id, userId)
     if (!post) return null
 
     const dto = await this.toDetailDTO(post)
@@ -91,38 +93,38 @@ export class PostService {
     return dto
   }
 
-  async getPostsByLocation(location: string): Promise<PostMetaDB[]> {
-    const cacheKey = `posts:location:${location}`
+  async getPostsByLocation(location: string, userId?: number | null): Promise<PostMetaDB[]> {
+    const cacheKey = `posts:location:${location}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<PostMetaDB[]>(cacheKey)
     if (cached) return cached
 
-    const posts = await this.postRepo.findByLocation(location)
+    const posts = await this.postRepo.findByLocation(location, userId)
     await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts'])
     return posts
   }
 
-  async getPostCountByType(type: string): Promise<number> {
-    const cacheKey = `posts:count:${type}`
+  async getPostCountByType(type: string, userId?: number | null): Promise<number> {
+    const cacheKey = `posts:count:${type}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<number>(cacheKey)
     if (cached !== null) return cached
 
-    const count = await this.postRepo.countByType(type)
+    const count = await this.postRepo.countByType(type, userId)
     await this.cache.set(cacheKey, count, this.CACHE_TTL, ['posts'])
     return count
   }
 
-  async getDistinctLocations(): Promise<string[]> {
-    const cacheKey = 'posts:locations'
+  async getDistinctLocations(userId?: number | null): Promise<string[]> {
+    const cacheKey = `posts:locations:u${userId ?? 'anon'}`
     const cached = await this.cache.get<string[]>(cacheKey)
     if (cached) return cached
 
-    const locations = await this.postRepo.getDistinctLocations()
+    const locations = await this.postRepo.getDistinctLocations(userId)
     await this.cache.set(cacheKey, locations, this.CACHE_TTL, ['posts'])
     return locations
   }
 
-  async getRecentPosts(limit: number = 10, type?: string): Promise<PostMetaDB[]> {
-    const cacheKey = `posts:recent:${limit}:${type || 'all'}`
+  async getRecentPosts(limit: number = 10, type?: string, userId?: number | null): Promise<PostMetaDB[]> {
+    const cacheKey = `posts:recent:${limit}:${type || 'all'}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<PostMetaDB[]>(cacheKey)
     if (cached) return cached
 
@@ -131,6 +133,7 @@ export class PostService {
       published: true,
       page: 1,
       pageSize: limit,
+      userId,
     })
     const posts = result.data
     await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts'])
@@ -138,24 +141,24 @@ export class PostService {
   }
 
   /** 按 slug 获取内容（DB-only，兼容旧调用名） */
-  async getPostBySlugHybrid(type: string, slug: string): Promise<PostDetailDTO | null> {
-    return this.getPostBySlug(type, slug)
+  async getPostBySlugHybrid(type: string, slug: string, userId?: number | null): Promise<PostDetailDTO | null> {
+    return this.getPostBySlug(type, slug, userId)
   }
 
   /** 获取某类内容（当前为旅行记录），DB-only（旧 content/ 兼容层已移除） */
-  async getPostsHybrid(type: string): Promise<PostMetaDB[]> {
-    const cacheKey = `posts:hybrid:${type}`
+  async getPostsHybrid(type: string, userId?: number | null): Promise<PostMetaDB[]> {
+    const cacheKey = `posts:hybrid:${type}:u${userId ?? 'anon'}`
     const cached = await this.cache.get<PostMetaDB[]>(cacheKey)
     if (cached) return cached
 
-    const posts = await this.postRepo.findAllByType(type)
+    const posts = await this.postRepo.findAllByType(type, userId)
     await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts', `posts:${type}`])
     return posts
   }
 
   /** 全站搜索（当前以旅行记录为主，返回最近 50 条） */
-  async searchAllPosts(keyword: string): Promise<PostMetaDB[]> {
-    const posts = await this.postRepo.search(keyword, 'travel')
+  async searchAllPosts(keyword: string, userId?: number | null): Promise<PostMetaDB[]> {
+    const posts = await this.postRepo.search(keyword, 'travel', userId)
     return posts.slice(0, 50)
   }
 

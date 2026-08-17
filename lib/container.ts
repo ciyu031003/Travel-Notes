@@ -59,9 +59,8 @@ export function getAuthService(): AuthService {
 
 export function getSiteService(): SiteService {
   if (!siteServiceInstance) {
-    const userRepo = new PrismaUserRepository()
     const cache = getCacheService()
-    siteServiceInstance = new SiteService(userRepo, cache)
+    siteServiceInstance = new SiteService(cache)
   }
   return siteServiceInstance
 }

@@ -3,6 +3,7 @@
  * （面向 P2 的行程与花费管理；公开的旅行详情展示属于 P5）
  */
 import { prisma } from '../../db'
+import { scopedWhere } from '../../visibility'
 import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
 
@@ -79,9 +80,10 @@ function iso(v: Date | null | undefined): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-export async function listTravels(): Promise<TravelSummary[]> {
+export async function listTravels(userId?: number | null): Promise<TravelSummary[]> {
   if (skipDbOnBuild()) return []
   const rows = await prisma.travel.findMany({
+    where: scopedWhere(userId, 'ownerId') as any,
     orderBy: { startDate: 'desc' },
     include: {
       _count: { select: { days: true } },
@@ -104,9 +106,9 @@ export async function listTravels(): Promise<TravelSummary[]> {
   }))
 }
 
-export async function getTravelDetail(id: number): Promise<TravelDetail | null> {
-  const travel = await prisma.travel.findUnique({
-    where: { id },
+export async function getTravelDetail(id: number, userId?: number | null): Promise<TravelDetail | null> {
+  const travel = await prisma.travel.findFirst({
+    where: { ...scopedWhere(userId, 'ownerId'), id } as any,
     include: {
       days: {
         orderBy: { sortOrder: 'asc' },
@@ -172,9 +174,9 @@ export interface TravelPublicDetail {
   cover: string | null
 }
 
-export async function getTravelBySlug(slug: string): Promise<TravelPublicDetail | null> {
+export async function getTravelBySlug(slug: string, userId?: number | null): Promise<TravelPublicDetail | null> {
   if (skipDbOnBuild()) return null
-  const t = await prisma.travel.findFirst({ where: { slug } })
+  const t = await prisma.travel.findFirst({ where: { ...scopedWhere(userId, 'ownerId'), slug } as any })
   if (!t) return null
 
   const contentHtml = await unifiedMarkdownRenderer
@@ -202,6 +204,8 @@ export async function createTravel(input: {
   description?: string
   startDate?: string
   endDate?: string
+  ownerId?: number | null
+  isPublic?: boolean
 }): Promise<{ id: number }> {
   const slugBase = input.title.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
   const row = await prisma.travel.create({
@@ -212,6 +216,8 @@ export async function createTravel(input: {
       startDate: input.startDate ? new Date(input.startDate) : null,
       endDate: input.endDate ? new Date(input.endDate) : null,
       status: 'PLANNED',
+      ownerId: input.ownerId ?? null,
+      isPublic: input.isPublic ?? false,
     },
   })
   return { id: row.id }
@@ -224,6 +230,7 @@ export async function updateTravel(id: number, input: any): Promise<void> {
   if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate) : null
   if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
   if (input.status !== undefined) data.status = input.status
+  if (input.isPublic !== undefined) data.isPublic = input.isPublic
   await prisma.travel.update({ where: { id }, data })
 }
 

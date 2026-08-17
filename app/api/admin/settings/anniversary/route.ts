@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   }
 
   const siteService = getSiteService()
-  const config = await siteService.getSiteConfig()
+  const config = await siteService.getSiteConfig(authResult.username)
   return NextResponse.json({
     anniversaryStart: config.anniversaryStart,
   })
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     const siteService = getSiteService()
 
-    const verifyResult = await siteService.verifyPassword(currentPassword)
+    const verifyResult = await siteService.verifyPassword(currentPassword, authResult.username)
     if (!verifyResult.success) {
       return NextResponse.json({ error: '当前密码错误' }, { status: 401 })
     }
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '日期格式不正确' }, { status: 400 })
     }
 
-    await siteService.updateAnniversaryStart(anniversaryStart || null)
+    await siteService.updateAnniversaryStart(anniversaryStart || null, authResult.username)
 
     return NextResponse.json({
       success: true,

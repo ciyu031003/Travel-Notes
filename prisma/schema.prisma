@@ -20,10 +20,15 @@ model Post {
   type      String   @default("travel") @db.VarChar(50)
   summary   String?  @db.Text
   published Boolean  @default(true)
+  /// 内容归属用户（null = 历史数据，归首个管理员）
+  userId    Int?
+  /// 是否公开（公开后所有登录用户可见，用于社交圈）
+  isPublic  Boolean  @default(false)
   createdAt DateTime @default(now()) @db.Timestamp(3)
   updatedAt DateTime @updatedAt @db.Timestamp(3)
 
   postImages PostImage[]
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@unique([type, slug])
   @@index([type, published, date])
@@ -82,10 +87,18 @@ model User {
   createdAt             DateTime @default(now()) @db.Timestamp(3)
   updatedAt             DateTime @updatedAt @db.Timestamp(3)
 
-  sessions     Session[]
-  spaceMembers SpaceMember[]
-  memories     Memory[]      @relation("MemoryCreatedBy")
-  auditLogs    AuditLog[]
+  sessions      Session[]
+  spaceMembers  SpaceMember[]
+  memories      Memory[]      @relation("MemoryCreatedBy")
+  auditLogs     AuditLog[]
+  posts         Post[]
+  travels       Travel[]      @relation("TravelOwner")
+  albums        Album[]       @relation("AlbumOwner")
+  media         Media[]       @relation("MediaOwner")
+  moments       Moment[]
+  photoMessages PhotoMessage[]
+  timelineItems TimelineItem[]
+  anniversaries Anniversary[]
 
   @@index([email])
 }
@@ -134,10 +147,15 @@ model Moment {
   id        Int      @id @default(autoincrement())
   content   String   @db.Text
   tags      String?  @db.Text
+  userId    Int?
+  isPublic  Boolean  @default(false)
   createdAt DateTime @default(now()) @db.Timestamp(3)
   updatedAt DateTime @updatedAt @db.Timestamp(3)
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([createdAt])
+  @@index([userId])
 }
 
 model Like {
@@ -156,9 +174,14 @@ model PhotoMessage {
   id        Int      @id @default(autoincrement())
   imageKey  String   @db.VarChar(500)
   content   String   @db.Text
+  userId    Int?
+  isPublic  Boolean  @default(false)
   createdAt DateTime @default(now()) @db.Timestamp(3)
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([imageKey, createdAt])
+  @@index([userId])
 }
 
 // ============================================================
@@ -295,6 +318,7 @@ model SpaceInvite {
 model Travel {
   id           Int          @id @default(autoincrement())
   spaceId      Int?
+  ownerId      Int?
   title        String       @db.VarChar(255)
   slug         String       @db.VarChar(255)
   description  String?      @db.Text
@@ -308,10 +332,13 @@ model Travel {
   coverMedia   Media?       @relation("TravelCover", fields: [coverMediaId], references: [id])
   status       TravelStatus @default(PLANNED)
   visibility   Visibility   @default(COUPLE)
+  /// 是否公开（公开后所有登录用户可见）
+  isPublic     Boolean      @default(false)
   createdAt    DateTime     @default(now()) @db.Timestamp(3)
   updatedAt    DateTime     @updatedAt @db.Timestamp(3)
 
   space    Space?      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  owner    User?       @relation("TravelOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   days     TravelDay[]
   memories Memory[]
   expenses Expense[]
@@ -390,6 +417,7 @@ model Media {
   id         Int        @id @default(autoincrement())
   spaceId    Int?
   memoryId   Int?
+  userId     Int?
   type       MediaType
   storageKey String     @db.VarChar(500)
   mimeType   String     @db.VarChar(100)
@@ -402,9 +430,12 @@ model Media {
   latitude   Float?
   longitude  Float?
   visibility Visibility @default(COUPLE)
+  /// 是否公开（公开后所有登录用户可见）
+  isPublic   Boolean    @default(false)
   createdAt  DateTime   @default(now()) @db.Timestamp(3)
 
   spaceOwner         Space?         @relation("MediaSpace", fields: [spaceId], references: [id])
+  owner              User?          @relation("MediaOwner", fields: [userId], references: [id], onDelete: SetNull)
   spaceCoverOf       Space?         @relation("SpaceCover")
   anniversaryCoverOf Anniversary?   @relation("AnniversaryCover")
   albumCoverOf       Album?         @relation("AlbumCover")
@@ -437,6 +468,7 @@ model MediaVariant {
 model Album {
   id           Int        @id @default(autoincrement())
   spaceId      Int?
+  userId       Int?
   title        String     @db.VarChar(255)
   description  String?    @db.Text
   coverMediaId Int?       @unique
@@ -444,10 +476,13 @@ model Album {
   date         DateTime?  @db.Timestamp(3)
   locationId   Int?
   visibility   Visibility @default(COUPLE)
+  /// 是否公开（公开后所有登录用户可见）
+  isPublic     Boolean    @default(false)
   createdAt    DateTime   @default(now()) @db.Timestamp(3)
   updatedAt    DateTime   @updatedAt @db.Timestamp(3)
 
   space Space?       @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user  User?        @relation("AlbumOwner", fields: [userId], references: [id], onDelete: SetNull)
   items AlbumMedia[]
 
   @@index([spaceId, createdAt])
@@ -490,22 +525,29 @@ model AuditLog {
 /// 纪念日（第一次见面/第一次旅行/生日等）
 model Anniversary {
   id           Int      @id @default(autoincrement())
+  userId       Int?
   title        String   @db.VarChar(255)
   date         DateTime @db.Timestamp(3)
   recurring    Boolean  @default(true)
   description  String?  @db.Text
   coverMediaId Int?     @unique
   coverMedia   Media?   @relation("AnniversaryCover", fields: [coverMediaId], references: [id])
+  /// 是否公开（公开后所有登录用户可见）
+  isPublic     Boolean  @default(false)
   createdAt    DateTime @default(now()) @db.Timestamp(3)
   updatedAt    DateTime @updatedAt @db.Timestamp(3)
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([date])
+  @@index([userId])
 }
 
 /// 统一时间线条目（旅行/回忆/日记/照片/相册/纪念日）
 model TimelineItem {
   id          Int      @id @default(autoincrement())
   spaceId     Int?
+  userId      Int?
   type        String   @db.VarChar(50)
   sourceId    Int?
   title       String   @db.VarChar(255)
@@ -514,6 +556,7 @@ model TimelineItem {
   createdAt   DateTime @default(now()) @db.Timestamp(3)
 
   space Space? @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([spaceId, happenedAt])
   @@index([type, happenedAt])

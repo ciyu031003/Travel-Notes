@@ -1,8 +1,7 @@
 import { revalidatePath } from 'next/cache'
-import { UserRepository } from '../repositories/user-repository'
+import { prisma } from '../db'
 import { CacheService } from '../infrastructure/cache'
 import { verifyPassword, hashPassword } from '../auth-utils'
-import type { SiteSettings } from '../auth'
 
 export interface SiteConfigDTO {
   username: string
@@ -12,31 +11,45 @@ export interface SiteConfigDTO {
   anniversaryStart: string | null
 }
 
+/** 按用户名定位用户（多用户：设置类操作只作用于当前登录用户） */
+async function findUserByUsername(username?: string | null) {
+  if (username) {
+    const user = await prisma.user.findUnique({ where: { username } })
+    if (user) return user
+  }
+  // 兼容旧调用：未传用户名时回退首个用户
+  return prisma.user.findFirst({ orderBy: { id: 'asc' } })
+}
+
 export class SiteService {
   private readonly CACHE_TTL = 600
 
   constructor(
-    private readonly userRepo: UserRepository,
     private readonly cache: CacheService,
   ) {}
 
-  async getSiteConfig(): Promise<SiteConfigDTO> {
-    const cacheKey = 'site:config'
+  async getSiteConfig(username?: string | null): Promise<SiteConfigDTO> {
+    const cacheKey = `site:config:${username || 'first'}`
     const cached = await this.cache.get<SiteConfigDTO>(cacheKey)
     if (cached) return cached
 
-    const settings = await this.userRepo.getSettings()
-    const dto = this.toDTO(settings)
+    const user = await findUserByUsername(username)
+    const dto = {
+      username: user?.username || '',
+      email: user?.email ?? null,
+      emailVerified: user?.emailVerified ?? false,
+      requirePasswordChange: user?.requirePasswordChange ?? false,
+      anniversaryStart: user?.anniversaryStart ?? null,
+    }
     await this.cache.set(cacheKey, dto, this.CACHE_TTL, ['site'])
     return dto
   }
 
-  async getSiteSettings(): Promise<SiteSettings> {
-    return this.userRepo.getSettings()
-  }
-
-  async updateAnniversaryStart(date: string | null): Promise<void> {
-    await this.userRepo.updateAnniversaryStart(date)
+  async updateAnniversaryStart(date: string | null, username?: string | null): Promise<void> {
+    const user = await findUserByUsername(username)
+    if (user) {
+      await prisma.user.update({ where: { id: user.id }, data: { anniversaryStart: date } })
+    }
     await this.cache.deleteByTag('site')
     try {
       revalidatePath('/')
@@ -47,62 +60,49 @@ export class SiteService {
     }
   }
 
-  async updateUsername(username: string, currentPassword: string): Promise<{ success: boolean; error?: string }> {
-    const settings = await this.userRepo.getSettings()
-    const valid = await verifyPassword(currentPassword, settings.passwordHash)
-    if (!valid) {
-      return { success: false, error: '当前密码错误' }
-    }
-    await this.userRepo.updateCredentials(username, settings.passwordHash, settings.email)
+  async updateUsername(username: string, currentPassword: string, currentUsername?: string | null): Promise<{ success: boolean; error?: string }> {
+    const user = await findUserByUsername(currentUsername)
+    if (!user || !user.passwordHash) return { success: false, error: '用户不存在' }
+    const valid = await verifyPassword(currentPassword, user.passwordHash)
+    if (!valid) return { success: false, error: '当前密码错误' }
+
+    const exists = await prisma.user.findUnique({ where: { username } })
+    if (exists && exists.id !== user.id) return { success: false, error: '该用户名已被占用' }
+
+    await prisma.user.update({ where: { id: user.id }, data: { username } })
     await this.cache.deleteByTag('site')
     return { success: true }
   }
 
-  async updatePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
-    const settings = await this.userRepo.getSettings()
-    const valid = await verifyPassword(currentPassword, settings.passwordHash)
-    if (!valid) {
-      return { success: false, error: '当前密码错误' }
-    }
+  async updatePassword(currentPassword: string, newPassword: string, currentUsername?: string | null): Promise<{ success: boolean; error?: string }> {
+    const user = await findUserByUsername(currentUsername)
+    if (!user || !user.passwordHash) return { success: false, error: '用户不存在' }
+    const valid = await verifyPassword(currentPassword, user.passwordHash)
+    if (!valid) return { success: false, error: '当前密码错误' }
+
     const newHash = await hashPassword(newPassword)
-    await this.userRepo.updateCredentials(settings.username, newHash, settings.email, true)
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash: newHash } })
     await this.cache.deleteByTag('site')
     return { success: true }
   }
 
-  async updateEmail(email: string | null, currentPassword?: string, skipPasswordCheck?: boolean): Promise<{ success: boolean; error?: string }> {
+  async updateEmail(email: string | null, currentPassword?: string, skipPasswordCheck?: boolean, currentUsername?: string | null): Promise<{ success: boolean; error?: string }> {
+    const user = await findUserByUsername(currentUsername)
+    if (!user) return { success: false, error: '用户不存在' }
     if (!skipPasswordCheck && currentPassword) {
-      const settings = await this.userRepo.getSettings()
-      const valid = await verifyPassword(currentPassword, settings.passwordHash)
-      if (!valid) {
-        return { success: false, error: '当前密码错误' }
-      }
+      const valid = await verifyPassword(currentPassword, user.passwordHash || '')
+      if (!valid) return { success: false, error: '当前密码错误' }
     }
-    await this.userRepo.updateEmail(email, skipPasswordCheck ? true : undefined)
+    await prisma.user.update({ where: { id: user.id }, data: { email: email || null } })
     await this.cache.deleteByTag('site')
     return { success: true }
   }
 
-  async sendVerificationCode(email: string): Promise<{ success: boolean; error?: string }> {
+  async verifyPassword(password: string, username?: string | null): Promise<{ success: boolean; error?: string }> {
+    const user = await findUserByUsername(username)
+    if (!user || !user.passwordHash) return { success: false, error: '用户不存在' }
+    const valid = await verifyPassword(password, user.passwordHash)
+    if (!valid) return { success: false, error: '当前密码错误' }
     return { success: true }
-  }
-
-  async verifyPassword(password: string): Promise<{ success: boolean; error?: string }> {
-    const settings = await this.userRepo.getSettings()
-    const valid = await verifyPassword(password, settings.passwordHash)
-    if (!valid) {
-      return { success: false, error: '当前密码错误' }
-    }
-    return { success: true }
-  }
-
-  private toDTO(settings: SiteSettings): SiteConfigDTO {
-    return {
-      username: settings.username,
-      email: settings.email,
-      emailVerified: settings.emailVerified,
-      requirePasswordChange: settings.requirePasswordChange,
-      anniversaryStart: settings.anniversaryStart,
-    }
   }
 }

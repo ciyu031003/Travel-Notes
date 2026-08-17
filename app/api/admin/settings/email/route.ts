@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   }
 
   const siteService = getSiteService()
-  const config = await siteService.getSiteConfig()
+  const config = await siteService.getSiteConfig(authResult.username)
   return NextResponse.json({
     email: config.email,
     emailVerified: config.emailVerified,
@@ -31,7 +31,7 @@ export async function DELETE(request: Request) {
     }
 
     const siteService = getSiteService()
-    const result = await siteService.updateEmail(null, currentPassword)
+    const result = await siteService.updateEmail(null, currentPassword, undefined, authResult?.username)
     if (!result.success) {
       return NextResponse.json({ error: result.error || '操作失败' }, { status: 401 })
     }

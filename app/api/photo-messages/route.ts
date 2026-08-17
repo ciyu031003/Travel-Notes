@@ -1,4 +1,4 @@
-﻿import { NextRequest } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getPhotoMessageService } from '@/lib/container'
 import { ok, fail, serverError } from '@/lib/api-response'
 
@@ -11,8 +11,10 @@ export async function GET(request: NextRequest) {
     if (!image) {
       return fail('缺少 image 参数')
     }
+    const { getCurrentUserId } = await import('@/lib/current-user')
+    const userId = await getCurrentUserId()
     const service = getPhotoMessageService()
-    const messages = await service.getMessages(image)
+    const messages = await service.getMessages(image, userId)
     return ok(messages)
   } catch (error: any) {
     console.error('[GET /api/photo-messages] Error:', error?.message || error)
@@ -31,8 +33,10 @@ export async function POST(request: NextRequest) {
     if (!content.trim()) {
       return fail('留言内容不能为空')
     }
+    const { getCurrentUserId } = await import('@/lib/current-user')
+    const userId = await getCurrentUserId()
     const service = getPhotoMessageService()
-    const message = await service.addMessage(image, content)
+    const message = await service.addMessage(image, content, userId)
     return ok(message, '留言成功')
   } catch (error: any) {
     console.error('[POST /api/photo-messages] Error:', error?.message || error)

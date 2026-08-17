@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   }
 
   const siteService = getSiteService()
-  const config = await siteService.getSiteConfig()
+  const config = await siteService.getSiteConfig(authResult.username)
   return NextResponse.json({
     username: config.username,
     anniversaryStart: config.anniversaryStart,
@@ -33,14 +33,14 @@ export async function POST(request: Request) {
     const siteService = getSiteService()
 
     if (newPassword && newPassword.trim()) {
-      const result = await siteService.updatePassword(currentPassword, newPassword.trim())
+      const result = await siteService.updatePassword(currentPassword, newPassword.trim(), authResult.username)
       if (!result.success) {
         return NextResponse.json({ error: result.error || '更新失败' }, { status: 401 })
       }
     }
 
     if (newUsername && newUsername.trim()) {
-      const result = await siteService.updateUsername(newUsername.trim(), currentPassword)
+      const result = await siteService.updateUsername(newUsername.trim(), currentPassword, authResult.username)
       if (!result.success) {
         return NextResponse.json({ error: result.error || '更新失败' }, { status: 401 })
       }

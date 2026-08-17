@@ -2,6 +2,7 @@
  * Timeline：把旅行与回忆按年份聚合，形成“我们的时间线”。
  */
 import { prisma } from '../../db'
+import { scopedWhere } from '../../visibility'
 import { skipDbOnBuild } from '../../db-guard'
 
 export interface TimelineEntry {
@@ -27,11 +28,12 @@ function toDate(value: Date | string | null | undefined): Date | null {
   return isNaN(d.getTime()) ? null : d
 }
 
-export async function getTimeline(): Promise<TimelineYear[]> {
+export async function getTimeline(userId?: number | null): Promise<TimelineYear[]> {
   if (skipDbOnBuild()) return []
 
   // 优先使用统一时间线 TimelineItem（Phase 2 建表，Phase 5 接入）
   const items = await prisma.timelineItem.findMany({
+    where: userId ? { userId } : {},
     orderBy: { happenedAt: 'asc' },
     take: 500,
   }).catch(() => null)
@@ -58,7 +60,7 @@ export async function getTimeline(): Promise<TimelineYear[]> {
 
   const [travels, memories] = await Promise.all([
     prisma.travel.findMany({
-      where: { visibility: { in: ['COUPLE', 'PUBLIC'] } },
+      where: { ...scopedWhere(userId, 'ownerId'), visibility: { in: ['COUPLE', 'PUBLIC'] } } as any,
       select: {
         id: true,
         title: true,
@@ -69,7 +71,9 @@ export async function getTimeline(): Promise<TimelineYear[]> {
       orderBy: { startDate: 'asc' },
     }),
     prisma.memory.findMany({
-      where: { visibility: { in: ['COUPLE', 'PUBLIC'] } },
+      where: userId
+        ? { OR: [{ createdById: userId }, { visibility: 'PUBLIC' }] }
+        : { visibility: 'PUBLIC' },
       select: {
         id: true,
         title: true,

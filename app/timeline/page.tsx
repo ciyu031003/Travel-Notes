@@ -4,7 +4,7 @@ import { MapPin, Sparkles, CalendarDays } from 'lucide-react'
 import { getTimeline } from '@/lib/modules/timeline/timeline.service'
 import { formatDate } from '@/lib/utils'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: '时间线 | 我们的故事',
@@ -12,7 +12,9 @@ export const metadata: Metadata = {
 }
 
 export default async function TimelinePage() {
-  const years = await getTimeline()
+  const { getCurrentUserId } = await import('@/lib/current-user')
+  const userId = await getCurrentUserId()
+  const years = await getTimeline(userId)
 
   return (
     <div className="container-custom py-10 md:py-14">

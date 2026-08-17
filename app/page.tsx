@@ -3,7 +3,7 @@ import { findProvinceByLocation } from '@/lib/province-map'
 import { listAnniversaries } from '@/lib/modules/anniversary/anniversary.service'
 import HomeClient from '@/components/HomeClient'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: '我们的小家 | 旅行记录 & 共同回忆',
@@ -11,10 +11,12 @@ export const metadata = {
 }
 
 export default async function Home() {
+  const { getCurrentUserId } = await import('@/lib/current-user')
+  const userId = await getCurrentUserId()
   const postService = getPostService()
   const [travelPosts, anniversaries] = await Promise.all([
-    postService.getPostsHybrid('travel'),
-    listAnniversaries(),
+    postService.getPostsHybrid('travel', userId),
+    listAnniversaries(userId),
   ])
 
   const provincesVisited = new Set<string>()

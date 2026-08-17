@@ -5,12 +5,16 @@ import { ok, fail, unauthorized } from '@/lib/api-response'
 import { validateCreatePost, validateUpdatePost } from '@/lib/validators/post.validator'
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request)
+  if (!auth.authenticated) {
+    return unauthorized('未授权')
+  }
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type') || undefined
 
   try {
     const postService = getPostService()
-    const posts = await postService.getAllPosts(type)
+    const posts = await postService.getAllPosts(type, auth.payload?.userId)
     return ok({ posts })
   } catch (error: any) {
     console.error('[GET /api/admin/posts] Error:', error?.message)
@@ -45,6 +49,8 @@ export async function POST(request: NextRequest) {
       type: validation.data.type || 'travel',
       summary: validation.data.summary || undefined,
       published: validation.data.published ?? true,
+      userId: auth.payload?.userId,
+      isPublic: validation.data.isPublic ?? false,
     })
 
     return ok({ post })

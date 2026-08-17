@@ -19,6 +19,7 @@ export const CreatePostSchema = z.object({
   type: z.string().max(50),
   summary: z.string().max(500).optional().or(z.literal('')),
   published: z.boolean().optional(),
+  isPublic: z.boolean().optional(),
 })
 
 export const UpdatePostSchema = CreatePostSchema.partial()

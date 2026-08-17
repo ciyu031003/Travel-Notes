@@ -19,11 +19,14 @@ function LoginPageContent() {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [isAuthed, setIsAuthed] = useState(false)
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [isRegistering, setIsRegistering] = useState(false)
 
   const [showAlbumLock, setShowAlbumLock] = useState(false)
   const [albumPassword, setAlbumPassword] = useState('')
@@ -76,6 +79,44 @@ function LoginPageContent() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (password !== confirmPassword) {
+      setError('两次输入的密码不一致')
+      return
+    }
+    if (password.length < 6) {
+      setError('密码至少需要 6 位字符')
+      return
+    }
+    setIsRegistering(true)
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, rememberMe }),
+      })
+      if (res.ok) {
+        router.push(redirect)
+      } else {
+        const data = await res.json()
+        setError(data.error || '注册失败')
+      }
+    } catch {
+      setError('网络错误，请重试')
+    } finally {
+      setIsRegistering(false)
+    }
+  }
+
+  const switchMode = (next: 'login' | 'register') => {
+    setMode(next)
+    setError('')
+    setPassword('')
+    setConfirmPassword('')
   }
 
   const handleAlbumUnlock = async (e: React.FormEvent) => {
@@ -132,10 +173,12 @@ function LoginPageContent() {
               </div>
 
               <h1 className="mt-7 font-display text-3xl font-bold leading-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-4xl">
-                输入我们的纪念日
+                {mode === 'login' ? '输入我们的纪念日' : '注册新旅程账号'}
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-[#5A6670] dark:text-[#9BA3AE]">
-                一扇只给我们的地图门，密码藏在开始的那一天。
+                {mode === 'login'
+                  ? '一扇只给我们的地图门，密码藏在开始的那一天。'
+                  : '内测邀请已开启，注册后开启属于你的专属旅程。'}
               </p>
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -183,8 +226,28 @@ function LoginPageContent() {
                   </div>
                 </div>
 
+                {mode === 'register' && (
+                  <div>
+                    <label className="mb-2 flex items-center gap-1.5 text-sm text-[#5A6670] dark:text-[#9BA3AE]">
+                      <Lock className="h-4 w-4" />
+                      确认密码
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9A958F]" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={`${inputCls} pr-12`}
+                        placeholder="请再次输入密码"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {error && (
-                  <div className="rounded-xl border border-[#E8B8C2]/50 bg-[#F5DCE0]/40 px-4 py-3 text-sm text-[#A64E61] dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-[#E8B8C2]">
+                  <div className="animate-[fadeIn_0.3s_ease] rounded-xl border border-[#E8B8C2]/50 bg-[#F5DCE0]/40 px-4 py-3 text-sm text-[#A64E61] dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-[#E8B8C2]">
                     {error}
                   </div>
                 )}
@@ -201,22 +264,44 @@ function LoginPageContent() {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#A64E61] py-3.5 font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:bg-[#8B3A4C] hover:shadow-xl disabled:opacity-50 active:scale-[0.99]"
+                  disabled={loading || isRegistering}
+                  onClick={mode === 'register' ? handleRegister : undefined}
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#A64E61] py-3.5 font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:bg-[#8B3A4C] hover:shadow-xl disabled:opacity-50 active:scale-[0.99]"
                 >
-                  {loading ? '解锁中...' : (
-                    <>
-                      解锁
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
+                  {mode === 'login'
+                    ? (loading ? '解锁中...' : (<>
+                        解锁
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </>))
+                    : (isRegistering ? '注册中...' : (<>
+                        注册并进入
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </>))}
                 </button>
               </form>
 
               <button
                 type="button"
+                onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#E8DDD8]/70 bg-white/60 px-4 py-2.5 text-sm text-[#5A6670] transition-all hover:border-[#E8B8C2]/60 hover:text-[#A64E61] active:scale-[0.99] dark:border-[#2C343E] dark:bg-[#161B22]/60 dark:text-[#9BA3AE] dark:hover:text-[#E8B8C2]"
+              >
+                {mode === 'login' ? (
+                  <>
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#E8B8C2]" />
+                    没有账号？注册一个
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-4 w-4" />
+                    已有账号？返回登录
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setShowAlbumLock(true)}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#E8DDD8]/70 bg-white/60 px-4 py-2.5 text-sm text-[#5A6670] transition-colors hover:border-[#E8B8C2]/60 hover:text-[#A64E61] dark:border-[#2C343E] dark:bg-[#161B22]/60 dark:text-[#9BA3AE] dark:hover:text-[#E8B8C2]"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#E8DDD8]/70 bg-white/60 px-4 py-2.5 text-sm text-[#5A6670] transition-colors hover:border-[#E8B8C2]/60 hover:text-[#A64E61] dark:border-[#2C343E] dark:bg-[#161B22]/60 dark:text-[#9BA3AE] dark:hover:text-[#E8B8C2]"
               >
                 <Lock className="h-4 w-4" />
                 相册解锁

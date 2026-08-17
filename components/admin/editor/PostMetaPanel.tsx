@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, Tag, Image, FileText } from 'lucide-react'
+import { MapPin, Tag, Image, FileText, Globe2, Lock } from 'lucide-react'
 
 const typeIcons: Record<string, any> = {
   travel: MapPin,
@@ -17,6 +17,7 @@ export interface PostMetaPanelProps {
   cover?: string
   summary?: string
   published: boolean
+  isPublic?: boolean
   imagesCount?: number
   videosCount?: number
   onChange: (field: string, value: any) => void
@@ -29,6 +30,7 @@ export default function PostMetaPanel({
   cover = '',
   summary = '',
   published,
+  isPublic = false,
   imagesCount = 0,
   onChange,
 }: PostMetaPanelProps) {
@@ -132,6 +134,44 @@ export default function PostMetaPanel({
         <label htmlFor="published" className="text-sm text-gray-700 dark:text-gray-300">
           立即发布
         </label>
+      </div>
+
+      <div className="pt-1">
+        <span className="mb-2 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+          {isPublic ? <Globe2 className="w-4 h-4 text-sky-500" /> : <Lock className="w-4 h-4 text-amber-500" />}
+          谁可以看
+        </span>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onChange('isPublic', false)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+              !isPublic
+                ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            <Lock className="w-3.5 h-3.5" />
+            仅自己可见
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange('isPublic', true)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+              isPublic
+                ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-700'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            <Globe2 className="w-3.5 h-3.5" />
+            公开分享
+          </button>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-gray-400 dark:text-gray-500">
+          {isPublic
+            ? '公开后，所有登录用户都能看到这篇游记（为社交圈做准备）。'
+            : '仅你自己可以看到这篇游记，其他用户不可见。'}
+        </p>
       </div>
     </div>
   )
