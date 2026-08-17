@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
       date,
       recurring: body?.recurring !== false,
       description: body?.description ? String(body.description) : undefined,
+      userId: auth.payload?.userId,
     })
     writeAuditLog({
       username: auth.username,
