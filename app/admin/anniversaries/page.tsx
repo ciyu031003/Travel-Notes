@@ -87,7 +87,7 @@ export default function AdminAnniversariesPage() {
       <div className="mx-auto max-w-4xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           返回后台
@@ -101,7 +101,7 @@ export default function AdminAnniversariesPage() {
 
       <form onSubmit={handleCreate} className="card p-6 mb-8">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-          <Plus className="w-5 h-5 text-rose-400" />
+          <Plus className="w-5 h-5 text-travel-accentSoft" />
           新增纪念日
         </h2>
         <div className="grid md:grid-cols-3 gap-4 mb-4">
@@ -111,7 +111,7 @@ export default function AdminAnniversariesPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
               placeholder="例如：第一次见面"
             />
           </div>
@@ -121,7 +121,7 @@ export default function AdminAnniversariesPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             />
           </div>
           <div>
@@ -138,7 +138,7 @@ export default function AdminAnniversariesPage() {
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             placeholder="备注（可选）"
           />
         </div>
@@ -151,7 +151,7 @@ export default function AdminAnniversariesPage() {
         <button
           type="submit"
           disabled={creating}
-          className="px-5 py-2.5 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+          className="px-5 py-2.5 bg-travel-accent hover:bg-travel-accentStrong disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
         >
           {creating && <Loader2 className="w-4 h-4 animate-spin" />}
           添加纪念日
@@ -167,7 +167,7 @@ export default function AdminAnniversariesPage() {
           {items.map((item) => (
             <div key={item.id} className="card p-5 flex items-center justify-between gap-4">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-500 shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-travel-sakura/50 dark:bg-travel-accent/20 flex items-center justify-center text-travel-accent shrink-0">
                   <CalendarDays className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
@@ -213,3 +213,5 @@ export default function AdminAnniversariesPage() {
     </AdminShell>
   )
 }
+
+

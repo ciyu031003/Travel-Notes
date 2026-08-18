@@ -15,6 +15,50 @@
     --color-bloom: #E8B8C2;
     --color-sky: #A8C8DC;
     --color-mist: #D6E8F0;
+    --color-travel-accent: #A64E61;
+    --color-travel-accent-strong: #8B4A5A;
+    --color-travel-accent-soft: #C76E80;
+    --color-travel-sand: #8B7355;
+    --color-travel-sand-soft: #C2AF9A;
+    --color-travel-sand-light: #E4D6C4;
+    --color-travel-parchment: #FDF5ED;
+    --color-travel-parchment-dim: #F5EDE4;
+    --color-travel-ink-strong: #5A4A3A;
+    --color-travel-line: #E8DDD4;
+
+    /* Album Dark Design Tokens（Stage 1 引入） */
+    --album-bg0: #050508;
+    --album-bg1: #0b0807;
+    --album-bg2: #14100e;
+    --album-surface: rgba(255,255,255,0.06);
+    --album-text1: rgba(245,247,255,0.92);
+    --album-text2: rgba(245,247,255,0.68);
+    --album-text3: rgba(245,247,255,0.45);
+    --album-warm: #a89f91;
+    --album-accent: #e8b06a;
+    --album-accent-strong: #f5c97e;
+    --album-accent-dim: rgba(232,176,106,0.16);
+    --album-ok: #6fcf97;
+    --album-sync: #f5c97e;
+    --album-wait: #9aa3b2;
+    --album-error: #e06c6c;
+
+    /* Pixel 木屋/纸面肤色（Stage 1 引入） */
+    --album-pixel-ink: #5a3b30;
+    --album-pixel-muted: #8a7662;
+    --album-pixel-faint: #8a8479;
+    --album-pixel-line: #3c2a1a;
+    --album-pixel-photo: #211713;
+    --album-pixel-panel: #1c110d;
+    --album-pixel-panel2: #2c1913;
+    --album-pixel-panel3: #231611;
+    --album-pixel-paper: #FDF5ED;
+    --album-pixel-online: #5b8731;
+    --album-pixel-bubble: #70b237;
+    --album-pixel-lineth: #d8c9a6;
+    --album-pixel-error: #a02a2a;
+    --album-pixel-goldlight: #fce268;
+    --album-pixel-goldpale: #f3d7a0;
 
     /* 语义化阴影 */
     --shadow-soft: 0 10px 28px rgba(90,102,112,0.08);
@@ -133,6 +177,7 @@ body {
 }
 
 /* ============ Notes 页面酷炫科技感样式（cerebrium 风格） ============ */
+/* DEPRECATED（Stage 1.1）：notes 模块已删除，此段为死代码，仅隔离保留待清理 */
 
 /* 深色科技背景 + 网格线 + 光晕 */
 .notes-bg {
@@ -407,6 +452,7 @@ body {
 }
 
 /* ============ Notes 页面浅色科技感全屏滚动样式 ============ */
+/* DEPRECATED（Stage 1.1）：同上，notes 模块已删除，此段为死代码，仅隔离保留待清理 */
 
 /* 浅色科技背景 */
 .notes-light-bg {
@@ -1450,8 +1496,8 @@ body {
 }
 
 @keyframes space-twinkle {
-  0%, 100% { opacity: 0.15; transform: scale(0.8); }
-  50% { opacity: 0.9; transform: scale(1.15); }
+  0%, 100% { opacity: 0.15; transform: scale(0.85); }
+  50% { opacity: 0.5; transform: scale(1); }
 }
 
 /* 粒子化照片留言：中心清晰 → 边缘模糊的径向遮罩 */
@@ -1564,3 +1610,11 @@ html.dark {
   90%  { opacity: 0.5; }
   100% { transform: translateY(-88vh) translateX(-16px) rotate(360deg); opacity: 0; }
 }
+
+
+
+
+
+
+
+

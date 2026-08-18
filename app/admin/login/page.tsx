@@ -105,7 +105,7 @@ export default function AdminLoginPage() {
           <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#F5DCE0] via-[#E8B8C2] to-[#A8C8DC]" />
 
           <motion.div variants={item} className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-400 via-pink-500 to-orange-300 shadow-lg shadow-rose-500/25">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-accentSoft via-pink-500 to-orange-300 shadow-lg shadow-travel-accent/25">
               <Heart className="h-8 w-8 text-white" fill="currentColor" />
             </div>
             <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">甜途 · 后台管理</h1>
@@ -194,3 +194,4 @@ export default function AdminLoginPage() {
     </div>
   )
 }
+

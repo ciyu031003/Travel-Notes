@@ -36,8 +36,8 @@ export default function SpaceRadar({ cities, currentIndex, onSelect }: SpaceRada
             <g key={city.name} transform={`translate(${cx + dx}, ${cy + dy})`} className="cursor-pointer">
               <circle
                 r={isCurrent ? 5 : 3.2}
-                fill={isCurrent ? 'rgba(255,220,150,0.95)' : 'rgba(160,180,255,0.65)'}
-                stroke={isCurrent ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.25)'}
+                fill={isCurrent ? '#e8b06a' : 'rgba(245,247,255,0.45)'}
+                stroke={isCurrent ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)'}
                 strokeWidth="1"
                 onClick={() => onSelect(i)}
               />
@@ -46,7 +46,8 @@ export default function SpaceRadar({ cities, currentIndex, onSelect }: SpaceRada
           )
         })}
       </svg>
-      <div className="absolute inset-x-0 bottom-1 text-center text-[8px] text-white/35 tracking-widest">360°</div>
+      <div className="absolute inset-x-0 bottom-1 text-center text-[10px] text-album-text2 tracking-widest">360°</div>
     </div>
   )
 }
+

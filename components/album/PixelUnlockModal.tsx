@@ -70,10 +70,10 @@ export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUn
 
         <div className="text-center mb-5 select-none">
           <div className="book-cover-3d w-20 h-24 mx-auto flex items-center justify-center mb-4 rounded-sm">
-            <Lock className="w-7 h-7 text-[#dfa87a]" />
+            <Lock className="w-7 h-7 text-album-accent" />
           </div>
-          <h3 className="font-zpix text-xl font-bold text-[#8b5a2e] tracking-wider">相册是我们的秘密</h3>
-          <p className="text-[11px] text-[#746759] mt-1.5">请输入恋爱纪念日作为密码</p>
+          <h3 className="font-zpix text-xl font-bold text-pixel-ink tracking-wider">相册是我们的秘密</h3>
+          <p className="text-xs text-album-warm mt-1.5">请输入恋爱纪念日作为密码</p>
         </div>
 
         <form onSubmit={handleUnlock} className="space-y-4">
@@ -86,11 +86,11 @@ export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUn
             required
             autoFocus
           />
-          <p className="text-[9px] text-[#8a7662] text-center select-none">
+          <p className="text-xs text-pixel-muted text-center select-none">
             支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日
           </p>
           {error && (
-            <p className="text-[10px] text-[#a02a2a] font-bold text-center bg-[#f3d7a0]/70 border-2 border-[#a02a2a] p-2">
+            <p className="text-xs text-pixel-error font-bold text-center bg-pixel-goldPale/70 border-2 border-pixel-error p-2">
               {error}
             </p>
           )}

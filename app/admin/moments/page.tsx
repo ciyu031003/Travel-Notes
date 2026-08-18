@@ -119,7 +119,7 @@ export default function AdminMomentsPage() {
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
           <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-rose-400" />
+            <Sparkles className="w-4 h-4 text-travel-accentSoft" />
             发布一条碎碎念
           </h2>
           <textarea
@@ -128,7 +128,7 @@ export default function AdminMomentsPage() {
             rows={4}
             maxLength={2000}
             placeholder="记录此刻的想法、灵感或小确幸..."
-            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none"
+            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-travel-accentSoft resize-none"
           />
           <div className="flex items-center justify-between gap-3 mt-3 flex-wrap">
             <input
@@ -136,12 +136,12 @@ export default function AdminMomentsPage() {
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               placeholder="标签（用逗号分隔，可选）"
-              className="flex-1 min-w-[180px] px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="flex-1 min-w-[180px] px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             />
             <button
               type="submit"
               disabled={submitting || !content.trim()}
-              className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-travel-accentSoft to-pink-500 hover:from-travel-accent hover:to-pink-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               发布
@@ -177,7 +177,7 @@ export default function AdminMomentsPage() {
                     {moment.tags && moment.tags.length > 0 && (
                       <span className="flex gap-1.5 flex-wrap">
                         {moment.tags.map((tag) => (
-                          <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-300">
+                          <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accent dark:text-travel-accentSoft">
                             #{tag}
                           </span>
                         ))}
@@ -202,3 +202,5 @@ export default function AdminMomentsPage() {
     </AdminShell>
   )
 }
+
+

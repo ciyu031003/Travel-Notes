@@ -218,7 +218,7 @@ export default function CommandPalette() {
                     onMouseEnter={() => setActiveIndex(idx)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                       idx === activeIndex
-                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300'
+                        ? 'bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accentStrong dark:text-travel-accentSoft'
                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
@@ -253,7 +253,7 @@ export default function CommandPalette() {
                       onMouseEnter={() => setActiveIndex(idx)}
                       className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                         idx === activeIndex
-                          ? 'bg-rose-50 dark:bg-rose-900/20'
+                          ? 'bg-travel-sakura/50 dark:bg-travel-accent/15'
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
@@ -296,4 +296,6 @@ export default function CommandPalette() {
     </div>
   )
 }
+
+
 

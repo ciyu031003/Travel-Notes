@@ -118,7 +118,7 @@ export default function TravelRecordPage() {
                 ))}
               </div>
             </div>
-            {error && <div className="px-4 py-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-2xl text-sm">{error}</div>}
+            {error && <div className="px-4 py-3 bg-travel-sakura/50 border border-travel-sakura text-travel-accentStrong rounded-2xl text-sm">{error}</div>}
             <button
               type="submit"
               disabled={submitting}
@@ -136,3 +136,5 @@ export default function TravelRecordPage() {
     </div>
   )
 }
+
+

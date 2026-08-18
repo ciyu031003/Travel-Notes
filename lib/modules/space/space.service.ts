@@ -216,3 +216,4 @@ export class SpaceService {
 }
 
 export const spaceService = new SpaceService(new PrismaSpaceRepository())
+

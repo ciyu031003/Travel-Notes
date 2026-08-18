@@ -44,7 +44,7 @@ export default function SearchPage() {
     <Suspense fallback={
       <div className="container-custom">
         <div className="max-w-2xl mx-auto text-center py-16 text-gray-500">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-rose-400" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-travel-accentSoft" />
           <p className="text-sm">加载中...</p>
         </div>
       </div>
@@ -155,7 +155,7 @@ function SearchContent() {
               if (e.key === 'Enter') performSearch(query)
             }}
             placeholder="输入城市、地点或关键词..."
-            className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent shadow-sm"
+            className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-travel-accentSoft focus:border-transparent shadow-sm"
           />
           {query && (
             <button
@@ -171,7 +171,7 @@ function SearchContent() {
         {/* 加载中 */}
         {loading && (
           <div className="card p-8 text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-rose-400" />
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-travel-accentSoft" />
             <p className="text-sm text-gray-500">搜索中...</p>
           </div>
         )}
@@ -179,7 +179,7 @@ function SearchContent() {
         {/* 未搜索状态 */}
         {!loading && !hasSearched && (
           <div className="card p-8 text-center">
-            <MapPin className="w-12 h-12 mx-auto mb-4 text-rose-200" />
+            <MapPin className="w-12 h-12 mx-auto mb-4 text-travel-sakura" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               输入关键词开始搜索，或试试以下热门标签：
             </p>
@@ -189,7 +189,7 @@ function SearchContent() {
                   key={tag}
                   type="button"
                   onClick={() => setQuery(tag)}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300 text-sm hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accentStrong dark:text-travel-accentSoft text-sm hover:bg-travel-sakura dark:hover:bg-travel-accentStrong/40 transition-colors"
                 >
                   <Tag className="w-3 h-3" />
                   {tag}
@@ -217,10 +217,10 @@ function SearchContent() {
                 <Link
                   key={`${post.slug}-${post.id}`}
                   href={`/travel/${post.slug}`}
-                  className="card ribbon-hover block p-5 hover:border-rose-200 dark:hover:border-rose-800 group"
+                  className="card ribbon-hover block p-5 hover:border-travel-sakura dark:hover:border-travel-accentStrong group"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-rose-500">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-travel-accent">
                       <MapPin className="w-3.5 h-3.5" />
                       旅行记录
                     </span>
@@ -229,7 +229,7 @@ function SearchContent() {
                     </span>
                   </div>
                   <h3
-                    className="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-rose-500 transition-colors mb-1.5"
+                    className="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-travel-accent transition-colors mb-1.5"
                     dangerouslySetInnerHTML={{ __html: highlight(post.title, keyword) }}
                   />
                   {post.description && (
@@ -250,7 +250,7 @@ function SearchContent() {
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 flex items-center gap-1 text-xs text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="mt-3 flex items-center gap-1 text-xs text-travel-accentSoft opacity-0 group-hover:opacity-100 transition-opacity">
                     查看详情
                     <ArrowRight className="w-3 h-3" />
                   </div>
@@ -263,3 +263,5 @@ function SearchContent() {
     </div>
   )
 }
+
+

@@ -212,7 +212,7 @@ export default function AdminTravelsPage() {
       <div className="mx-auto max-w-6xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           返回后台
@@ -229,7 +229,7 @@ export default function AdminTravelsPage() {
         <div>
           <form onSubmit={handleCreate} className="card p-5 mb-4">
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Plus className="w-4 h-4 text-rose-400" />
+              <Plus className="w-4 h-4 text-travel-accentSoft" />
               新建旅行
             </h2>
             <input
@@ -237,14 +237,14 @@ export default function AdminTravelsPage() {
               value={createTitle}
               onChange={(e) => setCreateTitle(e.target.value)}
               placeholder="旅行名称，如：东京 · 2026"
-              className="w-full px-3 py-2 mb-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="w-full px-3 py-2 mb-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             />
             <div className="grid grid-cols-2 gap-2 mb-2">
               <input type="date" value={createStart} onChange={(e) => setCreateStart(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
               <input type="date" value={createEnd} onChange={(e) => setCreateEnd(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
             </div>
             {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
-            <button type="submit" disabled={creating} className="w-full py-2 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white rounded-lg text-sm transition-colors">
+            <button type="submit" disabled={creating} className="w-full py-2 bg-travel-accent hover:bg-travel-accentStrong disabled:opacity-50 text-white rounded-lg text-sm transition-colors">
               {creating ? '创建中...' : '创建旅行'}
             </button>
           </form>
@@ -262,8 +262,8 @@ export default function AdminTravelsPage() {
                   onClick={() => setSelected(t.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${
                     selected === t.id
-                      ? 'bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800'
-                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-rose-200'
+                      ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 border border-travel-sakura dark:border-travel-accent/40'
+                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-travel-sakura'
                   }`}
                 >
                   <div className="flex-1 min-w-0">
@@ -289,7 +289,7 @@ export default function AdminTravelsPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-rose-400" />
+                      <MapPin className="w-5 h-5 text-travel-accentSoft" />
                       {detail.title}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
@@ -305,13 +305,13 @@ export default function AdminTravelsPage() {
               {/* 天数 + 行程 */}
               <div className="card p-5">
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-rose-400" />
+                  <CalendarDays className="w-4 h-4 text-travel-accentSoft" />
                   行程安排
                 </h3>
                 <div className="flex gap-2 mb-4">
                   <input type="date" value={dayDate} onChange={(e) => setDayDate(e.target.value)} className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
                   <input type="text" value={dayTitle} onChange={(e) => setDayTitle(e.target.value)} placeholder="Day 标题（可选）" className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
-                  <button type="button" onClick={handleAddDay} className="px-3 py-1.5 text-sm bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition-colors">+ 添加天数</button>
+                  <button type="button" onClick={handleAddDay} className="px-3 py-1.5 text-sm bg-travel-accent hover:bg-travel-accentStrong text-white rounded-lg transition-colors">+ 添加天数</button>
                 </div>
 
                 {detail.days.length === 0 ? (
@@ -322,7 +322,7 @@ export default function AdminTravelsPage() {
                       <div key={day.id} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-rose-500">
+                            <span className="text-sm font-semibold text-travel-accent">
                               Day {day.sortOrder + 1}
                             </span>
                             {day.date && <span className="text-xs text-gray-500">{day.date.slice(0, 10)}</span>}
@@ -375,7 +375,7 @@ export default function AdminTravelsPage() {
                             onChange={(e) => { setItineraryTime(e.target.value); setItineraryDay(day.id) }}
                             className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                           />
-                          <button type="button" onClick={handleAddItinerary} className="px-3 py-1.5 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors">
+                          <button type="button" onClick={handleAddItinerary} className="px-3 py-1.5 text-sm text-travel-accent hover:bg-travel-sakura/60 dark:hover:bg-travel-accentStrong/20 rounded-lg transition-colors">
                             添加
                           </button>
                         </div>
@@ -447,3 +447,5 @@ export default function AdminTravelsPage() {
     </AdminShell>
   )
 }
+
+

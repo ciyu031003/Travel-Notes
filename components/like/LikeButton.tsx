@@ -97,8 +97,8 @@ export default function LikeButton({
         'inline-flex items-center gap-1.5 rounded-full transition-all select-none',
         sm ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm',
         state.liked
-          ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500 border border-rose-200 dark:border-rose-800'
-          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-transparent hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-800',
+          ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent border border-travel-sakura dark:border-travel-accent/40'
+          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-transparent hover:bg-travel-sakura/60 dark:hover:bg-travel-accentStrong/20 hover:text-travel-accent hover:border-travel-sakura dark:hover:border-travel-accentStrong',
         loading && 'opacity-60 cursor-wait',
         className
       )}
@@ -107,10 +107,12 @@ export default function LikeButton({
         className={cn(
           'transition-transform',
           sm ? 'w-3.5 h-3.5' : 'w-4 h-4',
-          state.liked && 'fill-rose-500 scale-110'
+          state.liked && 'fill-travel-accent scale-110'
         )}
       />
       <span className="tabular-nums">{state.count > 0 ? state.count : '点赞'}</span>
     </button>
   )
 }
+
+

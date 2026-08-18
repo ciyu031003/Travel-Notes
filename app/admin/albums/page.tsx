@@ -149,7 +149,7 @@ export default function AdminAlbumsPage() {
       <div className="mx-auto max-w-5xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           返回后台
@@ -166,7 +166,7 @@ export default function AdminAlbumsPage() {
         <div>
           <form onSubmit={handleCreate} className="card p-5 mb-4">
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Plus className="w-4 h-4 text-rose-400" />
+              <Plus className="w-4 h-4 text-travel-accentSoft" />
               新建相册
             </h2>
             <div className="flex gap-2 mb-2">
@@ -175,12 +175,12 @@ export default function AdminAlbumsPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="相册名称"
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
               />
               <button
                 type="submit"
                 disabled={creating}
-                className="px-4 py-2 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white rounded-lg text-sm transition-colors"
+                className="px-4 py-2 bg-travel-accent hover:bg-travel-accentStrong disabled:opacity-50 text-white rounded-lg text-sm transition-colors"
               >
                 {creating ? '创建中...' : '创建'}
               </button>
@@ -190,7 +190,7 @@ export default function AdminAlbumsPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="简介（可选）"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             />
             {error && (
               <p className="flex items-center gap-1 mt-2 text-xs text-red-500">
@@ -212,8 +212,8 @@ export default function AdminAlbumsPage() {
                   onClick={() => setSelected(a.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${
                     selected === a.id
-                      ? 'bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800'
-                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-rose-200'
+                      ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 border border-travel-sakura dark:border-travel-accent/40'
+                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-travel-sakura'
                   }`}
                 >
                   <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
@@ -260,7 +260,7 @@ export default function AdminAlbumsPage() {
                 </button>
               </div>
 
-              <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 hover:border-rose-300 cursor-pointer mb-4">
+              <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 hover:border-travel-accentSoft cursor-pointer mb-4">
                 <Upload className="w-4 h-4" />
                 {uploading ? '上传中...' : '点击上传照片（支持多选）'}
                 <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleUpload} disabled={uploading} />
@@ -296,3 +296,5 @@ export default function AdminAlbumsPage() {
     </AdminShell>
   )
 }
+
+

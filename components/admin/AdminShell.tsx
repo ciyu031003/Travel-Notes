@@ -18,8 +18,8 @@ export interface AdminNavItem {
 }
 
 export const ADMIN_NAV: AdminNavItem[] = [
-  { href: '/admin', label: '文章管理', icon: FileText, color: 'text-rose-600 dark:text-rose-300' },
-  { href: '/admin/moments', label: '碎碎念管理', icon: Sparkles, color: 'text-rose-500 dark:text-rose-300' },
+  { href: '/admin', label: '文章管理', icon: FileText, color: 'text-travel-accentStrong dark:text-travel-accentSoft' },
+  { href: '/admin/moments', label: '碎碎念管理', icon: Sparkles, color: 'text-travel-accent dark:text-travel-accentSoft' },
   { href: '/admin/travels', label: '旅行规划', icon: MapPin, color: 'text-sky-600 dark:text-sky-300' },
   { href: '/admin/albums', label: '相册管理', icon: Images, color: 'text-cyan-600 dark:text-cyan-300' },
   { href: '/admin/anniversaries', label: '纪念日管理', icon: Heart, color: 'text-fuchsia-600 dark:text-fuchsia-300' },
@@ -53,7 +53,7 @@ const PAGE_TITLES: Record<string, string> = {
 export default function AdminShell({
   children,
   title,
-  accent = 'from-rose-400 via-pink-500 to-orange-300',
+  accent = 'from-travel-accentSoft via-pink-500 to-orange-300',
 }: {
   children: React.ReactNode
   title?: string
@@ -119,12 +119,12 @@ export default function AdminShell({
           {...(item.href === '/' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
           className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
             active
-              ? 'bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-500/15 dark:to-pink-500/10 text-rose-600 dark:text-rose-300 shadow-sm'
+              ? 'bg-gradient-to-r from-travel-sakura to-travel-sakura dark:from-travel-accent/15 dark:to-travel-accentSoft/10 text-travel-accentStrong dark:text-travel-accentSoft shadow-sm'
               : 'text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
           {active && (
-            <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-rose-400 to-pink-500" />
+            <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-travel-accentSoft to-pink-500" />
           )}
           <Icon className={`h-[18px] w-[18px] shrink-0 transition-transform duration-200 ${active ? '' : 'group-hover:scale-110'}`} />
           <span className="truncate">{item.label}</span>
@@ -138,7 +138,7 @@ export default function AdminShell({
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/70 bg-white/75 dark:border-white/5 dark:bg-[#16181C]/85 backdrop-blur-2xl lg:flex">
         {/* 品牌 */}
         <div className="flex h-16 items-center gap-3 border-b border-gray-100/80 dark:border-white/5 px-5">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${accent} shadow-md shadow-rose-500/20`}>
+          <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${accent} shadow-md shadow-travel-accent/20`}>
             <Heart className="h-4.5 w-4.5 text-white" fill="currentColor" />
           </div>
           <div className="leading-tight">
@@ -153,12 +153,12 @@ export default function AdminShell({
         {/* 用户卡片 */}
         <div className="border-t border-gray-100/80 dark:border-white/5 p-3">
           <div className="flex items-center gap-3 rounded-2xl bg-white/70 dark:bg-white/5 px-3 py-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-rose-300 to-pink-400 text-sm font-bold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-travel-accentSoft to-pink-400 text-sm font-bold text-white">
               {(username || '访').slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{username || '加载中...'}</p>
-              <Link href="/" target="_blank" className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-rose-500 transition-colors">
+              <Link href="/" target="_blank" className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-travel-accent transition-colors">
                 <ExternalLink className="h-3 w-3" /> 查看前台
               </Link>
             </div>
@@ -265,3 +265,6 @@ export function ShellLoader() {
     </div>
   )
 }
+
+
+

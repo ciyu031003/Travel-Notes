@@ -20,7 +20,7 @@ export default async function TimelinePage() {
   return (
     <div className="container-custom py-10 md:py-14">
       <header className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-300 rounded-full text-sm mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-accentSoft rounded-full text-sm mb-4">
           <CalendarDays className="w-4 h-4" />
           <span>我们的时间线</span>
         </div>
@@ -34,7 +34,7 @@ export default async function TimelinePage() {
 
       {years.length === 0 ? (
         <div className="card p-12 text-center text-gray-500">
-          <Sparkles className="w-10 h-10 mx-auto mb-3 text-rose-200" />
+          <Sparkles className="w-10 h-10 mx-auto mb-3 text-travel-sakura" />
           <p>时间线还是空的，从第一段旅行开始记录吧</p>
         </div>
       ) : (
@@ -42,9 +42,9 @@ export default async function TimelinePage() {
           {years.map(({ year, entries }) => (
             <section key={year} className="relative pl-8 md:pl-12 mb-10">
               {/* 年份标 */}
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-rose-200 via-rose-100 to-transparent dark:from-rose-800/60 dark:via-rose-800/30" />
+              <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-travel-sakura via-travel-sakura to-transparent dark:from-travel-accentStrong/60 dark:via-travel-accentStrong/30" />
               <h2 className="relative inline-flex items-center gap-2 mb-6">
-                <span className="absolute -left-8 md:-left-12 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-rose-400 border-4 border-white dark:border-gray-900 shadow" />
+                <span className="absolute -left-8 md:-left-12 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-travel-accentSoft border-4 border-white dark:border-gray-900 shadow" />
                 <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{year}</span>
               </h2>
 
@@ -54,7 +54,7 @@ export default async function TimelinePage() {
                     {entry.type === 'travel' && entry.slug ? (
                       <Link
                         href={`/travel/${entry.slug}`}
-                        className="card ribbon-hover block p-5 hover:border-rose-200 dark:hover:border-rose-800 transition-colors"
+                        className="card ribbon-hover block p-5 hover:border-travel-sakura dark:hover:border-travel-accentStrong transition-colors"
                       >
                         <TimelineItem entry={entry} />
                       </Link>
@@ -88,7 +88,7 @@ function TimelineItem({ entry }: { entry: import('@/lib/modules/timeline/timelin
           <span
             className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
               isTravel
-                ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-300'
+                ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-accentSoft'
                 : 'bg-purple-50 dark:bg-purple-900/30 text-purple-500 dark:text-purple-300'
             }`}
           >
@@ -102,7 +102,7 @@ function TimelineItem({ entry }: { entry: import('@/lib/modules/timeline/timelin
             <span className="text-xs text-gray-400 dark:text-gray-500">· {entry.travelTitle}</span>
           )}
         </div>
-        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 group-hover:text-rose-500 transition-colors">
+        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 group-hover:text-travel-accent transition-colors">
           {entry.title}
         </h3>
         {entry.description && (
@@ -127,3 +127,5 @@ function TimelineItem({ entry }: { entry: import('@/lib/modules/timeline/timelin
     </div>
   )
 }
+
+

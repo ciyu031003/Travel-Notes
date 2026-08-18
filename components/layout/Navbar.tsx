@@ -120,7 +120,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 isActive(item.href)
                   ? useDarkText
                     ? 'bg-white/20 text-white'
-                    : 'bg-[#F5DCE0]/50 text-[#8B4A5A] dark:bg-white/10 dark:text-rose-300'
+                    : 'bg-[#F5DCE0]/50 text-[#8B4A5A] dark:bg-white/10 dark:text-travel-accentSoft'
                   : useDarkText
                     ? 'text-white/70 hover:bg-white/10 hover:text-white'
                     : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852] dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
@@ -257,7 +257,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 className={cn(
                   'px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3',
                   isActive(item.href)
-                    ? 'bg-[#F5DCE0]/50 text-[#8B4A5A] dark:bg-white/10 dark:text-rose-300'
+                    ? 'bg-[#F5DCE0]/50 text-[#8B4A5A] dark:bg-white/10 dark:text-travel-accentSoft'
                     : 'text-[#4A5560] hover:bg-[#F5DCE0]/30 hover:text-[#3D4852] dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
                 )}
               >
@@ -299,3 +299,4 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
     </header>
   )
 }
+

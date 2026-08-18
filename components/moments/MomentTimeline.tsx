@@ -91,13 +91,13 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
         <div key={moment.id} className="relative pl-8">
           {/* 时间线竖线 + 节点 */}
           {idx < moments.length - 1 && (
-            <span className="absolute left-[9px] top-8 bottom-[-18px] w-px bg-gradient-to-b from-rose-200 to-transparent dark:from-rose-900/40" />
+            <span className="absolute left-[9px] top-8 bottom-[-18px] w-px bg-gradient-to-b from-travel-sakura to-transparent dark:from-travel-accentStrong/40" />
           )}
           <span className="absolute left-0 top-1.5 w-5 h-5 rounded-full bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] flex items-center justify-center shadow-sm">
             <Sparkles className="w-2.5 h-2.5 text-white" />
           </span>
 
-          <div className="card p-5 hover:border-rose-200 dark:hover:border-rose-800 transition-colors">
+          <div className="card p-5 hover:border-travel-sakura dark:hover:border-travel-accentStrong transition-colors">
             <p className="text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap break-words">
               {moment.content}
             </p>
@@ -111,7 +111,7 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
                     {moment.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-[11px] px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-300"
+                        className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accent dark:text-travel-accentSoft"
                       >
                         #{tag}
                       </span>
@@ -131,7 +131,7 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="px-5 py-2 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-300 text-sm hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
+            className="px-5 py-2 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accent dark:text-travel-accentSoft text-sm hover:bg-travel-sakura dark:hover:bg-travel-accentStrong/40 transition-colors disabled:opacity-50"
           >
             {loadingMore ? '加载中...' : '加载更多'}
           </button>
@@ -140,3 +140,5 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
     </div>
   )
 }
+
+

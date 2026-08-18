@@ -109,7 +109,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
   }
 
   return (
-    <div className="fixed inset-0 z-[110] overflow-y-auto bg-[#0d0604]">
+    <div className="fixed inset-0 z-[110] overflow-y-auto bg-album-bg1">
       {/* 像素木屋桌面背景 */}
       <PixelDeskBackground className="fixed inset-0" />
 
@@ -118,11 +118,11 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
         <button
           type="button"
           onClick={onBack}
-          className="pixel-btn pixel-border-stone px-3 py-1.5 text-[11px] font-bold rounded-sm"
+          className="pixel-btn pixel-border-stone px-3 py-1.5 text-xs font-bold rounded-sm"
         >
           ← 返回相册
         </button>
-        <div className="font-zpix text-[#dfa87a] text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
+        <div className="font-zpix text-album-accent text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
           ✦ 旅行相册 · 存档 ✦
         </div>
         <div className="w-20 md:w-24" aria-hidden="true" />
@@ -142,16 +142,16 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
           <div className="bookmark-ribbon" />
 
           {/* 左页：照片 + 留言记录 */}
-          <div className="w-full md:w-1/2 p-4 md:pr-8 border-b-4 md:border-b-0 md:border-r border-[#d8c9a6] relative">
-            <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-[#d8c9a6]" />
-            <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-[#d8c9a6]" />
+          <div className="w-full md:w-1/2 p-4 md:pr-8 border-b-4 md:border-b-0 md:border-r border-pixel-lineLight relative">
+            <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-pixel-lineLight" />
+            <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-pixel-lineLight" />
 
             <div className="flex flex-col h-[620px]">
               {/* 头部：像素精灵 */}
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#a89f91]/35 select-none">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-album-warm/35 select-none">
                 <div className="flex items-center gap-2">
                   {/* 黄色像素机器人 */}
-                  <div className="w-6 h-6 flex items-center justify-center bg-[#fce268] border border-black shadow-[1px_1px_0_#000] rounded-sm p-0.5">
+                  <div className="w-6 h-6 flex items-center justify-center bg-pixel-goldLight border border-black shadow-[1px_1px_0_#000] rounded-sm p-0.5">
                     <svg viewBox="0 0 16 16" className="w-full h-full text-black fill-current" xmlns="http://www.w3.org/2000/svg" style={{ imageRendering: 'pixelated' }}>
                       <rect x="7" y="0" width="2" height="2" />
                       <rect x="6" y="2" width="4" height="1" />
@@ -163,9 +163,9 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                     </svg>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-[#1c1511]">照片守候精灵</span>
-                    <span className="text-[9px] text-[#5b8731] flex items-center gap-1 leading-none font-bold">
-                      <span className="w-1.5 h-1.5 bg-[#5b8731] rounded-full inline-block" />
+                    <span className="text-xs font-bold text-pixel-panel">照片守候精灵</span>
+                    <span className="text-xs text-pixel-online flex items-center gap-1 leading-none font-bold">
+                      <span className="w-1.5 h-1.5 bg-pixel-online rounded-full inline-block" />
                       在线 · 这张照片在等待你的留言
                     </span>
                   </div>
@@ -190,26 +190,26 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                 >
                   <img src={image} alt={cityName || '照片'} loading="lazy" decoding="async" className="w-full aspect-[4/3] object-cover border border-black/70" />
                   <div className="pt-1.5 text-center">
-                    <span className="text-[10px] text-[#5a3b30] font-bold truncate block">{cityName || '记忆'}</span>
-                    {date && <span className="text-[9px] text-[#8a7662] mt-0.5 block">{date}</span>}
+                    <span className="text-xs text-pixel-ink font-bold truncate block">{cityName || '记忆'}</span>
+                    {date && <span className="text-xs text-pixel-muted mt-0.5 block">{date}</span>}
                   </div>
                 </div>
-                <p className="text-[9px] text-[#746759] mt-1.5 font-bold">点击照片预览大图 · 留言仅与当前照片绑定</p>
+                <p className="text-xs text-album-warm mt-1.5 font-bold">点击照片预览大图 · 留言仅与当前照片绑定</p>
               </div>
 
               {/* 聊天记录区（横线纸） */}
               <div
                 ref={listRef}
-                className="flex-grow overflow-y-auto mc-scrollbar pr-2 mb-2 pixel-paper-rules-chat rounded-sm border border-[#d8c9a6] p-2 space-y-3"
+                className="flex-grow overflow-y-auto mc-scrollbar pr-2 mb-2 pixel-paper-rules-chat rounded-sm border border-pixel-lineLight p-2 space-y-3"
               >
                 {loading ? (
                   <div className="flex items-center justify-center h-full py-10">
-                    <Loader2 className="w-5 h-5 text-[#8a7662] animate-spin" />
+                    <Loader2 className="w-5 h-5 text-pixel-muted animate-spin" />
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full gap-2 text-center py-10">
-                    <BookOpen className="w-10 h-8 text-[#8a7662] opacity-60" />
-                    <p className="text-[10px] text-[#746759] font-bold leading-relaxed">
+                    <BookOpen className="w-10 h-8 text-pixel-muted opacity-60" />
+                    <p className="text-xs text-album-warm font-bold leading-relaxed">
                       还没有留言，
                       <br />
                       写下第一句吧 ✍
@@ -218,10 +218,10 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                 ) : (
                   messages.map((msg) => (
                     <div key={msg.id} className="flex flex-col w-full">
-                      <div className="text-[9px] text-[#746759] mb-1 font-bold text-right select-none">
+                      <div className="text-xs text-album-warm mb-1 font-bold text-right select-none">
                         你 at {formatTime(msg.createdAt)}
                       </div>
-                      <div className="p-2 max-w-[90%] border-2 border-black shadow-[2px_2px_0_rgba(0,0,0,0.15)] text-xs leading-relaxed bg-[#70b237] text-black self-end whitespace-pre-wrap break-words">
+                      <div className="p-2 max-w-[90%] border-2 border-black shadow-[2px_2px_0_rgba(0,0,0,0.15)] text-xs leading-relaxed bg-pixel-bubble text-black self-end whitespace-pre-wrap break-words">
                         {msg.content}
                       </div>
                     </div>
@@ -230,9 +230,9 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
               </div>
 
               {/* 底部输入区 */}
-              <div className="pt-2 border-t border-[#a89f91]/35">
+              <div className="pt-2 border-t border-album-warm/35">
                 {error && (
-                  <p className="text-[10px] text-[#a02a2a] font-bold mb-1.5">{error}</p>
+                  <p className="text-xs text-pixel-error font-bold mb-1.5">{error}</p>
                 )}
                 <div className="flex gap-1.5 w-full items-stretch h-9">
                   <input
@@ -254,45 +254,45 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                     type="button"
                     onClick={handleSend}
                     disabled={sending || !input.trim()}
-                    className="pixel-btn pixel-border-green px-3 text-[11px] font-bold rounded-sm"
+                    className="pixel-btn pixel-border-green px-3 text-xs font-bold rounded-sm"
                     style={{ flexShrink: 0 }}
                   >
                     {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                     发送
                   </button>
                 </div>
-                <p className="text-[9px] text-[#8a7662] mt-1.5 text-center select-none">
+                <p className="text-xs text-pixel-muted mt-1.5 text-center select-none">
                   Enter 发送 · 留言仅与当前照片绑定
                 </p>
               </div>
             </div>
 
             {/* 页码 */}
-            <div className="text-[10px] text-[#8a7662] text-center mt-2 font-bold select-none">第 1 页</div>
+            <div className="text-xs text-pixel-muted text-center mt-2 font-bold select-none">第 1 页</div>
           </div>
 
           {/* 右页：留言面板 */}
           <div className="w-full md:w-1/2 p-4 md:pl-8 relative">
-            <div className="absolute top-2 right-2 w-2 h-2 border-t border-r border-[#d8c9a6]" />
-            <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-[#d8c9a6]" />
+            <div className="absolute top-2 right-2 w-2 h-2 border-t border-r border-pixel-lineLight" />
+            <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-pixel-lineLight" />
 
             <div className="flex flex-col h-[620px] justify-between">
               {/* 日期 */}
-              <div className="flex justify-end items-center pb-2 border-b border-[#a89f91]/35 text-[#8a7662] text-[10px] font-bold select-none">
-                <span className="flex items-center gap-1 text-[#8b5a2e]">
+              <div className="flex justify-end items-center pb-2 border-b border-album-warm/35 text-pixel-muted text-xs font-bold select-none">
+                <span className="flex items-center gap-1 text-pixel-ink">
                   <Clock className="w-3.5 h-3.5" /> {todayText()}
                 </span>
               </div>
 
               {/* 面板主体 */}
               <div className="flex-1 flex flex-col items-center justify-center px-4 text-center select-none">
-                <div className="w-14 h-10 text-[#8a7662] mb-3 opacity-70">
+                <div className="w-14 h-10 text-pixel-muted mb-3 opacity-70">
                   <svg viewBox="0 0 24 24" className="w-full h-full fill-none stroke-current stroke-2" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 21V5a3 3 0 0 0-3-3H2v16h7a3 3 0 0 1 3 3Z" />
                     <path d="M12 21v-16a3 3 0 0 1 3-3h7v16h-7a3 3 0 0 0-3 3Z" />
                   </svg>
                 </div>
-                <h4 className="text-xs font-bold text-[#8b5a2e] mb-3 tracking-wider">—— 留言面板 ——</h4>
+                <h4 className="text-xs font-bold text-pixel-ink mb-3 tracking-wider">—— 留言面板 ——</h4>
 
                 {/* 照片底片 */}
                 <div
@@ -304,20 +304,20 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                   <img src={image} alt="记忆底片" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
 
-                <p className="text-[10px] text-[#746759] mt-3 font-bold">
+                <p className="text-xs text-album-warm mt-3 font-bold">
                   {messages.length > 0 ? `已收集 ${messages.length} 条留言` : '等待第一条留言'}
                 </p>
-                <p className="text-[9px] text-[#8a7662] mt-1.5 leading-relaxed max-w-[240px]">
+                <p className="text-xs text-pixel-muted mt-1.5 leading-relaxed max-w-[240px]">
                   点击左侧照片或底片可预览大图，也可以返回相册继续翻阅其它记忆。
                 </p>
               </div>
 
               {/* 底部按钮 */}
-              <div className="flex justify-between items-end pt-2 border-t border-[#a89f91]/35 gap-2">
+              <div className="flex justify-between items-end pt-2 border-t border-album-warm/35 gap-2">
                 <button
                   type="button"
                   onClick={() => setPreviewOpen(true)}
-                  className="flex-1 mc-button mc-button-gold !py-1.5 text-[10px] font-bold flex items-center justify-center gap-1"
+                  className="flex-1 mc-button mc-button-gold !py-1.5 text-xs font-bold flex items-center justify-center gap-1"
                 >
                   <ImageIcon size={11} className="shrink-0" />
                   预览大图
@@ -325,7 +325,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                 <button
                   type="button"
                   onClick={onBack}
-                  className="flex-1 mc-button mc-button-parchment !py-1.5 text-[10px] font-bold flex items-center justify-center gap-1"
+                  className="flex-1 mc-button mc-button-parchment !py-1.5 text-xs font-bold flex items-center justify-center gap-1"
                 >
                   <MessageCircle size={11} className="shrink-0" />
                   返回相册
@@ -334,7 +334,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
             </div>
 
             {/* 页码 */}
-            <div className="text-[10px] text-[#8a7662] text-center mt-2 font-bold select-none">第 2 页</div>
+            <div className="text-xs text-pixel-muted text-center mt-2 font-bold select-none">第 2 页</div>
           </div>
         </div>
       </div>
@@ -362,7 +362,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
               alt={`${cityName || '旅行记忆'} 大图预览`}
               className="w-full max-h-[85vh] object-contain border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,0.6)]"
             />
-            <p className="text-center text-[11px] text-[#a89f91] mt-3 font-bold select-none">
+            <p className="text-center text-xs text-album-warm mt-3 font-bold select-none">
               点击任意处关闭 · Esc 关闭
             </p>
           </div>

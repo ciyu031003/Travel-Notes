@@ -43,16 +43,16 @@ interface Invite {
 
 const ROLE_LABEL: Record<string, string> = { OWNER: '创建者', MEMBER: '伴侣成员', VIEWER: '访客' }
 const ROLE_COLOR: Record<string, string> = {
-  OWNER: 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300',
+  OWNER: 'bg-travel-sakura dark:bg-travel-accentStrong/40 text-travel-accentStrong dark:text-travel-accentSoft',
   MEMBER: 'bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300',
   VIEWER: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300',
 }
 
 const SPACE_GRADIENTS = [
-  'from-rose-400 via-pink-500 to-orange-300',
+  'from-travel-accentSoft via-pink-500 to-orange-300',
   'from-sky-400 via-indigo-500 to-purple-400',
   'from-emerald-400 via-teal-500 to-cyan-400',
-  'from-amber-400 via-orange-500 to-rose-400',
+  'from-amber-400 via-orange-500 to-travel-accentSoft',
 ]
 
 function fmtDate(iso: string | null): string {
@@ -285,13 +285,13 @@ export default function AdminSpacesPage() {
   const inviteUrl = (code: string) => `${window.location.origin}/admin/spaces?join=${code}`
 
   const inputCls =
-    'w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-400/70 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500'
+    'w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/70 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500'
 
   return (
     <AdminShell title="空间管理">
       {/* 顶部 */}
       <div className="mx-auto max-w-5xl px-1 py-2">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-500 via-pink-500 to-orange-400 p-7 sm:p-9 text-white shadow-xl shadow-rose-500/20">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-travel-accent via-pink-500 to-orange-400 p-7 sm:p-9 text-white shadow-xl shadow-travel-accent/20">
           <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute right-16 bottom-0 h-24 w-24 rounded-full bg-white/10 blur-xl" />
           <div className="relative">
@@ -307,7 +307,7 @@ export default function AdminSpacesPage() {
               <button
                 type="button"
                 onClick={() => { setShowCreate(true); setError('') }}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-travel-accentStrong shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
               >
                 <Plus className="w-4 h-4" />
                 创建空间
@@ -332,9 +332,9 @@ export default function AdminSpacesPage() {
               加载中...
             </div>
           ) : spaces.length === 0 ? (
-            <div className="rounded-3xl border-2 border-dashed border-rose-200 dark:border-rose-800/60 bg-white/60 dark:bg-gray-900/40 p-14 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/30 dark:to-pink-900/30">
-                <Heart className="w-8 h-8 text-rose-400" />
+            <div className="rounded-3xl border-2 border-dashed border-travel-sakura dark:border-travel-accent/40/60 bg-white/60 dark:bg-gray-900/40 p-14 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-pink-100 dark:from-travel-accentStrong/30 dark:to-pink-900/30">
+                <Heart className="w-8 h-8 text-travel-accentSoft" />
               </div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">还没有空间</h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -343,7 +343,7 @@ export default function AdminSpacesPage() {
               <button
                 type="button"
                 onClick={() => setShowCreate(true)}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-rose-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-rose-500/25 transition-all hover:bg-rose-600 hover:-translate-y-0.5 active:scale-95"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-travel-accent px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-travel-accent/25 transition-all hover:bg-travel-accentStrong hover:-translate-y-0.5 active:scale-95"
               >
                 <Plus className="w-4 h-4" />
                 创建空间
@@ -364,7 +364,7 @@ export default function AdminSpacesPage() {
                     <div className={`relative h-24 bg-gradient-to-br ${gradient} p-4`}>
                       <div className="absolute right-4 top-4">
                         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur ${
-                          isOwner ? 'bg-white/90 text-rose-600' : 'bg-black/20 text-white'
+                          isOwner ? 'bg-white/90 text-travel-accentStrong' : 'bg-black/20 text-white'
                         }`}>
                           <Shield className="w-3 h-3" />
                           {ROLE_LABEL[space.myRole] || space.myRole}
@@ -383,8 +383,8 @@ export default function AdminSpacesPage() {
 
                       {/* 共享内容统计 */}
                       <div className="mt-4 grid grid-cols-4 gap-2">
-                        <div className="flex flex-col items-center gap-1 rounded-2xl bg-rose-50 dark:bg-rose-900/15 py-2.5">
-                          <Images className="w-4 h-4 text-rose-500" />
+                        <div className="flex flex-col items-center gap-1 rounded-2xl bg-travel-sakura/50 dark:bg-travel-accentStrong/15 py-2.5">
+                          <Images className="w-4 h-4 text-travel-accent" />
                           <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{space.albumCount ?? 0}</span>
                           <span className="text-[10px] text-gray-400">相册</span>
                         </div>
@@ -413,7 +413,7 @@ export default function AdminSpacesPage() {
                               <div
                                 key={m.id}
                                 title={`${m.username} · ${ROLE_LABEL[m.role] || m.role}`}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-gray-900 bg-gradient-to-br from-rose-300 to-pink-400 text-xs font-bold text-white shadow"
+                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-gray-900 bg-gradient-to-br from-travel-accentSoft to-pink-400 text-xs font-bold text-white shadow"
                               >
                                 {(m.username || '?').slice(0, 1).toUpperCase()}
                               </div>
@@ -428,7 +428,7 @@ export default function AdminSpacesPage() {
                         <button
                           type="button"
                           onClick={() => fetchMembers(space.id)}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-rose-500 dark:hover:text-rose-300 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors"
                         >
                           管理
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -444,7 +444,7 @@ export default function AdminSpacesPage() {
                               setGeneratedCode('')
                               fetchInvites(space.id)
                             }}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-500 px-3 py-2.5 text-sm font-medium text-white shadow-md shadow-rose-500/20 transition-all hover:bg-rose-600 active:scale-95"
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-travel-accent px-3 py-2.5 text-sm font-medium text-white shadow-md shadow-travel-accent/20 transition-all hover:bg-travel-accentStrong active:scale-95"
                           >
                             <Gift className="w-4 h-4" />
                             邀请伴侣
@@ -478,7 +478,7 @@ export default function AdminSpacesPage() {
 
       {/* ============ 创建空间弹窗 ============ */}
       {showCreate && (
-        <Modal onClose={() => setShowCreate(false)} title="创建空间" icon={<Heart className="w-5 h-5 text-rose-500" />}>
+        <Modal onClose={() => setShowCreate(false)} title="创建空间" icon={<Heart className="w-5 h-5 text-travel-accent" />}>
           <form onSubmit={handleCreate} className="space-y-4">
             {error && <ErrorBox message={error} />}
             <div>
@@ -496,7 +496,7 @@ export default function AdminSpacesPage() {
             <button
               type="submit"
               disabled={creating}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-500/25 transition-all hover:bg-rose-600 active:scale-[0.98] disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-travel-accent py-3 text-sm font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:bg-travel-accentStrong active:scale-[0.98] disabled:opacity-50"
             >
               {creating && <Loader2 className="w-4 h-4 animate-spin" />}
               创建
@@ -550,7 +550,7 @@ export default function AdminSpacesPage() {
               (members[memberSpaceId] || []).map((m) => (
                 <div key={m.id} className="flex items-center justify-between rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/50 p-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-rose-300 to-pink-400 text-sm font-bold text-white">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-travel-accentSoft to-pink-400 text-sm font-bold text-white">
                       {(m.username || '?').slice(0, 1).toUpperCase()}
                     </div>
                     <div>
@@ -585,19 +585,19 @@ export default function AdminSpacesPage() {
         <Modal
           onClose={() => setInviteSpaceId(null)}
           title={inviteRole === 'VIEWER' ? '邀请访客' : '邀请伴侣'}
-          icon={<Gift className="w-5 h-5 text-rose-500" />}
+          icon={<Gift className="w-5 h-5 text-travel-accent" />}
           wide
         >
           <div className="space-y-5">
             {error && <ErrorBox message={error} />}
 
             {/* 生成邀请 */}
-            <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 border border-rose-100 dark:border-rose-800/50 p-4">
+            <div className="rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-sakura dark:from-travel-accentStrong/20 dark:to-travel-accentStrong/20 border border-travel-sakura dark:border-travel-accentStrong/50 p-4">
               <div className="flex flex-wrap items-center gap-3">
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
                 >
                   <option value="MEMBER">伴侣成员（可共同编辑）</option>
                   <option value="VIEWER">访客（仅可查看）</option>
@@ -605,7 +605,7 @@ export default function AdminSpacesPage() {
                 <select
                   value={inviteDays}
                   onChange={(e) => setInviteDays(parseInt(e.target.value, 10))}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
                 >
                   <option value={1}>1 天有效</option>
                   <option value={3}>3 天有效</option>
@@ -616,7 +616,7 @@ export default function AdminSpacesPage() {
                   type="button"
                   onClick={() => handleGenerateInvite(inviteSpaceId)}
                   disabled={inviteLoading}
-                  className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2 text-sm font-medium text-white shadow-md shadow-rose-500/25 transition-all hover:bg-rose-600 active:scale-95 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-travel-accent px-4 py-2 text-sm font-medium text-white shadow-md shadow-travel-accent/25 transition-all hover:bg-travel-accentStrong active:scale-95 disabled:opacity-50"
                 >
                   {inviteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Gift className="w-4 h-4" />}
                   生成邀请码
@@ -624,18 +624,18 @@ export default function AdminSpacesPage() {
               </div>
 
               {generatedCode && (
-                <div className="mt-4 rounded-2xl bg-white dark:bg-gray-900 border border-rose-200 dark:border-rose-700/50 p-4">
+                <div className="mt-4 rounded-2xl bg-white dark:bg-gray-900 border border-travel-sakura dark:border-travel-accentStrong/50 p-4">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                     {inviteRole === 'VIEWER' ? '把下面的邀请码发给访客（仅可查看）' : '把下面的邀请码发给你的伴侣'}
                   </p>
                   <div className="flex items-center gap-3">
-                    <span className="flex-1 rounded-xl bg-rose-50 dark:bg-rose-900/30 px-4 py-3 text-center text-xl font-bold tracking-[0.35em] text-rose-600 dark:text-rose-300 select-all">
+                    <span className="flex-1 rounded-xl bg-travel-sakura/50 dark:bg-travel-accent/20 px-4 py-3 text-center text-xl font-bold tracking-[0.35em] text-travel-accentStrong dark:text-travel-accentSoft select-all">
                       {generatedCode}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleCopy(inviteUrl(generatedCode))}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm text-gray-600 dark:text-gray-300 transition-all hover:border-rose-300 hover:text-rose-500 active:scale-95"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm text-gray-600 dark:text-gray-300 transition-all hover:border-travel-accentSoft hover:text-travel-accent active:scale-95"
                       title="复制邀请链接"
                     >
                       {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
@@ -644,7 +644,7 @@ export default function AdminSpacesPage() {
                     <button
                       type="button"
                       onClick={() => handleCopy(generatedCode)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm text-gray-600 dark:text-gray-300 transition-all hover:border-rose-300 hover:text-rose-500 active:scale-95"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm text-gray-600 dark:text-gray-300 transition-all hover:border-travel-accentSoft hover:text-travel-accent active:scale-95"
                       title="复制邀请码"
                     >
                       <Link2 className="w-4 h-4" />
@@ -669,7 +669,7 @@ export default function AdminSpacesPage() {
                   {(invites[inviteSpaceId] || []).map((inv) => (
                     <div key={inv.id} className="flex items-center justify-between rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/50 px-3 py-2.5">
                       <div className="flex items-center gap-2.5">
-                        <Gift className="w-4 h-4 text-rose-400" />
+                        <Gift className="w-4 h-4 text-travel-accentSoft" />
                         <div>
                           <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
                             邀请 #{inv.id} · {ROLE_LABEL[inv.role] || inv.role}
@@ -680,7 +680,7 @@ export default function AdminSpacesPage() {
                             {inv.status === 'EXPIRED' && '已过期'}
                           </p>
                           {revealedInviteId === inv.id && inv.code && (
-                            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/30 px-2.5 py-1 text-xs font-bold tracking-[0.25em] text-rose-600 dark:text-rose-300 select-all">
+                            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-travel-sakura/50 dark:bg-travel-accent/20 px-2.5 py-1 text-xs font-bold tracking-[0.25em] text-travel-accentStrong dark:text-travel-accentSoft select-all">
                               {inv.code}
                               {copiedInviteId === inv.id && <Check className="w-3 h-3 text-emerald-500" />}
                             </p>
@@ -701,7 +701,7 @@ export default function AdminSpacesPage() {
                           <button
                             type="button"
                             onClick={() => handleRevealAndCopy(inv)}
-                            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20"
+                            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-travel-sakura/60 hover:text-travel-accent dark:hover:bg-travel-accentStrong/20"
                             title="查看并复制邀请码"
                           >
                             {revealedInviteId === inv.id && copiedInviteId === inv.id ? (
@@ -793,3 +793,6 @@ function ErrorBox({ message }: { message: string }) {
     </div>
   )
 }
+
+
+

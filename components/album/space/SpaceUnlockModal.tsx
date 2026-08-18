@@ -56,45 +56,45 @@ export default function SpaceUnlockModal({ isOpen, onClose, onSuccess }: SpaceUn
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-3 right-3 space-glass-btn w-8 h-8 rounded-full flex items-center justify-center text-white/70"
+          className="absolute top-3 right-3 space-glass-btn w-8 h-8 rounded-full flex items-center justify-center text-album-text1"
           aria-label="关闭"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#0a0c16]/70 border border-white/15 flex items-center justify-center shadow-[0_0_30px_rgba(120,140,255,0.35)]">
-          <Lock className="w-7 h-7 text-amber-200/90" />
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-album-bg0/70 border border-white/15 flex items-center justify-center shadow-[0_0_30px_var(--album-accent-dim)]">
+          <Lock className="w-7 h-7 text-album-accent" />
         </div>
-        <h3 className="text-white/95 text-lg font-semibold tracking-widest">相册是我们的秘密</h3>
-        <p className="text-white/45 text-xs mt-1.5">输入恋爱纪念日，唤醒银河中的回忆</p>
+        <h3 className="text-album-text1 text-lg font-semibold tracking-widest">相册是我们的秘密</h3>
+        <p className="text-album-text2 text-xs mt-1.5">输入恋爱纪念日，唤醒银河中的回忆</p>
 
         <form onSubmit={handleUnlock} className="mt-5 space-y-3">
           <input
             type="text"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full space-input text-sm text-center text-white/90"
+            className="w-full space-input text-sm text-center text-album-text1"
             placeholder="如 2023-06-20"
             required
             autoFocus
           />
-          <p className="text-[9px] text-white/35 select-none">
+          <p className="text-xs text-album-text2 select-none">
             支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日
           </p>
           {error && (
-            <p className="text-[11px] text-rose-300 font-bold text-center bg-rose-500/10 border border-rose-400/30 rounded-xl p-2">
+            <p className="text-xs text-danger-500 font-bold text-center bg-danger-500/10 border border-danger-600/30 rounded-xl p-2">
               {error}
             </p>
           )}
           <button
             type="submit"
             disabled={verifying}
-            className="w-full rounded-full space-glass-btn text-white/95 text-sm font-bold !py-2.5 disabled:opacity-50"
+            className="w-full rounded-full space-glass-btn text-album-text1 text-sm font-bold !py-2.5 disabled:opacity-50"
           >
             {verifying ? '正在唤醒银河...' : '解锁相册'}
           </button>
-          <p className="flex items-center justify-center gap-1 text-[10px] text-white/35">
-            <Sparkles className="w-3 h-3 text-amber-200/60" />
+          <p className="flex items-center justify-center gap-1 text-xs text-album-text2">
+            <Sparkles className="w-3 h-3 text-album-accent" />
             解锁后即可进入 360° 银河唱片空间
           </p>
         </form>
@@ -102,3 +102,5 @@ export default function SpaceUnlockModal({ isOpen, onClose, onSuccess }: SpaceUn
     </div>
   )
 }
+
+

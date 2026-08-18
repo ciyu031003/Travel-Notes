@@ -96,35 +96,35 @@ export default function GalaxyAlbumScene({
 
   if (cities.length === 0) {
     return (
-      <div className="fixed inset-0 z-[90] bg-[#050508] flex flex-col items-center justify-center gap-4">
-        <Sparkles className="w-10 h-10 text-amber-200/60" />
-        <p className="text-white/70 text-sm tracking-widest">银河中还没有旅行唱片</p>
-        <p className="text-white/35 text-xs">等待新的旅行记忆被点亮...</p>
+      <div className="fixed inset-0 z-[90] bg-album-bg0 flex flex-col items-center justify-center gap-4">
+        <Sparkles className="w-10 h-10 text-album-accent" />
+        <p className="text-album-text2 text-sm tracking-widest">银河中还没有旅行唱片</p>
+        <p className="text-album-text2 text-xs">等待新的旅行记忆被点亮...</p>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-[90] bg-[#050508] overflow-hidden">
+    <div className="fixed inset-0 z-[90] bg-album-bg0 overflow-hidden">
       {/* Three.js 画布 */}
       <div ref={mountRef} className="absolute inset-0" />
 
       {/* 加载态 */}
       {!ready && !failed && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-[#050508]">
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-album-bg0">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border border-white/15" />
-            <div className="absolute inset-0 rounded-full border-t-2 border-amber-200/80 animate-spin" />
-            <Sparkles className="absolute inset-0 m-auto w-5 h-5 text-amber-200/70" />
+            <div className="absolute inset-0 rounded-full border-t-2 border-album-accent animate-spin" />
+            <Sparkles className="absolute inset-0 m-auto w-5 h-5 text-album-accent" />
           </div>
-          <p className="text-white/70 text-sm tracking-widest">正在唤醒银河，装载旅行唱片...</p>
+          <p className="text-album-text2 text-sm tracking-widest">正在唤醒银河，装载旅行唱片...</p>
           <div className="w-48 h-1 rounded-full bg-white/10 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-400 to-amber-200 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-album-accentStrong to-album-accent transition-all duration-300"
               style={{ width: `${Math.max(6, progress)}%` }}
             />
           </div>
-          <p className="text-white/35 text-[11px]">{progress}%</p>
+          <p className="text-album-text2 text-xs">{progress}%</p>
         </div>
       )}
 
@@ -155,8 +155,8 @@ export default function GalaxyAlbumScene({
               <GlassPanel className="p-4 sm:p-5 rounded-3xl">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="text-white/95 text-lg font-bold tracking-widest truncate">{city.name} · 记忆唱片</h2>
-                    <p className="text-white/50 text-xs mt-1">
+                    <h2 className="text-album-text1 text-lg font-bold tracking-widest truncate">{city.name} · 记忆唱片</h2>
+                    <p className="text-album-text2 text-xs mt-1">
                       {formatDate(city.date)} · {city.images.length} 张照片
                       {city.province ? ` · ${city.province}` : ''}
                     </p>
@@ -164,7 +164,7 @@ export default function GalaxyAlbumScene({
                   <button
                     type="button"
                     onClick={() => engineRef.current?.exitCloseup()}
-                    className="space-glass-btn rounded-full px-3 py-1.5 flex items-center gap-1.5 text-white/80 text-xs shrink-0"
+                    className="space-glass-btn rounded-full px-3 py-1.5 flex items-center gap-1.5 text-album-text1 text-xs shrink-0"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     返回银河
@@ -189,12 +189,12 @@ export default function GalaxyAlbumScene({
                         className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <span className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition-colors flex items-center justify-center">
-                        <MessageCircle className="w-4 h-4 text-amber-200 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <MessageCircle className="w-4 h-4 text-album-accent opacity-0 group-hover:opacity-100 transition-opacity" />
                       </span>
                     </button>
                   ))}
                 </div>
-                <p className="mt-2.5 text-[10px] text-white/40 text-center">
+                <p className="mt-2.5 text-xs text-album-text2 text-center">
                   点击照片开启该照片专属的星河留言
                 </p>
               </GlassPanel>
@@ -205,3 +205,4 @@ export default function GalaxyAlbumScene({
     </div>
   )
 }
+

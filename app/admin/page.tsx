@@ -29,7 +29,7 @@ interface Post {
 
 const typeLabels: Record<string, string> = { travel: '旅行记录' }
 const typeIconBg: Record<string, string> = {
-  travel: 'from-rose-300 to-pink-400',
+  travel: 'from-travel-accentSoft to-pink-400',
 }
 
 const listVariants = {
@@ -387,7 +387,7 @@ export default function AdminDashboard() {
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition-all hover:shadow-xl active:scale-95 disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-travel-accent py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition-all hover:shadow-xl active:scale-95 disabled:opacity-60"
               >
                 {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
                 确认删除
@@ -399,3 +399,4 @@ export default function AdminDashboard() {
     </AdminShell>
   )
 }
+

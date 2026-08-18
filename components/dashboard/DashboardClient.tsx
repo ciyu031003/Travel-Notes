@@ -78,7 +78,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           icon={MapPin}
           label="点亮省份"
           value={data.provincesVisitedCount}
-          accent="bg-gradient-to-br from-rose-400 to-pink-500"
+          accent="bg-gradient-to-br from-travel-accentSoft to-pink-500"
           href="/travel"
         />
         <StatCard
@@ -112,7 +112,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           icon={Heart}
           label="收到点赞"
           value={data.totalLikes}
-          accent="bg-gradient-to-br from-red-400 to-rose-500"
+          accent="bg-gradient-to-br from-red-400 to-travel-accent"
         />
       </div>
 
@@ -120,7 +120,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         {/* 中国地图 */}
         <div className="lg:col-span-3 card p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-rose-400" />
+            <MapPin className="w-5 h-5 text-travel-accentSoft" />
             旅行足迹地图
           </h2>
           <div className="h-[420px] sm:h-[520px] lg:h-full">
@@ -164,7 +164,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
             </h2>
             <div className="space-y-2">
               {[
-                { label: '旅行记录', value: data.travelCount, color: 'bg-rose-400' },
+                { label: '旅行记录', value: data.travelCount, color: 'bg-travel-accentSoft' },
                 { label: '旅行照片', value: data.totalPhotos, color: 'bg-blue-400' },
                 { label: '碎碎念', value: data.momentCount, color: 'bg-purple-400' },
               ].map((item) => (
@@ -186,3 +186,5 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
     </div>
   )
 }
+
+

@@ -30,6 +30,52 @@ module.exports = {
           bloom: '#E8B8C2',     // 樱花粉（深，主强调色）
           sky: '#A8C8DC',       // 天空蓝
           mist: '#D6E8F0',      // 雾蓝（浅）
+          accent: '#A64E61',   // 深玫瑰（主强调）
+          accentStrong: '#8B4A5A', // 深玫瑰（hover/强调强）
+          accentSoft: '#C76E80',  // 浅玫瑰（次级文字/浅强调）
+          sand: '#8B7355',        // 暖棕（纸面次级文字）
+          sandSoft: '#C2AF9A',     // 暖棕浅（暗色模式次级）
+          sandLight: '#E4D6C4',    // 暖米（暗色模式强调）
+          parchment: '#FDF5ED',    // 羊皮纸亮
+          parchmentDim: '#F5EDE4', // 羊皮纸亮-渐变色
+          inkStrong: '#5A4A3A',    // 暖深棕标题
+          line: '#E8DDD4',         // 暖浅边框
+        },
+                        // ★ 像素风木屋/纸面肤色（Stage 1 引入）
+        pixel: {
+          ink: '#5a3b30',
+          muted: '#8a7662',
+          faint: '#8a8479',
+          line: '#3c2a1a',
+          photo: '#211713',
+          panel: '#1c110d',
+          panel2: '#2c1913',
+          panel3: '#231611',
+          paper: '#FDF5ED',
+          online: '#5b8731',
+          bubble: '#70b237',
+          lineLight: '#d8c9a6',
+          error: '#a02a2a',
+          goldLight: '#fce268',
+          goldPale: '#f3d7a0',
+        },
+        // ★ 相册暗色视觉系统（Stage 1：Album Design Tokens）
+        album: {
+          bg0: '#050508',
+          bg1: '#0b0807',
+          bg2: '#14100e',
+          surface: 'rgba(255,255,255,0.06)',
+          text1: 'rgba(245,247,255,0.92)',
+          text2: 'rgba(245,247,255,0.68)',
+          text3: 'rgba(245,247,255,0.45)',
+          warm: '#a89f91',
+          accent: '#e8b06a',
+          accentStrong: '#f5c97e',
+          accentDim: 'rgba(232,176,106,0.16)',
+          ok: '#6fcf97',
+          sync: '#f5c97e',
+          wait: '#9aa3b2',
+          error: '#e06c6c',
         },
         // ★ 新增语义化颜色
         success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
@@ -118,3 +164,9 @@ module.exports = {
     require('@tailwindcss/typography'),
   ],
 }
+
+
+
+
+
+
