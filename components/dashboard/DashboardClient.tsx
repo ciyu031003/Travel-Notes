@@ -123,7 +123,9 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
             <MapPin className="w-5 h-5 text-rose-400" />
             旅行足迹地图
           </h2>
-          <ChinaMap posts={data.travelPosts as never} />
+          <div className="h-[420px] sm:h-[520px] lg:h-full">
+            <ChinaMap posts={data.travelPosts as never} />
+          </div>
         </div>
 
         {/* 省份打卡排行 */}

@@ -22,7 +22,7 @@ export default function ProvinceCityPanel({
   onCityClick: (city: City) => void
 }) {
   return (
-    <div className="absolute top-0 right-0 bottom-0 w-[380px] bg-[#FAFBF7]/97 backdrop-blur-md border-l border-[#D8DDD8]/60 shadow-[-12px_0_40px_-8px_rgba(90,102,112,0.12)] flex flex-col z-30 animate-[slideIn_0.3s_ease-out]">
+    <div className="absolute top-0 right-0 bottom-0 w-[min(380px,100%)] bg-[#FAFBF7]/97 backdrop-blur-md border-l border-[#D8DDD8]/60 shadow-[-12px_0_40px_-8px_rgba(90,102,112,0.12)] flex flex-col z-30 animate-[slideIn_0.3s_ease-out]">
       <style>{`
         @keyframes slideIn {
           from { transform: translateX(100%); opacity: 0; }
