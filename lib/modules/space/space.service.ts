@@ -112,6 +112,7 @@ export class SpaceService {
       expiresAt,
       createdBy: actor,
       tokenHash: hashInviteCode(code),
+      code,
     })
     await writeAuditLog({
       username: actor,
@@ -167,10 +168,24 @@ export class SpaceService {
     }
   }
 
-  /** 查看空间邀请列表（成员可看） */
+  /** 查看空间邀请列表（成员可看，明文邀请码仅创建者可见） */
   async listInvites(actor: string, spaceId: number) {
-    await requireSpaceMember(actor, spaceId)
-    return this.repo.listInvites(spaceId)
+    const access = await requireSpaceMember(actor, spaceId)
+    const invites = await this.repo.listInvites(spaceId)
+    if (!access.isOwner) {
+      // 非创建者不返回明文邀请码
+      return invites.map((inv) => ({
+        id: inv.id,
+        spaceId: inv.spaceId,
+        role: inv.role,
+        expiresAt: inv.expiresAt,
+        createdBy: inv.createdBy,
+        usedAt: inv.usedAt,
+        createdAt: inv.createdAt,
+        status: inv.status,
+      }))
+    }
+    return invites
   }
 
   /** 撤销邀请（仅 OWNER） */

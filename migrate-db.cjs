@@ -329,6 +329,7 @@ async function migrate() {
           id INT NOT NULL AUTO_INCREMENT,
           spaceId INT NOT NULL,
           tokenHash VARCHAR(128) NOT NULL,
+          code VARCHAR(20) NOT NULL DEFAULT '',
           role ENUM('OWNER','MEMBER','VIEWER') NOT NULL DEFAULT 'MEMBER',
           expiresAt DATETIME(3) NOT NULL,
           createdBy VARCHAR(255) NOT NULL,
@@ -497,8 +498,6 @@ async function migrate() {
           INDEX AuditLog_action_idx (action)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
       },
-    ];
-
       {
         name: 'Anniversary',
         sql: `CREATE TABLE IF NOT EXISTS Anniversary (
@@ -560,6 +559,16 @@ async function migrate() {
       } else {
         console.log('Table ' + def.name + ' exists, skip.');
       }
+    }
+
+    // SpaceInvite: 为已存在的表补充 code 列（用于再次查看/复制邀请码）
+    const [inviteCols] = await connection.query(
+      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'SpaceInvite'",
+      [dbName]
+    );
+    if (inviteCols.length > 0 && !inviteCols.map(c => c.COLUMN_NAME).includes('code')) {
+      await connection.query("ALTER TABLE SpaceInvite ADD COLUMN code VARCHAR(20) NOT NULL DEFAULT ''");
+      console.log('SpaceInvite: added code column.');
     }
 
     console.log('\n✓ Database migration completed successfully!');

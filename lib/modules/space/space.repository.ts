@@ -25,6 +25,8 @@ export interface SpaceInviteRecord {
   id: number
   spaceId: number
   role: SpaceRole
+  /** 明文邀请码（仅空间创建者可见） */
+  code: string
   expiresAt: string
   createdBy: string
   usedAt: string | null
@@ -213,6 +215,7 @@ export class PrismaSpaceRepository {
     expiresAt: Date
     createdBy: string
     tokenHash: string
+    code: string
   }): Promise<number> {
     const row = await prisma.spaceInvite.create({
       data: {
@@ -221,6 +224,7 @@ export class PrismaSpaceRepository {
         expiresAt: input.expiresAt,
         createdBy: input.createdBy,
         tokenHash: input.tokenHash,
+        code: input.code,
       },
     })
     return row.id
@@ -242,6 +246,7 @@ export class PrismaSpaceRepository {
       id: r.id,
       spaceId: r.spaceId,
       role: toRole(r.role),
+      code: r.code,
       expiresAt: r.expiresAt.toISOString(),
       createdBy: r.createdBy,
       usedAt: r.usedAt ? r.usedAt.toISOString() : null,

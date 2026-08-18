@@ -298,11 +298,12 @@ model SpaceMember {
   @@index([spaceId, role])
 }
 
-/// 空间邀请（只保存 Token Hash，不保存明文 Token）
+/// 空间邀请（保存 Token Hash 用于校验 + 明文 Code 用于再次查看/复制）
 model SpaceInvite {
   id        Int       @id @default(autoincrement())
   spaceId   Int
   tokenHash String    @unique @db.VarChar(128)
+  code      String    @db.VarChar(20)
   role      SpaceRole @default(MEMBER)
   expiresAt DateTime  @db.Timestamp(3)
   createdBy String    @db.VarChar(255)

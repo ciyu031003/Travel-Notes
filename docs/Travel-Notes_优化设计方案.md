@@ -921,13 +921,14 @@ Invite
 ├── id
 ├── spaceId
 ├── tokenHash
+├── code
 ├── role
 ├── expiresAt
 ├── createdBy
 └── usedAt
 ```
 
-数据库只保存 Token Hash，不保存明文 Token。
+校验用 Token Hash；明文 Code 仅空间创建者可见（用于再次查看/复制邀请码），非创建者接口不返回。
 
 ---
 

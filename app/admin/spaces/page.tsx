@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   Plus, Users, Loader2, AlertCircle, Copy, Check, Link2, X,
   Heart, Images, MapPin, Sparkles, Camera, Trash2, UserPlus, Gift, Shield,
-  Clock, Ban, ChevronRight,
+  Clock, Ban, ChevronRight, Eye,
 } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
 
@@ -33,6 +33,7 @@ interface Member {
 interface Invite {
   id: number
   role: string
+  code?: string
   expiresAt: string
   createdBy: string
   usedAt: string | null
@@ -96,6 +97,9 @@ export default function AdminSpacesPage() {
   const [generatedCode, setGeneratedCode] = useState('')
   const [copied, setCopied] = useState(false)
   const [inviteLoading, setInviteLoading] = useState(false)
+  // 邀请记录中的邀请码查看/复制
+  const [revealedInviteId, setRevealedInviteId] = useState<number | null>(null)
+  const [copiedInviteId, setCopiedInviteId] = useState<number | null>(null)
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -148,7 +152,6 @@ export default function AdminSpacesPage() {
 
   const fetchInvites = async (spaceId: number) => {
     setInviteSpaceId(spaceId)
-    setGeneratedCode('')
     try {
       const res = await fetch(`/api/spaces/${spaceId}/invites`)
       if (res.ok) {
@@ -263,6 +266,20 @@ export default function AdminSpacesPage() {
       setCopied(true)
       window.setTimeout(() => setCopied(false), 2000)
     } catch {}
+  }
+
+  /** 点击眼睛图标：自动显示并复制邀请码 */
+  const handleRevealAndCopy = async (inv: Invite) => {
+    if (!inv.code) return
+    setRevealedInviteId(inv.id)
+    try {
+      await navigator.clipboard.writeText(inv.code)
+      setCopiedInviteId(inv.id)
+      showToast('邀请码已复制')
+      window.setTimeout(() => setCopiedInviteId((cur) => (cur === inv.id ? null : cur)), 2000)
+    } catch {
+      showToast('复制失败，请手动复制')
+    }
   }
 
   const inviteUrl = (code: string) => `${window.location.origin}/admin/spaces?join=${code}`
@@ -423,7 +440,10 @@ export default function AdminSpacesPage() {
                         {isOwner && (
                           <button
                             type="button"
-                            onClick={() => fetchInvites(space.id)}
+                            onClick={() => {
+                              setGeneratedCode('')
+                              fetchInvites(space.id)
+                            }}
                             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-500 px-3 py-2.5 text-sm font-medium text-white shadow-md shadow-rose-500/20 transition-all hover:bg-rose-600 active:scale-95"
                           >
                             <Gift className="w-4 h-4" />
@@ -564,7 +584,7 @@ export default function AdminSpacesPage() {
       {inviteSpaceId !== null && (
         <Modal
           onClose={() => setInviteSpaceId(null)}
-          title="邀请伴侣"
+          title={inviteRole === 'VIEWER' ? '邀请访客' : '邀请伴侣'}
           icon={<Gift className="w-5 h-5 text-rose-500" />}
           wide
         >
@@ -605,7 +625,9 @@ export default function AdminSpacesPage() {
 
               {generatedCode && (
                 <div className="mt-4 rounded-2xl bg-white dark:bg-gray-900 border border-rose-200 dark:border-rose-700/50 p-4">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">把下面的邀请码发给你的伴侣</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    {inviteRole === 'VIEWER' ? '把下面的邀请码发给访客（仅可查看）' : '把下面的邀请码发给你的伴侣'}
+                  </p>
                   <div className="flex items-center gap-3">
                     <span className="flex-1 rounded-xl bg-rose-50 dark:bg-rose-900/30 px-4 py-3 text-center text-xl font-bold tracking-[0.35em] text-rose-600 dark:text-rose-300 select-all">
                       {generatedCode}
@@ -657,6 +679,12 @@ export default function AdminSpacesPage() {
                             {inv.status === 'USED' && '已使用'}
                             {inv.status === 'EXPIRED' && '已过期'}
                           </p>
+                          {revealedInviteId === inv.id && inv.code && (
+                            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/30 px-2.5 py-1 text-xs font-bold tracking-[0.25em] text-rose-600 dark:text-rose-300 select-all">
+                              {inv.code}
+                              {copiedInviteId === inv.id && <Check className="w-3 h-3 text-emerald-500" />}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -669,6 +697,20 @@ export default function AdminSpacesPage() {
                         }`}>
                           {inv.status === 'PENDING' ? '待使用' : inv.status === 'USED' ? '已使用' : '已过期'}
                         </span>
+                        {inv.status === 'PENDING' && inv.code && (
+                          <button
+                            type="button"
+                            onClick={() => handleRevealAndCopy(inv)}
+                            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20"
+                            title="查看并复制邀请码"
+                          >
+                            {revealedInviteId === inv.id && copiedInviteId === inv.id ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
                         {inv.status === 'PENDING' && (
                           <button
                             type="button"
