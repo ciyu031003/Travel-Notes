@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, MapPin, Image as ImageIcon, CalendarDays, Search, Compass } from 'lucide-react'
+import { Home, MapPin, Image as ImageIcon, CalendarDays, User, Compass } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ITEMS = [
@@ -11,7 +11,7 @@ const ITEMS = [
   { href: '/circle', label: '旅行圈', icon: Compass },
   { href: '/timeline', label: '时间线', icon: CalendarDays },
   { href: '/album', label: '相册', icon: ImageIcon },
-  { href: '/search', label: '搜索', icon: Search },
+  { href: '/me', label: '个人主页', icon: User },
 ]
 
 export default function MobileBottomNav() {

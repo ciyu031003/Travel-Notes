@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Loader2, Compass } from 'lucide-react'
+import { Loader2, Compass, Home } from 'lucide-react'
 import TravelFilmCard from '@/components/album/TravelFilmCard'
 import { cn } from '@/lib/utils'
 
@@ -90,11 +91,16 @@ export default function TravelCircleFeed() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
-      <header className="mb-5">
-        <h1 className="flex items-center gap-2 text-xl font-bold text-album-text1">
-          <Compass className="h-5 w-5 text-album-accent" /> 旅行圈
-        </h1>
-        <p className="mt-1 text-xs text-album-text3">看看别人眼中的世界 · {total} 篇公开旅行</p>
+      <header className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-xl font-bold text-album-text1">
+            <Compass className="h-5 w-5 text-album-accent" /> 旅行圈
+          </h1>
+          <p className="mt-1 text-xs text-album-text3">看看别人眼中的世界 · {total} 篇公开旅行</p>
+        </div>
+        <Link href="/" className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-album-text2 hover:bg-white/10 hover:text-album-text1">
+          <Home className="h-3.5 w-3.5" /> 返回首页
+        </Link>
       </header>
 
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1">

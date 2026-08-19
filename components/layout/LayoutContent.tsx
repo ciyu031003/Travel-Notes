@@ -16,9 +16,10 @@ export default function LayoutContent({
   const isLoginPage = pathname === '/login'
   const isAlbumPage = pathname.startsWith('/album')
   const isCirclePage = pathname.startsWith('/circle')
+  const isMePage = pathname.startsWith('/me')
   const isAdminPage = pathname.startsWith('/admin')
   const isForgotPasswordPage = pathname.startsWith('/forgot-password')
-  if (isLoginPage || isAdminPage || isForgotPasswordPage || isAlbumPage || isCirclePage) {
+  if (isLoginPage || isAdminPage || isForgotPasswordPage || isAlbumPage || isCirclePage || isMePage) {
     return <>{children}</>
   }
 

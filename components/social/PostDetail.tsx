@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, MapPin, CalendarDays, Loader2, Image as ImageIcon, User } from 'lucide-react'
+import { ArrowLeft, MapPin, CalendarDays, Loader2, Image as ImageIcon, User, Flag, Ban, X } from 'lucide-react'
 import SocialBar from './SocialBar'
 import CommentPanel from './CommentPanel'
 import AlbumPhoto from '@/components/album/AlbumPhoto'
@@ -37,6 +37,10 @@ export default function PostDetail({ postId }: { postId: number }) {
   const [error, setError] = useState('')
   const [showComments, setShowComments] = useState(false)
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
+  const [showReport, setShowReport] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reporting, setReporting] = useState(false)
+  const [blocked, setBlocked] = useState(false)
 
   useEffect(() => {
     fetch('/api/social/posts/' + postId)
@@ -45,6 +49,21 @@ export default function PostDetail({ postId }: { postId: number }) {
       .catch(() => setError('网络错误'))
       .finally(() => setLoading(false))
   }, [postId])
+
+  const submitReport = async () => {
+    if (!reportReason.trim() || reporting) return
+    setReporting(true)
+    try {
+      await fetch('/api/social/posts/' + postId + '/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: reportReason }) })
+      setShowReport(false); setReportReason('')
+    } catch {} finally { setReporting(false) }
+  }
+
+  const blockAuthor = async () => {
+    if (!post?.author) return
+    setBlocked(true)
+    try { await fetch('/api/social/users/' + post.author.id + '/block', { method: 'POST' }) } catch {}
+  }
 
   if (loading) {
     return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-album-bg0 text-album-text3"><Loader2 className="h-7 w-7 animate-spin" />加载中…</div>
@@ -98,6 +117,14 @@ export default function PostDetail({ postId }: { postId: number }) {
           className="mt-6"
         />
 
+        <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-album-text3">
+          <button type="button" onClick={() => setShowReport(true)} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 hover:text-album-error"><Flag className="h-3.5 w-3.5" />举报</button>
+          {post.author && !blocked && (
+            <button type="button" onClick={blockAuthor} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 hover:text-album-error"><Ban className="h-3.5 w-3.5" />屏蔽作者</button>
+          )}
+          {blocked && <span className="text-album-text3">已屏蔽该作者</span>}
+        </div>
+
         {post.photos && post.photos.length > 1 && (
           <div className="mt-8">
             <h2 className="mb-3 text-sm font-semibold text-album-text1">旅行照片</h2>
@@ -116,6 +143,19 @@ export default function PostDetail({ postId }: { postId: number }) {
         )}
       </div>
 
+      {showReport && (
+        <div className="fixed inset-0 z-[70]">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setShowReport(false)} />
+          <div className="absolute left-1/2 top-1/2 w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 bg-album-bg1 p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-album-text1">举报该旅行</h3>
+              <button onClick={() => setShowReport(false)} className="text-album-text3 hover:text-album-text1"><X className="h-4 w-4" /></button>
+            </div>
+            <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-album-text1 placeholder:text-album-text3 focus:outline-none" />
+            <button onClick={submitReport} disabled={reporting || !reportReason.trim()} className="mt-3 w-full rounded-full bg-album-accent py-2.5 text-sm font-medium text-album-bg0 disabled:opacity-40">{reporting ? '提交中…' : '提交举报'}</button>
+          </div>
+        </div>
+      )}
       {showComments && <CommentPanel postId={post.id} onClose={() => setShowComments(false)} />}
       {viewerIndex !== null && post.photos.length > 0 && (
         <PhotoViewer images={post.photos.map((src) => ({ src, alt: post.title }))} index={viewerIndex} onClose={() => setViewerIndex(null)} onIndexChange={setViewerIndex} />

@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   Menu, X, Home, CalendarDays, Sparkles, MapPin, Images, Users, ShieldCheck,
-  Settings, LogOut, FileText, Heart, ExternalLink, Loader2,
+  Settings, LogOut, FileText, Heart, ExternalLink, Loader2, MessageCircle,
 } from 'lucide-react'
 
 export interface AdminNavItem {
@@ -24,6 +24,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/albums', label: '相册管理', icon: Images, color: 'text-cyan-600 dark:text-cyan-300' },
   { href: '/admin/anniversaries', label: '纪念日管理', icon: Heart, color: 'text-fuchsia-600 dark:text-fuchsia-300' },
   { href: '/admin/spaces', label: '空间管理', icon: Users, color: 'text-emerald-600 dark:text-emerald-300' },
+  { href: '/admin/social', label: '社交管理', icon: MessageCircle, color: 'text-pink-600 dark:text-pink-300' },
   { href: '/admin/audit', label: '审计日志', icon: ShieldCheck, color: 'text-amber-600 dark:text-amber-300' },
   { href: '/timeline', label: '时间线', icon: CalendarDays, color: 'text-purple-600 dark:text-purple-300' },
   { href: '/', label: '回到首页', icon: Home, color: 'text-gray-500 dark:text-gray-400' },
@@ -39,6 +40,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/anniversaries': '纪念日管理',
   '/admin/audit': '审计日志',
   '/admin/spaces': '空间管理',
+  '/admin/social': '社交管理',
   '/admin/settings': '账号设置',
   '/admin/change-password': '修改密码',
   '/admin/setup': '初始化',
