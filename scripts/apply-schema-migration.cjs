@@ -74,6 +74,24 @@ async function addIndex(conn, table, indexName, ddl) {
   return true
 }
 
+async function tableExists(conn, table) {
+  const [rows] = await conn.query(
+    'SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+    [table]
+  )
+  return rows.length > 0
+}
+
+async function createTable(conn, table, ddl) {
+  if (await tableExists(conn, table)) {
+    console.log('  [skip] 表 ' + table + ' 已存在')
+    return false
+  }
+  await conn.query(ddl)
+  console.log('  [create] 表 ' + table)
+  return true
+}
+
 async function main() {
   const conn = await getConn()
   console.log('== 1/2 增量 schema 迁移 ==')
@@ -119,6 +137,147 @@ async function main() {
   // TimelineItem
   await addColumn(conn, 'TimelineItem', 'userId', 'userId INT NULL AFTER spaceId')
   await addFk(conn, 'TimelineItem', 'TimelineItem_userId_fkey', 'FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL ON UPDATE CASCADE')
+
+  console.log('== 1.5/2 社交域建表（Stage 2）==')
+  const socialTables = [
+    {
+      name: 'TravelPost',
+      sql: `CREATE TABLE IF NOT EXISTS TravelPost (
+        id INT NOT NULL AUTO_INCREMENT,
+        travelId INT NOT NULL,
+        authorId INT NOT NULL,
+        visibility ENUM('PRIVATE','COUPLE','PUBLIC') NOT NULL DEFAULT 'PUBLIC',
+        title VARCHAR(255) NOT NULL,
+        summary TEXT NULL,
+        coverMediaId INT NULL,
+        publishedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        likeCount INT NOT NULL DEFAULT 0,
+        commentCount INT NOT NULL DEFAULT 0,
+        favoriteCount INT NOT NULL DEFAULT 0,
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        UNIQUE KEY TravelPost_travelId_key (travelId),
+        KEY TravelPost_authorId_publishedAt_idx (authorId, publishedAt),
+        KEY TravelPost_publishedAt_idx (publishedAt),
+        CONSTRAINT TravelPost_travelId_fkey FOREIGN KEY (travelId) REFERENCES Travel(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT TravelPost_authorId_fkey FOREIGN KEY (authorId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
+    {
+      name: 'PostLike',
+      sql: `CREATE TABLE IF NOT EXISTS PostLike (
+        id INT NOT NULL AUTO_INCREMENT,
+        postId INT NOT NULL,
+        userId INT NOT NULL,
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        UNIQUE KEY PostLike_postId_userId_key (postId, userId),
+        KEY PostLike_userId_createdAt_idx (userId, createdAt),
+        CONSTRAINT PostLike_postId_fkey FOREIGN KEY (postId) REFERENCES TravelPost(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT PostLike_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
+    {
+      name: 'PostFavorite',
+      sql: `CREATE TABLE IF NOT EXISTS PostFavorite (
+        id INT NOT NULL AUTO_INCREMENT,
+        postId INT NOT NULL,
+        userId INT NOT NULL,
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        UNIQUE KEY PostFavorite_postId_userId_key (postId, userId),
+        KEY PostFavorite_userId_createdAt_idx (userId, createdAt),
+        CONSTRAINT PostFavorite_postId_fkey FOREIGN KEY (postId) REFERENCES TravelPost(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT PostFavorite_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
+    {
+      name: 'Comment',
+      sql: `CREATE TABLE IF NOT EXISTS Comment (
+        id INT NOT NULL AUTO_INCREMENT,
+        postId INT NOT NULL,
+        userId INT NOT NULL,
+        parentId INT NULL,
+        content TEXT NOT NULL,
+        status ENUM('VISIBLE','HIDDEN','DELETED','PENDING') NOT NULL DEFAULT 'VISIBLE',
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        KEY Comment_postId_status_createdAt_idx (postId, status, createdAt),
+        KEY Comment_userId_createdAt_idx (userId, createdAt),
+        KEY Comment_parentId_idx (parentId),
+        CONSTRAINT Comment_postId_fkey FOREIGN KEY (postId) REFERENCES TravelPost(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT Comment_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT Comment_parentId_fkey FOREIGN KEY (parentId) REFERENCES Comment(id) ON DELETE SET NULL ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
+    {
+      name: 'CommentLike',
+      sql: `CREATE TABLE IF NOT EXISTS CommentLike (
+        id INT NOT NULL AUTO_INCREMENT,
+        commentId INT NOT NULL,
+        userId INT NOT NULL,
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        UNIQUE KEY CommentLike_commentId_userId_key (commentId, userId),
+        CONSTRAINT CommentLike_commentId_fkey FOREIGN KEY (commentId) REFERENCES Comment(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT CommentLike_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
+    {
+      name: 'UserFollow',
+      sql: `CREATE TABLE IF NOT EXISTS UserFollow (
+        id INT NOT NULL AUTO_INCREMENT,
+        followerId INT NOT NULL,
+        followingId INT NOT NULL,
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        UNIQUE KEY UserFollow_followerId_followingId_key (followerId, followingId),
+        KEY UserFollow_followingId_createdAt_idx (followingId, createdAt),
+        CONSTRAINT UserFollow_followerId_fkey FOREIGN KEY (followerId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT UserFollow_followingId_fkey FOREIGN KEY (followingId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
+    {
+      name: 'Notification',
+      sql: `CREATE TABLE IF NOT EXISTS Notification (
+        id INT NOT NULL AUTO_INCREMENT,
+        userId INT NOT NULL,
+        actorId INT NULL,
+        type ENUM('LIKE','COMMENT','REPLY','FAVORITE','FOLLOW') NOT NULL,
+        refType VARCHAR(50) NOT NULL,
+        refId INT NOT NULL,
+        isRead TINYINT(1) NOT NULL DEFAULT 0,
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        KEY Notification_userId_isRead_createdAt_idx (userId, isRead, createdAt),
+        KEY Notification_actorId_idx (actorId),
+        CONSTRAINT Notification_userId_fkey FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT Notification_actorId_fkey FOREIGN KEY (actorId) REFERENCES User(id) ON DELETE SET NULL ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
+    {
+      name: 'Report',
+      sql: `CREATE TABLE IF NOT EXISTS Report (
+        id INT NOT NULL AUTO_INCREMENT,
+        postId INT NOT NULL,
+        reporterId INT NOT NULL,
+        reason VARCHAR(255) NOT NULL,
+        status ENUM('PENDING','REVIEWED','DISMISSED','ACTIONED') NOT NULL DEFAULT 'PENDING',
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        UNIQUE KEY Report_postId_reporterId_key (postId, reporterId),
+        KEY Report_status_createdAt_idx (status, createdAt),
+        KEY Report_reporterId_idx (reporterId),
+        CONSTRAINT Report_postId_fkey FOREIGN KEY (postId) REFERENCES TravelPost(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT Report_reporterId_fkey FOREIGN KEY (reporterId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
+  ]
+  for (const def of socialTables) {
+    await createTable(conn, def.name, def.sql)
+  }
 
   console.log('== 2/2 归属回填 ==')
   const [users] = await conn.query('SELECT id, username FROM User ORDER BY id ASC LIMIT 1')

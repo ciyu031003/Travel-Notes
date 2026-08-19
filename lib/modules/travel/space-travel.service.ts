@@ -6,6 +6,7 @@
 import { PrismaTravelRepository, prismaTravelRepository, type TravelStatus, type TravelVisibility, type UpdateTravelPatch } from './space-travel.repository'
 import { requireSpaceRole } from '../space/permissions'
 import { writeAuditLog } from '../audit/audit-log.service'
+import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
 
 const SLUG_RE = /^[a-z0-9-]{2,80}$/
 const TITLE_MAX = 255
@@ -57,6 +58,7 @@ export class TravelService {
       spaceId,
       metadata: { title, slug },
     }).catch(() => {})
+    await syncTravelPost(id).catch(() => {})
     return { id }
   }
 
@@ -90,6 +92,7 @@ export class TravelService {
     if (patch.status !== undefined && !STATUSES.includes(patch.status)) throw new Error('旅行状态无效')
     if (patch.visibility !== undefined && !VISIBILITIES.includes(patch.visibility)) throw new Error('可见性无效')
     const updated = await this.repo.update(travelId, patch)
+    await syncTravelPost(travelId).catch(() => {})
     await writeAuditLog({
       username,
       action: 'UPDATE',
@@ -105,6 +108,7 @@ export class TravelService {
     const t = await this.repo.findById(travelId)
     if (!t) throw new Error('旅行不存在')
     await requireSpaceRole(username, t.spaceId, ['OWNER', 'MEMBER'])
+    await unpublishTravelPost(travelId).catch(() => {})
     await this.repo.remove(travelId)
     await writeAuditLog({
       username,

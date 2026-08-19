@@ -99,6 +99,16 @@ model User {
   photoMessages PhotoMessage[]
   timelineItems TimelineItem[]
   anniversaries Anniversary[]
+  travelPosts        TravelPost[]
+  postLikes          PostLike[]
+  postFavorites      PostFavorite[]
+  comments           Comment[]
+  commentLikes       CommentLike[]
+  following          UserFollow[]  @relation("UserFollowing")
+  followers          UserFollow[]  @relation("UserFollowers")
+  notifications      Notification[] @relation("NotificationReceiver")
+  notificationActed  Notification[] @relation("NotificationActor")
+  reports            Report[]
 
   @@index([email])
 }
@@ -258,6 +268,33 @@ enum AuditAction {
   SETTINGS_UPDATE
 }
 
+
+/// 评论状态（社交圈治理）
+enum CommentStatus {
+  VISIBLE
+  HIDDEN
+  DELETED
+  PENDING
+}
+
+/// 通知类型
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  FAVORITE
+  FOLLOW
+}
+
+/// 举报状态
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+  ACTIONED
+}
+
+
 /// 情侣共同生活的数字空间（核心业务模型）
 model Space {
   id           Int      @id @default(autoincrement())
@@ -343,6 +380,7 @@ model Travel {
   days     TravelDay[]
   memories Memory[]
   expenses Expense[]
+  travelPost         TravelPost?
 
   @@unique([spaceId, slug])
   @@index([spaceId, startDate])
@@ -596,4 +634,148 @@ model Expense {
   travel Travel @relation(fields: [travelId], references: [id], onDelete: Cascade)
 
   @@index([travelId])
+}
+
+
+// ============================================================
+// Stage 2 (Social Domain): 旅行圈社交
+// ============================================================
+
+/// 公开旅行帖子（Travel 与社交内容解耦：公开的是 TravelPost，不是整个 Space）
+model TravelPost {
+  id            Int        @id @default(autoincrement())
+  travelId      Int        @unique
+  authorId      Int
+  visibility    Visibility @default(PUBLIC)
+  title         String     @db.VarChar(255)
+  summary       String?    @db.Text
+  coverMediaId  Int?
+  publishedAt   DateTime   @default(now()) @db.Timestamp(3)
+  likeCount     Int        @default(0)
+  commentCount  Int        @default(0)
+  favoriteCount Int        @default(0)
+  createdAt     DateTime   @default(now()) @db.Timestamp(3)
+  updatedAt     DateTime   @updatedAt @db.Timestamp(3)
+
+  travel    Travel        @relation(fields: [travelId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes     PostLike[]
+  favorites PostFavorite[]
+  comments  Comment[]
+  reports   Report[]
+
+  @@index([authorId, publishedAt])
+  @@index([publishedAt])
+}
+
+/// 点赞（唯一约束防重复互动）
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  post TravelPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+}
+
+/// 收藏（唯一约束防重复互动）
+model PostFavorite {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  post TravelPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+}
+
+/// 评论（一级评论 + 回复 parentId）
+model Comment {
+  id        Int           @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  parentId  Int?
+  content   String        @db.Text
+  status    CommentStatus @default(VISIBLE)
+  createdAt DateTime      @default(now()) @db.Timestamp(3)
+  updatedAt DateTime      @updatedAt @db.Timestamp(3)
+
+  post    TravelPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies Comment[]      @relation("CommentReplies")
+  likes   CommentLike[]
+
+  @@index([postId, status, createdAt])
+  @@index([userId, createdAt])
+  @@index([parentId])
+}
+
+/// 评论点赞（唯一约束防重复互动）
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  commentId Int
+  userId    Int
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+}
+
+/// 关注关系（follower 关注 following）
+model UserFollow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now()) @db.Timestamp(3)
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId, createdAt])
+}
+
+/// 社交圈通知
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  actorId   Int?
+  type      NotificationType
+  refType   String           @db.VarChar(50)
+  refId     Int
+  read      Boolean          @default(false) @map("isRead")
+  createdAt DateTime         @default(now()) @db.Timestamp(3)
+
+  user  User  @relation("NotificationReceiver", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, read, createdAt])
+  @@index([actorId])
+}
+
+/// 举报（社交治理）
+model Report {
+  id         Int          @id @default(autoincrement())
+  postId     Int
+  reporterId Int
+  reason     String       @db.VarChar(255)
+  status     ReportStatus @default(PENDING)
+  createdAt  DateTime     @default(now()) @db.Timestamp(3)
+
+  post     TravelPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporter User       @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, reporterId])
+  @@index([status, createdAt])
+  @@index([reporterId])
 }

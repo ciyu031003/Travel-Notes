@@ -4,6 +4,7 @@
  */
 import { prisma } from '../../db'
 import { scopedWhere } from '../../visibility'
+import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
 import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
 
@@ -220,6 +221,7 @@ export async function createTravel(input: {
       isPublic: input.isPublic ?? false,
     },
   })
+  await syncTravelPost(row.id).catch(() => {})
   return { id: row.id }
 }
 
@@ -232,9 +234,11 @@ export async function updateTravel(id: number, input: any): Promise<void> {
   if (input.status !== undefined) data.status = input.status
   if (input.isPublic !== undefined) data.isPublic = input.isPublic
   await prisma.travel.update({ where: { id }, data })
+  await syncTravelPost(id).catch(() => {})
 }
 
 export async function deleteTravel(id: number): Promise<void> {
+  await unpublishTravelPost(id).catch(() => {})
   await prisma.travel.delete({ where: { id } })
 }
 
