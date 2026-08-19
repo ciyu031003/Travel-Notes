@@ -274,6 +274,20 @@ async function main() {
         CONSTRAINT Report_reporterId_fkey FOREIGN KEY (reporterId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     },
+    {
+      name: 'UserBlock',
+      sql: `CREATE TABLE IF NOT EXISTS UserBlock (
+        id INT NOT NULL AUTO_INCREMENT,
+        blockerId INT NOT NULL,
+        blockedId INT NOT NULL,
+        createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (id),
+        UNIQUE KEY UserBlock_blockerId_blockedId_key (blockerId, blockedId),
+        KEY UserBlock_blockedId_idx (blockedId),
+        CONSTRAINT UserBlock_blockerId_fkey FOREIGN KEY (blockerId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT UserBlock_blockedId_fkey FOREIGN KEY (blockedId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    },
   ]
   for (const def of socialTables) {
     await createTable(conn, def.name, def.sql)

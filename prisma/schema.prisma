@@ -109,6 +109,8 @@ model User {
   notifications      Notification[] @relation("NotificationReceiver")
   notificationActed  Notification[] @relation("NotificationActor")
   reports            Report[]
+  blockedBy          UserBlock[]   @relation("UserBlocker")
+  blockedUsers       UserBlock[]   @relation("UserBlocked")
 
   @@index([email])
 }
@@ -778,4 +780,19 @@ model Report {
   @@unique([postId, reporterId])
   @@index([status, createdAt])
   @@index([reporterId])
+}
+
+
+/// 用户屏蔽（社交治理：Feed 过滤被屏蔽作者）
+model UserBlock {
+  id        Int      @id @default(autoincrement())
+  blockerId Int
+  blockedId Int
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  blocker User @relation("UserBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("UserBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
 }
