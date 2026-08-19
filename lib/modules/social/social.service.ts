@@ -10,7 +10,7 @@ export type SocialFeedTab = 'recommended' | 'latest' | 'hot' | 'following'
 export type NotificationTypeName = 'LIKE' | 'COMMENT' | 'REPLY' | 'FAVORITE' | 'FOLLOW'
 
 const POST_INCLUDE: any = {
-  author: { select: { id: true, username: true } },
+  author: { select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true } },
   travel: {
     include: {
       coverMedia: true,
@@ -41,7 +41,13 @@ function travelCoverUrl(travel: any): string | null {
 
 function serializeAuthor(author: any) {
   if (!author) return null
-  return { id: author.id, username: author.username }
+  return {
+    id: author.id,
+    username: author.username,
+    nickname: author.nickname ?? null,
+    avatarUrl: author.avatarUrl ?? null,
+    accountId: author.accountId ?? null,
+  }
 }
 
 function serializePost(row: any, likedIds: Set<number>, favoriteIds: Set<number>) {
@@ -262,7 +268,7 @@ export async function listPostComments(postId: number, userId?: number | null) {
   const rows = await prisma.comment.findMany({
     where: { postId, status: 'VISIBLE' },
     orderBy: { createdAt: 'asc' },
-    include: { user: { select: { id: true, username: true } }, _count: { select: { likes: true } } },
+    include: { user: { select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true } }, _count: { select: { likes: true } } },
   })
   const ids = rows.map((r) => r.id)
   let likedIds = new Set<number>()
@@ -306,7 +312,7 @@ export async function createPostComment(input: { postId: number; userId: number;
   if (input.parentId && parentAuthorId) await notify(parentAuthorId, input.userId, 'REPLY', 'Comment', id)
   else await notify(post.authorId, input.userId, 'COMMENT', 'TravelPost', input.postId)
 
-  const created = await prisma.comment.findUnique({ where: { id }, include: { user: { select: { id: true, username: true } }, _count: { select: { likes: true } } } })
+  const created = await prisma.comment.findUnique({ where: { id }, include: { user: { select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true } }, _count: { select: { likes: true } } } })
   return serializeComment(created, new Set())
 }
 
@@ -371,7 +377,7 @@ export async function unblockUser(actorId: number, targetId: number) {
 }
 
 export async function getUserProfile(targetId: number, viewerId?: number | null) {
-  const user = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, username: true, createdAt: true } })
+  const user = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true, createdAt: true } })
   if (!user) return null
   const [postCount, followerCount, followingCount, isFollowing, isBlocked] = await Promise.all([
     prisma.travelPost.count({ where: { authorId: targetId, visibility: 'PUBLIC' } }),
@@ -385,6 +391,9 @@ export async function getUserProfile(targetId: number, viewerId?: number | null)
   return {
     id: user.id,
     username: user.username,
+    nickname: user.nickname,
+    avatarUrl: user.avatarUrl,
+    accountId: user.accountId,
     createdAt: iso(user.createdAt),
     stats: { postCount, followerCount, followingCount },
     isFollowing: !!isFollowing,
@@ -394,13 +403,13 @@ export async function getUserProfile(targetId: number, viewerId?: number | null)
 }
 
 export async function listFollowers(userId: number) {
-  const rows = await prisma.userFollow.findMany({ where: { followingId: userId }, orderBy: { createdAt: 'desc' }, include: { follower: { select: { id: true, username: true } } } })
-  return rows.map((r) => ({ id: r.follower.id, username: r.follower.username }))
+  const rows = await prisma.userFollow.findMany({ where: { followingId: userId }, orderBy: { createdAt: 'desc' }, include: { follower: { select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true } } } })
+  return rows.map((r) => ({ ...serializeAuthor(r.follower) }))
 }
 
 export async function listFollowing(userId: number) {
-  const rows = await prisma.userFollow.findMany({ where: { followerId: userId }, orderBy: { createdAt: 'desc' }, include: { following: { select: { id: true, username: true } } } })
-  return rows.map((r) => ({ id: r.following.id, username: r.following.username }))
+  const rows = await prisma.userFollow.findMany({ where: { followerId: userId }, orderBy: { createdAt: 'desc' }, include: { following: { select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true } } } })
+  return rows.map((r) => ({ ...serializeAuthor(r.following) }))
 }
 
 export async function listNotifications(userId: number, page?: number, pageSize?: number) {
@@ -413,7 +422,7 @@ export async function listNotifications(userId: number, page?: number, pageSize?
     orderBy: { createdAt: 'desc' },
     skip: (p - 1) * ps,
     take: ps,
-    include: { actor: { select: { id: true, username: true } } },
+    include: { actor: { select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true } } },
   })
   const data = rows.map((r) => ({ id: r.id, type: r.type, refType: r.refType, refId: r.refId, read: r.read, createdAt: iso(r.createdAt), actor: serializeAuthor(r.actor) }))
   const unread = await prisma.notification.count({ where: { userId, read: false } })

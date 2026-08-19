@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { Send, X, CornerDownRight } from 'lucide-react'
+import SocialAvatar from '@/components/social/SocialAvatar'
 import { cn } from '@/lib/utils'
 
-interface CommentAuthor { id: number; username: string }
+interface CommentAuthor { id: number; username: string; nickname?: string | null; avatarUrl?: string | null }
 interface Comment {
   id: number
   userId: number
@@ -72,74 +73,63 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
 
   const total = comments.reduce((n, c) => n + 1 + (c.replies?.length || 0), 0)
 
-  const renderComment = (c: Comment, isReply: boolean) => (
-    <div key={c.id} className={cn('group py-3', isReply && 'ml-9 border-l border-white/10 pl-3')}>
-      <div className="flex items-start gap-2.5">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-album-accent/20 text-xs font-medium text-album-accent">
-          {(c.author?.username || '?').slice(0, 1).toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="text-xs font-medium text-album-text1">{c.author?.username || '匿名'}</span>
-            <span className="text-[11px] text-album-text3">{timeAgo(c.createdAt)}</span>
+  const renderComment = (c: Comment, isReply: boolean) => {
+    const name = c.author?.nickname || c.author?.username || '匿名'
+    return (
+      <div key={c.id} className={cn('py-4', isReply && 'ml-10 border-l border-night-line pl-3')}>
+        <div className="flex items-start gap-2.5">
+          <SocialAvatar name={name} avatarUrl={c.author?.avatarUrl} size={30} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-medium text-night-text">{name}</span>
+              <span className="text-[11px] text-night-faint">{timeAgo(c.createdAt)}</span>
+            </div>
+            <p className="mt-1 break-words text-sm leading-relaxed text-night-muted">{c.content}</p>
+            <button type="button" onClick={() => setReplyTo({ id: c.id, username: name })}
+              className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-night-faint transition hover:text-night-gold">
+              <CornerDownRight className="h-3 w-3" /> 回复
+            </button>
           </div>
-          <p className="mt-1 break-words text-sm text-album-text1/90">{c.content}</p>
-          <button
-            type="button"
-            onClick={() => setReplyTo({ id: c.id, username: c.author?.username || '' })}
-            className="mt-1 inline-flex items-center gap-1 text-[11px] text-album-text3 hover:text-album-accent"
-          >
-            <CornerDownRight className="h-3 w-3" /> 回复
-          </button>
         </div>
+        {c.replies?.length > 0 && c.replies.map((r) => renderComment(r, true))}
       </div>
-      {c.replies?.length > 0 && c.replies.map((r) => renderComment(r, true))}
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-[60]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[78vh] max-w-2xl flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-album-bg1">
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-          <h3 className="text-sm font-semibold text-album-text1">评论 {total > 0 ? '(' + total + ')' : ''}</h3>
-          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-album-text2 hover:bg-white/10 hover:text-album-text1">
-            <X className="h-4 w-4" />
-          </button>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[80vh] max-w-2xl flex-col overflow-hidden rounded-t-[1.8rem] bg-night-surface ring-1 ring-night-line">
+        <div className="flex items-center justify-between border-b border-night-line px-5 py-4">
+          <h3 className="text-sm font-semibold text-night-text">评论 {total > 0 ? '(' + total + ')' : ''}</h3>
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-night-muted hover:text-night-text"><X className="h-4 w-4" /></button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2">
           {loading ? (
-            <p className="py-10 text-center text-sm text-album-text3">加载中…</p>
+            <p className="py-10 text-center text-sm text-night-faint">加载中…</p>
           ) : comments.length === 0 ? (
-            <p className="py-10 text-center text-sm text-album-text3">还没有评论，来抢沙发～</p>
+            <p className="py-10 text-center text-sm text-night-faint">还没有评论，来写下第一个旅行故事回应～</p>
           ) : (
             comments.map((c) => renderComment(c, false))
           )}
         </div>
 
-        <div className="border-t border-white/10 bg-album-bg2 px-4 py-3">
+        <div className="border-t border-night-line bg-night-bg/40 px-5 py-3">
           {replyTo && (
-            <div className="mb-2 flex items-center gap-2 text-xs text-album-text2">
+            <div className="mb-2 flex items-center gap-2 text-xs text-night-muted">
               <span>回复 @{replyTo.username}</span>
-              <button type="button" onClick={() => setReplyTo(null)} className="text-album-text3 hover:text-album-text1">取消</button>
+              <button type="button" onClick={() => setReplyTo(null)} className="text-night-faint hover:text-night-text">取消</button>
             </div>
           )}
-          {error && <p className="mb-2 text-xs text-album-error">{error}</p>}
+          {error && <p className="mb-2 text-xs text-[#E06C6C]">{error}</p>}
           <div className="flex items-center gap-2">
-            <input
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+            <input value={content} onChange={(e) => setContent(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
               placeholder={replyTo ? '回复 ' + replyTo.username + '…' : '写下你的评论…'}
-              className="h-10 min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-4 text-sm text-album-text1 placeholder:text-album-text3 focus:border-album-accent/50 focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={submit}
-              disabled={submitting || !content.trim()}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-album-accent text-album-bg0 transition active:scale-90 disabled:opacity-40"
-            >
+              className="h-11 min-w-0 flex-1 rounded-full bg-night-bg px-4 text-sm text-night-text outline-none ring-1 ring-night-line placeholder:text-night-faint focus:ring-night-gold/50" />
+            <button type="button" onClick={submit} disabled={submitting || !content.trim()}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-night-gold text-[#1a120a] transition active:scale-90 disabled:opacity-40">
               <Send className="h-4 w-4" />
             </button>
           </div>

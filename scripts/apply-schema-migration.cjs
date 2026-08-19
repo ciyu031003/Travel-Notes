@@ -7,6 +7,7 @@
  */
 const mysql = require('mysql2/promise')
 const fs = require('fs')
+const crypto = require('crypto')
 const path = require('path')
 
 async function getConn() {
@@ -74,6 +75,25 @@ async function addIndex(conn, table, indexName, ddl) {
   return true
 }
 
+async function addUniqueIndex(conn, table, indexName, columns) {
+  const [rows] = await conn.query(
+    'SELECT 1 FROM information_schema.table_constraints WHERE table_schema = DATABASE() AND table_name = ? AND constraint_name = ?',
+    [table, indexName]
+  )
+  if (rows.length > 0) {
+    console.log(`  [skip] UNIQUE ${indexName} 已存在`)
+    return false
+  }
+  try {
+    await conn.query(`ALTER TABLE \`${table}\` ADD UNIQUE INDEX \`${indexName}\` (${columns})`)
+    console.log(`  [add] UNIQUE ${indexName}`)
+    return true
+  } catch (e) {
+    console.log(`  [warn] UNIQUE ${indexName} 添加失败: ${e.message}`)
+    return false
+  }
+}
+
 async function tableExists(conn, table) {
   const [rows] = await conn.query(
     'SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
@@ -95,6 +115,12 @@ async function createTable(conn, table, ddl) {
 async function main() {
   const conn = await getConn()
   console.log('== 1/2 增量 schema 迁移 ==')
+
+  // User（个人主页：昵称/头像/8 位账号 ID）
+  await addColumn(conn, 'User', 'nickname', 'nickname VARCHAR(50) NULL AFTER anniversaryStart')
+  await addColumn(conn, 'User', 'avatarUrl', 'avatarUrl VARCHAR(500) NULL AFTER nickname')
+  await addColumn(conn, 'User', 'accountId', 'accountId VARCHAR(12) NULL AFTER avatarUrl')
+  await addUniqueIndex(conn, 'User', 'User_accountId_key', 'accountId')
 
   // Post
   await addColumn(conn, 'Post', 'userId', 'userId INT NULL AFTER published')
@@ -292,6 +318,34 @@ async function main() {
   for (const def of socialTables) {
     await createTable(conn, def.name, def.sql)
   }
+
+  // 账号 ID 回填（admin 固定 01230821；纪念日用户 = 2 位随机前缀 + YYYYMMDD；其余随机 8 位）
+  async function backfillUserAccountIds() {
+    const [allUsers] = await conn.query('SELECT id, username, anniversaryStart, accountId FROM User')
+    const used = new Set((allUsers || []).filter((u) => u.accountId).map((u) => String(u.accountId)))
+    for (const u of allUsers || []) {
+      if (u.accountId) continue
+      let accountId = ''
+      if (u.username === 'admin') {
+        accountId = '01230821'
+      } else {
+        const date = String(u.anniversaryStart || '').replace(/\D/g, '')
+        for (let attempt = 0; attempt < 100; attempt++) {
+          if (date.length === 8) {
+            const prefix = String(crypto.randomInt(0, 100)).padStart(2, '0')
+            accountId = prefix + date
+          } else {
+            accountId = String(crypto.randomInt(10000000, 100000000))
+          }
+          if (!used.has(accountId)) break
+        }
+      }
+      used.add(accountId)
+      await conn.query('UPDATE User SET accountId = ? WHERE id = ?', [accountId, u.id])
+      console.log(`  [accountId] #${u.id} ${u.username} -> ${accountId}`)
+    }
+  }
+  await backfillUserAccountIds()
 
   console.log('== 2/2 归属回填 ==')
   const [users] = await conn.query('SELECT id, username FROM User ORDER BY id ASC LIMIT 1')

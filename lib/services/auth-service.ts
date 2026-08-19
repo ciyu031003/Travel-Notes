@@ -4,6 +4,7 @@ import { UserRepository } from '../repositories/user-repository'
 import { TokenService } from '../services/token-service'
 import { PrismaSessionRepository } from '../repositories/session-repository'
 import { hashPassword, verifyPassword } from '../auth-utils'
+import { generateAccountIdForUser } from '../account-id'
 import { sendMail } from '../infrastructure/mailer'
 import {
   generateVerificationCode,
@@ -123,16 +124,23 @@ export class AuthService {
 
     const passwordHash = await hashPassword(password)
     let user
-    try {
-      user = await prisma.user.create({
-        data: { username: name, passwordHash, requirePasswordChange: false },
-      })
-    } catch (e: any) {
-      if (e && e.code === 'P2002') {
-        return { success: false, error: '该用户名已被注册' }
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const accountId = generateAccountIdForUser({ username: name })
+        user = await prisma.user.create({
+          data: { username: name, passwordHash, requirePasswordChange: false, accountId },
+        })
+        break
+      } catch (e: any) {
+        if (e && e.code === 'P2002') {
+          const exists = await prisma.user.findUnique({ where: { username: name } })
+          if (exists) return { success: false, error: '该用户名已被注册' }
+          continue
+        }
+        return { success: false, error: '注册失败，请稍后重试' }
       }
-      return { success: false, error: '注册失败，请稍后重试' }
     }
+    if (!user) return { success: false, error: '注册失败，请稍后重试' }
 
     const ttlSeconds = rememberMe ? REMEMBER_SESSION_SECONDS : DEFAULT_SESSION_SECONDS
     const sid = randomUUID()

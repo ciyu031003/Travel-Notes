@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, User } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import SocialAvatar from '@/components/social/SocialAvatar'
 
 export default function UserList({ endpoint, title }: { endpoint: string; title: string }) {
   const [users, setUsers] = useState<any[]>([])
@@ -13,24 +14,31 @@ export default function UserList({ endpoint, title }: { endpoint: string; title:
   }, [endpoint])
 
   return (
-    <div className="min-h-screen bg-album-bg0 pb-24">
-      <div className="mx-auto max-w-2xl px-4">
-        <header className="sticky top-0 z-20 -mx-4 mb-4 flex items-center gap-3 border-b border-white/10 bg-album-bg0/90 px-4 py-3 backdrop-blur">
-          <Link href="/me" className="rounded-full p-1.5 text-album-text2 hover:bg-white/10"><ArrowLeft className="h-5 w-5" /></Link>
-          <h1 className="text-sm font-semibold text-album-text1">{title}</h1>
+    <div className="min-h-screen bg-night-bg pb-28 text-night-text">
+      <div className="relative mx-auto max-w-2xl px-4 py-6">
+        <header className="mb-8 flex items-center gap-3">
+          <Link href="/me" className="rounded-full p-2 text-night-muted ring-1 ring-night-line transition hover:text-night-text"><ArrowLeft className="h-5 w-5" /></Link>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-night-gold/85">People</p>
+            <h1 className="text-xl font-semibold">{title}</h1>
+          </div>
         </header>
         {loading ? (
-          <div className="py-20 text-center text-album-text3"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
+          <div className="py-20 text-center text-night-faint"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
         ) : users.length === 0 ? (
-          <p className="py-20 text-center text-sm text-album-text3">暂无数据</p>
+          <p className="py-20 text-center text-sm text-night-faint">暂无数据。</p>
         ) : (
-          <div className="space-y-2">
-            {users.map((u) => (
-              <Link key={u.id} href={'/circle/user/' + u.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-album-accent/20 text-album-accent"><User className="h-4 w-4" /></span>
-                <span className="text-sm text-album-text1">{u.username}</span>
-              </Link>
-            ))}
+          <div className="space-y-1">
+            {users.map((u) => {
+              const name = u.nickname || u.username
+              return (
+                <Link key={u.id} href={'/circle/user/' + u.id} className="flex items-center gap-3 border-b border-night-line px-2 py-3.5 transition hover:bg-night-surface/50">
+                  <SocialAvatar name={name} avatarUrl={u.avatarUrl} size={40} />
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
+                  <span className="text-xs text-night-faint">@{u.username}</span>
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>

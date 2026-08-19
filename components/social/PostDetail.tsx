@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, MapPin, CalendarDays, Loader2, Image as ImageIcon, User, Flag, Ban, X } from 'lucide-react'
+import { ArrowLeft, MapPin, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, X } from 'lucide-react'
 import SocialBar from './SocialBar'
 import CommentPanel from './CommentPanel'
-import AlbumPhoto from '@/components/album/AlbumPhoto'
+import SocialAvatar from '@/components/social/SocialAvatar'
 import PhotoViewer from '@/components/album/PhotoViewer'
 
 interface PostDetailData {
@@ -20,7 +20,7 @@ interface PostDetailData {
   endDate: string | null
   dayCount: number
   photoCount: number
-  author: { id: number; username: string } | null
+  author: { id: number; username: string; nickname?: string | null; avatarUrl?: string | null } | null
   likeCount: number
   commentCount: number
   favoriteCount: number
@@ -66,44 +66,46 @@ export default function PostDetail({ postId }: { postId: number }) {
   }
 
   if (loading) {
-    return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-album-bg0 text-album-text3"><Loader2 className="h-7 w-7 animate-spin" />加载中…</div>
+    return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-night-bg text-night-faint"><Loader2 className="h-7 w-7 animate-spin" />加载中…</div>
   }
   if (error || !post) {
-    return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-album-bg0 text-album-text3">{error || '帖子不存在'}<Link href="/circle" className="text-album-accent">返回旅行圈</Link></div>
+    return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-night-bg text-night-faint">{error || '帖子不存在'}<Link href="/circle" className="text-night-gold">返回旅行圈</Link></div>
   }
 
   const dateText = (post.startDate ? post.startDate.slice(0, 10) : '') + (post.endDate && post.endDate !== post.startDate ? ' ~ ' + post.endDate.slice(0, 10) : '')
+  const authorName = post.author ? post.author.nickname || post.author.username : '旅行者'
 
   return (
-    <div className="min-h-screen bg-album-bg0 pb-24">
-      <div className="mx-auto max-w-3xl px-4">
-        <header className="sticky top-0 z-20 -mx-4 mb-4 flex items-center gap-3 border-b border-white/10 bg-album-bg0/90 px-4 py-3 backdrop-blur">
-          <Link href="/circle" className="rounded-full p-1.5 text-album-text2 hover:bg-white/10 hover:text-album-text1"><ArrowLeft className="h-5 w-5" /></Link>
-          <span className="text-sm text-album-text2">旅行圈</span>
+    <div className="min-h-screen bg-night-bg pb-28 text-night-text">
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%)]" />
+      <div className="relative mx-auto max-w-3xl px-4 py-6">
+        <header className="mb-7 flex items-center gap-3">
+          <Link href="/circle" className="rounded-full p-2 text-night-muted ring-1 ring-night-line transition hover:text-night-text"><ArrowLeft className="h-5 w-5" /></Link>
+          <span className="text-sm text-night-muted">旅行圈</span>
         </header>
 
         {post.coverUrl && (
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-album-bg2">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[1.6rem] bg-night-surface2 ring-1 ring-night-line">
             <Image src={post.coverUrl} alt={post.title} fill priority sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
           </div>
         )}
 
-        <div className="mt-5">
-          <h1 className="text-2xl font-bold leading-snug text-album-text1">{post.title}</h1>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-album-text2">
-            {post.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{post.location}</span>}
-            {dateText && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{dateText}</span>}
-            <span className="inline-flex items-center gap-1"><ImageIcon className="h-3.5 w-3.5" />{post.photoCount} 张 · DAY {post.dayCount}</span>
+        <div className="mt-8">
+          {post.location && <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-night-gold/90">{post.location}</div>}
+          <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{post.title}</h1>
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-night-muted">
+            {dateText && <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />{dateText}</span>}
+            <span className="inline-flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" />{post.photoCount} 张 · DAY {post.dayCount}</span>
           </div>
 
           {post.author && (
-            <Link href={'/circle/user/' + post.author.id} className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-album-text2 hover:text-album-text1">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-album-accent/20 text-album-accent"><User className="h-3.5 w-3.5" /></span>
-              {post.author.username}
+            <Link href={'/circle/user/' + post.author.id} className="mt-6 inline-flex items-center gap-2">
+              <SocialAvatar name={authorName} avatarUrl={post.author.avatarUrl} size={34} />
+              <span className="text-sm text-night-muted">{authorName}</span>
             </Link>
           )}
 
-          {post.summary && <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-album-text1/85">{post.summary}</p>}
+          {post.summary && <p className="mt-6 whitespace-pre-line text-base leading-relaxed text-night-muted">{post.summary}</p>}
         </div>
 
         <SocialBar
@@ -114,45 +116,48 @@ export default function PostDetail({ postId }: { postId: number }) {
           liked={post.isLiked}
           favorited={post.isFavorited}
           onOpenComments={() => setShowComments(true)}
-          className="mt-6"
+          className="mt-8"
         />
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-album-text3">
-          <button type="button" onClick={() => setShowReport(true)} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 hover:text-album-error"><Flag className="h-3.5 w-3.5" />举报</button>
+        <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-night-faint">
+          <button type="button" onClick={() => setShowReport(true)} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-night-text"><Flag className="h-3.5 w-3.5" />举报</button>
           {post.author && !blocked && (
-            <button type="button" onClick={blockAuthor} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 hover:text-album-error"><Ban className="h-3.5 w-3.5" />屏蔽作者</button>
+            <button type="button" onClick={blockAuthor} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-night-text"><Ban className="h-3.5 w-3.5" />屏蔽作者</button>
           )}
-          {blocked && <span className="text-album-text3">已屏蔽该作者</span>}
+          {blocked && <span>已屏蔽该作者</span>}
         </div>
 
         {post.photos && post.photos.length > 1 && (
-          <div className="mt-8">
-            <h2 className="mb-3 text-sm font-semibold text-album-text1">旅行照片</h2>
+          <div className="mt-12">
+            <div className="mb-4 flex items-center gap-3">
+              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-night-gold/80">旅行照片</h2>
+              <div className="h-px flex-1 bg-night-line" />
+            </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {post.photos.map((src, i) => (
-                <AlbumPhoto key={i} src={src} alt={post.title} aspect="square" onClick={() => setViewerIndex(i)} />
+                <button key={i} type="button" onClick={() => setViewerIndex(i)} className="group relative aspect-square overflow-hidden rounded-xl bg-night-surface2 ring-1 ring-night-line">
+                  <Image src={src} alt={post.title} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                </button>
               ))}
             </div>
           </div>
         )}
 
         {post.slug && (
-          <Link href={'/travel/' + encodeURIComponent(post.slug)} className="mt-8 inline-flex items-center gap-2 rounded-full border border-album-accent/40 px-5 py-2.5 text-sm text-album-accent hover:bg-album-accent/10">
-            查看完整旅行记录
-          </Link>
+          <Link href={'/travel/' + encodeURIComponent(post.slug)} className="mt-10 inline-flex items-center gap-2 text-sm text-night-gold transition hover:text-night-goldStrong">查看完整旅行记录</Link>
         )}
       </div>
 
       {showReport && (
         <div className="fixed inset-0 z-[70]">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setShowReport(false)} />
-          <div className="absolute left-1/2 top-1/2 w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 bg-album-bg1 p-5">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowReport(false)} />
+          <div className="absolute left-1/2 top-1/2 w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[1.6rem] bg-night-surface p-5 ring-1 ring-night-line">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-album-text1">举报该旅行</h3>
-              <button onClick={() => setShowReport(false)} className="text-album-text3 hover:text-album-text1"><X className="h-4 w-4" /></button>
+              <h3 className="text-base font-semibold">举报该旅行</h3>
+              <button onClick={() => setShowReport(false)} className="text-night-muted hover:text-night-text"><X className="h-4 w-4" /></button>
             </div>
-            <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-album-text1 placeholder:text-album-text3 focus:outline-none" />
-            <button onClick={submitReport} disabled={reporting || !reportReason.trim()} className="mt-3 w-full rounded-full bg-album-accent py-2.5 text-sm font-medium text-album-bg0 disabled:opacity-40">{reporting ? '提交中…' : '提交举报'}</button>
+            <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl bg-night-bg px-3 py-2 text-sm text-night-text outline-none ring-1 ring-night-line focus:ring-night-gold/50" />
+            <button onClick={submitReport} disabled={reporting || !reportReason.trim()} className="mt-3 w-full rounded-full bg-night-gold py-2.5 text-sm font-medium text-[#1a120a] disabled:opacity-40">{reporting ? '提交中…' : '提交举报'}</button>
           </div>
         </div>
       )}

@@ -77,6 +77,21 @@ module.exports = {
           wait: '#9aa3b2',
           error: '#e06c6c',
         },
+        // ★ 旅行记忆宇宙（Stage 3：个人主页 / 旅行圈统一暗色 Editorial）
+        night: {
+          bg: '#080808',
+          surface: '#111111',
+          surface2: '#171717',
+          surface3: '#1e1d1b',
+          text: '#F5F1EA',
+          muted: 'rgba(245,241,234,0.70)',
+          faint: 'rgba(245,241,234,0.46)',
+          gold: '#E8B36A',
+          goldStrong: '#F2C88A',
+          goldSoft: 'rgba(232,179,106,0.14)',
+          line: 'rgba(245,241,234,0.09)',
+          lineStrong: 'rgba(245,241,234,0.16)',
+        },
         // ★ 新增语义化颜色
         success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
         warning: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
