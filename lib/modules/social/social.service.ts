@@ -158,12 +158,45 @@ export async function listSocialFeed(params: {
   return { data, total, page, pageSize, hasMore: page * pageSize < total }
 }
 
+async function collectTravelPhotos(travelId: number): Promise<string[]> {
+  const urls: string[] = []
+  try {
+    const travel = await prisma.travel.findUnique({
+      where: { id: travelId },
+      select: { coverMedia: true, cover: true },
+    })
+    if (travel?.coverMedia?.storageKey) urls.push(mediaUrl(travel.coverMedia.storageKey))
+    else if (travel?.cover) urls.push(String(travel.cover))
+
+    const memories = await prisma.memory.findMany({
+      where: { travelId, visibility: 'PUBLIC' },
+      orderBy: { happenedAt: 'asc' },
+      include: { media: { where: { type: 'IMAGE' }, orderBy: { id: 'asc' } } },
+    })
+    for (const m of memories) {
+      for (const media of m.media) {
+        if (media.storageKey) {
+          const u = mediaUrl(media.storageKey)
+          if (!urls.includes(u)) urls.push(u)
+        }
+      }
+    }
+  } catch {
+    // 照片收集失败不影响帖子详情返回
+  }
+  return urls
+}
+
 export async function getSocialPost(id: number, userId?: number | null) {
-  const row = await prisma.travelPost.findUnique({ where: { id }, include: POST_INCLUDE })
+  const row: any = await prisma.travelPost.findUnique({ where: { id }, include: POST_INCLUDE })
   if (!row) return null
   if (row.visibility !== 'PUBLIC' && row.authorId !== userId) return null
   const [post] = await attachViewerState([row], userId)
-  return post
+  return {
+    ...post,
+    slug: row.travel?.slug ?? null,
+    photos: await collectTravelPhotos(row.travelId),
+  }
 }
 
 async function notify(recipientId: number | null, actorId: number, type: NotificationTypeName, refType: string, refId: number) {
