@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, Compass, NotebookPen, Bookmark, ChevronRight } from 'lucide-react'
+import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, Compass, NotebookPen, Bookmark, ChevronRight, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
@@ -128,6 +128,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           </div>
           <div className="flex items-center gap-2">
             <SocialThemeToggle />
+            <Link href="/sync" title="数据与同步" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><RefreshCw className="h-4 w-4" /></Link>
             <Link href="/me/notifications" className="relative rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><span className="text-base">✦</span>{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
             <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Home className="h-4 w-4" />返回首页</Link>
           </div>
