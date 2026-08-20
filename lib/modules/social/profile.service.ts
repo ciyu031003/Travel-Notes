@@ -1,4 +1,5 @@
 import { prisma } from '../../db'
+import { getDashboardStats } from '../../services/dashboard.service'
 
 function iso(v: Date | null | undefined): string | null {
   if (!v) return null
@@ -76,6 +77,8 @@ export async function getMyProfile(userId: number) {
       : recentTravel.cover
     : null
 
+  const dashboard = await getDashboardStats(userId).catch(() => null)
+
   return {
     id: user.id,
     username: user.username,
@@ -87,6 +90,7 @@ export async function getMyProfile(userId: number) {
     anniversaryStart: user.anniversaryStart,
     createdAt: iso(user.createdAt),
     stats: { postCount, followerCount, followingCount, favoriteCount, tripCount, placeCount, photoCount, dayCount, momentCount },
+    dashboard,
     recentTravel: recentTravel
       ? {
           id: recentTravel.id,

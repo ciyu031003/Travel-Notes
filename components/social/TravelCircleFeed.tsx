@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Compass, Home } from 'lucide-react'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
+import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 
 const TABS = [
   { key: 'recommended', label: '推荐' },
@@ -99,50 +100,50 @@ export default function TravelCircleFeed() {
   })
 
   return (
-    <div className="min-h-screen bg-night-bg pb-24 text-night-text">
+    <div className="min-h-screen bg-[var(--social-bg)] pb-24 text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.06),transparent_60%)]" />
       <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <header className="mb-8 flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-night-gold/85">Travel Circle</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-night-text sm:text-4xl">旅行圈</h1>
-            <p className="mt-2 max-w-md text-sm text-night-muted">看看别人眼中的世界，发现正在发生的旅途。</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">Travel Circle</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--social-text)] sm:text-4xl">旅行圈</h1>
+            <p className="mt-2 max-w-md text-sm text-[var(--social-muted)]">看看别人眼中的世界，发现正在发生的旅途。</p>
           </div>
-          <Link href="/" className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-night-surface px-4 py-2 text-sm text-night-muted ring-1 ring-night-line transition hover:text-night-text hover:ring-night-lineStrong"><Home className="h-4 w-4" />返回首页</Link>
+          <div className="flex shrink-0 items-center gap-2"><SocialThemeToggle /><Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)]"><Home className="h-4 w-4" />返回首页</Link></div>
         </header>
 
         <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
           {TABS.map((t) => (
             <button key={t.key} type="button" onClick={() => switchTab(t.key)}
               className={cn('shrink-0 rounded-full px-4 py-1.5 text-sm transition',
-                tab === t.key ? 'bg-night-gold text-[#1a120a]' : 'bg-night-surface text-night-muted ring-1 ring-night-line hover:text-night-text')}>
+                tab === t.key ? 'bg-[var(--social-accent)] text-[var(--social-on-accent)]' : 'bg-[var(--social-surface)] text-[var(--social-muted)] ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]')}>
               {t.label}
             </button>
           ))}
         </div>
 
         <div className="mb-8 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-night-faint">为你发现</span>
+          <span className="text-xs text-[var(--social-faint)]">为你发现</span>
           {THEMES.map((theme) => (
             <button key={theme} type="button" onClick={() => {}}
-              className="rounded-full px-3 py-1 text-xs text-night-muted transition hover:bg-night-goldSoft hover:text-night-gold">
+              className="rounded-full px-3 py-1 text-xs text-[var(--social-muted)] transition hover:bg-[var(--social-accent-soft)] hover:text-[var(--social-accent)]">
               # {theme}
             </button>
           ))}
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center gap-3 py-28 text-night-faint"><Loader2 className="h-7 w-7 animate-spin text-night-gold" /><span className="text-sm">正在翻阅旅行相册…</span></div>
+          <div className="flex flex-col items-center gap-3 py-28 text-[var(--social-faint)]"><Loader2 className="h-7 w-7 animate-spin text-[var(--social-accent)]" /><span className="text-sm">正在翻阅旅行相册…</span></div>
         ) : error ? (
-          <div className="py-20 text-center text-sm text-night-muted">{error}</div>
+          <div className="py-20 text-center text-sm text-[var(--social-muted)]">{error}</div>
         ) : posts.length === 0 ? (
-          <div className="relative overflow-hidden rounded-[2rem] bg-night-surface/60 px-6 py-28 text-center ring-1 ring-night-line">
+          <div className="relative overflow-hidden rounded-[2rem] bg-[var(--social-surface-60)] px-6 py-28 text-center ring-1 ring-[var(--social-line)]">
             <div className="absolute inset-0 bg-[radial-gradient(40%_50%_at_50%_30%,rgba(232,179,106,0.08),transparent_70%)]" />
             <div className="relative">
-              <Compass className="mx-auto h-10 w-10 text-night-gold/70" />
-              <p className="mt-4 text-base text-night-text">这里还没有故事。</p>
-              <p className="mt-2 text-sm text-night-muted">去看看自己的旅途，也许下一段故事就从那里开始。</p>
-              <button type="button" onClick={() => router.push('/travel')} className="mt-6 rounded-full bg-night-gold px-6 py-2.5 text-sm font-medium text-[#1a120a]">去我的旅行</button>
+              <Compass className="mx-auto h-10 w-10 text-[var(--social-accent)]" />
+              <p className="mt-4 text-base text-[var(--social-text)]">这里还没有故事。</p>
+              <p className="mt-2 text-sm text-[var(--social-muted)]">去看看自己的旅途，也许下一段故事就从那里开始。</p>
+              <button type="button" onClick={() => router.push('/travel')} className="mt-6 rounded-full bg-[var(--social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--social-on-accent)]">去我的旅行</button>
             </div>
           </div>
         ) : (
@@ -154,11 +155,11 @@ export default function TravelCircleFeed() {
             <div className="mt-6 flex justify-center">
               {hasMore ? (
                 <button type="button" onClick={loadMore} disabled={loadingMore}
-                  className="rounded-full bg-night-surface px-6 py-2.5 text-sm text-night-muted ring-1 ring-night-line transition hover:text-night-text hover:ring-night-lineStrong disabled:opacity-50">
+                  className="rounded-full bg-[var(--social-surface)] px-6 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)] disabled:opacity-50">
                   {loadingMore ? '加载中…' : '加载更多'}
                 </button>
               ) : (
-                rest.length > 0 && <span className="text-xs text-night-faint">已经到底啦</span>
+                rest.length > 0 && <span className="text-xs text-[var(--social-faint)]">已经到底啦</span>
               )}
             </div>
           </>

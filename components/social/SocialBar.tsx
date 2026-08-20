@@ -74,8 +74,8 @@ export default function SocialBar({
   }
 
   const btn = 'inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm tabular-nums transition-all active:scale-90 select-none'
-  const idle = dark ? 'text-night-muted hover:text-night-text' : 'text-travel-ink/60 hover:text-travel-ink'
-  const chip = dark ? 'bg-night-surface ring-1 ring-night-line' : 'bg-white border border-travel-line'
+  const idle = dark ? 'text-[var(--social-muted)] hover:text-[var(--social-text)]' : 'text-travel-ink/60 hover:text-travel-ink'
+  const chip = dark ? 'bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]' : 'bg-white border border-travel-line'
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>

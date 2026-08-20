@@ -1,5 +1,6 @@
 import { revalidatePath } from 'next/cache'
 import { PostRepository, type FindAllParams, type PaginatedResult, type CreatePostInput, type UpdatePostInput, type PostMetaDB, type PostDB, type VideoInfo } from '../repositories/post-repository'
+import { syncPublicPostToCircle, unpublishPublicPost } from '../modules/social/travel-post.service'
 import { CacheService } from '../infrastructure/cache'
 import { MarkdownRenderer, type TocItem } from '../infrastructure/markdown'
 
@@ -164,6 +165,7 @@ export class PostService {
 
   async createPost(input: CreatePostInput): Promise<{ id: number }> {
     const result = await this.postRepo.create(input)
+    await syncPublicPostToCircle(result.id).catch(() => {})
     await this.invalidateCache(input.type)
     this.invalidateIsrCache()
     return result
@@ -171,6 +173,7 @@ export class PostService {
 
   async updatePost(id: number, input: UpdatePostInput): Promise<void> {
     await this.postRepo.update(id, input)
+    await syncPublicPostToCircle(id).catch(() => {})
     if (input.type) {
       await this.invalidateCache(input.type)
     } else {
@@ -181,6 +184,7 @@ export class PostService {
 
   async deletePost(id: number): Promise<void> {
     await this.postRepo.delete(id)
+    await unpublishPublicPost(id).catch(() => {})
     await this.invalidateAllCache()
     this.invalidateIsrCache()
   }

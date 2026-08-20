@@ -29,6 +29,7 @@ model Post {
 
   postImages PostImage[]
   user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  travelPost TravelPost?
 
   @@unique([type, slug])
   @@index([type, published, date])
@@ -649,11 +650,12 @@ model Expense {
 /// 公开旅行帖子（Travel 与社交内容解耦：公开的是 TravelPost，不是整个 Space）
 model TravelPost {
   id            Int        @id @default(autoincrement())
-  travelId      Int        @unique
+  travelId      Int?       @unique
   authorId      Int
   visibility    Visibility @default(PUBLIC)
   title         String     @db.VarChar(255)
   summary       String?    @db.Text
+  postId        Int?       @unique
   coverMediaId  Int?
   publishedAt   DateTime   @default(now()) @db.Timestamp(3)
   likeCount     Int        @default(0)
@@ -662,7 +664,8 @@ model TravelPost {
   createdAt     DateTime   @default(now()) @db.Timestamp(3)
   updatedAt     DateTime   @updatedAt @db.Timestamp(3)
 
-  travel    Travel        @relation(fields: [travelId], references: [id], onDelete: Cascade)
+  travel    Travel?       @relation(fields: [travelId], references: [id], onDelete: Cascade)
+  post      Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
   author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likes     PostLike[]
   favorites PostFavorite[]

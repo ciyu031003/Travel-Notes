@@ -42,6 +42,20 @@ async function addColumn(conn, table, column, ddl) {
   return true
 }
 
+async function modifyColumn(conn, table, column, ddl) {
+  const [rows] = await conn.query(
+    'SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
+    [table, column]
+  )
+  if (rows.length === 0) {
+    console.log(`  [warn] ${table}.${column} 不存在，无法修改`)
+    return false
+  }
+  await conn.query(`ALTER TABLE \`${table}\` MODIFY COLUMN ${ddl}`)
+  console.log(`  [modify] ${table}.${column}`)
+  return true
+}
+
 async function addFk(conn, table, constraint, ddl) {
   const [rows] = await conn.query(
     'SELECT 1 FROM information_schema.table_constraints WHERE table_schema = DATABASE() AND table_name = ? AND constraint_name = ?',
@@ -170,7 +184,8 @@ async function main() {
       name: 'TravelPost',
       sql: `CREATE TABLE IF NOT EXISTS TravelPost (
         id INT NOT NULL AUTO_INCREMENT,
-        travelId INT NOT NULL,
+        travelId INT NULL,
+        postId INT NULL,
         authorId INT NOT NULL,
         visibility ENUM('PRIVATE','COUPLE','PUBLIC') NOT NULL DEFAULT 'PUBLIC',
         title VARCHAR(255) NOT NULL,
@@ -184,9 +199,11 @@ async function main() {
         updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
         PRIMARY KEY (id),
         UNIQUE KEY TravelPost_travelId_key (travelId),
+        UNIQUE KEY TravelPost_postId_key (postId),
         KEY TravelPost_authorId_publishedAt_idx (authorId, publishedAt),
         KEY TravelPost_publishedAt_idx (publishedAt),
         CONSTRAINT TravelPost_travelId_fkey FOREIGN KEY (travelId) REFERENCES Travel(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT TravelPost_postId_fkey FOREIGN KEY (postId) REFERENCES Post(id) ON DELETE CASCADE ON UPDATE CASCADE,
         CONSTRAINT TravelPost_authorId_fkey FOREIGN KEY (authorId) REFERENCES User(id) ON DELETE CASCADE ON UPDATE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     },
@@ -319,6 +336,12 @@ async function main() {
     await createTable(conn, def.name, def.sql)
   }
 
+  // TravelPost：支持 Travel 或 Post 两种来源（表已存在后修改）
+  await modifyColumn(conn, 'TravelPost', 'travelId', 'travelId INT NULL')
+  await addColumn(conn, 'TravelPost', 'postId', 'postId INT NULL AFTER travelId')
+  await addUniqueIndex(conn, 'TravelPost', 'TravelPost_postId_key', 'postId')
+  await addFk(conn, 'TravelPost', 'TravelPost_postId_fkey', 'FOREIGN KEY (postId) REFERENCES Post(id) ON DELETE CASCADE ON UPDATE CASCADE')
+
   // 账号 ID 回填（admin 固定 01230821；纪念日用户 = 2 位随机前缀 + YYYYMMDD；其余随机 8 位）
   async function backfillUserAccountIds() {
     const [allUsers] = await conn.query('SELECT id, username, anniversaryStart, accountId FROM User')
@@ -346,6 +369,27 @@ async function main() {
     }
   }
   await backfillUserAccountIds()
+
+  // 存量公开文章回填到旅行圈（Post -> TravelPost，postId 唯一幂等）
+  try {
+    const [userCheck] = await conn.query('SELECT id FROM User ORDER BY id ASC LIMIT 1')
+    if (userCheck.length > 0) {
+      const fallbackUserId = userCheck[0].id
+      const [res] = await conn.query(
+        `INSERT INTO TravelPost (postId, authorId, visibility, title, summary, publishedAt, createdAt, updatedAt)
+         SELECT p.id, COALESCE(p.userId, ?), 'PUBLIC', p.title, p.summary, p.date, NOW(3), NOW(3)
+         FROM Post p
+         WHERE p.type = 'travel' AND p.published = 1 AND p.isPublic = 1
+         ON DUPLICATE KEY UPDATE title = VALUES(title), summary = VALUES(summary), publishedAt = VALUES(publishedAt)`,
+        [fallbackUserId]
+      )
+      console.log(`  [publicPosts] 回填公开文章 ${res.affectedRows} 行`)
+    } else {
+      console.log('  [publicPosts] 用户表为空，跳过公开文章回填')
+    }
+  } catch (e) {
+    console.log('  [publicPosts] 回填跳过（' + (e.code || e.message) + '）')
+  }
 
   console.log('== 2/2 归属回填 ==')
   const [users] = await conn.query('SELECT id, username FROM User ORDER BY id ASC LIMIT 1')

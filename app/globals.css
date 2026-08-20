@@ -63,6 +63,46 @@
     /* 语义化阴影 */
     --shadow-soft: 0 10px 28px rgba(90,102,112,0.08);
     --shadow-card: 0 12px 40px -12px rgba(90,102,112,0.18);
+
+    /* Social / 旅行档案 / 旅行圈 亮色主题（默认） */
+    --social-bg: #F7F4EE;
+    --social-surface: #FFFFFF;
+    --social-surface-90: rgba(255, 255, 255, 0.90);
+    --social-surface-80: rgba(255, 255, 255, 0.80);
+    --social-surface-60: rgba(255, 255, 255, 0.60);
+    --social-surface-50: rgba(255, 255, 255, 0.50);
+    --social-surface2: #F3EEE6;
+    --social-surface3: #EAE3D9;
+    --social-text: #2B211B;
+    --social-muted: rgba(43, 33, 27, 0.70);
+    --social-faint: rgba(43, 33, 27, 0.46);
+    --social-accent: #A64E61;
+    --social-accent-strong: #8B4A5A;
+    --social-accent-soft: rgba(166, 78, 97, 0.12);
+    --social-on-accent: #FFFFFF;
+    --social-line: rgba(90, 74, 58, 0.12);
+    --social-line-strong: rgba(90, 74, 58, 0.22);
+  }
+
+  html.dark {
+    /* Social / 旅行档案 / 旅行圈 暗色主题 */
+    --social-bg: #080808;
+    --social-surface: #111111;
+    --social-surface-90: rgba(17, 17, 17, 0.90);
+    --social-surface-80: rgba(17, 17, 17, 0.80);
+    --social-surface-60: rgba(17, 17, 17, 0.60);
+    --social-surface-50: rgba(17, 17, 17, 0.50);
+    --social-surface2: #171717;
+    --social-surface3: #1e1d1b;
+    --social-text: #F5F1EA;
+    --social-muted: rgba(245, 241, 234, 0.70);
+    --social-faint: rgba(245, 241, 234, 0.46);
+    --social-accent: #E8B36A;
+    --social-accent-strong: #F2C88A;
+    --social-accent-soft: rgba(232, 179, 106, 0.14);
+    --social-on-accent: #1A120A;
+    --social-line: rgba(245, 241, 234, 0.09);
+    --social-line-strong: rgba(245, 241, 234, 0.16);
   }
 
   body {

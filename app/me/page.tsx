@@ -16,6 +16,7 @@ export default async function MePage() {
     accountId: user.accountId,
     createdAt: null,
     recentTravel: null,
+    dashboard: null,
     stats: { postCount: 0, followerCount: 0, followingCount: 0, favoriteCount: 0, tripCount: 0, placeCount: 0, photoCount: 0, dayCount: 0, momentCount: 0 },
   }
   return <MeHome initial={profile} />

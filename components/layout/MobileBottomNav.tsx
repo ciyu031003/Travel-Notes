@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, MapPin, Image as ImageIcon, CalendarDays, User, Compass } from 'lucide-react'
+import { Home, MapPin, CalendarDays, User, Compass } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ITEMS = [
@@ -10,7 +10,6 @@ const ITEMS = [
   { href: '/travel', label: '旅行', icon: MapPin },
   { href: '/circle', label: '旅行圈', icon: Compass },
   { href: '/timeline', label: '时间线', icon: CalendarDays },
-  { href: '/album', label: '相册', icon: ImageIcon },
   { href: '/me', label: '个人主页', icon: User },
 ]
 
@@ -27,7 +26,7 @@ export default function MobileBottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E8DDD8]/70 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg dark:border-[#2C343E] dark:bg-[#151A21]/95 md:hidden"
       aria-label="移动端导航"
     >
-      <div className="grid grid-cols-6">
+      <div className="grid grid-cols-5">
         {ITEMS.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)

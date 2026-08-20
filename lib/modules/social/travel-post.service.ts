@@ -132,3 +132,57 @@ export function serializeTravelPost(row: any) {
     favoriteCount: row.favoriteCount,
   }
 }
+
+/** 将公开的旧 Post（文章）同步到旅行圈；非 travel / 未发布 / 未公开则移除 */
+export async function syncPublicPostToCircle(postId: number): Promise<TravelPostSyncResult | null> {
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: {
+      id: true,
+      userId: true,
+      type: true,
+      title: true,
+      summary: true,
+      location: true,
+      date: true,
+      published: true,
+      isPublic: true,
+    },
+  })
+  if (!post) return null
+
+  if (post.type !== 'travel' || !post.published || !post.isPublic) {
+    await prisma.travelPost.deleteMany({ where: { postId } }).catch(() => {})
+    return null
+  }
+
+  const authorId = post.userId ?? (await resolveAuthorId(null, post.userId))
+  const summary = post.summary ?? null
+  const publishedAt = post.date ? new Date(post.date) : new Date()
+
+  const existing = await prisma.travelPost.findUnique({ where: { postId } })
+  if (existing) {
+    await prisma.travelPost.update({
+      where: { postId },
+      data: { title: post.title, summary, visibility: 'PUBLIC', publishedAt, ...(authorId ? { authorId } : {}) },
+    })
+    return { id: existing.id, published: true }
+  }
+
+  if (!authorId) return null
+  const created = await prisma.travelPost.create({
+    data: {
+      postId,
+      authorId,
+      visibility: 'PUBLIC',
+      title: post.title,
+      summary,
+      publishedAt,
+    },
+  })
+  return { id: created.id, published: true }
+}
+
+export async function unpublishPublicPost(postId: number): Promise<void> {
+  await prisma.travelPost.deleteMany({ where: { postId } }).catch(() => {})
+}

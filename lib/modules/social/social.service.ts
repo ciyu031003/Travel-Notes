@@ -17,6 +17,9 @@ const POST_INCLUDE: any = {
       _count: { select: { days: true, memories: true } },
     },
   },
+  post: {
+    select: { id: true, slug: true, cover: true, images: true, location: true, date: true },
+  },
 }
 
 function iso(v: Date | string | null | undefined): string | null {
@@ -50,19 +53,34 @@ function serializeAuthor(author: any) {
   }
 }
 
+function postImages(post: any): string[] {
+  if (!post) return []
+  if (Array.isArray(post.images)) return post.images.filter((v: any) => typeof v === 'string')
+  if (typeof post.images === 'string') {
+    try {
+      const parsed = JSON.parse(post.images)
+      if (Array.isArray(parsed)) return parsed.filter((v: any) => typeof v === 'string')
+    } catch {}
+  }
+  return []
+}
+
 function serializePost(row: any, likedIds: Set<number>, favoriteIds: Set<number>) {
   const travel = row.travel ?? null
+  const post = row.post ?? null
+  const photos = post ? postImages(post) : []
+  const coverUrl = post ? (post.cover || photos[0] || null) : travelCoverUrl(travel)
   return {
     id: row.id,
-    travelId: row.travelId,
+    travelId: row.travelId ?? null,
     title: row.title,
     summary: row.summary,
-    coverUrl: travelCoverUrl(travel),
-    location: travel?.location ?? null,
-    startDate: iso(travel?.startDate),
-    endDate: iso(travel?.endDate),
-    dayCount: travel?._count?.days ?? 0,
-    photoCount: travel?._count?.memories ?? 0,
+    coverUrl,
+    location: travel?.location ?? post?.location ?? null,
+    startDate: iso(travel?.startDate ?? post?.date),
+    endDate: iso(travel?.endDate ?? post?.date),
+    dayCount: travel?._count?.days ?? (post ? 1 : 0),
+    photoCount: travel?._count?.memories ?? photos.length,
     author: serializeAuthor(row.author),
     likeCount: row.likeCount,
     commentCount: row.commentCount,
@@ -200,8 +218,8 @@ export async function getSocialPost(id: number, userId?: number | null) {
   const [post] = await attachViewerState([row], userId)
   return {
     ...post,
-    slug: row.travel?.slug ?? null,
-    photos: await collectTravelPhotos(row.travelId),
+    slug: row.travel?.slug ?? row.post?.slug ?? null,
+    photos: row.post ? postImages(row.post) : row.travelId ? await collectTravelPhotos(row.travelId) : [],
   }
 }
 

@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 export default function CirclePage() {
   return (
-    <div className="min-h-screen bg-night-bg">
+    <div className="min-h-screen bg-[var(--social-bg)]">
       <TravelCircleFeed />
     </div>
   )

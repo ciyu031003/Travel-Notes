@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, UserPlus, UserMinus, Ban } from 'lucide-react'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
+import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 
 interface Profile {
   id: number
@@ -30,8 +31,8 @@ function displayName(p: Profile): string {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <div className="text-xl font-semibold text-night-text tabular-nums">{value}</div>
-      <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-night-faint">{label}</div>
+      <div className="text-xl font-semibold text-[var(--social-text)] tabular-nums">{value}</div>
+      <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[var(--social-faint)]">{label}</div>
     </div>
   )
 }
@@ -75,8 +76,8 @@ export default function UserProfile({ userId }: { userId: number }) {
     } catch { setProfile(snapshot) } finally { setBusy(false) }
   }
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-night-bg text-night-faint"><Loader2 className="h-7 w-7 animate-spin" /></div>
-  if (error || !profile) return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-night-bg text-night-faint">{error || '用户不存在'}<Link href="/circle" className="text-night-gold">返回旅行圈</Link></div>
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--social-bg)] text-[var(--social-faint)]"><Loader2 className="h-7 w-7 animate-spin" /></div>
+  if (error || !profile) return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]">{error || '用户不存在'}<Link href="/circle" className="text-[var(--social-accent)]">返回旅行圈</Link></div>
 
   const cardProps = (p: any, frame: (typeof FRAMES)[number]) => ({
     coverUrl: p.coverUrl || undefined,
@@ -94,20 +95,21 @@ export default function UserProfile({ userId }: { userId: number }) {
   })
 
   return (
-    <div className="min-h-screen bg-night-bg pb-24 text-night-text">
+    <div className="min-h-screen bg-[var(--social-bg)] pb-24 text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-5xl px-4 py-6">
         <header className="mb-8 flex items-center gap-3">
-          <button type="button" onClick={() => router.back()} className="rounded-full p-2 text-night-muted ring-1 ring-night-line transition hover:text-night-text"><ArrowLeft className="h-5 w-5" /></button>
-          <span className="text-sm text-night-muted">旅行者主页</span>
+          <div className="ml-auto"><SocialThemeToggle /></div>
+          <button type="button" onClick={() => router.back()} className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></button>
+          <span className="text-sm text-[var(--social-muted)]">旅行者主页</span>
         </header>
 
         <section className="flex flex-col gap-8 sm:flex-row sm:items-center">
           <SocialAvatar name={displayName(profile)} avatarUrl={profile.avatarUrl} size={96} className="text-3xl" />
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-night-text">{displayName(profile)}</h1>
-            <p className="mt-1 text-sm text-night-muted">@{profile.username}</p>
-            {profile.accountId && <span className="mt-2 inline-block rounded-full bg-night-goldSoft px-3 py-1 text-xs text-night-gold">ID {profile.accountId}</span>}
+            <h1 className="text-2xl font-semibold tracking-tight text-[var(--social-text)]">{displayName(profile)}</h1>
+            <p className="mt-1 text-sm text-[var(--social-muted)]">@{profile.username}</p>
+            {profile.accountId && <span className="mt-2 inline-block rounded-full bg-[var(--social-accent-soft)] px-3 py-1 text-xs text-[var(--social-accent)]">ID {profile.accountId}</span>}
             <div className="mt-6 flex gap-10">
               <Stat label="Trips" value={profile.stats.postCount} />
               <Stat label="Followers" value={profile.stats.followerCount} />
@@ -116,12 +118,12 @@ export default function UserProfile({ userId }: { userId: number }) {
             <div className="mt-6 flex gap-2">
               <button type="button" onClick={follow} disabled={busy}
                 className={cn('inline-flex items-center gap-1.5 rounded-full px-6 py-2.5 text-sm font-medium transition active:scale-95 disabled:opacity-50',
-                  profile.isFollowing ? 'bg-night-surface text-night-muted ring-1 ring-night-line' : 'bg-night-gold text-[#1a120a]')}>
+                  profile.isFollowing ? 'bg-[var(--social-surface)] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]' : 'bg-[var(--social-accent)] text-[var(--social-on-accent)]')}>
                 {profile.isFollowing ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
                 {profile.isFollowing ? '取消关注' : '关注'}
               </button>
               <button type="button" onClick={toggleBlock} disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-full bg-night-surface px-6 py-2.5 text-sm text-night-muted ring-1 ring-night-line transition hover:text-night-text disabled:opacity-50">
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-6 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] disabled:opacity-50">
                 <Ban className="h-4 w-4" />{profile.isBlocked ? '取消屏蔽' : '屏蔽'}
               </button>
             </div>
@@ -129,8 +131,8 @@ export default function UserProfile({ userId }: { userId: number }) {
         </section>
 
         <div className="mt-12 flex items-center gap-3">
-          <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-night-gold/80">Travel Stories</h2>
-          <div className="h-px flex-1 bg-night-line" />
+          <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">Travel Stories</h2>
+          <div className="h-px flex-1 bg-[var(--social-line)]" />
         </div>
 
         {profile.posts.length > 0 ? (
@@ -138,7 +140,7 @@ export default function UserProfile({ userId }: { userId: number }) {
             {profile.posts.map((p, i) => <SocialFilmCard key={p.id} {...cardProps(p, FRAMES[i % FRAMES.length])} className="mb-5 break-inside-avoid" />)}
           </div>
         ) : (
-          <p className="py-16 text-center text-sm text-night-faint">还没有公开的旅行故事。</p>
+          <p className="py-16 text-center text-sm text-[var(--social-faint)]">还没有公开的旅行故事。</p>
         )}
       </div>
     </div>
