@@ -1,9 +1,11 @@
+'use client'
+
+import { useParams } from 'next/navigation'
 import PostDetail from '@/components/social/PostDetail'
 
-export const dynamic = 'force-dynamic'
-
-export default async function CirclePostPage({ params }: { params: Promise<{ postId: string }> }) {
-  const { postId } = await params
-  const id = parseInt(postId, 10)
+export default function CirclePostPage() {
+  const params = useParams()
+  const raw = typeof params?.postId === 'string' ? params.postId : ''
+  const id = parseInt(raw, 10)
   return <PostDetail postId={Number.isFinite(id) ? id : 0} />
 }

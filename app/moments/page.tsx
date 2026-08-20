@@ -7,8 +7,6 @@ export const metadata: Metadata = {
   description: '生活中的灵感、随想与碎碎念',
 }
 
-export const revalidate = 120
-
 export default function MomentsPage() {
   return (
     <div className="container-custom">

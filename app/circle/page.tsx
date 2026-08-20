@@ -1,6 +1,6 @@
-import TravelCircleFeed from '@/components/social/TravelCircleFeed'
+'use client'
 
-export const dynamic = 'force-dynamic'
+import TravelCircleFeed from '@/components/social/TravelCircleFeed'
 
 export default function CirclePage() {
   return (
