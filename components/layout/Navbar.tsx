@@ -53,7 +53,8 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
 
   useEffect(() => {
     const saved = localStorage.getItem('theme')
-    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    // 默认亮色，仅当用户显式选择暗色时进入暗色（与旅行圈/旅行档案主题统一）
+    if (saved === 'dark') {
       document.documentElement.classList.add('dark')
       setIsDark(true)
     }

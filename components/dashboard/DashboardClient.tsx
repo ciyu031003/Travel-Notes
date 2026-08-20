@@ -86,7 +86,6 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           label="旅行照片"
           value={data.totalPhotos}
           accent="bg-gradient-to-br from-blue-400 to-indigo-500"
-          href="/album"
         />
         <StatCard
           icon={TrendingUp}

@@ -8,7 +8,8 @@ export default function SocialThemeToggle({ className }: { className?: string })
 
   useEffect(() => {
     const saved = localStorage.getItem('theme')
-    const next = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    // 默认亮色（社交页 = 旅行圈/旅行档案统一默认亮色），仅当用户显式选择暗色时进入暗色
+    const next = saved === 'dark'
     document.documentElement.classList.toggle('dark', next)
     setDark(next)
   }, [])
