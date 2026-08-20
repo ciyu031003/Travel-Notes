@@ -301,8 +301,8 @@ export default function TravelStarMap({ cities, stats, className, onSelectCity }
       const W = wrap.clientWidth
       const H = wrap.clientHeight
       const s = toScreen(p, W, H, viewRef.current.scale, viewRef.current.ox, viewRef.current.oy)
-      const cardX = clamp(s.x, 84, Math.max(84, W - 84))
-      const cardY = s.y > 96 ? clamp(s.y - 62, 6, H - 58) : clamp(s.y + 20, 6, H - 58)
+      const cardX = clamp(s.x, 96, Math.max(96, W - 96))
+      const cardY = s.y > 104 ? clamp(s.y - 82, 6, H - 84) : clamp(s.y + 20, 6, H - 84)
       setSelected({ city: p.city, x: cardX, y: cardY })
       onSelectCity?.(p.city)
     }
@@ -462,10 +462,14 @@ export default function TravelStarMap({ cities, stats, className, onSelectCity }
           双指缩放 · 拖拽平移 · 双击复位
         </div>
 
-        {/* 选中城市信息卡 */}
+        {/* 选中城市信息卡（点击进入该城市相册档案） */}
         {selected && (
-          <div className="pointer-events-none absolute z-10 -translate-x-1/2" style={{ left: selected.x, top: selected.y }}>
-            <div className="space-glass rounded-xl px-3 py-2 text-center">
+          <div className="absolute z-10 -translate-x-1/2" style={{ left: selected.x, top: selected.y }}>
+            <button
+              type="button"
+              onClick={() => onSelectCity?.(selected.city)}
+              className="space-glass cursor-pointer rounded-xl px-3.5 py-2 text-center hover:scale-[1.03]"
+            >
               <div className="text-xs font-bold tracking-widest text-album-text1">{selected.city.name}</div>
               {(selected.city.date || selected.city.count != null) && (
                 <div className="mt-1 whitespace-nowrap text-[10px] text-album-text2">
@@ -473,7 +477,8 @@ export default function TravelStarMap({ cities, stats, className, onSelectCity }
                   {selected.city.count != null ? ' · ' + selected.city.count + ' 张' : ''}
                 </div>
               )}
-            </div>
+              <div className="mt-1 text-[10px] tracking-widest text-album-accent">查看档案 →</div>
+            </button>
           </div>
         )}
       </div>

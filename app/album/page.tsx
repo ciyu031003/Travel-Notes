@@ -137,6 +137,15 @@ export default function AlbumPage() {
     loadAlbumData()
   }
 
+  // 星图点选城市 -> 打开该城市旅行档案
+  const handleStarMapSelect = useCallback((city: { name: string }) => {
+    const full = cities.find((c) => c.name === city.name)
+    if (!full) return
+    setSelectedCity(full)
+    setShowStarMap(false)
+    setShowArchive(true)
+  }, [cities])
+
   const handleWebGLFail = useCallback(() => {
     setViewMode('pixel')
   }, [])
@@ -597,7 +606,7 @@ export default function AlbumPage() {
               </button>
             </div>
             <main className="mx-auto w-full max-w-3xl px-4 py-5">
-              <TravelStarMap cities={starCities} stats={{ cities: starCities.length, days: totalDays, photos: totalPhotos }} />
+              <TravelStarMap cities={starCities} stats={{ cities: starCities.length, days: totalDays, photos: totalPhotos }} onSelectCity={handleStarMapSelect} />
             </main>
           </div>
         )}
