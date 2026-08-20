@@ -78,6 +78,11 @@ export class SyncQueue {
     await this.storage.update(id, { status: 'PENDING', lastError: null, updatedAt: Date.now() })
   }
 
+  /** 同步成功后回填云端主键（本地新建记录） */
+  async setRemoteId(id: number, remoteId: number): Promise<void> {
+    await this.storage.update(id, { remoteId })
+  }
+
   /** 统计各状态数量（供同步中心 UI） */
   async stats(): Promise<Record<QueueStatus, number>> {
     const items = await this.storage.list()
