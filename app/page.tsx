@@ -1,37 +1,40 @@
-import { getPostService } from '@/lib/container'
-import { findProvinceByLocation } from '@/lib/province-map'
-import { listAnniversaries } from '@/lib/modules/anniversary/anniversary.service'
+'use client'
+
+import { useEffect, useState } from 'react'
 import HomeClient from '@/components/HomeClient'
+import { apiUrl } from '@/lib/api-base'
 
-export const dynamic = 'force-dynamic'
-
-export const metadata = {
-  title: '我们的小家 | 旅行记录 & 共同回忆',
-  description: '记录两个人的旅行足迹与共同回忆',
+interface HomeData {
+  travelPosts: unknown[]
+  anniversaries: unknown[]
+  provincesVisitedCount: number
 }
 
-export default async function Home() {
-  const { getCurrentUserId } = await import('@/lib/current-user')
-  const userId = await getCurrentUserId()
-  const postService = getPostService()
-  const [travelPosts, anniversaries] = await Promise.all([
-    postService.getPostsHybrid('travel', userId),
-    listAnniversaries(userId),
-  ])
+export default function HomePage() {
+  const [data, setData] = useState<HomeData | null>(null)
+  const [error, setError] = useState('')
 
-  const provincesVisited = new Set<string>()
-  for (const post of travelPosts) {
-    if (post.location) {
-      const p = findProvinceByLocation(post.location)
-      if (p) provincesVisited.add(p.id)
-    }
+  useEffect(() => {
+    fetch(apiUrl('/api/home'))
+      .then((r) => r.json())
+      .then((j) => {
+        if (j && j.error) setError(String(j.error))
+        else setData(j as HomeData)
+      })
+      .catch(() => setError('网络错误，请稍后重试'))
+  }, [])
+
+  if (error) {
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
   }
-
+  if (!data) {
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+  }
   return (
     <HomeClient
-      travelPosts={travelPosts}
-      provincesVisitedCount={provincesVisited.size}
-      anniversaries={anniversaries}
+      travelPosts={data.travelPosts as never[]}
+      provincesVisitedCount={data.provincesVisitedCount}
+      anniversaries={data.anniversaries as never[]}
     />
   )
 }

@@ -1,28 +1,28 @@
-import type { Metadata } from 'next'
-import DashboardClient, { DashboardData } from '@/components/dashboard/DashboardClient'
-import { getDashboardStats } from '@/lib/services/dashboard.service'
+'use client'
 
-export const metadata: Metadata = {
-  title: '数据看板 | 足迹与成长',
-  description: '旅行足迹与共同回忆数据一览',
-}
+import { useEffect, useState } from 'react'
+import DashboardClient, { type DashboardData } from '@/components/dashboard/DashboardClient'
+import { apiUrl } from '@/lib/api-base'
 
-export const dynamic = 'force-dynamic'
+export default function DashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [error, setError] = useState('')
 
-export default async function DashboardPage() {
-  const { getCurrentUserId } = await import('@/lib/current-user')
-  const userId = await getCurrentUserId()
-  const stats = await getDashboardStats(userId)
+  useEffect(() => {
+    fetch(apiUrl('/api/dashboard'))
+      .then((r) => r.json())
+      .then((j) => {
+        if (j && j.error) setError(String(j.error))
+        else setData(j as DashboardData)
+      })
+      .catch(() => setError('网络错误，请稍后重试'))
+  }, [])
 
-  const data: DashboardData = {
-    provinceStats: stats.provinceStats,
-    provincesVisitedCount: stats.provincesVisitedCount,
-    travelCount: stats.travelCount,
-    totalPhotos: stats.totalPhotos,
-    momentCount: stats.momentCount,
-    totalLikes: stats.totalLikes,
-    travelPosts: stats.travelPosts as never[],
+  if (error) {
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
   }
-
+  if (!data) {
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+  }
   return <DashboardClient data={data} />
 }

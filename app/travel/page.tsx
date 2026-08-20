@@ -1,38 +1,28 @@
-import { getPostService } from '@/lib/container'
-import { listTravels } from '@/lib/modules/travel/travel.service'
+'use client'
+
+import { useEffect, useState } from 'react'
 import TravelClient from './TravelClient'
+import { apiUrl } from '@/lib/api-base'
 
-export const dynamic = 'force-dynamic'
+export default function TravelPage() {
+  const [posts, setPosts] = useState<unknown[] | null>(null)
+  const [error, setError] = useState('')
 
-export const metadata = {
-  title: '旅行记录 | 一起走过的地方',
-  description: '记录我们一起旅行的美好时光',
-}
+  useEffect(() => {
+    fetch(apiUrl('/api/travels'))
+      .then((r) => r.json())
+      .then((j) => {
+        if (j && j.error) setError(String(j.error))
+        else setPosts(j?.posts || [])
+      })
+      .catch(() => setError('网络错误，请稍后重试'))
+  }, [])
 
-export default async function TravelPage() {
-  const { getCurrentUserId } = await import('@/lib/current-user')
-  const userId = await getCurrentUserId()
-  // 新 Travel 模型优先；尚未迁移时回退旧 Post(type=travel)
-  const travels = await listTravels(userId)
-  if (travels.length > 0) {
-    const posts = travels.map((t) => ({
-      id: t.id,
-      slug: t.slug,
-      title: t.title,
-      date: t.startDate ?? '',
-      description: t.description ?? undefined,
-      cover: t.cover ?? undefined,
-      images: [] as string[],
-      videos: [] as unknown[],
-      tags: t.tags ?? [],
-      location: t.location ?? undefined,
-      type: 'travel',
-      published: true,
-    }))
-    return <TravelClient posts={posts} />
+  if (error) {
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
   }
-
-  const postService = getPostService()
-  const posts = await postService.getPostsHybrid('travel', userId)
-  return <TravelClient posts={posts} />
+  if (!posts) {
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+  }
+  return <TravelClient posts={posts as never[]} />
 }
