@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { addMediaToAlbum, removeMediaFromAlbum } from '@/lib/modules/album/album.service'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
@@ -10,6 +11,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!auth.authenticated || !auth.username) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
   const { id } = await params
   const albumId = parseInt(id, 10)
   if (isNaN(albumId)) {
@@ -60,6 +63,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (!auth.authenticated || !auth.username) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
   const { id } = await params
   const albumId = parseInt(id, 10)
   if (isNaN(albumId)) {

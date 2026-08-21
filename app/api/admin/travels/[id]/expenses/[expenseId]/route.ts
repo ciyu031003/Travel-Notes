@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { deleteExpense } from '@/lib/modules/travel/travel.service'
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string; expenseId: string }> }) {
@@ -7,6 +8,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (!auth.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
   const { expenseId } = await params
   const id = parseInt(expenseId, 10)
   if (isNaN(id)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })

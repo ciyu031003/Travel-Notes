@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { updateDay, deleteDay } from '@/lib/modules/travel/travel.service'
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string; dayId: string }> }) {
@@ -7,6 +8,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (!auth.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
   const { dayId } = await params
   const id = parseInt(dayId, 10)
   if (isNaN(id)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })
@@ -24,6 +27,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (!auth.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
   const { dayId } = await params
   const id = parseInt(dayId, 10)
   if (isNaN(id)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })
