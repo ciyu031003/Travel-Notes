@@ -38,6 +38,14 @@ interface MeProfile {
     provinceCount: number
   }
   recentTravel: RecentTravel | null
+  capabilities: {
+    isOwner: boolean
+    canManageContent: boolean
+    canManageSocial: boolean
+    canManageSettings: boolean
+    canManageSpace: boolean
+    canViewAudit: boolean
+  }
 }
 
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const

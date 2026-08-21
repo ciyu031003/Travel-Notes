@@ -99,3 +99,39 @@ export async function canDeleteMedia(username: string, mediaId: number): Promise
     return false
   }
 }
+
+// ============================================================
+// 3.6 后台能力模块化：用户能力（capabilities）
+// 移动端不设 /admin，管理入口按能力下沉到各功能模块。
+// 规则：无 Space 成员身份 = 单用户 = OWNER；否则按 Space 角色推导。
+// ============================================================
+export interface UserCapabilities {
+  isOwner: boolean
+  /** 旅行/相册/碎碎念/留言 的增删改（OWNER / MEMBER） */
+  canManageContent: boolean
+  /** 举报审核/评论隐藏/屏蔽（仅 OWNER） */
+  canManageSocial: boolean
+  /** 账号/密码/邮箱/账号名/纪念日系统设置（仅 OWNER） */
+  canManageSettings: boolean
+  /** 邀请/移除成员/角色调整（仅 OWNER） */
+  canManageSpace: boolean
+  /** 审计日志（仅 OWNER） */
+  canViewAudit: boolean
+}
+
+export async function getUserCapabilities(userId: number): Promise<UserCapabilities> {
+  const memberships = await prisma.spaceMember.findMany({
+    where: { userId, status: 'ACTIVE' },
+    select: { role: true },
+  })
+  const isOwner = memberships.length === 0 || memberships.some((m) => m.role === 'OWNER')
+  const canManageContent = isOwner || memberships.some((m) => m.role === 'MEMBER')
+  return {
+    isOwner,
+    canManageContent,
+    canManageSocial: isOwner,
+    canManageSettings: isOwner,
+    canManageSpace: isOwner,
+    canViewAudit: isOwner,
+  }
+}

@@ -1,5 +1,6 @@
 import { prisma } from '../../db'
 import { findProvinceByLocation } from '../../province-map'
+import { getUserCapabilities, type UserCapabilities } from '../space/permissions'
 
 function iso(v: Date | null | undefined): string | null {
   if (!v) return null
@@ -72,6 +73,7 @@ export interface MeProfile {
   createdAt: string | null
   summary: TravelProfileSummary
   recentTravel: RecentTravelSummary | null
+  capabilities: UserCapabilities
 }
 
 /**
@@ -136,6 +138,8 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
   ])
   const likeCount = likeAgg._sum.likeCount ?? 0
 
+  const capabilities = await getUserCapabilities(userId)
+
   const latest = travels[0] ?? null
   const recentTravel: RecentTravelSummary | null = latest
     ? {
@@ -170,6 +174,7 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
       provinceCount,
     },
     recentTravel,
+    capabilities,
   }
 }
 
