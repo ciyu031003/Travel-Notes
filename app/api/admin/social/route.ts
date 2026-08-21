@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -9,6 +10,8 @@ export async function GET(request: NextRequest) {
   if (!auth.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageSocial')
+  if (denied) return denied
   try {
     const [postCount, likeCount, commentCount, favoriteCount, reportCount, pendingReportCount, userCount] = await Promise.all([
       prisma.travelPost.count(),

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { getMomentService } from '@/lib/container'
 import { ok, fail, serverError, unauthorized } from '@/lib/api-response'
 
@@ -25,6 +26,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) return unauthorized()
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
 
   try {
     const body = await request.json().catch(() => ({}))

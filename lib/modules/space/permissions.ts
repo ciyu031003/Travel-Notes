@@ -135,3 +135,11 @@ export async function getUserCapabilities(userId: number): Promise<UserCapabilit
     canViewAudit: isOwner,
   }
 }
+
+export type CapabilityKey = Exclude<keyof UserCapabilities, 'isOwner'>
+
+/** 判断用户是否拥有某能力（3.6 写接口角色校验用） */
+export async function hasCapability(userId: number, capability: CapabilityKey): Promise<boolean> {
+  const caps = await getUserCapabilities(userId)
+  return caps[capability] === true
+}

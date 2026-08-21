@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { getPostService } from '@/lib/container'
 import { ok, fail, unauthorized } from '@/lib/api-response'
 import { validateCreatePost, validateUpdatePost } from '@/lib/validators/post.validator'
@@ -27,6 +28,8 @@ export async function POST(request: NextRequest) {
   if (!auth.authenticated) {
     return unauthorized('未授权')
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
 
   try {
     const body = await request.json()

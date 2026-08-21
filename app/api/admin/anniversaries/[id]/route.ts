@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { updateAnniversary, deleteAnniversary } from '@/lib/modules/anniversary/anniversary.service'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 
@@ -8,6 +9,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (!auth.authenticated || !auth.username) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
   const { id } = await params
   const anniversaryId = parseInt(id, 10)
   if (isNaN(anniversaryId)) {
@@ -38,6 +41,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (!auth.authenticated || !auth.username) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
   const { id } = await params
   const anniversaryId = parseInt(id, 10)
   if (isNaN(anniversaryId)) {

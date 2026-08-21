@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { listAlbums, createAlbum } from '@/lib/modules/album/album.service'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 
@@ -21,6 +22,8 @@ export async function POST(request: NextRequest) {
   if (!auth.authenticated || !auth.username) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
   try {
     const body = await request.json()
     const title = String(body?.title || '').trim()

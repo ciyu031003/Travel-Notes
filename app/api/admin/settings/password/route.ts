@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { getSiteService } from '@/lib/container'
 import { prismaSessionRepository } from '@/lib/repositories/session-repository'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
@@ -9,6 +10,8 @@ export async function POST(request: Request) {
   if (!authResult.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
+  const denied = await requireCapability(authResult.payload?.userId, 'canManageSettings')
+  if (denied) return denied
 
   try {
     const body = await request.json()

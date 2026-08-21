@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { requireCapability } from '@/lib/capability-guard'
 import { getMomentService } from '@/lib/container'
 import { ok, fail, serverError, unauthorized, notFound } from '@/lib/api-response'
 
@@ -8,6 +9,8 @@ export const dynamic = 'force-dynamic'
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) return unauthorized()
+  const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
+  if (denied) return denied
 
   try {
     const { id: idParam } = await params
