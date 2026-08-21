@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket, Orbit } from 'lucide-react'
+import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket, Orbit, Settings2 } from 'lucide-react'
+import ManageEntry from '@/components/layout/ManageEntry'
 import PixelDeskBackground from '@/components/album/PixelDeskBackground'
 import PolaroidWall from '@/components/album/PolaroidWall'
 import TravelFilmCard from '@/components/album/TravelFilmCard'
@@ -354,6 +355,12 @@ export default function AlbumPage() {
           我们的旅行相册 · 存档
         </div>
         <div className="flex items-center gap-2">
+          <ManageEntry
+            href="/admin/albums"
+            label="管理相册"
+            icon={<Settings2 className="w-3.5 h-3.5" />}
+            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
+          />
           <button
             type="button"
             onClick={() => setShowStarMap(true)}

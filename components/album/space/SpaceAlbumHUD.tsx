@@ -1,7 +1,8 @@
 'use client'
 
-import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Map, Minus, Plus, RotateCcw, Sparkles } from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Map, Minus, Plus, RotateCcw, Sparkles, Settings2 } from 'lucide-react'
 import type { CityData } from './particlePhoto'
+import ManageEntry from '@/components/layout/ManageEntry'
 
 interface SpaceAlbumHUDProps {
   cities: CityData[]
@@ -71,15 +72,23 @@ export default function SpaceAlbumHUD({
           <span>{cities.length} 座城市 · {totalPhotos} 张照片</span>
         </div>
 
-        <button
-          type="button"
-          onClick={onTogglePixel}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
-          title="一键切换到复古像素风"
-        >
-          <Map className="w-3.5 h-3.5" />
-          像素风
-        </button>
+        <div className="flex items-center gap-2">
+          <ManageEntry
+            href="/admin/albums"
+            label="管理相册"
+            icon={<Settings2 className="w-3.5 h-3.5" />}
+            className="px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
+          />
+          <button
+            type="button"
+            onClick={onTogglePixel}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
+            title="一键切换到复古像素风"
+          >
+            <Map className="w-3.5 h-3.5" />
+            像素风
+          </button>
+        </div>
       </header>
 
       {/* 底部胶囊栏 */}

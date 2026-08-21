@@ -4,8 +4,9 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
-import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info, Lock } from 'lucide-react'
+import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info, Lock, Settings2 } from 'lucide-react'
 import ChinaMap from '@/components/ChinaMap'
+import ManageEntry from '@/components/layout/ManageEntry'
 import TravelImageCarousel from '@/components/TravelImageCarousel'
 import TravelInfoPanel from '@/components/TravelInfoPanel'
 import AlbumUnlockModal from '@/components/AlbumUnlockModal'
@@ -132,6 +133,12 @@ export default function TravelClient({ posts }: TravelClientProps) {
               <ImageIcon className="w-4 h-4" />
               相册
             </button>
+            <ManageEntry
+              href="/admin/travels"
+              label="管理旅行"
+              icon={<Settings2 className="w-4 h-4" />}
+              className="px-4 py-2 text-sm text-[#5A6670]/70 hover:text-[#5A6670] transition-colors"
+            />
           </div>
         </nav>
       </header>

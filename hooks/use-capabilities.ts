@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { UserCapabilities } from '@/lib/modules/space/permissions'
+import { apiUrl } from '@/lib/api-base'
 
 let cached: UserCapabilities | null = null
 
@@ -14,7 +15,7 @@ export function useCapabilities(): UserCapabilities | null {
 
   useEffect(() => {
     if (cached) return
-    fetch('/api/me/capabilities')
+    fetch(apiUrl('/api/me/capabilities'))
       .then((r) => r.json())
       .then((j) => {
         const next = j?.data?.capabilities
