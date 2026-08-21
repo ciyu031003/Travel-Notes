@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw } from 'lucide-react'
+import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw, Settings, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
@@ -298,10 +298,22 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
         {error && <p className="mt-6 text-sm text-[#E06C6C]">{error}</p>}
 
-        {/* 账号操作弱化 */}
-        <button onClick={logout} className="mt-12 inline-flex items-center gap-1.5 text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]">
-          <LogOut className="h-3.5 w-3.5" />退出登录
-        </button>
+        {/* 账号操作弱化（管理入口按能力显隐） */}
+        <div className="mt-12 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--social-faint)]">
+          {profile.capabilities.canManageSettings && (
+            <Link href="/admin/settings" className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)]">
+              <Settings className="h-3.5 w-3.5" />账号设置
+            </Link>
+          )}
+          {profile.capabilities.isOwner && (
+            <Link href="/admin" className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)]">
+              <ShieldCheck className="h-3.5 w-3.5" />管理后台
+            </Link>
+          )}
+          <button onClick={logout} className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)]">
+            <LogOut className="h-3.5 w-3.5" />退出登录
+          </button>
+        </div>
       </div>
 
       {showEdit && (
