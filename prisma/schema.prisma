@@ -87,6 +87,7 @@ model User {
   anniversaryStart      String?  @db.VarChar(50)
   nickname              String?  @db.VarChar(50)
   avatarUrl             String?  @db.VarChar(500)
+  bio                   String?  @db.VarChar(200)
   accountId             String?  @unique @db.VarChar(12)
   createdAt             DateTime @default(now()) @db.Timestamp(3)
   updatedAt             DateTime @updatedAt @db.Timestamp(3)

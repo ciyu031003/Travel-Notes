@@ -10,7 +10,6 @@ import {
   Images,
   CalendarDays,
   Sparkles,
-  BarChart3,
   X,
   Loader2,
   CornerDownLeft,
@@ -43,7 +42,6 @@ const QUICK_LINKS: QuickLink[] = [
   { href: '/album', label: '私密照片墙', icon: ImageIcon },
   { href: '/albums', label: '纪念相册', icon: Images },
   { href: '/moments', label: '碎碎念', icon: Sparkles },
-  { href: '/dashboard', label: '数据看板', icon: BarChart3 },
   { href: '/search', label: '全站搜索', icon: Search },
 ]
 

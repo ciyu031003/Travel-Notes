@@ -1,77 +1,104 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, Compass, NotebookPen, Bookmark, ChevronRight, RefreshCw } from 'lucide-react'
+import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 
+interface RecentTravel {
+  id: number
+  title: string
+  slug: string
+  location: string | null
+  date: string | null
+  coverUrl: string | null
+  photoCount: number
+}
+
 interface MeProfile {
   id: number
   username: string
   nickname: string | null
+  bio: string | null
   avatarUrl: string | null
   accountId: string | null
   createdAt: string | null
-  stats: {
-    tripCount: number
+  summary: {
+    travelCount: number
     placeCount: number
     photoCount: number
-    dayCount: number
+    travelDays: number | null
     momentCount: number
     favoriteCount: number
-    postCount: number
-    followerCount: number
-    followingCount: number
+    likeCount: number
+    provinceCount: number
   }
-  recentTravel: { id: number; title: string; slug: string; location: string | null; startDate: string | null; endDate: string | null; coverUrl: string | null } | null
-  dashboard: { travelCount: number; totalPhotos: number; momentCount: number; totalLikes: number; provincesVisitedCount: number } | null
+  recentTravel: RecentTravel | null
 }
 
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const
-
-function dateRange(start?: string | null, end?: string | null): string {
-  const s = start ? start.slice(0, 10) : ''
-  const e = end ? end.slice(0, 10) : ''
-  if (s && e && s !== e) return s + ' — ' + e
-  return s || e || ''
-}
+const DEFAULT_BIO = '把走过的路，变成值得记住的故事。'
 
 export default function MeHome({ initial }: { initial: MeProfile }) {
   const router = useRouter()
   const [profile, setProfile] = useState<MeProfile>(initial)
   const [posts, setPosts] = useState<any[]>([])
+  const [postsLoading, setPostsLoading] = useState(true)
+  const [postsError, setPostsError] = useState(false)
   const [unread, setUnread] = useState(0)
   const [showEdit, setShowEdit] = useState(false)
   const [nickname, setNickname] = useState(initial.nickname || '')
-  const [savingNick, setSavingNick] = useState(false)
+  const [bio, setBio] = useState(initial.bio || '')
+  const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const displayName = profile.nickname || profile.username
+  const bioText = profile.bio || DEFAULT_BIO
 
-  useEffect(() => {
-    fetch('/api/me').then((r) => r.json()).then((j) => { if (j.data) { setProfile(j.data); setNickname(j.data.nickname || '') } }).catch(() => {})
-    fetch('/api/social/users/' + initial.id).then((r) => r.json()).then((j) => setPosts(j.data?.posts || [])).catch(() => {})
-    fetch('/api/social/notifications?page=1&pageSize=1').then((r) => r.json()).then((j) => { if (j.data?.unread != null) setUnread(j.data.unread) }).catch(() => {})
+  const loadPosts = useCallback(async () => {
+    setPostsLoading(true)
+    setPostsError(false)
+    try {
+      const r = await fetch('/api/social/users/' + initial.id)
+      const j = await r.json()
+      setPosts(j.data?.posts || [])
+    } catch {
+      setPostsError(true)
+    } finally {
+      setPostsLoading(false)
+    }
   }, [initial.id])
 
-  const saveNickname = async () => {
-    setSavingNick(true); setError('')
+  useEffect(() => {
+    loadPosts()
+    fetch('/api/social/notifications?page=1&pageSize=1')
+      .then((r) => r.json())
+      .then((j) => { if (j.data?.unread != null) setUnread(j.data.unread) })
+      .catch(() => {})
+  }, [loadPosts])
+
+  const saveProfile = async () => {
+    setSaving(true); setError('')
     try {
-      const res = await fetch('/api/me/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nickname }) })
+      const res = await fetch('/api/me/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname, bio }),
+      })
       const json = await res.json()
       if (res.ok && json.data) {
-        setProfile((p) => ({ ...p, nickname: json.data.nickname }))
+        setProfile((p) => ({ ...p, nickname: json.data.nickname, bio: json.data.bio }))
         setShowEdit(false)
       } else {
         setError(json.error || '保存失败')
       }
-    } catch { setError('网络错误') } finally { setSavingNick(false) }
+    } catch { setError('网络错误') } finally { setSaving(false) }
   }
 
   const onPickAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,16 +138,25 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   })
 
   const memories = [
-    { icon: Images, label: '相册', value: profile.stats.photoCount, suffix: '张照片', href: '/album' },
-    { icon: MapPin, label: '旅行', value: profile.stats.tripCount, suffix: '次旅途', href: '/travel' },
-    { icon: NotebookPen, label: '碎碎念', value: profile.stats.momentCount, suffix: '条记录', href: '/moments' },
-    { icon: Bookmark, label: '收藏', value: profile.stats.favoriteCount, suffix: '个记忆', href: '/me/favorites' },
+    { icon: Images, label: '相册', value: profile.summary.photoCount, suffix: '张照片', href: '/album' },
+    { icon: MapPin, label: '旅行', value: profile.summary.travelCount, suffix: '次旅途', href: '/travel' },
+    { icon: NotebookPen, label: '碎碎念', value: profile.summary.momentCount, suffix: '条记录', href: '/moments' },
+    { icon: Bookmark, label: '收藏', value: profile.summary.favoriteCount, suffix: '个记忆', href: '/me/favorites' },
   ]
+
+  const coreStats = [
+    ['次旅行', profile.summary.travelCount],
+    ['个地点', profile.summary.placeCount],
+    ['张照片', profile.summary.photoCount],
+  ] as const
+
+  const recent = profile.recentTravel
+  const recentDate = recent?.date ? recent.date.slice(0, 10) : ''
 
   return (
     <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.05),transparent_60%)]" />
-      <div className="relative mx-auto max-w-5xl px-4 py-6">
+      <div className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <header className="mb-8 flex items-center justify-between">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">My Archive</p>
@@ -128,41 +164,43 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           </div>
           <div className="flex items-center gap-2">
             <SocialThemeToggle />
-            <Link href="/sync" title="数据与同步" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><RefreshCw className="h-4 w-4" /></Link>
-            <Link href="/me/notifications" className="relative rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><span className="text-base">✦</span>{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
+            <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><RefreshCw className="h-4 w-4" /></Link>
+            <Link href="/me/notifications" aria-label="通知" className="relative rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><span className="text-base">✦</span>{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
             <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Home className="h-4 w-4" />返回首页</Link>
           </div>
         </header>
 
-        <section className="grid gap-8 lg:grid-cols-[1.1fr_1.4fr]">
+        <section className="grid gap-10 lg:grid-cols-[1.1fr_1.4fr]">
+          {/* 个人身份信息 */}
           <div>
             <div className="flex items-end gap-5">
               <div className="relative">
                 <SocialAvatar name={displayName} avatarUrl={profile.avatarUrl} size={92} className="text-3xl" />
-                <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="上传头像"
                   className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)] ring-2 ring-[var(--social-bg)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-60">
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
               </div>
-              <button type="button" onClick={() => { setNickname(profile.nickname || ''); setError(''); setShowEdit(true) }}
+              <button type="button" onClick={() => { setNickname(profile.nickname || ''); setBio(profile.bio || ''); setError(''); setShowEdit(true) }} aria-label="编辑资料"
                 className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]">
-                <Pencil className="h-3.5 w-3.5" />编辑昵称
+                <Pencil className="h-3.5 w-3.5" />编辑资料
               </button>
             </div>
 
             <h2 className="mt-5 text-3xl font-semibold tracking-tight">{displayName}</h2>
             <p className="mt-1 text-sm text-[var(--social-muted)]">@{profile.username}</p>
             {profile.accountId && <span className="mt-3 inline-block rounded-full bg-[var(--social-accent-soft)] px-3 py-1 text-xs text-[var(--social-accent)]">ID {profile.accountId}</span>}
-            <p className="mt-5 max-w-xs text-sm leading-relaxed text-[var(--social-muted)]">把走过的路，变成值得记住的故事。</p>
+            <p className="mt-5 max-w-xs text-sm leading-relaxed text-[var(--social-muted)]">「{bioText}」</p>
           </div>
 
+          {/* 最近的一次旅行（第一视觉焦点） */}
           <div className="lg:pt-4">
-            {profile.recentTravel ? (
-              <Link href={'/travel/' + encodeURIComponent(profile.recentTravel.slug)} className="group relative block overflow-hidden rounded-[2rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
+            {recent ? (
+              <Link href={'/travel/' + encodeURIComponent(recent.slug)} className="group relative block overflow-hidden rounded-[2rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
                 <div className="relative aspect-[16/10]">
-                  {profile.recentTravel.coverUrl ? (
-                    <img src={profile.recentTravel.coverUrl} alt={profile.recentTravel.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  {recent.coverUrl ? (
+                    <img src={recent.coverUrl} alt={recent.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-[var(--social-surface2)] text-[var(--social-faint)]"><MapPin className="h-8 w-8" /></div>
                   )}
@@ -170,56 +208,31 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">最近的一次旅行</p>
-                  <h3 className="mt-2 text-2xl font-semibold tracking-tight">{profile.recentTravel.title}</h3>
-                  <p className="mt-2 text-sm text-[var(--social-muted)]">{profile.recentTravel.location || ''}{profile.recentTravel.location ? ' · ' : ''}{dateRange(profile.recentTravel.startDate, profile.recentTravel.endDate)}</p>
+                  <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">{recent.title}</h3>
+                  <p className="mt-2 text-sm text-white/75">{recent.location || ''}{recent.location ? ' · ' : ''}{recentDate}{recentDate ? ' · ' : ''}{recent.photoCount} 张照片</p>
                 </div>
               </Link>
             ) : (
-              <div className="flex aspect-[16/10] items-center justify-center rounded-[2rem] bg-[var(--social-surface-60)] text-[var(--social-faint)] ring-1 ring-[var(--social-line)]">还没有旅行记录</div>
+              <div className="flex aspect-[16/10] flex-col items-center justify-center gap-4 rounded-[2rem] bg-[var(--social-surface-60)] px-6 text-center ring-1 ring-[var(--social-line)]">
+                <p className="text-sm text-[var(--social-text)]">还没有旅行记录</p>
+                <Link href="/travel" className="inline-block rounded-full bg-[var(--social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--social-on-accent)]">去记录第一次旅程 →</Link>
+              </div>
             )}
 
-            <div className="mt-6 grid grid-cols-2 gap-x-10 gap-y-6 sm:grid-cols-4">
-              {[
-                ['Trips', profile.stats.tripCount, '次旅行'],
-                ['Places', profile.stats.placeCount, '个地点'],
-                ['Photos', profile.stats.photoCount, '张照片'],
-                ['Days', profile.stats.dayCount, '天旅途'],
-              ].map(([label, value, suffix]) => (
-                <div key={String(label)}>
-                  <div className="text-3xl font-semibold tracking-tight text-[var(--social-text)] tabular-nums">{value}</div>
-                  <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[var(--social-accent)]">{label}</div>
-                  <div className="mt-1 text-xs text-[var(--social-faint)]">{suffix}</div>
+            {/* 核心统计：旅行护照式，仅 3 个可靠指标（Days 因 Post 无天数来源而隐藏） */}
+            <div className="mt-8 grid grid-cols-3 divide-x divide-[var(--social-line)] rounded-[1.6rem] bg-[var(--social-surface-50)] py-7 ring-1 ring-[var(--social-line)]">
+              {coreStats.map(([label, value]) => (
+                <div key={label} className="text-center">
+                  <div className="text-3xl font-semibold tracking-tight text-[var(--social-text)] tabular-nums sm:text-4xl">{value}</div>
+                  <div className="mt-1.5 text-xs text-[var(--social-muted)]">{label}</div>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {profile.dashboard && (
-          <section className="mt-10">
-            <div className="flex items-center gap-3">
-              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">数据汇总</h2>
-              <div className="h-px flex-1 bg-[var(--social-line)]" />
-              <Link href="/dashboard" className="text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]">数据看板 →</Link>
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-5">
-              {[
-                ['省份', profile.dashboard.provincesVisitedCount],
-                ['旅行记录', profile.dashboard.travelCount],
-                ['旅行照片', profile.dashboard.totalPhotos],
-                ['碎碎念', profile.dashboard.momentCount],
-                ['收到点赞', profile.dashboard.totalLikes],
-              ].map(([label, value]) => (
-                <div key={String(label)}>
-                  <div className="text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
-                  <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[var(--social-accent)]">{label}</div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section className="mt-14">
+        {/* 我的记忆 */}
+        <section className="mt-16">
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">我的记忆</h2>
             <div className="h-px flex-1 bg-[var(--social-line)]" />
@@ -237,13 +250,33 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           </div>
         </section>
 
-        <section className="mt-14">
+        {/* 我的旅行故事 */}
+        <section className="mt-16">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">公开旅行</h2>
+            <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">我的旅行故事</h2>
             <div className="h-px flex-1 bg-[var(--social-line)]" />
             <Link href={'/circle/user/' + profile.id} className="text-xs text-[var(--social-faint)] transition hover:text-[var(--social-text)]">查看全部 <ChevronRight className="inline h-3 w-3" /></Link>
           </div>
-          {posts.length > 0 ? (
+
+          {postsLoading ? (
+            <div className="mt-6 columns-1 gap-5 sm:columns-2 lg:columns-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="mb-5 break-inside-avoid overflow-hidden rounded-[1.4rem] bg-[var(--social-surface-80)] ring-1 ring-[var(--social-line)]">
+                  <div className="aspect-[4/5] animate-pulse bg-[var(--social-surface2)]" />
+                  <div className="space-y-3 p-4">
+                    <div className="h-3 w-1/3 animate-pulse rounded bg-[var(--social-surface2)]" />
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--social-surface2)]" />
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-[var(--social-surface2)]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : postsError ? (
+            <div className="mt-6 rounded-[2rem] bg-[var(--social-surface-50)] px-6 py-16 text-center ring-1 ring-[var(--social-line)]">
+              <p className="text-sm text-[var(--social-muted)]">旅行故事暂时无法加载。</p>
+              <button onClick={loadPosts} className="mt-5 inline-block rounded-full bg-[var(--social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--social-on-accent)]">重新加载 →</button>
+            </div>
+          ) : posts.length > 0 ? (
             <div className="mt-6 columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
               {posts.slice(0, 6).map((p, i) => <SocialFilmCard key={p.id} {...cardProps(p, FRAMES[i % FRAMES.length])} className="mb-5 break-inside-avoid" />)}
             </div>
@@ -257,8 +290,9 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
         {error && <p className="mt-6 text-sm text-[#E06C6C]">{error}</p>}
 
-        <button onClick={logout} className="mt-12 inline-flex items-center gap-2 rounded-full bg-[var(--social-surface)] px-5 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]">
-          <LogOut className="h-4 w-4" />退出登录
+        {/* 账号操作弱化 */}
+        <button onClick={logout} className="mt-12 inline-flex items-center gap-1.5 text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]">
+          <LogOut className="h-3.5 w-3.5" />退出登录
         </button>
       </div>
 
@@ -267,13 +301,16 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowEdit(false)} />
           <div className="absolute left-1/2 top-1/2 w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[1.6rem] bg-[var(--social-surface)] p-5 ring-1 ring-[var(--social-line)]">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-base font-semibold">编辑昵称</h3>
-              <button onClick={() => setShowEdit(false)} className="rounded-full p-1 text-[var(--social-muted)] hover:text-[var(--social-text)]"><X className="h-4 w-4" /></button>
+              <h3 className="text-base font-semibold">编辑资料</h3>
+              <button onClick={() => setShowEdit(false)} aria-label="关闭" className="rounded-full p-1 text-[var(--social-muted)] hover:text-[var(--social-text)]"><X className="h-4 w-4" /></button>
             </div>
-            <p className="mb-3 text-xs text-[var(--social-faint)]">昵称仅用于展示，账号名 @{profile.username} 只能在后台修改。</p>
+            <p className="mb-3 text-xs text-[var(--social-faint)]">账号名 @{profile.username} 只能在后台修改。</p>
+            <label className="mb-1.5 block text-xs text-[var(--social-muted)]">昵称</label>
             <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={24} placeholder="输入 1-24 位昵称" className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]" />
-            <button onClick={saveNickname} disabled={savingNick || !nickname.trim()} className="mt-4 w-full rounded-full bg-[var(--social-accent)] py-3 text-sm font-semibold text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-50">
-              {savingNick ? '保存中…' : '保存'}
+            <label className="mb-1.5 mt-4 block text-xs text-[var(--social-muted)]">个性签名</label>
+            <input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={120} placeholder="写一句话，成为你的旅行签名" className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]" />
+            <button onClick={saveProfile} disabled={saving || !nickname.trim()} className="mt-4 w-full rounded-full bg-[var(--social-accent)] py-3 text-sm font-semibold text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-50">
+              {saving ? '保存中…' : '保存'}
             </button>
           </div>
         </div>

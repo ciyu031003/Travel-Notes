@@ -1,5 +1,5 @@
 import { prisma } from '../../db'
-import { getDashboardStats } from '../../services/dashboard.service'
+import { findProvinceByLocation } from '../../province-map'
 
 function iso(v: Date | null | undefined): string | null {
   if (!v) return null
@@ -7,101 +7,169 @@ function iso(v: Date | null | undefined): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-export async function getMyProfile(userId: number) {
+/** 解析 Post.images 的 JSON 文本，返回图片标识数组（数字 ID 或 URL 字符串） */
+function parseImageTokens(images: string | null | undefined): string[] {
+  if (!images) return []
+  try {
+    const parsed = JSON.parse(images)
+    if (!Array.isArray(parsed)) return []
+    return parsed.map((item: unknown) => String(item).trim()).filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+/** 将图片标识（数字 ID / URL）统一解析为可访问 URL，用于去重与展示 */
+function resolveImageUrl(value: string | number | null | undefined): string | null {
+  if (value == null) return null
+  if (typeof value === 'number') return `/api/images/${value}`
+  const str = String(value).trim()
+  if (!str) return null
+  return /^\d+$/.test(str) ? `/api/images/${str}` : str
+}
+
+/** 单篇旅行记录的照片数（cover + images 去重） */
+function countTravelPhotos(cover: string | null, images: string | null): number {
+  const urls = new Set<string>()
+  const coverUrl = resolveImageUrl(cover)
+  if (coverUrl) urls.add(coverUrl)
+  for (const token of parseImageTokens(images)) {
+    const u = resolveImageUrl(token)
+    if (u) urls.add(u)
+  }
+  return urls.size
+}
+
+export interface TravelProfileSummary {
+  travelCount: number
+  placeCount: number
+  photoCount: number
+  /** Post 无可靠天数来源，固定为 null，前端隐藏 Days */
+  travelDays: number | null
+  momentCount: number
+  favoriteCount: number
+  likeCount: number
+  provinceCount: number
+}
+
+export interface RecentTravelSummary {
+  id: number
+  title: string
+  slug: string
+  location: string | null
+  date: string | null
+  coverUrl: string | null
+  photoCount: number
+}
+
+export interface MeProfile {
+  id: number
+  username: string
+  nickname: string | null
+  bio: string | null
+  avatarUrl: string | null
+  accountId: string | null
+  createdAt: string | null
+  summary: TravelProfileSummary
+  recentTravel: RecentTravelSummary | null
+}
+
+/**
+ * 个人旅行档案统一数据源：
+ * 旅行记录 = Post(type='travel', published=true)，仅统计当前用户自己（owner），
+ * 不再混用 Travel / TravelDay / Media / dashboard 等多套口径。
+ */
+export async function getMyProfile(userId: number): Promise<MeProfile | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
       username: true,
       nickname: true,
+      bio: true,
       avatarUrl: true,
       accountId: true,
-      email: true,
-      emailVerified: true,
-      anniversaryStart: true,
       createdAt: true,
     },
   })
   if (!user) return null
 
-  const [
-    postCount,
-    followerCount,
-    followingCount,
-    favoriteCount,
-    tripCount,
-    dayCount,
-    photoCount,
-    momentCount,
-    travels,
-  ] = await Promise.all([
-    prisma.travelPost.count({ where: { authorId: userId, visibility: 'PUBLIC' } }),
-    prisma.userFollow.count({ where: { followingId: userId } }),
-    prisma.userFollow.count({ where: { followerId: userId } }),
-    prisma.postFavorite.count({ where: { userId } }),
-    prisma.travel.count({ where: { ownerId: userId } }),
-    prisma.travelDay.count({ where: { travel: { ownerId: userId } } }),
-    prisma.media.count({ where: { userId, type: 'IMAGE' } }),
-    prisma.moment.count({ where: { userId } }),
-    prisma.travel.findMany({ where: { ownerId: userId }, select: { location: true } }),
-  ])
-
-  const placeCount = new Set(travels.map((t) => t.location).filter((v): v is string => !!v?.trim())).size
-
-  const recentTravel = await prisma.travel.findFirst({
-    where: { ownerId: userId },
-    orderBy: [{ startDate: 'desc' }, { id: 'desc' }],
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      location: true,
-      startDate: true,
-      endDate: true,
-      coverMedia: { select: { storageKey: true } },
-      cover: true,
-    },
+  const travels = await prisma.post.findMany({
+    where: { userId, type: 'travel', published: true },
+    orderBy: { date: 'desc' },
+    select: { id: true, slug: true, title: true, location: true, date: true, cover: true, images: true },
   })
 
-  function mediaUrl(storageKey: string): string {
-    if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) {
-      const base = (process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')
-      return base + '/' + storageKey
+  const travelCount = travels.length
+
+  const placeCount = new Set(
+    travels.map((t) => t.location?.trim()).filter((v): v is string => !!v)
+  ).size
+
+  // 全部照片（cover + images，按解析后 URL 去重）
+  const allPhotoUrls = new Set<string>()
+  for (const t of travels) {
+    const coverUrl = resolveImageUrl(t.cover)
+    if (coverUrl) allPhotoUrls.add(coverUrl)
+    for (const token of parseImageTokens(t.images)) {
+      const u = resolveImageUrl(token)
+      if (u) allPhotoUrls.add(u)
     }
-    return '/uploads/' + storageKey
   }
+  const photoCount = allPhotoUrls.size
 
-  const coverUrl = recentTravel
-    ? recentTravel.coverMedia?.storageKey
-      ? mediaUrl(recentTravel.coverMedia.storageKey)
-      : recentTravel.cover
+  const provinceIds = new Set<string>()
+  for (const t of travels) {
+    if (!t.location) continue
+    const p = findProvinceByLocation(t.location)
+    if (p) provinceIds.add(p.id)
+  }
+  const provinceCount = provinceIds.size
+
+  const [momentCount, favoriteCount, likeAgg] = await Promise.all([
+    prisma.moment.count({ where: { userId } }),
+    prisma.postFavorite.count({ where: { userId } }),
+    prisma.travelPost.aggregate({
+      where: { authorId: userId, visibility: 'PUBLIC' },
+      _sum: { likeCount: true },
+    }),
+  ])
+  const likeCount = likeAgg._sum.likeCount ?? 0
+
+  const latest = travels[0] ?? null
+  const recentTravel: RecentTravelSummary | null = latest
+    ? {
+        id: latest.id,
+        title: latest.title,
+        slug: latest.slug,
+        location: latest.location,
+        date: iso(latest.date),
+        coverUrl:
+          resolveImageUrl(latest.cover) ??
+          (parseImageTokens(latest.images).map(resolveImageUrl).find(Boolean) ?? null),
+        photoCount: countTravelPhotos(latest.cover, latest.images),
+      }
     : null
-
-  const dashboard = await getDashboardStats(userId).catch(() => null)
 
   return {
     id: user.id,
     username: user.username,
     nickname: user.nickname,
+    bio: user.bio,
     avatarUrl: user.avatarUrl,
     accountId: user.accountId,
-    email: user.email,
-    emailVerified: user.emailVerified,
-    anniversaryStart: user.anniversaryStart,
     createdAt: iso(user.createdAt),
-    stats: { postCount, followerCount, followingCount, favoriteCount, tripCount, placeCount, photoCount, dayCount, momentCount },
-    dashboard,
-    recentTravel: recentTravel
-      ? {
-          id: recentTravel.id,
-          title: recentTravel.title,
-          slug: recentTravel.slug,
-          location: recentTravel.location,
-          startDate: iso(recentTravel.startDate),
-          endDate: iso(recentTravel.endDate),
-          coverUrl,
-        }
-      : null,
+    summary: {
+      travelCount,
+      placeCount,
+      photoCount,
+      travelDays: null,
+      momentCount,
+      favoriteCount,
+      likeCount,
+      provinceCount,
+    },
+    recentTravel,
   }
 }
 
@@ -112,15 +180,40 @@ function normalizeNickname(nickname: unknown): string | null {
   return value.slice(0, 24)
 }
 
-export async function updateMyNickname(userId: number, nickname: unknown) {
-  const next = normalizeNickname(nickname)
-  if (next && !/^[\u4e00-\u9fa5A-Za-z0-9_\-\s]{1,24}$/.test(next)) {
-    throw new Error('昵称仅支持 1-24 位中文/字母/数字/空格/下划线/短横线')
+function normalizeBio(bio: unknown): string | null {
+  if (bio == null) return null
+  const value = String(bio).trim()
+  if (!value) return null
+  return value.slice(0, 120)
+}
+
+export async function updateMyProfile(
+  userId: number,
+  input: { nickname?: unknown; bio?: unknown }
+): Promise<{ nickname: string | null; bio: string | null }> {
+  const data: { nickname?: string | null; bio?: string | null } = {}
+
+  if (Object.prototype.hasOwnProperty.call(input, 'nickname')) {
+    const next = normalizeNickname(input.nickname)
+    if (next && !/^[\u4e00-\u9fa5A-Za-z0-9_\-\s]{1,24}$/.test(next)) {
+      throw new Error('昵称仅支持 1-24 位中文/字母/数字/空格/下划线/短横线')
+    }
+    data.nickname = next
   }
+
+  if (Object.prototype.hasOwnProperty.call(input, 'bio')) {
+    const bio = normalizeBio(input.bio)
+    if (bio && bio.length > 120) {
+      throw new Error('个性签名最多 120 字')
+    }
+    data.bio = bio
+  }
+
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
   if (!user) throw new Error('用户不存在')
-  const updated = await prisma.user.update({ where: { id: userId }, data: { nickname: next } })
-  return { nickname: updated.nickname }
+
+  const updated = await prisma.user.update({ where: { id: userId }, data })
+  return { nickname: updated.nickname, bio: updated.bio }
 }
 
 export async function updateMyAvatar(userId: number, avatarUrl: string) {

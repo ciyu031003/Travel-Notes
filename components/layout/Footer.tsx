@@ -31,7 +31,6 @@ export default function Footer() {
               <li><Link href="/travel" className="hover:text-[#8B4A5A] transition-colors">旅行记录</Link></li>
               <li><Link href="/timeline" className="hover:text-[#8B4A5A] transition-colors">时间线</Link></li>
               <li><Link href="/moments" className="hover:text-[#8B4A5A] transition-colors">碎碎念</Link></li>
-              <li><Link href="/dashboard" className="hover:text-[#8B4A5A] transition-colors">数据看板</Link></li>
             </ul>
           </div>
           <div>

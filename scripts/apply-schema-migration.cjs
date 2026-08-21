@@ -134,6 +134,7 @@ async function main() {
   await addColumn(conn, 'User', 'nickname', 'nickname VARCHAR(50) NULL AFTER anniversaryStart')
   await addColumn(conn, 'User', 'avatarUrl', 'avatarUrl VARCHAR(500) NULL AFTER nickname')
   await addColumn(conn, 'User', 'accountId', 'accountId VARCHAR(12) NULL AFTER avatarUrl')
+  await addColumn(conn, 'User', 'bio', 'bio VARCHAR(200) NULL AFTER accountId')
   await addUniqueIndex(conn, 'User', 'User_accountId_key', 'accountId')
 
   // Post
