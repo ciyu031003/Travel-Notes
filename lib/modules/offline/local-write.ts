@@ -42,3 +42,32 @@ export async function writeLocalEntity(input: LocalWriteInput, queue: SyncQueue)
     payload: input.data,
   })
 }
+
+/** 实体类型 → 本地表名（离线写 + 同步回写共用） */
+export const ENTITY_TABLE: Record<EntityType, string> = {
+  TRAVEL: 'travel',
+  TRAVEL_DAY: 'travel_day',
+  MEMORY: 'memory',
+  MEDIA: 'media',
+  ALBUM: 'album',
+  ALBUM_MEDIA: 'album_media',
+  MOMENT: 'moment',
+  COMMENT: 'comment',
+  LIKE: 'like',
+  FAVORITE: 'favorite',
+}
+
+/**
+ * 上传成功后回写本地实体：syncStatus → SYNCED + 回填 remoteId。
+ * 不动 updatedAt（保持最后一次真实编辑时间），供后续 LWW 拉取比较。
+ */
+export async function markEntitySynced(entityType: EntityType, entityId: string | null, remoteId: number | null): Promise<void> {
+  if (!isNativePlatform() || !entityId) return
+  const table = ENTITY_TABLE[entityType]
+  if (!table) return
+  const db = await getOfflineDb()
+  await db.run(
+    'UPDATE ' + table + ' SET syncStatus = ?, remoteId = COALESCE(?, remoteId) WHERE id = ?',
+    ['SYNCED', remoteId, entityId],
+  )
+}

@@ -7,6 +7,9 @@ export interface MomentRecord {
   content: string
   tags: string[] | null
   createdAt: string
+  updatedAt: string
+  userId: number | null
+  isPublic: boolean
 }
 
 export interface MomentRepository {
@@ -63,6 +66,9 @@ export class PrismaMomentRepository implements MomentRepository {
         content: r.content,
         tags: parseTags(r.tags),
         createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+        updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt),
+        userId: r.userId ?? null,
+        isPublic: !!r.isPublic,
       })),
       total,
       hasMore: page * pageSize < total,
@@ -77,6 +83,9 @@ export class PrismaMomentRepository implements MomentRepository {
       content: r.content,
       tags: parseTags(r.tags),
       createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+      updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt),
+      userId: r.userId ?? null,
+      isPublic: !!r.isPublic,
     }
   }
 

@@ -6,6 +6,9 @@ export interface MomentDTO {
   content: string
   tags: string[] | null
   createdAt: string
+  updatedAt: string
+  userId: number | null
+  isPublic: boolean
 }
 
 export interface MomentPage {

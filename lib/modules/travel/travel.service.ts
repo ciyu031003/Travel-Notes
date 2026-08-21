@@ -21,6 +21,10 @@ export interface TravelSummary {
   cover: string | null
   tags: string[] | null
   location: string | null
+  updatedAt: string | null
+  visibility: string
+  spaceId: number | null
+  ownerId: number | null
 }
 
 export interface ItineraryItemRecord {
@@ -62,6 +66,10 @@ export interface TravelDetail {
   status: string
   days: TravelDayRecord[]
   expenses: ExpenseRecord[]
+  updatedAt: string | null
+  visibility: string
+  spaceId: number | null
+  ownerId: number | null
 }
 
 function safeParseTags(raw: string | null | undefined): string[] | null {
@@ -104,6 +112,10 @@ export async function listTravels(userId?: number | null): Promise<TravelSummary
     cover: t.cover ?? null,
     tags: t.tags ? safeParseTags(t.tags) : null,
     location: t.location ?? null,
+    updatedAt: iso(t.updatedAt),
+    visibility: t.visibility ?? 'COUPLE',
+    spaceId: t.spaceId ?? null,
+    ownerId: t.ownerId ?? null,
   }))
 }
 
@@ -157,6 +169,10 @@ export async function getTravelDetail(id: number, userId?: number | null): Promi
       note: e.note,
       happenedAt: iso(e.happenedAt),
     })),
+    updatedAt: iso(travel.updatedAt),
+    visibility: travel.visibility ?? 'COUPLE',
+    spaceId: travel.spaceId ?? null,
+    ownerId: travel.ownerId ?? null,
   }
 }
 

@@ -19,6 +19,12 @@ export interface AlbumItem {
   mediaCount: number
   date: string | null
   createdAt: string
+  updatedAt: string
+  visibility: string
+  spaceId: number | null
+  userId: number | null
+  coverMediaId: number | null
+  locationId: number | null
 }
 
 export interface AlbumMediaItem {
@@ -61,6 +67,12 @@ function mapAlbum(a: any): AlbumItem {
     mediaCount: a._count?.items ?? 0,
     date: a.date ? (a.date instanceof Date ? a.date.toISOString() : String(a.date)) : null,
     createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt),
+    updatedAt: a.updatedAt instanceof Date ? a.updatedAt.toISOString() : String(a.updatedAt),
+    visibility: a.visibility ?? 'COUPLE',
+    spaceId: a.spaceId ?? null,
+    userId: a.userId ?? null,
+    coverMediaId: a.coverMediaId ?? null,
+    locationId: a.locationId ?? null,
   }
 }
 
