@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
-import { addMediaToAlbum, removeMediaFromAlbum } from '@/lib/modules/album/album.service'
+import { addMediaToAlbum, removeMediaFromAlbum, canManageAlbum } from '@/lib/modules/album/album.service'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
 import { getClientIp } from '@/lib/request-utils'
@@ -18,6 +18,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (isNaN(albumId)) {
     return NextResponse.json({ error: '无效的相册 ID' }, { status: 400 })
   }
+  const owned = await canManageAlbum(albumId, auth.payload?.userId)
+  if (!owned) return NextResponse.json({ error: '相册不存在或无权操作' }, { status: 404 })
 
   try {
     const ip = getClientIp(request)
@@ -70,6 +72,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (isNaN(albumId)) {
     return NextResponse.json({ error: '无效的相册 ID' }, { status: 400 })
   }
+  const owned = await canManageAlbum(albumId, auth.payload?.userId)
+  if (!owned) return NextResponse.json({ error: '相册不存在或无权操作' }, { status: 404 })
   try {
     const body = await request.json()
     const mediaId = parseInt(body?.mediaId, 10)

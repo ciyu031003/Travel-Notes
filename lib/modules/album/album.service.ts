@@ -267,3 +267,25 @@ export async function removeMediaFromAlbum(albumId: number, mediaId: number): Pr
     }
   }
 }
+
+// ============================================================
+// 3.6 子资源所有权校验：判断用户是否可管理该相册。
+// 规则：直接归属（userId）或所属空间（spaceId）的活跃 OWNER/MEMBER。
+// ============================================================
+export async function canManageAlbum(albumId: number, userId: number | null | undefined): Promise<boolean> {
+  if (!userId) return false
+  const album = await prisma.album.findUnique({
+    where: { id: albumId },
+    select: { userId: true, spaceId: true },
+  })
+  if (!album) return false
+  if (album.userId === userId) return true
+  if (album.spaceId) {
+    const member = await prisma.spaceMember.findFirst({
+      where: { spaceId: album.spaceId, userId, status: 'ACTIVE', role: { in: ['OWNER', 'MEMBER'] } },
+      select: { id: true },
+    })
+    if (member) return true
+  }
+  return false
+}

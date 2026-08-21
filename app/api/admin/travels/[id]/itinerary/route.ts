@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
-import { addItineraryItem } from '@/lib/modules/travel/travel.service'
+import { addItineraryItem, findTravelIdByDayId, canManageTravel } from '@/lib/modules/travel/travel.service'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request)
@@ -16,6 +16,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const title = String(body?.title || '').trim()
     if (isNaN(dayId) || !title) {
       return NextResponse.json({ error: '参数不完整：dayId/title 必填' }, { status: 400 })
+    }
+    const travelId = await findTravelIdByDayId(dayId)
+    if (!travelId || !(await canManageTravel(travelId, auth.payload?.userId))) {
+      return NextResponse.json({ error: '旅行不存在或无权操作' }, { status: 404 })
     }
     const result = await addItineraryItem(dayId, {
       title,

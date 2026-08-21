@@ -96,7 +96,8 @@ export async function POST(request: Request) {
     }
 
     return response
-  } catch {
+  } catch (error) {
+    console.error('[POST /api/login] failed:', error)
     return NextResponse.json({ error: '登录失败' }, { status: 500 })
   }
 }

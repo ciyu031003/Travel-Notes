@@ -336,4 +336,48 @@ export async function deleteExpense(id: number): Promise<void> {
   await prisma.expense.delete({ where: { id } })
 }
 
+// ============================================================
+// 3.6 子资源所有权校验：判断用户是否可管理该旅行。
+// 规则：直接归属（ownerId）或所属空间（spaceId）的活跃 OWNER/MEMBER。
+// 与 requireCapability（角色）分层：requireCapability 拦 VIEWER，这里拦「别的空间/别人名下的内容」（IDOR）。
+// ============================================================
+export async function canManageTravel(travelId: number, userId: number | null | undefined): Promise<boolean> {
+  if (!userId) return false
+  const travel = await prisma.travel.findUnique({
+    where: { id: travelId },
+    select: { ownerId: true, spaceId: true },
+  })
+  if (!travel) return false
+  if (travel.ownerId === userId) return true
+  if (travel.spaceId) {
+    const member = await prisma.spaceMember.findFirst({
+      where: { spaceId: travel.spaceId, userId, status: 'ACTIVE', role: { in: ['OWNER', 'MEMBER'] } },
+      select: { id: true },
+    })
+    if (member) return true
+  }
+  return false
+}
+
+/** 由天反查所属旅行 ID（子资源所有权校验用） */
+export async function findTravelIdByDayId(dayId: number): Promise<number | null> {
+  const day = await prisma.travelDay.findUnique({ where: { id: dayId }, select: { travelId: true } })
+  return day?.travelId ?? null
+}
+
+/** 由行程项反查所属旅行 ID（子资源所有权校验用） */
+export async function findTravelIdByItineraryItemId(itemId: number): Promise<number | null> {
+  const item = await prisma.itineraryItem.findUnique({
+    where: { id: itemId },
+    select: { travelDay: { select: { travelId: true } } },
+  })
+  return item?.travelDay?.travelId ?? null
+}
+
+/** 由花费反查所属旅行 ID（子资源所有权校验用） */
+export async function findTravelIdByExpenseId(expenseId: number): Promise<number | null> {
+  const expense = await prisma.expense.findUnique({ where: { id: expenseId }, select: { travelId: true } })
+  return expense?.travelId ?? null
+}
+
 export { ITINERARY_TYPES }

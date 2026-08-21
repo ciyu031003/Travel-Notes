@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
-import { updateDay, deleteDay } from '@/lib/modules/travel/travel.service'
+import { updateDay, deleteDay, findTravelIdByDayId, canManageTravel } from '@/lib/modules/travel/travel.service'
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string; dayId: string }> }) {
   const auth = await requireAuth(request)
@@ -13,6 +13,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const { dayId } = await params
   const id = parseInt(dayId, 10)
   if (isNaN(id)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })
+  const travelId = await findTravelIdByDayId(id)
+  if (!travelId || !(await canManageTravel(travelId, auth.payload?.userId))) {
+    return NextResponse.json({ error: '旅行不存在或无权操作' }, { status: 404 })
+  }
   try {
     const body = await request.json()
     await updateDay(id, body)
@@ -32,6 +36,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const { dayId } = await params
   const id = parseInt(dayId, 10)
   if (isNaN(id)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })
+  const travelId = await findTravelIdByDayId(id)
+  if (!travelId || !(await canManageTravel(travelId, auth.payload?.userId))) {
+    return NextResponse.json({ error: '旅行不存在或无权操作' }, { status: 404 })
+  }
   try {
     await deleteDay(id)
     return NextResponse.json({ success: true })
