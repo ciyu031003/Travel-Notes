@@ -4,9 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { Sparkles, Loader2, Inbox } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import LikeButton from '@/components/like/LikeButton'
+import { apiUrl } from '@/lib/api-base'
+import { readWithFallback } from '@/lib/modules/offline/repository'
+import { readLocalMoments } from '@/lib/modules/offline/moment-read'
 
 export interface MomentItem {
-  id: number
+  id: number | string
   content: string
   tags: string[] | null
   createdAt: string
@@ -45,14 +48,23 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
   const load = useCallback(async (targetPage: number, append: boolean) => {
     if (append) setLoadingMore(true)
     try {
-      const res = await fetch(`/api/moments?page=${targetPage}&pageSize=${limit}`)
-      if (res.ok) {
-        const json: MomentsResponse = await res.json()
-        const data = json.data?.data || []
-        setMoments((prev) => (append ? [...prev, ...data] : data))
-        setHasMore(!!json.data?.hasMore)
-        setPage(targetPage)
-      }
+      const result = await readWithFallback<MomentsResponse>(
+        async () => {
+          const res = await fetch(apiUrl(`/api/moments?page=${targetPage}&pageSize=${limit}`), { credentials: 'include' })
+          if (!res.ok) throw new Error('http ' + res.status)
+          return (await res.json()) as MomentsResponse
+        },
+        async () => {
+          const local = await readLocalMoments()
+          if (local == null) return null
+          return { data: { data: local, total: local.length, hasMore: false } } as MomentsResponse
+        },
+      )
+      const json = result.data
+      const data = json.data?.data || []
+      setMoments((prev) => (append ? [...prev, ...data] : data))
+      setHasMore(!!json.data?.hasMore)
+      setPage(targetPage)
     } catch {
       // 忽略错误
     } finally {
