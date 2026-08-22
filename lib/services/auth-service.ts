@@ -33,10 +33,13 @@ export interface TokenPayload {
 export interface LoginMeta {
   userAgent?: string | null
   ip?: string | null
+  /** 'app' 表示移动端原生壳登录，签发持久会话（免 5h 过期）；默认 'web' */
+  clientType?: 'app' | 'web'
 }
 
-export const DEFAULT_SESSION_SECONDS = 5 * 60 * 60 // 5 小时
-export const REMEMBER_SESSION_SECONDS = 7 * 24 * 60 * 60 // 7 天
+export const DEFAULT_SESSION_SECONDS = 5 * 60 * 60 // 5 小时（Web 默认）
+export const REMEMBER_SESSION_SECONDS = 7 * 24 * 60 * 60 // 7 天（Web 记住我）
+export const APP_SESSION_SECONDS = 365 * 24 * 60 * 60 // 1 年（App 持久登录，免 5h 重验证）
 
 export function hashIp(ip: string | null | undefined): string | null {
   if (!ip) return null
@@ -73,7 +76,9 @@ export class AuthService {
       return { success: false, error: '用户名或密码错误' }
     }
 
-    const ttlSeconds = rememberMe ? REMEMBER_SESSION_SECONDS : DEFAULT_SESSION_SECONDS
+    const ttlSeconds = meta.clientType === 'app'
+      ? APP_SESSION_SECONDS
+      : rememberMe ? REMEMBER_SESSION_SECONDS : DEFAULT_SESSION_SECONDS
     const sid = randomUUID()
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
 
@@ -142,7 +147,9 @@ export class AuthService {
     }
     if (!user) return { success: false, error: '注册失败，请稍后重试' }
 
-    const ttlSeconds = rememberMe ? REMEMBER_SESSION_SECONDS : DEFAULT_SESSION_SECONDS
+    const ttlSeconds = meta.clientType === 'app'
+      ? APP_SESSION_SECONDS
+      : rememberMe ? REMEMBER_SESSION_SECONDS : DEFAULT_SESSION_SECONDS
     const sid = randomUUID()
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
 

@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Lock, Eye, EyeOff, ArrowRight, X, Heart } from 'lucide-react'
 import LoginDoor from '@/components/login/LoginDoor'
+import { apiUrl } from '@/lib/api-base'
+import { isNativePlatform } from '@/lib/modules/offline/platform'
 
 const allCities = [
   '北京', '上海', '广州', '深圳', '杭州', '成都', '西安', '南京', '武汉',
@@ -46,7 +48,7 @@ function LoginPageContent() {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch('/api/check-auth')
+      const res = await fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
         if (data.authenticated) {
@@ -62,10 +64,12 @@ function LoginPageContent() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/login', {
+      const res = await fetch(apiUrl('/api/login'), {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, rememberMe }),
+        // App 原生壳登录：持久会话（免 5h 过期）；Web 保持 5h/7d
+        body: JSON.stringify({ username, password, rememberMe, clientType: isNativePlatform() ? 'app' : 'web' }),
       })
 
       if (res.ok) {
@@ -94,10 +98,11 @@ function LoginPageContent() {
     }
     setIsRegistering(true)
     try {
-      const res = await fetch('/api/register', {
+      const res = await fetch(apiUrl('/api/register'), {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, rememberMe }),
+        body: JSON.stringify({ username, password, rememberMe, clientType: isNativePlatform() ? 'app' : 'web' }),
       })
       if (res.ok) {
         router.push(redirect)
@@ -125,8 +130,9 @@ function LoginPageContent() {
     setAlbumVerifying(true)
 
     try {
-      const res = await fetch('/api/verify-album-password', {
+      const res = await fetch(apiUrl('/api/verify-album-password'), {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: albumPassword }),
       })

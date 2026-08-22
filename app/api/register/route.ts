@@ -26,12 +26,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error.issues?.[0]?.message || '注册信息不合法' }, { status: 400 })
     }
 
+    const clientType: 'app' | 'web' = body?.clientType === 'app' ? 'app' : 'web'
+
     const authService = getAuthService()
     const result = await authService.register(
       validation.data.username,
       validation.data.password,
       validation.data.rememberMe,
-      { userAgent: getUserAgent(request), ip },
+      { userAgent: getUserAgent(request), ip, clientType },
     )
 
     if (!result.success) {
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
       response.cookies.set('admin_session', result.token, {
         httpOnly: true,
         secure: process.env.COOKIE_SECURE === 'true',
-        sameSite: 'lax',
+        sameSite: clientType === 'app' ? 'none' : 'lax',
         maxAge: result.ttlSeconds || DEFAULT_SESSION_SECONDS,
         path: '/',
       })

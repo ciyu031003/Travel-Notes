@@ -31,6 +31,8 @@ export async function POST(request: Request) {
     }
 
     const username = validation.data.username
+    // 移动端原生壳登录：签发持久会话（免 5h 过期）；Web 保持 5h/7d
+    const clientType: 'app' | 'web' = body?.clientType === 'app' ? 'app' : 'web'
 
     const ipLimit = rateLimit({ prefix: 'login:ip', key: ip || 'unknown', limit: IP_LIMIT, windowMs: IP_WINDOW_MS })
     if (!ipLimit.ok) {
@@ -61,6 +63,7 @@ export async function POST(request: Request) {
     const result = await authService.login(username, validation.data.password, validation.data.rememberMe, {
       userAgent: getUserAgent(request),
       ip,
+      clientType,
     })
 
     if (!result.success) {
@@ -89,7 +92,8 @@ export async function POST(request: Request) {
       response.cookies.set('admin_session', result.token, {
         httpOnly: true,
         secure: process.env.COOKIE_SECURE === 'true',
-        sameSite: 'lax',
+        // App 跨域（本地壳 → 服务器 API）需 SameSite=None 才会带上 Cookie；Web 同源用 Lax
+        sameSite: clientType === 'app' ? 'none' : 'lax',
         maxAge: sessionSeconds,
         path: '/',
       })

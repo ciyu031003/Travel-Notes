@@ -84,6 +84,32 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   return response
 }
 
+/**
+ * 移动端本地壳（跨域）访问服务器 API：对允许的来源回显 Origin + 允许携带凭据。
+ * App 壳 origin 通常是 http://localhost / capacitor://localhost，故放行 localhost 与站点域名。
+ */
+function applyCorsHeaders(response: NextResponse, request: NextRequest): NextResponse {
+  const origin = request.headers.get('origin')
+  if (!origin) return response
+  let hostname = ''
+  try {
+    hostname = new URL(origin).hostname
+  } catch {
+    return response
+  }
+  const allowed = new Set(['localhost', '127.0.0.1', 'travel-notes.yuanabd.cn', '106.55.2.197'])
+  if (hostname && allowed.has(hostname)) {
+    response.headers.set('Access-Control-Allow-Origin', origin)
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    response.headers.set('Vary', 'Origin')
+  }
+  return response
+}
+
+function finalizeResponse(response: NextResponse, request: NextRequest): NextResponse {
+  return applyCorsHeaders(applySecurityHeaders(response), request)
+}
+
 async function verifyJWT(token: string): Promise<boolean> {
   try {
     await jwtVerify(token, JWT_SECRET, {
@@ -138,12 +164,21 @@ function rejectCrossOrigin(request: NextRequest): NextResponse | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // CORS 预检（移动端本地壳跨域访问服务器 API）
+  if (request.method === 'OPTIONS') {
+    const res = new NextResponse(null, { status: 204 })
+    res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    res.headers.set('Access-Control-Max-Age', '86400')
+    return applyCorsHeaders(res, request)
+  }
+
   const csrfResponse = rejectCrossOrigin(request)
-  if (csrfResponse) return csrfResponse
+  if (csrfResponse) return applyCorsHeaders(csrfResponse, request)
 
   // 首页及公开前缀路径直接放行（首页需精确匹配，不能用 startsWith('/')）
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
-    return applySecurityHeaders(NextResponse.next())
+    return finalizeResponse(NextResponse.next(), request)
   }
 
   const adminSession = request.cookies.get('admin_session')
@@ -151,7 +186,7 @@ export async function middleware(request: NextRequest) {
   if (!adminSession || !adminSession.value) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    return applySecurityHeaders(NextResponse.redirect(loginUrl))
+    return finalizeResponse(NextResponse.redirect(loginUrl), request)
   }
 
   const isValid = await verifyJWT(adminSession.value)
@@ -161,10 +196,10 @@ export async function middleware(request: NextRequest) {
 
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    return applySecurityHeaders(NextResponse.redirect(loginUrl))
+    return finalizeResponse(NextResponse.redirect(loginUrl), request)
   }
 
-  return applySecurityHeaders(NextResponse.next())
+  return finalizeResponse(NextResponse.next(), request)
 }
 
 export const config = {
