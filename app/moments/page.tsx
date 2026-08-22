@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Sparkles, Settings2 } from 'lucide-react'
-import MomentTimeline from '@/components/moments/MomentTimeline'
+import MomentsContent from '@/components/moments/MomentsContent'
 import ManageEntry from '@/components/layout/ManageEntry'
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ export default function MomentsPage() {
           </p>
         </header>
 
-        <MomentTimeline />
+        <MomentsContent />
       </div>
     </div>
   )

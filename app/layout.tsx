@@ -3,6 +3,7 @@ import './globals.css'
 import LayoutContent from '@/components/layout/LayoutContent'
 import CommandPalette from '@/components/command/CommandPalette'
 import AppUpdatePrompt from '@/components/offline/AppUpdatePrompt'
+import OfflineBootstrap from '@/components/offline/OfflineBootstrap'
 
 export const metadata: Metadata = {
   title: '我们的小家 | 旅行记录 & 共同回忆',
@@ -26,6 +27,7 @@ export default function RootLayout({
         <LayoutContent>{children}</LayoutContent>
         <CommandPalette />
         <AppUpdatePrompt />
+        <OfflineBootstrap />
       </body>
     </html>
   )
