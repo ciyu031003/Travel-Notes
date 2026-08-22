@@ -6,6 +6,13 @@ node_modules
 # Next 打包产物，禁止提交
 .next/
 out/
+# 移动端静态壳构建产物（由 scripts/build-mobile.cjs 生成）
+/www/
+# Android 构建产物
+/android/app/build/
+/android/.gradle/
+/android/build/
+/android/local.properties
 # 依赖、日志、缓存
 node_modules/
 npm-debug.log
