@@ -1,72 +1,78 @@
-import { notFound } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getPostService } from '@/lib/container'
-import { getTravelBySlug } from '@/lib/modules/travel/travel.service'
+import { useParams } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 import { Calendar, MapPin } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
 import dynamicImport from 'next/dynamic'
+import { apiUrl } from '@/lib/api-base'
 
 const VideoPlayer = dynamicImport(() => import('@/components/VideoPlayer'))
 
-export const dynamic = 'force-dynamic'
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug: rawSlug } = await params
-  const slug = decodeURIComponent(rawSlug)
-  const { getCurrentUserId } = await import('@/lib/current-user')
-  const userId = await getCurrentUserId()
-  const travel = await getTravelBySlug(slug, userId)
-  if (travel) {
-    return { title: travel.title, description: travel.description ?? undefined }
-  }
-  // 旧 Post 游记回退：标签页标题显示真实游记标题
-  try {
-    const postService = getPostService()
-    const legacyPost = await postService.getPostBySlugHybrid('travel', slug, userId)
-    if (legacyPost) {
-      return { title: legacyPost.title, description: legacyPost.description || undefined }
-    }
-  } catch {}
-  return { title: '文章不存在' }
+interface DetailData {
+  travel: {
+    id: number
+    title: string
+    slug: string
+    description: string | null
+    startDate: string | null
+    status: string
+    contentHtml: string
+    tags: string[] | null
+    location: string | null
+    cover: string | null
+  } | null
+  legacy: {
+    id: number
+    title: string
+    description: string | null
+    location: string | null
+    date: string
+    images: string[]
+    videos: any[]
+    contentHtml: string
+  } | null
+  images: string[]
+  videos: any[]
 }
 
-export default async function TravelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug: rawSlug } = await params
-  const slug = decodeURIComponent(rawSlug)
-  const { getCurrentUserId } = await import('@/lib/current-user')
-  const userId = await getCurrentUserId()
-  const postService = getPostService()
+export default function TravelDetailPage() {
+  const params = useParams<{ slug: string }>()
+  const slug = decodeURIComponent(params?.slug || '')
+  const [data, setData] = useState<DetailData | null>(null)
+  const [error, setError] = useState('')
 
-  // 新 Travel 优先；旧 Post 兜底（Travel 表为空时也能打开历史游记）
-  let travel = await getTravelBySlug(slug, userId)
-  let legacyPost = null
-  if (!travel) {
-    legacyPost = await postService.getPostBySlugHybrid('travel', slug, userId).catch(() => null)
+  useEffect(() => {
+    if (!slug) return
+    fetch(apiUrl('/api/travels/by-slug/' + encodeURIComponent(slug) + '/detail'), { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j: DetailData) => {
+        if (j?.travel || j?.legacy) setData(j)
+        else setError('旅行不存在')
+      })
+      .catch(() => setError('网络错误，请稍后重试'))
+  }, [slug])
+
+  if (error) {
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
+  }
+  if (!data) {
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
   }
 
-  const legacyImages = (legacyPost as any)?.images || []
-  const legacyVideos = (legacyPost as any)?.videos || []
-
-  // travel 为空且无旧 Post 时 404；否则统一走「全屏图廊 + 文章」布局
-  if (!travel && !legacyPost) {
-    notFound()
-  }
-
-  const record: any = travel ?? legacyPost
-  const images = travel
-    ? travel.cover
-      ? [travel.cover, ...legacyImages]
-      : legacyImages
-    : legacyImages
-  const videos = legacyVideos
-  const detailTitle = record.title
-  const detailDescription = travel ? travel.description ?? undefined : (legacyPost?.description || undefined)
-  const detailLocation = travel ? travel.location ?? undefined : (legacyPost?.location || undefined)
-  const detailDate = travel ? travel.startDate ?? '' : (legacyPost?.date || '')
+  const travel = data.travel
+  const legacy = data.legacy
+  const images = data.images || []
+  const videos = data.videos || []
+  const detailTitle = travel?.title ?? legacy?.title ?? ''
+  const detailDescription = travel?.description ?? legacy?.description ?? undefined
+  const detailLocation = travel?.location ?? legacy?.location ?? undefined
+  const detailDate = travel?.startDate ?? legacy?.date ?? ''
   const detailTags = travel?.tags ?? null
-  const contentHtml = travel ? travel.contentHtml : ((legacyPost as any)?.contentHtml || (legacyPost as any).content)
+  const contentHtml = travel?.contentHtml ?? legacy?.contentHtml ?? ''
 
   const imageProps = {
     images,
@@ -80,9 +86,7 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
 
   return (
     <div className="bg-[#FAFBF7] min-h-screen">
-      {(imageProps.images.length > 0 || imageProps.videos.length > 0) && (
-        <TravelDetailClient {...imageProps} />
-      )}
+      {(images.length > 0 || videos.length > 0) && <TravelDetailClient {...imageProps} />}
 
       <div className="container-custom pt-6">
         <Link
@@ -131,7 +135,7 @@ export default async function TravelDetailPage({ params }: { params: Promise<{ s
             className="prose prose-lg max-w-none prose-headings:text-[#5A6670] prose-p:text-[#5A6670]/80 prose-a:text-[#E8B8C2]"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
-          
+
           <MermaidRenderer />
         </article>
       </div>
