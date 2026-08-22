@@ -34,6 +34,7 @@ const PUBLIC_PATHS = [
   '/api/admin/force-change-password',
   '/api/forgot-password',
   '/api/register',
+  '/api/version',
   '/uploads',
   '/_next',
 ]
