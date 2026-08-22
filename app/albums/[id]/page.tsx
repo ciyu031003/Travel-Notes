@@ -1,5 +1,12 @@
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function AlbumDetailPage() {
-  redirect('/album')
+  const router = useRouter()
+  useEffect(() => {
+    router.replace('/album')
+  }, [router])
+  return null
 }
