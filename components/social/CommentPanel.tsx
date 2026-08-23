@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Send, X, CornerDownRight } from 'lucide-react'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import { cn } from '@/lib/utils'
+import { createComment } from '@/lib/modules/offline/social-write'
 
 interface CommentAuthor { id: number; username: string; nickname?: string | null; avatarUrl?: string | null }
 interface Comment {
@@ -55,20 +56,25 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
   const submit = async () => {
     const text = content.trim()
     if (!text || submitting) return
+    if (replyTo) {
+      // 回复暂不走离线队列（D2 仅一级评论离线写），直接在线提交
+      setSubmitting(true); setError('')
+      try {
+        const res = await fetch('/api/social/posts/' + postId + '/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: text, parentId: replyTo.id }),
+        })
+        if (res.ok) { setContent(''); setReplyTo(null); await load() }
+        else { const json = await res.json().catch(() => null); setError(json?.error || '评论失败') }
+      } catch { setError('网络错误') } finally { setSubmitting(false) }
+      return
+    }
     setSubmitting(true); setError('')
-    try {
-      const res = await fetch('/api/social/posts/' + postId + '/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text, parentId: replyTo?.id ?? null }),
-      })
-      if (res.ok) {
-        setContent(''); setReplyTo(null); await load()
-      } else {
-        const json = await res.json().catch(() => null)
-        setError(json?.error || '评论失败')
-      }
-    } catch { setError('网络错误') } finally { setSubmitting(false) }
+    const r = await createComment(postId, text)
+    if (r.ok) { setContent(''); await load() }
+    else setError(r.error || '评论失败')
+    setSubmitting(false)
   }
 
   const total = comments.reduce((n, c) => n + 1 + (c.replies?.length || 0), 0)

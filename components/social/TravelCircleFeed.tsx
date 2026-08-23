@@ -3,10 +3,13 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Loader2, Compass, Home } from 'lucide-react'
+import { Loader2, Compass, Home, WifiOff } from 'lucide-react'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { apiUrl } from '@/lib/api-base'
+import { readWithFallback } from '@/lib/modules/offline/repository'
+import { readLocalSocialFeed } from '@/lib/modules/offline/social-read'
 
 const TABS = [
   { key: 'recommended', label: '推荐' },
@@ -56,22 +59,31 @@ export default function TravelCircleFeed() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
   const [total, setTotal] = useState(0)
+  const [offline, setOffline] = useState(false)
 
   const load = useCallback(async (t: string, p: number, append: boolean) => {
     if (append) setLoadingMore(true); else setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/social/posts?tab=' + t + '&page=' + p + '&pageSize=12')
-      if (res.ok) {
-        const json = await res.json()
-        const data = json.data || []
-        setPosts((prev) => (append ? [...prev, ...data] : data))
-        setTotal(json.total || 0)
-        setHasMore(json.hasMore || false)
-        setPage(p)
-      } else {
-        setError('加载失败')
-      }
+      const result = await readWithFallback<{ data: Post[]; total: number; hasMore: boolean }>(
+        async () => {
+          const res = await fetch(apiUrl('/api/social/posts?tab=' + t + '&page=' + p + '&pageSize=12'), { credentials: 'include' })
+          if (!res.ok) throw new Error('http ' + res.status)
+          return (await res.json()) as { data: Post[]; total: number; hasMore: boolean }
+        },
+        async () => {
+          const local = await readLocalSocialFeed()
+          if (local == null) return null
+          return { data: local as Post[], total: local.length, hasMore: false }
+        },
+      )
+      const json = result.data
+      const data = json.data || []
+      setPosts((prev) => (append ? [...prev, ...data] : data))
+      setTotal(json.total || 0)
+      setHasMore(json.hasMore || false)
+      setPage(p)
+      setOffline(result.source === 'local')
     } catch { setError('网络错误') } finally {
       if (append) setLoadingMore(false); else setLoading(false)
     }
@@ -111,6 +123,13 @@ export default function TravelCircleFeed() {
           </div>
           <div className="flex shrink-0 items-center gap-2"><SocialThemeToggle /><Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)]"><Home className="h-4 w-4" />返回首页</Link></div>
         </header>
+
+        {offline && (
+          <div className="mb-6 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
+            <WifiOff className="h-3.5 w-3.5" />
+            离线模式：显示已缓存的旅行圈内容
+          </div>
+        )}
 
         <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
           {TABS.map((t) => (

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Heart, MessageCircle, Bookmark } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toggleLike as offlineToggleLike, toggleFavorite as offlineToggleFavorite } from '@/lib/modules/offline/social-write'
 
 interface SocialBarProps {
   postId: number
@@ -45,15 +46,8 @@ export default function SocialBar({
     const next = !prevLiked
     setIsLiked(next)
     setLikes(Math.max(0, prevCount + (next ? 1 : -1)))
-    try {
-      const res = await fetch('/api/social/posts/' + postId + '/like', { method: next ? 'POST' : 'DELETE' })
-      if (res.ok) {
-        const json = await res.json()
-        if (json.data) { setLikes(json.data.likeCount); setIsLiked(json.data.liked) }
-      } else {
-        setIsLiked(prevLiked); setLikes(prevCount)
-      }
-    } catch { setIsLiked(prevLiked); setLikes(prevCount) }
+    const r = await offlineToggleLike(postId, next)
+    if (!r.ok) { setIsLiked(prevLiked); setLikes(prevCount) }
   }
 
   const toggleFavorite = async () => {
@@ -62,15 +56,8 @@ export default function SocialBar({
     const next = !prevFav
     setIsFavorited(next)
     setFavorites(Math.max(0, prevCount + (next ? 1 : -1)))
-    try {
-      const res = await fetch('/api/social/posts/' + postId + '/favorite', { method: next ? 'POST' : 'DELETE' })
-      if (res.ok) {
-        const json = await res.json()
-        if (json.data) { setFavorites(json.data.favoriteCount); setIsFavorited(json.data.favorited) }
-      } else {
-        setIsFavorited(prevFav); setFavorites(prevCount)
-      }
-    } catch { setIsFavorited(prevFav); setFavorites(prevCount) }
+    const r = await offlineToggleFavorite(postId, next)
+    if (!r.ok) { setIsFavorited(prevFav); setFavorites(prevCount) }
   }
 
   const btn = 'inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm tabular-nums transition-all active:scale-90 select-none'
