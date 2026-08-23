@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Users, Loader2, X, Plus, KeyRound, Sparkles, RefreshCw } from 'lucide-react'
+import { Users, Loader2, X, Plus, KeyRound, Sparkles, RefreshCw, Copy, Trash2, UserMinus, ChevronDown, ChevronUp } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
 
 /**
@@ -30,6 +30,23 @@ const ROLE_LABEL: Record<string, string> = {
   VIEWER: '访客',
 }
 
+interface SpaceMember {
+  id: number
+  username: string
+  role: 'OWNER' | 'MEMBER' | 'VIEWER'
+  status: string
+  joinedAt: string
+}
+
+interface SpaceInvite {
+  id: number
+  spaceId: number
+  role: 'OWNER' | 'MEMBER' | 'VIEWER'
+  code?: string
+  expiresAt: string
+  status: 'PENDING' | 'USED' | 'EXPIRED'
+}
+
 export default function SpacePanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [spaces, setSpaces] = useState<SpaceInfo[]>([])
   const [loading, setLoading] = useState(false)
@@ -45,6 +62,13 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
   // 加入表单
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
+
+  // 空间详情（成员/邀请码）
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [members, setMembers] = useState<Record<number, SpaceMember[]>>({})
+  const [invites, setInvites] = useState<Record<number, SpaceInvite[]>>({})
+  const [loadingDetail, setLoadingDetail] = useState<Record<number, boolean>>({})
+  const [copied, setCopied] = useState<Record<number, boolean>>({})
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -66,6 +90,90 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
   }, [open, load])
 
   if (!open) return null
+
+  const loadDetail = async (spaceId: number) => {
+    setLoadingDetail((d) => ({ ...d, [spaceId]: true }))
+    try {
+      const [mRes, iRes] = await Promise.all([
+        fetch(apiUrl(`/api/spaces/${spaceId}/members`), { credentials: 'include' }),
+        fetch(apiUrl(`/api/spaces/${spaceId}/invites`), { credentials: 'include' }),
+      ])
+      const mj = await mRes.json().catch(() => ({}))
+      const ij = await iRes.json().catch(() => ({}))
+      if (mRes.ok) setMembers((m) => ({ ...m, [spaceId]: mj.members || [] }))
+      if (iRes.ok) setInvites((i) => ({ ...i, [spaceId]: ij.invites || [] }))
+    } catch {
+      // 忽略
+    } finally {
+      setLoadingDetail((d) => ({ ...d, [spaceId]: false }))
+    }
+  }
+
+  const toggleExpand = (spaceId: number) => {
+    const next = expandedId === spaceId ? null : spaceId
+    setExpandedId(next)
+    if (next !== null && !members[next]) loadDetail(next)
+  }
+
+  const generateInvite = async (spaceId: number) => {
+    setMessage(null)
+    try {
+      const res = await fetch(apiUrl(`/api/spaces/${spaceId}/invites`), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'MEMBER', expiresInDays: 7 }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(j.error || '生成失败')
+      setMessage({ type: 'ok', text: '邀请码已生成，复制发给你的另一半' })
+      await loadDetail(spaceId)
+    } catch (err: any) {
+      setMessage({ type: 'err', text: err.message || '生成失败' })
+    }
+  }
+
+  const revokeInvite = async (spaceId: number, inviteId: number) => {
+    setMessage(null)
+    try {
+      const res = await fetch(apiUrl(`/api/spaces/${spaceId}/invites/${inviteId}`), {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('撤销失败')
+      setMessage({ type: 'ok', text: '邀请码已撤销' })
+      await loadDetail(spaceId)
+    } catch {
+      setMessage({ type: 'err', text: '撤销失败' })
+    }
+  }
+
+  const removeMember = async (spaceId: number, username: string) => {
+    setMessage(null)
+    try {
+      const res = await fetch(apiUrl(`/api/spaces/${spaceId}/members`), {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      })
+      if (!res.ok) throw new Error('移除失败')
+      setMessage({ type: 'ok', text: `已移除成员 ${username}` })
+      await loadDetail(spaceId)
+    } catch {
+      setMessage({ type: 'err', text: '移除失败' })
+    }
+  }
+
+  const copyCode = (spaceId: number, code: string) => {
+    try {
+      navigator.clipboard.writeText(code)
+      setCopied((c) => ({ ...c, [spaceId]: true }))
+      setTimeout(() => setCopied((c) => ({ ...c, [spaceId]: false })), 1500)
+    } catch {
+      // 忽略
+    }
+  }
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -144,31 +252,120 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
           ) : spaces.length > 0 ? (
             <div className="space-y-4">
               {spaces.map((s) => (
-                <div key={s.id} className="rounded-2xl bg-[var(--social-bg)] p-4 ring-1 ring-[var(--social-line)]">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold">{s.name}</h4>
-                    <span className="rounded-full bg-[var(--social-accent-soft)] px-2.5 py-0.5 text-xs text-[var(--social-accent)]">
-                      {ROLE_LABEL[s.myRole] || s.myRole}
-                    </span>
+                <div key={s.id} className="overflow-hidden rounded-2xl bg-[var(--social-bg)] ring-1 ring-[var(--social-line)]">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold">{s.name}</h4>
+                      <span className="rounded-full bg-[var(--social-accent-soft)] px-2.5 py-0.5 text-xs text-[var(--social-accent)]">
+                        {ROLE_LABEL[s.myRole] || s.myRole}
+                      </span>
+                    </div>
+                    {s.description && <p className="mt-1 text-xs text-[var(--social-muted)]">{s.description}</p>}
+                    <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+                      {[
+                        ['成员', s.memberCount],
+                        ['旅行', s.travelCount ?? 0],
+                        ['相册', s.albumCount ?? 0],
+                        ['回忆', s.memoryCount ?? 0],
+                      ].map(([label, value]) => (
+                        <div key={String(label)} className="rounded-xl bg-[var(--social-surface-60)] py-2">
+                          <div className="text-lg font-semibold tabular-nums">{value}</div>
+                          <div className="text-[11px] text-[var(--social-faint)]">{label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(s.id)}
+                      className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
+                    >
+                      {expandedId === s.id ? <><ChevronUp className="h-3.5 w-3.5" />收起成员与邀请</> : <><ChevronDown className="h-3.5 w-3.5" />成员与邀请（{s.memberCount} 人）</>}
+                    </button>
                   </div>
-                  {s.description && <p className="mt-1 text-xs text-[var(--social-muted)]">{s.description}</p>}
-                  <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-                    {[
-                      ['成员', s.memberCount],
-                      ['旅行', s.travelCount ?? 0],
-                      ['相册', s.albumCount ?? 0],
-                      ['回忆', s.memoryCount ?? 0],
-                    ].map(([label, value]) => (
-                      <div key={String(label)} className="rounded-xl bg-[var(--social-surface-60)] py-2">
-                        <div className="text-lg font-semibold tabular-nums">{value}</div>
-                        <div className="text-[11px] text-[var(--social-faint)]">{label}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {s.myRole === 'OWNER' && (
-                    <p className="mt-3 text-xs text-[var(--social-faint)]">
-                      你是空间主人，可在下方生成邀请码邀请另一半
-                    </p>
+
+                  {expandedId === s.id && (
+                    <div className="border-t border-[var(--social-line)] px-4 py-3">
+                      {loadingDetail[s.id] ? (
+                        <div className="flex justify-center py-6 text-[var(--social-faint)]"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                      ) : (
+                        <div className="space-y-4">
+                          {/* 成员列表 */}
+                          <div>
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--social-faint)]">成员</p>
+                            <div className="space-y-1.5">
+                              {(members[s.id] || []).map((m) => (
+                                <div key={m.id} className="flex items-center justify-between rounded-xl bg-[var(--social-surface-60)] px-3 py-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--social-accent-soft)] text-xs font-semibold text-[var(--social-accent)]">
+                                      {m.username.slice(0, 1).toUpperCase()}
+                                    </span>
+                                    <span className="text-sm">{m.username}</span>
+                                    <span className="text-[11px] text-[var(--social-faint)]">{ROLE_LABEL[m.role]}</span>
+                                  </div>
+                                  {s.myRole === 'OWNER' && m.role !== 'OWNER' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeMember(s.id, m.username)}
+                                      aria-label={`移除 ${m.username}`}
+                                      className="rounded-full p-1 text-[var(--social-faint)] transition hover:text-[#E06C6C]"
+                                    >
+                                      <UserMinus className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              {(members[s.id] || []).length === 0 && <p className="py-2 text-center text-xs text-[var(--social-faint)]">暂无成员</p>}
+                            </div>
+                          </div>
+
+                          {/* 邀请码（仅 OWNER 显示生成与撤销） */}
+                          {s.myRole === 'OWNER' && (
+                            <div>
+                              <div className="mb-2 flex items-center justify-between">
+                                <p className="text-xs font-medium uppercase tracking-wider text-[var(--social-faint)]">邀请码</p>
+                                <button
+                                  type="button"
+                                  onClick={() => generateInvite(s.id)}
+                                  className="inline-flex items-center gap-1 rounded-full bg-[var(--social-accent)] px-3 py-1 text-xs font-medium text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)]"
+                                >
+                                  <Plus className="h-3 w-3" />生成邀请码
+                                </button>
+                              </div>
+                              <div className="space-y-1.5">
+                                {(invites[s.id] || []).filter((i) => i.status === 'PENDING').map((inv) => (
+                                  <div key={inv.id} className="flex items-center justify-between rounded-xl bg-[var(--social-surface-60)] px-3 py-2">
+                                    <code className="font-mono text-sm tracking-widest">{inv.code || '••••-••••'}</code>
+                                    <div className="flex items-center gap-1">
+                                      {inv.code && (
+                                        <button
+                                          type="button"
+                                          onClick={() => copyCode(s.id, inv.code!)}
+                                          aria-label="复制邀请码"
+                                          className="rounded-full p-1.5 text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
+                                        >
+                                          {copied[s.id] ? <Sparkles className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => revokeInvite(s.id, inv.id)}
+                                        aria-label="撤销邀请码"
+                                        className="rounded-full p-1.5 text-[var(--social-faint)] transition hover:text-[#E06C6C]"
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                                {(invites[s.id] || []).filter((i) => i.status === 'PENDING').length === 0 && (
+                                  <p className="py-1 text-center text-xs text-[var(--social-faint)]">暂无有效邀请码</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
