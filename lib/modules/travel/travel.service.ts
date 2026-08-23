@@ -216,8 +216,8 @@ export async function getTravelTimeline(id: number, userId?: number | null): Pro
       memories: {
         orderBy: { happenedAt: 'asc' },
         include: {
-          media: { select: { id: true, storageKey: true } },
-          mediaLinks: { include: { media: { select: { id: true, storageKey: true } } } },
+          media: { select: { id: true, storageKey: true, variants: { where: { variant: 'THUMBNAIL' }, select: { storageKey: true } } } },
+          mediaLinks: { include: { media: { select: { id: true, storageKey: true, variants: { where: { variant: 'THUMBNAIL' }, select: { storageKey: true } } } } } },
         },
       },
     },
@@ -228,10 +228,19 @@ export async function getTravelTimeline(id: number, userId?: number | null): Pro
       ? `${(process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')}/${m.storageKey}`
       : `/uploads/${m.storageKey}`
 
+  /** v3.1 M3-D1：照片优先缩略图（减流量），无变体回退原图 */
+  const thumbUrl = (m: any) => {
+    const thumb = m?.variants?.[0]?.storageKey
+    if (!thumb) return mediaUrl(m)
+    return process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET
+      ? `${(process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')}/${thumb}`
+      : `/uploads/${thumb}`
+  }
+
   const items: TravelDayTimelineItem[] = days.map((d: any) => {
     const memories = (d.memories || []).map((mem: any) => {
-      const primary = (mem.media || []).map((m: any) => ({ id: m.id, url: mediaUrl(m) }))
-      const linked = (mem.mediaLinks || []).map((l: any) => ({ id: l.media.id, url: mediaUrl(l.media) }))
+      const primary = (mem.media || []).map((m: any) => ({ id: m.id, url: thumbUrl(m) }))
+      const linked = (mem.mediaLinks || []).map((l: any) => ({ id: l.media.id, url: thumbUrl(l.media) }))
       const seen = new Set<number>()
       const photos = [...primary, ...linked].filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
       return {

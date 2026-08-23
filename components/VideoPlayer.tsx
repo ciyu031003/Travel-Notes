@@ -17,6 +17,14 @@ interface VideoPlayerProps {
   autoPlay?: boolean
 }
 
+interface VideoInfo {
+  url: string
+  thumbnail?: string
+  duration?: number
+  width?: number
+  height?: number
+}
+
 export default function VideoPlayer({
   videos,
   className = '',
@@ -197,6 +205,8 @@ export default function VideoPlayer({
       <video
         ref={videoRef}
         src={videoUrl}
+        poster={currentVideo?.thumbnail || undefined}
+        preload="none"
         className="w-full h-full object-contain"
         onClick={togglePlay}
         onDoubleClick={toggleFullscreen}
