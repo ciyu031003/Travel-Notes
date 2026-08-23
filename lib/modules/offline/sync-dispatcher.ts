@@ -1,8 +1,11 @@
 /**
- * 同步分发器（Stage 3.4）：把 SyncQueue 项映射为服务器写请求。
- * 说明：媒体上传（UPLOAD_MEDIA）走媒体管线 multipart，不由通用分发器处理。
+ * 同步分发器（Stage 3.4 / C1）：把 SyncQueue 项映射为服务器写请求。
+ * - 普通实体：POST/PUT/DELETE JSON；
+ * - UPLOAD_MEDIA：读本地照片 base64 → multipart 上传相册媒体接口。
  */
 import type { SyncQueueItem } from './types'
+import { readLocalPhotoBase64 } from './media-upload'
+import { apiUrl } from '@/lib/api-base'
 
 export interface UploadResult {
   remoteId?: number
@@ -34,9 +37,10 @@ function resolveEndpoint(item: SyncQueueItem): string {
 
 export class HttpSyncDispatcher implements SyncDispatcher {
   async upload(item: SyncQueueItem): Promise<UploadResult> {
+    if (item.operation === 'UPLOAD_MEDIA') {
+      return this.uploadMedia(item)
+    }
     const base = resolveEndpoint(item)
-    if (item.operation === 'UPLOAD_MEDIA') throw new Error('媒体上传走媒体管线，不由通用分发器处理')
-
     let url = base
     let method = 'POST'
     if (item.operation === 'DELETE') {
@@ -51,7 +55,7 @@ export class HttpSyncDispatcher implements SyncDispatcher {
 
     const hasBody = method !== 'DELETE'
     const body = hasBody ? (item.payload ? JSON.parse(item.payload) : {}) : undefined
-    const res = await fetch(url, {
+    const res = await fetch(apiUrl(url), {
       method,
       credentials: 'include',
       headers: hasBody ? { 'Content-Type': 'application/json' } : undefined,
@@ -63,4 +67,53 @@ export class HttpSyncDispatcher implements SyncDispatcher {
     const remoteId = data && typeof data === 'object' && data.id != null ? Number(data.id) : undefined
     return { remoteId }
   }
+
+  /** 媒体上传：读本地照片 → multipart → POST /api/admin/albums/{albumId}/media */
+  private async uploadMedia(item: SyncQueueItem): Promise<UploadResult> {
+    const payload = item.payload ? JSON.parse(item.payload) : {}
+    const albumId = payload.albumId
+    const localPath = payload.localPath
+    const mimeType = payload.mimeType || 'image/jpeg'
+    if (albumId == null) throw new Error('UPLOAD_MEDIA 缺少 albumId')
+    if (!localPath) throw new Error('UPLOAD_MEDIA 缺少 localPath')
+
+    const base64 = await readLocalPhotoBase64(localPath)
+    if (!base64) throw new Error('本地照片读取失败')
+
+    const bytes = base64ToBytes(base64)
+    const form = new FormData()
+    const ext = extFromMime(mimeType)
+    form.append('files', new Blob([bytes], { type: mimeType }), 'photo-' + Date.now() + '.' + ext)
+
+    const res = await fetch(apiUrl('/api/admin/albums/' + albumId + '/media'), {
+      method: 'POST',
+      credentials: 'include',
+      body: form,
+    })
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    const json = await res.json().catch(() => ({}))
+    const media = json && typeof json === 'object' ? (json as { media?: Array<{ id?: unknown }> }).media : undefined
+    const remoteId = Array.isArray(media) && media[0] && media[0].id != null ? Number(media[0].id) : undefined
+    return { remoteId }
+  }
+}
+
+function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
+  if (typeof atob === 'function') {
+    const bin = atob(b64)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    return bytes
+  }
+  return new Uint8Array(0)
+}
+
+function extFromMime(mimeType: string): string {
+  const map: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+  }
+  return map[mimeType] || 'jpg'
 }
