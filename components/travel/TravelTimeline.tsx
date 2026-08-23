@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { CalendarDays, MapPin, Camera, Sparkles, Loader2 } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
+import MemoryPhotoPicker from './MemoryPhotoPicker'
 
 interface TimelineDay {
   id: number
@@ -35,8 +36,9 @@ function formatDay(dateStr: string | null): string {
 export default function TravelTimeline({ travelId }: { travelId: number }) {
   const [days, setDays] = useState<TimelineDay[] | null>(null)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
-  useEffect(() => {
+  const load = useCallback(() => {
     let alive = true
     fetch(apiUrl(`/api/travels/${travelId}/timeline`), { credentials: 'include' })
       .then((r) => r.json())
@@ -48,6 +50,11 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
       .catch(() => { if (alive) setError('网络错误') })
     return () => { alive = false }
   }, [travelId])
+
+  useEffect(() => {
+    const cleanup = load()
+    return cleanup
+  }, [load, reloadKey])
 
   if (error) return null // 静默降级：时间线失败不阻塞详情页
   if (days === null) {
@@ -139,6 +146,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                               ))}
                             </div>
                           )}
+                          <MemoryPhotoPicker memoryId={mem.id} onDone={() => setReloadKey((k) => k + 1)} />
                         </div>
                       </div>
                     ))}
