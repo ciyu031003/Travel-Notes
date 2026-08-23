@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw, Settings, ShieldCheck } from 'lucide-react'
+import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw, Settings, ShieldCheck, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import SpacePanel from '@/components/space/SpacePanel'
 
 interface RecentTravel {
   id: number
@@ -65,6 +66,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const [showSpace, setShowSpace] = useState(false)
 
   const displayName = profile.nickname || profile.username
   const bioText = profile.bio || DEFAULT_BIO
@@ -172,6 +174,17 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           </div>
           <div className="flex items-center gap-2">
             <SocialThemeToggle />
+            {profile.capabilities.canManageSpace && (
+              <button
+                type="button"
+                onClick={() => setShowSpace(true)}
+                title="我们的空间"
+                aria-label="我们的空间"
+                className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"
+              >
+                <Users className="h-4 w-4" />
+              </button>
+            )}
             <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><RefreshCw className="h-4 w-4" /></Link>
             <Link href="/me/notifications" aria-label="通知" className="relative rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><span className="text-base">✦</span>{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
             <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Home className="h-4 w-4" />返回首页</Link>
@@ -315,6 +328,8 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           </button>
         </div>
       </div>
+
+      {showSpace && <SpacePanel open={showSpace} onClose={() => setShowSpace(false)} />}
 
       {showEdit && (
         <div className="fixed inset-0 z-[70]">
