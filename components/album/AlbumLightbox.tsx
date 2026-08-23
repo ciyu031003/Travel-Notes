@@ -135,7 +135,7 @@ export default function AlbumLightbox({
         <div className="flex items-center gap-2 text-sm">
           <Camera className="w-4 h-4 text-white/60" />
           <span>{cityName || '相册'}</span>
-          <span className="text-white/40">
+          <span className="text-white/70">
             {index + 1} / {images.length}
           </span>
         </div>
@@ -191,7 +191,7 @@ export default function AlbumLightbox({
       {/* 底部：EXIF + 缩略图 */}
       <div className="px-4 sm:px-6 py-4 z-10">
         {exifLoading ? (
-          <p className="text-xs text-white/40 mb-3 flex items-center gap-1.5">
+          <p className="text-xs text-white/70 mb-3 flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5" />
             读取相机信息...
           </p>
@@ -199,7 +199,7 @@ export default function AlbumLightbox({
           <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3 text-xs text-white/70">
             {exifItems.map((item) => (
               <span key={item.label} className="flex items-center gap-1.5">
-                <span className="text-white/40">{item.label}</span>
+                <span className="text-white/70">{item.label}</span>
                 <span className="font-medium text-white/90">{item.value}</span>
               </span>
             ))}

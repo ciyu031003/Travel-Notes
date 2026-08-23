@@ -7,8 +7,26 @@ const SHELL_CACHE = 'tiantu-shell-v1'
 const ASSET_CACHE = 'tiantu-assets-v1'
 const API_CACHE = 'tiantu-api-v1'
 
-self.addEventListener('install', () => {
-  self.skipWaiting()
+// 首屏预缓存（安装时写入，断网冷启动可直接命中）
+const PRECACHE_URLS = ['/', '/login', '/manifest.json']
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches
+      .open(SHELL_CACHE)
+      .then((cache) =>
+        Promise.allSettled(
+          PRECACHE_URLS.map((url) =>
+            fetch(url)
+              .then((res) => {
+                if (res.ok) cache.put(url, res)
+              })
+              .catch(() => {})
+          )
+        )
+      )
+      .then(() => self.skipWaiting())
+  )
 })
 
 self.addEventListener('activate', (event) => {

@@ -1,0 +1,18 @@
+{
+  "name": "甜途 · 旅行记录",
+  "short_name": "甜途",
+  "description": "记录两个人的旅行足迹与共同回忆",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFBF7",
+  "theme_color": "#E8B8C2",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

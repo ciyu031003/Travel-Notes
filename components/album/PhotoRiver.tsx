@@ -121,8 +121,8 @@ export default function PhotoRiver({ images, cityName, onPhotoClick }: PhotoRive
 
   if (images.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-white/40">
-        <Camera className="w-12 h-12 mb-3 opacity-40" />
+      <div className="flex flex-col items-center justify-center h-full text-white/70">
+        <Camera className="w-12 h-12 mb-3 opacity-60" />
         <p className="text-sm">这座城市的星河还未点亮</p>
       </div>
     )
