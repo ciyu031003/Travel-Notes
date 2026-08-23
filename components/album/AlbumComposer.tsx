@@ -63,7 +63,7 @@ export default function AlbumComposer({ onCreated }: { onCreated?: () => void })
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="absolute right-2 top-2 rounded-full p-1 text-album-warm/60 hover:bg-white/10"
+        className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full p-2 text-album-warm/60 hover:bg-white/10"
         aria-label="关闭"
       >
         <X className="h-4 w-4" />

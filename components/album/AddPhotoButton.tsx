@@ -56,10 +56,10 @@ export default function AddPhotoButton({
         onClick={() => canUpload && setOpen(true)}
         disabled={!canUpload || busy}
         title={canUpload ? '添加照片' : '相册同步后才能添加照片'}
-        className="absolute right-1.5 top-1.5 z-10 rounded-full bg-black/50 p-1.5 text-album-warm backdrop-blur transition hover:bg-black/70 disabled:opacity-40"
+        className="absolute right-1.5 top-1.5 z-10 flex h-9 min-w-9 items-center justify-center rounded-full bg-black/50 p-2 text-album-warm backdrop-blur transition hover:bg-black/70 disabled:opacity-40"
         aria-label="添加照片"
       >
-        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
       </button>
 
       {open && (
@@ -67,7 +67,7 @@ export default function AddPhotoButton({
           <div className="w-full max-w-xs rounded-2xl border border-white/15 bg-album-bg2 p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-zpix font-bold text-album-accent">添加照片</h3>
-              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-1 text-album-warm/60 hover:bg-white/10" aria-label="关闭">
+              <button type="button" onClick={() => setOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-full p-2 text-album-warm/60 hover:bg-white/10" aria-label="关闭">
                 <X className="h-4 w-4" />
               </button>
             </div>
