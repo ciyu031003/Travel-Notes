@@ -58,9 +58,20 @@ export async function exportMemoryArchive(username: string): Promise<ExportResul
     include: { days: { orderBy: { sortOrder: 'asc' } } },
   })
 
-  // 2) 回忆（含照片）
+  // 2) 回忆（含照片）——查用户创建或所属空间的回忆
+  const userSpaces = userId
+    ? (await prisma.spaceMember.findMany({
+        where: { userId, status: 'ACTIVE' },
+        select: { spaceId: true },
+      })).map((s) => s.spaceId)
+    : []
   const memories = await prisma.memory.findMany({
-    where: { spaceId: { not: null } } as any,
+    where: {
+      OR: [
+        ...(userSpaces.length ? [{ spaceId: { in: userSpaces } }] : []),
+        ...(userId ? [{ createdById: userId }] : []),
+      ],
+    } as any,
     include: {
       media: { include: { variants: { where: { variant: 'THUMBNAIL' } } } },
       mediaLinks: { include: { media: true } },
