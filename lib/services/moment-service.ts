@@ -1,5 +1,6 @@
 import { MomentRepository, MomentRecord } from '../repositories/moment-repository'
 import { CacheService } from '../infrastructure/cache'
+import { checkContent } from '../modules/content/policy'
 
 export interface MomentDTO {
   id: number
@@ -56,8 +57,10 @@ export class MomentService {
 
   async createMoment(content: string, tags: string[] | null, userId?: number | null, isPublic?: boolean): Promise<{ id: number }> {
     const trimmed = content.trim()
-    if (!trimmed) {
-      throw new Error('内容不能为空')
+    // v3.1 M3-B3：统一内容策略（长度/敏感词/外链限制）
+    const check = checkContent(trimmed, { maxLength: 2000, maxLinks: 0 })
+    if (!check.ok) {
+      throw new Error(check.reason || '内容不合法')
     }
     const result = await this.momentRepo.create(trimmed, tags, userId, isPublic)
     await this.invalidateCache()

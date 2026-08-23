@@ -5,6 +5,7 @@
  * 所有互动走唯一约束 + 事务维护反规范化计数，幂等。
  */
 import { prisma } from '../../db'
+import { checkContent } from '../content/policy'
 
 export type SocialFeedTab = 'recommended' | 'latest' | 'hot' | 'following'
 export type NotificationTypeName = 'LIKE' | 'COMMENT' | 'REPLY' | 'FAVORITE' | 'FOLLOW'
@@ -309,8 +310,9 @@ export async function listPostComments(postId: number, userId?: number | null) {
 
 export async function createPostComment(input: { postId: number; userId: number; content: string; parentId?: number | null }) {
   const content = (input.content || '').trim()
-  if (!content) throw new Error('评论内容不能为空')
-  if (content.length > 1000) throw new Error('评论最多 1000 字')
+  // v3.1 M3-B3：统一内容策略（长度/敏感词/外链限制）
+  const check = checkContent(content, { maxLength: 1000, maxLinks: 0 })
+  if (!check.ok) throw new Error(check.reason || '评论内容不合法')
   const post = await prisma.travelPost.findUnique({ where: { id: input.postId }, select: { id: true, authorId: true } })
   if (!post) throw new Error('帖子不存在')
 
