@@ -101,6 +101,23 @@ export class SpaceService {
     }).catch(() => {})
   }
 
+  /** 成员自己退出空间（D1）：OWNER 不可退出（需删除空间），MEMBER/VIEWER 可退出 */
+  async leaveSpace(actor: string, spaceId: number): Promise<void> {
+    const access = await requireSpaceMember(actor, spaceId)
+    if (access.isOwner) {
+      throw new Error('空间主人不能退出，如需解散请删除空间')
+    }
+    await this.repo.removeMember(spaceId, actor)
+    await writeAuditLog({
+      username: actor,
+      action: 'UPDATE_PERMISSIONS',
+      resourceType: 'SpaceMember',
+      resourceId: String(spaceId),
+      spaceId,
+      metadata: { left: actor },
+    }).catch(() => {})
+  }
+
   /** 生成邀请码（仅 OWNER） */
   async createInvite(actor: string, spaceId: number, role: SpaceRole = 'MEMBER', expiresInDays = 7) {
     await requireSpaceOwner(actor, spaceId)

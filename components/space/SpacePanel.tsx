@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Users, Loader2, X, Plus, KeyRound, Sparkles, RefreshCw, Copy, Trash2, UserMinus, ChevronDown, ChevronUp } from 'lucide-react'
+import { Users, Loader2, X, Plus, KeyRound, Sparkles, RefreshCw, Copy, Trash2, UserMinus, ChevronDown, ChevronUp, LogOut } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
 
 /**
@@ -175,6 +175,22 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
     }
   }
 
+  const leaveSpace = async (spaceId: number) => {
+    if (!window.confirm('确定退出该空间吗？退出后将无法查看空间内共享内容')) return
+    setMessage(null)
+    try {
+      const res = await fetch(apiUrl(`/api/spaces/${spaceId}/leave`), {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('退出失败')
+      setMessage({ type: 'ok', text: '已退出空间' })
+      await load()
+    } catch {
+      setMessage({ type: 'err', text: '退出失败' })
+    }
+  }
+
   const create = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
@@ -281,6 +297,16 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                     >
                       {expandedId === s.id ? <><ChevronUp className="h-3.5 w-3.5" />收起成员与邀请</> : <><ChevronDown className="h-3.5 w-3.5" />成员与邀请（{s.memberCount} 人）</>}
                     </button>
+                    {s.myRole !== 'OWNER' && (
+                      <button
+                        type="button"
+                        onClick={() => leaveSpace(s.id)}
+                        className="mt-1 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs text-[var(--social-faint)] transition hover:text-[#E06C6C]"
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        退出空间
+                      </button>
+                    )}
                   </div>
 
                   {expandedId === s.id && (
