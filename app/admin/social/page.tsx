@@ -11,10 +11,40 @@ export default function AdminSocialPage() {
   const [data, setData] = useState<any>(null)
   const [tab, setTab] = useState<Tab>('posts')
   const [loading, setLoading] = useState(true)
+  const [processing, setProcessing] = useState<number | null>(null)
+  const [notice, setNotice] = useState('')
+
+  const load = () => {
+    fetch('/api/admin/social').then((r) => r.json()).then((j) => setData(j)).catch(() => {})
+  }
 
   useEffect(() => {
     fetch('/api/admin/social').then((r) => r.json()).then((j) => setData(j)).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  // v3.1 M3-B2：处理举报（驳回/下架/隐藏评论/封禁警告）
+  const handleReport = async (reportId: number, action: string) => {
+    if (processing) return
+    const label = { DISMISS: '驳回举报', TAKEDOWN_POST: '下架帖子', HIDE_COMMENT: '隐藏评论', BAN_USER: '封禁警告' } as Record<string, string>
+    if (!window.confirm(`确认执行「${label[action] || action}」？`)) return
+    setProcessing(reportId)
+    setNotice('')
+    try {
+      const res = await fetch('/api/admin/social/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId, action }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(j.error || '处理失败')
+      setNotice(j.message || '处理成功')
+      load()
+    } catch (e: any) {
+      setNotice(e.message || '处理失败')
+    } finally {
+      setProcessing(null)
+    }
+  }
 
   const stats = data?.stats
 
@@ -97,6 +127,7 @@ export default function AdminSocialPage() {
 
             {tab === 'reports' && (
               <div className="space-y-2">
+                {notice && <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{notice}</p>}
                 {(data.reports || []).map((r: any) => (
                   <div key={r.id} className="rounded-2xl border border-gray-200/70 bg-white/70 p-3.5 dark:border-white/10 dark:bg-white/5">
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -105,6 +136,32 @@ export default function AdminSocialPage() {
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">{r.status}</span>
                     </div>
                     <p className="mt-1.5 text-sm text-gray-700 dark:text-gray-200">{r.reason}</p>
+                    {r.status === 'PENDING' && (
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        {[
+                          ['DISMISS', '驳回'],
+                          ['TAKEDOWN_POST', '下架帖子'],
+                          ['HIDE_COMMENT', '隐藏评论'],
+                          ['BAN_USER', '封禁警告'],
+                        ].map(([action, label]) => (
+                          <button
+                            key={action}
+                            type="button"
+                            onClick={() => handleReport(r.id, action)}
+                            disabled={processing === r.id}
+                            className={`rounded-full px-3 py-1 text-xs transition disabled:opacity-50 ${
+                              action === 'DISMISS'
+                                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-white/5 dark:text-gray-300'
+                                : action === 'BAN_USER'
+                                  ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300'
+                                  : 'bg-travel-sakura/60 text-travel-accent hover:bg-travel-sakura dark:bg-travel-accent/15'
+                            }`}
+                          >
+                            {processing === r.id ? '处理中...' : label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
                 {(data.reports || []).length === 0 && <p className="py-10 text-center text-gray-400">暂无举报</p>}

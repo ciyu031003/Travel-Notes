@@ -291,6 +291,8 @@ enum NotificationType {
   REPLY
   FAVORITE
   FOLLOW
+  /// 系统通知（v3.1 M3-B2：治理处理结果，如内容被下架）
+  SYSTEM
 }
 
 /// 举报状态
