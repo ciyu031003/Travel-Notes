@@ -177,6 +177,90 @@ export async function getTravelDetail(id: number, userId?: number | null): Promi
 }
 
 
+export interface TravelDayTimelineItem {
+  id: number
+  date: string | null
+  title: string | null
+  summary: string | null
+  sortOrder: number
+  itinerary: { id: number; title: string; startTime: string | null; endTime: string | null; type: string; notes: string | null; locationName: string | null }[]
+  /** 当天的回忆（含其照片） */
+  memories: {
+    id: number
+    title: string
+    content: string | null
+    mood: string | null
+    happenedAt: string | null
+    photos: { id: number; url: string }[]
+  }[]
+  /** 当天照片（由当天回忆的照片去重汇总，v3.1 M1-A4） */
+  photos: { id: number; url: string }[]
+}
+
+/** v3.1 M1-A4：按天叙事时间线（旅行 → 每一天 → 行程 → 回忆 → 照片） */
+export async function getTravelTimeline(id: number, userId?: number | null): Promise<{ id: number; title: string; days: TravelDayTimelineItem[] } | null> {
+  const travel = await prisma.travel.findFirst({
+    where: { ...scopedWhere(userId, 'ownerId'), id } as any,
+    select: { id: true, title: true },
+  })
+  if (!travel) return null
+
+  const days = await prisma.travelDay.findMany({
+    where: { travelId: id },
+    orderBy: { sortOrder: 'asc' },
+    include: {
+      itineraryItems: {
+        orderBy: { sortOrder: 'asc' },
+        include: { location: { select: { name: true } } },
+      },
+      memories: {
+        orderBy: { happenedAt: 'asc' },
+        include: { media: { select: { id: true, storageKey: true } } },
+      },
+    },
+  })
+
+  const mediaUrl = (m: any) =>
+    process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET
+      ? `${(process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')}/${m.storageKey}`
+      : `/uploads/${m.storageKey}`
+
+  const items: TravelDayTimelineItem[] = days.map((d: any) => {
+    const memories = (d.memories || []).map((mem: any) => ({
+      id: mem.id,
+      title: mem.title,
+      content: mem.content ?? null,
+      mood: mem.mood ?? null,
+      happenedAt: iso(mem.happenedAt),
+      photos: (mem.media || []).map((m: any) => ({ id: m.id, url: mediaUrl(m) })),
+    }))
+    const seen = new Set<number>()
+    const photos = memories
+      .flatMap((mem: any) => mem.photos)
+      .filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
+    return {
+      id: d.id,
+      date: iso(d.date),
+      title: d.title,
+      summary: d.summary,
+      sortOrder: d.sortOrder,
+      itinerary: (d.itineraryItems || []).map((it: any) => ({
+        id: it.id,
+        title: it.title,
+        startTime: iso(it.startTime),
+        endTime: iso(it.endTime),
+        type: it.type,
+        notes: it.notes,
+        locationName: it.location?.name ?? null,
+      })),
+      memories,
+      photos,
+    }
+  })
+
+  return { id: travel.id, title: travel.title, days: items }
+}
+
 export interface TravelPublicDetail {
   id: number
   title: string

@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils'
 import { Calendar, MapPin } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
+import TravelTimeline from '@/components/travel/TravelTimeline'
 import dynamicImport from 'next/dynamic'
 import { apiUrl } from '@/lib/api-base'
 
@@ -135,6 +136,13 @@ export default function TravelDetailShell() {
             className="prose prose-lg max-w-none prose-headings:text-[#5A6670] prose-p:text-[#5A6670]/80 prose-a:text-[#E8B8C2]"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
+
+          {/* v3.1 M1-A4：按天叙事时间线（仅新 Travel 模型有按天数据） */}
+          {travel?.id && (
+            <div className="mt-10">
+              <TravelTimeline travelId={travel.id} />
+            </div>
+          )}
 
           <MermaidRenderer />
         </article>
