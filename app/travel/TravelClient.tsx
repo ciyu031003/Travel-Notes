@@ -26,9 +26,10 @@ interface PostMeta {
 
 interface TravelClientProps {
   posts: PostMeta[]
+  offline?: boolean
 }
 
-export default function TravelClient({ posts }: TravelClientProps) {
+export default function TravelClient({ posts, offline = false }: TravelClientProps) {
   const [showAll, setShowAll] = useState(false)
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
@@ -111,8 +112,7 @@ export default function TravelClient({ posts }: TravelClientProps) {
       />
 
       {/* 顶部导航 */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#FAFBF7]/80 backdrop-blur-md border-b border-[#D8DDD8]/50">
-        <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#FAFBF7]/80 backdrop-blur-md border-b border-[#D8DDD8]/50">        <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
           <Link
             href="/"
             className="font-bold text-lg text-[#5A6670]"
@@ -145,6 +145,11 @@ export default function TravelClient({ posts }: TravelClientProps) {
 
       {/* 主要内容 */}
       <div className="relative z-10 pt-14">
+        {offline && (
+          <div className="bg-[#E8B8C2]/15 border-b border-[#E8B8C2]/30 px-6 py-2 text-center text-xs text-[#B07686]">
+            离线模式：当前显示本地缓存的旅行记录，联网后自动同步
+          </div>
+        )}
         {/* 地图区 - 可收起侧边栏布局 */}
         <section className="relative h-[calc(100vh-56px)] overflow-hidden">
           {/* 地图容器 */}
