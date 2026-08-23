@@ -21,7 +21,16 @@
 
 ## 三、待办（非阻塞，下一轮优化）
 
-- [ ] Performance 提升：Google Fonts 本地化/预加载优化；大组件动态导入（星图/PhotoRiver 已按需，可查首屏 JS 体积）。
+- [x] ~~Performance 提升~~：**D3 已完成**（2026-08-23）——Google Fonts 本地化（自托管 latin 子集 Inter 400/500/600 + Playfair 700/900，public/fonts/），移除远程 fonts.googleapis.com 加载。
 - [ ] target-size：交互按钮最小 44×44（相册小图标按钮）。
 - [ ] valid-source-maps：构建产物不产出 sourcemap（或本地保留）。
 - [ ] 真机回归（C3 清单）执行后回填。
+
+## 四、D3 复测结果（2026-08-23 · 字体本地化后）
+
+| 维度 | C4 基线 | D3 后 | 变化 |
+| --- | --- | --- | --- |
+| Performance | 62 | **69** | +7（消除 Google Fonts 第三方阻塞） |
+| Accessibility | 95 | 95 | 持平（target-size 待办） |
+| Best Practices | 92 | **100** | +8 |
+| SEO | 100 | — | 未复测（无相关改动） |
