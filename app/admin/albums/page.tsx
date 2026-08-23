@@ -38,6 +38,8 @@ export default function AdminAlbumsPage() {
   const [creating, setCreating] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [travelId, setTravelId] = useState<number | ''>('')
+  const [travels, setTravels] = useState<{ id: number; title: string }[]>([])
 
   const [selected, setSelected] = useState<number | null>(null)
   const [detail, setDetail] = useState<AlbumDetail | null>(null)
@@ -58,6 +60,14 @@ export default function AdminAlbumsPage() {
   }, [])
 
   useEffect(() => { fetchAlbums() }, [fetchAlbums])
+
+  // 加载旅行列表（v3.1 M1-A1：相册绑定旅行）
+  useEffect(() => {
+    fetch('/api/admin/travels')
+      .then((r) => r.json())
+      .then((j) => setTravels((j.travels || []).map((t: any) => ({ id: t.id, title: t.title }))))
+      .catch(() => {})
+  }, [])
 
   const fetchDetail = useCallback(async (id: number) => {
     const res = await fetch(`/api/admin/albums/${id}`)
@@ -83,14 +93,14 @@ export default function AdminAlbumsPage() {
       const res = await fetch('/api/admin/albums', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), description }),
+        body: JSON.stringify({ title: title.trim(), description, travelId: travelId === '' ? undefined : travelId }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setError(data.error || '创建失败')
         return
       }
-      setTitle(''); setDescription('')
+      setTitle(''); setDescription(''); setTravelId('')
       await fetchAlbums()
       setSelected(data.id)
     } catch {
@@ -194,6 +204,16 @@ export default function AdminAlbumsPage() {
               placeholder="简介（可选）"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             />
+            <select
+              value={travelId}
+              onChange={(e) => setTravelId(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+            >
+              <option value="">关联旅行（可选）</option>
+              {travels.map((t) => (
+                <option key={t.id} value={t.id}>{t.title}</option>
+              ))}
+            </select>
             {error && (
               <p className="flex items-center gap-1 mt-2 text-xs text-red-500">
                 <AlertCircle className="w-3.5 h-3.5" /> {error}
