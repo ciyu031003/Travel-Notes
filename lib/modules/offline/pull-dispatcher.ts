@@ -37,6 +37,7 @@ export class HttpPullDispatcher implements PullDispatcher {
         case 'MOMENT': return await this.pullMoments()
         case 'TRAVEL': return await this.pullTravels()
         case 'ALBUM': return await this.pullAlbums()
+        case 'SOCIAL_POST': return await this.pullSocialPosts()
         default: return []
       }
     } catch {
@@ -110,6 +111,40 @@ export class HttpPullDispatcher implements PullDispatcher {
         isPublic: a.isPublic ? 1 : 0,
         spaceId: a.spaceId ?? null,
         userId: a.userId ?? null,
+      },
+    }))
+  }
+
+  /** 旅行圈 Feed 缓存（D2 社交离线读）：拉推荐 Feed 前若干条进本地 social_post */
+  private async pullSocialPosts(): Promise<PullEntity[]> {
+    const res = await fetch(apiUrl('/api/social/posts?tab=recommended&page=1&pageSize=50'), { credentials: 'include' })
+    if (!res.ok) return []
+    const json = await res.json()
+    const rows = json?.data ?? []
+    return rows.map((p: any): PullEntity => ({
+      table: 'social_post',
+      id: String(p.id),
+      remoteId: Number(p.id),
+      updatedAt: toMs(p.publishedAt) || Date.now(),
+      data: {
+        title: p.title ?? '',
+        summary: p.summary ?? null,
+        coverUrl: p.coverUrl ?? null,
+        location: p.location ?? null,
+        startDate: p.startDate ? new Date(p.startDate).getTime() : null,
+        endDate: p.endDate ? new Date(p.endDate).getTime() : null,
+        dayCount: p.dayCount ?? 0,
+        photoCount: p.photoCount ?? 0,
+        authorId: p.author?.id ?? null,
+        authorName: p.author?.username ?? null,
+        authorNickname: p.author?.nickname ?? null,
+        authorAvatar: p.author?.avatarUrl ?? null,
+        likeCount: p.likeCount ?? 0,
+        commentCount: p.commentCount ?? 0,
+        favoriteCount: p.favoriteCount ?? 0,
+        isLiked: p.isLiked ? 1 : 0,
+        isFavorited: p.isFavorited ? 1 : 0,
+        publishedAt: p.publishedAt ? new Date(p.publishedAt).getTime() : null,
       },
     }))
   }

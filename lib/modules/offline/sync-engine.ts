@@ -14,8 +14,8 @@ import { markEntitySynced } from './local-write'
 
 const BASE_RETRY_MS = 30_000
 
-/** 首期下载拉取的实体类型（D-4 首期离线读范围：碎碎念 / 旅行 / 相册） */
-const PULL_ENTITY_TYPES = ['MOMENT', 'TRAVEL', 'ALBUM'] as const
+/** 下载拉取的实体类型（D-4 首期离线读范围：碎碎念 / 旅行 / 相册 + D2 旅行圈 Feed） */
+const PULL_ENTITY_TYPES = ['MOMENT', 'TRAVEL', 'ALBUM', 'SOCIAL_POST'] as const
 
 export class SyncEngine {
   private running = false

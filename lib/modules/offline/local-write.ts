@@ -52,6 +52,7 @@ export const ENTITY_TABLE: Record<EntityType, string> = {
   ALBUM: 'album',
   ALBUM_MEDIA: 'album_media',
   MOMENT: 'moment',
+  SOCIAL_POST: 'social_post',
   COMMENT: 'comment',
   LIKE: 'like',
   FAVORITE: 'favorite',

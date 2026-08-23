@@ -5,7 +5,7 @@
  * 社交互动表（comment/like/favorite）按 D-4 决策后置，暂不建表。
  */
 
-export const OFFLINE_SCHEMA_VERSION = 1
+export const OFFLINE_SCHEMA_VERSION = 2
 
 export const CREATE_TABLES_SQL: string[] = [
   // 元信息（版本 / 游标）
@@ -58,6 +58,16 @@ export const CREATE_TABLES_SQL: string[] = [
   "CREATE TABLE IF NOT EXISTS moment (" +
     "id TEXT PRIMARY KEY, remoteId INTEGER, content TEXT, tags TEXT, userId INTEGER, isPublic INTEGER, " +
     "updatedAt INTEGER NOT NULL, syncStatus TEXT NOT NULL DEFAULT 'SYNCED', deleted INTEGER NOT NULL DEFAULT 0)",
+
+  // 旅行圈帖子缓存（D2 社交离线读：Feed/详情离线展示 + 本地互动状态）
+  "CREATE TABLE IF NOT EXISTS social_post (" +
+    "id TEXT PRIMARY KEY, remoteId INTEGER, title TEXT, summary TEXT, coverUrl TEXT, " +
+    "location TEXT, startDate INTEGER, endDate INTEGER, dayCount INTEGER, photoCount INTEGER, " +
+    "authorId INTEGER, authorName TEXT, authorNickname TEXT, authorAvatar TEXT, " +
+    "likeCount INTEGER NOT NULL DEFAULT 0, commentCount INTEGER NOT NULL DEFAULT 0, favoriteCount INTEGER NOT NULL DEFAULT 0, " +
+    "isLiked INTEGER NOT NULL DEFAULT 0, isFavorited INTEGER NOT NULL DEFAULT 0, " +
+    "publishedAt INTEGER, updatedAt INTEGER NOT NULL, " +
+    "syncStatus TEXT NOT NULL DEFAULT 'SYNCED', deleted INTEGER NOT NULL DEFAULT 0)",
 ]
 
 export const CREATE_INDEXES_SQL: string[] = [

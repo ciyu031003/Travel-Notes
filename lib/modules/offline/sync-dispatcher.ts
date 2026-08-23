@@ -32,6 +32,15 @@ function resolveEndpoint(item: SyncQueueItem): string {
     if (travelId == null) throw new Error('MEMORY 缺少 travelId')
     return '/api/travels/' + travelId + '/memories'
   }
+  if (item.entityType === 'LIKE' || item.entityType === 'FAVORITE' || item.entityType === 'COMMENT') {
+    const payload = item.payload ? JSON.parse(item.payload) : {}
+    const postId = payload.postId
+    if (postId == null) throw new Error(item.entityType + ' 缺少 postId')
+    const base = '/api/social/posts/' + postId
+    if (item.entityType === 'LIKE') return base + '/like'
+    if (item.entityType === 'FAVORITE') return base + '/favorite'
+    return base + '/comments'
+  }
   throw new Error('未支持的实体类型: ' + item.entityType)
 }
 
@@ -44,9 +53,16 @@ export class HttpSyncDispatcher implements SyncDispatcher {
     let url = base
     let method = 'POST'
     if (item.operation === 'DELETE') {
-      if (item.remoteId == null) throw new Error('DELETE 缺少 remoteId')
-      url = base + '/' + item.remoteId
-      method = 'DELETE'
+      if (item.remoteId == null && item.entityType !== 'LIKE' && item.entityType !== 'FAVORITE') {
+        throw new Error('DELETE 缺少 remoteId')
+      }
+      // LIKE/FAVORITE 为幂等切换接口（POST 点赞 / DELETE 取消，同一 URL）；COMMENT 用 remoteId 定位
+      if (item.entityType === 'LIKE' || item.entityType === 'FAVORITE') {
+        method = 'DELETE'
+      } else {
+        url = base + '/' + item.remoteId
+        method = 'DELETE'
+      }
     } else if (item.operation === 'UPDATE') {
       if (item.remoteId == null) throw new Error('UPDATE 缺少 remoteId')
       url = base + '/' + item.remoteId

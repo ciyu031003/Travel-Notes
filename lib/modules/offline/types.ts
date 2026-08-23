@@ -18,6 +18,7 @@ export type EntityType =
   | 'ALBUM'
   | 'ALBUM_MEDIA'
   | 'MOMENT'
+  | 'SOCIAL_POST'
   | 'COMMENT'
   | 'LIKE'
   | 'FAVORITE'
