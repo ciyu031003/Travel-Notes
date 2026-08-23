@@ -72,3 +72,44 @@ export async function readLocalSocialFeed(): Promise<LocalSocialPost[] | null> {
     return null
   }
 }
+
+/** 按 id 读本地旅行圈单帖（帖子详情离线回退用） */
+export async function readLocalSocialPostById(postId: number | string): Promise<LocalSocialPost | null> {
+  if (!isNativePlatform()) return null
+  try {
+    const rows = await queryRows(
+      'SELECT id, remoteId, title, summary, coverUrl, location, startDate, endDate, dayCount, photoCount, ' +
+        'authorId, authorName, authorNickname, authorAvatar, likeCount, commentCount, favoriteCount, ' +
+        'isLiked, isFavorited, publishedAt FROM social_post WHERE (remoteId = ? OR id = ?) AND deleted = 0 LIMIT 1',
+      [Number(postId), String(postId)],
+    )
+    const r = rows[0]
+    if (!r) return null
+    const remoteId = r[1] == null ? null : Number(r[1])
+    return {
+      id: remoteId ?? String(r[0]),
+      title: String(r[2] ?? ''),
+      summary: r[3] == null ? null : String(r[3]),
+      coverUrl: r[4] == null ? null : String(r[4]),
+      location: r[5] == null ? null : String(r[5]),
+      startDate: msToIso(r[6]),
+      endDate: msToIso(r[7]),
+      dayCount: Number(r[8]) || 0,
+      photoCount: Number(r[9]) || 0,
+      author: r[10] == null ? null : {
+        id: Number(r[10]),
+        username: r[11] == null ? null : String(r[11]),
+        nickname: r[12] == null ? null : String(r[12]),
+        avatarUrl: r[13] == null ? null : String(r[13]),
+      },
+      likeCount: Number(r[14]) || 0,
+      commentCount: Number(r[15]) || 0,
+      favoriteCount: Number(r[16]) || 0,
+      isLiked: !!r[17],
+      isFavorited: !!r[18],
+      publishedAt: msToIso(r[19]),
+    }
+  } catch {
+    return null
+  }
+}

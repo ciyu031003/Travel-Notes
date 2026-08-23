@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, MapPin, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, X } from 'lucide-react'
+import { ArrowLeft, MapPin, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, X, WifiOff } from 'lucide-react'
 import SocialBar from './SocialBar'
 import CommentPanel from './CommentPanel'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import PhotoViewer from '@/components/album/PhotoViewer'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { apiUrl } from '@/lib/api-base'
+import { readWithFallback } from '@/lib/modules/offline/repository'
+import { readLocalSocialPostById } from '@/lib/modules/offline/social-read'
 
 interface PostDetailData {
   id: number
@@ -42,13 +45,31 @@ export default function PostDetail({ postId }: { postId: number }) {
   const [reportReason, setReportReason] = useState('')
   const [reporting, setReporting] = useState(false)
   const [blocked, setBlocked] = useState(false)
+  const [offline, setOffline] = useState(false)
 
   useEffect(() => {
-    fetch('/api/social/posts/' + postId)
-      .then((r) => r.json())
-      .then((json) => { if (json.data) setPost(json.data); else setError(json.error || '帖子不存在') })
-      .catch(() => setError('网络错误'))
-      .finally(() => setLoading(false))
+    let alive = true
+    readWithFallback<PostDetailData>(
+      async () => {
+        const res = await fetch(apiUrl('/api/social/posts/' + postId), { credentials: 'include' })
+        if (!res.ok) throw new Error('http ' + res.status)
+        const json = await res.json()
+        if (!json.data) throw new Error(json.error || '帖子不存在')
+        return json.data as PostDetailData
+      },
+      async () => {
+        const local = await readLocalSocialPostById(postId)
+        return local as PostDetailData | null
+      },
+    )
+      .then((result) => {
+        if (!alive) return
+        setPost(result.data)
+        setOffline(result.source === 'local')
+      })
+      .catch((e) => { if (alive) setError(e instanceof Error ? e.message : '帖子不存在') })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
   }, [postId])
 
   const submitReport = async () => {
@@ -80,6 +101,12 @@ export default function PostDetail({ postId }: { postId: number }) {
     <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%)]" />
       <div className="relative mx-auto max-w-3xl px-4 py-6">
+        {offline && (
+          <div className="mb-4 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
+            <WifiOff className="h-3.5 w-3.5" />
+            离线模式：显示已缓存的帖子内容
+          </div>
+        )}
         <header className="mb-7 flex items-center gap-3">
           <div className="ml-auto"><SocialThemeToggle /></div>
           <Link href="/circle" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
