@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket, Orbit, Settings2 } from 'lucide-react'
@@ -18,6 +18,10 @@ import PixelUnlockModal from '@/components/album/PixelUnlockModal'
 import PhotoChatView from '@/components/album/PhotoChatView'
 import GalaxyAlbumScene from '@/components/album/space/GalaxyAlbumScene'
 import SpaceUnlockModal from '@/components/album/space/SpaceUnlockModal'
+import AlbumComposer from '@/components/album/AlbumComposer'
+import { readLocalAlbums } from '@/lib/modules/offline/album-read'
+import { useLocalMediaUrls } from '@/hooks/use-local-media-url'
+import { isNativePlatform } from '@/lib/modules/offline/platform'
 
 interface CityDay {
   date: string
@@ -118,10 +122,26 @@ export default function AlbumPage() {
           setSelectedCity(data.cities[0])
         }
       } else {
-        setIsUnlocked(false)
+        // 在线但未解锁：尝试本地缓存（离线兜底）
+        const local = await readLocalAlbums()
+        if (local) {
+          setIsUnlocked(true)
+          setAlbums(local as never[])
+          setCities([])
+        } else {
+          setIsUnlocked(false)
+        }
       }
     } catch {
-      setIsUnlocked(false)
+      // 离线/失败：回退本地相册缓存
+      const local = await readLocalAlbums()
+      if (local) {
+        setIsUnlocked(true)
+        setAlbums(local as never[])
+        setCities([])
+      } else {
+        setIsUnlocked(false)
+      }
     } finally {
       setCheckingLock(false)
       setLoading(false)
@@ -153,6 +173,13 @@ export default function AlbumPage() {
 
   const totalPhotos = cities.reduce((sum, city) => sum + city.images.length, 0)
   const totalDays = cities.reduce((sum, city) => sum + (city.days?.length || 1), 0)
+
+  // 相册封面本地化（离线读：本地缓存命中 → 本地 URI）
+  const albumCoverUrls = useMemo(
+    () => albums.map((a) => a.coverUrl).filter((u): u is string => !!u),
+    [albums],
+  )
+  const localMediaMap = useLocalMediaUrls(albumCoverUrls)
   const starCities = cities
     .map((city) => {
       const match = findCityByName(city.name)
@@ -340,6 +367,13 @@ export default function AlbumPage() {
     <div className="min-h-screen album-pixel-root bg-album-bg1 relative overflow-hidden">
       {/* 像素木屋桌面背景 */}
       <PixelDeskBackground />
+
+      {/* 移动端新建相册入口（原生壳，模块内管理入口；Web 走后台 /admin/albums） */}
+      {isNativePlatform() && isUnlocked && (
+        <div className="fixed right-3 top-16 z-[120]">
+          <AlbumComposer onCreated={loadAlbumData} />
+        </div>
+      )}
 
       {/* 顶部导航 */}
       <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 md:px-8 border-b-4 border-black bg-black/45">
@@ -576,7 +610,7 @@ export default function AlbumPage() {
               {albums.map((album) => (
                 <TravelFilmCard
                   key={album.id}
-                  coverUrl={album.coverUrl ?? undefined}
+                  coverUrl={album.coverUrl ? (localMediaMap[album.coverUrl] ?? album.coverUrl) : undefined}
                   title={album.title}
                   dateRange={album.date ? formatDate(album.date) : undefined}
                   photoCount={album.mediaCount}

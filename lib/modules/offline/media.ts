@@ -96,3 +96,32 @@ export async function resolveMediaUrl(mediaId: number | string, remoteUrl: strin
   }
   return remoteUrl
 }
+
+/** 按远端 URL 解析媒体显示 URL（无 mediaId 的场景，如相册封面/照片墙），本地命中返回本地 URI */
+export async function resolveMediaUrlByRemote(remoteUrl: string): Promise<string> {
+  if (!isNativePlatform() || !remoteUrl) return remoteUrl
+  try {
+    const db = await getOfflineDb()
+    const rows = toRows(await db.query('SELECT localPath FROM media WHERE remoteUrl = ? LIMIT 1', [remoteUrl]))
+    if (rows[0] && rows[0][0]) return await getLocalUri(String(rows[0][0]))
+  } catch {
+    // 本地无缓存则回退远端
+  }
+  return remoteUrl
+}
+
+/** 批量解析：输入 URL 列表，输出本地 URI / 远端 URL 映射（幂等，仅原生端生效） */
+export async function resolveMediaUrlsByRemote(urls: string[]): Promise<Record<string, string>> {
+  const out: Record<string, string> = {}
+  if (!isNativePlatform() || urls.length === 0) return out
+  try {
+    const db = await getOfflineDb()
+    for (const url of urls) {
+      const rows = toRows(await db.query('SELECT localPath FROM media WHERE remoteUrl = ? LIMIT 1', [url]))
+      if (rows[0] && rows[0][0]) out[url] = await getLocalUri(String(rows[0][0]))
+    }
+  } catch {
+    // 忽略
+  }
+  return out
+}
