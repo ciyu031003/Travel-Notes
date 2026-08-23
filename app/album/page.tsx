@@ -5,24 +5,27 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket, Orbit, Settings2 } from 'lucide-react'
 import ManageEntry from '@/components/layout/ManageEntry'
+import dynamicImport from 'next/dynamic'
 import PixelDeskBackground from '@/components/album/PixelDeskBackground'
-import PolaroidWall from '@/components/album/PolaroidWall'
 import TravelFilmCard from '@/components/album/TravelFilmCard'
 import TravelArchiveView from '@/components/album/TravelArchiveView'
-import TravelStarMap from '@/components/album/TravelStarMap'
 import TravelLocationBadge from '@/components/album/TravelLocationBadge'
 import TravelTimeline from '@/components/album/TravelTimeline'
 import { findCityByName } from '@/data/cities'
 import PixelPhotoChat from '@/components/album/PixelPhotoChat'
 import PixelUnlockModal from '@/components/album/PixelUnlockModal'
 import PhotoChatView from '@/components/album/PhotoChatView'
-import GalaxyAlbumScene from '@/components/album/space/GalaxyAlbumScene'
 import SpaceUnlockModal from '@/components/album/space/SpaceUnlockModal'
 import AlbumComposer from '@/components/album/AlbumComposer'
 import AddPhotoButton from '@/components/album/AddPhotoButton'
 import { readLocalAlbums } from '@/lib/modules/offline/album-read'
 import { useLocalMediaUrls } from '@/hooks/use-local-media-url'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
+
+// v3.1 M3-D2：Canvas/WebGL 重组件按需加载（首屏不打包；渲染时才拉取）
+const PolaroidWall = dynamicImport(() => import('@/components/album/PolaroidWall'), { ssr: false })
+const TravelStarMap = dynamicImport(() => import('@/components/album/TravelStarMap'), { ssr: false })
+const GalaxyAlbumScene = dynamicImport(() => import('@/components/album/space/GalaxyAlbumScene'), { ssr: false })
 
 interface CityDay {
   date: string

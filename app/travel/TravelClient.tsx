@@ -5,13 +5,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info, Lock, Settings2 } from 'lucide-react'
-import ChinaMap from '@/components/ChinaMap'
+import dynamicImport from 'next/dynamic'
 import ManageEntry from '@/components/layout/ManageEntry'
 import TravelImageCarousel from '@/components/TravelImageCarousel'
 import TravelInfoPanel from '@/components/TravelInfoPanel'
 import AlbumUnlockModal from '@/components/AlbumUnlockModal'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
+
+// v3.1 M3-D2：ChinaMap 重组件按需加载（首屏不打包）
+const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
 
 interface PostMeta {
   slug: string
