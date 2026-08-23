@@ -61,7 +61,7 @@ try {
       ...process.env,
       MOBILE_EXPORT: '1',
       NEXT_PUBLIC_API_BASE: apiBase,
-      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '2.6.0',
+      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '2.6.1',
       SKIP_DB_ON_BUILD: '1',
     },
   })

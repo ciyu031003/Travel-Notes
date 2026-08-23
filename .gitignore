@@ -13,6 +13,9 @@ out/
 /android/.gradle/
 /android/build/
 /android/local.properties
+# Android 发布签名（密钥与密码，禁止提交）
+/android/keystore.properties
+/android/app/*.keystore
 # 依赖、日志、缓存
 node_modules/
 npm-debug.log
