@@ -19,10 +19,22 @@ const ENDPOINT: Partial<Record<SyncQueueItem['entityType'], string>> = {
   ALBUM: '/api/admin/albums',
 }
 
+/** MEMORY 写接口依赖 travelId（/api/travels/{travelId}/memories），从 payload 取云端 travelId */
+function resolveEndpoint(item: SyncQueueItem): string {
+  const fixed = ENDPOINT[item.entityType]
+  if (fixed) return fixed
+  if (item.entityType === 'MEMORY') {
+    const payload = item.payload ? JSON.parse(item.payload) : {}
+    const travelId = payload.travelId
+    if (travelId == null) throw new Error('MEMORY 缺少 travelId')
+    return '/api/travels/' + travelId + '/memories'
+  }
+  throw new Error('未支持的实体类型: ' + item.entityType)
+}
+
 export class HttpSyncDispatcher implements SyncDispatcher {
   async upload(item: SyncQueueItem): Promise<UploadResult> {
-    const base = ENDPOINT[item.entityType]
-    if (!base) throw new Error('未支持的实体类型: ' + item.entityType)
+    const base = resolveEndpoint(item)
     if (item.operation === 'UPLOAD_MEDIA') throw new Error('媒体上传走媒体管线，不由通用分发器处理')
 
     let url = base

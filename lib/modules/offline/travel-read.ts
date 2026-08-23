@@ -21,8 +21,7 @@ export interface LocalTravelPost {
 }
 
 /** 读本地旅行列表（原生端 + 表非空才返回，否则 null 交给 readWithFallback 走远端） */
-export async function readLocalTravels(): Promise<LocalTravelPost[] | null> {
-  if (!isNativePlatform()) return null
+export async function readLocalTravels(): Promise<LocalTravelPost[] | null> {  if (!isNativePlatform()) return null
   try {
     const rows = await queryRows(
       'SELECT id, remoteId, title, slug, description, location, cover, startDate, endDate, visibility, isPublic, updatedAt FROM travel WHERE deleted = 0 ORDER BY COALESCE(startDate, updatedAt) DESC',
@@ -48,6 +47,35 @@ export async function readLocalTravels(): Promise<LocalTravelPost[] | null> {
         published: true,
       }
     })
+  } catch {
+    return null
+  }
+}
+
+export interface LocalTravelInfo {
+  id: number | string
+  title: string
+  slug: string
+  spaceId: number | null
+}
+
+/** 按 slug 读本地旅行（record 页离线回退用）：返回云端 id（remoteId）或本地 id */
+export async function readLocalTravelBySlug(slug: string): Promise<LocalTravelInfo | null> {
+  if (!isNativePlatform() || !slug) return null
+  try {
+    const rows = await queryRows(
+      'SELECT id, remoteId, title, slug, spaceId FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1',
+      [slug],
+    )
+    const r = rows[0]
+    if (!r) return null
+    const remoteId = r[1] == null ? null : Number(r[1])
+    return {
+      id: remoteId ?? String(r[0]),
+      title: String(r[2] ?? ''),
+      slug: String(r[3] ?? slug),
+      spaceId: r[4] == null ? null : Number(r[4]),
+    }
   } catch {
     return null
   }

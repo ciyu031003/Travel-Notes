@@ -3,10 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Send } from 'lucide-react'
+import { ArrowLeft, Loader2, Send, Sparkles } from 'lucide-react'
+import { apiUrl } from '@/lib/api-base'
+import { readWithFallback } from '@/lib/modules/offline/repository'
+import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
+import { createMemory } from '@/lib/modules/offline/memory-write'
+import { isNativePlatform } from '@/lib/modules/offline/platform'
 
 interface TravelInfo {
-  id: number
+  id: number | string
   title: string
   slug: string
   spaceId: number | null
@@ -25,11 +30,26 @@ export default function TravelRecordPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [offline, setOffline] = useState(false)
 
   useEffect(() => {
-    fetch('/api/travels/by-slug/' + encodeURIComponent(params.slug))
-      .then((res) => res.json())
-      .then((data) => setTravel(data.travel || null))
+    const slug = params.slug
+    readWithFallback<TravelInfo | null>(
+      async () => {
+        const res = await fetch(apiUrl('/api/travels/by-slug/' + encodeURIComponent(slug)), { credentials: 'include' })
+        if (!res.ok) throw new Error('http ' + res.status)
+        const data = await res.json()
+        return data.travel || null
+      },
+      async () => {
+        const local = await readLocalTravelBySlug(slug)
+        return local
+      },
+    )
+      .then((result) => {
+        setTravel(result.data)
+        setOffline(result.source === 'local')
+      })
       .catch(() => setTravel(null))
       .finally(() => setLoading(false))
   }, [params.slug])
@@ -39,17 +59,23 @@ export default function TravelRecordPage() {
     setError('')
     setSubmitting(true)
     try {
-      const res = await fetch('/api/travels/' + travel!.id + '/memories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, mood }),
+      const travelId = Number(travel!.id)
+      if (!Number.isFinite(travelId)) {
+        setError('该旅行尚未同步到云端，暂时无法留言')
+        setSubmitting(false)
+        return
+      }
+      const r = await createMemory({
+        travelId,
+        title,
+        content: content || undefined,
+        mood: mood || undefined,
       })
-      if (res.ok) {
+      if (r.ok) {
         setSuccess(true)
         setTimeout(() => router.push('/travel/' + params.slug), 1200)
       } else {
-        const data = await res.json()
-        setError(data.error || '保存失败')
+        setError(r.error || '保存失败')
       }
     } catch {
       setError('网络错误，请重试')
@@ -78,8 +104,16 @@ export default function TravelRecordPage() {
       </header>
 
       <main className="max-w-xl mx-auto px-4 py-6">
+        {offline && (
+          <div className="mb-4 rounded-2xl bg-[#E8B8C2]/15 border border-[#E8B8C2]/40 px-4 py-2 text-center text-xs text-[#B07686]">
+            离线模式：保存的留言会先存到本地，联网后自动上传
+          </div>
+        )}
         {success ? (
-          <div className="card p-8 text-center text-green-600">已保存，即将返回…</div>
+          <div className="card p-8 text-center text-green-600 flex flex-col items-center gap-2">
+            <Sparkles className="w-5 h-5" />
+            {isNativePlatform() && !navigator.onLine ? '已保存到本地，联网后自动上传' : '已保存，即将返回…'}
+          </div>
         ) : travel.spaceId ? (
           <form onSubmit={submit} className="space-y-4">
             <div>
