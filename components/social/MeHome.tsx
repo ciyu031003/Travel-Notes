@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw, Settings, ShieldCheck, Users } from 'lucide-react'
+import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw, Settings, ShieldCheck, Users, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
@@ -131,6 +131,33 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   const logout = async () => {
     try { await fetch('/api/logout', { method: 'POST' }) } catch {}
     router.push('/login')
+  }
+
+  // v3.1 M2-E1：导出记忆档案（JSON + Markdown + 原图 ZIP）
+  const [exporting, setExporting] = useState(false)
+  const exportArchive = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      const res = await fetch('/api/export/archive', { credentials: 'include' })
+      if (!res.ok) {
+        setError('导出失败，请稍后重试')
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'travel-notes-archive.zip'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('导出失败，请稍后重试')
+    } finally {
+      setExporting(false)
+    }
   }
 
   const cardProps = (p: any, frame: (typeof FRAMES)[number]) => ({
@@ -313,6 +340,15 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
         {/* 账号操作弱化（管理入口按能力显隐） */}
         <div className="mt-12 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--social-faint)]">
+          <button
+            onClick={exportArchive}
+            disabled={exporting}
+            className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)] disabled:opacity-50"
+            title="导出旅行/回忆/碎碎念/照片的完整档案包"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {exporting ? '导出中...' : '导出记忆档案'}
+          </button>
           {profile.capabilities.canManageSettings && (
             <Link href="/admin/settings" className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)]">
               <Settings className="h-3.5 w-3.5" />账号设置
