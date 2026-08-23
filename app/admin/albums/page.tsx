@@ -23,6 +23,8 @@ interface MediaItem {
   size: number
   width: number | null
   height: number | null
+  thumbnailUrl?: string | null
+  previewUrl?: string | null
 }
 
 interface AlbumDetail extends AlbumItem {
@@ -276,7 +278,7 @@ export default function AdminAlbumsPage() {
                   {detail.media.map((m) => (
                     <div key={m.id} className="relative group aspect-square rounded-lg overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <Image src={m.url} alt="" fill sizes="100vw" className="object-cover" />
+                      <Image src={m.thumbnailUrl ?? m.url} alt="" fill sizes="100vw" className="object-cover" />
                       <button
                         type="button"
                         onClick={() => handleRemoveMedia(m.id)}

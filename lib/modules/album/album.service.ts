@@ -35,6 +35,14 @@ export interface AlbumMediaItem {
   width: number | null
   height: number | null
   createdAt: string
+  /** 三级缩略（Stage C2）：列表/详情/原图按需取用 */
+  thumbnailUrl?: string | null
+  previewUrl?: string | null
+}
+
+function variantUrl(media: any, variant: string): string | null {
+  const v = media?.variants?.find((x: any) => x.variant === variant)
+  return v?.storageKey ? mediaPublicUrl(v.storageKey) : null
 }
 
 export interface UploadFile {
@@ -63,7 +71,9 @@ function mapAlbum(a: any): AlbumItem {
     id: a.id,
     title: a.title,
     description: a.description,
-    coverUrl: a.coverMedia ? mediaPublicUrl(a.coverMedia.storageKey) : null,
+    coverUrl: a.coverMedia
+      ? (variantUrl(a.coverMedia, 'THUMBNAIL') ?? mediaPublicUrl(a.coverMedia.storageKey))
+      : null,
     mediaCount: a._count?.items ?? 0,
     date: a.date ? (a.date instanceof Date ? a.date.toISOString() : String(a.date)) : null,
     createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt),
@@ -81,7 +91,7 @@ export async function listAlbums(userId?: number | null): Promise<AlbumItem[]> {
     where: scopedWhere(userId) as any,
     orderBy: { createdAt: 'desc' },
     include: {
-      coverMedia: true,
+      coverMedia: { include: { variants: true } },
       _count: { select: { items: true } },
     },
   })
@@ -92,11 +102,11 @@ export async function getAlbum(albumId: number, userId?: number | null): Promise
   const album = await prisma.album.findFirst({
     where: { ...scopedWhere(userId), id: albumId } as any,
     include: {
-      coverMedia: true,
+      coverMedia: { include: { variants: true } },
       _count: { select: { items: true } },
       items: {
         orderBy: { sortOrder: 'asc' },
-        include: { media: true },
+        include: { media: { include: { variants: true } } },
       },
     },
   })
@@ -114,6 +124,8 @@ export async function getAlbum(albumId: number, userId?: number | null): Promise
         width: m.width,
         height: m.height,
         createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt),
+        thumbnailUrl: variantUrl(m, 'THUMBNAIL'),
+        previewUrl: variantUrl(m, 'PREVIEW'),
       })),
   }
 }
