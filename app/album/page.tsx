@@ -19,6 +19,7 @@ import PhotoChatView from '@/components/album/PhotoChatView'
 import GalaxyAlbumScene from '@/components/album/space/GalaxyAlbumScene'
 import SpaceUnlockModal from '@/components/album/space/SpaceUnlockModal'
 import AlbumComposer from '@/components/album/AlbumComposer'
+import AddPhotoButton from '@/components/album/AddPhotoButton'
 import { readLocalAlbums } from '@/lib/modules/offline/album-read'
 import { useLocalMediaUrls } from '@/hooks/use-local-media-url'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
@@ -608,13 +609,15 @@ export default function AlbumPage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {albums.map((album) => (
-                <TravelFilmCard
-                  key={album.id}
-                  coverUrl={album.coverUrl ? (localMediaMap[album.coverUrl] ?? album.coverUrl) : undefined}
-                  title={album.title}
-                  dateRange={album.date ? formatDate(album.date) : undefined}
-                  photoCount={album.mediaCount}
-                />
+                <div key={album.id} className="relative">
+                  <TravelFilmCard
+                    coverUrl={album.coverUrl ? (localMediaMap[album.coverUrl] ?? album.coverUrl) : undefined}
+                    title={album.title}
+                    dateRange={album.date ? formatDate(album.date) : undefined}
+                    photoCount={album.mediaCount}
+                  />
+                  <AddPhotoButton albumId={album.id} onAdded={loadAlbumData} />
+                </div>
               ))}
             </div>
           </section>
