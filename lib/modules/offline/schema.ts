@@ -5,7 +5,7 @@
  * 社交互动表（comment/like/favorite）按 D-4 决策后置，暂不建表。
  */
 
-export const OFFLINE_SCHEMA_VERSION = 2
+export const OFFLINE_SCHEMA_VERSION = 3
 
 export const CREATE_TABLES_SQL: string[] = [
   // 元信息（版本 / 游标）
@@ -48,7 +48,7 @@ export const CREATE_TABLES_SQL: string[] = [
   // 相册
   "CREATE TABLE IF NOT EXISTS album (" +
     "id TEXT PRIMARY KEY, remoteId INTEGER, spaceId INTEGER, userId INTEGER, title TEXT, " +
-    "description TEXT, coverMediaId INTEGER, date INTEGER, locationId INTEGER, visibility TEXT, isPublic INTEGER, " +
+    "description TEXT, coverMediaId INTEGER, date INTEGER, locationId INTEGER, travelId INTEGER, visibility TEXT, isPublic INTEGER, " +
     "updatedAt INTEGER NOT NULL, syncStatus TEXT NOT NULL DEFAULT 'SYNCED', deleted INTEGER NOT NULL DEFAULT 0)",
 
   // 相册-媒体关联

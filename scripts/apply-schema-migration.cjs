@@ -151,6 +151,10 @@ async function main() {
   await addColumn(conn, 'Album', 'userId', 'userId INT NULL AFTER spaceId')
   await addColumn(conn, 'Album', 'isPublic', "isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER visibility")
   await addFk(conn, 'Album', 'Album_userId_fkey', 'FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL ON UPDATE CASCADE')
+  // v3.1 M1-A1：相册绑定旅行（一个相册 = 一次旅行/一座城市）
+  await addColumn(conn, 'Album', 'travelId', 'travelId INT NULL AFTER locationId')
+  await addFk(conn, 'Album', 'Album_travelId_fkey', 'FOREIGN KEY (travelId) REFERENCES Travel(id) ON DELETE SET NULL ON UPDATE CASCADE')
+  await addIndex(conn, 'Album', 'Album_travelId_idx', '(travelId)')
 
   // Media
   await addColumn(conn, 'Media', 'userId', 'userId INT NULL AFTER memoryId')

@@ -107,6 +107,7 @@ export class HttpPullDispatcher implements PullDispatcher {
         coverMediaId: a.coverMediaId ?? null,
         date: a.date ? new Date(a.date).getTime() : null,
         locationId: a.locationId ?? null,
+        travelId: a.travelId ?? null,
         visibility: a.visibility ?? 'COUPLE',
         isPublic: a.isPublic ? 1 : 0,
         spaceId: a.spaceId ?? null,

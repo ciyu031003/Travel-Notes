@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
       date: body?.date || undefined,
       userId: auth.payload?.userId,
       isPublic: Boolean(body?.isPublic),
+      travelId: body?.travelId != null ? Number(body.travelId) : undefined,
     })
     writeAuditLog({
       username: auth.username,

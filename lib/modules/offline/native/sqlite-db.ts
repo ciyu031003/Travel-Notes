@@ -11,11 +11,17 @@ import { CREATE_TABLES_SQL, CREATE_INDEXES_SQL } from '../schema'
 const DB_NAME = 'tiantu_offline'
 const DB_VERSION = 1
 
+/** 幂等列升级（schema v2 → v3 等增量列；旧库已存在表时 CREATE IF NOT EXISTS 不会加列） */
+const COLUMN_UPGRADES_SQL: string[] = [
+  // v3（M1-A1）：album.travelId（相册绑定旅行）
+  "ALTER TABLE album ADD COLUMN travelId INTEGER",
+]
+
 let db: SQLiteDBConnection | null = null
 let sqliteConn: { closeConnection: (database: string, readonly: boolean) => Promise<void> } | null = null
 let initing: Promise<SQLiteDBConnection> | null = null
 
-/** 初始化（幂等）：建连接 → open → 建表/索引 */
+/** 初始化（幂等）：建连接 → open → 建表/索引 → 列升级（忽略重复列错误） */
 export async function getOfflineDb(): Promise<SQLiteDBConnection> {
   if (!isNativePlatform()) {
     throw new Error('[offline] 非原生环境，不支持 SQLite')
@@ -29,6 +35,9 @@ export async function getOfflineDb(): Promise<SQLiteDBConnection> {
       await conn.open()
       await conn.execute(CREATE_TABLES_SQL.join(';\n') + ';')
       await conn.execute(CREATE_INDEXES_SQL.join(';\n') + ';')
+      for (const sql of COLUMN_UPGRADES_SQL) {
+        await conn.execute(sql).catch(() => {}) // 列已存在时忽略
+      }
       db = conn
       sqliteConn = sqlite
       return conn

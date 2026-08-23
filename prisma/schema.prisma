@@ -388,6 +388,7 @@ model Travel {
   memories Memory[]
   expenses Expense[]
   travelPost         TravelPost?
+  albums   Album[]    @relation("AlbumTravel")
 
   @@unique([spaceId, slug])
   @@index([spaceId, startDate])
@@ -521,6 +522,9 @@ model Album {
   coverMedia   Media?     @relation("AlbumCover", fields: [coverMediaId], references: [id])
   date         DateTime?  @db.Timestamp(3)
   locationId   Int?
+  /// 关联旅行（v3.1：一个相册 = 一次旅行/一座城市，收敛双相册模型）
+  travelId     Int?
+  travel       Travel?    @relation("AlbumTravel", fields: [travelId], references: [id], onDelete: SetNull)
   visibility   Visibility @default(COUPLE)
   /// 是否公开（公开后所有登录用户可见）
   isPublic     Boolean    @default(false)

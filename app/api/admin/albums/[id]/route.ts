@@ -44,6 +44,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (body.description !== undefined) input.description = body.description ? String(body.description) : null
     if (body.date !== undefined) input.date = body.date || null
     if (body.isPublic !== undefined) input.isPublic = Boolean(body.isPublic)
+    if (body.travelId !== undefined) input.travelId = body.travelId ? Number(body.travelId) : null
 
     await updateAlbum(albumId, input)
     writeAuditLog({ username: auth.username, action: 'UPDATE', resourceType: 'Album', resourceId: String(albumId) }).catch(() => {})

@@ -25,6 +25,8 @@ export interface AlbumItem {
   userId: number | null
   coverMediaId: number | null
   locationId: number | null
+  /** v3.1 M1-A1：关联旅行（一个相册 = 一次旅行/一座城市） */
+  travelId: number | null
 }
 
 export interface AlbumMediaItem {
@@ -83,6 +85,7 @@ function mapAlbum(a: any): AlbumItem {
     userId: a.userId ?? null,
     coverMediaId: a.coverMediaId ?? null,
     locationId: a.locationId ?? null,
+    travelId: a.travelId ?? null,
   }
 }
 
@@ -136,6 +139,8 @@ export interface CreateAlbumInput {
   date?: string
   userId?: number | null
   isPublic?: boolean
+  /** v3.1 M1-A1：关联旅行 */
+  travelId?: number | null
 }
 
 export async function createAlbum(input: CreateAlbumInput): Promise<{ id: number }> {
@@ -146,6 +151,7 @@ export async function createAlbum(input: CreateAlbumInput): Promise<{ id: number
       date: input.date ? new Date(input.date) : null,
       userId: input.userId ?? null,
       isPublic: input.isPublic ?? false,
+      travelId: input.travelId ?? null,
     },
   })
   return { id: row.id }
@@ -157,6 +163,7 @@ export async function updateAlbum(id: number, input: Partial<CreateAlbumInput>):
   if (input.description !== undefined) data.description = input.description || null
   if (input.date !== undefined) data.date = input.date ? new Date(input.date) : null
   if (input.isPublic !== undefined) data.isPublic = input.isPublic
+  if (input.travelId !== undefined) data.travelId = input.travelId || null
   await prisma.album.update({ where: { id }, data })
 }
 
