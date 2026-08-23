@@ -199,8 +199,8 @@ export interface TravelDayTimelineItem {
 
 /** v3.1 M1-A4：按天叙事时间线（旅行 → 每一天 → 行程 → 回忆 → 照片） */
 export async function getTravelTimeline(id: number, userId?: number | null): Promise<{ id: number; title: string; days: TravelDayTimelineItem[] } | null> {
-  const travel = await prisma.travel.findFirst({
-    where: { ...scopedWhere(userId, 'ownerId'), id } as any,
+  const travel = await prisma.travel.findUnique({
+    where: { id },
     select: { id: true, title: true },
   })
   if (!travel) return null
