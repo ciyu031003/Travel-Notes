@@ -452,11 +452,26 @@ model Memory {
   travel        Travel?    @relation(fields: [travelId], references: [id], onDelete: SetNull)
   travelDay     TravelDay? @relation(fields: [travelDayId], references: [id], onDelete: SetNull)
   location      Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  media         Media[]
+  media         Media[]    @relation("MemoryPrimaryMedia")
+  mediaLinks    MemoryMedia[]
   createdByUser User?      @relation("MemoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([spaceId, happenedAt])
   @@index([spaceId, travelId])
+}
+
+/// 回忆-媒体 多对多关联（v3.1 M2-A2：一张照片可进多个回忆；memoryId 主关联兼容旧数据）
+model MemoryMedia {
+  id       Int    @id @default(autoincrement())
+  memoryId Int
+  mediaId  Int
+  sortOrder Int   @default(0)
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  media  Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, mediaId])
+  @@index([mediaId])
 }
 
 /// 独立媒体（从 Post 中彻底独立）
@@ -486,7 +501,8 @@ model Media {
   spaceCoverOf       Space?         @relation("SpaceCover")
   anniversaryCoverOf Anniversary?   @relation("AnniversaryCover")
   albumCoverOf       Album?         @relation("AlbumCover")
-  memory             Memory?        @relation(fields: [memoryId], references: [id], onDelete: SetNull)
+  memory             Memory?        @relation("MemoryPrimaryMedia", fields: [memoryId], references: [id], onDelete: SetNull)
+  memoryLinks        MemoryMedia[]
   travels            Travel[]       @relation("TravelCover")
   variants           MediaVariant[]
   albums             AlbumMedia[]

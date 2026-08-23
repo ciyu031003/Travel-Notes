@@ -215,7 +215,10 @@ export async function getTravelTimeline(id: number, userId?: number | null): Pro
       },
       memories: {
         orderBy: { happenedAt: 'asc' },
-        include: { media: { select: { id: true, storageKey: true } } },
+        include: {
+          media: { select: { id: true, storageKey: true } },
+          mediaLinks: { include: { media: { select: { id: true, storageKey: true } } } },
+        },
       },
     },
   })
@@ -226,14 +229,20 @@ export async function getTravelTimeline(id: number, userId?: number | null): Pro
       : `/uploads/${m.storageKey}`
 
   const items: TravelDayTimelineItem[] = days.map((d: any) => {
-    const memories = (d.memories || []).map((mem: any) => ({
-      id: mem.id,
-      title: mem.title,
-      content: mem.content ?? null,
-      mood: mem.mood ?? null,
-      happenedAt: iso(mem.happenedAt),
-      photos: (mem.media || []).map((m: any) => ({ id: m.id, url: mediaUrl(m) })),
-    }))
+    const memories = (d.memories || []).map((mem: any) => {
+      const primary = (mem.media || []).map((m: any) => ({ id: m.id, url: mediaUrl(m) }))
+      const linked = (mem.mediaLinks || []).map((l: any) => ({ id: l.media.id, url: mediaUrl(l.media) }))
+      const seen = new Set<number>()
+      const photos = [...primary, ...linked].filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
+      return {
+        id: mem.id,
+        title: mem.title,
+        content: mem.content ?? null,
+        mood: mem.mood ?? null,
+        happenedAt: iso(mem.happenedAt),
+        photos,
+      }
+    })
     const seen = new Set<number>()
     const photos = memories
       .flatMap((mem: any) => mem.photos)

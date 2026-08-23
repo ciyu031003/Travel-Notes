@@ -4,6 +4,7 @@
 import { PrismaMemoryRepository, prismaMemoryRepository, type MemoryVisibility, type UpdateMemoryPatch } from './memory.repository'
 import { requireSpaceRole } from '../space/permissions'
 import { writeAuditLog } from '../audit/audit-log.service'
+import { prisma } from '../../db'
 
 const TITLE_MAX = 255
 const MOOD_MAX = 50
@@ -103,6 +104,62 @@ export class MemoryService {
       resourceType: 'Memory',
       resourceId: String(memoryId),
       spaceId: m.spaceId,
+    }).catch(() => {})
+  }
+
+  // ===== v3.1 M2-A2：回忆-媒体 多对多（一张照片可进多个回忆）=====
+
+  /** 给回忆关联媒体（幂等：已关联则忽略；同时回填主关联 memoryId 兼容旧读取路径） */
+  async attachMedia(username: string, memoryId: number, mediaIds: number[]): Promise<void> {
+    const m = await this.repo.findById(memoryId)
+    if (!m) throw new Error('回忆不存在')
+    await requireSpaceRole(username, m.spaceId, ['OWNER', 'MEMBER'])
+    const ids = Array.from(new Set((mediaIds || []).map(Number).filter(Number.isFinite)))
+    if (ids.length === 0) return
+    for (const mediaId of ids) {
+      await prisma.memoryMedia.upsert({
+        where: { memoryId_mediaId: { memoryId, mediaId } },
+        update: {},
+        create: { memoryId, mediaId },
+      }).catch(() => {})
+      // 主关联回填（兼容旧读取路径；不覆盖已有主回忆）
+      await prisma.media.updateMany({
+        where: { id: mediaId, memoryId: null },
+        data: { memoryId },
+      }).catch(() => {})
+    }
+    await writeAuditLog({
+      username,
+      action: 'UPDATE',
+      resourceType: 'Memory',
+      resourceId: String(memoryId),
+      spaceId: m.spaceId,
+      metadata: { attachMediaCount: ids.length },
+    }).catch(() => {})
+  }
+
+  /** 移除回忆的媒体关联（幂等；不动媒体本身） */
+  async detachMedia(username: string, memoryId: number, mediaIds: number[]): Promise<void> {
+    const m = await this.repo.findById(memoryId)
+    if (!m) throw new Error('回忆不存在')
+    await requireSpaceRole(username, m.spaceId, ['OWNER', 'MEMBER'])
+    const ids = Array.from(new Set((mediaIds || []).map(Number).filter(Number.isFinite)))
+    if (ids.length === 0) return
+    await prisma.memoryMedia.deleteMany({
+      where: { memoryId, mediaId: { in: ids } },
+    })
+    // 主关联仅在仍指向该回忆时清除
+    await prisma.media.updateMany({
+      where: { id: { in: ids }, memoryId },
+      data: { memoryId: null },
+    }).catch(() => {})
+    await writeAuditLog({
+      username,
+      action: 'UPDATE',
+      resourceType: 'Memory',
+      resourceId: String(memoryId),
+      spaceId: m.spaceId,
+      metadata: { detachMediaCount: ids.length },
     }).catch(() => {})
   }
 }

@@ -341,6 +341,25 @@ async function main() {
     await createTable(conn, def.name, def.sql)
   }
 
+  // v3.1 M2-A2：回忆-媒体 多对多关联表（一图多回忆）
+  await createTable(conn, 'MemoryMedia', `CREATE TABLE IF NOT EXISTS MemoryMedia (
+    id INT NOT NULL AUTO_INCREMENT,
+    memoryId INT NOT NULL,
+    mediaId INT NOT NULL,
+    sortOrder INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY MemoryMedia_memoryId_mediaId_key (memoryId, mediaId),
+    KEY MemoryMedia_mediaId_idx (mediaId),
+    CONSTRAINT MemoryMedia_memoryId_fkey FOREIGN KEY (memoryId) REFERENCES Memory(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT MemoryMedia_mediaId_fkey FOREIGN KEY (mediaId) REFERENCES Media(id) ON DELETE CASCADE ON UPDATE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
+
+  // MemoryMedia 回填：存量 Media.memoryId 主关联 → 关联表（幂等，不覆盖已存在）
+  await conn.query(
+    `INSERT IGNORE INTO MemoryMedia (memoryId, mediaId, sortOrder)
+     SELECT memoryId, id, 0 FROM Media WHERE memoryId IS NOT NULL`
+  ).catch(() => {})
+
   // TravelPost：支持 Travel 或 Post 两种来源（表已存在后修改）
   await modifyColumn(conn, 'TravelPost', 'travelId', 'travelId INT NULL')
   await addColumn(conn, 'TravelPost', 'postId', 'postId INT NULL AFTER travelId')
