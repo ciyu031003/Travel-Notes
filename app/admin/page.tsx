@@ -215,7 +215,7 @@ export default function AdminDashboard() {
                 className="group mb-5 break-inside-avoid overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-16px_rgba(167,78,97,0.35)] dark:border-white/10 dark:bg-[#16181C]/90"
               >
                 {/* 封面 */}
-                <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-travel-sakura to-travel-mist dark:from-[#32261D] dark:to-[#22303A]">
+                <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-travel-sakura via-travel-bloom/30 to-travel-sakura dark:from-[#32261D] dark:via-[#3A2B21] dark:to-[#241B15]">
                   {post.cover ? (
                     <Image
                       src={post.cover}

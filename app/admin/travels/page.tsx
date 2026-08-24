@@ -219,9 +219,9 @@ export default function AdminTravelsPage() {
           返回后台
         </Link>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">旅行规划</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          管理旅行、每天行程与花费（数据模型：Travel / TravelDay / ItineraryItem / Expense）
+        <h1 className="text-2xl font-bold text-travel-inkStrong dark:text-white mb-1">旅行规划</h1>
+        <p className="text-sm text-travel-ink/60 dark:text-gray-400">
+          管理一段旅行的天数、每日行程与花费
         </p>
       </div>
 

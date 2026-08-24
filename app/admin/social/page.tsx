@@ -91,21 +91,28 @@ export default function AdminSocialPage() {
 
             {tab === 'posts' && (
               <div className="overflow-hidden rounded-2xl border border-travel-line/50 dark:border-[#2C343E]">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-travel-sakura/40 text-xs text-travel-ink/70 dark:bg-white/5 dark:text-gray-400">
-                    <tr><th className="px-4 py-2.5">标题</th><th className="px-4 py-2.5">作者</th><th className="px-4 py-2.5">点赞/评论/收藏</th><th className="px-4 py-2.5">发布时间</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-travel-line/40 dark:divide-white/5">
-                    {(data.posts || []).map((p: any) => (
-                      <tr key={p.id} className="text-travel-ink dark:text-gray-200">
-                        <td className="px-4 py-2.5"><Link href={'/circle/' + p.id} className="hover:text-travel-accent">{p.title}</Link></td>
-                        <td className="px-4 py-2.5">{p.author?.username || '-'}</td>
-                        <td className="px-4 py-2.5 tabular-nums">{p.likeCount}/{p.commentCount}/{p.favoriteCount}</td>
-                        <td className="px-4 py-2.5 text-xs text-travel-ink/50">{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('zh-CN') : '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {(data.posts || []).length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-travel-ink/50 dark:text-gray-400">
+                    <FileText className="mb-3 h-10 w-10 opacity-30 text-travel-accentSoft" />
+                    <p>还没有公开的旅行帖子</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-travel-sakura/40 text-xs text-travel-ink/70 dark:bg-white/5 dark:text-gray-400">
+                      <tr><th className="px-4 py-2.5">标题</th><th className="px-4 py-2.5">作者</th><th className="px-4 py-2.5">点赞/评论/收藏</th><th className="px-4 py-2.5">发布时间</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-travel-line/40 dark:divide-white/5">
+                      {(data.posts || []).map((p: any) => (
+                        <tr key={p.id} className="text-travel-ink dark:text-gray-200">
+                          <td className="px-4 py-2.5"><Link href={'/circle/' + p.id} className="hover:text-travel-accent">{p.title}</Link></td>
+                          <td className="px-4 py-2.5">{p.author?.username || '-'}</td>
+                          <td className="px-4 py-2.5 tabular-nums">{p.likeCount}/{p.commentCount}/{p.favoriteCount}</td>
+                          <td className="px-4 py-2.5 text-xs text-travel-ink/50">{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('zh-CN') : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             )}
 
