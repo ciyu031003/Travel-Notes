@@ -19,15 +19,17 @@ export async function applyPullEntity(entity: PullEntity): Promise<boolean> {
 
   // 按 id 或 remoteId 匹配：本地新建（UUID id + 已回填 remoteId）也能被命中，避免同实体分裂成两行
   const existing = toRows(
-    await db.query('SELECT id, updatedAt, syncStatus FROM ' + entity.table + ' WHERE id = ? OR remoteId = ? LIMIT 1', [
+    await db.query('SELECT id, updatedAt, syncStatus, deleted FROM ' + entity.table + ' WHERE id = ? OR remoteId = ? LIMIT 1', [
       entity.id,
       entity.remoteId,
     ]),
   )
   if (existing[0]) {
-    const [localId, localUpdatedAt, localSyncStatus] = existing[0]
+    const [localId, localUpdatedAt, localSyncStatus, localDeleted] = existing[0]
     const syncStatus = String(localSyncStatus)
     if (syncStatus === 'PENDING_UPLOAD') return false // 本地有待上传改动，跳过
+    // v3.1 M4-C1：墓碑防复活——本地已删（deleted=1）不覆盖，保持墓碑（即使远端行仍在/更新）
+    if (Number(localDeleted) === 1) return false
     if (Number(localUpdatedAt) > entity.updatedAt) return false // 本地更新（LWW）
 
     const fields: Record<string, unknown> = {

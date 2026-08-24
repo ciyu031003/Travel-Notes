@@ -22,6 +22,9 @@ export class SyncEngine {
   private syncing = false
   private unsubscribers: Array<() => void> = []
 
+  /** v3.1 M4-C1：最近一次同步统计（供同步中心展示） */
+  lastSyncStats: { at: number; written: number } | null = null
+
   constructor(
     private queue: SyncQueue,
     private dispatcher: SyncDispatcher,
@@ -58,16 +61,17 @@ export class SyncEngine {
     try {
       await this.requeueDue()
       await this.uploadPending()
-      await this.pullRemote()
+      const written = await this.pullRemote()
+      this.lastSyncStats = { at: Date.now(), written }
     } finally {
       this.syncing = false
     }
   }
 
-  /** 下载拉取（3.4b）：远端列表 → 本地 SQLite，LWW 落地 */
-  private async pullRemote(): Promise<void> {
-    if (!this.puller || !isNativePlatform()) return
-    await pullEntityTypes(this.puller, [...PULL_ENTITY_TYPES])
+  /** 下载拉取（3.4b）：远端列表 → 本地 SQLite，LWW 落地；返回写入条数 */
+  private async pullRemote(): Promise<number> {
+    if (!this.puller || !isNativePlatform()) return 0
+    return pullEntityTypes(this.puller, [...PULL_ENTITY_TYPES])
   }
 
   /** 指数退避：到期的 FAILED 项回到 PENDING */
