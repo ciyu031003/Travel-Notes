@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Sparkles, Trash2, Send, Loader2, Inbox } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
+import { AdminInput, AdminTextarea, AdminButton, AdminCard } from '@/components/admin/ui'
 
 interface MomentItem {
   id: number
@@ -117,63 +118,59 @@ export default function AdminMomentsPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-travel-accentSoft" />
-            发布一条碎碎念
-          </h2>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={4}
-            maxLength={2000}
-            placeholder="记录此刻的想法、灵感或小确幸..."
-            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-travel-accentSoft resize-none"
-          />
-          <div className="flex items-center justify-between gap-3 mt-3 flex-wrap">
-            <input
-              type="text"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="标签（用逗号分隔，可选）"
-              className="flex-1 min-w-[180px] px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+        <form onSubmit={handleSubmit} className="mb-8">
+          <AdminCard title="发布一条碎碎念" icon={Sparkles}>
+            <AdminTextarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={4}
+              maxLength={2000}
+              placeholder="记录此刻的想法、灵感或小确幸..."
             />
-            <button
-              type="submit"
-              disabled={submitting || !content.trim()}
-              className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-travel-accentSoft to-pink-500 hover:from-travel-accent hover:to-pink-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              发布
-            </button>
-          </div>
-          <p className="text-xs text-gray-400 mt-2">{content.length}/2000</p>
+            <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+              <AdminInput
+                type="text"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+                placeholder="标签（用逗号分隔，可选）"
+                className="flex-1 min-w-[180px]"
+              />
+              <AdminButton
+                type="submit"
+                disabled={submitting || !content.trim()}
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                发布
+              </AdminButton>
+            </div>
+            <p className="mt-2 text-xs text-travel-ink/50 dark:text-gray-400">{content.length}/2000</p>
+          </AdminCard>
         </form>
 
-        <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="mb-4 text-sm text-travel-ink/60 dark:text-gray-400">
           共 {total} 条碎碎念
         </div>
 
         {loading ? (
-          <div className="text-center py-16 text-gray-500">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" />
+          <div className="flex flex-col items-center justify-center py-16 text-travel-ink/50 dark:text-gray-500">
+            <Loader2 className="h-6 w-6 animate-spin" />
             加载中...
           </div>
         ) : moments.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <Inbox className="w-12 h-12 mx-auto mb-4 opacity-30" />
-            <p>还没有碎碎念，发布第一条吧~</p>
+          <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-[#32261D] dark:bg-white/5">
+            <Inbox className="mx-auto mb-4 h-12 w-12 opacity-30 text-travel-accentSoft" />
+            <p className="text-travel-ink/70 dark:text-gray-400">还没有碎碎念，发布第一条吧~</p>
           </div>
         ) : (
           <div className="space-y-3">
             {moments.map((moment) => (
-              <div key={moment.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 flex items-start gap-4">
+              <div key={moment.id} className="rounded-2xl border border-travel-line/50 bg-white/80 p-5 shadow-soft dark:border-[#2C343E] dark:bg-[#141414]/80 flex items-start gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  <p className="text-travel-ink dark:text-gray-200 text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {moment.content}
                   </p>
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    <span className="text-xs text-gray-400">{formatTime(moment.createdAt)}</span>
+                    <span className="text-xs text-travel-ink/50 dark:text-gray-400">{formatTime(moment.createdAt)}</span>
                     {moment.tags && moment.tags.length > 0 && (
                       <span className="flex gap-1.5 flex-wrap">
                         {moment.tags.map((tag) => (
@@ -189,7 +186,7 @@ export default function AdminMomentsPage() {
                   type="button"
                   onClick={() => handleDelete(moment.id)}
                   disabled={deletingId === moment.id}
-                  className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                  className="p-2 rounded-lg text-travel-ink/50 hover:text-travel-danger hover:bg-travel-danger/10 transition-colors disabled:opacity-50"
                   title="删除"
                 >
                   <Trash2 className="w-4 h-4" />

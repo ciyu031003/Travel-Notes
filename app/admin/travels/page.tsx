@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Plus, Trash2, Loader2, MapPin, Wallet, CalendarDays, X } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
+import { AdminInput, AdminButton, AdminCard } from '@/components/admin/ui'
 
 interface TravelSummary {
   id: number
@@ -228,31 +229,31 @@ export default function AdminTravelsPage() {
         {/* 左列：旅行列表 */}
         <div>
           <form onSubmit={handleCreate} className="card p-5 mb-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+            <h2 className="text-base font-semibold text-travel-ink dark:text-gray-100 mb-3 flex items-center gap-2">
               <Plus className="w-4 h-4 text-travel-accentSoft" />
               新建旅行
             </h2>
-            <input
+            <AdminInput
               type="text"
               value={createTitle}
               onChange={(e) => setCreateTitle(e.target.value)}
               placeholder="旅行名称，如：东京 · 2026"
-              className="w-full px-3 py-2 mb-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+              className="mb-2"
             />
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <input type="date" value={createStart} onChange={(e) => setCreateStart(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
-              <input type="date" value={createEnd} onChange={(e) => setCreateEnd(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+              <AdminInput type="date" value={createStart} onChange={(e) => setCreateStart(e.target.value)} />
+              <AdminInput type="date" value={createEnd} onChange={(e) => setCreateEnd(e.target.value)} />
             </div>
-            {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
-            <button type="submit" disabled={creating} className="w-full py-2 bg-travel-accent hover:bg-travel-accentStrong disabled:opacity-50 text-white rounded-lg text-sm transition-colors">
+            {error && <p className="text-xs text-travel-danger mb-2">{error}</p>}
+            <AdminButton type="submit" disabled={creating} className="w-full">
               {creating ? '创建中...' : '创建旅行'}
-            </button>
+            </AdminButton>
           </form>
 
           {loading ? (
-            <div className="text-center py-10 text-gray-500">加载中...</div>
+            <div className="py-10 text-center text-travel-ink/50 dark:text-gray-500">加载中...</div>
           ) : travels.length === 0 ? (
-            <div className="card p-6 text-center text-gray-500">还没有旅行规划</div>
+            <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-6 text-center text-travel-ink/60 dark:border-[#32261D] dark:bg-white/5">还没有旅行规划</div>
           ) : (
             <div className="space-y-2">
               {travels.map((t) => (
@@ -263,12 +264,12 @@ export default function AdminTravelsPage() {
                   className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${
                     selected === t.id
                       ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 border border-travel-sakura dark:border-travel-accent/40'
-                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-travel-sakura'
+                      : 'bg-white/80 dark:bg-white/5 border border-travel-line/50 dark:border-[#2C343E] hover:border-travel-sakura'
                   }`}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{t.title}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="font-medium text-travel-ink dark:text-gray-100 truncate">{t.title}</p>
+                    <p className="text-xs text-travel-ink/60">
                       {t.dayCount} 天 · 花费 ¥{t.expenseTotal.toFixed(0)}
                     </p>
                   </div>
@@ -281,41 +282,41 @@ export default function AdminTravelsPage() {
         {/* 右列：详情 */}
         <div className="lg:col-span-2 space-y-4">
           {!selected || !detail ? (
-            <div className="card p-12 text-center text-gray-500">选择或创建一个旅行开始规划</div>
+            <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-12 text-center text-travel-ink/60 dark:border-[#32261D] dark:bg-white/5">选择或创建一个旅行开始规划</div>
           ) : (
             <>
               {/* 基本信息 */}
-              <div className="card p-5">
+              <AdminCard className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-travel-ink dark:text-gray-100 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-travel-accentSoft" />
                       {detail.title}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-travel-ink/60 mt-1">
                       {detail.startDate ? detail.startDate.slice(0, 10) : '—'} ~ {detail.endDate ? detail.endDate.slice(0, 10) : '—'} · {detail.status}
                     </p>
                   </div>
-                  <button type="button" onClick={handleDeleteTravel} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                  <AdminButton variant="danger" type="button" onClick={handleDeleteTravel}>
                     <Trash2 className="w-4 h-4" /> 删除
-                  </button>
+                  </AdminButton>
                 </div>
-              </div>
+              </AdminCard>
 
               {/* 天数 + 行程 */}
-              <div className="card p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+              <AdminCard className="p-5">
+                <h3 className="font-semibold text-travel-ink dark:text-gray-100 mb-3 flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-travel-accentSoft" />
                   行程安排
                 </h3>
                 <div className="flex gap-2 mb-4">
-                  <input type="date" value={dayDate} onChange={(e) => setDayDate(e.target.value)} className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
-                  <input type="text" value={dayTitle} onChange={(e) => setDayTitle(e.target.value)} placeholder="Day 标题（可选）" className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
-                  <button type="button" onClick={handleAddDay} className="px-3 py-1.5 text-sm bg-travel-accent hover:bg-travel-accentStrong text-white rounded-lg transition-colors">+ 添加天数</button>
+                  <AdminInput type="date" value={dayDate} onChange={(e) => setDayDate(e.target.value)} className="!w-auto" />
+                  <AdminInput type="text" value={dayTitle} onChange={(e) => setDayTitle(e.target.value)} placeholder="Day 标题（可选）" className="flex-1" />
+                  <AdminButton type="button" onClick={handleAddDay}>+ 添加天数</AdminButton>
                 </div>
 
                 {detail.days.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-6">还没有天数，先添加 Day 1</p>
+                  <p className="text-sm text-travel-ink/50 text-center py-6">还没有天数，先添加 Day 1</p>
                 ) : (
                   <div className="space-y-4">
                     {detail.days.map((day) => (
@@ -383,7 +384,7 @@ export default function AdminTravelsPage() {
                     ))}
                   </div>
                 )}
-              </div>
+              </AdminCard>
 
               {/* 花费 */}
               <div className="card p-5">
