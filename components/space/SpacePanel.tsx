@@ -252,7 +252,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
         <div className="flex items-center justify-between border-b border-[var(--social-line)] px-5 py-4">
           <h3 className="flex items-center gap-2 text-base font-semibold">
             <Users className="h-4 w-4 text-[var(--social-accent)]" />
-            我们的空间
+            旅行空间
           </h3>
           <button onClick={onClose} aria-label="关闭" className="rounded-full p-1 text-[var(--social-muted)] hover:text-[var(--social-text)]">
             <X className="h-4 w-4" />

@@ -87,10 +87,10 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
             <path
               key={p.id}
               d={p.d}
-              fill={lit ? 'rgba(166,78,97,0.22)' : 'rgba(61,72,82,0.045)'}
-              stroke={lit ? 'rgba(166,78,97,0.65)' : 'rgba(61,72,82,0.26)'}
+              fill={lit ? 'rgba(168,95,58,0.22)' : 'rgba(61,72,82,0.045)'}
+              stroke={lit ? 'rgba(168,95,58,0.65)' : 'rgba(61,72,82,0.26)'}
               className={lit ? 'hero-map-lit' : undefined}
-              style={lit ? { filter: 'drop-shadow(0 0 4px rgba(232,184,194,0.45))' } : undefined}
+              style={lit ? { filter: 'drop-shadow(0 0 4px rgba(228,180,120,0.45))' } : undefined}
             />
           )
         })}
@@ -100,7 +100,7 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
         <path
           d={routeD}
           fill="none"
-          stroke="#C76E80"
+          stroke="#C97E55"
           strokeWidth="1.8"
           strokeLinecap="round"
           strokeDasharray="6 6"
@@ -110,8 +110,8 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
 
       {dots.map((d) => (
         <g key={d.id}>
-          <circle cx={d.x} cy={d.y} r="8" fill="#A64E61" opacity="0.18" />
-          <circle cx={d.x} cy={d.y} r="3.6" fill="#C76E80" stroke="#FFF8F4" strokeWidth="1" />
+          <circle cx={d.x} cy={d.y} r="8" fill="#A85F3A" opacity="0.18" />
+          <circle cx={d.x} cy={d.y} r="3.6" fill="#C97E55" stroke="#FBF3E9" strokeWidth="1" />
         </g>
       ))}
     </svg>

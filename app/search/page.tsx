@@ -140,7 +140,7 @@ function SearchContent() {
           搜索旅行记录
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          查找我们一起走过的每一段旅程
+          查找每一段旅行足迹
         </p>
 
         {/* 搜索框 */}

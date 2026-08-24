@@ -121,7 +121,7 @@ export default function TravelImageCarousel({
   }, [currentIndex, total, preloadNext])
 
   const decorItems = useMemo<DecorItem[]>(() => {
-    const palette: DecorItem['color'][] = ['#F5DCE0', '#E8B8C2', '#A8C8DC', '#D6E8F0']
+    const palette: DecorItem['color'][] = ['#F3E4D5', '#E4B478', '#A8C8DC', '#D6E8F0']
     return DECOR_POSITIONS.map((p, i) => ({
       ...p,
       type: i % 2 === 0 ? 'heart' : 'pin',

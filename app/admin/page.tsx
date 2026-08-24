@@ -128,7 +128,7 @@ export default function AdminDashboard() {
       {/* 页头 */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-travel-sakura/70 px-3 py-1 text-xs font-medium text-travel-accent dark:bg-[#3A2B31]/70 dark:text-travel-bloom">
+          <div className="inline-flex items-center gap-2 rounded-full bg-travel-sakura/70 px-3 py-1 text-xs font-medium text-travel-accent dark:bg-[#32261D]/70 dark:text-travel-bloom">
             <Sparkles className="h-3 w-3" />
             行迹内容中心
           </div>
@@ -177,8 +177,8 @@ export default function AdminDashboard() {
           ))}
         </div>
       ) : filteredPosts.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-[#3A2B31] dark:bg-white/5">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom/60 dark:from-[#3A2B31] dark:to-[#5A3A44]">
+        <div className="rounded-3xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-[#32261D] dark:bg-white/5">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom/60 dark:from-[#32261D] dark:to-[#4A3427]">
             <FileText className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
           </div>
           <h3 className="text-lg font-semibold text-[#3D4852] dark:text-[#E8E6E1]">
@@ -215,7 +215,7 @@ export default function AdminDashboard() {
                 className="group mb-5 break-inside-avoid overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-16px_rgba(167,78,97,0.35)] dark:border-white/10 dark:bg-[#16181C]/90"
               >
                 {/* 封面 */}
-                <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-travel-sakura to-travel-mist dark:from-[#3A2B31] dark:to-[#22303A]">
+                <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-travel-sakura to-travel-mist dark:from-[#32261D] dark:to-[#22303A]">
                   {post.cover ? (
                     <Image
                       src={post.cover}
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                   {post.tags && post.tags.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {post.tags.slice(0, 4).map((tag) => (
-                        <span key={tag} className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-[11px] text-travel-accent dark:bg-[#3A2B31]/80 dark:text-travel-bloom">
+                        <span key={tag} className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-[11px] text-travel-accent dark:bg-[#32261D]/80 dark:text-travel-bloom">
                           # {tag}
                         </span>
                       ))}

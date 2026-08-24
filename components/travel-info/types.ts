@@ -1,8 +1,8 @@
 export const TravelInfoColors = {
   cream: '#FAFBF7',
   ink: '#5A6670',
-  sakura: '#F5DCE0',
-  bloom: '#E8B8C2',
+  sakura: '#F3E4D5',
+  bloom: '#E4B478',
   sky: '#A8C8DC',
   mist: '#D6E8F0',
 }

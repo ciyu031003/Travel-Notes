@@ -44,7 +44,7 @@ export default function DoorMap({ className }: DoorMapProps) {
           <path
             key={p.id}
             d={p.d}
-            fill="var(--door-map-fill, rgba(166,78,97,0.07))"
+            fill="var(--door-map-fill, rgba(168,95,58,0.07))"
             stroke="var(--door-map-stroke, rgba(61,72,82,0.55))"
           />
         ))}

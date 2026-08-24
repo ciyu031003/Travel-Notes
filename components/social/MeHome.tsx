@@ -205,8 +205,8 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               <button
                 type="button"
                 onClick={() => setShowSpace(true)}
-                title="我们的空间"
-                aria-label="我们的空间"
+                title="旅行空间"
+                aria-label="旅行空间"
                 className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"
               >
                 <Users className="h-4 w-4" />

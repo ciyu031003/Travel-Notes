@@ -51,9 +51,9 @@ export default function TimelinePage() {
       <header className="text-center mb-12">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-accentSoft rounded-full text-sm mb-4">
           <CalendarDays className="w-4 h-4" />
-          <span>我们的时间线</span>
+          <span>旅行时间线</span>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">一起走过的时光</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">走过的时光</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-2">按年份回顾每一段旅行与回忆</p>
       </header>
 

@@ -10,7 +10,7 @@ export default function WeatherIcon({
 }) {
   switch (kind) {
     case 'sunny':
-      return <Sun className={className} style={{ color: '#E8B8C2' }} />
+      return <Sun className={className} style={{ color: '#E4B478' }} />
     case 'cloudy':
       return <Cloudy className={className} style={{ color: '#A8C8DC' }} />
     case 'rainy':

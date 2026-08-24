@@ -390,7 +390,7 @@ export default function AlbumPage() {
         </Link>
         <div className="font-zpix text-album-accent text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)] flex items-center gap-2">
           <BookOpen className="w-4 h-4" />
-          我们的旅行相册 · 存档
+          旅行相册 · 存档
         </div>
         <div className="flex items-center gap-2">
           <ManageEntry
@@ -441,7 +441,7 @@ export default function AlbumPage() {
               </div>
               <div>
                 <h1 className="font-zpix text-xl sm:text-2xl font-bold text-album-accent tracking-wider drop-shadow-[0_3px_0_rgba(0,0,0,0.7)]">
-                  我们的旅行相册
+                  旅行相册
                 </h1>
                 <p className="text-xs text-album-warm mt-1 tracking-widest">
                   TRAVEL ALBUM · SAVE OUR MEMORIES

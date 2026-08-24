@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       return fail('留言内容不能超过50字', 400)
     }
 
-    const color = (body?.color || '#E8B8C2').toString()
+    const color = (body?.color || '#E4B478').toString()
 
     const created = await prisma.danmaku.create({
       data: {

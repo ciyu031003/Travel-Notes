@@ -486,8 +486,8 @@ export default function TravelStarMap({ cities, stats, className, onSelectCity }
       {stats && (
         <p className="mt-3 text-center font-zpix text-xs text-album-accent">
           {stats.days !== undefined || stats.photos !== undefined
-            ? '我们一起去过 ' + (stats.cities ?? points.length) + ' 城 · ' + (stats.days ?? 0) + ' 天 · ' + (stats.photos ?? 0) + ' 张照片'
-            : '我们一起去过 ' + points.length + ' 个城市'}
+            ? '走过 ' + (stats.cities ?? points.length) + ' 城 · ' + (stats.days ?? 0) + ' 天 · ' + (stats.photos ?? 0) + ' 张照片'
+            : '走过 ' + points.length + ' 个城市'}
         </p>
       )}
     </div>

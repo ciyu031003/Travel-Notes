@@ -71,9 +71,9 @@ export default function AdminLoginPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-[#121316]">
       {/* 氛围光晕 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-travel-sakura/70 blur-3xl dark:bg-[#5A3A44]/30" />
+        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-travel-sakura/70 blur-3xl dark:bg-[#4A3427]/30" />
         <div className="absolute -bottom-32 -right-24 h-[28rem] w-[28rem] rounded-full bg-travel-mist/80 blur-3xl dark:bg-[#2E3A44]/30" />
-        <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-travel-bloom/40 blur-3xl dark:bg-[#3A2B31]/40" />
+        <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-travel-bloom/40 blur-3xl dark:bg-[#32261D]/40" />
         {/* 漂浮樱花颗粒 */}
         {Array.from({ length: 14 }).map((_, i) => (
           <span
@@ -157,7 +157,7 @@ export default function AdminLoginPage() {
                 key={error}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-travel-bloom"
+                className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#4A3427] dark:bg-[#32261D]/70 dark:text-travel-bloom"
               >
                 {error}
               </motion.div>

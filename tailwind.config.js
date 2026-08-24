@@ -23,16 +23,16 @@ module.exports = {
         },
         // ★ 新增 travel 暖色调系列（项目主色调）
         travel: {
-          cream: '#FAFBF7',    // 主背景（米白）
-          ink: '#5A6670',       // 主文字（深灰）
-          dim: '#D8DDD8',       // 次要边框（浅灰）
-          sakura: '#F5DCE0',    // 樱花粉（浅）
-          bloom: '#E8B8C2',     // 樱花粉（深，主强调色）
+          cream: '#FAF6EE',    // 主背景（暖米白）
+          ink: '#585450',       // 主文字（暖墨灰）
+          dim: '#DAD5CB',       // 次要边框（暖浅灰）
+          sakura: '#F3E4D5',    // 暖米（浅）
+          bloom: '#E4B478',     // 琥珀暖（深色模式强调）
           sky: '#A8C8DC',       // 天空蓝
           mist: '#D6E8F0',      // 雾蓝（浅）
-          accent: '#A64E61',   // 深玫瑰（主强调）
-          accentStrong: '#8B4A5A', // 深玫瑰（hover/强调强）
-          accentSoft: '#C76E80',  // 浅玫瑰（次级文字/浅强调）
+          accent: '#A85F3A',   // 陶土暖棕（主强调）
+          accentStrong: '#8A4A2B', // 陶土深（hover/强调强）
+          accentSoft: '#C97E55',  // 陶土浅（次级文字/浅强调）
           sand: '#8B7355',        // 暖棕（纸面次级文字）
           sandSoft: '#C2AF9A',     // 暖棕浅（暗色模式次级）
           sandLight: '#E4D6C4',    // 暖米（暗色模式强调）

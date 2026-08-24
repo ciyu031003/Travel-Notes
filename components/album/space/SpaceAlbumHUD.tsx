@@ -62,7 +62,7 @@ export default function SpaceAlbumHUD({
           <div className="hidden sm:flex items-center gap-2 min-w-0">
             <BookOpen className="w-4 h-4 text-album-accent shrink-0" />
             <h1 className="text-album-text1 text-sm font-semibold tracking-widest truncate">
-              我们的旅行相册 · 银河存档
+              旅行相册 · 银河存档
             </h1>
           </div>
         </div>

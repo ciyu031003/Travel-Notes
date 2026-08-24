@@ -253,7 +253,7 @@ function LoginPageContent() {
                 )}
 
                 {error && (
-                  <div className="animate-[fadeIn_0.3s_ease] rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-travel-bloom">
+                  <div className="animate-[fadeIn_0.3s_ease] rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#4A3427] dark:bg-[#32261D]/70 dark:text-travel-bloom">
                     {error}
                   </div>
                 )}
@@ -386,7 +386,7 @@ function LoginPageContent() {
                 </p>
 
                 {albumError && (
-                  <div className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-2.5 text-center text-sm text-travel-accent dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-travel-bloom">
+                  <div className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-2.5 text-center text-sm text-travel-accent dark:border-[#4A3427] dark:bg-[#32261D]/70 dark:text-travel-bloom">
                     {albumError}
                   </div>
                 )}

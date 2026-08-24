@@ -62,7 +62,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
   return (
     <div className="container-custom py-10">
       <header className="mb-10 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-300 rounded-full text-sm mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-travel-sakura/60 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-bloom rounded-full text-sm mb-4">
           <BarChart3 className="w-4 h-4" />
           <span>数据看板</span>
         </div>
@@ -78,40 +78,40 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           icon={MapPin}
           label="点亮省份"
           value={data.provincesVisitedCount}
-          accent="bg-gradient-to-br from-travel-accentSoft to-pink-500"
+          accent="bg-gradient-to-br from-travel-accent to-travel-accentStrong"
           href="/travel"
         />
         <StatCard
           icon={Camera}
           label="旅行照片"
           value={data.totalPhotos}
-          accent="bg-gradient-to-br from-blue-400 to-indigo-500"
+          accent="bg-gradient-to-br from-travel-bloom to-travel-accent"
         />
         <StatCard
           icon={TrendingUp}
           label="全部内容"
           value={totalContent}
-          accent="bg-gradient-to-br from-amber-400 to-orange-500"
+          accent="bg-gradient-to-br from-travel-sand to-travel-accent"
         />
         <StatCard
           icon={ImageIcon}
           label="旅行足迹"
           value={data.travelCount}
-          accent="bg-gradient-to-br from-cyan-400 to-sky-500"
+          accent="bg-gradient-to-br from-travel-sky to-travel-accent"
           href="/travel"
         />
         <StatCard
           icon={Sparkles}
           label="碎碎念"
           value={data.momentCount}
-          accent="bg-gradient-to-br from-fuchsia-400 to-pink-500"
+          accent="bg-gradient-to-br from-travel-accentSoft to-travel-sand"
           href="/moments"
         />
         <StatCard
           icon={Heart}
           label="收到点赞"
           value={data.totalLikes}
-          accent="bg-gradient-to-br from-red-400 to-travel-accent"
+          accent="bg-gradient-to-br from-travel-accentStrong to-travel-accent"
         />
       </div>
 
@@ -131,7 +131,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         <div className="lg:col-span-2 space-y-6">
           <div className="card p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-indigo-400" />
+              <BarChart3 className="w-5 h-5 text-travel-accentSoft" />
               省份打卡排行
             </h2>
             {data.provinceStats.length === 0 ? (
@@ -158,14 +158,14 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
           <div className="card p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-400" />
+              <TrendingUp className="w-5 h-5 text-travel-accentSoft" />
               内容构成
             </h2>
             <div className="space-y-2">
               {[
                 { label: '旅行记录', value: data.travelCount, color: 'bg-travel-accentSoft' },
-                { label: '旅行照片', value: data.totalPhotos, color: 'bg-blue-400' },
-                { label: '碎碎念', value: data.momentCount, color: 'bg-purple-400' },
+                { label: '旅行照片', value: data.totalPhotos, color: 'bg-travel-bloom' },
+                { label: '碎碎念', value: data.momentCount, color: 'bg-travel-sand' },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
                   <span className={`w-2.5 h-2.5 rounded-full ${item.color} flex-shrink-0`} />

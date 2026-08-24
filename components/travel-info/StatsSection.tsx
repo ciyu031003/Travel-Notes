@@ -38,7 +38,7 @@ export default function StatsSection({
           className="text-sm font-semibold tracking-wide"
           style={{ color: TravelInfoColors.ink }}
         >
-          我们的进度
+          旅行进度
         </h3>
       </div>
 

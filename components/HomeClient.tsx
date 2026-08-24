@@ -91,9 +91,9 @@ interface Danmaku {
 
 const danmakuColors = [
   '#D98E9E',
-  '#C76E80',
-  '#A64E61',
-  '#E8B8C2',
+  '#C97E55',
+  '#A85F3A',
+  '#E4B478',
   '#B85A6D',
   '#D4A5B0',
 ]
@@ -151,16 +151,16 @@ function FeatureCard({
     })
   }
   const cls =
-    'group relative flex flex-col items-start gap-3 rounded-2xl border border-travel-line/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-7 text-left shadow- lg:p-8[0_10px_28px_-12px_rgba(90,102,112,0.18)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-16px_rgba(166,78,97,0.28)]'
+    'group relative flex flex-col items-start gap-3 rounded-2xl border border-travel-line/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-7 text-left shadow- lg:p-8[0_10px_28px_-12px_rgba(90,102,112,0.18)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-16px_rgba(168,95,58,0.28)]'
   const body = (
     <>
       <span
         className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(220px circle at ${spot.x}% ${spot.y}%, rgba(232,184,194,0.16), transparent 62%)`,
+          background: `radial-gradient(220px circle at ${spot.x}% ${spot.y}%, rgba(228,180,120,0.16), transparent 62%)`,
         }}
       />
-      <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-travel-sakura dark:bg-[#33262E] text-travel-accent dark:text-travel-bloom transition-transform group-hover:scale-105">
+      <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-travel-sakura dark:bg-[#292119] text-travel-accent dark:text-travel-bloom transition-transform group-hover:scale-105">
         <Icon className="h-7 w-7" />
       </span>
       <span>
@@ -315,7 +315,7 @@ export default function HomeClient({
           <div className="mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
             <div className="animate-[fade-in-up_0.7s_ease-out_both] text-center md:text-left">
               <h1 className="font-display text-[44px] leading-[1.12] font-bold tracking-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-6xl xl:text-7xl">
-                <span className="block">一起走过的</span>
+                <span className="block">走过的</span>
                 <span className="relative mt-1 inline-block">
                   地方
                   <svg
@@ -335,10 +335,10 @@ export default function HomeClient({
                 </span>
               </h1>
               <p className="mt-7 text-sm tracking-[0.2em] text-travel-accent dark:text-travel-bloom md:text-base">
-                行迹 · 记录我们的旅行时光
+                行迹 · 记录每一段旅行时光
               </p>
               <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-travel-ink dark:text-[#9BA3AE] md:mx-0 md:text-lg">
-                用文字记录生活，用照片定格瞬间 —— 在这个小小的世界里，收藏我们的每一份感动
+                用文字记录生活，用照片定格瞬间 —— 在这里，收藏每一段旅行记忆
               </p>
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3 md:justify-start">
                 <Link
@@ -346,7 +346,7 @@ export default function HomeClient({
                   className="group inline-flex items-center gap-2 rounded-xl bg-travel-accent px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:bg-travel-accentStrong hover:shadow-xl md:text-base"
                 >
                   <MapPin className="h-4 w-4" />
-                  打开我们的地图
+                  打开旅行地图
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <span className="inline-flex items-center gap-2 rounded-xl border border-travel-line/70 bg-white/85 px-4 py-3 text-sm text-travel-ink dark:border-[#2C343E] dark:bg-[#1B2128]/90 dark:text-[#9BA3AE]">
@@ -361,10 +361,10 @@ export default function HomeClient({
             </div>
 
             <div className="relative animate-[fade-in-up_0.7s_ease-out_0.15s_both]">
-              <div className="h-[340px] overflow-hidden rounded-2xl border border-travel-line/60 bg-white/80 shadow-[0_24px_50px_-24px_rgba(166,78,97,0.4)] dark:border-[#2C343E] dark:bg-[#1B2128]/90 md:h-[420px] lg:h-[470px]">
+              <div className="h-[340px] overflow-hidden rounded-2xl border border-travel-line/60 bg-white/80 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.4)] dark:border-[#2C343E] dark:bg-[#1B2128]/90 md:h-[420px] lg:h-[470px]">
                 <HeroFootprintMap posts={travelPosts} />
               </div>
-              <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FFF8F4] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-travel-bloom/70 dark:bg-[#2A1D22] dark:text-travel-bloom">
+              <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FBF3E9] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-travel-bloom/70 dark:bg-[#241B15] dark:text-travel-bloom">
                 足迹地图 · {provincesVisitedCount} 省
               </span>
             </div>
@@ -397,7 +397,7 @@ export default function HomeClient({
                     className="group w-72 flex-shrink-0 snap-start lg:w-80 overflow-hidden rounded-xl border border-travel-line/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] transition-all hover:border-travel-bloom/70 hover:shadow-md"
                   >
                     {post.cover ? (
-                      <div className="relative h-40 overflow-hidden bg-travel-sakura/40 dark:bg-[#33262E]">
+                      <div className="relative h-40 overflow-hidden bg-travel-sakura/40 dark:bg-[#292119]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <Image
                           src={post.cover}
@@ -408,7 +408,7 @@ export default function HomeClient({
                         />
                       </div>
                     ) : (
-                      <div className="flex h-40 items-center justify-center bg-gradient-to-br from-[#FDF3F5] to-travel-sakura/70 dark:from-[#2A2328] dark:to-[#33262E]">
+                      <div className="flex h-40 items-center justify-center bg-gradient-to-br from-[#FBF0E6] to-travel-sakura/70 dark:from-[#241C15] dark:to-[#292119]">
                         <MapPin className="h-7 w-7 text-travel-accentSoft" />
                       </div>
                     )}
@@ -448,14 +448,14 @@ export default function HomeClient({
           <section className="px-3 pb-12 md:px-6 md:pb-16">
             <div className="mx-auto max-w-7xl">
               <div className="rounded-2xl border border-travel-line/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
-                <SectionTitle icon={Heart}>旅行纪念日</SectionTitle>
+                <SectionTitle icon={CalendarDays}>重要日子</SectionTitle>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {anniversaries.map((a) => {
                     const days = daysUntil(a.date, a.recurring)
                     return (
                       <div
                         key={a.id}
-                        className="rounded-xl border border-travel-sakura/70 dark:border-[#3A2B31] bg-travel-parchment dark:bg-[#1B2128] p-4"
+                        className="rounded-xl border border-travel-sakura/70 dark:border-[#32261D] bg-travel-parchment dark:bg-[#1B2128] p-4"
                       >
                         <p className="text-xs text-travel-accent dark:text-travel-bloom">
                           {a.recurring ? '周年纪念' : '纪念日'} · {formatAnniversaryDate(a.date)}
@@ -485,7 +485,7 @@ export default function HomeClient({
         {/* 每日一言 */}
         <section className="px-3 pb-12 md:px-6 md:pb-16">
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-2xl border border-travel-bloom/40 dark:border-[#5A3A44] bg-white/90 dark:bg-[#1B2128]/95 px-6 py-10 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-12">
+            <div className="rounded-2xl border border-travel-bloom/40 dark:border-[#4A3427] bg-white/90 dark:bg-[#1B2128]/95 px-6 py-10 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-12">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-travel-accent dark:text-travel-bloom">
                 <Quote className="h-4 w-4" />
                 <span>每日一言</span>
@@ -520,14 +520,14 @@ export default function HomeClient({
               <FeatureCard
                 icon={MessageCircle}
                 title="留言板"
-                desc="写下想对对方说的话"
+                desc="写下此刻想说的话"
                 action="写留言"
                 onClick={() => setShowDanmakuInput(true)}
               />
               <FeatureCard
                 icon={CalendarDays}
                 title="时间线"
-                desc="把我们的故事串成一条线"
+                desc="按年份回顾每一段旅程"
                 action="去看时间线"
                 href="/timeline"
               />
@@ -579,7 +579,7 @@ export default function HomeClient({
               </div>
 
               <p className="mb-4 text-sm text-travel-ink dark:text-[#9BA3AE]">
-                写下你想对对方说的话，它会在首页飘动显示
+                写下此刻想说的话，它会飘动出现在首页
               </p>
 
               <textarea

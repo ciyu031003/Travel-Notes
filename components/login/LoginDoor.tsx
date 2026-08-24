@@ -137,7 +137,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
             className="absolute inset-y-0 left-0 w-1/2 origin-left overflow-hidden bg-travel-parchmentDim transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-[#1A1F26]"
             style={{ transform: phase === 'opening' ? 'rotateY(-108deg)' : 'rotateY(0deg)' }}
           >
-            <div className="absolute left-0 top-0 h-full w-screen [--door-map-fill:rgba(166,78,97,0.08)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(232,184,194,0.1)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
+            <div className="absolute left-0 top-0 h-full w-screen [--door-map-fill:rgba(168,95,58,0.08)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(228,180,120,0.1)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
               <DoorMap className="h-full w-full" />
             </div>
             <div className="absolute left-6 top-6 flex items-center gap-2 md:left-10 md:top-10">
@@ -163,7 +163,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
               transitionDelay: phase === 'opening' ? '70ms' : '0ms',
             }}
           >
-            <div className="absolute right-0 top-0 h-full w-screen [--door-map-fill:rgba(166,78,97,0.08)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(232,184,194,0.1)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
+            <div className="absolute right-0 top-0 h-full w-screen [--door-map-fill:rgba(168,95,58,0.08)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(228,180,120,0.1)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
               <DoorMap className="h-full w-full" />
             </div>
             {/* 邮戳章 */}
@@ -181,7 +181,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
               phase === 'opening' ? 'scale-x-0 opacity-0' : 'scale-x-100 opacity-100'
             }`}
           >
-            <div className="flex h-28 w-28 -rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-travel-parchment shadow-[0_10px_30px_rgba(166,78,97,0.25)] dark:border-travel-bloom/70 dark:bg-[#2A1D22]">
+            <div className="flex h-28 w-28 -rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-travel-parchment shadow-[0_10px_30px_rgba(168,95,58,0.25)] dark:border-travel-bloom/70 dark:bg-[#241B15]">
               <div className="text-center text-travel-accent dark:text-travel-bloom">
                 <p className="text-[10px] tracking-[0.3em]">启程</p>
                 <p className="mt-1 font-display text-base font-bold">{sealDate}</p>

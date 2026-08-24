@@ -274,7 +274,7 @@ export default function TravelDetailClient({
           >
             <div className="travel-media-parallax absolute -inset-y-[14%] inset-x-0">
               {/* 暖色渐变占位：图片加载中/失败时显示，避免黑屏 */}
-              <div className="absolute inset-0 bg-gradient-to-br from-travel-sakura via-travel-bloom/50 to-travel-mist dark:from-[#3A2B31] dark:via-[#4A3640] dark:to-[#22303A]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-travel-sakura via-travel-bloom/50 to-travel-mist dark:from-[#32261D] dark:via-[#3A2B21] dark:to-[#22303A]" />
               {item.type === 'image' ? (
                 <Image
                   key={`${item.type}-${index}-${index === visibleIndex ? animationKey : 'idle'}`}

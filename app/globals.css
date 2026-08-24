@@ -50,16 +50,16 @@
 @layer base {
   :root {
     /* Travel Design Tokens (CSS 变量形式，供非 Tailwind 场景使用) */
-    --color-cream: #FAFBF7;
-    --color-ink: #5A6670;
-    --color-dim: #D8DDD8;
-    --color-sakura: #F5DCE0;
-    --color-bloom: #E8B8C2;
+    --color-cream: #FAF6EE;
+    --color-ink: #585450;
+    --color-dim: #DAD5CB;
+    --color-sakura: #F3E4D5;
+    --color-bloom: #E4B478;
     --color-sky: #A8C8DC;
     --color-mist: #D6E8F0;
-    --color-travel-accent: #A64E61;
-    --color-travel-accent-strong: #8B4A5A;
-    --color-travel-accent-soft: #C76E80;
+    --color-travel-accent: #A85F3A;
+    --color-travel-accent-strong: #8A4A2B;
+    --color-travel-accent-soft: #C97E55;
     --color-travel-sand: #8B7355;
     --color-travel-sand-soft: #C2AF9A;
     --color-travel-sand-light: #E4D6C4;
@@ -118,9 +118,9 @@
     --social-text: #2B211B;
     --social-muted: rgba(43, 33, 27, 0.70);
     --social-faint: rgba(43, 33, 27, 0.46);
-    --social-accent: #A64E61;
-    --social-accent-strong: #8B4A5A;
-    --social-accent-soft: rgba(166, 78, 97, 0.12);
+    --social-accent: #A85F3A;
+    --social-accent-strong: #8A4A2B;
+    --social-accent-soft: rgba(168, 95, 58, 0.12);
     --social-on-accent: #FFFFFF;
     --social-line: rgba(90, 74, 58, 0.12);
     --social-line-strong: rgba(90, 74, 58, 0.22);
