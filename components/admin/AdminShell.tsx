@@ -135,7 +135,7 @@ export default function AdminShell({
     })
 
   return (
-    <div className="min-h-screen bg-[#FAFBF7] text-[#5A6670] dark:bg-[#121316] dark:text-[#C9CDD3]">
+    <div className="min-h-screen bg-travel-cream text-travel-ink dark:bg-[#121316] dark:text-[#C9CDD3]">
       {/* ===== 桌面侧边栏 ===== */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/70 bg-white/75 dark:border-white/5 dark:bg-[#16181C]/85 backdrop-blur-2xl lg:flex">
         {/* 品牌 */}

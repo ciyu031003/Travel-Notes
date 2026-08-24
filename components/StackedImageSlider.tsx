@@ -100,7 +100,7 @@ export default function StackedImageSlider({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
+      <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-travel-sakura via-[#E8D5E0] to-travel-mist">
         {images.map((img, index) => (
           <div
             key={`${img}-${index}`}

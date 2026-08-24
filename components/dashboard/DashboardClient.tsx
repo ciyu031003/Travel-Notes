@@ -146,7 +146,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                     </div>
                     <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-[#F5DCE0] to-[#E8B8C2] rounded-full transition-all duration-700"
+                        className="h-full bg-gradient-to-r from-travel-sakura to-travel-bloom rounded-full transition-all duration-700"
                         style={{ width: `${(p.count / maxProvinceCount) * 100}%` }}
                       />
                     </div>

@@ -50,7 +50,7 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-full bg-[#E8B8C2] px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-[#DDA5B2]"
+        className="inline-flex items-center gap-1.5 rounded-full bg-travel-bloom px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-[#DDA5B2]"
       >
         <Plus className="h-4 w-4" />
         新建旅行
@@ -61,48 +61,48 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
   return (
     <form
       onSubmit={submit}
-      className="relative w-full max-w-md rounded-2xl border border-[#D8DDD8] bg-[#FAFBF7] p-4 shadow-lg"
+      className="relative w-full max-w-md rounded-2xl border border-travel-dim bg-travel-cream p-4 shadow-lg"
     >
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="absolute right-2 top-2 rounded-full p-1 text-[#5A6670]/50 hover:bg-[#D8DDD8]/50"
+        className="absolute right-2 top-2 rounded-full p-1 text-travel-ink/50 hover:bg-travel-dim/50"
         aria-label="关闭"
       >
         <X className="h-4 w-4" />
       </button>
-      <h3 className="mb-3 font-semibold text-[#5A6670]">新建旅行</h3>
+      <h3 className="mb-3 font-semibold text-travel-ink">新建旅行</h3>
       <div className="space-y-3">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="旅行名称（必填）"
-          className="w-full rounded-xl border border-[#D8DDD8]/70 bg-white px-3 py-2 text-sm text-[#5A6670] outline-none placeholder:text-[#5A6670]/40 focus:border-[#E8B8C2]"
+          className="w-full rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none placeholder:text-travel-ink/40 focus:border-travel-bloom"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
           placeholder="描述（可选）"
-          className="w-full resize-none rounded-xl border border-[#D8DDD8]/70 bg-white px-3 py-2 text-sm text-[#5A6670] outline-none placeholder:text-[#5A6670]/40 focus:border-[#E8B8C2]"
+          className="w-full resize-none rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none placeholder:text-travel-ink/40 focus:border-travel-bloom"
         />
         <div className="flex gap-3">
           <label className="flex-1">
-            <span className="mb-1 block text-xs text-[#5A6670]/60">开始日期</span>
+            <span className="mb-1 block text-xs text-travel-ink/60">开始日期</span>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-xl border border-[#D8DDD8]/70 bg-white px-3 py-2 text-sm text-[#5A6670] outline-none focus:border-[#E8B8C2]"
+              className="w-full rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none focus:border-travel-bloom"
             />
           </label>
           <label className="flex-1">
-            <span className="mb-1 block text-xs text-[#5A6670]/60">结束日期</span>
+            <span className="mb-1 block text-xs text-travel-ink/60">结束日期</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded-xl border border-[#D8DDD8]/70 bg-white px-3 py-2 text-sm text-[#5A6670] outline-none focus:border-[#E8B8C2]"
+              className="w-full rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none focus:border-travel-bloom"
             />
           </label>
         </div>
@@ -117,7 +117,7 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
         <button
           type="submit"
           disabled={submitting || !title.trim()}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[#E8B8C2] px-4 py-1.5 text-sm font-medium text-white transition hover:bg-[#DDA5B2] disabled:opacity-50"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-travel-bloom px-4 py-1.5 text-sm font-medium text-white transition hover:bg-[#DDA5B2] disabled:opacity-50"
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           保存

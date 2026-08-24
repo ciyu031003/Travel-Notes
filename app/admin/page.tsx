@@ -121,23 +121,23 @@ export default function AdminDashboard() {
   })
 
   const glassInput =
-    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-[#3D4852] dark:text-[#E8E6E1] placeholder-[#9A958F] shadow-sm backdrop-blur-xl transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#C76E80]/50'
+    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-[#3D4852] dark:text-[#E8E6E1] placeholder-[#9A958F] shadow-sm backdrop-blur-xl transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50'
 
   return (
     <AdminShell title="文章管理">
       {/* 页头 */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#F5DCE0]/70 px-3 py-1 text-xs font-medium text-[#A64E61] dark:bg-[#3A2B31]/70 dark:text-[#E8B8C2]">
+          <div className="inline-flex items-center gap-2 rounded-full bg-travel-sakura/70 px-3 py-1 text-xs font-medium text-travel-accent dark:bg-[#3A2B31]/70 dark:text-travel-bloom">
             <Sparkles className="h-3 w-3" />
             行迹内容中心
           </div>
           <h1 className="mt-3 text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA] sm:text-3xl">文章管理</h1>
-          <p className="mt-1 text-sm text-[#5A6670]/70 dark:text-[#9BA3AE]">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>
+          <p className="mt-1 text-sm text-travel-ink/70 dark:text-[#9BA3AE]">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>
         </div>
         <Link
           href="/admin/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#A64E61] to-[#C76E80] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-travel-accent to-travel-accentSoft px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
         >
           <Plus className="h-4 w-4" />
           新建文章
@@ -177,20 +177,20 @@ export default function AdminDashboard() {
           ))}
         </div>
       ) : filteredPosts.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-[#E8B8C2]/50 bg-white/50 p-14 text-center dark:border-[#3A2B31] dark:bg-white/5">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2]/60 dark:from-[#3A2B31] dark:to-[#5A3A44]">
-            <FileText className="h-8 w-8 text-[#A64E61] dark:text-[#E8B8C2]" />
+        <div className="rounded-3xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-[#3A2B31] dark:bg-white/5">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom/60 dark:from-[#3A2B31] dark:to-[#5A3A44]">
+            <FileText className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
           </div>
           <h3 className="text-lg font-semibold text-[#3D4852] dark:text-[#E8E6E1]">
             {posts.length === 0 ? '还没有文章' : '没有匹配的文章'}
           </h3>
-          <p className="mt-1 text-sm text-[#5A6670]/70 dark:text-[#9BA3AE]">
+          <p className="mt-1 text-sm text-travel-ink/70 dark:text-[#9BA3AE]">
             {posts.length === 0 ? '从第一篇游记开始，收藏你们的旅程' : '换个关键词试试吧'}
           </p>
           {posts.length === 0 && (
             <Link
               href="/admin/new"
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#A64E61] to-[#C76E80] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:-translate-y-0.5 active:scale-95"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-travel-accent to-travel-accentSoft px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-travel-accent/25 transition-all hover:-translate-y-0.5 active:scale-95"
             >
               <Plus className="h-4 w-4" />
               新建文章
@@ -215,7 +215,7 @@ export default function AdminDashboard() {
                 className="group mb-5 break-inside-avoid overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-16px_rgba(167,78,97,0.35)] dark:border-white/10 dark:bg-[#16181C]/90"
               >
                 {/* 封面 */}
-                <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] dark:from-[#3A2B31] dark:to-[#22303A]">
+                <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-travel-sakura to-travel-mist dark:from-[#3A2B31] dark:to-[#22303A]">
                   {post.cover ? (
                     <Image
                       src={post.cover}
@@ -230,7 +230,7 @@ export default function AdminDashboard() {
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
-                      {Icon && <Icon className="h-10 w-10 text-[#A64E61]/40 dark:text-[#E8B8C2]/30" />}
+                      {Icon && <Icon className="h-10 w-10 text-travel-accent/40 dark:text-travel-bloom/30" />}
                     </div>
                   )}
                   {/* 类型角标 */}
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
                   </span>
                   {/* 悬停查看 */}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/25 group-hover:opacity-100">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-[#5A6670] shadow-lg">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-travel-ink shadow-lg">
                       <Eye className="h-3.5 w-3.5" />
                       查看游记
                     </span>
@@ -249,11 +249,11 @@ export default function AdminDashboard() {
                 {/* 内容 */}
                 <div className="p-5">
                   <Link href={`/${post.type}/${post.slug}`} target="_blank" className="block">
-                    <h3 className="text-base font-bold leading-snug text-[#2D3842] transition-colors group-hover:text-[#A64E61] dark:text-[#F1EFEA] dark:group-hover:text-[#E8B8C2]">
+                    <h3 className="text-base font-bold leading-snug text-[#2D3842] transition-colors group-hover:text-travel-accent dark:text-[#F1EFEA] dark:group-hover:text-travel-bloom">
                       {post.title}
                     </h3>
                   </Link>
-                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[#5A6670]/80 dark:text-[#9BA3AE]">
+                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-travel-ink/80 dark:text-[#9BA3AE]">
                     {post.summary || '还没有摘要，点击编辑为这篇文章写一句引言吧。'}
                   </p>
 
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                   {post.tags && post.tags.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {post.tags.slice(0, 4).map((tag) => (
-                        <span key={tag} className="rounded-full bg-[#F5DCE0]/60 px-2 py-0.5 text-[11px] text-[#A64E61] dark:bg-[#3A2B31]/80 dark:text-[#E8B8C2]">
+                        <span key={tag} className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-[11px] text-travel-accent dark:bg-[#3A2B31]/80 dark:text-travel-bloom">
                           # {tag}
                         </span>
                       ))}
@@ -317,14 +317,14 @@ export default function AdminDashboard() {
                         href={`/${post.type}/${post.slug}`}
                         target="_blank"
                         title="查看"
-                        className="rounded-lg p-2 text-[#9A958F] transition-all hover:bg-[#F5DCE0]/60 hover:text-[#A64E61] active:scale-90"
+                        className="rounded-lg p-2 text-[#9A958F] transition-all hover:bg-travel-sakura/60 hover:text-travel-accent active:scale-90"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                       <Link
                         href={`/admin/edit/${post.id}`}
                         title="编辑"
-                        className="rounded-lg p-2 text-[#9A958F] transition-all hover:bg-[#D6E8F0]/60 hover:text-[#2E6E8E] active:scale-90"
+                        className="rounded-lg p-2 text-[#9A958F] transition-all hover:bg-travel-mist/60 hover:text-[#2E6E8E] active:scale-90"
                       >
                         <Edit2 className="h-4 w-4" />
                       </Link>
@@ -347,7 +347,7 @@ export default function AdminDashboard() {
       {/* 移动端新建 FAB */}
       <Link
         href="/admin/new"
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#A64E61] to-[#C76E80] text-white shadow-xl shadow-[#A64E61]/35 transition-all hover:scale-105 active:scale-95 lg:hidden"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-accent to-travel-accentSoft text-white shadow-xl shadow-travel-accent/35 transition-all hover:scale-105 active:scale-95 lg:hidden"
         aria-label="新建文章"
       >
         <Plus className="h-6 w-6" />
@@ -374,13 +374,13 @@ export default function AdminDashboard() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-sm leading-relaxed text-[#5A6670]/80 dark:text-[#9BA3AE]">
+            <p className="text-sm leading-relaxed text-travel-ink/80 dark:text-[#9BA3AE]">
               删除后不可恢复，确定要删除这篇游记吗？
             </p>
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-[#5A6670] transition-all hover:bg-black/5 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-travel-ink transition-all hover:bg-black/5 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
               >
                 取消
               </button>

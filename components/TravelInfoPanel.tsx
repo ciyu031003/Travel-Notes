@@ -53,7 +53,7 @@ export default function TravelInfoPanel({
 
   return (
     <aside
-      className="relative w-full h-full flex flex-col gap-3 p-4 rounded-3xl border border-[#D6E8F0]/70 bg-[#FAFBF7]/85 backdrop-blur-md shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] overflow-y-auto"
+      className="relative w-full h-full flex flex-col gap-3 p-4 rounded-3xl border border-travel-mist/70 bg-travel-cream/85 backdrop-blur-md shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] overflow-y-auto"
       style={{ fontFamily: "'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif" }}
     >
       <div

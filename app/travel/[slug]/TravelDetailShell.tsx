@@ -86,13 +86,13 @@ export default function TravelDetailShell() {
   }
 
   return (
-    <div className="bg-[#FAFBF7] min-h-screen">
+    <div className="bg-travel-cream min-h-screen">
       {(images.length > 0 || videos.length > 0) && <TravelDetailClient {...imageProps} />}
 
       <div className="container-custom pt-6">
         <Link
           href={`/travel/${slug}/record`}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#F5DCE0] border border-[#E8B8C2]/50 text-[#5A6670] rounded-full text-sm font-medium hover:bg-[#EED2D8] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-travel-sakura border border-travel-bloom/50 text-travel-ink rounded-full text-sm font-medium hover:bg-[#EED2D8] transition-colors"
         >
           ✍️ 记录今日
         </Link>
@@ -100,8 +100,8 @@ export default function TravelDetailShell() {
       <div id={`detail-${slug}`} className="container-custom">
         <article className="max-w-3xl mx-auto pt-24 pb-16">
           <header className="mb-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#5A6670]">{detailTitle}</h1>
-            <div className="flex items-center justify-center gap-4 text-[#5A6670]/60 text-sm">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-travel-ink">{detailTitle}</h1>
+            <div className="flex items-center justify-center gap-4 text-travel-ink/60 text-sm">
               {detailDate && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
@@ -118,7 +118,7 @@ export default function TravelDetailShell() {
             {detailTags && detailTags.length > 0 && (
               <div className="flex justify-center gap-2 mt-4">
                 {detailTags.map((tag: string) => (
-                  <span key={tag} className="px-3 py-1 bg-[#F5DCE0]/40 border border-[#E8B8C2]/50 text-[#5A6670] text-xs rounded-full">
+                  <span key={tag} className="px-3 py-1 bg-travel-sakura/40 border border-travel-bloom/50 text-travel-ink text-xs rounded-full">
                     {tag}
                   </span>
                 ))}
@@ -133,7 +133,7 @@ export default function TravelDetailShell() {
           )}
 
           <div
-            className="prose prose-lg max-w-none prose-headings:text-[#5A6670] prose-p:text-[#5A6670]/80 prose-a:text-[#E8B8C2]"
+            className="prose prose-lg max-w-none prose-headings:text-travel-ink prose-p:text-travel-ink/80 prose-a:text-travel-bloom"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
 

@@ -131,7 +131,7 @@ export default function TravelImageCarousel({
 
   if (total === 0) {
     return (
-      <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] via-[#FAFBF7] to-[#D6E8F0] flex items-center justify-center">
+      <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-travel-sakura via-travel-cream to-travel-mist flex items-center justify-center">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {decorItems.map((d, i) => (
             <div
@@ -163,10 +163,10 @@ export default function TravelImageCarousel({
         </div>
         <div className="flex flex-col items-center gap-3 text-center px-6 relative z-10">
           <div className="w-20 h-20 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center shadow-lg">
-            <ImageOff className="w-10 h-10 text-[#5A6670]" />
+            <ImageOff className="w-10 h-10 text-travel-ink" />
           </div>
-          <p className="text-[#5A6670] text-base font-medium">暂无旅行照片</p>
-          <p className="text-[#5A6670]/70 text-sm">上传照片开启美好的旅行回忆</p>
+          <p className="text-travel-ink text-base font-medium">暂无旅行照片</p>
+          <p className="text-travel-ink/70 text-sm">上传照片开启美好的旅行回忆</p>
         </div>
         <style jsx>{`
           @keyframes carousel-float {
@@ -184,7 +184,7 @@ export default function TravelImageCarousel({
   const prevHasError = prevImage ? imageError[prevImage] : false
 
   return (
-    <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#F5DCE0] via-[#FAFBF7] to-[#D6E8F0]">
+    <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-travel-sakura via-travel-cream to-travel-mist">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {decorItems.map((d, i) => (
           <div
@@ -217,7 +217,7 @@ export default function TravelImageCarousel({
 
       <div className="absolute inset-0 flex items-center justify-center p-8 sm:p-10 md:p-14">
         <div
-          className="relative rounded-2xl overflow-hidden shadow-2xl bg-[#FAFBF7]"
+          className="relative rounded-2xl overflow-hidden shadow-2xl bg-travel-cream"
           style={{
             width: 'min(88%, 380px)',
             aspectRatio: '4 / 5',
@@ -225,9 +225,9 @@ export default function TravelImageCarousel({
         >
           {/* 底层：当前图片（始终可见，作为基底） */}
           {currentHasError ? (
-            <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-3 bg-[#FAFBF7]">
-              <ImageOff className="w-12 h-12 text-[#5A6670]/50" />
-              <p className="text-sm text-[#5A6670]/70">图片加载失败</p>
+            <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-3 bg-travel-cream">
+              <ImageOff className="w-12 h-12 text-travel-ink/50" />
+              <p className="text-sm text-travel-ink/70">图片加载失败</p>
             </div>
           ) : (
             <NextImage
@@ -284,15 +284,15 @@ export default function TravelImageCarousel({
               onClick={() => goTo(index)}
               className={`rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? 'w-6 h-2 bg-[#E8B8C2]'
-                  : 'w-2 h-2 bg-[#5A6670]/25 hover:bg-[#5A6670]/50'
+                  ? 'w-6 h-2 bg-travel-bloom'
+                  : 'w-2 h-2 bg-travel-ink/25 hover:bg-travel-ink/50'
               }`}
               aria-label={`跳转到第 ${index + 1} 张`}
             />
           ))}
         </div>
         <div className="px-3 py-1 rounded-full bg-white/70 backdrop-blur-sm shadow-sm">
-          <span className="text-xs font-medium text-[#5A6670]">
+          <span className="text-xs font-medium text-travel-ink">
             第 {currentIndex + 1} / {total} 张
           </span>
         </div>

@@ -88,7 +88,7 @@ export default function MemoryPhotoPicker({
       <button
         type="button"
         onClick={openPicker}
-        className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[#E8B8C2]/30 px-2.5 py-1 text-xs text-[#5A6670]/80 transition hover:bg-[#E8B8C2]/50"
+        className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-travel-bloom/30 px-2.5 py-1 text-xs text-travel-ink/80 transition hover:bg-travel-bloom/50"
       >
         <Plus className="h-3 w-3" />
         关联照片
@@ -98,17 +98,17 @@ export default function MemoryPhotoPicker({
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4" onClick={() => setOpen(false)}>
           <div className="flex max-h-[80vh] w-full max-w-md flex-col rounded-2xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-semibold text-[#5A6670]">选择照片关联到回忆</h3>
-              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-1 text-[#5A6670]/50 hover:bg-gray-100" aria-label="关闭">
+              <h3 className="font-semibold text-travel-ink">选择照片关联到回忆</h3>
+              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-1 text-travel-ink/50 hover:bg-gray-100" aria-label="关闭">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="flex justify-center py-10 text-[#5A6670]/50"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                <div className="flex justify-center py-10 text-travel-ink/50"><Loader2 className="h-5 w-5 animate-spin" /></div>
               ) : photos.length === 0 ? (
-                <p className="py-10 text-center text-sm text-[#5A6670]/50">还没有可关联的照片，先去相册上传吧</p>
+                <p className="py-10 text-center text-sm text-travel-ink/50">还没有可关联的照片，先去相册上传吧</p>
               ) : (
                 <div className="grid grid-cols-4 gap-1.5">
                   {photos.map((p) => (
@@ -116,12 +116,12 @@ export default function MemoryPhotoPicker({
                       key={p.id}
                       type="button"
                       onClick={() => toggle(p.id)}
-                      className={`relative aspect-square overflow-hidden rounded-lg transition ${selected.has(p.id) ? 'ring-2 ring-[#E8B8C2]' : 'ring-1 ring-gray-200'}`}
+                      className={`relative aspect-square overflow-hidden rounded-lg transition ${selected.has(p.id) ? 'ring-2 ring-travel-bloom' : 'ring-1 ring-gray-200'}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={p.url} alt="" className="h-full w-full object-cover" loading="lazy" />
                       {selected.has(p.id) && (
-                        <span className="absolute inset-0 flex items-center justify-center bg-[#E8B8C2]/40">
+                        <span className="absolute inset-0 flex items-center justify-center bg-travel-bloom/40">
                           <Check className="h-5 w-5 text-white" />
                         </span>
                       )}
@@ -134,12 +134,12 @@ export default function MemoryPhotoPicker({
             {message && <p className={`mt-2 text-center text-xs ${message.type === 'ok' ? 'text-emerald-600' : 'text-red-500'}`}>{message.text}</p>}
 
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-[#5A6670]/50">已选 {selected.size} 张</span>
+              <span className="text-xs text-travel-ink/50">已选 {selected.size} 张</span>
               <button
                 type="button"
                 onClick={save}
                 disabled={saving || selected.size === 0}
-                className="rounded-full bg-[#E8B8C2] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#DDA5B2] disabled:opacity-50"
+                className="rounded-full bg-travel-bloom px-4 py-2 text-sm font-medium text-white transition hover:bg-[#DDA5B2] disabled:opacity-50"
               >
                 {saving ? '关联中...' : '关联照片'}
               </button>

@@ -2,7 +2,7 @@ import { ChinaMapColors as colors } from './types'
 
 export default function SouthChinaSeaInset() {
   return (
-    <div className="absolute bottom-4 left-4 w-[116px] h-[162px] rounded-lg border-2 border-[#D8DDD8]/60 bg-[#FAFBF7]/60 backdrop-blur-sm p-1.5 pointer-events-none">
+    <div className="absolute bottom-4 left-4 w-[116px] h-[162px] rounded-lg border-2 border-travel-dim/60 bg-travel-cream/60 backdrop-blur-sm p-1.5 pointer-events-none">
       <svg
         viewBox="0 0 116 162"
         className="w-full h-full"

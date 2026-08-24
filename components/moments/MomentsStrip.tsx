@@ -26,11 +26,11 @@ function timeAgo(dateStr: string): string {
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-xl border border-[#E8DDD8]/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] p-4">
-      <div className="h-3 w-full rounded bg-[#E8DDD8]/70 dark:bg-[#2C343E]" />
-      <div className="mt-2 h-3 w-4/5 rounded bg-[#E8DDD8]/70 dark:bg-[#2C343E]" />
-      <div className="mt-2 h-3 w-2/5 rounded bg-[#E8DDD8]/70 dark:bg-[#2C343E]" />
-      <div className="mt-4 h-2.5 w-1/4 rounded bg-[#E8DDD8]/50 dark:bg-[#2C343E]/60" />
+    <div className="animate-pulse rounded-xl border border-travel-line/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] p-4">
+      <div className="h-3 w-full rounded bg-travel-line/70 dark:bg-[#2C343E]" />
+      <div className="mt-2 h-3 w-4/5 rounded bg-travel-line/70 dark:bg-[#2C343E]" />
+      <div className="mt-2 h-3 w-2/5 rounded bg-travel-line/70 dark:bg-[#2C343E]" />
+      <div className="mt-4 h-2.5 w-1/4 rounded bg-travel-line/50 dark:bg-[#2C343E]/60" />
     </div>
   )
 }
@@ -58,15 +58,15 @@ export default function MomentsStrip() {
   return (
     <section className="px-3 pb-12 md:px-6 md:pb-16">
       <div className="mx-auto max-w-7xl">
-        <div className="rounded-2xl border border-[#E8DDD8]/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
+        <div className="rounded-2xl border border-travel-line/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="flex items-center gap-2.5 text-lg font-semibold text-[#3D4852] dark:text-[#E8E6E1]">
-              <Sparkles className="h-[18px] w-[18px] text-[#A64E61] dark:text-[#E8B8C2]" />
+              <Sparkles className="h-[18px] w-[18px] text-travel-accent dark:text-travel-bloom" />
               碎碎念
             </h2>
             <Link
               href="/moments"
-              className="inline-flex items-center gap-1 text-xs text-[#A64E61] dark:text-[#E8B8C2] transition-colors hover:text-[#8B3A4C]"
+              className="inline-flex items-center gap-1 text-xs text-travel-accent dark:text-travel-bloom transition-colors hover:text-travel-accentStrong"
             >
               全部
               <ArrowRight className="h-3 w-3" />
@@ -81,11 +81,11 @@ export default function MomentsStrip() {
             </div>
           ) : moments.length === 0 ? (
             <div className="py-10 text-center">
-              <Sparkles className="mx-auto h-8 w-8 text-[#E8B8C2]" />
-              <p className="mt-3 text-sm text-[#5A6670] dark:text-[#9BA3AE]">还没有碎碎念，来写第一条吧</p>
+              <Sparkles className="mx-auto h-8 w-8 text-travel-bloom" />
+              <p className="mt-3 text-sm text-travel-ink dark:text-[#9BA3AE]">还没有碎碎念，来写第一条吧</p>
               <Link
                 href="/admin/moments"
-                className="mt-4 inline-flex items-center gap-1 rounded-xl bg-[#A64E61] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#8B3A4C]"
+                className="mt-4 inline-flex items-center gap-1 rounded-xl bg-travel-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-travel-accentStrong"
               >
                 写一条碎碎念
                 <ArrowRight className="h-4 w-4" />
@@ -97,15 +97,15 @@ export default function MomentsStrip() {
                 <Link
                   key={moment.id}
                   href="/moments"
-                  className="group block rounded-xl border border-[#E8DDD8]/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] p-4 transition-all hover:border-[#E8B8C2]/70 hover:shadow-md"
+                  className="group block rounded-xl border border-travel-line/60 dark:border-[#2C343E] bg-white dark:bg-[#1B2128] p-4 transition-all hover:border-travel-bloom/70 hover:shadow-md"
                 >
                   <p className="text-sm leading-relaxed text-[#3D4852] dark:text-[#E8E6E1] line-clamp-3 whitespace-pre-wrap break-words">
                     {moment.content}
                   </p>
                   <div className="mt-3 flex items-center gap-2">
-                    <span className="text-[11px] text-[#5A6670] dark:text-[#9BA3AE]">{timeAgo(moment.createdAt)}</span>
+                    <span className="text-[11px] text-travel-ink dark:text-[#9BA3AE]">{timeAgo(moment.createdAt)}</span>
                     {moment.tags && moment.tags.length > 0 && (
-                      <span className="rounded-full bg-[#F5DCE0]/50 dark:bg-[#33262E] px-1.5 py-0.5 text-[10px] text-[#A64E61] dark:text-[#E8B8C2]">
+                      <span className="rounded-full bg-travel-sakura/50 dark:bg-[#33262E] px-1.5 py-0.5 text-[10px] text-travel-accent dark:text-travel-bloom">
                         #{moment.tags[0]}
                       </span>
                     )}

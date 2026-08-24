@@ -127,7 +127,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
               {mediaItems.length > 0 && (
                 <div className="mb-8">
                   {mediaItems.length === 1 ? (
-                    <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
+                    <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-travel-sakura via-[#E8D5E0] to-travel-mist">
                       {mediaItems[0].type === 'image' ? (
                         <Image
                           src={mediaItems[0].url}
@@ -154,7 +154,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                     </div>
                   ) : (
                     <>
-                      <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#F5DCE0] via-[#E8D5E0] to-[#D6E8F0]">
+                      <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-travel-sakura via-[#E8D5E0] to-travel-mist">
                         <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800">
                           {mediaItems.map((item, index) => (
                             item.type === 'image' ? (
@@ -239,7 +239,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                           <button
                             key={`thumb-${index}`}
                             onClick={() => setCurrentIndex(index)}
-                            className={`relative aspect-square rounded-lg overflow-hidden transition-all bg-gradient-to-br from-[#F5DCE0] to-[#D6E8F0] ${
+                            className={`relative aspect-square rounded-lg overflow-hidden transition-all bg-gradient-to-br from-travel-sakura to-travel-mist ${
                               index === currentIndex
                                 ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900'
                                 : 'opacity-60 hover:opacity-100'

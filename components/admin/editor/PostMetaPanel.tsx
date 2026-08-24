@@ -48,8 +48,8 @@ export default function PostMetaPanel({
                 onClick={() => onChange('type', key)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                   type === key
-                    ? 'bg-gradient-to-r from-[#A64E61] to-[#C76E80] text-white shadow-md shadow-[#A64E61]/25'
-                    : 'border border-white/70 bg-white/70 text-[#5A6670] hover:text-[#A64E61] dark:border-white/10 dark:bg-white/5 dark:text-gray-300'
+                    ? 'bg-gradient-to-r from-travel-accent to-travel-accentSoft text-white shadow-md shadow-travel-accent/25'
+                    : 'border border-white/70 bg-white/70 text-travel-ink hover:text-travel-accent dark:border-white/10 dark:bg-white/5 dark:text-gray-300'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -69,7 +69,7 @@ export default function PostMetaPanel({
           type="text"
           value={tags}
           onChange={(e) => onChange('tags', e.target.value)}
-          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#C76E80]/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
+          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
           placeholder="标签1, 标签2, 标签3"
         />
       </div>
@@ -84,7 +84,7 @@ export default function PostMetaPanel({
             type="text"
             value={location}
             onChange={(e) => onChange('location', e.target.value)}
-            className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#C76E80]/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
+            className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
             placeholder="例如：广东广州"
           />
         </div>
@@ -118,7 +118,7 @@ export default function PostMetaPanel({
           value={summary}
           onChange={(e) => onChange('summary', e.target.value)}
           rows={3}
-          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#C76E80]/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
+          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
           placeholder="简短描述这篇文章..."
         />
       </div>
@@ -148,7 +148,7 @@ export default function PostMetaPanel({
             className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
               !isPublic
                 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
-                : 'border border-white/70 bg-white/70 text-gray-500 hover:text-[#A64E61] dark:border-white/10 dark:bg-white/5 dark:text-gray-400'
+                : 'border border-white/70 bg-white/70 text-gray-500 hover:text-travel-accent dark:border-white/10 dark:bg-white/5 dark:text-gray-400'
             }`}
           >
             <Lock className="w-3.5 h-3.5" />

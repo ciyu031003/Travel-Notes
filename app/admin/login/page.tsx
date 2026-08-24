@@ -65,20 +65,20 @@ export default function AdminLoginPage() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-[#E8DDD4] bg-white/70 py-3 pl-11 pr-11 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#C76E80]/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]'
+    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]'
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#FAFBF7] p-4 dark:bg-[#121316]">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-[#121316]">
       {/* 氛围光晕 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-[#F5DCE0]/70 blur-3xl dark:bg-[#5A3A44]/30" />
-        <div className="absolute -bottom-32 -right-24 h-[28rem] w-[28rem] rounded-full bg-[#D6E8F0]/80 blur-3xl dark:bg-[#2E3A44]/30" />
+        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-travel-sakura/70 blur-3xl dark:bg-[#5A3A44]/30" />
+        <div className="absolute -bottom-32 -right-24 h-[28rem] w-[28rem] rounded-full bg-travel-mist/80 blur-3xl dark:bg-[#2E3A44]/30" />
         <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-travel-bloom/40 blur-3xl dark:bg-[#3A2B31]/40" />
         {/* 漂浮樱花颗粒 */}
         {Array.from({ length: 14 }).map((_, i) => (
           <span
             key={i}
-            className="absolute rounded-full bg-travel-bloom/50 dark:bg-[#E8B8C2]/20"
+            className="absolute rounded-full bg-travel-bloom/50 dark:bg-travel-bloom/20"
             style={{
               left: `${(i * 67) % 100}%`,
               top: `${(i * 41) % 100}%`,
@@ -157,7 +157,7 @@ export default function AdminLoginPage() {
                 key={error}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-[#E8B8C2]"
+                className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-travel-bloom"
               >
                 {error}
               </motion.div>
@@ -168,7 +168,7 @@ export default function AdminLoginPage() {
               disabled={loading}
               whileHover={{ scale: loading ? 1 : 1.015 }}
               whileTap={{ scale: 0.98 }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-travel-accent to-travel-accentSoft py-3.5 font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:shadow-xl disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-travel-accent to-travel-accentSoft py-3.5 font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:shadow-xl disabled:opacity-60"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '登 录'}
             </motion.button>
@@ -176,11 +176,11 @@ export default function AdminLoginPage() {
 
           <motion.div variants={item} className="mt-6 flex items-center justify-center gap-6 text-sm">
             {needsSetup && (
-              <Link href="/admin/setup" className="text-travel-accent transition-colors hover:text-travel-accentStrong underline underline-offset-4 dark:text-[#E8B8C2]">
+              <Link href="/admin/setup" className="text-travel-accent transition-colors hover:text-travel-accentStrong underline underline-offset-4 dark:text-travel-bloom">
                 首次使用？初始化管理员
               </Link>
             )}
-            <Link href="/" className="inline-flex items-center gap-1 text-travel-ink transition-colors hover:text-travel-accent dark:text-[#9BA3AE] dark:hover:text-[#E8B8C2]">
+            <Link href="/" className="inline-flex items-center gap-1 text-travel-ink transition-colors hover:text-travel-accent dark:text-[#9BA3AE] dark:hover:text-travel-bloom">
               <ArrowLeft className="h-3.5 w-3.5" />
               返回首页
             </Link>

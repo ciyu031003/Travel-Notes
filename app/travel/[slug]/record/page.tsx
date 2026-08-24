@@ -93,19 +93,19 @@ export default function TravelRecordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFBF7]">
-      <header className="sticky top-0 z-10 bg-[#FAFBF7]/90 backdrop-blur border-b border-[#E8E8E4]">
+    <div className="min-h-screen bg-travel-cream">
+      <header className="sticky top-0 z-10 bg-travel-cream/90 backdrop-blur border-b border-[#E8E8E4]">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link href={'/travel/' + params.slug} className="p-2 -ml-2 text-[#5A6670]">
+          <Link href={'/travel/' + params.slug} className="p-2 -ml-2 text-travel-ink">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="font-semibold text-[#5A6670]">记录此刻 · {travel.title}</h1>
+          <h1 className="font-semibold text-travel-ink">记录此刻 · {travel.title}</h1>
         </div>
       </header>
 
       <main className="max-w-xl mx-auto px-4 py-6">
         {offline && (
-          <div className="mb-4 rounded-2xl bg-[#E8B8C2]/15 border border-[#E8B8C2]/40 px-4 py-2 text-center text-xs text-[#B07686]">
+          <div className="mb-4 rounded-2xl bg-travel-bloom/15 border border-travel-bloom/40 px-4 py-2 text-center text-xs text-[#B07686]">
             离线模式：保存的留言会先存到本地，联网后自动上传
           </div>
         )}
@@ -117,35 +117,35 @@ export default function TravelRecordPage() {
         ) : travel.spaceId ? (
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label className="block text-sm text-[#5A6670]/70 mb-1">此刻标题</label>
+              <label className="block text-sm text-travel-ink/70 mb-1">此刻标题</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
                 maxLength={255}
                 placeholder="比如：今天看到的海"
-                className="w-full px-4 py-3 rounded-2xl border border-[#E8B8C2]/50 bg-white focus:outline-none focus:ring-2 focus:ring-[#E8B8C2]/60"
+                className="w-full px-4 py-3 rounded-2xl border border-travel-bloom/50 bg-white focus:outline-none focus:ring-2 focus:ring-travel-bloom/60"
               />
             </div>
             <div>
-              <label className="block text-sm text-[#5A6670]/70 mb-1">写点什么</label>
+              <label className="block text-sm text-travel-ink/70 mb-1">写点什么</label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={6}
                 placeholder="此刻的心情、发生的事…"
-                className="w-full px-4 py-3 rounded-2xl border border-[#E8B8C2]/50 bg-white focus:outline-none focus:ring-2 focus:ring-[#E8B8C2]/60 resize-none"
+                className="w-full px-4 py-3 rounded-2xl border border-travel-bloom/50 bg-white focus:outline-none focus:ring-2 focus:ring-travel-bloom/60 resize-none"
               />
             </div>
             <div>
-              <label className="block text-sm text-[#5A6670]/70 mb-2">心情</label>
+              <label className="block text-sm text-travel-ink/70 mb-2">心情</label>
               <div className="flex flex-wrap gap-2">
                 {MOODS.map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setMood(m)}
-                    className={`px-4 py-2 rounded-full text-sm border transition-colors ${mood === m ? 'bg-[#F5DCE0] border-[#E8B8C2] text-[#5A6670]' : 'bg-white border-[#E8E8E4] text-[#5A6670]/70'}`}
+                    className={`px-4 py-2 rounded-full text-sm border transition-colors ${mood === m ? 'bg-travel-sakura border-travel-bloom text-travel-ink' : 'bg-white border-[#E8E8E4] text-travel-ink/70'}`}
                   >
                     {m}
                   </button>
@@ -156,13 +156,13 @@ export default function TravelRecordPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 bg-gradient-to-r from-[#E8B8C2] to-[#D4A5B0] text-white font-semibold rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 bg-gradient-to-r from-travel-bloom to-[#D4A5B0] text-white font-semibold rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {submitting ? '保存中...' : <><Send className="w-4 h-4" />保存回忆</>}
             </button>
           </form>
         ) : (
-          <div className="card p-8 text-center text-[#5A6670]/70">
+          <div className="card p-8 text-center text-travel-ink/70">
             该旅行尚未关联旅行空间，请先在后台为其关联空间后再记录。
           </div>
         )}

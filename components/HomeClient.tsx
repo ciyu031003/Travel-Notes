@@ -277,7 +277,7 @@ export default function HomeClient({
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-travel-cream via-[#FDF8F5] to-travel-cream text-travel-ink dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C] dark:text-[#E8E6E1]">
+    <div className="relative min-h-screen bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream text-travel-ink dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C] dark:text-[#E8E6E1]">
       {/* 弹幕层 */}
       {!danmakuPaused && (
         <div
@@ -364,7 +364,7 @@ export default function HomeClient({
               <div className="h-[340px] overflow-hidden rounded-2xl border border-travel-line/60 bg-white/80 shadow-[0_24px_50px_-24px_rgba(166,78,97,0.4)] dark:border-[#2C343E] dark:bg-[#1B2128]/90 md:h-[420px] lg:h-[470px]">
                 <HeroFootprintMap posts={travelPosts} />
               </div>
-              <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FFF8F4] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-[#E8B8C2]/70 dark:bg-[#2A1D22] dark:text-[#E8B8C2]">
+              <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FFF8F4] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-travel-bloom/70 dark:bg-[#2A1D22] dark:text-travel-bloom">
                 足迹地图 · {provincesVisitedCount} 省
               </span>
             </div>
@@ -455,7 +455,7 @@ export default function HomeClient({
                     return (
                       <div
                         key={a.id}
-                        className="rounded-xl border border-travel-sakura/70 dark:border-[#3A2B31] bg-[#FDF8F5] dark:bg-[#1B2128] p-4"
+                        className="rounded-xl border border-travel-sakura/70 dark:border-[#3A2B31] bg-travel-parchment dark:bg-[#1B2128] p-4"
                       >
                         <p className="text-xs text-travel-accent dark:text-travel-bloom">
                           {a.recurring ? '周年纪念' : '纪念日'} · {formatAnniversaryDate(a.date)}

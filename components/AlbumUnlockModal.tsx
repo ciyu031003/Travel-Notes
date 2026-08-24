@@ -101,7 +101,7 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
                   autoFocus
                 />
               </div>
-              <p className="text-xs text-travel-sand/40 mt-2 text-center dark:text-[#C2AF9A]/50">
+              <p className="text-xs text-travel-sand/40 mt-2 text-center dark:text-travel-sandSoft/50">
                 支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
               </p>
             </div>

@@ -105,7 +105,7 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
           {idx < moments.length - 1 && (
             <span className="absolute left-[9px] top-8 bottom-[-18px] w-px bg-gradient-to-b from-travel-sakura to-transparent dark:from-travel-accentStrong/40" />
           )}
-          <span className="absolute left-0 top-1.5 w-5 h-5 rounded-full bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] flex items-center justify-center shadow-sm">
+          <span className="absolute left-0 top-1.5 w-5 h-5 rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom flex items-center justify-center shadow-sm">
             <Sparkles className="w-2.5 h-2.5 text-white" />
           </span>
 
