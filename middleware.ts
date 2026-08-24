@@ -128,12 +128,44 @@ async function verifyJWT(token: string): Promise<boolean> {
  * - 无 Origin 的请求（curl/服务器间调用/移动端）放行；SameSite=Lax 已阻止跨站带 Cookie。
  * - 跨站浏览器请求 Origin 与 Host 不一致时拒绝。
  */
+function normalizeHostname(host: string): string {
+  try {
+    return new URL(host.includes('://') ? host : 'https://' + host).hostname
+  } catch {
+    // 兼容不带 scheme/未知格式的主机，取端口前的部分
+    return host.split(':')[0]
+  }
+}
+
+/**
+ * 计算允许的 Origin 主机名集合。
+ * 覆盖：请求真实 Host、反向代理透传的 X-Forwarded-Host、配置的站点域名/IP、本地调试 host。
+ * 说明：middleware 的 nextUrl.hostname 在反代后不一定同步 Host 头，因此须以请求头为准做同源判断。
+ */
+function allowedOriginHostnames(request: NextRequest): Set<string> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || ''
+  const candidates: string[] = [
+    request.nextUrl.hostname,
+    request.headers.get('host') || '',
+    request.headers.get('x-forwarded-host') || '',
+    siteUrl,
+    'localhost',
+    '127.0.0.1',
+  ]
+  const result = new Set<string>()
+  for (const c of candidates) {
+    if (!c) continue
+    result.add(normalizeHostname(c))
+  }
+  return result
+}
+
 function rejectCrossOrigin(request: NextRequest): NextResponse | null {
   if (request.method === 'GET' || request.method === 'HEAD' || request.method === 'OPTIONS') {
     return null
   }
   const origin = request.headers.get('origin')
-  // 微信/部分 WebView 可能发送字符串 "null"，这类请求没有可校验的 Origin，交给 SameSite Cookie 兜底
+  // 微信/部分 WebView 可能发送字符串 'null'，这类请求没有可校验的 Origin，交给 SameSite Cookie 兜底
   if (!origin || origin === 'null') return null
 
   let originHostname: string
@@ -144,20 +176,7 @@ function rejectCrossOrigin(request: NextRequest): NextResponse | null {
     return null
   }
 
-  const requestHostname = request.nextUrl.hostname
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || ''
-  let siteHostname = ''
-  try {
-    siteHostname = new URL(siteUrl).hostname
-  } catch {}
-
-  // 允许来源：
-  // 1. 请求实际 Host（如反向代理后为 localhost）
-  // 2. 配置中的站点域名/IP（如 http://106.55.2.197）
-  // 3. 本地调试 host
-  const allowedHostnames = new Set([requestHostname, siteHostname, 'localhost', '127.0.0.1'].filter(Boolean))
-
-  if (!allowedHostnames.has(originHostname)) {
+  if (!allowedOriginHostnames(request).has(originHostname)) {
     return applySecurityHeaders(NextResponse.json({ error: '跨站请求被拒绝' }, { status: 403 }))
   }
   return null
