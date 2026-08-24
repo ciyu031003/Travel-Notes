@@ -153,7 +153,7 @@ function LoginPageContent() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-[#E8DDD4] bg-white/70 py-3 pl-11 pr-4 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#C76E80]/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]'
+    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-[#3D4852] transition-all placeholder-travel-sand/50 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]'
 
   return (
     <>
@@ -163,7 +163,7 @@ function LoginPageContent() {
             <div className="rounded-3xl border border-white/60 bg-white/85 p-7 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl dark:border-[#2C343E] dark:bg-[#1B2128]/85 md:p-9">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C76E80] shadow-sm">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-travel-accentSoft shadow-sm">
                     <MapPin className="h-4 w-4 text-white" />
                   </span>
                   <span className="font-bold text-[#3D4852] dark:text-[#E8E6E1]">行迹</span>
@@ -171,7 +171,7 @@ function LoginPageContent() {
                 {isAuthed && (
                   <Link
                     href="/"
-                    className="rounded-full bg-[#E8B8C2]/30 px-3 py-1.5 text-xs text-[#A64E61] transition-colors hover:bg-[#E8B8C2]/50 dark:text-[#E8B8C2]"
+                    className="rounded-full bg-travel-bloom/30 px-3 py-1.5 text-xs text-travel-accent transition-colors hover:bg-travel-bloom/50 dark:text-travel-bloom"
                   >
                     已登录 · 进入空间
                   </Link>
@@ -181,7 +181,7 @@ function LoginPageContent() {
               <h1 className="mt-7 font-display text-3xl font-bold leading-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-4xl">
                 {mode === 'login' ? '登录你的旅行记忆空间' : '注册一个新的行迹账号'}
               </h1>
-              <p className="mt-3 text-sm leading-relaxed text-[#5A6670] dark:text-[#9BA3AE]">
+              <p className="mt-3 text-sm leading-relaxed text-travel-ink dark:text-[#9BA3AE]">
                 {mode === 'login'
                   ? '登录后继续沉淀你的旅行与故事。'
                   : '注册后开启属于你的旅行记忆空间。'}
@@ -189,12 +189,12 @@ function LoginPageContent() {
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-4">
                 <div>
-                  <label className="mb-2 flex items-center gap-1.5 text-sm text-[#5A6670] dark:text-[#9BA3AE]">
+                  <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-[#9BA3AE]">
                     <Lock className="h-4 w-4" />
                     登录账号
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9A958F]" />
+                    <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
                     <input
                       type="text"
                       value={username}
@@ -207,12 +207,12 @@ function LoginPageContent() {
                 </div>
 
                 <div>
-                  <label className="mb-2 flex items-center gap-1.5 text-sm text-[#5A6670] dark:text-[#9BA3AE]">
+                  <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-[#9BA3AE]">
                     <Lock className="h-4 w-4" />
                     登录密码
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9A958F]" />
+                    <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
@@ -224,7 +224,7 @@ function LoginPageContent() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9A958F] transition-colors hover:text-[#A64E61]"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-travel-sand/50 transition-colors hover:text-travel-accent"
                       aria-label={showPassword ? '隐藏密码' : '显示密码'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -234,12 +234,12 @@ function LoginPageContent() {
 
                 {mode === 'register' && (
                   <div>
-                    <label className="mb-2 flex items-center gap-1.5 text-sm text-[#5A6670] dark:text-[#9BA3AE]">
+                    <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-[#9BA3AE]">
                       <Lock className="h-4 w-4" />
                       确认密码
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9A958F]" />
+                      <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={confirmPassword}
@@ -253,7 +253,7 @@ function LoginPageContent() {
                 )}
 
                 {error && (
-                  <div className="animate-[fadeIn_0.3s_ease] rounded-xl border border-[#E8B8C2]/50 bg-[#F5DCE0]/40 px-4 py-3 text-sm text-[#A64E61] dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-[#E8B8C2]">
+                  <div className="animate-[fadeIn_0.3s_ease] rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-travel-bloom">
                     {error}
                   </div>
                 )}
@@ -263,16 +263,16 @@ function LoginPageContent() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 rounded border-[#E8DDD4] accent-[#C76E80]"
+                    className="h-4 w-4 rounded border-travel-line accent-travel-accentSoft"
                   />
-                  <span className="text-xs text-[#5A6670] dark:text-[#9BA3AE]">记住我 (5小时)</span>
+                  <span className="text-xs text-travel-ink dark:text-[#9BA3AE]">记住我 (5小时)</span>
                 </label>
 
                 <button
                   type="submit"
                   disabled={loading || isRegistering}
                   onClick={mode === 'register' ? handleRegister : undefined}
-                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#A64E61] py-3.5 font-semibold text-white shadow-lg shadow-[#A64E61]/25 transition-all hover:bg-[#8B3A4C] hover:shadow-xl disabled:opacity-50 active:scale-[0.99]"
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-travel-accent py-3.5 font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:bg-travel-accentStrong hover:shadow-xl disabled:opacity-50 active:scale-[0.99]"
                 >
                   {mode === 'login'
                     ? (loading ? '解锁中...' : (<>
@@ -289,11 +289,11 @@ function LoginPageContent() {
               <button
                 type="button"
                 onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#E8DDD8]/70 bg-white/60 px-4 py-2.5 text-sm text-[#5A6670] transition-all hover:border-[#E8B8C2]/60 hover:text-[#A64E61] active:scale-[0.99] dark:border-[#2C343E] dark:bg-[#161B22]/60 dark:text-[#9BA3AE] dark:hover:text-[#E8B8C2]"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-travel-line/70 bg-white/60 px-4 py-2.5 text-sm text-travel-ink transition-all hover:border-travel-bloom/60 hover:text-travel-accent active:scale-[0.99] dark:border-[#2C343E] dark:bg-[#161B22]/60 dark:text-[#9BA3AE] dark:hover:text-travel-bloom"
               >
                 {mode === 'login' ? (
                   <>
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#E8B8C2]" />
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-travel-bloom" />
                     没有账号？注册一个
                   </>
                 ) : (
@@ -307,26 +307,26 @@ function LoginPageContent() {
               <button
                 type="button"
                 onClick={() => setShowAlbumLock(true)}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#E8DDD8]/70 bg-white/60 px-4 py-2.5 text-sm text-[#5A6670] transition-colors hover:border-[#E8B8C2]/60 hover:text-[#A64E61] dark:border-[#2C343E] dark:bg-[#161B22]/60 dark:text-[#9BA3AE] dark:hover:text-[#E8B8C2]"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-travel-line/70 bg-white/60 px-4 py-2.5 text-sm text-travel-ink transition-colors hover:border-travel-bloom/60 hover:text-travel-accent dark:border-[#2C343E] dark:bg-[#161B22]/60 dark:text-[#9BA3AE] dark:hover:text-travel-bloom"
               >
                 <Lock className="h-4 w-4" />
                 相册解锁
               </button>
 
-              <div className="mt-7 border-t border-[#E8DDD8]/60 pt-5 dark:border-[#2C343E]">
+              <div className="mt-7 border-t border-travel-line/60 pt-5 dark:border-[#2C343E]">
                 <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                   {cityThumbnails.map((city, i) => (
                     <div
                       key={i}
-                      className="flex h-14 w-14 flex-shrink-0 rotate-[-4deg] items-center justify-center rounded-full border-2 border-dashed border-[#E8B8C2]/80 bg-[#FDF8F5] dark:border-[#E8B8C2]/50 dark:bg-[#241E22]"
+                      className="flex h-14 w-14 flex-shrink-0 rotate-[-4deg] items-center justify-center rounded-full border-2 border-dashed border-travel-bloom/80 bg-travel-parchment dark:border-travel-bloom/50 dark:bg-[#241E22]"
                     >
-                      <span className="text-center text-[10px] font-medium leading-tight text-[#A64E61] dark:text-[#E8B8C2]">
+                      <span className="text-center text-[10px] font-medium leading-tight text-travel-accent dark:text-travel-bloom">
                         {city}
                       </span>
                     </div>
                   ))}
                 </div>
-                <p className="mt-3 text-center text-[11px] text-[#5A6670] dark:text-[#9BA3AE]">
+                <p className="mt-3 text-center text-[11px] text-travel-ink dark:text-[#9BA3AE]">
                   {cityThumbnails.length} 座城市的记忆邮戳
                 </p>
               </div>
@@ -342,7 +342,7 @@ function LoginPageContent() {
       {showAlbumLock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-[#2C343E] dark:bg-[#1B2128]/95">
-            <div className="relative bg-gradient-to-br from-[#FDF5ED] to-[#F5EDE4] p-8 dark:from-[#1E1A1C] dark:to-[#241E22]">
+            <div className="relative bg-gradient-to-br from-travel-parchment to-travel-parchmentDim p-8 dark:from-[#1E1A1C] dark:to-[#241E22]">
               <button
                 type="button"
                 onClick={() => {
@@ -350,43 +350,43 @@ function LoginPageContent() {
                   setAlbumPassword('')
                   setAlbumError('')
                 }}
-                className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-[#8B7355]/50 transition-colors hover:bg-white/60 hover:text-[#8B7355] dark:text-[#C2AF9A]/60 dark:hover:bg-white/10 dark:hover:text-[#E4D6C4]"
+                className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-travel-sand/50 transition-colors hover:bg-white/60 hover:text-travel-sand dark:text-travel-sandSoft/60 dark:hover:bg-white/10 dark:hover:text-[#E4D6C4]"
                 aria-label="关闭"
               >
                 <X className="h-4 w-4" />
               </button>
 
               <div className="flex flex-col items-center text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] shadow-lg">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom shadow-lg">
                   <Heart className="h-8 w-8 fill-white text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-[#5A4A3A] dark:text-[#E8E6E1]">
+                <h3 className="text-xl font-bold text-travel-inkStrong dark:text-[#E8E6E1]">
                   相册已上锁
                 </h3>
-                <p className="mt-2 text-sm text-[#8B7355]/70 dark:text-[#C2AF9A]/80">
+                <p className="mt-2 text-sm text-travel-sand/70 dark:text-travel-sandSoft/80">
                   请输入相册解锁密码
                 </p>
               </div>
 
               <form onSubmit={handleAlbumUnlock} className="mt-6 space-y-4">
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8B7355]/40" />
+                  <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/40" />
                   <input
                     type="text"
                     value={albumPassword}
                     onChange={(e) => setAlbumPassword(e.target.value)}
-                    className="w-full rounded-2xl border border-[#E8DDD4] bg-white/60 py-3 pl-11 pr-4 text-[#5A4A3A] transition-all placeholder-[#8B7355]/40 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#E8B8C2]/60 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#C2AF9A]/50"
+                    className="w-full rounded-2xl border border-travel-line bg-white/60 py-3 pl-11 pr-4 text-travel-inkStrong transition-all placeholder-travel-sand/40 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-bloom/60 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-travel-sandSoft/50"
                     placeholder="如 2023-06-20"
                     required
                     autoFocus
                   />
                 </div>
-                <p className="text-center text-xs text-[#8B7355]/40 dark:text-[#C2AF9A]/50">
+                <p className="text-center text-xs text-travel-sand/40 dark:text-travel-sandSoft/50">
                   支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
                 </p>
 
                 {albumError && (
-                  <div className="rounded-xl border border-[#E8B8C2]/50 bg-[#F5DCE0]/40 px-4 py-2.5 text-center text-sm text-[#A64E61] dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-[#E8B8C2]">
+                  <div className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-2.5 text-center text-sm text-travel-accent dark:border-[#5A3A44] dark:bg-[#3A2B31]/70 dark:text-travel-bloom">
                     {albumError}
                   </div>
                 )}
@@ -394,7 +394,7 @@ function LoginPageContent() {
                 <button
                   type="submit"
                   disabled={albumVerifying}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#A64E61] py-3 font-semibold text-white shadow-lg shadow-[#A64E61]/30 transition-colors hover:bg-[#8B3A4C] disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-travel-accent py-3 font-semibold text-white shadow-lg shadow-travel-accent/30 transition-colors hover:bg-travel-accentStrong disabled:opacity-50"
                 >
                   {albumVerifying ? '验证中...' : '解锁相册'}
                 </button>

@@ -134,14 +134,14 @@ export default function LoginDoor({ children }: LoginDoorProps) {
         >
           {/* 左扇门 */}
           <div
-            className="absolute inset-y-0 left-0 w-1/2 origin-left overflow-hidden bg-[#F6F1E9] transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-[#1A1F26]"
+            className="absolute inset-y-0 left-0 w-1/2 origin-left overflow-hidden bg-travel-parchmentDim transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-[#1A1F26]"
             style={{ transform: phase === 'opening' ? 'rotateY(-108deg)' : 'rotateY(0deg)' }}
           >
             <div className="absolute left-0 top-0 h-full w-screen [--door-map-fill:rgba(166,78,97,0.08)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(232,184,194,0.1)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
               <DoorMap className="h-full w-full" />
             </div>
             <div className="absolute left-6 top-6 flex items-center gap-2 md:left-10 md:top-10">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C76E80] shadow-sm">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-travel-accentSoft shadow-sm">
                 <MapPin className="h-4 w-4 text-white" />
               </span>
               <span className="font-bold text-[#3D4852] dark:text-[#E8E6E1]">行迹</span>
@@ -157,7 +157,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
 
           {/* 右扇门 */}
           <div
-            className="absolute inset-y-0 right-0 w-1/2 origin-right overflow-hidden bg-[#F6F1E9] transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-[#1A1F26]"
+            className="absolute inset-y-0 right-0 w-1/2 origin-right overflow-hidden bg-travel-parchmentDim transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-[#1A1F26]"
             style={{
               transform: phase === 'opening' ? 'rotateY(108deg)' : 'rotateY(0deg)',
               transitionDelay: phase === 'opening' ? '70ms' : '0ms',
@@ -167,8 +167,8 @@ export default function LoginDoor({ children }: LoginDoorProps) {
               <DoorMap className="h-full w-full" />
             </div>
             {/* 邮戳章 */}
-            <div className="absolute bottom-8 right-8 flex h-24 w-24 rotate-6 items-center justify-center rounded-full border-2 border-dashed border-[#C76E80] bg-white/40 dark:border-[#E8B8C2]/70 dark:bg-[#1A1F26]/60">
-              <div className="text-center text-[#A64E61] dark:text-[#E8B8C2]">
+            <div className="absolute bottom-8 right-8 flex h-24 w-24 rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-white/40 dark:border-travel-bloom/70 dark:bg-[#1A1F26]/60">
+              <div className="text-center text-travel-accent dark:text-travel-bloom">
                 <MapPin className="mx-auto h-4 w-4" />
                 <p className="mt-0.5 text-[10px] tracking-widest">地图门</p>
               </div>
@@ -181,8 +181,8 @@ export default function LoginDoor({ children }: LoginDoorProps) {
               phase === 'opening' ? 'scale-x-0 opacity-0' : 'scale-x-100 opacity-100'
             }`}
           >
-            <div className="flex h-28 w-28 -rotate-6 items-center justify-center rounded-full border-2 border-dashed border-[#C76E80] bg-[#FFF8F4] shadow-[0_10px_30px_rgba(166,78,97,0.25)] dark:border-[#E8B8C2]/70 dark:bg-[#2A1D22]">
-              <div className="text-center text-[#A64E61] dark:text-[#E8B8C2]">
+            <div className="flex h-28 w-28 -rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-travel-parchment shadow-[0_10px_30px_rgba(166,78,97,0.25)] dark:border-travel-bloom/70 dark:bg-[#2A1D22]">
+              <div className="text-center text-travel-accent dark:text-travel-bloom">
                 <p className="text-[10px] tracking-[0.3em]">启程</p>
                 <p className="mt-1 font-display text-base font-bold">{sealDate}</p>
               </div>

@@ -41,7 +41,7 @@ interface Invite {
   status: 'PENDING' | 'USED' | 'EXPIRED'
 }
 
-const ROLE_LABEL: Record<string, string> = { OWNER: '创建者', MEMBER: '伴侣成员', VIEWER: '访客' }
+const ROLE_LABEL: Record<string, string> = { OWNER: '创建者', MEMBER: '成员', VIEWER: '访客' }
 const ROLE_COLOR: Record<string, string> = {
   OWNER: 'bg-travel-sakura dark:bg-travel-accentStrong/40 text-travel-accentStrong dark:text-travel-accentSoft',
   MEMBER: 'bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300',
@@ -301,7 +301,7 @@ export default function AdminSpacesPage() {
             </div>
             <h1 className="mt-3 text-2xl sm:text-3xl font-bold">空间管理</h1>
             <p className="mt-2 text-sm text-white/85 max-w-xl leading-relaxed">
-              创建属于你们的空间，邀请伴侣加入，一起查看相册、旅行与回忆。
+              创建属于你们的空间，邀请伙伴加入，一起查看相册、旅行与回忆。
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <button
@@ -338,7 +338,7 @@ export default function AdminSpacesPage() {
               </div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">还没有空间</h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                创建第一个空间，邀请你的伴侣一起开始记录
+                创建第一个空间，邀请你的伙伴一起开始记录
               </p>
               <button
                 type="button"
@@ -447,7 +447,7 @@ export default function AdminSpacesPage() {
                             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-travel-accent px-3 py-2.5 text-sm font-medium text-white shadow-md shadow-travel-accent/20 transition-all hover:bg-travel-accentStrong active:scale-95"
                           >
                             <Gift className="w-4 h-4" />
-                            邀请伴侣
+                            邀请伙伴
                           </button>
                         )}
                         {isOwner && (
@@ -519,7 +519,7 @@ export default function AdminSpacesPage() {
                 placeholder="XXXX-XXXX"
                 required
               />
-              <p className="mt-2 text-xs text-gray-400">输入伴侣分享给你的邀请码（8 位，如 7XK2-M9PQ）</p>
+              <p className="mt-2 text-xs text-gray-400">输入伙伴分享给你的邀请码（8 位，如 7XK2-M9PQ）</p>
             </div>
             <button
               type="submit"
@@ -580,11 +580,11 @@ export default function AdminSpacesPage() {
         </Modal>
       )}
 
-      {/* ============ 邀请伴侣弹窗 ============ */}
+      {/* ============ 邀请伙伴弹窗 ============ */}
       {inviteSpaceId !== null && (
         <Modal
           onClose={() => setInviteSpaceId(null)}
-          title={inviteRole === 'VIEWER' ? '邀请访客' : '邀请伴侣'}
+          title={inviteRole === 'VIEWER' ? '邀请访客' : '邀请伙伴'}
           icon={<Gift className="w-5 h-5 text-travel-accent" />}
           wide
         >
@@ -599,7 +599,7 @@ export default function AdminSpacesPage() {
                   onChange={(e) => setInviteRole(e.target.value)}
                   className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
                 >
-                  <option value="MEMBER">伴侣成员（可共同编辑）</option>
+                  <option value="MEMBER">成员（可共同编辑）</option>
                   <option value="VIEWER">访客（仅可查看）</option>
                 </select>
                 <select
@@ -626,7 +626,7 @@ export default function AdminSpacesPage() {
               {generatedCode && (
                 <div className="mt-4 rounded-2xl bg-white dark:bg-gray-900 border border-travel-sakura dark:border-travel-accentStrong/50 p-4">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                    {inviteRole === 'VIEWER' ? '把下面的邀请码发给访客（仅可查看）' : '把下面的邀请码发给你的伴侣'}
+                    {inviteRole === 'VIEWER' ? '把下面的邀请码发给访客（仅可查看）' : '把下面的邀请码发给你的伙伴'}
                   </p>
                   <div className="flex items-center gap-3">
                     <span className="flex-1 rounded-xl bg-travel-sakura/50 dark:bg-travel-accent/20 px-4 py-3 text-center text-xl font-bold tracking-[0.35em] text-travel-accentStrong dark:text-travel-accentSoft select-all">
@@ -653,7 +653,7 @@ export default function AdminSpacesPage() {
                   </div>
                   <p className="mt-2 text-xs text-gray-400 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    {`${inviteDays} 天内有效，${inviteRole === 'MEMBER' ? '对方加入后为伴侣成员，可共同编辑内容' : '对方加入后为访客，仅可查看'}`}
+                    {`${inviteDays} 天内有效，${inviteRole === 'MEMBER' ? '对方加入后为成员，可共同编辑内容' : '对方加入后为访客，仅可查看'}`}
                   </p>
                 </div>
               )}

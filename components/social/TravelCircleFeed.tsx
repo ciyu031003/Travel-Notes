@@ -18,7 +18,7 @@ const TABS = [
   { key: 'following', label: '关注' },
 ]
 
-const THEMES = ['海边', '周末旅行', '情侣旅行', '城市漫游', '星空', '摄影']
+const THEMES = ['海边', '周末旅行', '结伴旅行', '城市漫游', '星空', '摄影']
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const
 
 interface PostAuthor { id: number; username: string; nickname?: string | null; avatarUrl?: string | null }
