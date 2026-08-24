@@ -55,7 +55,7 @@ const PAGE_TITLES: Record<string, string> = {
 export default function AdminShell({
   children,
   title,
-  accent = 'from-travel-accentSoft via-pink-500 to-orange-300',
+  accent = 'from-travel-accent to-travel-bloom',
 }: {
   children: React.ReactNode
   title?: string
@@ -126,7 +126,7 @@ export default function AdminShell({
           }`}
         >
           {active && (
-            <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-travel-accentSoft to-pink-500" />
+            <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-travel-accentSoft to-travel-accent" />
           )}
           <Icon className={`h-[18px] w-[18px] shrink-0 transition-transform duration-200 ${active ? '' : 'group-hover:scale-110'}`} />
           <span className="truncate">{item.label}</span>
@@ -155,7 +155,7 @@ export default function AdminShell({
         {/* 用户卡片 */}
         <div className="border-t border-gray-100/80 dark:border-white/5 p-3">
           <div className="flex items-center gap-3 rounded-2xl bg-white/70 dark:bg-white/5 px-3 py-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-travel-accentSoft to-pink-400 text-sm font-bold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-travel-accentSoft to-travel-accent text-sm font-bold text-white">
               {(username || '访').slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">

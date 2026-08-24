@@ -15,39 +15,39 @@ export default function Footer() {
       <div className="container-custom py-8">
         <div className="grid md:grid-cols-3 gap-8">
           <div>
-            <h3 className="font-bold text-lg mb-4 text-[#3D4852] flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-[#A64E61]" />
+            <h3 className="font-bold text-lg mb-4 text-travel-inkStrong flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-travel-accent" />
               行迹
             </h3>
-            <p className="text-[#4A5560] text-sm">
+            <p className="text-travel-ink text-sm">
               记录每一次出发与归来，沉淀属于你的旅行记忆。<br />
               一个收藏旅途与故事的数字旅行空间。
             </p>
           </div>
           <div>
             <h4 className="font-semibold mb-4">快速导航</h4>
-            <ul className="space-y-2 text-sm text-[#4A5560]">
-              <li><Link href="/" className="hover:text-[#8B4A5A] transition-colors">首页</Link></li>
-              <li><Link href="/travel" className="hover:text-[#8B4A5A] transition-colors">旅行记录</Link></li>
-              <li><Link href="/timeline" className="hover:text-[#8B4A5A] transition-colors">时间线</Link></li>
-              <li><Link href="/moments" className="hover:text-[#8B4A5A] transition-colors">碎碎念</Link></li>
+            <ul className="space-y-2 text-sm text-travel-ink">
+              <li><Link href="/" className="hover:text-travel-accentStrong transition-colors">首页</Link></li>
+              <li><Link href="/travel" className="hover:text-travel-accentStrong transition-colors">旅行记录</Link></li>
+              <li><Link href="/timeline" className="hover:text-travel-accentStrong transition-colors">时间线</Link></li>
+              <li><Link href="/moments" className="hover:text-travel-accentStrong transition-colors">碎碎念</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold mb-4">联系方式</h4>
             <div className="flex gap-4">
-              <a href="mailto:your@email.com" className="p-2 rounded-lg bg-[#F5DCE0]/30 hover:bg-[#F5DCE0]/60 transition-colors">
-                <Mail className="w-5 h-5 text-[#4A5560]" />
+              <a href="mailto:your@email.com" className="p-2 rounded-lg bg-travel-sakura/30 hover:bg-travel-sakura/60 transition-colors">
+                <Mail className="w-5 h-5 text-travel-ink" />
               </a>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-[#F5DCE0]/30 hover:bg-[#F5DCE0]/60 transition-colors">
-                <GithubIcon className="w-5 h-5 text-[#4A5560]" />
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-travel-sakura/30 hover:bg-travel-sakura/60 transition-colors">
+                <GithubIcon className="w-5 h-5 text-travel-ink" />
               </a>
             </div>
           </div>
         </div>
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-500">
           <p className="flex items-center justify-center gap-1">
-            Made with <Heart className="w-4 h-4 text-[#A64E61] fill-[#A64E61]" /> by 行迹
+            Made with <Heart className="w-4 h-4 text-travel-accent fill-travel-accent" /> by 行迹
           </p>
           <p className="mt-1">© {new Date().getFullYear()} All rights reserved.</p>
         </div>
