@@ -174,9 +174,12 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     onOpen: () => router.push('/circle/' + p.id),
   })
 
+  const recent = profile.recentTravel
+  const recentDate = recent?.date ? recent.date.slice(0, 10) : ''
+
   const memories = [
-    { icon: Images, label: '相册', value: profile.summary.photoCount, suffix: '张照片', href: '/album' },
-    { icon: MapPin, label: '旅行', value: profile.summary.travelCount, suffix: '次旅途', href: '/travel' },
+    { icon: Images, label: '相册', value: profile.summary.photoCount, suffix: '张照片', href: '/album', photo: recent?.coverUrl || profile.avatarUrl },
+    { icon: MapPin, label: '旅行', value: profile.summary.travelCount, suffix: '次旅途', href: '/travel', photo: recent?.coverUrl },
     { icon: NotebookPen, label: '碎碎念', value: profile.summary.momentCount, suffix: '条记录', href: '/moments' },
     { icon: Bookmark, label: '收藏', value: profile.summary.favoriteCount, suffix: '个记忆', href: '/me/favorites' },
   ]
@@ -186,9 +189,6 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     ['个地点', profile.summary.placeCount],
     ['张照片', profile.summary.photoCount],
   ] as const
-
-  const recent = profile.recentTravel
-  const recentDate = recent?.date ? recent.date.slice(0, 10) : ''
 
   return (
     <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
@@ -288,11 +288,23 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {memories.map((m, i) => (
               <Link key={m.label} href={m.href}
-                className={cn('group relative overflow-hidden rounded-[1.4rem] bg-[var(--social-surface-80)] p-5 ring-1 ring-[var(--social-line)] transition hover:bg-[var(--social-surface)] hover:ring-[var(--social-line-strong)]', i === 0 && 'bg-[var(--social-accent-soft)]')}>
-                <m.icon className="h-5 w-5 text-[var(--social-accent)]" />
-                <div className="mt-4 text-2xl font-semibold tracking-tight tabular-nums">{m.value}</div>
-                <div className="mt-1 text-sm text-[var(--social-muted)]">{m.label}</div>
-                <div className="mt-0.5 text-xs text-[var(--social-faint)]">{m.suffix}</div>
+                className={cn('group relative overflow-hidden rounded-[1.4rem] ring-1 ring-[var(--social-line)] transition hover:ring-[var(--social-line-strong)]', i === 0 && 'ring-[var(--social-accent)]/40')}
+                style={m.photo ? { aspectRatio: '1 / 1' } : undefined}>
+                {m.photo ? (
+                  <>
+                    <img src={m.photo} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/85 via-[#050505]/25 to-transparent" />
+                  </>
+                ) : (
+                  <div className="flex h-full min-h-[120px] items-center justify-center bg-[var(--social-surface-80)]">
+                    <m.icon className="h-7 w-7 text-[var(--social-accent)]" />
+                  </div>
+                )}
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <div className="text-2xl font-semibold tracking-tight tabular-nums text-white">{m.value}</div>
+                  <div className="mt-0.5 text-xs text-white/80">{m.label}</div>
+                  <div className="text-[11px] text-white/60">{m.suffix}</div>
+                </div>
               </Link>
             ))}
           </div>
