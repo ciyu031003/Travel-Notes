@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, RefreshCw, Loader2, CheckCheck } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Loader2, CheckCheck, ShieldCheck } from 'lucide-react'
 import { SyncQueue } from '@/lib/modules/offline/sync-queue'
 import { getSyncQueueStorage } from '@/lib/modules/offline/storage'
 import type { SyncQueueItem } from '@/lib/modules/offline/types'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { getPrivacyLockEnabled, setPrivacyLockEnabled } from '@/lib/modules/offline/privacy-lock'
 
 type StatCounts = { PENDING: number; SYNCING: number; FAILED: number }
 
@@ -16,6 +17,12 @@ export default function SyncCenter() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  // v3.1 M4-C3：本地隐私锁
+  const [lockEnabled, setLockEnabled] = useState(false)
+
+  useEffect(() => {
+    setLockEnabled(getPrivacyLockEnabled())
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -125,6 +132,30 @@ export default function SyncCenter() {
             )}
 
             {error && <p className="mt-6 text-sm text-[#E06C6C]">{error}</p>}
+
+            {/* v3.1 M4-C3：本地隐私锁 */}
+            <section className="mt-10 rounded-[1.6rem] bg-[var(--social-surface-60)] p-5 ring-1 ring-[var(--social-line)]">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[var(--social-accent)]" />
+                  <div>
+                    <h2 className="text-sm font-medium">本地隐私锁</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--social-faint)]">
+                      开启后，打开相册、回忆等私密模块前需验证 PIN / 生物识别；本地数据库可启用加密（真机生效）。
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={lockEnabled}
+                  onClick={() => { const next = !lockEnabled; setLockEnabled(next); setPrivacyLockEnabled(next) }}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition ${lockEnabled ? 'bg-[var(--social-accent)]' : 'bg-[var(--social-line-strong)]'}`}
+                >
+                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${lockEnabled ? 'left-6' : 'left-1'}`} />
+                </button>
+              </div>
+            </section>
           </>
         )}
       </div>
