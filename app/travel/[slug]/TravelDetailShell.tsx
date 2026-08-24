@@ -8,6 +8,7 @@ import { Calendar, MapPin } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
 import TravelTimeline from '@/components/travel/TravelTimeline'
+import AsyncState from '@/components/AsyncState'
 import dynamicImport from 'next/dynamic'
 import { apiUrl } from '@/lib/api-base'
 
@@ -58,10 +59,10 @@ export default function TravelDetailShell() {
   }, [slug])
 
   if (error) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
+    return <AsyncState variant="error" message={error} title="旅行加载失败" />
   }
   if (!data) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+    return <AsyncState variant="loading" message="正在翻开这本旅行相册…" />
   }
 
   const travel = data.travel

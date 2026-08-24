@@ -311,8 +311,8 @@ export default function HomeClient({
 
       <div className="relative z-10">
         {/* Hero 区域 - 沉浸足迹地图 */}
-        <section className="px-3 pt-10 pb-12 md:px-6 md:pt-16 md:pb-16">
-          <div className="mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
+        <section className="px-3 pt-8 pb-6 md:px-6 md:pt-16 md:pb-10">
+          <div className="mx-auto grid max-w-7xl items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
             <div className="animate-[fade-in-up_0.7s_ease-out_both] text-center md:text-left">
               <h1 className="font-display text-[44px] leading-[1.12] font-bold tracking-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-6xl xl:text-7xl">
                 <span className="block">走过的</span>
@@ -361,7 +361,7 @@ export default function HomeClient({
             </div>
 
             <div className="relative animate-[fade-in-up_0.7s_ease-out_0.15s_both]">
-              <div className="h-[340px] overflow-hidden rounded-2xl border border-travel-line/60 bg-white/80 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.4)] dark:border-[#2C343E] dark:bg-[#1B2128]/90 md:h-[420px] lg:h-[470px]">
+              <div className="relative h-[260px] overflow-hidden rounded-2xl border border-travel-line/40 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/40 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.35)] dark:border-[#2C343E] dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128] md:h-[400px] lg:h-[430px]">
                 <HeroFootprintMap posts={travelPosts} />
               </div>
               <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FBF3E9] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-travel-bloom/70 dark:bg-[#241B15] dark:text-travel-bloom">

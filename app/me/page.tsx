@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import MeHome from '@/components/social/MeHome'
+import AsyncState from '@/components/AsyncState'
 import { apiUrl } from '@/lib/api-base'
 
 export default function MePage() {
@@ -19,10 +20,10 @@ export default function MePage() {
   }, [])
 
   if (error) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
+    return <AsyncState variant="error" message={error} title="个人档案加载失败" />
   }
   if (!profile) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+    return <AsyncState variant="loading" message="正在加载你的旅行档案…" />
   }
   return <MeHome initial={profile} />
 }

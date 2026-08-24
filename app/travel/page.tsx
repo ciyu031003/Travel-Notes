@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import TravelClient from './TravelClient'
 import TravelComposer from '@/components/travel/TravelComposer'
+import AsyncState from '@/components/AsyncState'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalTravels } from '@/lib/modules/offline/travel-read'
@@ -40,10 +41,10 @@ export default function TravelPage() {
   }, [load])
 
   if (error) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
+    return <AsyncState variant="error" message={error} title="旅行记录加载失败" />
   }
   if (!posts) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+    return <AsyncState variant="loading" message="正在加载旅行记录…" />
   }
   return (
     <>

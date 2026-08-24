@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { ChevronDown, ArrowLeft, MapPin, Calendar, Play, Pause } from 'lucide-react'
+import { ChevronDown, ArrowLeft, MapPin, Calendar, Play, Pause, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -258,6 +258,10 @@ export default function TravelDetailClient({
                 {new Date(date).toLocaleDateString('zh-CN')}
               </span>
             )}
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/80 backdrop-blur-md">
+              <ImageIcon className="w-3.5 h-3.5" />
+              旅行相册
+            </span>
           </div>
         </div>
       </nav>

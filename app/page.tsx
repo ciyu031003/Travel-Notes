@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import HomeClient from '@/components/HomeClient'
+import AsyncState from '@/components/AsyncState'
 import { apiUrl } from '@/lib/api-base'
 
 interface HomeData {
@@ -25,10 +26,10 @@ export default function HomePage() {
   }, [])
 
   if (error) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
+    return <AsyncState variant="error" message={error} title="首页加载失败" />
   }
   if (!data) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+    return <AsyncState variant="loading" message="正在翻开你的旅行记忆…" />
   }
   return (
     <HomeClient

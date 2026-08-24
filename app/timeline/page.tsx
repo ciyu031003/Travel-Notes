@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { MapPin, Sparkles, CalendarDays } from 'lucide-react'
 import TimelineCover from '@/components/timeline/TimelineCover'
+import AsyncState from '@/components/AsyncState'
 import { formatDate } from '@/lib/utils'
 import { apiUrl } from '@/lib/api-base'
 
@@ -40,10 +41,10 @@ export default function TimelinePage() {
   }, [])
 
   if (error) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
+    return <AsyncState variant="error" message={error} title="时间线加载失败" />
   }
   if (!years) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+    return <AsyncState variant="loading" message="正在整理你的旅行时间线…" />
   }
 
   return (

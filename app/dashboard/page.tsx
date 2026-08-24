@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import DashboardClient, { type DashboardData } from '@/components/dashboard/DashboardClient'
+import AsyncState from '@/components/AsyncState'
 import { apiUrl } from '@/lib/api-base'
 
 export default function DashboardPage() {
@@ -19,10 +20,10 @@ export default function DashboardPage() {
   }, [])
 
   if (error) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">{error}</div>
+    return <AsyncState variant="error" message={error} title="数据看板加载失败" />
   }
   if (!data) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+    return <AsyncState variant="loading" message="正在汇总你的旅行数据…" />
   }
   return <DashboardClient data={data} />
 }
