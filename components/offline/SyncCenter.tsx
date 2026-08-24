@@ -8,6 +8,7 @@ import { getSyncQueueStorage } from '@/lib/modules/offline/storage'
 import type { SyncQueueItem } from '@/lib/modules/offline/types'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { getPrivacyLockEnabled, setPrivacyLockEnabled } from '@/lib/modules/offline/privacy-lock'
+import { getSyncEngine } from '@/lib/modules/offline/bootstrap'
 
 type StatCounts = { PENDING: number; SYNCING: number; FAILED: number }
 
@@ -17,11 +18,15 @@ export default function SyncCenter() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  // v3.1 M4-C3：本地隐私锁
+  // v3.1 M4-C1：本地隐私锁
   const [lockEnabled, setLockEnabled] = useState(false)
+  // v3.1 M4-C1：最近同步统计（冲突保护/写入量）
+  const [lastSync, setLastSync] = useState<{ at: number; written: number } | null>(null)
 
   useEffect(() => {
     setLockEnabled(getPrivacyLockEnabled())
+    const engine = getSyncEngine()
+    if (engine?.lastSyncStats) setLastSync(engine.lastSyncStats)
   }, [])
 
   const load = useCallback(async () => {
@@ -105,6 +110,11 @@ export default function SyncCenter() {
                 <CheckCheck className="mx-auto h-8 w-8 text-[var(--social-accent)]" />
                 <p className="mt-4 text-sm text-[var(--social-muted)]">所有改动都已同步。</p>
                 <p className="mt-1 text-xs leading-relaxed text-[var(--social-faint)]">离线写的照片、留言、碎碎念会进入队列，联网后自动上传。</p>
+                {lastSync && (
+                  <p className="mt-3 text-xs text-[var(--social-faint)]">
+                    最近同步：{new Date(lastSync.at).toLocaleTimeString('zh-CN')} · 更新 {lastSync.written} 条本地缓存
+                  </p>
+                )}
               </div>
             )}
 

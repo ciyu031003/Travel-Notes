@@ -4,6 +4,7 @@
  * 统一入口：handleReport(action, reportId)，由 /api/admin/social/reports 路由调用（canManageSocial 能力）。
  */
 import { prisma } from '@/lib/db'
+import { logger } from '@/lib/infrastructure/logger'
 
 export type ReportAction = 'DISMISS' | 'TAKEDOWN_POST' | 'HIDE_COMMENT' | 'BAN_USER'
 
@@ -45,6 +46,7 @@ export async function handleReport(action: ReportAction, reportId: number): Prom
       if (report.post.authorId) {
         await systemNotify(report.post.authorId, 'TravelPost', report.postId, '你的旅行圈内容因违规被下架')
       }
+      logger.info('moderation', 'report_takedown', { reportId, postId: report.postId, action })
       return { ok: true, message: '已下架该帖子' }
     }
 
