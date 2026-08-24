@@ -35,6 +35,7 @@ const PUBLIC_PATHS = [
   '/api/forgot-password',
   '/api/register',
   '/api/version',
+  '/api/health',
   '/uploads',
   '/_next',
 ]
