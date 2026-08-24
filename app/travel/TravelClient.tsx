@@ -114,24 +114,24 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
         }}
       />
 
-      {/* 顶部导航 */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-travel-cream/80 backdrop-blur-md border-b border-travel-dim/50">        <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
+      {/* 顶部导航（旅行工作区专用，与全局 Navbar 同风格） */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-travel-cream/80 backdrop-blur-md border-b border-travel-line/50 dark:border-[#2C343E]">        <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
           <Link
             href="/"
-            className="font-bold text-lg text-travel-ink"
+            className="font-bold text-lg text-travel-inkStrong dark:text-[#F1EFEA]"
           >
             行迹
           </Link>
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="px-4 py-2 text-sm text-travel-ink/70 hover:text-travel-ink transition-colors"
+              className="px-4 py-2 text-sm text-travel-ink/80 hover:text-travel-ink transition-colors"
             >
               返回首页
             </Link>
             <button
               onClick={() => setShowAlbumUnlock(true)}
-              className="px-4 py-2 text-sm text-travel-ink/70 hover:text-travel-ink transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 text-sm text-travel-ink/80 hover:text-travel-ink transition-colors flex items-center gap-1.5"
             >
               <ImageIcon className="w-4 h-4" />
               相册
@@ -140,7 +140,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
               href="/admin/travels"
               label="管理旅行"
               icon={<Settings2 className="w-4 h-4" />}
-              className="px-4 py-2 text-sm text-travel-ink/70 hover:text-travel-ink transition-colors"
+              className="px-4 py-2 text-sm text-travel-ink/80 hover:text-travel-ink transition-colors"
             />
           </div>
         </nav>
@@ -149,12 +149,12 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
       {/* 主要内容 */}
       <div className="relative z-10 pt-14">
         {offline && (
-          <div className="bg-travel-bloom/15 border-b border-travel-bloom/30 px-6 py-2 text-center text-xs text-[#B07686]">
+          <div className="bg-travel-bloom/15 border-b border-travel-bloom/30 px-6 py-2 text-center text-xs text-travel-accent dark:text-travel-bloom">
             离线模式：当前显示本地缓存的旅行记录，联网后自动同步
           </div>
         )}
         {/* 地图区 - 可收起侧边栏布局 */}
-        <section className="relative h-[calc(100vh-56px)] overflow-hidden">
+        <section className="relative h-[62vh] md:h-[calc(100vh-56px)] overflow-hidden">
           {/* 地图容器 */}
           <div className="absolute inset-0 p-2 md:p-4">
             <div className="w-full h-full rounded-2xl border border-travel-dim/60 bg-travel-cream p-3 md:p-5 shadow-[0_10px_28px_rgba(90,102,112,0.08)]">
