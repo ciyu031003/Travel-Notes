@@ -194,12 +194,12 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.05),transparent_60%)]" />
       <div className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <header className="mb-8 flex items-center justify-between">
-          <div>
+        <header className="mb-8 flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">My Archive</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">我的旅行档案</h1>
+            <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight">我的旅行档案</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 md:gap-2">
             <SocialThemeToggle />
             {profile.capabilities.canManageSpace && (
               <button
@@ -256,8 +256,8 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">最近的一次旅行</p>
-                  <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">{recent.title}</h3>
-                  <p className="mt-2 text-sm text-white/75">{recent.location || ''}{recent.location ? ' · ' : ''}{recentDate}{recentDate ? ' · ' : ''}{recent.photoCount} 张照片</p>
+                  <h3 className="mt-2 line-clamp-2 text-2xl font-semibold tracking-tight text-white">{recent.title}</h3>
+                  <p className="mt-2 truncate text-sm text-white/75">{recent.location || ''}{recent.location ? ' · ' : ''}{recentDate}{recentDate ? ' · ' : ''}{recent.photoCount} 张照片</p>
                 </div>
               </Link>
             ) : (
@@ -289,22 +289,26 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             {memories.map((m, i) => (
               <Link key={m.label} href={m.href}
                 className={cn('group relative overflow-hidden rounded-[1.4rem] ring-1 ring-[var(--social-line)] transition hover:ring-[var(--social-line-strong)]', i === 0 && 'ring-[var(--social-accent)]/40')}
-                style={m.photo ? { aspectRatio: '1 / 1' } : undefined}>
+                style={m.photo ? { aspectRatio: '1 / 1' } : { minHeight: '120px' }}>
                 {m.photo ? (
                   <>
                     <img src={m.photo} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/85 via-[#050505]/25 to-transparent" />
                   </>
                 ) : (
-                  <div className="flex h-full min-h-[120px] items-center justify-center bg-[var(--social-surface-80)]">
-                    <m.icon className="h-7 w-7 text-[var(--social-accent)]" />
+                  <div className="flex h-full min-h-[120px] flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-[var(--social-surface2)] to-[var(--social-surface)] p-4">
+                    <m.icon className="h-6 w-6 text-[var(--social-accent)]" />
+                    <div className="text-2xl font-semibold tracking-tight tabular-nums text-[var(--social-text)]">{m.value}</div>
+                    <div className="text-xs text-[var(--social-muted)]">{m.label} · {m.suffix}</div>
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <div className="text-2xl font-semibold tracking-tight tabular-nums text-white">{m.value}</div>
-                  <div className="mt-0.5 text-xs text-white/80">{m.label}</div>
-                  <div className="text-[11px] text-white/60">{m.suffix}</div>
-                </div>
+                {m.photo && (
+                  <div className="absolute inset-x-0 bottom-0 p-4">
+                    <div className="text-2xl font-semibold tracking-tight tabular-nums text-white">{m.value}</div>
+                    <div className="mt-0.5 text-xs text-white/80">{m.label}</div>
+                    <div className="text-[11px] text-white/60">{m.suffix}</div>
+                  </div>
+                )}
               </Link>
             ))}
           </div>
