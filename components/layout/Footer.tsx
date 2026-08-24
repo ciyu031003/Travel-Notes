@@ -11,7 +11,7 @@ function GithubIcon({ className }: { className?: string }) {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <footer className="border-t border-travel-line/60 dark:border-[#2C343E] bg-white dark:bg-[#12161C]">
       <div className="container-custom py-8">
         <div className="grid md:grid-cols-3 gap-8">
           <div>
@@ -45,7 +45,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-500">
+        <div className="mt-8 pt-6 border-t border-travel-line/60 dark:border-[#2C343E] text-center text-sm text-travel-ink/60 dark:text-[#9BA3AE]">
           <p className="flex items-center justify-center gap-1">
             Made with <Heart className="w-4 h-4 text-travel-accent fill-travel-accent" /> by 行迹
           </p>

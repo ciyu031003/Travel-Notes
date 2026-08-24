@@ -96,6 +96,10 @@ module.exports = {
         success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
         warning: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
         danger:  { 50: '#fef2f2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c' },
+        // ★ travel 语义色（Phase2 对齐命名；色值与上方 success/warning/danger 保持一致）
+        'travel-success': '#22c55e',
+        'travel-warning': '#f59e0b',
+        'travel-danger': '#ef4444',
       },
       fontFamily: {
         display: ['"Noto Serif SC"', 'Noto Serif', 'Georgia', 'serif'],
@@ -112,6 +116,14 @@ module.exports = {
         '2xl': ['1.5rem', { lineHeight: '2rem' }],
         '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
         '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+        // ★ Phase2 归一 Typography Scale（命名 step，便于收敛内联 text-[xx]）
+        'display-hero': ['3rem', { lineHeight: '1.12' }],     // 48px 首页/档案 hero
+        'display-1': ['2.25rem', { lineHeight: '1.25' }],     // 36px 页级 H1
+        'display-2': ['1.5rem', { lineHeight: '1.4' }],       // 24px 区块 H2
+        'heading': ['1.125rem', { lineHeight: '1.5' }],       // 18px 卡片标题
+        'body-lg': ['1.125rem', { lineHeight: '1.7' }],       // 18px 大正文
+        'caption': ['0.75rem', { lineHeight: '1.5' }],        // 12px meta/标签
+        'data': ['1.75rem', { lineHeight: '1.2' }],           // 28px 数据大数
       },
       spacing: {
         '18': '4.5rem',

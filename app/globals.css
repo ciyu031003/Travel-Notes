@@ -67,6 +67,10 @@
     --color-travel-parchment-dim: #F5EDE4;
     --color-travel-ink-strong: #5A4A3A;
     --color-travel-line: #E8DDD4;
+    /* Phase2：travel 语义色（与 tailwind travel-success/warning/danger 对齐） */
+    --color-travel-success: #22c55e;
+    --color-travel-warning: #f59e0b;
+    --color-travel-danger: #ef4444;
 
     /* Album Dark Design Tokens（Stage 1 引入） */
     --album-bg0: #050508;
