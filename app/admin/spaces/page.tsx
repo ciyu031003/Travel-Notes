@@ -297,7 +297,7 @@ export default function AdminSpacesPage() {
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
               <Heart className="w-3.5 h-3.5" />
-              两个人的数字小家
+              行迹
             </div>
             <h1 className="mt-3 text-2xl sm:text-3xl font-bold">空间管理</h1>
             <p className="mt-2 text-sm text-white/85 max-w-xl leading-relaxed">
@@ -378,7 +378,7 @@ export default function AdminSpacesPage() {
 
                     <div className="p-5">
                       <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 min-h-[2.5rem]">
-                        {space.description || '还没有简介，写一句话介绍你们的小家吧'}
+                        {space.description || '还没有简介，写一句话介绍你的旅行空间吧'}
                       </p>
 
                       {/* 共享内容统计 */}
@@ -483,7 +483,7 @@ export default function AdminSpacesPage() {
             {error && <ErrorBox message={error} />}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间名称</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="例如：我们的小家" required />
+              <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="例如：我的旅行空间" required />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间标识</label>

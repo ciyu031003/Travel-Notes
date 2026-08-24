@@ -108,8 +108,8 @@ export default function AdminLoginPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-accentSoft via-pink-500 to-orange-300 shadow-lg shadow-travel-accent/25">
               <Heart className="h-8 w-8 text-white" fill="currentColor" />
             </div>
-            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">甜途 · 后台管理</h1>
-            <p className="mt-2 text-sm text-[#5A6670] dark:text-[#9BA3AE]">两个人的数字小家，从这里开始打理</p>
+            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">行迹 · 后台管理</h1>
+            <p className="mt-2 text-sm text-[#5A6670] dark:text-[#9BA3AE]">行迹 · 从这里开始打理</p>
           </motion.div>
 
           <motion.form variants={item} onSubmit={handleSubmit} className="space-y-5">

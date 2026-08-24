@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Heart, Mail } from 'lucide-react'
+import { Heart, Mail, MapPin } from 'lucide-react'
 
 function GithubIcon({ className }: { className?: string }) {
   return (
@@ -16,12 +16,12 @@ export default function Footer() {
         <div className="grid md:grid-cols-3 gap-8">
           <div>
             <h3 className="font-bold text-lg mb-4 text-[#3D4852] flex items-center gap-2">
-              <Heart className="w-5 h-5 text-[#E8B8C2] fill-[#E8B8C2]" />
-              我们的小家
+              <MapPin className="w-5 h-5 text-[#A64E61]" />
+              行迹
             </h3>
             <p className="text-[#4A5560] text-sm">
-              记录共同旅行的点滴，沉淀属于我们的回忆。<br />
-              一个属于我们的小世界。
+              记录每一次出发与归来，沉淀属于你的旅行记忆。<br />
+              一个收藏旅途与故事的数字旅行空间。
             </p>
           </div>
           <div>
@@ -47,7 +47,7 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-500">
           <p className="flex items-center justify-center gap-1">
-            Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> by 袁同学 & 阿比旦
+            Made with <Heart className="w-4 h-4 text-[#A64E61] fill-[#A64E61]" /> by 行迹
           </p>
           <p className="mt-1">© {new Date().getFullYear()} All rights reserved.</p>
         </div>

@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Lock, Eye, EyeOff, ArrowRight, X, Heart } from 'lucide-react'
+import { Lock, Eye, EyeOff, ArrowRight, X, Heart, MapPin } from 'lucide-react'
 import LoginDoor from '@/components/login/LoginDoor'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
@@ -164,27 +164,27 @@ function LoginPageContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C76E80] shadow-sm">
-                    <Heart className="h-4 w-4 fill-white text-white" />
+                    <MapPin className="h-4 w-4 text-white" />
                   </span>
-                  <span className="font-bold text-[#3D4852] dark:text-[#E8E6E1]">我们的小家</span>
+                  <span className="font-bold text-[#3D4852] dark:text-[#E8E6E1]">行迹</span>
                 </div>
                 {isAuthed && (
                   <Link
                     href="/"
                     className="rounded-full bg-[#E8B8C2]/30 px-3 py-1.5 text-xs text-[#A64E61] transition-colors hover:bg-[#E8B8C2]/50 dark:text-[#E8B8C2]"
                   >
-                    已登录 · 进入地图
+                    已登录 · 进入空间
                   </Link>
                 )}
               </div>
 
               <h1 className="mt-7 font-display text-3xl font-bold leading-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-4xl">
-                {mode === 'login' ? '输入我们的纪念日' : '注册新旅程账号'}
+                {mode === 'login' ? '登录你的旅行记忆空间' : '注册一个新的行迹账号'}
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-[#5A6670] dark:text-[#9BA3AE]">
                 {mode === 'login'
-                  ? '一扇只给我们的地图门，密码藏在开始的那一天。'
-                  : '内测邀请已开启，注册后开启属于你的专属旅程。'}
+                  ? '登录后继续沉淀你的旅行与故事。'
+                  : '注册后开启属于你的旅行记忆空间。'}
               </p>
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -333,7 +333,7 @@ function LoginPageContent() {
             </div>
 
             <p className="mt-5 text-center text-xs text-white/85 drop-shadow">
-              Made with ♥ by 袁同学 & 阿比旦
+              Made with ♥ by 行迹
             </p>
           </div>
         </div>
@@ -361,10 +361,10 @@ function LoginPageContent() {
                   <Heart className="h-8 w-8 fill-white text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-[#5A4A3A] dark:text-[#E8E6E1]">
-                  相册是我们的秘密
+                  相册已上锁
                 </h3>
                 <p className="mt-2 text-sm text-[#8B7355]/70 dark:text-[#C2AF9A]/80">
-                  请输入恋爱纪念日作为密码
+                  请输入相册解锁密码
                 </p>
               </div>
 

@@ -65,8 +65,8 @@ export default function SpaceUnlockModal({ isOpen, onClose, onSuccess }: SpaceUn
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-album-bg0/70 border border-white/15 flex items-center justify-center shadow-[0_0_30px_var(--album-accent-dim)]">
           <Lock className="w-7 h-7 text-album-accent" />
         </div>
-        <h3 className="text-album-text1 text-lg font-semibold tracking-widest">相册是我们的秘密</h3>
-        <p className="text-album-text2 text-xs mt-1.5">输入恋爱纪念日，唤醒银河中的回忆</p>
+        <h3 className="text-album-text1 text-lg font-semibold tracking-widest">相册已上锁</h3>
+        <p className="text-album-text2 text-xs mt-1.5">输入纪念日，唤醒旅行中的回忆</p>
 
         <form onSubmit={handleUnlock} className="mt-5 space-y-3">
           <input

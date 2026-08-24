@@ -120,7 +120,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
             href="/"
             className="font-bold text-lg text-[#5A6670]"
           >
-            Travel Journal
+            行迹
           </Link>
           <div className="flex items-center gap-2">
             <Link
@@ -330,7 +330,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
         <footer className="relative z-10 border-t border-[#D8DDD8]/50 py-8 px-6">
           <div className="max-w-6xl mx-auto text-center">
             <p className="text-[#5A6670]/50 text-sm">
-              © {new Date().getFullYear()} Travel Journal · 用足迹丈量中国
+              © {new Date().getFullYear()} 行迹 · 用足迹丈量中国
             </p>
           </div>
         </footer>

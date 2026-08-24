@@ -72,8 +72,8 @@ export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUn
           <div className="book-cover-3d w-20 h-24 mx-auto flex items-center justify-center mb-4 rounded-sm">
             <Lock className="w-7 h-7 text-album-accent" />
           </div>
-          <h3 className="font-zpix text-xl font-bold text-pixel-ink tracking-wider">相册是我们的秘密</h3>
-          <p className="text-xs text-album-warm mt-1.5">请输入恋爱纪念日作为密码</p>
+          <h3 className="font-zpix text-xl font-bold text-pixel-ink tracking-wider">相册已上锁</h3>
+          <p className="text-xs text-album-warm mt-1.5">请输入纪念日作为密码</p>
         </div>
 
         <form onSubmit={handleUnlock} className="space-y-4">

@@ -238,9 +238,9 @@ export default function AlbumPage() {
             </div>
             <h2 className="text-album-text1 text-2xl font-bold tracking-[0.3em]">旅行相册 · 银河存档</h2>
             <p className="text-album-text2 text-xs mt-3 leading-relaxed">
-              这是我们的秘密相册
+              这是旅行中的秘密相册
               <br />
-              输入恋爱纪念日，唤醒银河中的回忆
+              输入纪念日，唤醒旅行中的回忆
             </p>
             <button
               type="button"
@@ -294,9 +294,9 @@ export default function AlbumPage() {
             旅行相册 · 存档
           </h2>
           <p className="text-xs text-album-warm mt-3 leading-relaxed">
-            这是我们的秘密相册
+            这是旅行中的秘密相册
             <br />
-            输入恋爱纪念日即可解锁
+            输入纪念日即可解锁
           </p>
           <button
             type="button"

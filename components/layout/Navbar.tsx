@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, MapPin, CalendarDays, Menu, X, Moon, Sun, Settings, LogOut, Heart, Search, Compass } from 'lucide-react'
+import { Home, MapPin, CalendarDays, Menu, X, Moon, Sun, Settings, LogOut, Search, Compass } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -105,10 +105,10 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             useDarkText ? '!text-white' : 'text-[#3D4852] dark:text-gray-100'
           )}
         >
-          <span className="w-8 h-8 bg-gradient-to-br from-[#F5DCE0] to-[#E8B8C2] rounded-xl flex items-center justify-center shadow-sm">
-            <Heart className="w-4 h-4 text-white fill-white" />
+          <span className="w-8 h-8 bg-gradient-to-br from-[#A64E61] to-[#E8B8C2] rounded-xl flex items-center justify-center shadow-sm">
+            <Compass className="w-5 h-5 text-white" />
           </span>
-          <span>我们的小家</span>
+          <span>行迹</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-1">

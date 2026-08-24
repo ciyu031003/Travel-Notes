@@ -6,8 +6,8 @@ import AppUpdatePrompt from '@/components/offline/AppUpdatePrompt'
 import OfflineBootstrap from '@/components/offline/OfflineBootstrap'
 
 export const metadata: Metadata = {
-  title: '我们的小家 | 旅行记录 & 共同回忆',
-  description: '记录两个人的旅行足迹与共同回忆',
+  title: '行迹 | 旅行记忆空间',
+  description: '记录每一次出发与归来，沉淀属于你的旅行记忆。',
 }
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#E8B8C2" />
+        <meta name="theme-color" content="#FAFBF7" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <script src="/register-sw.js" defer />
       </head>

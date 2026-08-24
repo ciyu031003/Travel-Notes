@@ -130,7 +130,7 @@ export default function AdminDashboard() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-[#F5DCE0]/70 px-3 py-1 text-xs font-medium text-[#A64E61] dark:bg-[#3A2B31]/70 dark:text-[#E8B8C2]">
             <Sparkles className="h-3 w-3" />
-            甜途内容中心
+            行迹内容中心
           </div>
           <h1 className="mt-3 text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA] sm:text-3xl">文章管理</h1>
           <p className="mt-1 text-sm text-[#5A6670]/70 dark:text-[#9BA3AE]">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>

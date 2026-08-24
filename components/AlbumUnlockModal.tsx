@@ -80,10 +80,10 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
             </div>
 
             <h3 className="text-xl font-bold text-travel-inkStrong dark:text-[#E8E6E1]">
-              相册是我们的秘密
+              相册已上锁
             </h3>
             <p className="text-sm text-travel-sand/70 dark:text-travel-sandSoft/80 mt-2">
-              请输入恋爱纪念日作为密码
+              请输入纪念日作为密码
             </p>
           </div>
 

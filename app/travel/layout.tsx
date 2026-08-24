@@ -1,6 +1,6 @@
 export const metadata = {
-  title: '旅行记录 | 一起走过的地方',
-  description: '记录我们一起旅行的美好时光',
+  title: '旅行 | 行迹',
+  description: '管理你的旅行足迹与记忆。',
 }
 
 export default function TravelLayout({

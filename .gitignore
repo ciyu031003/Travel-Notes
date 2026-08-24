@@ -46,3 +46,6 @@ dev-server.log
 dev-server.err.log
 
 dev-run.log
+
+# Visual Studio 临时目录
+.vs/

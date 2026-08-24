@@ -418,7 +418,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="空间名称（如：我们的小家）"
+                      placeholder="空间名称（如：旅行空间）"
                       className="w-full rounded-xl bg-[var(--social-surface)] px-3.5 py-2.5 text-sm outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--social-accent)]"
                     />
                     <textarea

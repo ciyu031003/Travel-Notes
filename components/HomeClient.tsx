@@ -335,7 +335,7 @@ export default function HomeClient({
                 </span>
               </h1>
               <p className="mt-7 text-sm tracking-[0.2em] text-[#A64E61] dark:text-[#E8B8C2] md:text-base">
-                Travel Journal · 记录我们的美好时光
+                行迹 · 记录我们的旅行时光
               </p>
               <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-[#5A6670] dark:text-[#9BA3AE] md:mx-0 md:text-lg">
                 用文字记录生活，用照片定格瞬间 —— 在这个小小的世界里，收藏我们的每一份感动
@@ -448,7 +448,7 @@ export default function HomeClient({
           <section className="px-3 pb-12 md:px-6 md:pb-16">
             <div className="mx-auto max-w-7xl">
               <div className="rounded-2xl border border-[#E8DDD8]/70 dark:border-[#2C343E] bg-white/85 dark:bg-[#1B2128]/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
-                <SectionTitle icon={Heart}>我们的纪念日</SectionTitle>
+                <SectionTitle icon={Heart}>旅行纪念日</SectionTitle>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {anniversaries.map((a) => {
                     const days = daysUntil(a.date, a.recurring)
@@ -512,8 +512,8 @@ export default function HomeClient({
             <div className="grid gap-4 sm:grid-cols-3">
               <FeatureCard
                 icon={ImageIcon}
-                title="我们的相册"
-                desc="恋爱纪念日解锁，收藏我们的照片"
+                title="旅行相册"
+                desc="纪念日解锁，收藏旅行照片"
                 action="查看相册"
                 onClick={() => setShowAlbumUnlock(true)}
               />

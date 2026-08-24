@@ -10,7 +10,7 @@ const ITEMS = [
   { href: '/travel', label: '旅行', icon: MapPin },
   { href: '/circle', label: '旅行圈', icon: Compass },
   { href: '/timeline', label: '时间线', icon: CalendarDays },
-  { href: '/me', label: '个人主页', icon: User },
+  { href: '/me', label: '我的', icon: User },
 ]
 
 export default function MobileBottomNav() {

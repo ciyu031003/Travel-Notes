@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Heart, MapPin } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import DoorMap from './DoorMap'
 
 type Phase = 'closed' | 'opening' | 'open'
@@ -12,7 +12,7 @@ interface LoginDoorProps {
 
 function formatSealDate(date: string): string {
   const d = new Date(date)
-  if (Number.isNaN(d.getTime())) return '我们的秘密'
+  if (Number.isNaN(d.getTime())) return '启程'
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`
 }
@@ -24,7 +24,7 @@ function formatSealDate(date: string): string {
 export default function LoginDoor({ children }: LoginDoorProps) {
   const [phase, setPhase] = useState<Phase>('closed')
   const [instant, setInstant] = useState(false)
-  const [sealDate, setSealDate] = useState('我们的秘密')
+  const [sealDate, setSealDate] = useState('启程')
   const timers = useRef<number[]>([])
 
   const markSeen = () => {
@@ -142,9 +142,9 @@ export default function LoginDoor({ children }: LoginDoorProps) {
             </div>
             <div className="absolute left-6 top-6 flex items-center gap-2 md:left-10 md:top-10">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C76E80] shadow-sm">
-                <Heart className="h-4 w-4 fill-white text-white" />
+                <MapPin className="h-4 w-4 text-white" />
               </span>
-              <span className="font-bold text-[#3D4852] dark:text-[#E8E6E1]">我们的小家</span>
+              <span className="font-bold text-[#3D4852] dark:text-[#E8E6E1]">行迹</span>
             </div>
             <div className="absolute bottom-8 left-8 hidden max-w-[240px] md:block">
               <p className="font-display text-2xl font-bold leading-snug text-[#2D3842] dark:text-[#F1EFEA]">
@@ -183,7 +183,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
           >
             <div className="flex h-28 w-28 -rotate-6 items-center justify-center rounded-full border-2 border-dashed border-[#C76E80] bg-[#FFF8F4] shadow-[0_10px_30px_rgba(166,78,97,0.25)] dark:border-[#E8B8C2]/70 dark:bg-[#2A1D22]">
               <div className="text-center text-[#A64E61] dark:text-[#E8B8C2]">
-                <p className="text-[10px] tracking-[0.3em]">我们的纪念日</p>
+                <p className="text-[10px] tracking-[0.3em]">启程</p>
                 <p className="mt-1 font-display text-base font-bold">{sealDate}</p>
               </div>
             </div>

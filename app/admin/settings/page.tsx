@@ -832,12 +832,12 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
     <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
       <div>
         <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">旅行设置</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">设置恋爱纪念日开始日期，旅行地图页面将自动计算相恋天数</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">设置纪念日开始日期，旅行地图页面将自动计算天数</p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          恋爱纪念日
+          纪念日
         </label>
         <div className="relative">
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -850,7 +850,7 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
           />
         </div>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          选择你们开始恋爱的日期，系统将自动计算相恋天数
+          选择开始日期，系统将自动计算天数
         </p>
       </div>
 

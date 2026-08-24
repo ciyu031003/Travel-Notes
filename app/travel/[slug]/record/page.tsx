@@ -163,7 +163,7 @@ export default function TravelRecordPage() {
           </form>
         ) : (
           <div className="card p-8 text-center text-[#5A6670]/70">
-            该旅行尚未关联情侣空间，请先在后台为其关联空间后再记录。
+            该旅行尚未关联旅行空间，请先在后台为其关联空间后再记录。
           </div>
         )}
       </main>

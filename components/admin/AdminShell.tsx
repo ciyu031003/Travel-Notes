@@ -144,8 +144,8 @@ export default function AdminShell({
             <Heart className="h-4.5 w-4.5 text-white" fill="currentColor" />
           </div>
           <div className="leading-tight">
-            <p className="text-sm font-bold text-gray-900 dark:text-white">甜途</p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500">两个人的数字小家</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">行迹</p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">行迹</p>
           </div>
         </div>
 
@@ -221,7 +221,7 @@ export default function AdminShell({
                 <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${accent}`}>
                   <Heart className="h-4 w-4 text-white" fill="currentColor" />
                 </div>
-                <span className="font-semibold text-gray-900 dark:text-white">甜途 · {pageTitle}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">行迹 · {pageTitle}</span>
               </div>
               <button
                 type="button"
