@@ -152,7 +152,15 @@
   }
 
   body {
-    @apply bg-travel-cream text-travel-ink dark:bg-[#0B0B0B] dark:text-[#E8E6E1] transition-colors duration-200;
+    @apply bg-travel-cream text-travel-ink transition-colors duration-200;
+    color-scheme: light;
+  }
+
+  html.dark body {
+    /* 统一暗色底：与档案 --social-bg / night.bg 一致的极黑暖调，消除明暗切换的割裂感 */
+    background-color: #080808;
+    color: #E8E6E1;
+    color-scheme: dark;
   }
 }
 
