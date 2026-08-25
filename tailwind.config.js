@@ -93,6 +93,17 @@ module.exports = {
           line: 'rgba(245,241,234,0.09)',
           lineStrong: 'rgba(245,241,234,0.16)',
         },
+        // ★ 标准壳暗色（首页/时间线/登录等冷灰蓝 dark 值归一为语义 token，视觉零变化，仅消除硬编码）
+        shell: {
+          bg: '#12161C',        // 页面底（原 dark:bg-[#12161C]）
+          surface: '#1B2128',   // 卡片面（原 dark:bg-[#1B2128]）
+          surface2: '#161B22',  // 输入框/内嵌面（原 dark:bg-[#161B22]）
+          surface3: '#151A21',  // 底部导航（原 dark:bg-[#151A21]）
+          text: '#E8E6E1',      // 主文字（原 dark:text-[#E8E6E1]）
+          muted: '#9BA3AE',     // 次级文字（原 dark:text-[#9BA3AE]）
+          faint: '#6E6A64',     // 弱化文字（原 dark:text-[#6E6A64]）
+          line: '#2C343E',      // 边框（原 dark:border-[#2C343E]）
+        },
         // ★ 新增语义化颜色
         success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
         warning: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },

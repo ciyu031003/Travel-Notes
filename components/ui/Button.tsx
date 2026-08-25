@@ -16,7 +16,7 @@ const variants: Record<Variant, string> = {
   secondary:
     'bg-travel-sakura/60 text-travel-accentStrong rounded-xl hover:bg-travel-sakura dark:bg-white/10 dark:text-travel-accentSoft',
   ghost:
-    'text-travel-ink/80 rounded-xl hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-[#9BA3AE] dark:hover:bg-white/10',
+    'text-travel-ink/80 rounded-xl hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10',
   danger:
     'bg-travel-danger/10 text-travel-danger rounded-xl hover:bg-travel-danger/20',
 }

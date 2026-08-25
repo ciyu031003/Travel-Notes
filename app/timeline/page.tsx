@@ -55,7 +55,7 @@ export default function TimelinePage() {
           <span>旅行时间线</span>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-travel-inkStrong dark:text-[#F1EFEA]">走过的时光</h1>
-        <p className="text-travel-ink/70 dark:text-[#9BA3AE] mt-2">按年份回顾每一段旅行与回忆</p>
+        <p className="text-travel-ink/70 dark:text-shell-muted mt-2">按年份回顾每一段旅行与回忆</p>
       </header>
 
       {years.length === 0 ? (
@@ -111,20 +111,20 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
             {isTravel ? <MapPin className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
             {isTravel ? '旅行' : '回忆'}
           </span>
-          <span className="text-xs text-travel-ink/50 dark:text-[#9BA3AE]">{formatDate(entry.date)}</span>
-          {!isTravel && entry.travelTitle && <span className="text-xs text-travel-ink/50 dark:text-[#9BA3AE]">· {entry.travelTitle}</span>}
+          <span className="text-xs text-travel-ink/50 dark:text-shell-muted">{formatDate(entry.date)}</span>
+          {!isTravel && entry.travelTitle && <span className="text-xs text-travel-ink/50 dark:text-shell-muted">· {entry.travelTitle}</span>}
         </div>
         <h3 className="text-base font-semibold text-travel-inkStrong dark:text-[#F1EFEA] group-hover:text-travel-accent transition-colors">{entry.title}</h3>
-        {entry.description && <p className="text-sm text-travel-ink/70 dark:text-[#9BA3AE] mt-1 line-clamp-2">{entry.description}</p>}
+        {entry.description && <p className="text-sm text-travel-ink/70 dark:text-shell-muted mt-1 line-clamp-2">{entry.description}</p>}
         {(entry.location || entry.mood) && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {entry.location && (
-              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-[#9BA3AE]">
+              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">
                 <MapPin className="w-3 h-3" />
                 {entry.location}
               </span>
             )}
-            {entry.mood && <span className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-[#9BA3AE]">{entry.mood}</span>}
+            {entry.mood && <span className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">{entry.mood}</span>}
           </div>
         )}
       </div>

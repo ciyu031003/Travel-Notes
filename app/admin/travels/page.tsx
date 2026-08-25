@@ -264,7 +264,7 @@ export default function AdminTravelsPage() {
                   className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${
                     selected === t.id
                       ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 border border-travel-sakura dark:border-travel-accent/40'
-                      : 'bg-white/80 dark:bg-white/5 border border-travel-line/50 dark:border-[#2C343E] hover:border-travel-sakura'
+                      : 'bg-white/80 dark:bg-white/5 border border-travel-line/50 dark:border-shell-line hover:border-travel-sakura'
                   }`}
                 >
                   <div className="flex-1 min-w-0">

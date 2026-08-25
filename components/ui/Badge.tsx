@@ -9,7 +9,7 @@ const tones: Record<Tone, string> = {
   accent:
     'bg-travel-accent/10 text-travel-accent dark:bg-travel-accent/20 dark:text-travel-bloom',
   neutral:
-    'bg-white/70 text-travel-ink/70 border border-travel-line/60 dark:bg-white/5 dark:text-[#9BA3AE] dark:border-[#2C343E]',
+    'bg-white/70 text-travel-ink/70 border border-travel-line/60 dark:bg-white/5 dark:text-shell-muted dark:border-shell-line',
 }
 
 /** 统一胶囊标签/章节 eyebrow。 */

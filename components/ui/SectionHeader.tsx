@@ -30,7 +30,7 @@ export default function SectionHeader({
         {action}
       </div>
       {subtitle && (
-        <p className="mt-1 text-sm leading-relaxed text-travel-ink/70 dark:text-[#9BA3AE]">
+        <p className="mt-1 text-sm leading-relaxed text-travel-ink/70 dark:text-shell-muted">
           {subtitle}
         </p>
       )}

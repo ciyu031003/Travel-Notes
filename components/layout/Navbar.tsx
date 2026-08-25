@@ -92,9 +92,9 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         isTransparent
           ? scrolled
-            ? 'bg-white/85 dark:bg-[#12161C]/85 backdrop-blur-md border-b border-travel-line/60 dark:border-[#2C343E]'
+            ? 'bg-white/85 dark:bg-shell-bg/85 backdrop-blur-md border-b border-travel-line/60 dark:border-shell-line'
             : 'bg-transparent'
-          : 'bg-white/80 dark:bg-[#12161C]/80 backdrop-blur-md border-b border-travel-line/60 dark:border-[#2C343E]'
+          : 'bg-white/80 dark:bg-shell-bg/80 backdrop-blur-md border-b border-travel-line/60 dark:border-shell-line'
       )}
     >
       <nav className="container-custom h-16 flex items-center justify-between">
@@ -124,7 +124,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                     : 'bg-travel-sakura/50 text-travel-accentStrong dark:bg-white/10 dark:text-travel-accentSoft'
                   : useDarkText
                     ? 'text-white/70 hover:bg-white/10 hover:text-white'
-                    : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                    : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
               )}
             >
               <item.icon className="w-4 h-4" />
@@ -137,7 +137,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70 hover:bg-white/10'
-                : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-accent dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-accent dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="搜索"
           >
@@ -149,7 +149,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors ml-2',
               useDarkText
                 ? 'text-white/70 hover:bg-white/10'
-                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -160,14 +160,14 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70 hover:bg-white/10'
-                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="管理后台"
           >
             <Settings className="w-5 h-5" />
           </Link>
           {username && (
-            <div className="flex items-center gap-2 ml-2 pl-3 border-l border-travel-line/60 dark:border-[#2C343E]">
+            <div className="flex items-center gap-2 ml-2 pl-3 border-l border-travel-line/60 dark:border-shell-line">
               <span className={cn(
                 'text-sm font-medium',
                 useDarkText ? 'text-white' : 'text-travel-inkStrong dark:text-[#F1EFEA]'
@@ -180,7 +180,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                   'p-2 rounded-lg transition-colors',
                   useDarkText
                     ? 'text-white/70 hover:bg-white/10'
-                    : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                    : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
                 )}
                 title="退出登录"
               >
@@ -197,7 +197,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-accent dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-accent dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="搜索"
           >
@@ -209,7 +209,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -220,7 +220,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="管理后台"
           >
@@ -232,7 +232,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               'p-2 rounded-lg transition-colors',
               useDarkText
                 ? 'text-white/70'
-                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -245,8 +245,8 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
           className={cn(
             'md:hidden border-t',
             isTransparent
-              ? 'bg-white dark:bg-[#12161C] border-travel-line/60 dark:border-[#2C343E]'
-              : 'bg-white dark:bg-[#12161C] border-travel-line/60 dark:border-[#2C343E]'
+              ? 'bg-white dark:bg-shell-bg border-travel-line/60 dark:border-shell-line'
+              : 'bg-white dark:bg-shell-bg border-travel-line/60 dark:border-shell-line'
           )}
         >
           <div className="container-custom py-4 space-y-1">
@@ -259,7 +259,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                   'px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3',
                   isActive(item.href)
                     ? 'bg-travel-sakura/50 text-travel-accentStrong dark:bg-white/10 dark:text-travel-accentSoft'
-                    : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-[#9BA3AE] dark:hover:bg-white/10 dark:hover:text-white'
+                    : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
                 )}
               >
                 <item.icon className="w-5 h-5" />
@@ -277,7 +277,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             <Link
               href="/admin"
               onClick={() => setIsMenuOpen(false)}
-              className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink border-t border-travel-line/60 dark:border-[#2C343E] mt-2 pt-3"
+              className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink border-t border-travel-line/60 dark:border-shell-line mt-2 pt-3"
             >
               <Settings className="w-5 h-5" />
               管理后台

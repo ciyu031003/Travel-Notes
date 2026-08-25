@@ -23,7 +23,7 @@ export default function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-travel-line/70 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg dark:border-[#2C343E] dark:bg-[#151A21]/95 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-travel-line/70 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg dark:border-shell-line dark:bg-shell-surface3/95 md:hidden"
       aria-label="移动端导航"
     >
       <div className="grid grid-cols-5">
@@ -39,7 +39,7 @@ export default function MobileBottomNav() {
                 'flex min-h-[52px] flex-col items-center justify-center gap-1 text-[11px] transition-colors',
                 active
                   ? 'font-medium text-travel-accent dark:text-travel-bloom'
-                  : 'text-travel-ink/70 hover:text-travel-ink dark:text-[#9BA3AE] dark:hover:text-[#E8E6E1]'
+                  : 'text-travel-ink/70 hover:text-travel-ink dark:text-shell-muted dark:hover:text-[#E8E6E1]'
               )}
             >
               <Icon className={cn('h-5 w-5', active && 'scale-110')} />

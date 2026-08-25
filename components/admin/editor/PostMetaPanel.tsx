@@ -69,7 +69,7 @@ export default function PostMetaPanel({
           type="text"
           value={tags}
           onChange={(e) => onChange('tags', e.target.value)}
-          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
+          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
           placeholder="标签1, 标签2, 标签3"
         />
       </div>
@@ -84,7 +84,7 @@ export default function PostMetaPanel({
             type="text"
             value={location}
             onChange={(e) => onChange('location', e.target.value)}
-            className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
+            className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
             placeholder="例如：广东广州"
           />
         </div>
@@ -118,7 +118,7 @@ export default function PostMetaPanel({
           value={summary}
           onChange={(e) => onChange('summary', e.target.value)}
           rows={3}
-          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-[#E8E6E1]"
+          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-[#3D4852] shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
           placeholder="简短描述这篇文章..."
         />
       </div>

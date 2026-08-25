@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]'
+    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-[#121316]">
@@ -109,12 +109,12 @@ export default function AdminLoginPage() {
               <Heart className="h-8 w-8 text-white" fill="currentColor" />
             </div>
             <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">行迹 · 后台管理</h1>
-            <p className="mt-2 text-sm text-travel-ink dark:text-[#9BA3AE]">行迹 · 从这里开始打理</p>
+            <p className="mt-2 text-sm text-travel-ink dark:text-shell-muted">行迹 · 从这里开始打理</p>
           </motion.div>
 
           <motion.form variants={item} onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="mb-2 block text-sm font-medium text-travel-ink dark:text-[#9BA3AE]">用户名</label>
+              <label className="mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">用户名</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
                 <input
@@ -130,7 +130,7 @@ export default function AdminLoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-travel-ink dark:text-[#9BA3AE]">密码</label>
+              <label className="mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">密码</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
                 <input
@@ -180,14 +180,14 @@ export default function AdminLoginPage() {
                 首次使用？初始化管理员
               </Link>
             )}
-            <Link href="/" className="inline-flex items-center gap-1 text-travel-ink transition-colors hover:text-travel-accent dark:text-[#9BA3AE] dark:hover:text-travel-bloom">
+            <Link href="/" className="inline-flex items-center gap-1 text-travel-ink transition-colors hover:text-travel-accent dark:text-shell-muted dark:hover:text-travel-bloom">
               <ArrowLeft className="h-3.5 w-3.5" />
               返回首页
             </Link>
           </motion.div>
         </motion.div>
 
-        <motion.p variants={item} className="mt-6 text-center text-xs text-travel-sand/50 dark:text-[#6E6A64]">
+        <motion.p variants={item} className="mt-6 text-center text-xs text-travel-sand/50 dark:text-shell-faint">
           Made with ♥ by 行迹
         </motion.p>
       </motion.div>

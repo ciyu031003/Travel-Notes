@@ -121,7 +121,7 @@ export default function AdminDashboard() {
   })
 
   const glassInput =
-    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-[#3D4852] dark:text-[#E8E6E1] placeholder-[#9A958F] shadow-sm backdrop-blur-xl transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50'
+    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-[#3D4852] dark:text-shell-text placeholder-[#9A958F] shadow-sm backdrop-blur-xl transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50'
 
   return (
     <AdminShell title="文章管理">
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
             行迹内容中心
           </div>
           <h1 className="mt-3 text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA] sm:text-3xl">文章管理</h1>
-          <p className="mt-1 text-sm text-travel-ink/70 dark:text-[#9BA3AE]">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>
+          <p className="mt-1 text-sm text-travel-ink/70 dark:text-shell-muted">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>
         </div>
         <Link
           href="/admin/new"
@@ -181,10 +181,10 @@ export default function AdminDashboard() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom/60 dark:from-[#32261D] dark:to-[#4A3427]">
             <FileText className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
           </div>
-          <h3 className="text-lg font-semibold text-[#3D4852] dark:text-[#E8E6E1]">
+          <h3 className="text-lg font-semibold text-[#3D4852] dark:text-shell-text">
             {posts.length === 0 ? '还没有文章' : '没有匹配的文章'}
           </h3>
-          <p className="mt-1 text-sm text-travel-ink/70 dark:text-[#9BA3AE]">
+          <p className="mt-1 text-sm text-travel-ink/70 dark:text-shell-muted">
             {posts.length === 0 ? '从第一篇游记开始，收藏你们的旅程' : '换个关键词试试吧'}
           </p>
           {posts.length === 0 && (
@@ -253,7 +253,7 @@ export default function AdminDashboard() {
                       {post.title}
                     </h3>
                   </Link>
-                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-travel-ink/80 dark:text-[#9BA3AE]">
+                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
                     {post.summary || '还没有摘要，点击编辑为这篇文章写一句引言吧。'}
                   </p>
 
@@ -374,7 +374,7 @@ export default function AdminDashboard() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-sm leading-relaxed text-travel-ink/80 dark:text-[#9BA3AE]">
+            <p className="text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
               删除后不可恢复，确定要删除这篇游记吗？
             </p>
             <div className="mt-6 flex gap-3">

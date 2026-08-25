@@ -164,7 +164,7 @@ export default function AdminMomentsPage() {
         ) : (
           <div className="space-y-3">
             {moments.map((moment) => (
-              <div key={moment.id} className="rounded-2xl border border-travel-line/50 bg-white/80 p-5 shadow-soft dark:border-[#2C343E] dark:bg-[#141414]/80 flex items-start gap-4">
+              <div key={moment.id} className="rounded-2xl border border-travel-line/50 bg-white/80 p-5 shadow-soft dark:border-shell-line dark:bg-shell-bg/80 flex items-start gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-travel-ink dark:text-gray-200 text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {moment.content}

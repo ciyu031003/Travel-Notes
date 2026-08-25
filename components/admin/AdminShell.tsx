@@ -27,7 +27,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/social', label: '社交管理', icon: MessageCircle, color: 'text-travel-accent dark:text-travel-accentSoft' },
   { href: '/admin/audit', label: '审计日志', icon: ShieldCheck, color: 'text-travel-accentSoft dark:text-travel-bloom' },
   { href: '/timeline', label: '时间线', icon: CalendarDays, color: 'text-travel-accent dark:text-travel-accentSoft' },
-  { href: '/', label: '回到首页', icon: Home, color: 'text-travel-ink/60 dark:text-[#9BA3AE]' },
+  { href: '/', label: '回到首页', icon: Home, color: 'text-travel-ink/60 dark:text-shell-muted' },
 ]
 
 const PAGE_TITLES: Record<string, string> = {
@@ -122,7 +122,7 @@ export default function AdminShell({
           className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
             active
               ? 'bg-gradient-to-r from-travel-sakura to-travel-sakura dark:from-travel-accent/15 dark:to-travel-accentSoft/10 text-travel-accentStrong dark:text-travel-accentSoft shadow-sm'
-              : 'text-travel-ink/70 dark:text-[#9BA3AE] hover:bg-white/70 dark:hover:bg-white/5 hover:text-travel-ink dark:hover:text-[#E8E6E1]'
+              : 'text-travel-ink/70 dark:text-shell-muted hover:bg-white/70 dark:hover:bg-white/5 hover:text-travel-ink dark:hover:text-[#E8E6E1]'
           }`}
         >
           {active && (
@@ -137,7 +137,7 @@ export default function AdminShell({
   return (
     <div className="min-h-screen bg-travel-cream text-travel-ink dark:bg-[#0A0A0A] dark:text-[#C9CDD3]">
       {/* ===== 桌面侧边栏 ===== */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-travel-line/40 bg-white/75 dark:border-white/5 dark:bg-[#141414]/85 backdrop-blur-2xl lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-travel-line/40 bg-white/75 dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:flex">
         {/* 品牌 */}
         <div className="flex h-16 items-center gap-3 border-b border-travel-line/50 dark:border-white/5 px-5">
           <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${accent} shadow-md shadow-travel-accent/20`}>
@@ -211,7 +211,7 @@ export default function AdminShell({
         >
           <div className="absolute inset-0 backdrop-blur-[2px]" />
           <div
-            className={`absolute right-0 top-0 flex h-full w-[min(86vw,340px)] flex-col bg-white/95 dark:bg-[#141414]/95 backdrop-blur-2xl shadow-2xl shadow-black/30 ring-1 ring-black/5 dark:ring-white/10 transition-transform duration-300 ease-out ${
+            className={`absolute right-0 top-0 flex h-full w-[min(86vw,340px)] flex-col bg-white/95 dark:bg-shell-bg/95 backdrop-blur-2xl shadow-2xl shadow-black/30 ring-1 ring-black/5 dark:ring-white/10 transition-transform duration-300 ease-out ${
               open ? 'translate-x-0' : 'translate-x-full'
             }`}
             onClick={(e) => e.stopPropagation()}

@@ -73,7 +73,7 @@ export default function AdminSocialPage() {
           <>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {statCards.map((s) => (
-                <div key={s.label} className="rounded-2xl border border-travel-line/50 bg-white/80 p-4 backdrop-blur shadow-soft dark:border-[#2C343E] dark:bg-white/5">
+                <div key={s.label} className="rounded-2xl border border-travel-line/50 bg-white/80 p-4 backdrop-blur shadow-soft dark:border-shell-line dark:bg-white/5">
                   <div className="flex items-center gap-2 text-xs text-travel-ink/60 dark:text-gray-400"><s.icon className="h-4 w-4 text-travel-accentSoft" />{s.label}</div>
                   <div className="mt-2 text-2xl font-bold text-travel-ink dark:text-gray-100">{s.value}</div>
                 </div>
@@ -90,7 +90,7 @@ export default function AdminSocialPage() {
             </div>
 
             {tab === 'posts' && (
-              <div className="overflow-hidden rounded-2xl border border-travel-line/50 dark:border-[#2C343E]">
+              <div className="overflow-hidden rounded-2xl border border-travel-line/50 dark:border-shell-line">
                 {(data.posts || []).length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center text-travel-ink/50 dark:text-gray-400">
                     <FileText className="mb-3 h-10 w-10 opacity-30 text-travel-accentSoft" />
@@ -119,7 +119,7 @@ export default function AdminSocialPage() {
             {tab === 'comments' && (
               <div className="space-y-2">
                 {(data.comments || []).map((c: any) => (
-                  <div key={c.id} className="rounded-2xl border border-travel-line/50 bg-white/70 p-3.5 dark:border-[#2C343E] dark:bg-white/5">
+                  <div key={c.id} className="rounded-2xl border border-travel-line/50 bg-white/70 p-3.5 dark:border-shell-line dark:bg-white/5">
                     <div className="flex items-center gap-2 text-xs text-travel-ink/60 dark:text-gray-400">
                       <span className="font-medium text-travel-ink dark:text-gray-200">{c.user?.username || '-'}</span>
                       <span>· 评论了 <Link href={'/circle/' + c.post?.id} className="text-travel-accent">{c.post?.title || '#' + c.postId}</Link></span>
@@ -136,7 +136,7 @@ export default function AdminSocialPage() {
               <div className="space-y-2">
                 {notice && <p className="rounded-xl bg-travel-success/10 px-3 py-2 text-sm text-travel-success">{notice}</p>}
                 {(data.reports || []).map((r: any) => (
-                  <div key={r.id} className="rounded-2xl border border-travel-line/50 bg-white/70 p-3.5 dark:border-[#2C343E] dark:bg-white/5">
+                  <div key={r.id} className="rounded-2xl border border-travel-line/50 bg-white/70 p-3.5 dark:border-shell-line dark:bg-white/5">
                     <div className="flex items-center gap-2 text-xs text-travel-ink/60 dark:text-gray-400">
                       <span className="font-medium text-travel-ink dark:text-gray-200">{r.reporter?.username || '-'}</span>
                       <span>举报了 <Link href={'/circle/' + r.post?.id} className="text-travel-accent">{r.post?.title || '#' + r.postId}</Link></span>

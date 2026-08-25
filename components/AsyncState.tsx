@@ -43,7 +43,7 @@ export default function AsyncState({
         aria-live="polite"
       >
         <Loader2 className="h-9 w-9 animate-spin text-travel-accent dark:text-travel-bloom" />
-        <p className="text-sm text-travel-ink dark:text-[#9BA3AE]">{message || '正在加载…'}</p>
+        <p className="text-sm text-travel-ink dark:text-shell-muted">{message || '正在加载…'}</p>
       </div>
     )
   }
@@ -55,7 +55,7 @@ export default function AsyncState({
         style={{ minHeight }}
         role="alert"
       >
-        <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/20 dark:border-[#2C343E] dark:bg-white/5">
+        <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/20 dark:border-shell-line dark:bg-white/5">
           <AlertCircle className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
         </span>
         <div className="space-y-1.5">
@@ -63,10 +63,10 @@ export default function AsyncState({
             {title || '加载失败'}
           </p>
           {message && (
-            <p className="text-sm text-travel-ink/70 dark:text-[#9BA3AE]">{message}</p>
+            <p className="text-sm text-travel-ink/70 dark:text-shell-muted">{message}</p>
           )}
           {hint && (
-            <p className="text-xs text-travel-sand dark:text-[#6E6A64]">{hint}</p>
+            <p className="text-xs text-travel-sand dark:text-shell-faint">{hint}</p>
           )}
         </div>
         {actionLabel && onAction && (
@@ -97,10 +97,10 @@ export default function AsyncState({
           {title || '这里还空着'}
         </p>
         {message && (
-          <p className="text-sm text-travel-ink/70 dark:text-[#9BA3AE]">{message}</p>
+          <p className="text-sm text-travel-ink/70 dark:text-shell-muted">{message}</p>
         )}
         {hint && (
-          <p className="text-xs text-travel-sand dark:text-[#6E6A64]">{hint}</p>
+          <p className="text-xs text-travel-sand dark:text-shell-faint">{hint}</p>
         )}
       </div>
       {actionLabel && onAction && (

@@ -144,7 +144,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-travel-accentSoft shadow-sm">
                 <MapPin className="h-4 w-4 text-white" />
               </span>
-              <span className="font-bold text-[#3D4852] dark:text-[#E8E6E1]">行迹</span>
+              <span className="font-bold text-[#3D4852] dark:text-shell-text">行迹</span>
             </div>
             <div className="absolute bottom-8 left-8 hidden max-w-[240px] md:block">
               <p className="font-display text-2xl font-bold leading-snug text-[#2D3842] dark:text-[#F1EFEA]">

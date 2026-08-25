@@ -82,7 +82,7 @@ export default function ForceChangePasswordPage() {
               <CheckCircle className="w-8 h-8 text-emerald-500" />
             </div>
             <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA] mb-2">密码修改成功</h1>
-            <p className="text-sm text-travel-ink/80 dark:text-[#9BA3AE]">正在跳转到管理后台...</p>
+            <p className="text-sm text-travel-ink/80 dark:text-shell-muted">正在跳转到管理后台...</p>
           </div>
         </div>
       </div>
@@ -103,21 +103,21 @@ export default function ForceChangePasswordPage() {
               <AlertTriangle className="w-8 h-8 text-amber-500" />
             </div>
             <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">首次登录请修改密码</h1>
-            <p className="text-sm text-travel-ink/80 dark:text-[#9BA3AE] mt-2">
+            <p className="text-sm text-travel-ink/80 dark:text-shell-muted mt-2">
               您正在使用初始密码，请设置一个新密码以确保账户安全
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block mb-2 block text-sm font-medium text-travel-ink dark:text-[#9BA3AE]">新密码</label>
+              <label className="block mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">新密码</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9A958F]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-12 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]"
+                  className="w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-12 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]"
                   placeholder="至少 6 位"
                   required
                 />
@@ -132,14 +132,14 @@ export default function ForceChangePasswordPage() {
             </div>
 
             <div>
-              <label className="block mb-2 block text-sm font-medium text-travel-ink dark:text-[#9BA3AE]">确认新密码</label>
+              <label className="block mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">确认新密码</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9A958F]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-[#2C343E] dark:bg-[#161B22]/80 dark:text-[#E8E6E1] dark:placeholder-[#6E6A64]"
+                  className="w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]"
                   placeholder="再次输入新密码"
                   required
                 />
@@ -162,7 +162,7 @@ export default function ForceChangePasswordPage() {
           </form>
         </div>
 
-        <p className="text-center mt-6 text-center text-xs text-[#9A958F] dark:text-[#6E6A64]">
+        <p className="text-center mt-6 text-center text-xs text-[#9A958F] dark:text-shell-faint">
           为了您的账户安全，初始密码首次登录必须修改
         </p>
       </div>

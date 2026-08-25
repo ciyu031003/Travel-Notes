@@ -36,13 +36,13 @@ function BigStat({
 }) {
   const inner = (
     <div className="group flex flex-col items-center text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/40 text-travel-accent dark:border-[#2C343E] dark:bg-travel-accent/15 dark:text-travel-bloom">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/40 text-travel-accent dark:border-shell-line dark:bg-travel-accent/15 dark:text-travel-bloom">
         <Icon className="h-5 w-5" />
       </div>
       <div className="mt-3 text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-[#F1EFEA] tabular-nums">
         {value}
       </div>
-      <div className="mt-1 text-xs text-travel-ink/70 dark:text-[#9BA3AE]">{label}</div>
+      <div className="mt-1 text-xs text-travel-ink/70 dark:text-shell-muted">{label}</div>
     </div>
   )
   return href ? <Link href={href} className="transition group-hover:opacity-90">{inner}</Link> : inner
@@ -66,13 +66,13 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-[#F1EFEA] md:text-4xl">
             我的旅行记忆空间
           </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-travel-ink/70 dark:text-[#9BA3AE]">
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-travel-ink/70 dark:text-shell-muted">
             走过的省份、写下的文字、拍下的照片——这里是你旅行的全部沉淀。
           </p>
         </header>
 
         {/* 核心大数（护照式，弱化后台报表感） */}
-        <section className="mx-auto mb-12 grid max-w-3xl grid-cols-3 gap-6 rounded-[1.6rem] border border-travel-line/60 bg-white/60 py-8 backdrop-blur-sm dark:border-[#2C343E] dark:bg-[#1B2128]/70 md:py-10">
+        <section className="mx-auto mb-12 grid max-w-3xl grid-cols-3 gap-6 rounded-[1.6rem] border border-travel-line/60 bg-white/60 py-8 backdrop-blur-sm dark:border-shell-line dark:bg-shell-surface/70 md:py-10">
           <BigStat icon={MapPin} label="点亮省份" value={data.provincesVisitedCount} href="/travel" />
           <BigStat icon={Camera} label="旅行记录" value={data.travelCount} href="/travel" />
           <BigStat icon={ImageIcon} label="照片" value={data.totalPhotos} href="/album" />
@@ -89,7 +89,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               去旅行记录 <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="overflow-hidden rounded-[1.6rem] border border-travel-line/60 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/30 p-2 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.3)] dark:border-[#2C343E] dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128]">
+          <div className="overflow-hidden rounded-[1.6rem] border border-travel-line/60 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/30 p-2 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.3)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128]">
             <div className="h-[340px] sm:h-[440px] lg:h-[520px]">
               <ChinaMap posts={data.travelPosts as never} />
             </div>
@@ -98,13 +98,13 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
         {/* 省份打卡 + 内容构成（左右分栏，弱化为侧栏） */}
         <section className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-[#2C343E] dark:bg-[#1B2128]/80">
+          <div className="lg:col-span-2 rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-shell-line dark:bg-shell-surface/80">
             <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-[#F1EFEA]">
               <MapPin className="h-4 w-4 text-travel-accent" />
               省份打卡
             </h2>
             {data.provinceStats.length === 0 ? (
-              <p className="py-10 text-center text-sm text-travel-ink/70 dark:text-[#9BA3AE]">
+              <p className="py-10 text-center text-sm text-travel-ink/70 dark:text-shell-muted">
                 还没有旅行记录，去点亮第一个省份吧
               </p>
             ) : (
@@ -112,8 +112,8 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                 {data.provinceStats.slice(0, 8).map((p) => (
                   <div key={p.name}>
                     <div className="mb-1.5 flex items-center justify-between text-sm">
-                      <span className="text-travel-ink dark:text-[#E8E6E1]">{p.name}</span>
-                      <span className="tabular-nums text-travel-ink/60 dark:text-[#9BA3AE]">{p.count} 篇</span>
+                      <span className="text-travel-ink dark:text-shell-text">{p.name}</span>
+                      <span className="tabular-nums text-travel-ink/60 dark:text-shell-muted">{p.count} 篇</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-travel-sakura/40 dark:bg-white/5">
                       <div
@@ -127,7 +127,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
             )}
           </div>
 
-          <div className="rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-[#2C343E] dark:bg-[#1B2128]/80">
+          <div className="rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-shell-line dark:bg-shell-surface/80">
             <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-[#F1EFEA]">
               <Sparkles className="h-4 w-4 text-travel-accent" />
               内容构成
@@ -140,13 +140,13 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
                   <span className={`h-2.5 w-2.5 rounded-full ${item.color} flex-shrink-0`} />
-                  <span className="flex-1 text-sm text-travel-ink dark:text-[#E8E6E1]">{item.label}</span>
-                  <span className="tabular-nums text-sm text-travel-ink/60 dark:text-[#9BA3AE]">{item.value}</span>
+                  <span className="flex-1 text-sm text-travel-ink dark:text-shell-text">{item.label}</span>
+                  <span className="tabular-nums text-sm text-travel-ink/60 dark:text-shell-muted">{item.value}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-6 border-t border-travel-line/50 pt-4 dark:border-[#2C343E]">
-              <p className="text-xs text-travel-ink/50 dark:text-[#6E6A64]">
+            <div className="mt-6 border-t border-travel-line/50 pt-4 dark:border-shell-line">
+              <p className="text-xs text-travel-ink/50 dark:text-shell-faint">
                 最近更新：{recent ? formatDate(recent.date) : '—'}
               </p>
             </div>

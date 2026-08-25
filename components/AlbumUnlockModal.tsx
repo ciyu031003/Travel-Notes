@@ -57,7 +57,7 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-sm bg-white/95 dark:bg-[#1B2128]/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/80 dark:border-[#2C343E] overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+      <div className="w-full max-w-sm bg-white/95 dark:bg-shell-surface/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/80 dark:border-shell-line overflow-hidden animate-[fadeIn_0.2s_ease-out]">
         <style>{`
           @keyframes fadeIn {
             from { transform: scale(0.95); opacity: 0; }
@@ -79,7 +79,7 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
               <Heart className="w-8 h-8 text-white fill-white" />
             </div>
 
-            <h3 className="text-xl font-bold text-travel-inkStrong dark:text-[#E8E6E1]">
+            <h3 className="text-xl font-bold text-travel-inkStrong dark:text-shell-text">
               相册已上锁
             </h3>
             <p className="text-sm text-travel-sand/70 dark:text-travel-sandSoft/80 mt-2">
@@ -95,7 +95,7 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
                   type="text"
                   value={albumPassword}
                   onChange={(e) => setAlbumPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-white/60 border border-travel-line rounded-2xl text-travel-inkStrong dark:text-[#E8E6E1] placeholder-travel-sand/40 dark:bg-[#161B22]/80 dark:border-[#2C343E] dark:placeholder-travel-sandSoft/50 focus:outline-none focus:ring-2 focus:ring-travel-bloom/60 focus:border-transparent transition-all"
+                  className="w-full pl-11 pr-4 py-3 bg-white/60 border border-travel-line rounded-2xl text-travel-inkStrong dark:text-shell-text placeholder-travel-sand/40 dark:bg-shell-surface2/80 dark:border-shell-line dark:placeholder-travel-sandSoft/50 focus:outline-none focus:ring-2 focus:ring-travel-bloom/60 focus:border-transparent transition-all"
                   placeholder="如 2023-06-20"
                   required
                   autoFocus
