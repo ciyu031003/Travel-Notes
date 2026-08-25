@@ -53,6 +53,32 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
     onClose()
   }
 
+  // 多元场景：无纪念日用户直接进入相册（服务端无密码时放行）
+  const handleSkipUnlock = async () => {
+    setAlbumError('')
+    setAlbumVerifying(true)
+    try {
+      const res = await fetch('/api/verify-album-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skip: true }),
+      })
+      if (res.ok) {
+        setAlbumPassword('')
+        onClose()
+        onSuccess?.()
+        if (redirectToAlbum) router.push('/album')
+      } else {
+        const data = await res.json()
+        setAlbumError(data.error || '无法进入相册')
+      }
+    } catch {
+      setAlbumError('网络错误，请重试')
+    } finally {
+      setAlbumVerifying(false)
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -118,6 +144,14 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
               className="w-full py-3 bg-gradient-to-r from-travel-bloom to-travel-bloom text-white font-semibold rounded-2xl hover:from-travel-bloom hover:to-travel-accentSoft transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-travel-bloom/30"
             >
               {albumVerifying ? '验证中...' : '解锁相册'}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSkipUnlock()}
+              disabled={albumVerifying}
+              className="w-full py-2 text-sm text-travel-sand/70 hover:text-travel-accent transition-colors dark:text-travel-sandSoft/70"
+            >
+              没有纪念日？直接进入相册
             </button>
           </form>
         </div>

@@ -8,8 +8,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const inputDate = (body.date || '').trim()
+    const skipRequested = body.skip === true
 
-    if (!inputDate) {
+    if (!inputDate && !skipRequested) {
       return NextResponse.json({ success: false, error: '请输入日期' }, { status: 400 })
     }
 
@@ -39,7 +40,17 @@ export async function POST(request: Request) {
     }
 
     if (!expectedDate) {
-      return NextResponse.json({ success: false, error: '系统未设置纪念日' }, { status: 400 })
+      // 多元场景：未设置纪念日（如独旅用户）时，直接放行解锁，不强制密码
+      // 安全性不受影响：本来就无密码保护，放行只是跳过无意义的门槛
+      const token = await generateAlbumToken('none')
+      const response = NextResponse.json({ success: true, unlocked: true })
+      response.cookies.set(ALBUM_COOKIE, token, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        httpOnly: true,
+        sameSite: 'lax',
+      })
+      return response
     }
 
     const normalize = (s: string) => s.replace(/[./年]/g, '-').replace(/[月]/g, '-').replace(/日/g, '').trim()
