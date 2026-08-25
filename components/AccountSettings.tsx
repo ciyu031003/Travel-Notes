@@ -83,7 +83,7 @@ export default function AccountSettings() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-500 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-travel-accentSoft rounded-lg flex items-center justify-center">
           <Settings className="w-5 h-5 text-white" />
         </div>
         <div>

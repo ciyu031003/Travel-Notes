@@ -54,13 +54,13 @@ export default function TimelinePage() {
           <CalendarDays className="w-4 h-4" />
           <span>旅行时间线</span>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">走过的时光</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">按年份回顾每一段旅行与回忆</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-travel-inkStrong dark:text-[#F1EFEA]">走过的时光</h1>
+        <p className="text-travel-ink/70 dark:text-[#9BA3AE] mt-2">按年份回顾每一段旅行与回忆</p>
       </header>
 
       {years.length === 0 ? (
-        <div className="card p-12 text-center text-gray-500">
-          <Sparkles className="w-10 h-10 mx-auto mb-3 text-travel-sakura" />
+        <div className="card p-12 text-center text-travel-ink/60">
+          <Sparkles className="w-10 h-10 mx-auto mb-3 text-travel-accentSoft" />
           <p>时间线还是空的，从第一段旅行开始记录吧</p>
         </div>
       ) : (
@@ -69,8 +69,8 @@ export default function TimelinePage() {
             <section key={year} className="relative pl-8 md:pl-12 mb-10">
               <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-travel-sakura via-travel-sakura to-transparent dark:from-travel-accentStrong/60 dark:via-travel-accentStrong/30" />
               <h2 className="relative inline-flex items-center gap-2 mb-6">
-                <span className="absolute -left-8 md:-left-12 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-travel-accentSoft border-4 border-white dark:border-gray-900 shadow" />
-                <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{year}</span>
+                <span className="absolute -left-8 md:-left-12 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-travel-accentSoft border-4 border-white dark:border-[#0A0A0A] shadow" />
+                <span className="text-2xl font-bold text-travel-inkStrong dark:text-[#F1EFEA]">{year}</span>
               </h2>
 
               <div className="space-y-4">
@@ -107,24 +107,24 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-2">
-          <span className={'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ' + (isTravel ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-accentSoft' : 'bg-purple-50 dark:bg-purple-900/30 text-purple-500 dark:text-purple-300')}>
+          <span className={'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ' + (isTravel ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-accentSoft' : 'bg-travel-mist/50 dark:bg-travel-sky/20 text-travel-sky dark:text-travel-sky')}>
             {isTravel ? <MapPin className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
             {isTravel ? '旅行' : '回忆'}
           </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(entry.date)}</span>
-          {!isTravel && entry.travelTitle && <span className="text-xs text-gray-400 dark:text-gray-500">· {entry.travelTitle}</span>}
+          <span className="text-xs text-travel-ink/50 dark:text-[#9BA3AE]">{formatDate(entry.date)}</span>
+          {!isTravel && entry.travelTitle && <span className="text-xs text-travel-ink/50 dark:text-[#9BA3AE]">· {entry.travelTitle}</span>}
         </div>
-        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 group-hover:text-travel-accent transition-colors">{entry.title}</h3>
-        {entry.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{entry.description}</p>}
+        <h3 className="text-base font-semibold text-travel-inkStrong dark:text-[#F1EFEA] group-hover:text-travel-accent transition-colors">{entry.title}</h3>
+        {entry.description && <p className="text-sm text-travel-ink/70 dark:text-[#9BA3AE] mt-1 line-clamp-2">{entry.description}</p>}
         {(entry.location || entry.mood) && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {entry.location && (
-              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300">
+              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-[#9BA3AE]">
                 <MapPin className="w-3 h-3" />
                 {entry.location}
               </span>
             )}
-            {entry.mood && <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300">{entry.mood}</span>}
+            {entry.mood && <span className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-[#9BA3AE]">{entry.mood}</span>}
           </div>
         )}
       </div>

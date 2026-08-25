@@ -63,7 +63,7 @@ export default function AdminSocialPage() {
   ]
 
   return (
-    <AdminShell title="社交管理" accent="from-pink-400 via-rose-400 to-orange-300">
+    <AdminShell title="社交管理" accent="from-travel-accent to-travel-bloom">
       <div className="space-y-6">
         {loading ? (
           <div className="py-20 text-center text-gray-400"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>

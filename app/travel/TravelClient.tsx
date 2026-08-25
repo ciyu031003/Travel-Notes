@@ -153,8 +153,8 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
             离线模式：当前显示本地缓存的旅行记录，联网后自动同步
           </div>
         )}
-        {/* 地图区 - 可收起侧边栏布局 */}
-        <section className="relative h-[62vh] md:h-[calc(100vh-56px)] overflow-hidden">
+        {/* 地图区 - 可收起侧边栏布局（移动端 40vh，列表前置） */}
+        <section className="relative h-[40vh] md:h-[calc(100vh-56px)] overflow-hidden">
           {/* 地图容器 */}
           <div className="absolute inset-0 p-2 md:p-4">
             <div className="w-full h-full rounded-2xl border border-travel-dim/60 bg-travel-cream p-3 md:p-5 shadow-[0_10px_28px_rgba(90,102,112,0.08)]">

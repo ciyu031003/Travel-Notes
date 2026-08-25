@@ -855,10 +855,10 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
       </div>
 
       {calculatedDays !== null && (
-        <div className="bg-gradient-to-r from-pink-50 to-blue-50 dark:from-pink-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-pink-100 dark:border-pink-800">
+        <div className="bg-gradient-to-r from-travel-sakura to-travel-mist dark:from-travel-accent/20 dark:to-travel-sky/10 rounded-xl p-4 border border-travel-bloom/40 dark:border-travel-accent/30">
           <div className="flex items-center gap-2 mb-2">
-            <Heart className="w-4 h-4 text-pink-500" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">预览效果</span>
+            <Heart className="w-4 h-4 text-travel-accent" />
+            <span className="text-sm font-medium text-travel-ink dark:text-gray-300">预览效果</span>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
