@@ -7,9 +7,11 @@
 
 ## 1. 产品定位（必须内化）
 
-Travel-Notes = **一个以旅行摄影为核心、以时间与地点为线索、以情侣共同记忆为灵魂、带有轻社交能力的数字旅行记忆空间。**
+Travel-Notes = **一个以旅行摄影为核心、以时间与地点为线索、以个人旅行记忆为灵魂、带有轻社交能力的数字旅行记忆空间。**（品牌名「行迹」）
 
-英文定位：**A cinematic digital travel memory space for couples.**
+英文定位：**A cinematic digital travel memory space.**
+
+> 支持：独旅 / 情侣 / 朋友 / 家庭 / 多人共同旅行 / 长期旅行记录 / 旅行回忆与个人旅行档案。**UI 不得再表现为「情侣旅行 App」。**
 
 页面信息架构：
 
@@ -46,7 +48,7 @@ Travel-Notes = **一个以旅行摄影为核心、以时间与地点为线索、
 | 相册 | Memory | 保存视觉记忆 |
 | 碎碎念 | Emotion | 保存生活碎片 |
 | 地图 | Geography | 看见走过的地方 |
-| 情侣 Space | Couple Memory | 两个人共同的记忆 |
+| 情侣 Space | Space / 旅行空间 | 多人共同记忆 |
 | 旅行档案（/me） | Personal Archive | 看见自己的旅行人生 |
 | 旅行圈（/circle） | Travel Discovery | 看见别人的旅行记忆 |
 
@@ -103,17 +105,24 @@ Travel Memory / Romantic / Photography / Editorial / Digital Scrapbook / Minimal
 
 ### 4.2 色彩
 
-#### 暖色主站（首页 / 旅行 / 相册 / 碎碎念 / 地图 / Space）
+#### 暖色主站（首页 / 旅行 / 相册 / 碎碎念 / 地图 / 时间线）
 
-- 米白背景：`#FAFBF7`
-- 羊皮纸：`#FDF5ED`
-- 暖深棕标题：`#5A4A3A`
-- 正文灰：`#5A6670`
-- 玫瑰主强调：`#A64E61`
-- 玫瑰深：`#8B4A5A`
-- 樱花粉：`#F5DCE0` / `#E8B8C2`
-- 天空蓝：`#A8C8DC` / `#D6E8F0`
-- 暖棕：`#8B7355` / `#C2AF9A`
+> 主色为 `travel.*` 暖陶土语义色（Tailwind config 已定义，禁止再用旧玫瑰粉 `#A64E61`）。
+
+- 米白背景 `travel.cream`：`#FAF6EE`
+- 羊皮纸 `travel.parchment`：`#FDF5ED`
+- 暖深棕标题 `travel.inkStrong`：`#5A4A3A`
+- 正文暖墨灰 `travel.ink`：`#585450`
+- **主强调陶土 `travel.accent`：`#A85F3A`**（原玫瑰粉已废弃）
+- 陶土深 `travel.accentStrong`：`#8A4A2B`
+- 陶土浅 `travel.accentSoft`：`#C97E55`
+- 琥珀暖 `travel.bloom`：`#E4B478`
+- 暖米浅 `travel.sakura`：`#F3E4D5`
+- 天空蓝 `travel.sky`：`#A8C8DC` / 雾蓝 `travel.mist`：`#D6E8F0`
+- 暖棕 `travel.sand`：`#8B7355` / 暖棕浅 `travel.sandSoft`：`#C2AF9A`
+- 暖浅边框 `travel.line`：`#E8DDD4`
+
+> **语义色对齐**：`primary.*` 已重定义为暖陶土（`primary.500 = #A85F3A`，原天蓝已废弃）；`travel-success/warning/danger` 为语义绿/橙/红。admin 后台与前台共用同一 `primary/travel` 主色，不再有蓝色残留。
 
 #### 相册暗色（/album 专用，Stage 1 已建立）
 

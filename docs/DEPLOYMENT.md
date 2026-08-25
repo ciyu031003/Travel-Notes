@@ -1,329 +1,200 @@
-# 阿里云 ECS 部署指南
+# Travel-Notes 部署与运维手册
 
-本文档详细介绍如何将个人博客项目部署到阿里云 ECS 服务器。
+> 本文件由原 5 份运维文档（DEPLOYMENT / SERVER_SETUP / DOCKER_DEPLOY / BACKUP_AND_MONITORING / EMAIL_SETUP）合并精简而来。
+> 当前生产部署方式为 **Docker（MySQL 8.4 + Next.js）**，生产环境：IP `106.55.2.197`，域名 `travel-notes.yuanabd.cn`，应用监听内部 `3000` 端口，Nginx 反代。
 
-## 一、前期准备
+---
 
-### 1.1 服务器要求
-- 操作系统：CentOS 7+ / Ubuntu 20.04+
-- 配置建议：2核2G 起步（2G 内存需配合 Swap 分区）
-- 带宽：1M 以上
+## 一、架构与端口
 
-### 1.2 安全组配置
-在阿里云控制台开放以下端口：
-- **22**：SSH 远程连接
-- **80**：HTTP 访问
-- **443**：HTTPS 访问
-- **3000**：Next.js 开发调试（可选，生产环境建议只开80/443）
+| 组件 | 说明 |
+|---|---|
+| 应用容器 `travel-notes-app` | Next.js 15，监听容器内 `3000` |
+| 数据库容器 `travel-notes-db` | MySQL 8.4（utf8mb4），named volume `mysql-data` |
+| 上传文件 | named volume `uploads-data` → `/app/public/uploads` |
+| Nginx | 宿主机反代 `80/443` → `127.0.0.1:3000`；`8443` 端口 HTTPS 对外 |
 
-## 二、服务器环境配置
+数据持久化在两个命名卷：`mysql-data`（数据库）与 `uploads-data`（上传文件），**删除容器不丢数据，`docker compose down -v` 才会清空**。
 
-### 2.1 连接服务器
+---
 
-```bash
-ssh root@你的服务器公网IP
-```
-
-### 2.2 安装 Node.js（CentOS 示例）
+## 二、Docker 一键部署（推荐 · 当前方式）
 
 ```bash
-# 安装 NodeSource 仓库
-curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-
-# 安装 Node.js
-sudo yum install -y nodejs
-
-# 验证安装
-node -v
-npm -v
+# 首次/更新部署
+cd /home/ubuntu/travel-notes
+docker compose up -d --build app
 ```
 
-### 2.3 安装 PM2 进程管理器
+首次启动会自动：
+1. 从 `.env.example` 生成 `.env`（若不存在）
+2. 生成 `JWT_SECRET` / `SESSION_SECRET` / `MYSQL_ROOT_PASSWORD`
+3. 构建应用镜像（`npm ci` + `prisma generate` + `next build`）
+4. 启动 MySQL 8.4 + 应用，容器内自动 `prisma db push` 建表
+
+启动后访问 http://localhost:3000，前往 `/admin/setup` 初始化管理员。
+
+### 常用命令
 
 ```bash
-npm install -g pm2
-
-# 设置开机自启
-pm2 startup
+docker compose ps                      # 查看容器状态
+docker compose logs -f app             # 查看应用日志
+docker compose down                    # 停止（保留数据卷）
+docker compose down -v                 # 停止并清空数据卷（危险）
+docker compose up -d --build app       # 更新代码后重建
 ```
 
-### 2.4 安装 Nginx
+### 磁盘清理（重要）
+
+每次 `--build` 会累积 docker build cache，曾导致磁盘 100% 打满、部署失败。已配置 cron **每周日 04:30** 自动清理：
 
 ```bash
-# CentOS
-sudo yum install -y nginx
-
-# 启动 Nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
-
-# 验证
-sudo systemctl status nginx
+bash /home/ubuntu/travel-notes/scripts/disk-clean.sh   # 手动执行清理
+crontab -l                                              # 查看 cron
+# 清理内容：docker builder prune -af / image prune -af / apt clean / journalctl vacuum
 ```
 
-### 2.5 安装 Git（可选，用于拉取代码）
+---
 
-```bash
-sudo yum install -y git
-```
+## 三、环境变量
 
-## 三、部署项目
+| 变量 | 说明 | 默认 |
+|---|---|---|
+| `APP_PORT` | 宿主机映射端口 | 3000 |
+| `MYSQL_ROOT_PASSWORD` | MySQL root 密码 | 自动生成 |
+| `JWT_SECRET` / `SESSION_SECRET` | 会话签名密钥 | 自动生成 |
+| `ADMIN_USERNAME` | 初始化管理员用户名 | admin |
+| `ADMIN_PASSWORD_HASH` | 预置管理员密码哈希（可选） | 空 |
+| `COOKIE_SECURE` | Cookie Secure（https 设 true） | false |
+| `NEXT_PUBLIC_SITE_URL` | 站点 URL | http://localhost:3000 |
+| `NEXT_PUBLIC_SITE_TITLE` | 站点标题 | Travel-Notes |
+| `SMTP_*` + `MAIL_FROM` | 邮件发送（可选） | 空 |
+| `STORAGE_*` | S3 兼容对象存储（可选） | 空 |
 
-### 方式一：Git 拉取（推荐）
+---
 
-1. **将代码推送到 GitHub/Gitee**
+## 四、Nginx 反向代理与 HTTPS
 
-2. **服务器上克隆项目**
-```bash
-cd /www/wwwroot/
-git clone 你的仓库地址 blog
-cd blog
-```
+### 4.1 反向代理
 
-3. **安装依赖**
-```bash
-npm install --legacy-peer-deps
-```
-
-4. **构建项目**
-```bash
-npm run build
-```
-
-> **低内存服务器（2GB）**：构建前添加 Swap 分区，防止 OOM：
-> ```bash
-> sudo fallocate -l 2G /swapfile
-> sudo mkswap /swapfile
-> sudo swapon /swapfile
-> echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-> ```
-> 或限制 Node.js 内存：`NODE_OPTIONS=--max-old-space-size=512 npm run build`
-
-### 方式二：本地上传
-
-1. **本地构建**
-```bash
-npm run build
-```
-
-2. **打包上传**
-```bash
-# 本地打包（排除 node_modules）
-tar -czf blog.tar.gz --exclude=node_modules .
-
-# 上传到服务器
-scp blog.tar.gz root@服务器IP:/www/wwwroot/
-```
-
-3. **服务器解压安装**
-```bash
-cd /www/wwwroot/
-mkdir blog && tar -xzf blog.tar.gz -C blog
-cd blog
-npm install --legacy-peer-deps
-npx prisma generate
-```
-
-## 四、启动项目
-
-### 4.1 使用 PM2 启动
-
-```bash
-# 启动项目
-pm2 start npm --name "blog" -- start
-
-# 查看状态
-pm2 status
-
-# 查看日志
-pm2 logs blog
-
-# 保存进程列表（开机自启）
-pm2 save
-```
-
-### 4.2 PM2 常用命令
-
-```bash
-pm2 list              # 查看所有进程
-pm2 restart blog      # 重启
-pm2 stop blog         # 停止
-pm2 delete blog       # 删除
-pm2 logs blog         # 查看日志
-pm2 monit             # 监控面板
-```
-
-## 五、配置 Nginx 反向代理
-
-### 5.1 创建配置文件
-
-```bash
-sudo vi /etc/nginx/conf.d/blog.conf
-```
-
-写入以下内容：
+应用监听内部 `3000`，Nginx 反代（域名 `travel-notes.yuanabd.cn`，另有 `8443` 端口 HTTPS 直连）：
 
 ```nginx
 server {
-    listen 80;
-    server_name your-domain.com www.your-domain.com;
+    listen 443 ssl;
+    server_name travel-notes.yuanabd.cn;
+    # ssl_certificate / ssl_certificate_key 由 certbot 自动生成
 
-    # Gzip 压缩
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/javascript application/json;
-
-    # 静态资源缓存
-    location /_next/static/ {
-        proxy_pass http://localhost:3000;
-        proxy_cache_valid 200 7d;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-    }
-
-    # 主站反向代理
     location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_pass http://127.0.0.1:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
+    client_max_body_size 100m;   # 上传大小限制
 }
 ```
 
-### 5.2 检查并重载 Nginx
+> **注意**：中间件 CSRF 校验基于 `request.nextUrl.hostname`，走 IP 直连（`106.55.2.197:8443`）需确认 Nginx 正确透传 `Host` 头；历史已修复"反代透传 Host"以支持 IP 直连登录。
+
+### 4.2 HTTPS 证书（Let's Encrypt）
 
 ```bash
-# 检查配置语法
-sudo nginx -t
-
-# 重载配置
-sudo systemctl reload nginx
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d travel-notes.yuanabd.cn
+sudo certbot renew --dry-run          # 测试自动续期
+# crontab 已内置自动续期：0 0 1 * * certbot renew --quiet
 ```
 
-## 六、配置 HTTPS（推荐）
+---
 
-### 6.1 使用 Let's Encrypt 免费证书
+## 五、邮件服务（SMTP，可选）
+
+在 `.env` 配置齐全后自动启用密码找回/邮箱验证：
+
+| 变量 | 示例 |
+|---|---|
+| `SMTP_HOST` | smtp.qq.com |
+| `SMTP_PORT` | 465 |
+| `SMTP_USER` | 你的邮箱 |
+| `SMTP_PASS` | 授权码（非登录密码） |
+| `SMTP_SECURE` | true |
+| `MAIL_FROM` | 你的邮箱 |
+
+配置后重启应用生效。验证：走一遍 `/forgot-password` 发送验证码流程。
+
+---
+
+## 六、备份与恢复
+
+### 6.1 数据库备份（cron）
 
 ```bash
-# 安装 certbot（CentOS）
-sudo yum install -y certbot python3-certbot-nginx
-
-# 自动获取并配置证书
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+crontab -e
+# 每天凌晨 2:30 备份（SQL 输出到 backups/db/）
+30 2 * * * cd /home/ubuntu/travel-notes && ./scripts/migrate-database.sh backup >> logs/backup.log 2>&1
 ```
 
-### 6.2 证书自动续期
+保留策略：近 7 天每日、近 4 周每周、之后按月。
 
-Let's Encrypt 证书有效期90天，配置自动续期：
+### 6.2 媒体备份
+
+- 本地：`uploads-data` 卷（相册/视频）
+- 对象存储：桶自带版本控制/生命周期
 
 ```bash
-# 测试续期
-sudo certbot renew --dry-run
-
-# 添加定时任务
-sudo crontab -e
-# 添加：0 0 1 * * /usr/bin/certbot renew --quiet
+rclone sync public/uploads remote:trip-media --checksum   # 异地增量同步（示例）
 ```
 
-## 七、域名解析
+### 6.3 环境配置备份
 
-1. 登录阿里云控制台 → 云解析 DNS
-2. 添加两条解析记录：
-   - `@` → 服务器公网IP（A记录）
-   - `www` → 服务器公网IP（A记录）
-3. 等待生效（通常几分钟到几小时）
+`.env` 含密钥，用密码管理器保存或 `gpg -c .env` 加密异地保存，**不要明文提交 Git**。
 
-## 八、更新部署
-
-### 8.1 常规更新流程
+### 6.4 恢复演练（每季度一次）
 
 ```bash
-# 1. 拉取最新代码
-cd /www/wwwroot/blog
-git pull
-
-# 2. 安装新依赖（如有）
-npm install
-
-# 3. 重新构建
-npm run build
-
-# 4. 重启服务
-pm2 restart blog
+./scripts/migrate-database.sh restore backups/db/xxx.sql
+# 恢复媒体后 docker compose up -d，校验登录/列表/详情/相册/时间线正常
 ```
 
-### 8.2 自动化部署脚本
+---
 
-创建 `deploy.sh` 脚本：
+## 七、监控与告警
+
+- **进程**：`docker compose ps` 确认两容器 Up/healthy；可接 Uptime Kuma 每 1 分钟 GET `/` 与 `/api/health`
+- **健康检查**：`/api/health` 返回 `{"status":"ok","db":"ok","version":...}`（含 DB ping）
+- **日志**：`docker compose logs -f app`；错误写 `console.error`
+- **告警阈值**：磁盘 >80%、备份连续失败、探活连续失败、登录失败率异常升高（`AuditLog` LOGIN 动作增多）
+
+---
+
+## 八、常见问题排查
+
+| 现象 | 排查 |
+|---|---|
+| 502 Bad Gateway | `docker compose ps` 看容器是否 Up；`docker compose logs app` 看 Next.js 是否启动失败 |
+| 构建 OOM | 2C2G 服务器 `next build` 可能 OOM，加 Swap 或 `NODE_OPTIONS=--max-old-space-size=512` |
+| 磁盘打满 | 跑 `bash scripts/disk-clean.sh`；已配 cron 每周自动清 |
+| 登录 403 | 检查 Nginx 是否透传 `Host`/`X-Forwarded-Host`（middleware CSRF 依赖） |
+| 域名 443 连接重置 | 检查 Nginx/certbot 证书与 443 端口放行（与前端无关的历史观察项） |
+
+---
+
+## 九、更新部署（当前流程）
 
 ```bash
-#!/bin/bash
-cd /www/wwwroot/blog
+# 1) 本地打包源码（排除构建/数据目录）
+tar -czf /tmp/tn-deploy.tar.gz --exclude=node_modules --exclude=.next --exclude=data \
+  --exclude=content --exclude=.env --exclude=docs --exclude=android --exclude=www \
+  --exclude=mysql-data --exclude=.git --exclude=tsconfig.tsbuildinfo .
 
-echo ">>> 拉取最新代码..."
-git pull
+# 2) 上传 + 解包（保留 .env/data/content）
+scp /tmp/tn-deploy.tar.gz ubuntu@106.55.2.197:/tmp/
+ssh ubuntu@106.55.2.197 "cd /home/ubuntu/travel-notes && tar -xzf /tmp/tn-deploy.tar.gz -C ."
 
-echo ">>> 安装依赖..."
-npm install
-
-echo ">>> 构建项目..."
-npm run build
-
-echo ">>> 重启服务..."
-pm2 restart blog
-
-echo ">>> 部署完成！"
-pm2 status
+# 3) 重建应用容器（数据库不动）
+ssh ubuntu@106.55.2.197 "cd /home/ubuntu/travel-notes && docker compose up -d --build app"
 ```
 
-使用：
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-## 九、常见问题
-
-### 9.1 访问 502 Bad Gateway
-- 检查 Next.js 是否正常启动：`pm2 status`
-- 检查端口是否正确：默认3000
-- 查看错误日志：`pm2 logs blog`
-
-### 9.2 内存不足
-- 增加 Swap 分区
-- 升级服务器配置
-- 使用 `NODE_OPTIONS=--max-old-space-size=512` 限制内存
-
-### 9.3 构建失败
-- 确保 Node.js 版本 >= 18
-- 删除 node_modules 重新安装
-- 检查磁盘空间：`df -h`
-
-### 9.4 图片加载慢
-- 使用阿里云 OSS 存储图片
-- 配置 CDN 加速
-- 图片压缩优化
-
-## 十、性能优化建议
-
-1. **开启 Brotli 压缩**（Nginx 额外模块）
-2. **配置 CDN 加速**静态资源
-3. **使用 Redis 缓存**热门页面（替换 MemoryCacheService）
-4. **图片懒加载**和 WebP 格式
-5. **数据库优化**（索引已优化，可按需添加）
-
-## 十一、环境变量说明
-
-| 变量名 | 说明 | 示例 |
-|--------|------|------|
-| `DATABASE_URL` | MySQL 数据库连接字符串 | `mysql://user:pass@localhost:3306/Travel_And_Study` |
-| `ADMIN_USERNAME` | 管理员用户名 | `yuanabd` |
-| `ADMIN_PASSWORD_HASH` | 管理员密码哈希（bcrypt） | `$2a$10$...` |
-| `JWT_SECRET` | JWT Token 签名密钥 | `openssl rand -hex 32` 生成 |
-| `SESSION_SECRET` | 备用密钥（兼容旧配置） | 同上 |
-| `COOKIE_SECURE` | Cookie 安全标志（生产设为 true） | `false` / `true` |
+> 服务器源码目录非 git 仓库，用「打包 → scp → 解包覆盖」方式同步，**务必排除 `.env`/`data`/`content` 以免覆盖生产数据**。
