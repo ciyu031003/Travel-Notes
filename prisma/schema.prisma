@@ -315,16 +315,26 @@ enum ReportStatus {
 }
 
 
+/// 空间类型（多元场景：情侣/家庭/朋友/个人/其他）
+enum SpaceType {
+  COUPLE
+  FAMILY
+  FRIENDS
+  SOLO
+  OTHER
+}
+
 /// 情侣共同生活的数字空间（核心业务模型）
 model Space {
-  id           Int      @id @default(autoincrement())
-  name         String   @db.VarChar(200)
-  slug         String   @unique @db.VarChar(200)
-  description  String?  @db.Text
-  coverMediaId Int?     @unique
-  coverMedia   Media?   @relation("SpaceCover", fields: [coverMediaId], references: [id])
-  createdAt    DateTime @default(now()) @db.Timestamp(3)
-  updatedAt    DateTime @updatedAt @db.Timestamp(3)
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(200)
+  slug         String    @unique @db.VarChar(200)
+  description  String?   @db.Text
+  coverMediaId Int?      @unique
+  spaceType    SpaceType @default(COUPLE)
+  coverMedia   Media?    @relation("SpaceCover", fields: [coverMediaId], references: [id])
+  createdAt    DateTime  @default(now()) @db.Timestamp(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamp(3)
 
   members       SpaceMember[]
   invites       SpaceInvite[]

@@ -1,5 +1,7 @@
 import { getPostService, getMomentService, getLikeService } from '../container'
 import { findProvinceByLocation } from '../province-map'
+import { prisma } from '../db'
+import { scopedWhere } from '../visibility'
 
 export interface DashboardStats {
   provinceStats: Array<{ name: string; count: number }>
@@ -9,6 +11,8 @@ export interface DashboardStats {
   momentCount: number
   totalLikes: number
   travelPosts: any[]
+  /** 多元场景：旅行类型分布（独旅/情侣/家庭/朋友/闺蜜/结伴） */
+  travelTypeStats: Array<{ type: string; count: number }>
 }
 
 /**
@@ -49,6 +53,22 @@ export async function getDashboardStats(userId?: number | null): Promise<Dashboa
     totalPhotos += (post.images || []).length
   }
 
+  // 多元场景：从 Travel 模型统计旅行类型分布（新模型才有 travelType）
+  let travelTypeStats: Array<{ type: string; count: number }> = []
+  try {
+    const grouped = await prisma.travel.groupBy({
+      by: ['travelType'],
+      where: { ...scopedWhere(userId, 'ownerId') } as any,
+      _count: { _all: true },
+    })
+    travelTypeStats = (grouped as any[])
+      .filter((g) => g.travelType)
+      .map((g) => ({ type: g.travelType, count: g._count._all }))
+      .sort((a, b) => b.count - a.count)
+  } catch (e) {
+    console.error('[Dashboard] 旅行类型统计失败，降级为空:', e)
+  }
+
   return {
     provinceStats: Array.from(provinceCounts.values()).sort((a, b) => b.count - a.count),
     provincesVisitedCount: provinceCounts.size,
@@ -57,5 +77,6 @@ export async function getDashboardStats(userId?: number | null): Promise<Dashboa
     momentCount,
     totalLikes,
     travelPosts,
+    travelTypeStats,
   }
 }

@@ -16,6 +16,7 @@ export async function GET(_request: NextRequest) {
       momentCount: stats.momentCount,
       totalLikes: stats.totalLikes,
       travelPosts: stats.travelPosts,
+      travelTypeStats: stats.travelTypeStats,
     })
   } catch (error) {
     console.error('[GET /api/dashboard]', error)

@@ -12,6 +12,10 @@ import {
 import ChinaMap from '@/components/ChinaMap'
 import { formatDate } from '@/lib/utils'
 
+const TRAVEL_TYPE_LABELS: Record<string, string> = {
+  ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',
+}
+
 export interface DashboardData {
   provinceStats: Array<{ name: string; count: number }>
   provincesVisitedCount: number
@@ -20,6 +24,7 @@ export interface DashboardData {
   momentCount: number
   totalLikes: number
   travelPosts: never[]
+  travelTypeStats?: Array<{ type: string; count: number }>
 }
 
 /** 旅行记忆空间 · 核心大数（护照式，弱化"数据后台"感） */
@@ -145,6 +150,31 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                 </div>
               ))}
             </div>
+            {data.travelTypeStats && data.travelTypeStats.length > 0 && (() => {
+              const stats = data.travelTypeStats as Array<{ type: string; count: number }>
+              const max = Math.max(1, stats[0]?.count ?? 1)
+              return (
+                <div className="mt-5 border-t border-travel-line/50 pt-4 dark:border-shell-line">
+                  <p className="mb-2.5 text-xs font-medium text-travel-ink/60 dark:text-shell-muted">旅行类型</p>
+                  <div className="space-y-2">
+                    {stats.slice(0, 5).map((s) => (
+                      <div key={s.type} className="flex items-center gap-2">
+                        <span className="w-14 shrink-0 text-xs text-travel-ink/70 dark:text-shell-muted">
+                          {TRAVEL_TYPE_LABELS[s.type] || s.type}
+                        </span>
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-travel-sakura/40 dark:bg-white/5">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-travel-bloom to-travel-accent"
+                            style={{ width: `${Math.min(100, (s.count / max) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="w-6 shrink-0 text-right text-xs tabular-nums text-travel-ink/60 dark:text-shell-muted">{s.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
             <div className="mt-6 border-t border-travel-line/50 pt-4 dark:border-shell-line">
               <p className="text-xs text-travel-ink/50 dark:text-shell-faint">
                 最近更新：{recent ? formatDate(recent.date) : '—'}

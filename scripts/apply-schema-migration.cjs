@@ -163,6 +163,9 @@ async function main() {
   await addColumn(conn, 'Travel', 'companions', 'companions JSON NULL AFTER travelType')
   await addFk(conn, 'Travel', 'Travel_ownerId_fkey', 'FOREIGN KEY (ownerId) REFERENCES User(id) ON DELETE SET NULL ON UPDATE CASCADE')
 
+  // 多元场景：Space 空间类型（情侣/家庭/朋友/个人/其他）
+  await addColumn(conn, 'Space', 'spaceType', "spaceType ENUM('COUPLE','FAMILY','FRIENDS','SOLO','OTHER') NOT NULL DEFAULT 'COUPLE' AFTER coverMediaId")
+
   // Album
   await addColumn(conn, 'Album', 'userId', 'userId INT NULL AFTER spaceId')
   await addColumn(conn, 'Album', 'isPublic', "isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER visibility")
