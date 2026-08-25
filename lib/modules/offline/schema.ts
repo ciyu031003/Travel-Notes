@@ -5,7 +5,7 @@
  * 社交互动表（comment/like/favorite）按 D-4 决策后置，暂不建表。
  */
 
-export const OFFLINE_SCHEMA_VERSION = 4
+export const OFFLINE_SCHEMA_VERSION = 5
 
 export const CREATE_TABLES_SQL: string[] = [
   // 元信息（版本 / 游标）
@@ -22,7 +22,8 @@ export const CREATE_TABLES_SQL: string[] = [
   "CREATE TABLE IF NOT EXISTS travel (" +
     "id TEXT PRIMARY KEY, remoteId INTEGER, title TEXT, slug TEXT, description TEXT, " +
     "location TEXT, cover TEXT, startDate INTEGER, endDate INTEGER, coverMediaId INTEGER, " +
-    "status TEXT, visibility TEXT, isPublic INTEGER, spaceId INTEGER, ownerId INTEGER, " +
+    "status TEXT, visibility TEXT, travelType TEXT, companions TEXT, isPublic INTEGER, " +
+    "spaceId INTEGER, ownerId INTEGER, " +
     "updatedAt INTEGER NOT NULL, syncStatus TEXT NOT NULL DEFAULT 'SYNCED', deleted INTEGER NOT NULL DEFAULT 0)",
 
   // 旅行天

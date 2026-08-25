@@ -38,6 +38,11 @@ interface MeProfile {
     likeCount: number
     provinceCount: number
   }
+  companionStats?: Array<{
+    name: string
+    relation: string | null
+    count: number
+  }>
   recentTravel: RecentTravel | null
   capabilities: {
     isOwner: boolean
@@ -276,6 +281,25 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 </div>
               ))}
             </div>
+
+            {/* 同行者聚合：和 X 去过 N 次（来自 Travel.companions） */}
+            {profile.companionStats && profile.companionStats.length > 0 && (
+              <div className="mt-5">
+                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--social-faint)]">和 TA 们去过</p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {profile.companionStats.map((c) => (
+                    <span
+                      key={c.name}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs text-[var(--social-text)] ring-1 ring-[var(--social-line)]"
+                    >
+                      <span className="max-w-[8rem] truncate">{c.name}</span>
+                      {c.relation && <span className="text-[var(--social-faint)]">· {c.relation}</span>}
+                      <span className="tabular-nums text-[var(--social-accent)]">×{c.count}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

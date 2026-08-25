@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
-import { Calendar, MapPin } from 'lucide-react'
+import { Calendar, MapPin, Users } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
 import TravelTimeline from '@/components/travel/TravelTimeline'
@@ -121,6 +121,25 @@ export default function TravelDetailShell() {
               <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${TRAVEL_TYPE_STYLES[travel.travelType] || TRAVEL_TYPE_STYLES.OTHER}`}>
                 {TRAVEL_TYPE_LABELS[travel.travelType] || travel.travelType}
               </span>
+            )}
+            {Array.isArray(travel?.companions) && (travel.companions as any[]).length > 0 && (
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                {(travel.companions as any[]).map((c, i) => {
+                  const name = String(c?.name || '').trim()
+                  if (!name) return null
+                  const relation = String(c?.relation || '').trim()
+                  return (
+                    <span
+                      key={`${name}-${i}`}
+                      className="inline-flex items-center gap-1 rounded-full border border-travel-bloom/40 bg-travel-sakura/30 px-3 py-1 text-xs text-travel-ink"
+                    >
+                      <Users className="h-3 w-3 text-travel-accentSoft" />
+                      {name}
+                      {relation ? <span className="text-travel-ink/50">· {relation}</span> : null}
+                    </span>
+                  )
+                })}
+              </div>
             )}
             <div className="flex items-center justify-center gap-4 text-travel-ink/60 text-sm mt-2">
               {detailDate && (

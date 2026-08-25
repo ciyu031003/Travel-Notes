@@ -63,6 +63,13 @@ export interface RecentTravelSummary {
   photoCount: number
 }
 
+/** 同行者聚合：「和 X 去过 N 次」 */
+export interface CompanionStat {
+  name: string
+  relation: string | null
+  count: number
+}
+
 export interface MeProfile {
   id: number
   username: string
@@ -73,6 +80,8 @@ export interface MeProfile {
   createdAt: string | null
   summary: TravelProfileSummary
   recentTravel: RecentTravelSummary | null
+  /** 同行者聚合（从 Travel.companions 汇总，按姓名去重计数，最多 8 人） */
+  companionStats: CompanionStat[]
   capabilities: UserCapabilities
 }
 
@@ -155,6 +164,42 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
       }
     : null
 
+  // 同行者聚合：我的旅行（ownerId 归属，或所在 ACTIVE 空间的旅行）里 companions 按姓名计数
+  const memberSpaces = await prisma.spaceMember.findMany({
+    where: { userId, status: 'ACTIVE' },
+    select: { spaceId: true },
+  })
+  const spaceIds = memberSpaces.map((s) => s.spaceId)
+  const companionTravels = await prisma.travel.findMany({
+    where: {
+      OR: [
+        { ownerId: userId },
+        ...(spaceIds.length > 0 ? [{ spaceId: { in: spaceIds } }] : []),
+      ],
+    },
+    select: { id: true, companions: true },
+  })
+  const seenTravelIds = new Set<number>()
+  const byName = new Map<string, CompanionStat>()
+  for (const t of companionTravels) {
+    if (seenTravelIds.has(t.id)) continue
+    seenTravelIds.add(t.id)
+    if (!Array.isArray(t.companions)) continue
+    for (const c of t.companions as Array<{ name?: unknown; relation?: unknown }>) {
+      const name = String(c?.name || '').trim()
+      if (!name) continue
+      const relation = String(c?.relation || '').trim() || null
+      const cur = byName.get(name)
+      if (cur) {
+        cur.count += 1
+        if (!cur.relation && relation) cur.relation = relation
+      } else {
+        byName.set(name, { name, relation, count: 1 })
+      }
+    }
+  }
+  const companionStats = Array.from(byName.values()).sort((a, b) => b.count - a.count).slice(0, 8)
+
   return {
     id: user.id,
     username: user.username,
@@ -174,6 +219,7 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
       provinceCount,
     },
     recentTravel,
+    companionStats,
     capabilities,
   }
 }

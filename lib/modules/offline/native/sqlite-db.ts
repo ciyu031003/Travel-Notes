@@ -15,6 +15,9 @@ const DB_VERSION = 1
 const COLUMN_UPGRADES_SQL: string[] = [
   // v3（M1-A1）：album.travelId（相册绑定旅行）
   "ALTER TABLE album ADD COLUMN travelId INTEGER",
+  // v5（同行者录入）：travel.travelType / travel.companions（多元旅行场景，兼容旧库）
+  "ALTER TABLE travel ADD COLUMN travelType TEXT",
+  "ALTER TABLE travel ADD COLUMN companions TEXT",
 ]
 
 let db: SQLiteDBConnection | null = null
