@@ -49,7 +49,7 @@ export async function getTimeline(userId?: number | null): Promise<TimelineYear[
       })
       .catch(() => []),
     prisma.travel.findMany({
-      where: { ...scopedWhere(userId, 'ownerId'), visibility: { in: ['COUPLE', 'PUBLIC'] } } as any,
+      where: { ...scopedWhere(userId, 'ownerId'), visibility: { in: ['SPACE', 'PUBLIC'] } } as any,
       select: { id: true, title: true, slug: true, startDate: true, description: true, cover: true },
       orderBy: { startDate: 'asc' },
     }),

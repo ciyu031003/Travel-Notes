@@ -65,7 +65,7 @@ export async function canReadMemory(username: string, memoryId: number): Promise
   if (memory.createdBy === username) return true
   try {
     await requireSpaceMember(username, memory.spaceId)
-    return memory.visibility === 'COUPLE'
+    return memory.visibility === 'SPACE'
   } catch {
     return false
   }

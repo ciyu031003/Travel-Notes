@@ -47,7 +47,7 @@ export async function createMemory(input: CreateMemoryInput): Promise<CreateMemo
           content: input.content || null,
           happenedAt: input.happenedAt ? new Date(input.happenedAt).getTime() : null,
           mood: input.mood || null,
-          visibility: 'COUPLE',
+          visibility: 'SPACE',
           createdBy: null,
           createdById: null,
         },

@@ -42,7 +42,7 @@ export async function createAlbum(input: CreateAlbumInput): Promise<CreateAlbumR
           date: input.date ? new Date(input.date).getTime() : null,
           coverMediaId: null,
           locationId: null,
-          visibility: 'COUPLE',
+          visibility: 'SPACE',
           isPublic: input.isPublic ? 1 : 0,
           spaceId: null,
           userId: null,

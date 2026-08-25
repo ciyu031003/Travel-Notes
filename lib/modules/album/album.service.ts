@@ -80,7 +80,7 @@ function mapAlbum(a: any): AlbumItem {
     date: a.date ? (a.date instanceof Date ? a.date.toISOString() : String(a.date)) : null,
     createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt),
     updatedAt: a.updatedAt instanceof Date ? a.updatedAt.toISOString() : String(a.updatedAt),
-    visibility: a.visibility ?? 'COUPLE',
+    visibility: a.visibility ?? 'SPACE',
     spaceId: a.spaceId ?? null,
     userId: a.userId ?? null,
     coverMediaId: a.coverMediaId ?? null,
@@ -210,7 +210,7 @@ export async function addMediaToAlbum(albumId: number, files: UploadFile[], user
         size: stored.size,
         width: safe.width,
         height: safe.height,
-        visibility: 'COUPLE',
+        visibility: 'SPACE',
         userId: userId ?? null,
       },
     })

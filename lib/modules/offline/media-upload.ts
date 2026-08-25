@@ -156,7 +156,7 @@ export async function addPhotoToAlbum(input: AddPhotoInput): Promise<AddPhotoRes
       'INSERT INTO media (id, remoteId, localPath, remoteUrl, sha256, mimeType, size, width, height, type, visibility, syncStatus, updatedAt, deleted) ' +
         'VALUES (?, NULL, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0) ' +
         'ON CONFLICT(id) DO UPDATE SET localPath = excluded.localPath, sha256 = excluded.sha256, syncStatus = ?, updatedAt = excluded.updatedAt',
-      [photo.id, localPath, hash, photo.mimeType, photo.size, photo.width || null, photo.height || null, 'IMAGE', 'COUPLE', 'PENDING_UPLOAD', Date.now(), 'PENDING_UPLOAD'],
+      [photo.id, localPath, hash, photo.mimeType, photo.size, photo.width || null, photo.height || null, 'IMAGE', 'SPACE', 'PENDING_UPLOAD', Date.now(), 'PENDING_UPLOAD'],
     )
 
     const queue = new SyncQueue(getSyncQueueStorage())

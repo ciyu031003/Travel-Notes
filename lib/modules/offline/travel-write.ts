@@ -46,7 +46,7 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
           startDate: input.startDate ? new Date(input.startDate).getTime() : null,
           endDate: input.endDate ? new Date(input.endDate).getTime() : null,
           status: 'PLANNED',
-          visibility: 'COUPLE',
+          visibility: 'SPACE',
           isPublic: input.isPublic ? 1 : 0,
           spaceId: null,
           ownerId: null,

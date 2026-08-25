@@ -130,6 +130,19 @@ async function main() {
   const conn = await getConn()
   console.log('== 1/2 增量 schema 迁移 ==')
 
+  // 多元场景：Visibility.COUPLE → SPACE（幂等数据迁移，供 db push 枚举变更前清理旧值）
+  // 涉及表：Travel / Memory / Media / Album / TravelPost 等含 visibility 的表
+  const visibilityTables = ['Travel', 'Memory', 'Media', 'Album', 'TravelPost', 'TimelineItem', 'Moment', 'PhotoMessage', 'Anniversary']
+  for (const t of visibilityTables) {
+    try {
+      const [res] = await conn.query(`UPDATE \`${t}\` SET visibility = 'SPACE' WHERE visibility = 'COUPLE'`)
+      if (res.affectedRows > 0) console.log(`  [visibility] ${t}: COUPLE→SPACE ${res.affectedRows} 行`)
+    } catch (e) {
+      // 表不存在或列不存在时跳过（幂等）
+      console.log(`  [visibility] ${t} 跳过（${e.code || e.message}）`)
+    }
+  }
+
   // User（个人主页：昵称/头像/8 位账号 ID）
   await addColumn(conn, 'User', 'nickname', 'nickname VARCHAR(50) NULL AFTER anniversaryStart')
   await addColumn(conn, 'User', 'avatarUrl', 'avatarUrl VARCHAR(500) NULL AFTER nickname')
@@ -145,6 +158,9 @@ async function main() {
   // Travel
   await addColumn(conn, 'Travel', 'ownerId', 'ownerId INT NULL AFTER spaceId')
   await addColumn(conn, 'Travel', 'isPublic', "isPublic TINYINT(1) NOT NULL DEFAULT 0 AFTER visibility")
+  // 多元场景：旅行类型 + 同行者
+  await addColumn(conn, 'Travel', 'travelType', "travelType ENUM('ALONE','COUPLE','FAMILY','FRIENDS','BFF','GROUP','OTHER') NOT NULL DEFAULT 'ALONE' AFTER isPublic")
+  await addColumn(conn, 'Travel', 'companions', 'companions JSON NULL AFTER travelType')
   await addFk(conn, 'Travel', 'Travel_ownerId_fkey', 'FOREIGN KEY (ownerId) REFERENCES User(id) ON DELETE SET NULL ON UPDATE CASCADE')
 
   // Album
@@ -192,7 +208,7 @@ async function main() {
         travelId INT NULL,
         postId INT NULL,
         authorId INT NOT NULL,
-        visibility ENUM('PRIVATE','COUPLE','PUBLIC') NOT NULL DEFAULT 'PUBLIC',
+        visibility ENUM('PRIVATE','SPACE','PUBLIC') NOT NULL DEFAULT 'PUBLIC',
         title VARCHAR(255) NOT NULL,
         summary TEXT NULL,
         coverMediaId INT NULL,

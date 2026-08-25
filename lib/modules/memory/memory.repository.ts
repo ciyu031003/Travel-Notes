@@ -3,7 +3,7 @@
  */
 import { prisma } from '../../db'
 
-export type MemoryVisibility = 'PRIVATE' | 'COUPLE' | 'PUBLIC'
+export type MemoryVisibility = 'PRIVATE' | 'SPACE' | 'PUBLIC'
 
 export interface MemoryRecord {
   id: number
@@ -66,7 +66,7 @@ export class PrismaMemoryRepository {
         happenedAt: input.happenedAt ? new Date(input.happenedAt) : null,
         locationId: input.locationId ?? null,
         mood: input.mood ?? null,
-        visibility: (input.visibility ?? 'COUPLE') as any,
+        visibility: (input.visibility ?? 'SPACE') as any,
         createdBy: input.createdBy,
       },
     })

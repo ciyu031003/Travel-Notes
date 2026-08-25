@@ -45,7 +45,7 @@ async function migrate() {
       const [existing] = await connection.query('SELECT id FROM Media WHERE storageKey = ?', [storageKey]);
       if (existing.length === 0) {
         await connection.query(
-          'INSERT INTO Media (spaceId, type, storageKey, mimeType, size, visibility, createdAt) VALUES (NULL, \'IMAGE\', ?, ?, ?, \'COUPLE\', NOW())',
+          'INSERT INTO Media (spaceId, type, storageKey, mimeType, size, visibility, createdAt) VALUES (NULL, \'IMAGE\', ?, ?, ?, \'SPACE\', NOW())',
           [storageKey, row.mimeType || 'image/jpeg', Buffer.byteLength(row.data)]
         );
         migrated += 1;

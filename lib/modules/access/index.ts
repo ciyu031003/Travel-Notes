@@ -6,7 +6,7 @@
  *
  * 资源×可见性矩阵（本模块即矩阵的实现）：
  *
- * | 资源         | PRIVATE        | COUPLE（空间）   | PUBLIC（社交公开）      |
+ * | 资源         | PRIVATE        | SPACE（空间）   | PUBLIC（社交公开）      |
  * |-------------|----------------|------------------|------------------------|
  * | Travel      | 仅 owner       | 空间 ACTIVE 成员 | 所有登录用户（isPublishedToCircle） |
  * | Album       | 仅 owner       | 空间 ACTIVE 成员 | 所有登录用户            |
@@ -17,7 +17,7 @@
  * 读取规则（canViewResource）：
  * 1) PUBLIC / isPublic=true → 任意登录用户可读
  * 2) PRIVATE → 仅 owner（userId/ownerId/createdById 命中）
- * 3) COUPLE → owner 或 空间（spaceId）ACTIVE 成员
+ * 3) SPACE → owner 或 空间（spaceId）ACTIVE 成员
  */
 import { prisma } from '@/lib/db'
 
@@ -63,7 +63,7 @@ export async function canViewResource(
 ): Promise<boolean> {
   if (isPubliclyVisible(snapshot)) return true
   if (isOwner(snapshot, userId)) return true
-  if (snapshot.visibility === 'COUPLE') {
+  if (snapshot.visibility === 'SPACE') {
     return isSpaceActiveMember(snapshot.spaceId, userId)
   }
   return false

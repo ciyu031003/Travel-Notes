@@ -1,6 +1,6 @@
 /**
  * Stage 2 公开权限模型：
- * - Travel.visibility: PRIVATE（仅自己）/ COUPLE（我的 Space）/ PUBLIC（公开到旅行圈）
+ * - Travel.visibility: PRIVATE（仅自己）/ SPACE（我的 Space）/ PUBLIC（公开到旅行圈）
  * - 与旧字段 isPublic 兼容（isPublic=true 视为 PUBLIC）。
  * - 服务端读路径统一经过这里，杜绝「知道 ID 就能读到私人数据」的 IDOR。
  *
@@ -10,7 +10,7 @@
 import { prisma } from '../../db'
 import { canViewResource } from '../access'
 
-export type TravelVisibility = 'PRIVATE' | 'COUPLE' | 'PUBLIC'
+export type TravelVisibility = 'PRIVATE' | 'SPACE' | 'PUBLIC'
 
 /** 判断一次旅行当前是否应当出现在旅行圈（PUBLIC 或旧 isPublic 标记） */
 export function isPublishedToCircle(travel: {

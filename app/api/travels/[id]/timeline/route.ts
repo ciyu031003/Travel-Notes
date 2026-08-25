@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 /**
  * v3.1 M1-A4：旅行按天叙事时间线。
  * GET /api/travels/[id]/timeline → { id, title, days: [{ date, title, summary, itinerary, memories, photos }] }
- * 权限（v3.1 M2-B1）：统一 access 中间层判读——owner / COUPLE 空间成员 / PUBLIC 可读（修复原 scopedWhere 只认 ownerId 的缺口）。
+ * 权限（v3.1 M2-B1）：统一 access 中间层判读——owner / SPACE 空间成员 / PUBLIC 可读（修复原 scopedWhere 只认 ownerId 的缺口）。
  */
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

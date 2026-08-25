@@ -244,8 +244,19 @@ enum TravelStatus {
 
 enum Visibility {
   PRIVATE
-  COUPLE
+  SPACE
   PUBLIC
+}
+
+/// 旅行类型（多元场景：独旅/情侣/家庭/朋友/闺蜜/结伴）
+enum TravelType {
+  ALONE
+  COUPLE
+  FAMILY
+  FRIENDS
+  BFF
+  GROUP
+  OTHER
 }
 
 enum MediaType {
@@ -378,7 +389,11 @@ model Travel {
   coverMediaId Int?
   coverMedia   Media?       @relation("TravelCover", fields: [coverMediaId], references: [id])
   status       TravelStatus @default(PLANNED)
-  visibility   Visibility   @default(COUPLE)
+  visibility   Visibility   @default(SPACE)
+  /// 旅行类型（多元场景：独旅/情侣/家庭/朋友/闺蜜/结伴）
+  travelType   TravelType   @default(ALONE)
+  /// 同行者列表 JSON：[{ "name": string, "relation": string, "userId"?: number }]
+  companions   Json?
   /// 是否公开（公开后所有登录用户可见）
   isPublic     Boolean      @default(false)
   createdAt    DateTime     @default(now()) @db.Timestamp(3)
@@ -444,7 +459,7 @@ model Memory {
   happenedAt  DateTime?  @db.Timestamp(3)
   locationId  Int?
   mood        String?    @db.VarChar(50)
-  visibility  Visibility @default(COUPLE)
+  visibility  Visibility @default(SPACE)
   createdBy   String     @db.VarChar(255)
   createdById Int?
   createdAt   DateTime   @default(now()) @db.Timestamp(3)
@@ -493,7 +508,7 @@ model Media {
   takenAt    DateTime?  @db.Timestamp(3)
   latitude   Float?
   longitude  Float?
-  visibility Visibility @default(COUPLE)
+  visibility Visibility @default(SPACE)
   /// 是否公开（公开后所有登录用户可见）
   isPublic   Boolean    @default(false)
   createdAt  DateTime   @default(now()) @db.Timestamp(3)
@@ -543,7 +558,7 @@ model Album {
   /// 关联旅行（v3.1：一个相册 = 一次旅行/一座城市，收敛双相册模型）
   travelId     Int?
   travel       Travel?    @relation("AlbumTravel", fields: [travelId], references: [id], onDelete: SetNull)
-  visibility   Visibility @default(COUPLE)
+  visibility   Visibility @default(SPACE)
   /// 是否公开（公开后所有登录用户可见）
   isPublic     Boolean    @default(false)
   createdAt    DateTime   @default(now()) @db.Timestamp(3)

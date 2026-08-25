@@ -11,7 +11,7 @@ import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.servi
 const SLUG_RE = /^[a-z0-9-]{2,80}$/
 const TITLE_MAX = 255
 const STATUSES: TravelStatus[] = ['PLANNED', 'ONGOING', 'COMPLETED']
-const VISIBILITIES: TravelVisibility[] = ['PRIVATE', 'COUPLE', 'PUBLIC']
+const VISIBILITIES: TravelVisibility[] = ['PRIVATE', 'SPACE', 'PUBLIC']
 
 export interface CreateTravelInput {
   spaceId: number
@@ -48,7 +48,7 @@ export class TravelService {
       startDate: input.startDate ?? null,
       endDate: input.endDate ?? null,
       status: input.status ?? 'PLANNED',
-      visibility: input.visibility ?? 'COUPLE',
+      visibility: input.visibility ?? 'SPACE',
     })
     await writeAuditLog({
       username,

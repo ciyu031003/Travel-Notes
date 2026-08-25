@@ -4,7 +4,7 @@
 import { prisma } from '../../db'
 
 export type TravelStatus = 'PLANNED' | 'ONGOING' | 'COMPLETED'
-export type TravelVisibility = 'PRIVATE' | 'COUPLE' | 'PUBLIC'
+export type TravelVisibility = 'PRIVATE' | 'SPACE' | 'PUBLIC'
 
 export interface TravelRecord {
   id: number
@@ -62,7 +62,7 @@ export class PrismaTravelRepository {
         startDate: input.startDate ? new Date(input.startDate) : null,
         endDate: input.endDate ? new Date(input.endDate) : null,
         status: (input.status ?? 'PLANNED') as any,
-        visibility: (input.visibility ?? 'COUPLE') as any,
+        visibility: (input.visibility ?? 'SPACE') as any,
       },
     })
     return t.id

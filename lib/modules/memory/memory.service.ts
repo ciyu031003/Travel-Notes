@@ -8,7 +8,7 @@ import { prisma } from '../../db'
 
 const TITLE_MAX = 255
 const MOOD_MAX = 50
-const VISIBILITIES: MemoryVisibility[] = ['PRIVATE', 'COUPLE', 'PUBLIC']
+const VISIBILITIES: MemoryVisibility[] = ['PRIVATE', 'SPACE', 'PUBLIC']
 
 export interface CreateMemoryInput {
   spaceId: number
@@ -44,7 +44,7 @@ export class MemoryService {
       happenedAt: input.happenedAt ? new Date(input.happenedAt) : null,
       locationId: input.locationId ?? null,
       mood: input.mood ?? null,
-      visibility: input.visibility ?? 'COUPLE',
+      visibility: input.visibility ?? 'SPACE',
       createdBy: username,
     })
     await writeAuditLog({

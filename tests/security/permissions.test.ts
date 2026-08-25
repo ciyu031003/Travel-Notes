@@ -74,19 +74,19 @@ describe('canReadMemory', () => {
     expect(await canReadMemory('u1', 1)).toBe(true)
   })
 
-  it('创建者可读自己的 COUPLE 记忆', async () => {
-    prismaMock.memory.findUnique.mockResolvedValue({ spaceId: 1, visibility: 'COUPLE', createdBy: 'u1' })
+  it('创建者可读自己的 SPACE 记忆', async () => {
+    prismaMock.memory.findUnique.mockResolvedValue({ spaceId: 1, visibility: 'SPACE', createdBy: 'u1' })
     expect(await canReadMemory('u1', 1)).toBe(true)
   })
 
-  it('非成员不能读 COUPLE 记忆', async () => {
-    prismaMock.memory.findUnique.mockResolvedValue({ spaceId: 1, visibility: 'COUPLE', createdBy: 'other' })
+  it('非成员不能读 SPACE 记忆', async () => {
+    prismaMock.memory.findUnique.mockResolvedValue({ spaceId: 1, visibility: 'SPACE', createdBy: 'other' })
     prismaMock.spaceMember.findUnique.mockResolvedValue(null)
     expect(await canReadMemory('u1', 1)).toBe(false)
   })
 
-  it('成员可读 COUPLE 记忆', async () => {
-    prismaMock.memory.findUnique.mockResolvedValue({ spaceId: 1, visibility: 'COUPLE', createdBy: 'other' })
+  it('成员可读 SPACE 记忆', async () => {
+    prismaMock.memory.findUnique.mockResolvedValue({ spaceId: 1, visibility: 'SPACE', createdBy: 'other' })
     prismaMock.spaceMember.findUnique.mockResolvedValue({ role: 'MEMBER', status: 'ACTIVE' })
     expect(await canReadMemory('u1', 1)).toBe(true)
   })

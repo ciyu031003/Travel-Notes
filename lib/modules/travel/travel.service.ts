@@ -113,7 +113,7 @@ export async function listTravels(userId?: number | null): Promise<TravelSummary
     tags: t.tags ? safeParseTags(t.tags) : null,
     location: t.location ?? null,
     updatedAt: iso(t.updatedAt),
-    visibility: t.visibility ?? 'COUPLE',
+    visibility: t.visibility ?? 'SPACE',
     spaceId: t.spaceId ?? null,
     ownerId: t.ownerId ?? null,
   }))
@@ -170,7 +170,7 @@ export async function getTravelDetail(id: number, userId?: number | null): Promi
       happenedAt: iso(e.happenedAt),
     })),
     updatedAt: iso(travel.updatedAt),
-    visibility: travel.visibility ?? 'COUPLE',
+    visibility: travel.visibility ?? 'SPACE',
     spaceId: travel.spaceId ?? null,
     ownerId: travel.ownerId ?? null,
   }
