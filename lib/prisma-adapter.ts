@@ -203,6 +203,7 @@ export class PrismaMariaDB {
       user: decodeURIComponent(url.username || 'root'),
       password: decodeURIComponent(url.password),
       database: decodeURIComponent(url.pathname.slice(1)),
+      charset: 'utf8mb4',
       waitForConnections: true,
       connectionLimit: DB_CONFIG.connectionLimit,
       queueLimit: DB_CONFIG.queueLimit,
@@ -274,19 +275,21 @@ export class PrismaMariaDB {
 
     try {
       const url = new URL(this.url)
-      const config = {
-        host: url.hostname || 'localhost',
-        port: parseInt(url.port || '3306'),
-        user: decodeURIComponent(url.username || 'root'),
-        password: decodeURIComponent(url.password),
-        database: decodeURIComponent(url.pathname.slice(1)),
-        waitForConnections: true,
-        connectionLimit: DB_CONFIG.connectionLimit,
-        queueLimit: DB_CONFIG.queueLimit,
-        dateStrings: false,
-        connectTimeout: DB_CONFIG.timeout,
-        namedPlaceholders: true,
-      }
+    const config = {
+      host: url.hostname || 'localhost',
+      port: parseInt(url.port || '3306'),
+      user: decodeURIComponent(url.username || 'root'),
+      password: decodeURIComponent(url.password),
+      database: decodeURIComponent(url.pathname.slice(1)),
+      // 显式 utf8mb4：确保 emoji/生僻字不被连接级字符集截断为 '?'
+      charset: 'utf8mb4',
+      waitForConnections: true,
+      connectionLimit: DB_CONFIG.connectionLimit,
+      queueLimit: DB_CONFIG.queueLimit,
+      dateStrings: false,
+      connectTimeout: DB_CONFIG.timeout,
+      namedPlaceholders: true,
+    }
 
       this.pool = createPool(config)
       const conn = await this.pool.getConnection()
