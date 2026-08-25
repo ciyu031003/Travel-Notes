@@ -19,11 +19,17 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#FAFBF7" />
+        <meta name="theme-color" content="#FAF6EE" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <script src="/register-sw.js" defer />
       </head>
       <body className="min-h-screen flex flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-travel-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-lg"
+        >
+          跳到主内容
+        </a>
         <LayoutContent>{children}</LayoutContent>
         <CommandPalette />
         <AppUpdatePrompt />

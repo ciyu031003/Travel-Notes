@@ -37,7 +37,7 @@ export default function LayoutContent({
     return (
       <>
         <Navbar />
-        <main className="flex-1 pt-16 pb-14 md:pb-0">
+        <main id="main-content" className="flex-1 pt-16 pb-14 md:pb-0">
           {children}
         </main>
         <MobileBottomNav />
@@ -48,7 +48,7 @@ export default function LayoutContent({
   return (
     <>
       <Navbar />
-      <main className="flex-1 pt-20 pb-20 md:pb-12">
+      <main id="main-content" className="flex-1 pt-20 pb-20 md:pb-12">
         {children}
       </main>
       <Footer />
