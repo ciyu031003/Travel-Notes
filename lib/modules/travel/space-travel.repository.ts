@@ -73,6 +73,8 @@ export class PrismaTravelRepository {
         travelType: (input.travelType ?? 'ALONE') as any,
         companions: input.companions ?? undefined,
       },
+      // 只回读 id：避免引擎对 Json 列（companions）select-back 序列化出错
+      select: { id: true },
     })
     return t.id
   }
@@ -110,8 +112,9 @@ export class PrismaTravelRepository {
     if (patch.travelType !== undefined) data.travelType = patch.travelType as any
     if (patch.companions !== undefined) data.companions = patch.companions
     if (Object.keys(data).length === 0) return this.findById(id)
-    const t = await prisma.travel.update({ where: { id }, data })
-    return serialize(t)
+    // 只回读 id 再反查：update 的 select-back 同样会踩 Json 列序列化问题（配合 jsonStrings 双保险）
+    await prisma.travel.update({ where: { id }, data, select: { id: true } })
+    return this.findById(id)
   }
 
   async remove(id: number): Promise<void> {

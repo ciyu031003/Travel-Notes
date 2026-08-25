@@ -204,6 +204,9 @@ export class PrismaMariaDB {
       password: decodeURIComponent(url.password),
       database: decodeURIComponent(url.pathname.slice(1)),
       charset: 'utf8mb4',
+      // Json 列以文本字符串返回，由 Prisma 引擎统一解析：
+      // 直接返回解析后对象会让引擎在 select-back 时 String(obj) → "[object Object]" 再 JSON.parse 失败（companions 写/读全崩）
+      jsonStrings: true,
       waitForConnections: true,
       connectionLimit: DB_CONFIG.connectionLimit,
       queueLimit: DB_CONFIG.queueLimit,
@@ -283,6 +286,8 @@ export class PrismaMariaDB {
       database: decodeURIComponent(url.pathname.slice(1)),
       // 显式 utf8mb4：确保 emoji/生僻字不被连接级字符集截断为 '?'
       charset: 'utf8mb4',
+      // 与 _connect 保持一致：Json 列返回字符串，由 Prisma 引擎解析（见 _connect 注释）
+      jsonStrings: true,
       waitForConnections: true,
       connectionLimit: DB_CONFIG.connectionLimit,
       queueLimit: DB_CONFIG.queueLimit,

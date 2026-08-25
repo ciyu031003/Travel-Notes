@@ -346,6 +346,8 @@ export async function createTravel(input: {
       travelType: (input.travelType ?? 'ALONE') as any,
       companions: input.companions ?? undefined,
     },
+    // 只回读 id：避免引擎 select-back 整行时对 Json 列（companions）二次序列化（配合 jsonStrings 双保险）
+    select: { id: true },
   })
   await syncTravelPost(row.id).catch(() => {})
   return { id: row.id }
@@ -359,7 +361,9 @@ export async function updateTravel(id: number, input: any): Promise<void> {
   if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
   if (input.status !== undefined) data.status = input.status
   if (input.isPublic !== undefined) data.isPublic = input.isPublic
-  await prisma.travel.update({ where: { id }, data })
+  if (input.travelType !== undefined) data.travelType = input.travelType
+  if (input.companions !== undefined) data.companions = input.companions
+  await prisma.travel.update({ where: { id }, data, select: { id: true } })
   await syncTravelPost(id).catch(() => {})
 }
 

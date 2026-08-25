@@ -50,7 +50,8 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
           status: 'PLANNED',
           visibility: 'SPACE',
           travelType: input.travelType || 'ALONE',
-          companions: input.companions || null,
+          // 本地 companions 为 TEXT 列：对象需序列化为 JSON 字符串，避免 SQLite 绑定对象失败
+          companions: input.companions ? JSON.stringify(input.companions) : null,
           isPublic: input.isPublic ? 1 : 0,
           spaceId: null,
           ownerId: null,
