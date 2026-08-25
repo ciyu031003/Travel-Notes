@@ -130,15 +130,30 @@ async function main() {
   const conn = await getConn()
   console.log('== 1/2 增量 schema 迁移 ==')
 
-  // 多元场景：Visibility.COUPLE → SPACE（幂等数据迁移，供 db push 枚举变更前清理旧值）
+  // 多元场景：Visibility.COUPLE → SPACE（三步走：过渡枚举→数据UPDATE→最终枚举，供 db push 前安全变更）
   // 涉及表：Travel / Memory / Media / Album / TravelPost 等含 visibility 的表
-  const visibilityTables = ['Travel', 'Memory', 'Media', 'Album', 'TravelPost', 'TimelineItem', 'Moment', 'PhotoMessage', 'Anniversary']
+  const visibilityTables = ['Travel', 'Memory', 'Media', 'Album', 'TravelPost']
   for (const t of visibilityTables) {
     try {
+      const [colRows] = await conn.query(
+        "SELECT COLUMN_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = 'visibility'",
+        [t]
+      )
+      const colType = colRows[0]?.COLUMN_TYPE || ''
+      // 已是最终枚举（含 SPACE 不含 COUPLE）则跳过
+      if (colType.includes('SPACE') && !colType.includes('COUPLE')) {
+        console.log(`  [visibility] ${t}: 已是 SPACE 枚举，跳过`)
+        continue
+      }
+      // 1) 过渡枚举：扩展为含 COUPLE + SPACE（保留现有值）
+      await conn.query(`ALTER TABLE \`${t}\` MODIFY visibility ENUM('PRIVATE','COUPLE','SPACE','PUBLIC') NOT NULL DEFAULT 'SPACE'`)
+      // 2) 数据迁移：COUPLE → SPACE
       const [res] = await conn.query(`UPDATE \`${t}\` SET visibility = 'SPACE' WHERE visibility = 'COUPLE'`)
       if (res.affectedRows > 0) console.log(`  [visibility] ${t}: COUPLE→SPACE ${res.affectedRows} 行`)
+      // 3) 最终枚举：移除 COUPLE
+      await conn.query(`ALTER TABLE \`${t}\` MODIFY visibility ENUM('PRIVATE','SPACE','PUBLIC') NOT NULL DEFAULT 'SPACE'`)
+      console.log(`  [visibility] ${t}: 枚举迁移完成`)
     } catch (e) {
-      // 表不存在或列不存在时跳过（幂等）
       console.log(`  [visibility] ${t} 跳过（${e.code || e.message}）`)
     }
   }
