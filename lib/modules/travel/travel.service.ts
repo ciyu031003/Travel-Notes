@@ -291,6 +291,8 @@ export interface TravelPublicDetail {
   tags: string[] | null
   location: string | null
   cover: string | null
+  travelType: string | null
+  companions: unknown
 }
 
 export async function getTravelBySlug(slug: string, userId?: number | null): Promise<TravelPublicDetail | null> {
@@ -315,6 +317,8 @@ export async function getTravelBySlug(slug: string, userId?: number | null): Pro
     tags: t.tags ? safeParseTags(t.tags) : null,
     location: t.location,
     cover: t.cover,
+    travelType: t.travelType ?? 'ALONE',
+    companions: t.companions ?? null,
   }
 }
 
@@ -325,6 +329,8 @@ export async function createTravel(input: {
   endDate?: string
   ownerId?: number | null
   isPublic?: boolean
+  travelType?: 'ALONE' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BFF' | 'GROUP' | 'OTHER'
+  companions?: unknown
 }): Promise<{ id: number }> {
   const slugBase = input.title.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
   const row = await prisma.travel.create({
@@ -337,6 +343,8 @@ export async function createTravel(input: {
       status: 'PLANNED',
       ownerId: input.ownerId ?? null,
       isPublic: input.isPublic ?? false,
+      travelType: (input.travelType ?? 'ALONE') as any,
+      companions: input.companions ?? undefined,
     },
   })
   await syncTravelPost(row.id).catch(() => {})

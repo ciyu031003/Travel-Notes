@@ -4,6 +4,16 @@ import { useState } from 'react'
 import { Plus, Loader2, Sparkles, X } from 'lucide-react'
 import { createTravel } from '@/lib/modules/offline/travel-write'
 
+const TRAVEL_TYPES: { value: string; label: string }[] = [
+  { value: 'ALONE', label: '独旅' },
+  { value: 'COUPLE', label: '情侣' },
+  { value: 'FAMILY', label: '家庭' },
+  { value: 'FRIENDS', label: '朋友' },
+  { value: 'BFF', label: '闺蜜/兄弟' },
+  { value: 'GROUP', label: '结伴' },
+  { value: 'OTHER', label: '其他' },
+]
+
 /**
  * 新建旅行：离线时本地乐观写 + 入同步队列（联网自动上传云端），在线直接创建。
  * 移动端不设 /admin，此即 /travel 模块内的新建入口。
@@ -14,6 +24,7 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
   const [description, setDescription] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [travelType, setTravelType] = useState('ALONE')
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
@@ -27,12 +38,14 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
       description: description.trim() || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
+      travelType: travelType as never,
     })
     if (r.ok) {
       setTitle('')
       setDescription('')
       setStartDate('')
       setEndDate('')
+      setTravelType('ALONE')
       setMessage({ type: 'ok', text: r.local ? '已保存到本地，联网后自动上传' : '创建成功' })
       onCreated?.()
       setTimeout(() => {
@@ -86,6 +99,25 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
           placeholder="描述（可选）"
           className="w-full resize-none rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none placeholder:text-travel-ink/40 focus:border-travel-bloom"
         />
+        <div>
+          <span className="mb-1.5 block text-xs text-travel-ink/60">这次旅行是？</span>
+          <div className="flex flex-wrap gap-1.5">
+            {TRAVEL_TYPES.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setTravelType(t.value)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  travelType === t.value
+                    ? 'bg-travel-bloom text-white'
+                    : 'bg-travel-dim/40 text-travel-ink/70 hover:bg-travel-dim/70'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex gap-3">
           <label className="flex-1">
             <span className="mb-1 block text-xs text-travel-ink/60">开始日期</span>

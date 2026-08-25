@@ -3,7 +3,7 @@
  * 注意：与并发会话的 lib/modules/travel/travel.service.ts（P2 行程/花费规划）并存，
  * 本服务负责公开的、按空间隔离的旅行 CRUD。
  */
-import { PrismaTravelRepository, prismaTravelRepository, type TravelStatus, type TravelVisibility, type UpdateTravelPatch } from './space-travel.repository'
+import { PrismaTravelRepository, prismaTravelRepository, type TravelStatus, type TravelVisibility, type TravelType, type UpdateTravelPatch } from './space-travel.repository'
 import { requireSpaceRole } from '../space/permissions'
 import { writeAuditLog } from '../audit/audit-log.service'
 import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
@@ -12,6 +12,7 @@ const SLUG_RE = /^[a-z0-9-]{2,80}$/
 const TITLE_MAX = 255
 const STATUSES: TravelStatus[] = ['PLANNED', 'ONGOING', 'COMPLETED']
 const VISIBILITIES: TravelVisibility[] = ['PRIVATE', 'SPACE', 'PUBLIC']
+const TRAVEL_TYPES: TravelType[] = ['ALONE', 'COUPLE', 'FAMILY', 'FRIENDS', 'BFF', 'GROUP', 'OTHER']
 
 export interface CreateTravelInput {
   spaceId: number
@@ -22,6 +23,8 @@ export interface CreateTravelInput {
   endDate?: string | null
   status?: TravelStatus
   visibility?: TravelVisibility
+  travelType?: TravelType
+  companions?: unknown
 }
 
 export class TravelService {
@@ -39,6 +42,7 @@ export class TravelService {
     if (await this.repo.slugExists(spaceId, slug)) throw new Error('该空间下已存在相同旅行标识')
     if (input.status && !STATUSES.includes(input.status)) throw new Error('旅行状态无效')
     if (input.visibility && !VISIBILITIES.includes(input.visibility)) throw new Error('可见性无效')
+    if (input.travelType && !TRAVEL_TYPES.includes(input.travelType)) throw new Error('旅行类型无效')
 
     const id = await this.repo.create({
       spaceId,
@@ -49,6 +53,8 @@ export class TravelService {
       endDate: input.endDate ?? null,
       status: input.status ?? 'PLANNED',
       visibility: input.visibility ?? 'SPACE',
+      travelType: input.travelType ?? 'ALONE',
+      companions: input.companions ?? null,
     })
     await writeAuditLog({
       username,
@@ -91,6 +97,7 @@ export class TravelService {
     }
     if (patch.status !== undefined && !STATUSES.includes(patch.status)) throw new Error('旅行状态无效')
     if (patch.visibility !== undefined && !VISIBILITIES.includes(patch.visibility)) throw new Error('可见性无效')
+    if (patch.travelType !== undefined && !TRAVEL_TYPES.includes(patch.travelType)) throw new Error('旅行类型无效')
     const updated = await this.repo.update(travelId, patch)
     await syncTravelPost(travelId).catch(() => {})
     await writeAuditLog({

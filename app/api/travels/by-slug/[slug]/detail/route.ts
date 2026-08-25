@@ -40,6 +40,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
           tags: travel.tags,
           location: travel.location,
           cover: travel.cover,
+          travelType: travel.travelType,
+          companions: travel.companions,
         }
       : null,
     legacy: legacy

@@ -40,6 +40,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       endDate: body?.endDate,
       status: body?.status,
       visibility: body?.visibility,
+      travelType: body?.travelType,
+      companions: body?.companions,
     })
     return NextResponse.json({ success: true, travel })
   } catch (error: any) {

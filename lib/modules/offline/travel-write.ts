@@ -15,6 +15,8 @@ export interface CreateTravelInput {
   startDate?: string
   endDate?: string
   isPublic?: boolean
+  travelType?: 'ALONE' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BFF' | 'GROUP' | 'OTHER'
+  companions?: unknown
 }
 
 export interface CreateTravelResult {
@@ -47,6 +49,8 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
           endDate: input.endDate ? new Date(input.endDate).getTime() : null,
           status: 'PLANNED',
           visibility: 'SPACE',
+          travelType: input.travelType || 'ALONE',
+          companions: input.companions || null,
           isPublic: input.isPublic ? 1 : 0,
           spaceId: null,
           ownerId: null,

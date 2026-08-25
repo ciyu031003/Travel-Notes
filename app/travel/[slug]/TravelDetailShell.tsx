@@ -14,6 +14,19 @@ import { apiUrl } from '@/lib/api-base'
 
 const VideoPlayer = dynamicImport(() => import('@/components/VideoPlayer'))
 
+const TRAVEL_TYPE_LABELS: Record<string, string> = {
+  ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',
+}
+const TRAVEL_TYPE_STYLES: Record<string, string> = {
+  ALONE: 'bg-travel-mist/50 text-travel-sky',
+  COUPLE: 'bg-travel-sakura/60 text-travel-accent',
+  FAMILY: 'bg-travel-sakura/50 text-travel-accentStrong',
+  FRIENDS: 'bg-travel-mist/40 text-travel-sky',
+  BFF: 'bg-travel-sakura/50 text-travel-accent',
+  GROUP: 'bg-travel-mist/50 text-travel-sky',
+  OTHER: 'bg-travel-dim/40 text-travel-ink/70',
+}
+
 interface DetailData {
   travel: {
     id: number
@@ -26,6 +39,8 @@ interface DetailData {
     tags: string[] | null
     location: string | null
     cover: string | null
+    travelType?: string | null
+    companions?: unknown
   } | null
   legacy: {
     id: number
@@ -102,7 +117,12 @@ export default function TravelDetailShell() {
         <article className="max-w-3xl mx-auto pt-24 pb-16">
           <header className="mb-8 text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-travel-ink">{detailTitle}</h1>
-            <div className="flex items-center justify-center gap-4 text-travel-ink/60 text-sm">
+            {travel?.travelType && (
+              <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${TRAVEL_TYPE_STYLES[travel.travelType] || TRAVEL_TYPE_STYLES.OTHER}`}>
+                {TRAVEL_TYPE_LABELS[travel.travelType] || travel.travelType}
+              </span>
+            )}
+            <div className="flex items-center justify-center gap-4 text-travel-ink/60 text-sm mt-2">
               {detailDate && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />

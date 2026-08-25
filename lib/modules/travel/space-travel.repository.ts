@@ -5,6 +5,7 @@ import { prisma } from '../../db'
 
 export type TravelStatus = 'PLANNED' | 'ONGOING' | 'COMPLETED'
 export type TravelVisibility = 'PRIVATE' | 'SPACE' | 'PUBLIC'
+export type TravelType = 'ALONE' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BFF' | 'GROUP' | 'OTHER'
 
 export interface TravelRecord {
   id: number
@@ -17,6 +18,8 @@ export interface TravelRecord {
   coverMediaId: number | null
   status: TravelStatus
   visibility: TravelVisibility
+  travelType: TravelType
+  companions: unknown | null
   createdAt: string
   updatedAt: string
 }
@@ -30,6 +33,8 @@ export interface CreateTravelInput {
   endDate?: Date | string | null
   status?: TravelStatus
   visibility?: TravelVisibility
+  travelType?: TravelType
+  companions?: unknown
 }
 
 export type UpdateTravelPatch = Partial<Omit<CreateTravelInput, 'spaceId'>>
@@ -46,6 +51,8 @@ function serialize(t: any): TravelRecord {
     coverMediaId: t.coverMediaId,
     status: t.status,
     visibility: t.visibility,
+    travelType: t.travelType ?? 'ALONE',
+    companions: t.companions ?? null,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
   }
@@ -63,6 +70,8 @@ export class PrismaTravelRepository {
         endDate: input.endDate ? new Date(input.endDate) : null,
         status: (input.status ?? 'PLANNED') as any,
         visibility: (input.visibility ?? 'SPACE') as any,
+        travelType: (input.travelType ?? 'ALONE') as any,
+        companions: input.companions ?? undefined,
       },
     })
     return t.id
@@ -98,6 +107,8 @@ export class PrismaTravelRepository {
     if (patch.endDate !== undefined) data.endDate = patch.endDate ? new Date(patch.endDate) : null
     if (patch.status !== undefined) data.status = patch.status as any
     if (patch.visibility !== undefined) data.visibility = patch.visibility as any
+    if (patch.travelType !== undefined) data.travelType = patch.travelType as any
+    if (patch.companions !== undefined) data.companions = patch.companions
     if (Object.keys(data).length === 0) return this.findById(id)
     const t = await prisma.travel.update({ where: { id }, data })
     return serialize(t)

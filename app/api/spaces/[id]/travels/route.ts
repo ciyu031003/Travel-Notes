@@ -41,6 +41,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       endDate: body?.endDate ?? null,
       status: body?.status ?? undefined,
       visibility: body?.visibility ?? undefined,
+      travelType: body?.travelType ?? undefined,
+      companions: body?.companions ?? undefined,
     })
     return NextResponse.json({ success: true, travelId: result.id }, { status: 201 })
   } catch (error: any) {
