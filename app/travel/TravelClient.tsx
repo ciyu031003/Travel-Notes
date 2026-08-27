@@ -118,7 +118,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
       <header className="fixed top-0 left-0 right-0 z-50 bg-travel-cream/80 backdrop-blur-md border-b border-travel-line/50 dark:border-shell-line">        <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
           <Link
             href="/"
-            className="font-bold text-lg text-travel-inkStrong dark:text-[#F1EFEA]"
+            className="font-bold text-lg text-travel-inkStrong dark:text-shell-text"
           >
             行迹
           </Link>

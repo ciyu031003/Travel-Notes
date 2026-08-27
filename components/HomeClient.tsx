@@ -160,7 +160,7 @@ function FeatureCard({
           background: `radial-gradient(220px circle at ${spot.x}% ${spot.y}%, rgba(228,180,120,0.16), transparent 62%)`,
         }}
       />
-      <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-travel-sakura dark:bg-[#292119] text-travel-accent dark:text-travel-bloom transition-transform group-hover:scale-105">
+      <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-travel-sakura dark:bg-shell-surface text-travel-accent dark:text-travel-bloom transition-transform group-hover:scale-105">
         <Icon className="h-7 w-7" />
       </span>
       <span>
@@ -314,7 +314,7 @@ export default function HomeClient({
         <section className="px-3 pt-8 pb-6 md:px-6 md:pt-16 md:pb-10">
           <div className="mx-auto grid max-w-7xl items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
             <div className="animate-[fade-in-up_0.7s_ease-out_both] text-center md:text-left">
-              <h1 className="font-display text-display-hero font-bold tracking-tight text-travel-inkStrong dark:text-[#F1EFEA] md:text-6xl xl:text-7xl">
+              <h1 className="font-display text-display-hero font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-6xl xl:text-7xl">
                 <span className="block">走过的</span>
                 <span className="relative mt-1 inline-block">
                   地方
@@ -353,7 +353,7 @@ export default function HomeClient({
                   <Globe2 className="h-4 w-4 text-travel-accent dark:text-travel-bloom" />
                   <span className="font-medium text-travel-ink dark:text-shell-text">{provincesVisitedCount}</span>
                   个省份
-                  <span className="mx-1 h-4 w-px bg-travel-line dark:bg-[#2C343E]" />
+                  <span className="mx-1 h-4 w-px bg-travel-line dark:bg-shell-line" />
                   <span className="font-medium text-travel-ink dark:text-shell-text">{travelPosts.length}</span>
                   篇旅行
                 </span>
@@ -364,7 +364,7 @@ export default function HomeClient({
               <div className="relative h-[260px] overflow-hidden rounded-2xl border border-travel-line/40 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/40 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.35)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128] md:h-[400px] lg:h-[430px]">
                 <HeroFootprintMap posts={travelPosts} />
               </div>
-              <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FBF3E9] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-travel-bloom/70 dark:bg-[#241B15] dark:text-travel-bloom">
+              <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FBF3E9] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-travel-bloom/70 dark:bg-shell-surface dark:text-travel-bloom">
                 足迹地图 · {provincesVisitedCount} 省
               </span>
             </div>
@@ -397,7 +397,7 @@ export default function HomeClient({
                     className="group w-72 flex-shrink-0 snap-start lg:w-80 overflow-hidden rounded-xl border border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-surface transition-all hover:border-travel-bloom/70 hover:shadow-md"
                   >
                     {post.cover ? (
-                      <div className="relative h-40 overflow-hidden bg-travel-sakura/40 dark:bg-[#292119]">
+                      <div className="relative h-40 overflow-hidden bg-travel-sakura/40 dark:bg-shell-surface">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <Image
                           src={post.cover}
@@ -455,7 +455,7 @@ export default function HomeClient({
                     return (
                       <div
                         key={a.id}
-                        className="rounded-xl border border-travel-sakura/70 dark:border-[#32261D] bg-travel-parchment dark:bg-shell-surface p-4"
+                        className="rounded-xl border border-travel-sakura/70 dark:border-shell-line bg-travel-parchment dark:bg-shell-surface p-4"
                       >
                         <p className="text-xs text-travel-accent dark:text-travel-bloom">
                           {a.recurring ? '周年纪念' : '纪念日'} · {formatAnniversaryDate(a.date)}
@@ -485,7 +485,7 @@ export default function HomeClient({
         {/* 每日一言 */}
         <section className="px-3 pb-12 md:px-6 md:pb-16">
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-2xl border border-travel-bloom/40 dark:border-[#4A3427] bg-white/90 dark:bg-shell-surface/95 px-6 py-10 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-12">
+            <div className="rounded-2xl border border-travel-bloom/40 dark:border-shell-line bg-white/90 dark:bg-shell-surface/95 px-6 py-10 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-12">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-travel-accent dark:text-travel-bloom">
                 <Quote className="h-4 w-4" />
                 <span>每日一言</span>

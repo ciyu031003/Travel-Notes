@@ -142,7 +142,7 @@ export default function StackedImageSlider({
             style={{ opacity: isAnimating ? 0.7 : 1 }}
             aria-label="上一张"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-800 dark:text-white" />
+            <ChevronLeft className="w-5 h-5 text-travel-inkStrong dark:text-shell-text" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); next() }}
@@ -150,7 +150,7 @@ export default function StackedImageSlider({
             style={{ opacity: isAnimating ? 0.7 : 1 }}
             aria-label="下一张"
           >
-            <ChevronRight className="w-5 h-5 text-gray-800 dark:text-white" />
+            <ChevronRight className="w-5 h-5 text-travel-inkStrong dark:text-shell-text" />
           </button>
 
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2">
@@ -168,9 +168,9 @@ export default function StackedImageSlider({
             ))}
           </div>
 
-          <div className="absolute -left-2 top-4 bg-white dark:bg-gray-800 rounded-lg shadow-md px-3 py-1.5 flex items-center gap-2 z-[200]">
-            <span className="text-lg font-bold text-primary-500">{String(currentIndex + 1).padStart(2, '0')}</span>
-            <span className="text-xs text-gray-400">/ {String(total).padStart(2, '0')}</span>
+          <div className="absolute -left-2 top-4 bg-white dark:bg-shell-surface rounded-lg shadow-md px-3 py-1.5 flex items-center gap-2 z-[200]">
+            <span className="text-lg font-bold text-travel-accent">{String(currentIndex + 1).padStart(2, '0')}</span>
+            <span className="text-xs text-travel-sand/70">/ {String(total).padStart(2, '0')}</span>
           </div>
         </>
       )}

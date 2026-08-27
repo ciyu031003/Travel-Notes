@@ -153,7 +153,7 @@ export default function AdminAnniversariesPage() {
       {loading ? (
         <div className="py-16 text-center text-travel-ink/50 dark:text-gray-500">加载中...</div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-8 text-center text-travel-ink/60 dark:border-[#32261D] dark:bg-white/5">还没有纪念日</div>
+        <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-8 text-center text-travel-ink/60 dark:border-shell-line dark:bg-white/5">还没有纪念日</div>
       ) : (
         <div className="space-y-3">
           {items.map((item) => (

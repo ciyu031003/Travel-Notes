@@ -68,12 +68,12 @@ export default function AdminLoginPage() {
     'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-[#121316]">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-shell-bg">
       {/* 氛围光晕 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-travel-sakura/70 blur-3xl dark:bg-[#4A3427]/30" />
-        <div className="absolute -bottom-32 -right-24 h-[28rem] w-[28rem] rounded-full bg-travel-mist/80 blur-3xl dark:bg-[#2E3A44]/30" />
-        <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-travel-bloom/40 blur-3xl dark:bg-[#32261D]/40" />
+        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-travel-sakura/70 blur-3xl dark:bg-shell-surface/30" />
+        <div className="absolute -bottom-32 -right-24 h-[28rem] w-[28rem] rounded-full bg-travel-mist/80 blur-3xl dark:bg-shell-line/30" />
+        <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-travel-bloom/40 blur-3xl dark:bg-shell-surface/40" />
         {/* 漂浮樱花颗粒 */}
         {Array.from({ length: 14 }).map((_, i) => (
           <span
@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
       >
         <motion.div
           variants={item}
-          className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#16181C]/90"
+          className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-shell-bg/90"
         >
           {/* 顶部渐变条 */}
           <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-travel-sakura via-travel-bloom to-travel-sky" />
@@ -108,7 +108,7 @@ export default function AdminLoginPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-accent to-travel-bloom shadow-lg shadow-travel-accent/25">
               <Heart className="h-8 w-8 text-white" fill="currentColor" />
             </div>
-            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">行迹 · 后台管理</h1>
+            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-shell-text">行迹 · 后台管理</h1>
             <p className="mt-2 text-sm text-travel-ink dark:text-shell-muted">行迹 · 从这里开始打理</p>
           </motion.div>
 
@@ -157,7 +157,7 @@ export default function AdminLoginPage() {
                 key={error}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#4A3427] dark:bg-[#32261D]/70 dark:text-travel-bloom"
+                className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom"
               >
                 {error}
               </motion.div>

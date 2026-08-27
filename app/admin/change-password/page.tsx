@@ -71,17 +71,17 @@ export default function ForceChangePasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-travel-cream dark:bg-[#121316]">
+      <div className="min-h-screen flex items-center justify-center bg-travel-cream dark:bg-shell-bg">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
         </div>
         <div className="relative z-10 w-full max-w-md mx-4">
-          <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#16181C]/90 text-center">
+          <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-shell-bg/90 text-center">
             <div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-emerald-500" />
             </div>
-            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA] mb-2">密码修改成功</h1>
+            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-shell-text mb-2">密码修改成功</h1>
             <p className="text-sm text-travel-ink/80 dark:text-shell-muted">正在跳转到管理后台...</p>
           </div>
         </div>
@@ -90,19 +90,19 @@ export default function ForceChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-travel-cream dark:bg-[#121316]">
+    <div className="min-h-screen flex items-center justify-center bg-travel-cream dark:bg-shell-bg">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#16181C]/90">
+        <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-shell-bg/90">
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-8 h-8 text-amber-500" />
             </div>
-            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">首次登录请修改密码</h1>
+            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-shell-text">首次登录请修改密码</h1>
             <p className="text-sm text-travel-ink/80 dark:text-shell-muted mt-2">
               您正在使用初始密码，请设置一个新密码以确保账户安全
             </p>
@@ -147,7 +147,7 @@ export default function ForceChangePasswordPage() {
             </div>
 
             {error && (
-              <div className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#4A3427] dark:bg-[#32261D]/70 dark:text-travel-bloom">
+              <div className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom">
                 {error}
               </div>
             )}

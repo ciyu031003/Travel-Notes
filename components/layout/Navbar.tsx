@@ -102,7 +102,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
           href="/"
           className={cn(
             'font-bold text-xl flex items-center gap-2',
-            useDarkText ? '!text-white' : 'text-travel-inkStrong dark:text-[#F1EFEA]'
+            useDarkText ? '!text-white' : 'text-travel-inkStrong dark:text-shell-text'
           )}
         >
           <span className="w-8 h-8 bg-gradient-to-br from-travel-accent to-travel-bloom rounded-xl flex items-center justify-center shadow-sm">
@@ -170,7 +170,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             <div className="flex items-center gap-2 ml-2 pl-3 border-l border-travel-line/60 dark:border-shell-line">
               <span className={cn(
                 'text-sm font-medium',
-                useDarkText ? 'text-white' : 'text-travel-inkStrong dark:text-[#F1EFEA]'
+                useDarkText ? 'text-white' : 'text-travel-inkStrong dark:text-shell-text'
               )}>
                 {username}
               </span>

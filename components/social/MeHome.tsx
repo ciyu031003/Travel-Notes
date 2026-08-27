@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, LogOut, Camera, Pencil, X, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw, Settings, ShieldCheck, Users, Download } from 'lucide-react'
+import { Home, LogOut, Camera, Pencil, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw, Settings, ShieldCheck, Users, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import SpacePanel from '@/components/space/SpacePanel'
+import { Modal } from '@/components/ui/Modal'
 
 interface RecentTravel {
   id: number
@@ -407,25 +408,21 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
       {showSpace && <SpacePanel open={showSpace} onClose={() => setShowSpace(false)} />}
 
-      {showEdit && (
-        <div className="fixed inset-0 z-[70]">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowEdit(false)} />
-          <div className="absolute left-1/2 top-1/2 w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[1.6rem] bg-[var(--social-surface)] p-5 ring-1 ring-[var(--social-line)]">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-base font-semibold">编辑资料</h3>
-              <button onClick={() => setShowEdit(false)} aria-label="关闭" className="rounded-full p-1 text-[var(--social-muted)] hover:text-[var(--social-text)]"><X className="h-4 w-4" /></button>
-            </div>
-            <p className="mb-3 text-xs text-[var(--social-faint)]">账号名 @{profile.username} 只能在后台修改。</p>
-            <label className="mb-1.5 block text-xs text-[var(--social-muted)]">昵称</label>
-            <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={24} placeholder="输入 1-24 位昵称" className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]" />
-            <label className="mb-1.5 mt-4 block text-xs text-[var(--social-muted)]">个性签名</label>
-            <input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={120} placeholder="写一句话，成为你的旅行签名" className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]" />
-            <button onClick={saveProfile} disabled={saving || !nickname.trim()} className="mt-4 w-full rounded-full bg-[var(--social-accent)] py-3 text-sm font-semibold text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-50">
-              {saving ? '保存中…' : '保存'}
-            </button>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={showEdit}
+        onClose={() => setShowEdit(false)}
+        className="max-w-sm bg-[var(--social-surface)] ring-1 ring-[var(--social-line)] dark:bg-[var(--social-surface)]"
+        title="编辑资料"
+      >
+        <p className="mb-3 text-xs text-[var(--social-faint)]">账号名 @{profile.username} 只能在后台修改。</p>
+        <label className="mb-1.5 block text-xs text-[var(--social-muted)]">昵称</label>
+        <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={24} placeholder="输入 1-24 位昵称" className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]" />
+        <label className="mb-1.5 mt-4 block text-xs text-[var(--social-muted)]">个性签名</label>
+        <input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={120} placeholder="写一句话，成为你的旅行签名" className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]" />
+        <button onClick={saveProfile} disabled={saving || !nickname.trim()} className="mt-4 w-full rounded-full bg-[var(--social-accent)] py-3 text-sm font-semibold text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-50">
+          {saving ? '保存中…' : '保存'}
+        </button>
+      </Modal>
     </div>
   )
 }

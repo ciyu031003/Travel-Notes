@@ -59,7 +59,7 @@ export default function AsyncState({
           <AlertCircle className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
         </span>
         <div className="space-y-1.5">
-          <p className="text-base font-semibold text-travel-ink dark:text-[#F1EFEA]">
+          <p className="text-base font-semibold text-travel-ink dark:text-shell-text">
             {title || '加载失败'}
           </p>
           {message && (
@@ -89,11 +89,11 @@ export default function AsyncState({
       className="container-custom flex flex-col items-center justify-center gap-4 text-center"
       style={{ minHeight }}
     >
-      <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft/70 dark:border-travel-bloom/40 bg-travel-sakura/20 dark:bg-[#241B15]">
+      <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft/70 dark:border-travel-bloom/40 bg-travel-sakura/20 dark:bg-shell-surface">
         <Compass className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
       </span>
       <div className="space-y-1.5">
-        <p className="text-base font-semibold text-travel-ink dark:text-[#F1EFEA]">
+        <p className="text-base font-semibold text-travel-ink dark:text-shell-text">
           {title || '这里还空着'}
         </p>
         {message && (

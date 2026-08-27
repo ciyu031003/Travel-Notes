@@ -15,7 +15,7 @@ export default function FollowersPage() {
   }, [])
 
   if (!id) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-gray-500">加载中…</div>
+    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-travel-sand">加载中…</div>
   }
   return <UserList endpoint={'/api/social/users/' + id + '/followers'} title="我的粉丝" />
 }

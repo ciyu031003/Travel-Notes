@@ -135,7 +135,7 @@ export default function AdminShell({
     })
 
   return (
-    <div className="min-h-screen bg-travel-cream text-travel-ink dark:bg-[#0A0A0A] dark:text-[#C9CDD3]">
+    <div className="min-h-screen bg-travel-cream text-travel-ink dark:bg-shell-bg dark:text-shell-muted">
       {/* ===== 桌面侧边栏 ===== */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-travel-line/40 bg-white/75 dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:flex">
         {/* 品牌 */}
@@ -178,7 +178,7 @@ export default function AdminShell({
       {/* ===== 主区域 ===== */}
       <div className="lg:pl-64">
         {/* 移动端顶栏 */}
-        <header className="sticky top-0 z-30 border-b border-travel-line/50 bg-white/80 dark:border-white/5 dark:bg-[#0A0A0A]/85 backdrop-blur-2xl lg:hidden">
+        <header className="sticky top-0 z-30 border-b border-travel-line/50 bg-white/80 dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:hidden">
           <div className="flex h-14 items-center justify-between px-4">
             <div className="flex items-center gap-2.5">
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${accent} shadow-md`}>

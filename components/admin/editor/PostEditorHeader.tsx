@@ -27,7 +27,7 @@ export default function PostEditorHeader({
           <ArrowLeft className="h-4 w-4" />
           返回
         </Link>
-        <h1 className="text-xl font-bold text-[#2D3842] dark:text-[#F1EFEA]">
+        <h1 className="text-xl font-bold text-[#2D3842] dark:text-shell-text">
           {isNew ? '新建文章' : '编辑文章'}
         </h1>
       </div>

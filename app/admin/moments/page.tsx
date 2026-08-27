@@ -157,7 +157,7 @@ export default function AdminMomentsPage() {
             加载中...
           </div>
         ) : moments.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-[#32261D] dark:bg-white/5">
+          <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-shell-line dark:bg-white/5">
             <Inbox className="mx-auto mb-4 h-12 w-12 opacity-30 text-travel-accentSoft" />
             <p className="text-travel-ink/70 dark:text-gray-400">还没有碎碎念，发布第一条吧~</p>
           </div>

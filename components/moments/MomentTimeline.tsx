@@ -81,7 +81,7 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+      <div className="flex flex-col items-center justify-center py-16 text-travel-sand/70 dark:text-shell-faint">
         <Loader2 className="w-6 h-6 animate-spin mb-3" />
         <p className="text-sm">加载中...</p>
       </div>
@@ -90,7 +90,7 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
 
   if (moments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+      <div className="flex flex-col items-center justify-center py-16 text-travel-sand/70 dark:text-shell-faint">
         <Inbox className="w-12 h-12 mb-3 opacity-40" />
         <p className="text-sm">还没有碎碎念，稍后再来看看吧~</p>
       </div>
@@ -110,12 +110,12 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
           </span>
 
           <div className="card p-5 hover:border-travel-sakura dark:hover:border-travel-accentStrong transition-colors">
-            <p className="text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap break-words">
+            <p className="text-travel-ink dark:text-shell-text leading-relaxed whitespace-pre-wrap break-words">
               {moment.content}
             </p>
             <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-gray-400 dark:text-gray-500">
+                <span className="text-xs text-travel-sand/70 dark:text-shell-faint">
                   {formatRelativeTime(moment.createdAt)}
                 </span>
                 {moment.tags && moment.tags.length > 0 && (

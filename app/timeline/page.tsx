@@ -54,7 +54,7 @@ export default function TimelinePage() {
           <CalendarDays className="w-4 h-4" />
           <span>旅行时间线</span>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-travel-inkStrong dark:text-[#F1EFEA]">走过的时光</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-travel-inkStrong dark:text-shell-text">走过的时光</h1>
         <p className="text-travel-ink/70 dark:text-shell-muted mt-2">按年份回顾每一段旅行与回忆</p>
       </header>
 
@@ -69,8 +69,8 @@ export default function TimelinePage() {
             <section key={year} className="relative pl-8 md:pl-12 mb-10">
               <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-travel-sakura via-travel-sakura to-transparent dark:from-travel-accentStrong/60 dark:via-travel-accentStrong/30" />
               <h2 className="relative inline-flex items-center gap-2 mb-6">
-                <span className="absolute -left-8 md:-left-12 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-travel-accentSoft border-4 border-white dark:border-[#0A0A0A] shadow" />
-                <span className="text-2xl font-bold text-travel-inkStrong dark:text-[#F1EFEA]">{year}</span>
+                <span className="absolute -left-8 md:-left-12 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-travel-accentSoft border-4 border-white dark:border-shell-bg shadow" />
+                <span className="text-2xl font-bold text-travel-inkStrong dark:text-shell-text">{year}</span>
               </h2>
 
               <div className="space-y-4">
@@ -114,7 +114,7 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
           <span className="text-xs text-travel-ink/50 dark:text-shell-muted">{formatDate(entry.date)}</span>
           {!isTravel && entry.travelTitle && <span className="text-xs text-travel-ink/50 dark:text-shell-muted">· {entry.travelTitle}</span>}
         </div>
-        <h3 className="text-base font-semibold text-travel-inkStrong dark:text-[#F1EFEA] group-hover:text-travel-accent transition-colors">{entry.title}</h3>
+        <h3 className="text-base font-semibold text-travel-inkStrong dark:text-shell-text group-hover:text-travel-accent transition-colors">{entry.title}</h3>
         {entry.description && <p className="text-sm text-travel-ink/70 dark:text-shell-muted mt-1 line-clamp-2">{entry.description}</p>}
         {(entry.location || entry.mood) && (
           <div className="mt-2 flex flex-wrap gap-1.5">

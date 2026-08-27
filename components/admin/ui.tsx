@@ -63,7 +63,7 @@ export function AdminCard({ title, icon: Icon, action, children, className }: {
   return (
     <div className={cn('rounded-2xl border border-travel-line/50 bg-white/80 p-6 shadow-soft dark:border-shell-line dark:bg-shell-bg/80', className)}>
       {title && (
-        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-[#F1EFEA]">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-shell-text">
           {Icon && <Icon className="h-4 w-4 text-travel-accentSoft" />}
           {title}
         </h2>

@@ -128,11 +128,11 @@ export default function AdminDashboard() {
       {/* 页头 */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-travel-sakura/70 px-3 py-1 text-xs font-medium text-travel-accent dark:bg-[#32261D]/70 dark:text-travel-bloom">
+          <div className="inline-flex items-center gap-2 rounded-full bg-travel-sakura/70 px-3 py-1 text-xs font-medium text-travel-accent dark:bg-shell-surface/70 dark:text-travel-bloom">
             <Sparkles className="h-3 w-3" />
             行迹内容中心
           </div>
-          <h1 className="mt-3 text-2xl font-bold text-[#2D3842] dark:text-[#F1EFEA] sm:text-3xl">文章管理</h1>
+          <h1 className="mt-3 text-2xl font-bold text-[#2D3842] dark:text-shell-text sm:text-3xl">文章管理</h1>
           <p className="mt-1 text-sm text-travel-ink/70 dark:text-shell-muted">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>
         </div>
         <Link
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
           ))}
         </div>
       ) : filteredPosts.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-[#32261D] dark:bg-white/5">
+        <div className="rounded-3xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-shell-line dark:bg-white/5">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom/60 dark:from-[#32261D] dark:to-[#4A3427]">
             <FileText className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
           </div>
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
               <motion.article
                 key={post.id}
                 variants={cardVariants}
-                className="group mb-5 break-inside-avoid overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-16px_rgba(167,78,97,0.35)] dark:border-white/10 dark:bg-[#16181C]/90"
+                className="group mb-5 break-inside-avoid overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-16px_rgba(167,78,97,0.35)] dark:border-white/10 dark:bg-shell-bg/90"
               >
                 {/* 封面 */}
                 <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-travel-sakura via-travel-bloom/30 to-travel-sakura dark:from-[#32261D] dark:via-[#3A2B21] dark:to-[#241B15]">
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
                 {/* 内容 */}
                 <div className="p-5">
                   <Link href={`/${post.type}/${post.slug}`} target="_blank" className="block">
-                    <h3 className="text-base font-bold leading-snug text-[#2D3842] transition-colors group-hover:text-travel-accent dark:text-[#F1EFEA] dark:group-hover:text-travel-bloom">
+                    <h3 className="text-base font-bold leading-snug text-[#2D3842] transition-colors group-hover:text-travel-accent dark:text-shell-text dark:group-hover:text-travel-bloom">
                       {post.title}
                     </h3>
                   </Link>
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                   {post.tags && post.tags.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {post.tags.slice(0, 4).map((tag) => (
-                        <span key={tag} className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-[11px] text-travel-accent dark:bg-[#32261D]/80 dark:text-travel-bloom">
+                        <span key={tag} className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-[11px] text-travel-accent dark:bg-shell-surface/80 dark:text-travel-bloom">
                           # {tag}
                         </span>
                       ))}
@@ -361,14 +361,14 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-3xl border border-white/70 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-[#16181C]/95"
+            className="w-full max-w-sm rounded-3xl border border-white/70 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-shell-bg/95"
           >
             <div className="mb-4 flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-500/10">
                   <Trash2 className="h-5 w-5 text-red-500" />
                 </div>
-                <h3 className="text-base font-semibold text-[#2D3842] dark:text-[#F1EFEA]">删除这篇文章？</h3>
+                <h3 className="text-base font-semibold text-[#2D3842] dark:text-shell-text">删除这篇文章？</h3>
               </div>
               <button onClick={() => setDeleteId(null)} className="rounded-lg p-1.5 text-gray-400 hover:bg-black/5 dark:hover:bg-white/10" aria-label="关闭">
                 <X className="h-4 w-4" />

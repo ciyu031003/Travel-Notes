@@ -59,9 +59,9 @@ export default function CommentsSection({ term }: { term?: string }) {
   if (!configured) return null
 
   return (
-    <section className="mt-10 border-t border-gray-200 dark:border-gray-800 pt-8">
-      <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        <MessageSquare className="w-5 h-5 text-primary-500" />
+    <section className="mt-10 border-t border-travel-line dark:border-shell-line pt-8">
+      <h2 className="flex items-center gap-2 text-lg font-semibold text-travel-inkStrong dark:text-shell-text mb-4">
+        <MessageSquare className="w-5 h-5 text-travel-accent" />
         评论
       </h2>
       <div ref={ref} className="giscus" />

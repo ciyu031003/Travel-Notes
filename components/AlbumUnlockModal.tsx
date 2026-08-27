@@ -133,7 +133,7 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
             </div>
 
             {albumError && (
-              <div className="px-4 py-2.5 bg-travel-sakura/40 border border-travel-bloom/50 rounded-xl text-travel-accentStrong dark:bg-[#32261D]/70 dark:border-[#4A3427] dark:text-travel-bloom text-sm text-center">
+              <div className="px-4 py-2.5 bg-travel-sakura/40 border border-travel-bloom/50 rounded-xl text-travel-accentStrong dark:bg-shell-surface/70 dark:border-shell-line dark:text-travel-bloom text-sm text-center">
                 {albumError}
               </div>
             )}

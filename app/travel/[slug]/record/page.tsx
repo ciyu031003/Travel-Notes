@@ -85,11 +85,11 @@ export default function TravelRecordPage() {
   }
 
   if (loading) {
-    return <div className="container-custom py-20 text-center text-gray-500"><Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />加载中...</div>
+    return <div className="container-custom py-20 text-center text-travel-sand"><Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />加载中...</div>
   }
 
   if (!travel) {
-    return <div className="container-custom py-20 text-center text-gray-500">旅行不存在</div>
+    return <div className="container-custom py-20 text-center text-travel-sand">旅行不存在</div>
   }
 
   return (

@@ -357,7 +357,7 @@ export default function AdminTravelsPage() {
           {loading ? (
             <div className="py-10 text-center text-travel-ink/50 dark:text-gray-500">加载中...</div>
           ) : travels.length === 0 ? (
-            <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-6 text-center text-travel-ink/60 dark:border-[#32261D] dark:bg-white/5">还没有旅行规划</div>
+            <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-6 text-center text-travel-ink/60 dark:border-shell-line dark:bg-white/5">还没有旅行规划</div>
           ) : (
             <div className="space-y-2">
               {travels.map((t) => (
@@ -386,7 +386,7 @@ export default function AdminTravelsPage() {
         {/* 右列：详情 */}
         <div className="lg:col-span-2 space-y-4">
           {!selected || !detail ? (
-            <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-12 text-center text-travel-ink/60 dark:border-[#32261D] dark:bg-white/5">选择或创建一个旅行开始规划</div>
+            <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-12 text-center text-travel-ink/60 dark:border-shell-line dark:bg-white/5">选择或创建一个旅行开始规划</div>
           ) : (
             <>
               {/* 基本信息 */}

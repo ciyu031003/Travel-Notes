@@ -81,20 +81,20 @@ export default function AccountSettings() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-shell-surface rounded-xl shadow-sm p-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-travel-accentSoft rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-travel-accent to-travel-accentSoft rounded-lg flex items-center justify-center">
           <Settings className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">账号设置</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">修改登录账号和密码（与本站访问密码一致）</p>
+          <h2 className="text-lg font-semibold text-travel-inkStrong dark:text-shell-text">账号设置</h2>
+          <p className="text-sm text-travel-sand dark:text-shell-muted">修改登录账号和密码（与本站访问密码一致）</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-travel-ink dark:text-shell-text mb-2">
             <User className="w-4 h-4 inline mr-2" />
             用户名
           </label>
@@ -102,13 +102,13 @@ export default function AccountSettings() {
             type="text"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2.5 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             placeholder="输入新的用户名"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-travel-ink dark:text-shell-text mb-2">
             <Key className="w-4 h-4 inline mr-2" />
             当前密码
           </label>
@@ -117,28 +117,28 @@ export default function AccountSettings() {
               type={showCurrentPwd ? 'text' : 'password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-4 py-2.5 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
               placeholder="必须输入当前密码以验证身份"
               required
             />
             <button
               type="button"
               onClick={() => setShowCurrentPwd(!showCurrentPwd)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-sand/70 hover:text-travel-ink"
             >
               {showCurrentPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <div className="border-t border-travel-line dark:border-shell-line pt-6">
+          <p className="text-sm text-travel-sand dark:text-shell-muted mb-4">
             如需修改密码，请填写以下字段；留空则表示不修改密码。
           </p>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-travel-ink dark:text-shell-text mb-2">
                 新密码
               </label>
               <div className="relative">
@@ -146,13 +146,13 @@ export default function AccountSettings() {
                   type={showNewPwd ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
                   placeholder="至少 6 位字符（留空则不修改）"
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPwd(!showNewPwd)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-sand/70 hover:text-travel-ink"
                 >
                   {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -160,7 +160,7 @@ export default function AccountSettings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-travel-ink dark:text-shell-text mb-2">
                 确认新密码
               </label>
               <div className="relative">
@@ -168,13 +168,13 @@ export default function AccountSettings() {
                   type={showConfirmPwd ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
                   placeholder="再次输入新密码"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPwd(!showConfirmPwd)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-sand/70 hover:text-travel-ink"
                 >
                   {showConfirmPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -203,7 +203,7 @@ export default function AccountSettings() {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-travel-accent hover:bg-travel-accentStrong text-white font-medium rounded-lg transition-colors disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
           {loading ? '保存中...' : '保存修改'}

@@ -168,12 +168,12 @@ export default function CommandPalette() {
       aria-modal="true"
     >
       <div
-        className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        className="w-full max-w-xl bg-white dark:bg-shell-surface rounded-2xl shadow-2xl border border-travel-line dark:border-shell-line overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 输入区 */}
-        <div className="flex items-center gap-3 px-5 h-14 border-b border-gray-200 dark:border-gray-700">
-          <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+        <div className="flex items-center gap-3 px-5 h-14 border-b border-travel-line dark:border-shell-line">
+          <Search className="w-5 h-5 text-travel-sand/70 flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
@@ -183,15 +183,15 @@ export default function CommandPalette() {
             }}
             onKeyDown={handleKeyDown}
             placeholder="搜索旅行记录，或输入命令..."
-            className="flex-1 bg-transparent text-gray-900 dark:text-white text-base outline-none placeholder-gray-400"
+            className="flex-1 bg-transparent text-travel-inkStrong dark:text-shell-text text-base outline-none placeholder-travel-sand/50"
           />
           {loading ? (
-            <Loader2 className="w-4 h-4 text-gray-400 animate-spin flex-shrink-0" />
+            <Loader2 className="w-4 h-4 text-travel-sand/70 animate-spin flex-shrink-0" />
           ) : (
             <button
               type="button"
               onClick={close}
-              className="p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="p-1 rounded-md text-travel-sand/70 hover:text-travel-ink dark:hover:text-shell-text hover:bg-travel-sakura/40 dark:hover:bg-white/10"
             >
               <X className="w-4 h-4" />
             </button>
@@ -202,7 +202,7 @@ export default function CommandPalette() {
         <div className="max-h-[55vh] overflow-y-auto py-2" onMouseDown={(e) => e.preventDefault()}>
           {showQuickLinks && (
             <div className="px-3">
-              <p className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 font-medium">快捷入口</p>
+              <p className="px-3 py-2 text-xs text-travel-sand/70 dark:text-shell-faint font-medium">快捷入口</p>
               {QUICK_LINKS.map((link, idx) => {
                 const Icon = link.icon
                 return (
@@ -217,7 +217,7 @@ export default function CommandPalette() {
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                       idx === activeIndex
                         ? 'bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accentStrong dark:text-travel-accentSoft'
-                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        : 'text-travel-ink dark:text-shell-text hover:bg-travel-sakura/40 dark:hover:bg-white/10'
                     }`}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
@@ -231,11 +231,11 @@ export default function CommandPalette() {
 
           {showResults && (
             <div className="px-3">
-              <p className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 font-medium">
+              <p className="px-3 py-2 text-xs text-travel-sand/70 dark:text-shell-faint font-medium">
                 {loading ? '搜索中...' : `搜索结果（${results.length}）`}
               </p>
               {results.length === 0 && !loading ? (
-                <p className="px-3 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+                <p className="px-3 py-6 text-center text-sm text-travel-sand/70 dark:text-shell-faint">
                   未找到与「{query.trim()}」相关的内容
                 </p>
               ) : (
@@ -252,15 +252,15 @@ export default function CommandPalette() {
                       className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                         idx === activeIndex
                           ? 'bg-travel-sakura/50 dark:bg-travel-accent/15'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                          : 'hover:bg-travel-sakura/40 dark:hover:bg-white/10'
                       }`}
                     >
-                      <span className="mt-0.5 p-1.5 rounded-md flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-500">
+                      <span className="mt-0.5 p-1.5 rounded-md flex-shrink-0 bg-travel-mist/60 dark:bg-travel-accent/15 text-travel-sky">
                         <FileText className="w-3.5 h-3.5" />
                       </span>
                       <span className="flex-1 min-w-0">
-                        <span className="block text-sm text-gray-800 dark:text-gray-100 truncate">{item.title}</span>
-                        <span className="block text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                        <span className="block text-sm text-travel-inkStrong dark:text-shell-text truncate">{item.title}</span>
+                        <span className="block text-xs text-travel-sand/70 dark:text-shell-faint truncate mt-0.5">
                           旅行记录 · {formatDate(item.date)}
                         </span>
                       </span>
@@ -274,7 +274,7 @@ export default function CommandPalette() {
         </div>
 
         {/* 底部提示 */}
-        <div className="flex items-center gap-4 px-5 py-2.5 border-t border-gray-200 dark:border-gray-700 text-[11px] text-gray-400 dark:text-gray-500">
+        <div className="flex items-center gap-4 px-5 py-2.5 border-t border-travel-line dark:border-shell-line text-[11px] text-travel-sand/70 dark:text-shell-faint">
           <span className="flex items-center gap-1">
             <ArrowUp className="w-3 h-3" />
             <ArrowDown className="w-3 h-3" />

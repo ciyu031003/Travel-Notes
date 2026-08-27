@@ -99,7 +99,7 @@ export default function MemoryPhotoPicker({
           <div className="flex max-h-[80vh] w-full max-w-md flex-col rounded-2xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold text-travel-ink">选择照片关联到回忆</h3>
-              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-1 text-travel-ink/50 hover:bg-gray-100" aria-label="关闭">
+              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-1 text-travel-ink/50 hover:bg-travel-sakura/40" aria-label="关闭">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -116,7 +116,7 @@ export default function MemoryPhotoPicker({
                       key={p.id}
                       type="button"
                       onClick={() => toggle(p.id)}
-                      className={`relative aspect-square overflow-hidden rounded-lg transition ${selected.has(p.id) ? 'ring-2 ring-travel-bloom' : 'ring-1 ring-gray-200'}`}
+                      className={`relative aspect-square overflow-hidden rounded-lg transition ${selected.has(p.id) ? 'ring-2 ring-travel-bloom' : 'ring-1 ring-travel-line'}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={p.url} alt="" className="h-full w-full object-cover" loading="lazy" />

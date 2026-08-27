@@ -17,7 +17,7 @@ export default function MomentsPage() {
             href="/admin/moments"
             label="管理碎碎念"
             icon={<Settings2 className="w-3.5 h-3.5" />}
-            className="px-3 py-1.5 rounded-full text-sm text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft hover:bg-travel-sakura/50 dark:hover:bg-travel-accent/15 transition-colors"
+            className="px-3 py-1.5 rounded-full text-sm text-travel-sand dark:text-shell-muted hover:text-travel-accent dark:hover:text-travel-accentSoft hover:bg-travel-sakura/50 dark:hover:bg-travel-accent/15 transition-colors"
           />
         </div>
 
@@ -26,10 +26,10 @@ export default function MomentsPage() {
             <Sparkles className="w-4 h-4" />
             <span>碎碎念</span>
           </div>
-          <h1 className="text-3xl font-bold mb-3 text-gray-900 dark:text-gray-100">
+          <h1 className="text-3xl font-bold mb-3 text-travel-inkStrong dark:text-shell-text">
             生活随记
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+          <p className="text-travel-sand dark:text-shell-muted max-w-md mx-auto">
             记录生活里的灵感、随想和值得收藏的瞬间
           </p>
         </header>

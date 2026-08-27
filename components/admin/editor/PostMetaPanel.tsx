@@ -35,7 +35,7 @@ export default function PostMetaPanel({
   onChange,
 }: PostMetaPanelProps) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/80 p-6 shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-[#16181C]/90 space-y-5">
+    <div className="rounded-2xl border border-white/70 bg-white/80 p-6 shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-shell-bg/90 space-y-5">
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">分类</label>
         <div className="grid grid-cols-2 gap-2">

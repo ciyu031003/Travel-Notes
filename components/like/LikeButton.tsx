@@ -98,7 +98,7 @@ export default function LikeButton({
         sm ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm',
         state.liked
           ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent border border-travel-sakura dark:border-travel-accent/40'
-          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-transparent hover:bg-travel-sakura/60 dark:hover:bg-travel-accentStrong/20 hover:text-travel-accent hover:border-travel-sakura dark:hover:border-travel-accentStrong',
+          : 'bg-travel-dim/50 dark:bg-shell-surface2 text-travel-sand dark:text-shell-muted border border-transparent hover:bg-travel-sakura/60 dark:hover:bg-travel-accentStrong/20 hover:text-travel-accent hover:border-travel-sakura dark:hover:border-travel-accentStrong',
         loading && 'opacity-60 cursor-wait',
         className
       )}

@@ -44,7 +44,7 @@ function BigStat({
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/40 text-travel-accent dark:border-shell-line dark:bg-travel-accent/15 dark:text-travel-bloom">
         <Icon className="h-5 w-5" />
       </div>
-      <div className="mt-3 text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-[#F1EFEA] tabular-nums">
+      <div className="mt-3 text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text tabular-nums">
         {value}
       </div>
       <div className="mt-1 text-xs text-travel-ink/70 dark:text-shell-muted">{label}</div>
@@ -68,7 +68,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-travel-accent dark:text-travel-bloom">
             My Travel Space
           </p>
-          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-[#F1EFEA] md:text-4xl">
+          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-4xl">
             我的旅行记忆空间
           </h1>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-travel-ink/70 dark:text-shell-muted">
@@ -86,7 +86,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         {/* 足迹地图（视觉主体前置） */}
         <section className="mb-14">
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-travel-inkStrong dark:text-[#F1EFEA]">
+            <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-travel-inkStrong dark:text-shell-text">
               <MapPin className="h-5 w-5 text-travel-accent" />
               我的旅行足迹
             </h2>
@@ -104,7 +104,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         {/* 省份打卡 + 内容构成（左右分栏，弱化为侧栏） */}
         <section className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-shell-line dark:bg-shell-surface/80">
-            <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-[#F1EFEA]">
+            <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-shell-text">
               <MapPin className="h-4 w-4 text-travel-accent" />
               省份打卡
             </h2>
@@ -133,7 +133,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           </div>
 
           <div className="rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-shell-line dark:bg-shell-surface/80">
-            <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-[#F1EFEA]">
+            <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-shell-text">
               <Sparkles className="h-4 w-4 text-travel-accent" />
               内容构成
             </h2>

@@ -27,10 +27,10 @@ function timeAgo(dateStr: string): string {
 function SkeletonCard() {
   return (
     <div className="animate-pulse rounded-xl border border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-surface p-4">
-      <div className="h-3 w-full rounded bg-travel-line/70 dark:bg-[#2C343E]" />
-      <div className="mt-2 h-3 w-4/5 rounded bg-travel-line/70 dark:bg-[#2C343E]" />
-      <div className="mt-2 h-3 w-2/5 rounded bg-travel-line/70 dark:bg-[#2C343E]" />
-      <div className="mt-4 h-2.5 w-1/4 rounded bg-travel-line/50 dark:bg-[#2C343E]/60" />
+      <div className="h-3 w-full rounded bg-travel-line/70 dark:bg-shell-line" />
+      <div className="mt-2 h-3 w-4/5 rounded bg-travel-line/70 dark:bg-shell-line" />
+      <div className="mt-2 h-3 w-2/5 rounded bg-travel-line/70 dark:bg-shell-line" />
+      <div className="mt-4 h-2.5 w-1/4 rounded bg-travel-line/50 dark:bg-shell-line/60" />
     </div>
   )
 }
@@ -105,7 +105,7 @@ export default function MomentsStrip() {
                   <div className="mt-3 flex items-center gap-2">
                     <span className="text-[11px] text-travel-ink dark:text-shell-muted">{timeAgo(moment.createdAt)}</span>
                     {moment.tags && moment.tags.length > 0 && (
-                      <span className="rounded-full bg-travel-sakura/50 dark:bg-[#292119] px-1.5 py-0.5 text-[10px] text-travel-accent dark:text-travel-bloom">
+                      <span className="rounded-full bg-travel-sakura/50 dark:bg-shell-surface px-1.5 py-0.5 text-[10px] text-travel-accent dark:text-travel-bloom">
                         #{moment.tags[0]}
                       </span>
                     )}

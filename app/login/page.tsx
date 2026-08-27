@@ -178,7 +178,7 @@ function LoginPageContent() {
                 )}
               </div>
 
-              <h1 className="mt-7 font-display text-3xl font-bold leading-tight text-[#2D3842] dark:text-[#F1EFEA] md:text-4xl">
+              <h1 className="mt-7 font-display text-3xl font-bold leading-tight text-[#2D3842] dark:text-shell-text md:text-4xl">
                 {mode === 'login' ? '登录你的旅行记忆空间' : '注册一个新的行迹账号'}
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-travel-ink dark:text-shell-muted">
@@ -253,7 +253,7 @@ function LoginPageContent() {
                 )}
 
                 {error && (
-                  <div className="animate-[fadeIn_0.3s_ease] rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-[#4A3427] dark:bg-[#32261D]/70 dark:text-travel-bloom">
+                  <div className="animate-[fadeIn_0.3s_ease] rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom">
                     {error}
                   </div>
                 )}
@@ -318,7 +318,7 @@ function LoginPageContent() {
                   {cityThumbnails.map((city, i) => (
                     <div
                       key={i}
-                      className="flex h-14 w-14 flex-shrink-0 rotate-[-4deg] items-center justify-center rounded-full border-2 border-dashed border-travel-bloom/80 bg-travel-parchment dark:border-travel-bloom/50 dark:bg-[#241E22]"
+                      className="flex h-14 w-14 flex-shrink-0 rotate-[-4deg] items-center justify-center rounded-full border-2 border-dashed border-travel-bloom/80 bg-travel-parchment dark:border-travel-bloom/50 dark:bg-shell-surface"
                     >
                       <span className="text-center text-[10px] font-medium leading-tight text-travel-accent dark:text-travel-bloom">
                         {city}
@@ -386,7 +386,7 @@ function LoginPageContent() {
                 </p>
 
                 {albumError && (
-                  <div className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-2.5 text-center text-sm text-travel-accent dark:border-[#4A3427] dark:bg-[#32261D]/70 dark:text-travel-bloom">
+                  <div className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-2.5 text-center text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom">
                     {albumError}
                   </div>
                 )}

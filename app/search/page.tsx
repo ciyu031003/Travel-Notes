@@ -36,14 +36,14 @@ function highlight(text: string, keyword: string): string {
   if (!keyword) return safe
   const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const re = new RegExp(`(${escaped})`, 'gi')
-  return safe.replace(re, '<mark class="bg-yellow-200 text-gray-900 rounded px-0.5">$&</mark>')
+  return safe.replace(re, '<mark class="bg-travel-bloom/40 text-travel-accentStrong rounded px-0.5">$&</mark>')
 }
 
 export default function SearchPage() {
   return (
     <Suspense fallback={
       <div className="container-custom">
-        <div className="max-w-2xl mx-auto text-center py-16 text-gray-500">
+        <div className="max-w-2xl mx-auto text-center py-16 text-travel-sand">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-travel-accentSoft" />
           <p className="text-sm">加载中...</p>
         </div>
@@ -136,16 +136,16 @@ function SearchContent() {
   return (
     <div className="container-custom py-10 md:py-14">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-travel-inkStrong dark:text-shell-text mb-2">
           搜索旅行记录
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <p className="text-sm text-travel-sand dark:text-shell-muted mb-6">
           查找每一段旅行足迹
         </p>
 
         {/* 搜索框 */}
         <div className="relative mb-8">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-travel-sand/70" />
           <input
             ref={inputRef}
             type="text"
@@ -155,13 +155,13 @@ function SearchContent() {
               if (e.key === 'Enter') performSearch(query)
             }}
             placeholder="输入城市、地点或关键词..."
-            className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-travel-accentSoft focus:border-transparent shadow-sm"
+            className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-travel-line dark:border-shell-line bg-white dark:bg-shell-surface2 text-travel-inkStrong dark:text-shell-text outline-none focus:ring-2 focus:ring-travel-accentSoft focus:border-transparent shadow-sm"
           />
           {query && (
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-travel-sand/70 hover:text-travel-ink dark:hover:text-shell-text hover:bg-travel-sakura/40 dark:hover:bg-white/10"
             >
               <X className="w-4 h-4" />
             </button>
@@ -172,7 +172,7 @@ function SearchContent() {
         {loading && (
           <div className="card p-8 text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-travel-accentSoft" />
-            <p className="text-sm text-gray-500">搜索中...</p>
+            <p className="text-sm text-travel-sand">搜索中...</p>
           </div>
         )}
 
@@ -180,7 +180,7 @@ function SearchContent() {
         {!loading && !hasSearched && (
           <div className="card p-8 text-center">
             <MapPin className="w-12 h-12 mx-auto mb-4 text-travel-sakura" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-travel-sand dark:text-shell-muted mb-4">
               输入关键词开始搜索，或试试以下热门标签：
             </p>
             <div className="flex flex-wrap gap-2 justify-center">
@@ -202,8 +202,8 @@ function SearchContent() {
         {/* 无结果 */}
         {!loading && hasSearched && !hasResults && (
           <div className="card p-8 text-center">
-            <p className="text-gray-600 dark:text-gray-300 mb-2">未找到相关内容</p>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className="text-travel-ink dark:text-shell-text mb-2">未找到相关内容</p>
+            <p className="text-sm text-travel-sand mb-4">
               {keyword ? `没有匹配「${keyword}」的旅行记录` : '请输入搜索关键词'}
             </p>
           </div>
@@ -224,17 +224,17 @@ function SearchContent() {
                       <MapPin className="w-3.5 h-3.5" />
                       旅行记录
                     </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                    <span className="text-xs text-travel-sand/70 dark:text-shell-faint">
                       {formatDate(post.date)}
                     </span>
                   </div>
                   <h3
-                    className="text-lg font-semibold text-gray-800 dark:text-gray-100 group-hover:text-travel-accent transition-colors mb-1.5"
+                    className="text-lg font-semibold text-travel-inkStrong dark:text-shell-text group-hover:text-travel-accent transition-colors mb-1.5"
                     dangerouslySetInnerHTML={{ __html: highlight(post.title, keyword) }}
                   />
                   {post.description && (
                     <p
-                      className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2"
+                      className="text-sm text-travel-ink dark:text-shell-text line-clamp-2"
                       dangerouslySetInnerHTML={{ __html: highlight(post.description, keyword) }}
                     />
                   )}
@@ -243,7 +243,7 @@ function SearchContent() {
                       {post.tags.slice(0, 5).map((tag) => (
                         <span
                           key={tag}
-                          className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300"
+                          className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/60 dark:bg-white/10 text-travel-sand dark:text-shell-text"
                         >
                           #{tag}
                         </span>
@@ -263,5 +263,3 @@ function SearchContent() {
     </div>
   )
 }
-
-

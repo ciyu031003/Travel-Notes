@@ -306,7 +306,7 @@ export default function ForgotPasswordPage() {
                         <div
                           key={i}
                           className={`h-1 flex-1 rounded-full ${
-                            i <= passwordStrength.score ? passwordStrength.color : 'bg-gray-200'
+                            i <= passwordStrength.score ? passwordStrength.color : 'bg-travel-dim'
                           }`}
                         />
                       ))}
