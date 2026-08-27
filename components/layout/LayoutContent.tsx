@@ -20,8 +20,18 @@ export default function LayoutContent({
   const isSyncPage = pathname.startsWith('/sync')
   const isAdminPage = pathname.startsWith('/admin')
   const isForgotPasswordPage = pathname.startsWith('/forgot-password')
-  if (isLoginPage || isAdminPage || isForgotPasswordPage || isAlbumPage || isCirclePage || isMePage || isSyncPage) {
+  if (isLoginPage || isAdminPage || isForgotPasswordPage || isAlbumPage) {
     return <>{children}</>
+  }
+
+  // UI-V3 壳层收口：/me /circle /sync 接入底部导航（保留自绘 header），桌面不受影响（导航 md:hidden）
+  if (isCirclePage || isMePage || isSyncPage) {
+    return (
+      <>
+        {children}
+        <MobileBottomNav />
+      </>
+    )
   }
 
   if (isTravelPage) {

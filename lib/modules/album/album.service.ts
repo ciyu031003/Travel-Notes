@@ -27,6 +27,9 @@ export interface AlbumItem {
   locationId: number | null
   /** v3.1 M1-A1：关联旅行（一个相册 = 一次旅行/一座城市） */
   travelId: number | null
+  /** 多元场景：关联旅行的类型/同行者（相册按类型分组 + 按同行者筛选） */
+  travelType: string | null
+  companions: unknown
 }
 
 export interface AlbumMediaItem {
@@ -86,6 +89,8 @@ function mapAlbum(a: any): AlbumItem {
     coverMediaId: a.coverMediaId ?? null,
     locationId: a.locationId ?? null,
     travelId: a.travelId ?? null,
+    travelType: a.travel?.travelType ?? null,
+    companions: a.travel?.companions ?? null,
   }
 }
 
@@ -96,6 +101,8 @@ export async function listAlbums(userId?: number | null): Promise<AlbumItem[]> {
     include: {
       coverMedia: { include: { variants: true } },
       _count: { select: { items: true } },
+      // 多元场景：附带关联旅行的类型/同行者，供相册按类型分组 + 按同行者筛选
+      travel: { select: { travelType: true, companions: true } },
     },
   })
   return rows.map(mapAlbum)

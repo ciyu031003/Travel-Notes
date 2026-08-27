@@ -68,6 +68,21 @@ const EXPENSE_CATEGORIES = ['TRANSPORT', 'HOTEL', 'FOOD', 'TICKET', 'SHOPPING', 
 const EXPENSE_LABELS: Record<string, string> = {
   TRANSPORT: '交通', HOTEL: '住宿', FOOD: '餐饮', TICKET: '门票', SHOPPING: '购物', OTHER: '其他',
 }
+const TRAVEL_TYPES: { value: string; label: string }[] = [
+  { value: 'ALONE', label: '独旅' },
+  { value: 'COUPLE', label: '情侣' },
+  { value: 'FAMILY', label: '家庭' },
+  { value: 'FRIENDS', label: '朋友' },
+  { value: 'BFF', label: '闺蜜/兄弟' },
+  { value: 'GROUP', label: '结伴' },
+  { value: 'OTHER', label: '其他' },
+]
+const MAX_COMPANIONS = 10
+
+interface Companion {
+  name: string
+  relation: string
+}
 
 export default function AdminTravelsPage() {
   const [travels, setTravels] = useState<TravelSummary[]>([])
@@ -79,8 +94,20 @@ export default function AdminTravelsPage() {
   const [createTitle, setCreateTitle] = useState('')
   const [createStart, setCreateStart] = useState('')
   const [createEnd, setCreateEnd] = useState('')
+  const [createTravelType, setCreateTravelType] = useState('ALONE')
+  const [createCompanions, setCreateCompanions] = useState<Companion[]>([])
+  const [companionName, setCompanionName] = useState('')
+  const [companionRelation, setCompanionRelation] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
+
+  const addCompanion = () => {
+    const name = companionName.trim()
+    if (!name || createCompanions.length >= MAX_COMPANIONS) return
+    setCreateCompanions([...createCompanions, { name, relation: companionRelation.trim() }])
+    setCompanionName('')
+    setCompanionRelation('')
+  }
 
   // day form
   const [dayDate, setDayDate] = useState('')
@@ -133,11 +160,17 @@ export default function AdminTravelsPage() {
       const res = await fetch('/api/admin/travels', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: createTitle.trim(), startDate: createStart || undefined, endDate: createEnd || undefined }),
+        body: JSON.stringify({
+          title: createTitle.trim(),
+          startDate: createStart || undefined,
+          endDate: createEnd || undefined,
+          travelType: createTravelType,
+          companions: createCompanions.length > 0 ? createCompanions : undefined,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setError(data.error || '创建失败'); return }
-      setCreateTitle(''); setCreateStart(''); setCreateEnd('')
+      setCreateTitle(''); setCreateStart(''); setCreateEnd(''); setCreateTravelType('ALONE'); setCreateCompanions([])
       await fetchList()
       setSelected(data.id)
     } catch { setError('网络错误') } finally { setCreating(false) }
@@ -243,6 +276,77 @@ export default function AdminTravelsPage() {
             <div className="grid grid-cols-2 gap-2 mb-2">
               <AdminInput type="date" value={createStart} onChange={(e) => setCreateStart(e.target.value)} />
               <AdminInput type="date" value={createEnd} onChange={(e) => setCreateEnd(e.target.value)} />
+            </div>
+            <div className="mb-2">
+              <span className="mb-1 block text-xs text-travel-ink/60 dark:text-gray-400">这次旅行是？</span>
+              <div className="flex flex-wrap gap-1.5">
+                {TRAVEL_TYPES.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setCreateTravelType(t.value)}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                      createTravelType === t.value
+                        ? 'bg-travel-accent text-white'
+                        : 'bg-travel-dim/40 text-travel-ink/70 hover:bg-travel-dim/70 dark:bg-white/10 dark:text-gray-300'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-2">
+              <span className="mb-1 block text-xs text-travel-ink/60 dark:text-gray-400">
+                和谁一起去的？<span className="text-travel-ink/40 dark:text-gray-500">（可选，最多 {MAX_COMPANIONS} 人）</span>
+              </span>
+              <div className="flex gap-1.5">
+                <AdminInput
+                  type="text"
+                  value={companionName}
+                  onChange={(e) => setCompanionName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCompanion() } }}
+                  placeholder="姓名"
+                  className="!w-24 shrink-0"
+                />
+                <AdminInput
+                  type="text"
+                  value={companionRelation}
+                  onChange={(e) => setCompanionRelation(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCompanion() } }}
+                  placeholder="关系（可选）"
+                  className="flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={addCompanion}
+                  disabled={!companionName.trim() || createCompanions.length >= MAX_COMPANIONS}
+                  className="shrink-0 rounded-lg border border-travel-line/70 px-2.5 py-1.5 text-xs font-medium text-travel-ink/70 transition hover:bg-travel-dim/50 disabled:opacity-40 dark:border-shell-line dark:text-gray-300"
+                >
+                  + 添加
+                </button>
+              </div>
+              {createCompanions.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {createCompanions.map((c, i) => (
+                    <span
+                      key={`${c.name}-${i}`}
+                      className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/50 px-2.5 py-0.5 text-xs text-travel-ink dark:bg-white/10 dark:text-gray-200"
+                    >
+                      {c.name}
+                      {c.relation ? <span className="text-travel-ink/50 dark:text-gray-400">· {c.relation}</span> : null}
+                      <button
+                        type="button"
+                        onClick={() => setCreateCompanions(createCompanions.filter((_, j) => j !== i))}
+                        aria-label={`移除 ${c.name}`}
+                        className="ml-0.5 rounded-full p-0.5 text-travel-ink/50 hover:text-travel-ink dark:text-gray-400"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             {error && <p className="text-xs text-travel-danger mb-2">{error}</p>}
             <AdminButton type="submit" disabled={creating} className="w-full">

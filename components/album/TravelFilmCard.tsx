@@ -26,6 +26,8 @@ interface TravelFilmCardProps {
   author?: TravelFilmAuthor
   stats?: TravelFilmStats
   variant?: 'card' | 'hero' | 'strip'
+  /** 封面右上角像素风徽章（如旅行类型：独旅/家庭/朋友…） */
+  badge?: string
   onOpen?: () => void
   className?: string
 }
@@ -46,6 +48,7 @@ export default function TravelFilmCard({
   author,
   stats,
   variant = 'card',
+  badge,
   onOpen,
   className,
 }: TravelFilmCardProps) {
@@ -76,6 +79,11 @@ export default function TravelFilmCard({
 
   const cover = (aspectClass: string) => (
     <div className={cn('relative w-full overflow-hidden bg-album-bg2', aspectClass)}>
+      {badge && (
+        <span className="absolute right-2 top-2 z-10 rounded-full border border-pixel-line bg-black/75 px-2 py-0.5 font-zpix text-[11px] font-bold text-album-accent shadow-[2px_2px_0_rgba(0,0,0,0.6)]">
+          {badge}
+        </span>
+      )}
       {coverUrl ? (
         <Image
           src={coverUrl}

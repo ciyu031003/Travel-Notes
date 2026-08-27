@@ -51,6 +51,8 @@ interface AlbumItem {
   mediaCount: number
   date: string | null
   createdAt: string
+  travelType?: string | null
+  companions?: unknown
 }
 
 interface ChatPhoto {
@@ -69,6 +71,15 @@ const SPINE_COLORS = [
   'book-spine-brown',
   'book-spine-leather',
 ]
+
+// 多元场景：旅行类型（与 TravelComposer/TravelDetailShell 一致）
+const TRAVEL_TYPE_LABELS: Record<string, string> = {
+  ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',
+}
+
+function albumCompanionsOf(a: AlbumItem): Array<{ name: string; relation?: string }> {
+  return Array.isArray(a.companions) ? (a.companions as any[]) : []
+}
 
 const VIEW_MODE_KEY = 'album-view-mode'
 
@@ -94,6 +105,8 @@ export default function AlbumPage() {
   const [showStarMap, setShowStarMap] = useState(false)
   const [chatPhoto, setChatPhoto] = useState<ChatPhoto | null>(null)
   const [view, setView] = useState<'gallery' | 'chat'>('gallery')
+  const [albumTypeFilter, setAlbumTypeFilter] = useState<string>('ALL')
+  const [albumCompanionFilter, setAlbumCompanionFilter] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'space' | 'pixel'>(() => {
     try {
       return localStorage.getItem(VIEW_MODE_KEY) === 'pixel' ? 'pixel' : 'space'
@@ -177,6 +190,34 @@ export default function AlbumPage() {
 
   const totalPhotos = cities.reduce((sum, city) => sum + city.images.length, 0)
   const totalDays = cities.reduce((sum, city) => sum + (city.days?.length || 1), 0)
+
+  // 多元场景：纪念相册按旅行类型分组 + 按同行者筛选
+  const albumTypes = useMemo(() => {
+    const set = new Set<string>()
+    for (const a of albums) if (a.travelType) set.add(a.travelType)
+    return Array.from(set)
+  }, [albums])
+  const albumCompanions = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const a of albums) {
+      for (const c of albumCompanionsOf(a)) {
+        const name = String(c?.name || '').trim()
+        if (!name) continue
+        if (!map.has(name)) map.set(name, String(c?.relation || '').trim())
+      }
+    }
+    return Array.from(map, ([name, relation]) => ({ name, relation }))
+  }, [albums])
+  const filteredAlbums = useMemo(() => {
+    return albums.filter((a) => {
+      if (albumTypeFilter !== 'ALL' && (a.travelType || '') !== albumTypeFilter) return false
+      if (albumCompanionFilter) {
+        const names = albumCompanionsOf(a).map((c) => String(c?.name || '').trim())
+        if (!names.includes(albumCompanionFilter)) return false
+      }
+      return true
+    })
+  }, [albums, albumTypeFilter, albumCompanionFilter])
 
   // 相册封面本地化（离线读：本地缓存命中 → 本地 URI）
   const albumCoverUrls = useMemo(
@@ -607,22 +648,85 @@ export default function AlbumPage() {
                 纪念相册
               </h2>
               <span className="text-xs text-album-warm font-bold bg-black/40 border border-pixel-line px-2 py-0.5">
-                {albums.length} 册
+                {filteredAlbums.length}/{albums.length} 册
               </span>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {albums.map((album) => (
-                <div key={album.id} className="relative">
-                  <TravelFilmCard
-                    coverUrl={album.coverUrl ? (localMediaMap[album.coverUrl] ?? album.coverUrl) : undefined}
-                    title={album.title}
-                    dateRange={album.date ? formatDate(album.date) : undefined}
-                    photoCount={album.mediaCount}
-                  />
-                  <AddPhotoButton albumId={album.id} onAdded={loadAlbumData} />
-                </div>
-              ))}
-            </div>
+
+            {/* 多元场景：按旅行类型分组 Tab + 按同行者筛选 */}
+            {(albumTypes.length > 0 || albumCompanions.length > 0) && (
+              <div className="mb-4 space-y-2">
+                {albumTypes.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => { setAlbumTypeFilter('ALL'); setAlbumCompanionFilter(null) }}
+                      className={`rounded-full border px-3 py-1 text-xs font-bold transition ${
+                        albumTypeFilter === 'ALL' && !albumCompanionFilter
+                          ? 'bg-album-accent text-black border-album-accent'
+                          : 'bg-black/40 text-album-warm border-pixel-line hover:bg-black/60'
+                      }`}
+                    >
+                      全部
+                    </button>
+                    {albumTypes.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => { setAlbumTypeFilter(albumTypeFilter === t ? 'ALL' : t); setAlbumCompanionFilter(null) }}
+                        className={`rounded-full border px-3 py-1 text-xs font-bold transition ${
+                          albumTypeFilter === t
+                            ? 'bg-album-accent text-black border-album-accent'
+                            : 'bg-black/40 text-album-warm border-pixel-line hover:bg-black/60'
+                        }`}
+                      >
+                        {TRAVEL_TYPE_LABELS[t] || t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {albumCompanions.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-bold tracking-wider text-album-warm/70">同行者</span>
+                    {albumCompanions.map((c) => (
+                      <button
+                        key={c.name}
+                        type="button"
+                        onClick={() => setAlbumCompanionFilter(albumCompanionFilter === c.name ? null : c.name)}
+                        className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${
+                          albumCompanionFilter === c.name
+                            ? 'bg-album-accent text-black border-album-accent'
+                            : 'bg-black/40 text-album-warm border-pixel-line hover:bg-black/60'
+                        }`}
+                      >
+                        {c.name}
+                        {c.relation ? ` · ${c.relation}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {filteredAlbums.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-pixel-line bg-black/30 px-4 py-8 text-center text-sm text-album-warm">
+                没有符合条件的相册
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredAlbums.map((album) => (
+                  <div key={album.id} className="relative">
+                    <TravelFilmCard
+                      coverUrl={album.coverUrl ? (localMediaMap[album.coverUrl] ?? album.coverUrl) : undefined}
+                      title={album.title}
+                      dateRange={album.date ? formatDate(album.date) : undefined}
+                      photoCount={album.mediaCount}
+                      badge={album.travelType ? TRAVEL_TYPE_LABELS[album.travelType] || album.travelType : undefined}
+                    />
+                    <AddPhotoButton albumId={album.id} onAdded={loadAlbumData} />
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
