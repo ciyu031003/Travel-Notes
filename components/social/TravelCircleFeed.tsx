@@ -111,7 +111,7 @@ export default function TravelCircleFeed() {
   const switchTab = (t: string) => { setTab(t); load(t, 1, false) }
   const loadMore = () => { if (hasMore && !loadingMore) load(tab, page + 1, true) }
 
-  const [hero, ...rest] = posts
+  const hero = posts[0]
 
   const cardProps = (p: Post, frame: (typeof FRAMES)[number] = 'portrait') => ({
     coverUrl: p.coverUrl,
@@ -196,9 +196,16 @@ export default function TravelCircleFeed() {
           </div>
         ) : (
           <>
-            {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="mb-8" />}
+            {/* 移动端：保留紧凑 hero 大图叙事（桌面端走瀑布流，避免全宽巨卡） */}
+            {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="mb-8 md:hidden" />}
             <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
-              {rest.map((p, i) => <SocialFilmCard key={p.id} {...cardProps(p, FRAMES[i % FRAMES.length])} className="mb-5 break-inside-avoid" />)}
+              {posts.map((p, i) => (
+                <SocialFilmCard
+                  key={p.id}
+                  {...cardProps(p, FRAMES[i % FRAMES.length])}
+                  className={cn('mb-5 break-inside-avoid', hero && p.id === hero.id && 'hidden md:block')}
+                />
+              ))}
             </div>
             <div className="mt-6 flex justify-center">
               {hasMore ? (
@@ -207,7 +214,7 @@ export default function TravelCircleFeed() {
                   {loadingMore ? '加载中…' : '加载更多'}
                 </button>
               ) : (
-                rest.length > 0 && <span className="text-xs text-[var(--social-faint)]">已经到底啦</span>
+                posts.length > 0 && <span className="text-xs text-[var(--social-faint)]">已经到底啦</span>
               )}
             </div>
           </>
