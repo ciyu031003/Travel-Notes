@@ -21,6 +21,17 @@ const TABS = [
 const THEMES = ['海边', '周末旅行', '结伴旅行', '城市漫游', '星空', '摄影']
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const
 
+// 旅行关系映射（Travel.travelType 枚举 → 卡片叙事文案）
+const TRAVEL_RELATION: Record<string, string> = {
+  ALONE: '独旅',
+  COUPLE: '与TA',
+  FAMILY: '与家人',
+  FRIENDS: '与朋友',
+  BFF: '与闺蜜',
+  GROUP: '结伴',
+  OTHER: '结伴',
+}
+
 interface PostAuthor { id: number; username: string; nickname?: string | null; avatarUrl?: string | null }
 interface Post {
   id: number
@@ -32,6 +43,7 @@ interface Post {
   endDate: string | null
   dayCount: number
   photoCount: number
+  travelType?: string | null
   author: PostAuthor | null
   likeCount: number
   commentCount: number
@@ -49,6 +61,10 @@ function displayName(a: PostAuthor | null): string {
   return a ? a.nickname || a.username : '旅行者'
 }
 
+function relationLabel(p: Post): string | undefined {
+  return p.travelType ? TRAVEL_RELATION[p.travelType] : undefined
+}
+
 export default function TravelCircleFeed() {
   const router = useRouter()
   const [tab, setTab] = useState('recommended')
@@ -60,6 +76,7 @@ export default function TravelCircleFeed() {
   const [hasMore, setHasMore] = useState(false)
   const [total, setTotal] = useState(0)
   const [offline, setOffline] = useState(false)
+  const [activeTheme, setActiveTheme] = useState<string | null>(null)
 
   const load = useCallback(async (t: string, p: number, append: boolean) => {
     if (append) setLoadingMore(true); else setLoading(true)
@@ -105,6 +122,7 @@ export default function TravelCircleFeed() {
     dayCount: p.dayCount,
     photoCount: p.photoCount,
     location: p.location || undefined,
+    travelRelation: relationLabel(p),
     author: p.author ? { name: displayName(p.author), avatar: p.author.avatarUrl || null } : null,
     stats: { likes: p.likeCount, comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
@@ -141,14 +159,25 @@ export default function TravelCircleFeed() {
           ))}
         </div>
 
-        <div className="mb-8 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-[var(--social-faint)]">为你发现</span>
-          {THEMES.map((theme) => (
-            <button key={theme} type="button" onClick={() => {}}
-              className="rounded-full px-3 py-1 text-xs text-[var(--social-muted)] transition hover:bg-[var(--social-accent-soft)] hover:text-[var(--social-accent)]">
-              # {theme}
-            </button>
-          ))}
+        <div className="mb-8">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="text-sm font-semibold tracking-wide text-[var(--social-text)]">探索旅途</span>
+            <span className="h-px flex-1 bg-[var(--social-line)]" />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {THEMES.map((theme) => {
+              const active = activeTheme === theme
+              return (
+                <button key={theme} type="button" onClick={() => setActiveTheme(active ? null : theme)}
+                  className={cn('rounded-full px-3 py-1 text-xs transition',
+                    active
+                      ? 'bg-[var(--social-accent)] text-[var(--social-on-accent)]'
+                      : 'text-[var(--social-muted)] hover:bg-[var(--social-accent-soft)] hover:text-[var(--social-accent)]')}>
+                  # {theme}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {loading ? (

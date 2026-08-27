@@ -38,7 +38,24 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
   const [rightOpen, setRightOpen] = useState(true)
   const [anniversaryStart, setAnniversaryStart] = useState<string | undefined>(undefined)
   const [showAlbumUnlock, setShowAlbumUnlock] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const visiblePosts = showAll ? posts : posts.slice(0, 6)
+
+  // 移动端默认收起左右面板，避免遮挡 40vh 小地图（桌面保持默认展开）
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  useEffect(() => {
+    if (isMobile) {
+      setLeftOpen(false)
+      setRightOpen(false)
+    }
+  }, [isMobile])
 
   useEffect(() => {
     fetch('/api/travel/settings')
@@ -104,7 +121,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
   }, [posts])
 
   return (
-    <div className="relative min-h-screen bg-travel-cream text-travel-ink">
+    <div className="relative min-h-screen bg-travel-cream text-travel-ink pb-24 md:pb-0">
       {/* 底部雾气带 */}
       <div
         className="fixed inset-x-0 bottom-0 h-[40vh] pointer-events-none opacity-40"
@@ -161,6 +178,26 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
               <ChinaMap posts={posts} />
             </div>
           </div>
+
+          {/* 移动端胶囊入口：面板收起时快捷打开照片/足迹 */}
+          {isMobile && !leftOpen && !rightOpen && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex gap-2 md:hidden">
+              <button
+                onClick={() => setLeftOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-travel-cream/90 border border-travel-dim/80 shadow-md text-xs text-travel-ink backdrop-blur transition-colors hover:bg-travel-sakura/30"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-travel-bloom" />
+                照片
+              </button>
+              <button
+                onClick={() => setRightOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-travel-cream/90 border border-travel-dim/80 shadow-md text-xs text-travel-ink backdrop-blur transition-colors hover:bg-travel-mist/30"
+              >
+                <Info className="w-3.5 h-3.5 text-travel-bloom" />
+                足迹
+              </button>
+            </div>
+          )}
 
           {/* 左侧可收起面板 */}
           <div

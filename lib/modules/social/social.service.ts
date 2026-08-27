@@ -82,6 +82,7 @@ function serializePost(row: any, likedIds: Set<number>, favoriteIds: Set<number>
     endDate: iso(travel?.endDate ?? post?.date),
     dayCount: travel?._count?.days ?? (post ? 1 : 0),
     photoCount: travel?._count?.memories ?? photos.length,
+    travelType: travel?.travelType ?? null,
     author: serializeAuthor(row.author),
     likeCount: row.likeCount,
     commentCount: row.commentCount,

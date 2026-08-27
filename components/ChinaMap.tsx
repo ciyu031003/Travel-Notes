@@ -28,6 +28,19 @@ export interface ChinaMapProps {
 
 const width = 1100
 const height = 860
+const MIN_SCALE = 0.5
+const MAX_SCALE = 4
+
+interface TouchState {
+  mode: 'none' | 'pan' | 'pinch'
+  startX: number
+  startY: number
+  initialOffset: { x: number; y: number }
+  initialScale: number
+  pinchDist: number
+  pinchMid: { x: number; y: number }
+  moved: boolean
+}
 
 export default function ChinaMap({ posts }: ChinaMapProps) {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
@@ -40,7 +53,16 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [initialOffset, setInitialOffset] = useState({ x: 0, y: 0 })
+  const [located, setLocated] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const touchRef = useRef<TouchState>({
+    mode: 'none', startX: 0, startY: 0,
+    initialOffset: { x: 0, y: 0 }, initialScale: 1,
+    pinchDist: 0, pinchMid: { x: 0, y: 0 }, moved: false,
+  })
+  const suppressClickRef = useRef(false)
+  const offsetRef = useRef(offset)
+  offsetRef.current = offset
 
   const postsByProvince = useMemo(() => {
     const map = new Map<string, PostMeta[]>()
@@ -111,11 +133,13 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
         x: initialOffset.x + (e.clientX - dragStart.x),
         y: initialOffset.y + (e.clientY - dragStart.y),
       })
+      setLocated(false)
     }
   }
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return
+    suppressClickRef.current = false
     setIsDragging(true)
     setDragStart({ x: e.clientX, y: e.clientY })
     setInitialOffset({ ...offset })
@@ -123,18 +147,18 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
 
   const handleMouseUp = () => setIsDragging(false)
   const handleMouseLeave = () => { setIsDragging(false); setHoveredProvince(null) }
-  const handleWheel = (e: React.WheelEvent) => {
-    const delta = e.deltaY > 0 ? -0.1 : 0.1
-    setScale((prev) => Math.max(0.5, Math.min(4, prev + delta)))
-  }
-  const zoomIn = () => setScale((prev) => Math.min(4, prev + 0.3))
-  const zoomOut = () => setScale((prev) => Math.max(0.5, prev - 0.3))
-  const resetZoom = () => { setScale(1); setOffset({ x: 0, y: 0 }) }
+
+  const zoomIn = () => { setScale((prev) => Math.min(MAX_SCALE, prev + 0.3)); setLocated(false) }
+  const zoomOut = () => { setScale((prev) => Math.max(MIN_SCALE, prev - 0.3)); setLocated(false) }
+  const resetZoom = () => { setScale(1); setOffset({ x: 0, y: 0 }); setLocated(false) }
 
   const handleWheelNative = useCallback((e: WheelEvent) => {
     e.preventDefault()
-    const delta = e.deltaY > 0 ? -0.1 : 0.1
-    setScale((prev) => Math.max(0.5, Math.min(4, prev + delta)))
+    // ctrlKey+wheel = 触摸板双指捏合（桌面触控板同样受益）
+    const step = e.ctrlKey ? 0.25 : 0.1
+    const delta = e.deltaY > 0 ? -step : step
+    setScale((prev) => Math.max(MIN_SCALE, Math.min(MAX_SCALE, prev + delta)))
+    setLocated(false)
   }, [])
 
   useEffect(() => {
@@ -143,6 +167,115 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     container.addEventListener('wheel', handleWheelNative, { passive: false })
     return () => container.removeEventListener('wheel', handleWheelNative)
   }, [handleWheelNative])
+
+  // ---- 触摸手势：单指拖动 / 双指缩放（touch-action:none 由容器 style 提供） ----
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    suppressClickRef.current = false
+    const t = touchRef.current
+    if (e.touches.length === 1) {
+      t.mode = 'pan'
+      t.startX = e.touches[0].clientX
+      t.startY = e.touches[0].clientY
+      t.initialOffset = { ...offsetRef.current }
+      t.moved = false
+    } else if (e.touches.length === 2) {
+      t.mode = 'pinch'
+      const dx = e.touches[1].clientX - e.touches[0].clientX
+      const dy = e.touches[1].clientY - e.touches[0].clientY
+      t.pinchDist = Math.max(1, Math.hypot(dx, dy))
+      t.pinchMid = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top,
+      }
+      t.initialScale = scale
+      t.initialOffset = { ...offsetRef.current }
+      t.moved = false
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const t = touchRef.current
+    if (t.mode === 'pan' && e.touches.length === 1) {
+      const dx = e.touches[0].clientX - t.startX
+      const dy = e.touches[0].clientY - t.startY
+      if (Math.abs(dx) + Math.abs(dy) > 8) t.moved = true
+      setOffset({ x: t.initialOffset.x + dx, y: t.initialOffset.y + dy })
+      setLocated(false)
+    } else if (t.mode === 'pinch' && e.touches.length >= 2) {
+      const dx = e.touches[1].clientX - e.touches[0].clientX
+      const dy = e.touches[1].clientY - e.touches[0].clientY
+      const dist = Math.max(1, Math.hypot(dx, dy))
+      const mid = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top,
+      }
+      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, t.initialScale * (dist / t.pinchDist)))
+      // 保持双指中点下的地图点不动（围绕中点缩放）
+      const wx = (t.pinchMid.x - t.initialOffset.x) / t.initialScale
+      const wy = (t.pinchMid.y - t.initialOffset.y) / t.initialScale
+      setScale(newScale)
+      setOffset({ x: mid.x - wx * newScale, y: mid.y - wy * newScale })
+      if (Math.abs(dist - t.pinchDist) > 4) t.moved = true
+      setLocated(false)
+    }
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const t = touchRef.current
+    if (e.touches.length === 1 && t.mode === 'pinch') {
+      // 双指抬起一根：退化为单指拖动
+      t.mode = 'pan'
+      t.startX = e.touches[0].clientX
+      t.startY = e.touches[0].clientY
+      t.initialOffset = { ...offsetRef.current }
+      t.moved = false
+      return
+    }
+    if (e.touches.length === 0) {
+      suppressClickRef.current = t.moved
+      t.mode = 'none'
+      t.moved = false
+    }
+  }
+
+  // 拖动/捏合后抑制浏览器合成的 click，避免误触省份
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (suppressClickRef.current) {
+      e.stopPropagation()
+      suppressClickRef.current = false
+    }
+  }
+
+  // ---- 回到旅行位置：聚焦已探索省份包围盒 ----
+  const focusLitProvinces = () => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect || rect.width === 0 || rect.height === 0) return
+    if (located) { resetZoom(); return }
+    const lit = paths.filter((p) => p.lit && p.centroid)
+    if (lit.length === 0) { resetZoom(); return }
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    for (const p of lit) {
+      const [x, y] = p.centroid!
+      if (x < minX) minX = x
+      if (x > maxX) maxX = x
+      if (y < minY) minY = y
+      if (y > maxY) maxY = y
+    }
+    const pad = Math.min(rect.width, rect.height) * 0.16
+    const bboxW = Math.max(1, maxX - minX)
+    const bboxH = Math.max(1, maxY - minY)
+    const s = Math.min((rect.width - pad) / bboxW, (rect.height - pad) / bboxH, 3.2)
+    const clamped = Math.max(MIN_SCALE, s)
+    const center = { x: rect.width / 2, y: rect.height / 2 }
+    const bc = { x: (minX + maxX) / 2, y: (minY + maxY) / 2 }
+    setScale(clamped)
+    setOffset({ x: center.x - bc.x * clamped, y: center.y - bc.y * clamped })
+    setLocated(true)
+  }
 
   const handleProvinceClick = (provinceId: string) => {
     setSelectedProvince(provinceId)
@@ -160,7 +293,11 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
-      onWheel={handleWheel}
+      onClickCapture={handleClickCapture}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       <div
@@ -169,13 +306,15 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
           transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
           transformOrigin: 'center center',
           transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+          // touch-action 只作用于地图内容层：地图区域独占手势，抽屉/弹窗/按钮不受影响
+          touchAction: 'none',
         }}
       >
         <MapPaths paths={paths} dashPath={dashPath} hoveredProvince={hoveredProvince} selectedProvince={selectedProvince} onProvinceHover={setHoveredProvince} onProvinceClick={handleProvinceClick} />
         <SouthChinaSeaInset />
       </div>
 
-      <ZoomControls scale={scale} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
+      <ZoomControls scale={scale} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} onLocate={focusLitProvinces} located={located} />
 
       {hoveredProvince && (
         <ProvinceTooltip province={paths.find((p) => p.id === hoveredProvince)} provincePosts={postsByProvince.get(hoveredProvince) || []} mousePos={mousePos} />

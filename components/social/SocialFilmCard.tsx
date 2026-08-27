@@ -19,6 +19,7 @@ interface SocialFilmCardProps {
   dayCount?: number
   photoCount?: number
   location?: string | null
+  travelRelation?: string | null
   author?: SocialFilmAuthor | null
   stats?: { likes?: number; comments?: number; bookmarks?: number }
   variant?: 'hero' | 'card'
@@ -47,6 +48,7 @@ export default function SocialFilmCard({
   dayCount,
   photoCount,
   location,
+  travelRelation,
   author,
   stats,
   variant = 'card',
@@ -86,11 +88,11 @@ export default function SocialFilmCard({
         className={cn('group relative block w-full overflow-hidden rounded-[2rem] bg-[var(--social-surface)] text-left ring-1 ring-[var(--social-line)]', className)}>
         {cover('aspect-[16/10]')}
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/15 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
+        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-7">
           {cityName && <div className="text-xs font-medium tracking-[0.22em] text-[var(--social-accent)] uppercase">{cityName}</div>}
-          {title && <h2 className="mt-2 max-w-2xl text-2xl font-semibold leading-tight tracking-tight text-[var(--social-text)] sm:text-3xl">{title}</h2>}
-          {summary && <p className="mt-2 line-clamp-2 max-w-2xl text-sm text-[var(--social-muted)]">{summary}</p>}
-          <div className="mt-4 flex items-center justify-between gap-3">
+          {title && <h2 className="mt-2 max-w-2xl text-xl font-semibold leading-tight tracking-tight text-[var(--social-text)] sm:text-3xl">{title}</h2>}
+          {summary && <p className="mt-2 line-clamp-2 max-w-2xl text-sm text-[var(--social-muted)] max-sm:hidden">{summary}</p>}
+          <div className="mt-3 flex items-center justify-between gap-3 sm:mt-4">
             {author ? <div className="flex min-w-0 items-center gap-2"><SocialAvatar name={author.name} avatarUrl={author.avatar} size={28} /><span className="truncate text-sm text-[var(--social-muted)]">{author.name}</span></div> : <span />}
             {statsNode}
           </div>
@@ -109,6 +111,7 @@ export default function SocialFilmCard({
         {title && <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--social-text)]">{title}</h3>}
         {summary && <p className="line-clamp-2 text-sm leading-relaxed text-[var(--social-muted)]">{summary}</p>}
         <div className="flex items-center gap-x-2 gap-y-1 text-xs text-[var(--social-faint)]">
+          {travelRelation && <span className="text-[var(--social-accent)]">{travelRelation}</span>}
           {dateRange && <span>{dateRange}</span>}
           {dayCount !== undefined && <span>· {dayCount} 天</span>}
           {photoCount !== undefined && <span>· {photoCount} 张</span>}
