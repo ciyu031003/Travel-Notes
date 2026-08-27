@@ -286,7 +286,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                       ].map(([label, value]) => (
                         <div key={String(label)} className="rounded-xl bg-[var(--social-surface-60)] py-2">
                           <div className="text-lg font-semibold tabular-nums">{value}</div>
-                          <div className="text-[11px] text-[var(--social-faint)]">{label}</div>
+                          <div className="text-xs text-[var(--social-faint)]">{label}</div>
                         </div>
                       ))}
                     </div>
@@ -326,7 +326,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                                       {m.username.slice(0, 1).toUpperCase()}
                                     </span>
                                     <span className="text-sm">{m.username}</span>
-                                    <span className="text-[11px] text-[var(--social-faint)]">{ROLE_LABEL[m.role]}</span>
+                                    <span className="text-xs text-[var(--social-faint)]">{ROLE_LABEL[m.role]}</span>
                                   </div>
                                   {s.myRole === 'OWNER' && m.role !== 'OWNER' && (
                                     <button

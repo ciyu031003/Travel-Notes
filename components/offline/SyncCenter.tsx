@@ -83,7 +83,7 @@ export default function SyncCenter() {
           <div className="ml-auto"><SocialThemeToggle /></div>
           <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Sync</p>
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Sync</p>
             <h1 className="text-xl font-semibold">数据与同步</h1>
           </div>
         </header>
@@ -100,7 +100,7 @@ export default function SyncCenter() {
               ] as Array<[string, number]>).map(([label, value]) => (
                 <div key={label} className="rounded-[1.4rem] bg-[var(--social-surface-80)] p-5 text-center ring-1 ring-[var(--social-line)]">
                   <div className="text-2xl font-semibold tabular-nums">{value}</div>
-                  <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[var(--social-accent)]">{label}</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--social-accent)]">{label}</div>
                 </div>
               ))}
             </div>

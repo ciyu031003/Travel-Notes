@@ -120,7 +120,7 @@ export default function PostDetail({ postId }: { postId: number }) {
         )}
 
         <div className="mt-8">
-          {post.location && <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">{post.location}</div>}
+          {post.location && <div className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">{post.location}</div>}
           <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{post.title}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--social-muted)]">
             {dateText && <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />{dateText}</span>}

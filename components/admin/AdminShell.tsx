@@ -145,7 +145,7 @@ export default function AdminShell({
           </div>
           <div className="leading-tight">
             <p className="text-sm font-bold text-travel-inkStrong dark:text-white">行迹</p>
-            <p className="text-[11px] text-travel-ink/50 dark:text-gray-500">旅行记忆空间</p>
+            <p className="text-xs text-travel-ink/50 dark:text-gray-500">旅行记忆空间</p>
           </div>
         </div>
 
@@ -160,7 +160,7 @@ export default function AdminShell({
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-travel-ink dark:text-gray-100">{username || '加载中...'}</p>
-              <Link href="/" target="_blank" className="inline-flex items-center gap-1 text-[11px] text-travel-ink/50 hover:text-travel-accent transition-colors">
+              <Link href="/" target="_blank" className="inline-flex items-center gap-1 text-xs text-travel-ink/50 hover:text-travel-accent transition-colors">
                 <ExternalLink className="h-3 w-3" /> 查看前台
               </Link>
             </div>

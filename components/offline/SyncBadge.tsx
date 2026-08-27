@@ -15,7 +15,7 @@ export default function SyncBadge({ status, className }: { status: SyncStatus; c
       title={spec.label}
       aria-label={spec.label}
       className={
-        'inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-[11px] font-bold leading-none shadow-sm ' +
+        'inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-xs font-bold leading-none shadow-sm ' +
         (className || '')
       }
       style={{ color: spec.color, backgroundColor: 'rgba(5,5,8,0.72)' }}

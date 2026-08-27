@@ -274,7 +274,7 @@ export default function CommandPalette() {
         </div>
 
         {/* 底部提示 */}
-        <div className="flex items-center gap-4 px-5 py-2.5 border-t border-travel-line dark:border-shell-line text-[11px] text-travel-sand/70 dark:text-shell-faint">
+        <div className="flex items-center gap-4 px-5 py-2.5 border-t border-travel-line dark:border-shell-line text-xs text-travel-sand/70 dark:text-shell-faint">
           <span className="flex items-center gap-1">
             <ArrowUp className="w-3 h-3" />
             <ArrowDown className="w-3 h-3" />

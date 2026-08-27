@@ -105,7 +105,7 @@ export default function SocialFilmCard({
         onOpen && 'hover:-translate-y-0.5 hover:bg-[var(--social-surface)] hover:ring-[var(--social-line-strong)]', className)}>
       {cover(FRAME[frame])}
       <div className="space-y-2 p-4">
-        {cityName && <div className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--social-accent)]"><MapPin className="h-3 w-3" />{cityName}</div>}
+        {cityName && <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--social-accent)]"><MapPin className="h-3 w-3" />{cityName}</div>}
         {title && <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--social-text)]">{title}</h3>}
         {summary && <p className="line-clamp-2 text-sm leading-relaxed text-[var(--social-muted)]">{summary}</p>}
         <div className="flex items-center gap-x-2 gap-y-1 text-xs text-[var(--social-faint)]">

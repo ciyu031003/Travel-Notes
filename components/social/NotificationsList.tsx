@@ -41,7 +41,7 @@ export default function NotificationsList() {
           <div className="flex items-center gap-3">
             <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Inbox</p>
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Inbox</p>
               <h1 className="text-xl font-semibold">我的通知</h1>
             </div>
             {unread > 0 && <span className="rounded-full bg-[var(--social-accent-soft)] px-2 py-0.5 text-xs text-[var(--social-accent)]">{unread} 未读</span>}

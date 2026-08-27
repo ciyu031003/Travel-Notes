@@ -363,7 +363,7 @@ export default function AdminSpacesPage() {
                     {/* 封面 */}
                     <div className={`relative h-24 bg-gradient-to-br ${gradient} p-4`}>
                       <div className="absolute right-4 top-4">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur ${
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur ${
                           isOwner ? 'bg-white/90 text-travel-accentStrong' : 'bg-black/20 text-white'
                         }`}>
                           <Shield className="w-3 h-3" />
@@ -559,7 +559,7 @@ export default function AdminSpacesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${ROLE_COLOR[m.role] || ROLE_COLOR.VIEWER}`}>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${ROLE_COLOR[m.role] || ROLE_COLOR.VIEWER}`}>
                       {ROLE_LABEL[m.role] || m.role}
                     </span>
                     {m.role !== 'OWNER' && (
@@ -674,7 +674,7 @@ export default function AdminSpacesPage() {
                           <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
                             邀请 #{inv.id} · {ROLE_LABEL[inv.role] || inv.role}
                           </p>
-                          <p className="text-[11px] text-gray-400">
+                          <p className="text-xs text-gray-400">
                             {inv.status === 'PENDING' && `${daysLeft(inv.expiresAt)} 天后过期`}
                             {inv.status === 'USED' && '已使用'}
                             {inv.status === 'EXPIRED' && '已过期'}

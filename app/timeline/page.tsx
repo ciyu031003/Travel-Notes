@@ -119,12 +119,12 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
         {(entry.location || entry.mood) && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {entry.location && (
-              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">
                 <MapPin className="w-3 h-3" />
                 {entry.location}
               </span>
             )}
-            {entry.mood && <span className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">{entry.mood}</span>}
+            {entry.mood && <span className="text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">{entry.mood}</span>}
           </div>
         )}
       </div>

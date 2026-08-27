@@ -202,7 +202,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
       <div className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <header className="mb-8 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">My Archive</p>
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">My Archive</p>
             <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight">我的旅行档案</h1>
           </div>
           <div className="flex shrink-0 items-center gap-1 md:gap-2">
@@ -261,7 +261,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/20 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">最近的一次旅行</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">最近的一次旅行</p>
                   <h3 className="mt-2 line-clamp-2 text-2xl font-semibold tracking-tight text-white">{recent.title}</h3>
                   <p className="mt-2 truncate text-sm text-white/75">{recent.location || ''}{recent.location ? ' · ' : ''}{recentDate}{recentDate ? ' · ' : ''}{recent.photoCount} 张照片</p>
                 </div>
@@ -286,7 +286,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             {/* 同行者聚合：和 X 去过 N 次（来自 Travel.companions） */}
             {profile.companionStats && profile.companionStats.length > 0 && (
               <div className="mt-5">
-                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--social-faint)]">和 TA 们去过</p>
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--social-faint)]">和 TA 们去过</p>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {profile.companionStats.map((c) => (
                     <span
@@ -331,7 +331,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <div className="text-2xl font-semibold tracking-tight tabular-nums text-white">{m.value}</div>
                     <div className="mt-0.5 text-xs text-white/80">{m.label}</div>
-                    <div className="text-[11px] text-white/60">{m.suffix}</div>
+                    <div className="text-xs text-white/60">{m.suffix}</div>
                   </div>
                 )}
               </Link>

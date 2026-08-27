@@ -442,7 +442,7 @@ export default function AdminTravelsPage() {
                           <ul className="space-y-1.5 mb-3">
                             {day.itinerary.map((item) => (
                               <li key={item.id} className="flex items-center gap-2 text-sm">
-                                <span className="inline-block w-16 text-[11px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-center">
+                                <span className="inline-block w-16 text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-center">
                                   {ITINERARY_LABELS[item.type] || item.type}
                                 </span>
                                 <span className="text-gray-700 dark:text-gray-200">{item.title}</span>
@@ -531,7 +531,7 @@ export default function AdminTravelsPage() {
                   <ul className="space-y-1.5">
                     {detail.expenses.map((e) => (
                       <li key={e.id} className="flex items-center gap-2 text-sm">
-                        <span className="inline-block w-14 text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 text-center">
+                        <span className="inline-block w-14 text-xs px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 text-center">
                           {EXPENSE_LABELS[e.category] || e.category}
                         </span>
                         <span className="font-medium text-gray-800 dark:text-gray-100">¥{e.amount.toFixed(2)}</span>

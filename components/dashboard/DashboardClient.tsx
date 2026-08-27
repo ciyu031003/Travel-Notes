@@ -65,7 +65,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
     <div className="bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C]">
       <div className="container-custom py-10 md:py-14">
         <header className="mb-10 text-center md:mb-12">
-          <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-travel-accent dark:text-travel-bloom">
+          <p className="text-xs font-medium uppercase tracking-[0.28em] text-travel-accent dark:text-travel-bloom">
             My Travel Space
           </p>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-4xl">

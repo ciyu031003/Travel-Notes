@@ -117,7 +117,7 @@ export default function TravelCircleFeed() {
       <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <header className="mb-8 flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">Travel Circle</p>
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">Travel Circle</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--social-text)] sm:text-4xl">旅行圈</h1>
             <p className="mt-2 max-w-md text-sm text-[var(--social-muted)]">看看别人眼中的世界，发现正在发生的旅途。</p>
           </div>

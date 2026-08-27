@@ -36,7 +36,7 @@ export default function MobileBottomNav() {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex min-h-[52px] flex-col items-center justify-center gap-1 text-[11px] transition-colors',
+                'flex min-h-[52px] flex-col items-center justify-center gap-1 text-xs transition-colors',
                 active
                   ? 'font-medium text-travel-accent dark:text-travel-bloom'
                   : 'text-travel-ink/70 hover:text-travel-ink dark:text-shell-muted dark:hover:text-[#E8E6E1]'

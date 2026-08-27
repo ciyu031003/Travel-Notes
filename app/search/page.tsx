@@ -243,7 +243,7 @@ function SearchContent() {
                       {post.tags.slice(0, 5).map((tag) => (
                         <span
                           key={tag}
-                          className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/60 dark:bg-white/10 text-travel-sand dark:text-shell-text"
+                          className="text-xs px-2 py-0.5 rounded-full bg-travel-sakura/60 dark:bg-white/10 text-travel-sand dark:text-shell-text"
                         >
                           #{tag}
                         </span>

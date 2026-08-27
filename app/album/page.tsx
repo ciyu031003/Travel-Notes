@@ -542,7 +542,7 @@ export default function AlbumPage() {
                             <span className="text-[10px] text-album-accent font-bold">
                               {String(index + 1).padStart(2, '0')}
                             </span>
-                            <span className="[writing-mode:vertical-rl] text-[11px] font-bold tracking-wide text-album-text1 max-h-16 overflow-hidden">
+                            <span className="[writing-mode:vertical-rl] text-xs font-bold tracking-wide text-album-text1 max-h-16 overflow-hidden">
                               {city.name.slice(0, 5)}
                             </span>
                             <span className="text-[10px] text-album-text2">{city.images.length}张</span>
@@ -686,7 +686,7 @@ export default function AlbumPage() {
                 )}
                 {albumCompanions.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-bold tracking-wider text-album-warm/70">同行者</span>
+                    <span className="text-xs font-bold tracking-wider text-album-warm/70">同行者</span>
                     {albumCompanions.map((c) => (
                       <button
                         key={c.name}

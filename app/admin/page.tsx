@@ -234,7 +234,7 @@ export default function AdminDashboard() {
                     </div>
                   )}
                   {/* 类型角标 */}
-                  <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+                  <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/35 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
                     {typeLabels[post.type] || post.type}
                   </span>
                   {/* 悬停查看 */}
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                   {post.tags && post.tags.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {post.tags.slice(0, 4).map((tag) => (
-                        <span key={tag} className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-[11px] text-travel-accent dark:bg-shell-surface/80 dark:text-travel-bloom">
+                        <span key={tag} className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-xs text-travel-accent dark:bg-shell-surface/80 dark:text-travel-bloom">
                           # {tag}
                         </span>
                       ))}
@@ -284,7 +284,7 @@ export default function AdminDashboard() {
                   {/* 状态与操作 */}
                   <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3.5 dark:border-white/5">
                     <div className="flex items-center gap-1.5">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                         post.published
                           ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300'
                           : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400'
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
                         onClick={() => togglePublic(post)}
                         disabled={togglingId === post.id}
                         title={post.isPublic ? '点击设为仅自己可见' : '点击公开分享（所有人可见）'}
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-all active:scale-95 disabled:opacity-60 ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-all active:scale-95 disabled:opacity-60 ${
                           post.isPublic
                             ? 'bg-sky-100 text-sky-600 hover:bg-sky-200 dark:bg-sky-500/15 dark:text-sky-300'
                             : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-600 dark:bg-white/10 dark:text-gray-400'

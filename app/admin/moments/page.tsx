@@ -174,7 +174,7 @@ export default function AdminMomentsPage() {
                     {moment.tags && moment.tags.length > 0 && (
                       <span className="flex gap-1.5 flex-wrap">
                         {moment.tags.map((tag) => (
-                          <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accent dark:text-travel-accentSoft">
+                          <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accent dark:text-travel-accentSoft">
                             #{tag}
                           </span>
                         ))}

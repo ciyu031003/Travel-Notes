@@ -166,7 +166,7 @@ export default function AdminAnniversariesPage() {
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-travel-ink dark:text-gray-100">{item.title}</h3>
                     <span
-                      className={`text-[11px] px-2 py-0.5 rounded-full ${
+                      className={`text-xs px-2 py-0.5 rounded-full ${
                         item.recurring
                           ? 'bg-travel-accent/10 dark:bg-travel-accent/20 text-travel-accent'
                           : 'bg-travel-ink/10 dark:bg-white/5 text-travel-ink/60'

@@ -32,7 +32,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div>
       <div className="text-xl font-semibold text-[var(--social-text)] tabular-nums">{value}</div>
-      <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[var(--social-faint)]">{label}</div>
+      <div className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--social-faint)]">{label}</div>
     </div>
   )
 }

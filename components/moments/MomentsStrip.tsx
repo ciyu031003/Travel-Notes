@@ -103,7 +103,7 @@ export default function MomentsStrip() {
                     {moment.content}
                   </p>
                   <div className="mt-3 flex items-center gap-2">
-                    <span className="text-[11px] text-travel-ink dark:text-shell-muted">{timeAgo(moment.createdAt)}</span>
+                    <span className="text-xs text-travel-ink dark:text-shell-muted">{timeAgo(moment.createdAt)}</span>
                     {moment.tags && moment.tags.length > 0 && (
                       <span className="rounded-full bg-travel-sakura/50 dark:bg-shell-surface px-1.5 py-0.5 text-[10px] text-travel-accent dark:text-travel-bloom">
                         #{moment.tags[0]}

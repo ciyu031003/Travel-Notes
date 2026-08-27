@@ -88,11 +88,11 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-2">
               <span className="text-xs font-medium text-[var(--social-text)]">{name}</span>
-              <span className="text-[11px] text-[var(--social-faint)]">{timeAgo(c.createdAt)}</span>
+              <span className="text-xs text-[var(--social-faint)]">{timeAgo(c.createdAt)}</span>
             </div>
             <p className="mt-1 break-words text-sm leading-relaxed text-[var(--social-muted)]">{c.content}</p>
             <button type="button" onClick={() => setReplyTo({ id: c.id, username: name })}
-              className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-[var(--social-faint)] transition hover:text-[var(--social-accent)]">
+              className="mt-1.5 inline-flex items-center gap-1 text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]">
               <CornerDownRight className="h-3 w-3" /> 回复
             </button>
           </div>

@@ -326,7 +326,7 @@ function LoginPageContent() {
                     </div>
                   ))}
                 </div>
-                <p className="mt-3 text-center text-[11px] text-travel-ink dark:text-shell-muted">
+                <p className="mt-3 text-center text-xs text-travel-ink dark:text-shell-muted">
                   {cityThumbnails.length} 座城市的记忆邮戳
                 </p>
               </div>

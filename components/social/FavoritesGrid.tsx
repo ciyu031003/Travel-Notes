@@ -40,7 +40,7 @@ export default function FavoritesGrid() {
           <div className="ml-auto"><SocialThemeToggle /></div>
           <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Memories</p>
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Memories</p>
             <h1 className="text-xl font-semibold">我的收藏</h1>
           </div>
         </header>
