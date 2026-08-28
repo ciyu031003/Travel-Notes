@@ -141,14 +141,23 @@ function PageBody({ page, book }: { page: Page; book: Book }) {
   }
 }
 
-const PAGE_W = 440
-const PAGE_H = 560
-
 export default function BookReader({ book, onBack }: { book: Book; onBack: () => void }) {
   const pages = useMemo(() => buildPages(book), [book])
-  const [pageIndex, setPageIndex] = useState(0) // 当前右侧页索引
+  const [pageIndex, setPageIndex] = useState(0) // 当前页索引（桌面=右页）
   const [turn, setTurn] = useState<'next' | 'prev' | null>(null)
   const timer = useRef<number | null>(null)
+
+  // 视口：桌面双页 / 移动单页 + 自适应尺寸
+  const [vp, setVp] = useState({ w: 1280, h: 800 })
+  useEffect(() => {
+    const onR = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    onR()
+    window.addEventListener('resize', onR)
+    return () => window.removeEventListener('resize', onR)
+  }, [])
+  const isDesktop = vp.w >= 640
+  const pageW = Math.round(isDesktop ? Math.min(440, (vp.w - 190) / 2) : Math.min(vp.w * 0.92, 460))
+  const pageH = Math.round(Math.min(pageW * 1.25, vp.h - 200))
 
   const total = pages.length
   const canNext = pageIndex < total - 1
@@ -158,10 +167,11 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
     if (turn || next < 0 || next > total - 1 || next === pageIndex) return
     setTurn(next > pageIndex ? 'next' : 'prev')
     if (timer.current) window.clearTimeout(timer.current)
+    const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     timer.current = window.setTimeout(() => {
       setPageIndex(next)
       setTurn(null)
-    }, 430)
+    }, reduce ? 0 : 430)
   }, [pageIndex, total, turn])
 
   useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
@@ -187,11 +197,17 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
     else if (dx > 50) go(pageIndex - 1)
   }
 
-  // 翻转期间展示的空间（right 页的动态内容）
-  const rightPage = pages[pageIndex]
+  const current = pages[pageIndex]
   const leftPage = pageIndex > 0 ? pages[pageIndex - 1] : null
-  const nextRight = turn === 'next' && pageIndex + 1 < total ? pages[pageIndex + 1] : rightPage
+  const revealed = turn === 'next'
+    ? (pageIndex + 1 < total ? pages[pageIndex + 1] : current)
+    : turn === 'prev'
+      ? (pageIndex - 1 >= 0 ? pages[pageIndex - 1] : current)
+      : current
+  const flipPage = turn ? (turn === 'prev' && isDesktop ? leftPage : current) : null
   const prevLeft = turn === 'prev' && pageIndex - 2 >= 0 ? pages[pageIndex - 2] : null
+
+  const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40'
 
   return (
     <div className="fixed inset-0 z-[105] flex flex-col bg-travel-cream">
@@ -206,26 +222,35 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
         </button>
       </header>
 
-      <main className="flex flex-1 items-center justify-center overflow-hidden px-4 py-4" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        <div className="flex items-center gap-4">
-          {/* 上一页按钮 */}
+      <main className="flex flex-1 items-center justify-center overflow-hidden px-3 py-4" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className="flex items-center gap-3">
           <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} aria-label="上一页"
-            className="hidden rounded-full bg-travel-sakura/60 p-2 text-travel-ink hover:bg-travel-sakura disabled:opacity-40 sm:block">
-            <ChevronLeft className="h-5 w-5" />
+            className={`${navBtn} hidden sm:inline-flex`}>
+            <ChevronLeft className="h-4 w-4" />
           </button>
 
           {/* 书（透视容器） */}
           <div className="book-scene" style={{ perspective: '2600px' }}>
-            <div className="book" style={{ width: PAGE_W * 2, height: PAGE_H, position: 'relative' }}>
-              {/* 左页（静态，上一页） */}
-              <div style={{ position: 'absolute', left: 0, top: 0, width: PAGE_W, height: PAGE_H, zIndex: 1 }}
-                className="book-paper flex items-center justify-center overflow-hidden rounded-l-[3px]">
-                {turn === 'prev' ? (prevLeft ? <PageBody page={prevLeft} book={book} /> : null) : leftPage ? <PageBody page={leftPage} book={book} /> : null}
-              </div>
-              {/* 右页（底，下一页/后一页） */}
-              <div style={{ position: 'absolute', right: 0, top: 0, width: PAGE_W, height: PAGE_H, zIndex: 2 }}
-                className="book-paper flex items-center justify-center overflow-hidden rounded-r-[3px]">
-                <PageBody page={nextRight} book={book} />
+            <div className="book" style={{ width: isDesktop ? pageW * 2 : pageW, height: pageH, position: 'relative' }}>
+              {/* 底部页（翻开后露出的页 / 静态页） */}
+              <div
+                style={{ position: 'absolute', inset: 0, zIndex: 2 }}
+                className="book-paper flex items-center justify-center overflow-hidden rounded-[3px]"
+              >
+                {isDesktop ? (
+                  <div className="flex h-full w-full">
+                    <div className="flex h-full w-1/2 items-center justify-center overflow-hidden rounded-l-[3px]">
+                      {turn === 'prev' ? (prevLeft ? <PageBody page={prevLeft} book={book} /> : null) : leftPage ? <PageBody page={leftPage} book={book} /> : null}
+                    </div>
+                    <div className="flex h-full w-1/2 items-center justify-center overflow-hidden rounded-r-[3px]">
+                      {turn === 'next' ? <PageBody page={revealed} book={book} /> : <PageBody page={current} book={book} />}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full w-full">
+                    <PageBody page={revealed} book={book} />
+                  </div>
+                )}
               </div>
 
               {/* 翻转页 */}
@@ -234,30 +259,35 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
                   className={turn === 'next' ? 'book-flip-next' : 'book-flip-prev'}
                   style={{
                     position: 'absolute', top: 0, zIndex: 5,
-                    width: PAGE_W, height: PAGE_H, ...(turn === 'next' ? { right: 0 } : { left: 0 }),
-                    transformOrigin: turn === 'next' ? 'left center' : 'right center',
+                    width: isDesktop ? pageW : pageW, height: pageH,
+                    ...(isDesktop ? (turn === 'next' ? { right: 0 } : { left: 0 }) : { left: 0 }),
+                    transformOrigin: isDesktop ? (turn === 'next' ? 'left center' : 'right center') : (turn === 'next' ? 'left center' : 'right center'),
                     backfaceVisibility: 'hidden',
                   }}
                 >
-                  <PageBody page={turn === 'next' ? rightPage : (leftPage as Page)} book={book} />
+                  <div className="book-paper h-full w-full overflow-hidden rounded-[3px]">
+                    <PageBody page={flipPage as Page} book={book} />
+                  </div>
                 </div>
               )}
-              {/* 书脊 */}
-              <div style={{ position: 'absolute', left: PAGE_W - 1, top: 0, width: 2, height: PAGE_H, zIndex: 4 }}
-                className="bg-gradient-to-b from-black/10 via-black/20 to-black/10" />
+
+              {/* 书脊（仅桌面） */}
+              {isDesktop && (
+                <div style={{ position: 'absolute', left: pageW - 1, top: 0, width: 2, height: pageH, zIndex: 4 }}
+                  className="bg-gradient-to-b from-black/10 via-black/25 to-black/10" />
+              )}
             </div>
           </div>
 
-          {/* 下一页按钮 */}
           <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} aria-label="下一页"
-            className="hidden rounded-full bg-travel-sakura/60 p-2 text-travel-ink hover:bg-travel-sakura disabled:opacity-40 sm:block">
-            <ChevronRight className="h-5 w-5" />
+            className={`${navBtn} hidden sm:inline-flex`}>
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </main>
 
       <footer className="flex items-center justify-center gap-3 border-t border-travel-dim/40 px-4 py-3">
-        <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40">
+        <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} className={navBtn}>
           <ChevronLeft className="h-3.5 w-3.5" />上一页
         </button>
         <div className="flex flex-wrap justify-center gap-1">
@@ -266,7 +296,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
               className={`h-1.5 w-1.5 rounded-full transition-all ${i === pageIndex ? 'bg-travel-bloom' : 'bg-travel-dim/40'}`} />
           ))}
         </div>
-        <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40">
+        <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} className={navBtn}>
           下一页<ChevronRight className="h-3.5 w-3.5" />
         </button>
       </footer>
