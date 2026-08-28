@@ -76,6 +76,26 @@ model SiteSetting {
   @@index([resetToken])
 }
 
+/// 应用敏感配置(加密存储:AES-256-GCM 密文 + IV 落库,解密密钥来自 .env 的 APP_ENCRYPTION_KEY)。
+/// 仅存密文/IV,读取时解密;不落明文、不经响应返回明文。name 如 'DASHSCOPE_API_KEY'。
+model AppSecret {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  valueEnc  String   @db.Text
+  iv        String   @db.VarChar(64)
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+  updatedAt DateTime @updatedAt @db.Timestamp(3)
+}
+
+/// 油画生成缓存：sourceKey = 原图 URL 的 SHA-256, url = 已保存到我们存储的油画图地址。
+/// 每张只生成一次, 避免重复计费。
+model OilPainting {
+  id        Int      @id @default(autoincrement())
+  sourceKey String   @unique @db.VarChar(64)
+  url       String   @db.VarChar(500)
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+}
+
 /// 用户账号（多账号基础：当前为单管理员迁移自 SiteSetting，未来支持情侣双账号）
 model User {
   id                    Int      @id @default(autoincrement())

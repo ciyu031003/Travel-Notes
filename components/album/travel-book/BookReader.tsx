@@ -66,14 +66,46 @@ function ChapterIntro({ chapter }: { chapter: BookChapter }) {
   )
 }
 
-function PhotoPage({ chapter, photo }: { chapter: BookChapter; photo: BookPhoto }) {
-  const src = photo.previewUrl || photo.thumbnailUrl
-  const ratio = photo.width && photo.height ? `${photo.width} / ${photo.height}` : '4 / 3'
+function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhoto }) {
+  const realSrc = photo.previewUrl || photo.thumbnailUrl
+  const [paint, setPaint] = useState<string | null>(null)
+  const [state, setState] = useState<'loading' | 'done' | 'none'>('loading')
+
+  // 按需生成该照片的油画版（生成后缓存,后端只生成一次）
+  useEffect(() => {
+    let alive = true
+    if (!realSrc) { setState('none'); return }
+    fetch(`/api/travel-book/oil?url=${encodeURIComponent(realSrc)}`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => { if (alive) { if (j?.url) { setPaint(j.url); setState('done') } else { setState('none') } } })
+      .catch(() => { if (alive) setState('none') })
+    return () => { alive = false }
+  }, [realSrc])
+
+  const paintSrc = paint || realSrc // 失败/未配置回退原图
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
-      <div className="min-h-0 flex-1" style={{ aspectRatio: ratio }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src || ''} alt="" loading="lazy" className="h-full w-full object-cover" />
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+        {/* 左(桌面)：原图 */}
+        <div className="relative min-h-0 flex-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={realSrc || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <span className="absolute left-2 top-2 rounded-full bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white">原图</span>
+        </div>
+        {/* 右(桌面)：油画版 */}
+        <div className="relative min-h-0 flex-1 border-t border-travel-dim/40 sm:border-l sm:border-t-0">
+          {state === 'loading' || state === 'none' ? (
+            <div className="flex h-full items-center justify-center bg-travel-sakura/20">
+              <span className="animate-pulse text-[11px] tracking-widest text-travel-ink/50">
+                {state === 'loading' ? '油画生成中…' : '油画暂不可用'}
+              </span>
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={paintSrc || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          )}
+          <span className="absolute right-2 top-2 rounded-full bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white">油画</span>
+        </div>
       </div>
       <div className="flex items-center justify-between pt-2.5 text-[10px] uppercase tracking-[0.2em] text-travel-ink/45">
         <span>Chapter {String(chapter.index).padStart(2, '0')}</span>
@@ -135,7 +167,7 @@ function PageBody({ page, book }: { page: Page; book: Book }) {
   switch (page.kind) {
     case 'cover': return <CoverPage book={book} />
     case 'chapter': return <ChapterIntro chapter={page.chapter} />
-    case 'photo': return <PhotoPage chapter={page.chapter} photo={page.photo} />
+    case 'photo': return <PhotoSpread chapter={page.chapter} photo={page.photo} />
     case 'summary': return <SummaryPage book={book} />
     default: return null
   }
