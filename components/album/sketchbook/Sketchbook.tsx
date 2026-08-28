@@ -672,6 +672,8 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
             <p className="sk-caption">
               {current?.title}
               {current?.place ? <span className="sk-meta"> · {current.place}</span> : null}
+              {current?.photoNo ? <span className="sk-meta"> · 第{current.photoNo}/{current.count}张</span> : null}
+              {current?.date ? <span className="sk-meta"> · {current.date}</span> : null}
             </p>
           </div>
           <p className={'sk-hint' + (showHint ? '' : ' gone')}>拖动页面翻页 · 拖动放大镜查看细节</p>
@@ -738,8 +740,8 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
                 onClick={() => { goTo(sp.index); setIndexOpen(false) }}
               >
                 <span className="n">{String(sp.index + 1).padStart(2, '0')}</span>
-                <span className="t">{sp.kind === 'summary' ? '旅行总结' : sp.title}</span>
-                <span className="p">{sp.kind === 'summary' ? 'End' : sp.place || sp.date}</span>
+                <span className="t">{sp.kind === 'summary' ? '旅行总结' : (sp.photoNo ? sp.title + ' · 第' + sp.photoNo + '张' : sp.title)}</span>
+                <span className="p">{sp.kind === 'summary' ? 'End' : (sp.place || sp.date)}</span>
               </button>
             </li>
           ))}

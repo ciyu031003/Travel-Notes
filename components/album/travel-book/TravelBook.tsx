@@ -5,6 +5,7 @@ import { BookOpen, ChevronLeft, ChevronRight, MapPin, Camera, Users, Loader2, La
 import { apiUrl } from '@/lib/api-base'
 import BookReader from './BookReader'
 import Sketchbook from '../sketchbook/Sketchbook'
+import PostcardCard from '../PostcardCard'
 
 type Mode = 'book' | 'space' | 'pixel'
 
@@ -368,37 +369,9 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
             <p className="text-xs text-travel-ink/40">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3">
             {books.map((book) => (
-              <button
-                key={book.travelId}
-                type="button"
-                onClick={() => setOpenBook(book)}
-                className="group overflow-hidden rounded-[2px] bg-[#FFFCF7] text-left shadow-[0_16px_50px_-28px_rgba(41,39,35,0.5)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_70px_-30px_rgba(41,39,35,0.55)]"
-              >
-                <div className="aspect-[4/3] w-full overflow-hidden bg-travel-sakura/20">
-                  {book.coverThumb ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={book.coverThumb} alt={book.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <Camera className="h-8 w-8 text-travel-bloom/40" />
-                    </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-display text-base font-bold text-travel-ink">{book.title}</h3>
-                  <div className="mt-1.5 flex items-center gap-2 text-xs text-travel-ink/50">
-                    {book.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{book.location}</span>}
-                    {book.startDate && <span>{formatDay(book.startDate)}</span>}
-                  </div>
-                  <div className="mt-2 flex items-center gap-3 text-[11px] text-travel-ink/45">
-                    <span className="inline-flex items-center gap-1"><BookOpen className="h-3 w-3" />{book.dayCount} 章</span>
-                    <span className="inline-flex items-center gap-1"><Camera className="h-3 w-3" />{book.photoCount} 图</span>
-                    {book.travelType && <span className="rounded-full bg-travel-sakura/40 px-1.5 py-0.5 text-travel-accent">{TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}</span>}
-                  </div>
-                </div>
-              </button>
+              <PostcardCard key={book.travelId} book={book} onOpen={() => setOpenBook(book)} />
             ))}
           </div>
         )}
