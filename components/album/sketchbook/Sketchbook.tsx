@@ -143,11 +143,13 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       if (sketch) img.classList.add('sk-sketch')
     }
 
-    /* 一页书页（左右半页其一）：模糊占位 + 半页图 + 中缝阴影 + 外侧纸边 */
+    /* 一页书页（左右半页其一）：模糊占位(仅当图未就绪) + 半页图 + 中缝阴影 + 外侧纸边 */
     const page = (pos: 'left' | 'right', sp: Spread) => {
       const p = div('sk-half ' + pos)
       let blur: HTMLDivElement | null = null
-      if (sp.blur && sp.blur !== sp.image) {
+      // 图已就绪则不创建模糊占位，杜绝"加载完仍残留模糊层次"
+      const ready = isImageReady(sp.image)
+      if (!ready && sp.blur && sp.blur !== sp.image) {
         blur = div('sk-blur')
         blur.style.backgroundImage = 'url(' + sp.blur + ')'
         p.appendChild(blur)
@@ -159,15 +161,19 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       img.decoding = 'async'
       img.className = 'sk-half-img' + (pos === 'right' ? ' right' : '')
       setSketch(img)
-      // 图就绪后淡出/移除模糊占位，避免"加载完仍有模糊层次"
-      const onImg = () => {
-        if (blur) {
-          blur.style.opacity = '0'
-          window.setTimeout(() => { if (blur.parentNode === p) blur.remove() }, 360)
-        }
+      let blurCleared = false
+      const clearBlur = () => {
+        if (!blur || blurCleared) return
+        blurCleared = true
+        blur.style.opacity = '0'
+        window.setTimeout(() => { if (blur.parentNode === p) blur.remove() }, 360)
       }
-      img.addEventListener('load', onImg)
-      img.addEventListener('error', onImg)
+      if (blur) {
+        // 图就绪后淡出/移除模糊占位；若缓存图同步可用则立即清除
+        img.addEventListener('load', clearBlur, { once: true })
+        img.addEventListener('error', clearBlur, { once: true })
+        if (img.complete && img.naturalWidth > 0) clearBlur()
+      }
       p.appendChild(img)
       p.appendChild(div('sk-gutter-shade ' + pos))
       p.appendChild(div('sk-page-edge ' + (pos === 'left' ? 'l' : 'r')))
@@ -214,7 +220,7 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
 
     syncZoomLayer()
     placeLoupe()
-  }, [sketch, spreads])
+  }, [sketch, spreads, isImageReady])
 
   /* ---------- 弯曲纸：嵌套条带 ---------- */
   const buildCurl = (turn: TurnState, fromSp?: Spread, toSp?: Spread) => {
