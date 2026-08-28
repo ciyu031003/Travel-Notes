@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, MapPin, X, Camera } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, MapPin, X, Camera } from 'lucide-react'
 import type { Book, BookChapter, BookPhoto } from './TravelBook'
 
 type Page =
@@ -71,7 +71,7 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
   const [paint, setPaint] = useState<string | null>(null)
   const [state, setState] = useState<'loading' | 'done' | 'none'>('loading')
 
-  // 按需生成该照片的油画版（生成后缓存,后端只生成一次）
+  // 按需生成该照片的油画版（生成后缓存,后端只生成一次）；暂停/未配置时返回 {url:null}
   useEffect(() => {
     let alive = true
     if (!realSrc) { setState('none'); return }
@@ -82,28 +82,36 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
     return () => { alive = false }
   }, [realSrc])
 
-  const paintSrc = paint || realSrc // 失败/未配置回退原图
+  const showSplit = state === 'done' && !!paint
+
+  // 无油画（暂停通义 API / 生成失败/未配置）：整页原图
+  if (!showSplit) {
+    return (
+      <div className="relative flex h-full flex-col overflow-hidden">
+        <div className="relative min-h-0 flex-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={realSrc || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+        </div>
+        <div className="flex items-center justify-between pt-2.5 text-[10px] uppercase tracking-[0.2em] text-travel-ink/45">
+          <span>Chapter {String(chapter.index).padStart(2, '0')}</span>
+          <span>{chapter.date ? formatDay(chapter.date) : ''}</span>
+        </div>
+      </div>
+    )
+  }
+
+  // 有油画：左原图 / 右油画 跨页
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
-        {/* 左(桌面)：原图 */}
         <div className="relative min-h-0 flex-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={realSrc || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
           <span className="absolute left-2 top-2 rounded-full bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white">原图</span>
         </div>
-        {/* 右(桌面)：油画版 */}
         <div className="relative min-h-0 flex-1 border-t border-travel-dim/40 sm:border-l sm:border-t-0">
-          {state === 'loading' || state === 'none' ? (
-            <div className="flex h-full items-center justify-center bg-travel-sakura/20">
-              <span className="animate-pulse text-[11px] tracking-widest text-travel-ink/50">
-                {state === 'loading' ? '油画生成中…' : '油画暂不可用'}
-              </span>
-            </div>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={paintSrc || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={paint || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
           <span className="absolute right-2 top-2 rounded-full bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white">油画</span>
         </div>
       </div>
@@ -173,7 +181,7 @@ function PageBody({ page, book }: { page: Page; book: Book }) {
   }
 }
 
-export default function BookReader({ book, onBack }: { book: Book; onBack: () => void }) {
+export default function BookReader({ book, onBack, onToggleSketch }: { book: Book; onBack: () => void; onToggleSketch?: () => void }) {
   const pages = useMemo(() => buildPages(book), [book])
   const [pageIndex, setPageIndex] = useState(0) // 当前页索引（桌面=右页）
   const [turn, setTurn] = useState<'next' | 'prev' | null>(null)
@@ -249,9 +257,17 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           我的旅行画册
         </button>
         <div className="font-display text-sm font-semibold text-travel-ink">{book.title}</div>
-        <button type="button" onClick={onBack} aria-label="关闭" className="rounded-full p-2 text-travel-ink/60 hover:bg-travel-sakura/40 hover:text-travel-ink">
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          {onToggleSketch && (
+            <button type="button" onClick={onToggleSketch} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura" title="切换为素描本">
+              <BookOpen className="h-3.5 w-3.5" />
+              素描本
+            </button>
+          )}
+          <button type="button" onClick={onBack} aria-label="关闭" className="rounded-full p-2 text-travel-ink/60 hover:bg-travel-sakura/40 hover:text-travel-ink">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </header>
 
       <main className="flex flex-1 items-center justify-center overflow-hidden px-3 py-4" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>

@@ -87,6 +87,9 @@ async function pollResult(apiKey: string, taskId: string): Promise<string | null
 
 /** 生成（或取缓存）某张照片的油画版, 返回我们存储的 URL。失败返回 null。 */
 export async function getOilPainting(photoUrl: string): Promise<string | null> {
+  // 开关：未显式开启(OIL_PAINT_ENABLED !== 'true')则暂停使用通义 API, 不调用/不计费, 前端回退原图
+  if (process.env.OIL_PAINT_ENABLED !== 'true') return null
+
   if (!photoUrl) return null
   const sk = sourceKey(photoUrl)
 

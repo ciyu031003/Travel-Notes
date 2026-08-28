@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, MapPin, Camera, Users, Loader2, LayoutGrid, Orbit, X } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
 import BookReader from './BookReader'
+import Sketchbook from '../sketchbook/Sketchbook'
 
 type Mode = 'book' | 'space' | 'pixel'
 
@@ -313,6 +314,7 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
   const [books, setBooks] = useState<Book[] | null>(null)
   const [error, setError] = useState('')
   const [openBook, setOpenBook] = useState<Book | null>(null)
+  const [readerMode, setReaderMode] = useState<'sketch' | 'book'>('sketch')
 
   const load = useCallback(() => {
     fetch(apiUrl('/api/travel-book'), { credentials: 'include' })
@@ -325,7 +327,12 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
   }, [])
   useEffect(() => { load() }, [load])
 
-  if (openBook) return <BookReader book={openBook} onBack={() => setOpenBook(null)} />
+  if (openBook) {
+    if (readerMode === 'book') {
+      return <BookReader book={openBook} onBack={() => setOpenBook(null)} onToggleSketch={() => setReaderMode('sketch')} />
+    }
+    return <Sketchbook book={openBook} onBack={() => setOpenBook(null)} onToggleBook={() => setReaderMode('book')} />
+  }
 
   return (
     <div className="min-h-screen bg-travel-cream">
