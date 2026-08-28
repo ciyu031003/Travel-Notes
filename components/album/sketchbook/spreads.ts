@@ -15,6 +15,7 @@ export interface Spread {
   place: string
   date: string
   image: string
+  blur: string
   count: number
   chapterId?: number
   /** 该照片在所属章节内的序号（从 1 开始），用于图版标签与图注 */
@@ -49,6 +50,7 @@ export function buildSpreads(book: Book): Spread[] {
     place: book.location || '',
     date: iso(book.startDate),
     image: coverImg,
+    blur: book.coverBlur || coverImg,
     count: book.photoCount,
   })
 
@@ -66,6 +68,7 @@ export function buildSpreads(book: Book): Spread[] {
         place,
         date: chDate,
         image: photo.previewUrl || photo.thumbnailUrl || NO_IMG,
+        blur: photo.blurUrl || photo.thumbnailUrl || NO_IMG,
         count: photos.length,
         chapterId: ch.id,
         photoNo: pi + 1,
@@ -81,6 +84,7 @@ export function buildSpreads(book: Book): Spread[] {
       place: book.location || '',
       date: iso(book.endDate || book.startDate),
       image: coverImg,
+      blur: book.coverBlur || coverImg,
       count: book.photoCount,
     })
   }

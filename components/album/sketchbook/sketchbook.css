@@ -140,6 +140,16 @@
 /* ---- 静止/展开时的整页图版 ---- */
 .sk-full { position: absolute; inset: 0; overflow: hidden; }
 .sk-full img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sk-blur {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(18px) saturate(1.12);
+  transform: scale(1.12);
+  pointer-events: none;
+  opacity: 0.92;
+}
 
 /* ---- 翻页时的左右半页 ---- */
 .sk-half { position: absolute; top: 0; bottom: 0; width: 50%; overflow-x: clip; overflow-y: visible; }

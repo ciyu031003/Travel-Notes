@@ -11,11 +11,13 @@ import { scopedWhere } from '../../visibility'
 import { skipDbOnBuild } from '../../db-guard'
 import { getPostService } from '../../container'
 import { findCityByName } from '../../../data/cities'
+import { resolveLocalUrlVariants } from '../../infrastructure/media-variants'
 
 export interface TravelBookChapterPhoto {
   id: number
   thumbnailUrl: string | null
   previewUrl: string | null
+  blurUrl: string | null
   width: number | null
   height: number | null
 }
@@ -43,6 +45,7 @@ export interface TravelBookData {
   companions: unknown
   coverThumb: string | null
   coverPreview: string | null
+  coverBlur: string | null
   dayCount: number
   photoCount: number
   chapters: TravelBookChapter[]
@@ -76,6 +79,7 @@ function toPhoto(m: any): TravelBookChapterPhoto {
     id: m.id,
     thumbnailUrl: variantOf(m, 'THUMBNAIL') ?? mediaUrl(m.storageKey),
     previewUrl: variantOf(m, 'PREVIEW') ?? mediaUrl(m.storageKey),
+    blurUrl: variantOf(m, 'BLUR') ?? mediaUrl(m.storageKey),
     width: m.width ?? null,
     height: m.height ?? null,
   }
@@ -160,6 +164,7 @@ async function listTravelModelBooks(userId?: number | null): Promise<TravelBookD
       companions: travel.companions ?? null,
       coverThumb: travel.coverMedia ? (variantOf(travel.coverMedia, 'THUMBNAIL') ?? mediaUrl(travel.coverMedia.storageKey)) : (travel.cover ?? null),
       coverPreview: travel.coverMedia ? (variantOf(travel.coverMedia, 'PREVIEW') ?? mediaUrl(travel.coverMedia.storageKey)) : (travel.cover ?? null),
+      coverBlur: travel.coverMedia ? (variantOf(travel.coverMedia, 'BLUR') ?? mediaUrl(travel.coverMedia.storageKey)) : (travel.cover ?? null),
       dayCount: (travel.days || []).length,
       photoCount,
       chapters,
@@ -190,12 +195,22 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
     photos: TravelBookChapterPhoto[]
   }
   const cityMap = new Map<string, CityBox>()
-  const urlPhoto = new Map<string, TravelBookChapterPhoto>()
+  const urlPhoto = new Map<string, Promise<TravelBookChapterPhoto>>()
   let photoSeq = 1
-  const toUrlPhoto = (url: string): TravelBookChapterPhoto => {
+  const toUrlPhoto = (url: string): Promise<TravelBookChapterPhoto> => {
     let existing = urlPhoto.get(url)
     if (!existing) {
-      existing = { id: photoSeq++, thumbnailUrl: url, previewUrl: url, width: null, height: null }
+      existing = (async () => {
+        const v = await resolveLocalUrlVariants(url)
+        return {
+          id: photoSeq++,
+          thumbnailUrl: v?.thumbnailUrl ?? url,
+          previewUrl: v?.previewUrl ?? url,
+          blurUrl: v?.blurUrl ?? url,
+          width: null,
+          height: null,
+        }
+      })()
       urlPhoto.set(url, existing)
     }
     return existing
@@ -207,7 +222,7 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
     const name = city?.name ?? post.location
     const raw = [...(post.cover ? [post.cover] : []), ...((post.images as string[]) || [])]
     if (raw.length === 0) continue
-    const imgs = raw.filter((u) => !(!u)).map(toUrlPhoto)
+    const imgs = await Promise.all(raw.filter((u) => !(!u)).map(toUrlPhoto))
 
     let box = cityMap.get(name)
     if (!box) {
@@ -255,6 +270,7 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
       companions: null,
       coverThumb: box.photos[0]?.thumbnailUrl ?? null,
       coverPreview: box.photos[0]?.previewUrl ?? null,
+      coverBlur: box.photos[0]?.blurUrl ?? null,
       dayCount: days.length,
       photoCount: box.photos.length,
       chapters,

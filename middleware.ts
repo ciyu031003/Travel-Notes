@@ -108,6 +108,15 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest): NextRes
   return response
 }
 
+function applyStaticCacheHeaders(response: NextResponse, pathname: string): NextResponse {
+  // 不可变的图片变体（-thumbnail/-preview/-blur.jpg）允许长期缓存
+  const isImmutableVariant = /-(thumbnail|preview|blur)\.(jpg|jpeg|png|webp)$/.test(pathname)
+  if (isImmutableVariant) {
+    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
+  }
+  return response
+}
+
 function finalizeResponse(response: NextResponse, request: NextRequest): NextResponse {
   return applyCorsHeaders(applySecurityHeaders(response), request)
 }
@@ -199,7 +208,9 @@ export async function middleware(request: NextRequest) {
 
   // 首页及公开前缀路径直接放行（首页需精确匹配，不能用 startsWith('/')）
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
-    return finalizeResponse(NextResponse.next(), request)
+    let res = finalizeResponse(NextResponse.next(), request)
+    if (pathname.startsWith('/uploads')) res = applyStaticCacheHeaders(res, pathname)
+    return res
   }
 
   const adminSession = request.cookies.get('admin_session')
@@ -224,5 +235,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)', '/uploads/:path*'],
 }

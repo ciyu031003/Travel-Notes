@@ -13,6 +13,7 @@ export interface BookPhoto {
   id: number
   thumbnailUrl: string | null
   previewUrl: string | null
+  blurUrl: string | null
   width: number | null
   height: number | null
 }
@@ -40,6 +41,7 @@ export interface Book {
   companions: unknown
   coverThumb: string | null
   coverPreview: string | null
+  coverBlur: string | null
   dayCount: number
   photoCount: number
   chapters: BookChapter[]

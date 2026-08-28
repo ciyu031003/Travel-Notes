@@ -68,6 +68,8 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
   const lastTs = useRef(0)
   const reducedRef = useRef(false)
   const hintTimer = useRef<number | null>(null)
+  /* ---------- 图片预取缓存（避免翻页时旧图重叠/空白） ---------- */
+  const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map())
 
   useEffect(() => {
     reducedRef.current = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -89,6 +91,47 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
     return Math.round(Math.max(165, Math.min(262, bookRef.current?.clientWidth ?? 0 * 0.235)))
   }, [])
 
+  /* ---------- 图片预取（立即发送请求 + 判断/等待解码） ---------- */
+  const warmImage = useCallback((url: string): HTMLImageElement | null => {
+    if (!url) return null
+    let img = imgCacheRef.current.get(url)
+    if (!img) {
+      img = new Image()
+      img.decoding = 'async'
+      img.loading = 'eager'
+      img.src = url
+      imgCacheRef.current.set(url, img)
+    }
+    return img
+  }, [])
+
+  const isImageReady = useCallback((url: string): boolean => {
+    const img = imgCacheRef.current.get(url)
+    if (!img) return false
+    return img.complete && img.naturalWidth > 0
+  }, [])
+
+  const waitImageReady = useCallback((url: string, timeout = 3000): Promise<void> => {
+    if (!url) return Promise.resolve()
+    const img = warmImage(url)
+    if (!img) return Promise.resolve()
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve()
+    return new Promise((resolve) => {
+      let settled = false
+      const finish = () => {
+        if (settled) return
+        settled = true
+        img.removeEventListener('load', finish)
+        img.removeEventListener('error', finish)
+        clearTimeout(timer)
+        resolve()
+      }
+      const timer = setTimeout(finish, timeout)
+      img.addEventListener('load', finish)
+      img.addEventListener('error', finish)
+    })
+  }, [warmImage])
+
   /* ---------- 书内容绘制（幂等：每次清空重建） ---------- */
   const paint = useCallback(() => {
     const bookEl = bookRef.current
@@ -106,10 +149,17 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       const full = div('sk-full')
       const sp = spreads[idxRef.current]
       if (sp) {
+        // 大图未解码时先显示低清模糊占位，避免空白/整块色块
+        if (sp.blur && sp.blur !== sp.image) {
+          const blur = div('sk-blur')
+          blur.style.backgroundImage = 'url(' + sp.blur + ')'
+          full.appendChild(blur)
+        }
         const img = new Image()
         img.src = sp.image
         img.alt = sp.title
         img.draggable = false
+        img.decoding = 'async'
         setSketch(img)
         full.appendChild(img)
         if (sp.kind === 'summary') {
@@ -135,10 +185,16 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       const toSp = spreads[turn.to]
       const half = (pos: 'left' | 'right', sp: Spread) => {
         const h = div('sk-half ' + pos)
+        if (sp.blur && sp.blur !== sp.image) {
+          const blur = div('sk-blur')
+          blur.style.backgroundImage = 'url(' + sp.blur + ')'
+          h.appendChild(blur)
+        }
         const img = new Image()
         img.src = sp.image
         img.alt = sp.title
         img.draggable = false
+        img.decoding = 'async'
         img.className = 'sk-half-img' + (pos === 'right' ? ' right' : '')
         setSketch(img)
         h.appendChild(img)
@@ -177,8 +233,15 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
         face.style.backgroundImage = 'url(' + url + ')'
         face.style.backgroundPositionX = px
       }
-      const fromUrl = fromSp?.image || ''
-      const toUrl = toSp?.image || ''
+      // 目标图未就绪时用模糊占位，避免翻页瞬间露出上一张/空白造成重叠
+      const displayUrl = (sp: Spread | undefined): string => {
+        if (!sp) return ''
+        warmImage(sp.image)
+        if (sp.blur && sp.blur !== sp.image) warmImage(sp.blur)
+        return isImageReady(sp.image) ? sp.image : (sp.blur || sp.image)
+      }
+      const fromUrl = displayUrl(fromSp)
+      const toUrl = displayUrl(toSp)
       const useFrom = turn.dir === 'next'
       dress(front, useFrom ? fromUrl : toUrl, useFrom ? A : B)
       dress(back, useFrom ? toUrl : fromUrl, useFrom ? B : A)
@@ -362,25 +425,23 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
     }
   }, [spreads.length, paint])
 
-  const step = useCallback((dir: Dir) => {
-    if (turnRef.current) {
-      idxRef.current = turnRef.current.to
-      turnRef.current = null
-    }
-    startTurn(dir, 0)
-    commit()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const startTurn = useCallback((dir: Dir, t: number) => {
+  const startTurn = useCallback(async (dir: Dir, t: number, awaitReady = false) => {
     springRef.current = null
     if (turnRef.current) idxRef.current = turnRef.current.to
     const from = idxRef.current
     const total = spreads.length
     const to = dir === 'next' ? (from + 1) % total : (from - 1 + total) % total
+    const toSp = spreads[to]
+    // 按钮/键盘翻页：等目标图解码完成再开翻（拖拽翻页不等待，用模糊占位兜底）
+    if (awaitReady && toSp) {
+      await waitImageReady(toSp.image)
+      if (toSp.blur && toSp.blur !== toSp.image) await waitImageReady(toSp.blur)
+      if (idxRef.current !== from) return
+    }
     shoveLoupe(dir)
     turnRef.current = { dir, from, to, t: t || 0, strips: [] }
     paint()
-  }, [paint, shoveLoupe, spreads.length])
+  }, [paint, shoveLoupe, spreads.length, waitImageReady])
 
   const commit = useCallback(() => {
     const turn = turnRef.current
@@ -407,6 +468,14 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       paint()
     }, 150, 24)
   }, [paint])
+
+  const step = useCallback((dir: Dir) => {
+    if (turnRef.current) {
+      idxRef.current = turnRef.current.to
+      turnRef.current = null
+    }
+    startTurn(dir, 0, true).then(() => commit())
+  }, [startTurn, commit])
 
   const animateTo = useCallback((target: number, onDone: () => void, stiff: number, damp: number) => {
     springRef.current = { kind: 'spring', v: 0, target, done: onDone, k: stiff || 150, c: damp || 22 }
@@ -500,10 +569,27 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
     return () => window.removeEventListener('resize', onResize)
   }, [layout])
 
+  /* ---------- 切换画册时清空图片缓存 ---------- */
+  useEffect(() => {
+    imgCacheRef.current.clear()
+  }, [book])
+
   useEffect(() => {
     paint()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paint])
+
+  /* ---------- 预取相邻图版：翻页那一刻图片已就绪 ---------- */
+  useEffect(() => {
+    const total = spreads.length
+    if (total === 0) return
+    for (const offset of [-1, 0, 1]) {
+      const sp = spreads[(idxRef.current + offset + total) % total]
+      if (!sp) continue
+      warmImage(sp.image)
+      if (sp.blur && sp.blur !== sp.image) warmImage(sp.blur)
+    }
+  }, [idx, spreads, warmImage])
 
   /* ---------- 指针交互（翻页 + 倾斜 + 放大镜拖拽） ---------- */
   const onPointerDown = useCallback((e: React.PointerEvent) => {
