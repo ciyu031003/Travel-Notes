@@ -137,26 +137,72 @@
   opacity: calc(1 - var(--shade, 0) * 0.62);
 }
 
-/* ---- 静止/展开时的整页图版 ---- */
-.sk-full { position: absolute; inset: 0; overflow: hidden; }
-.sk-full img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* ---- 打开的素描本（双页跨页） ---- */
+.sk-open {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  border-radius: 10px;
+  background:
+    radial-gradient(120% 90% at 50% 8%, rgba(255,255,255,0.5), rgba(255,255,255,0) 60%),
+    linear-gradient(180deg, #fbf6ea, #f4ecdb);
+  box-shadow:
+    0 1px 2px rgba(74, 56, 32, 0.12),
+    0 24px 54px -24px rgba(58, 40, 20, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 252, 0.55),
+    inset 0 0 70px rgba(201, 188, 158, 0.26);
+}
+/* 中缝 / 书脊 —— 打开本的核心 */
+.sk-open::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: clamp(22px, 3.6%, 58px);
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255,255,252,0) 0%, rgba(255,255,252,0.55) 42%, rgba(255,255,252,0) 50%, rgba(56,40,20,0.14) 60%, rgba(56,40,20,0) 100%),
+    linear-gradient(90deg, rgba(56,40,20,0) 0%, rgba(56,40,20,0.16) 46%, rgba(40,27,12,0.36) 50%, rgba(56,40,20,0.16) 54%, rgba(56,40,20,0) 100%);
+  filter: blur(0.4px);
+}
+/* 底部页叠阴影，增强"本子"厚度 */
+.sk-open::after {
+  content: "";
+  position: absolute;
+  left: 1.2%; right: 1.2%; bottom: -1px;
+  height: 10%;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(120,95,60,0) 0%, rgba(120,95,60,0.14) 62%, rgba(120,95,60,0.30) 100%);
+  filter: blur(1px);
+  border-radius: 0 0 10px 10px;
+  opacity: 0.55;
+}
+/* 模糊占位层（永远垫在图下方；图加载完成后由脚本淡出） */
 .sk-blur {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background-size: cover;
   background-position: center;
   filter: blur(18px) saturate(1.12);
   transform: scale(1.12);
   pointer-events: none;
   opacity: 0.92;
+  transition: opacity 0.35s ease;
 }
 
-/* ---- 翻页时的左右半页 ---- */
-.sk-half { position: absolute; top: 0; bottom: 0; width: 50%; overflow-x: clip; overflow-y: visible; }
-.sk-half.left { left: 0; }
-.sk-half.right { left: 50%; }
-.sk-half-img { width: 200%; max-width: none; height: 100%; object-fit: cover; display: block; }
+/* ---- 翻页时的左右半页（打开本的两页） ---- */
+.sk-half { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; z-index: 1; transform-style: preserve-3d; }
+.sk-half.left { left: 0; border-radius: 10px 0 0 10px; }
+.sk-half.right { left: 50%; border-radius: 0 10px 10px 0; }
+.sk-half-img { position: relative; z-index: 1; width: 200%; max-width: none; height: 100%; object-fit: cover; display: block; }
 .sk-half-img.right { margin-left: -100%; }
+/* 页面外侧边缘（书页厚度） */
+.sk-page-edge { position: absolute; top: 0; bottom: 0; width: clamp(8px, 1.7%, 26px); z-index: 3; pointer-events: none; }
+.sk-page-edge.l { left: 0; background: linear-gradient(90deg, rgba(255,255,252,0.92), rgba(255,252,242,0)); border-top-left-radius: 10px; border-bottom-left-radius: 10px; box-shadow: inset 2px 0 3px -2px rgba(74,56,32,0.4); }
+.sk-page-edge.r { right: 0; background: linear-gradient(270deg, rgba(255,255,252,0.92), rgba(255,252,242,0)); border-top-right-radius: 10px; border-bottom-right-radius: 10px; box-shadow: inset -2px 0 3px -2px rgba(74,56,32,0.4); }
 
 .sk-gutter-shade {
   position: absolute;
@@ -230,11 +276,11 @@
   opacity: calc(var(--shade, 0) * var(--lit, 1) * var(--lit, 1) * 0.20);
 }
 
-/* ---- 命中区（点击翻页） ---- */
-.sk-zone { position: absolute; top: 0; bottom: 0; border: 0; background: transparent; cursor: grab; z-index: 60; -webkit-tap-highlight-color: transparent; }
+/* ---- 命中区（点击书页侧边末端翻页） ---- */
+.sk-zone { position: absolute; top: 7%; bottom: 14%; border: 0; background: transparent; cursor: pointer; z-index: 80; -webkit-tap-highlight-color: transparent; }
 .sk-zone:active { cursor: grabbing; }
-.sk-zone.prev { left: 0; width: 50%; }
-.sk-zone.next { right: 0; width: 50%; }
+.sk-zone.prev { left: 0; width: 15%; }
+.sk-zone.next { right: 0; width: 15%; }
 
 /* ---- 标题/图注 & 提示 —— 放在书下方 ---- */
 .sk-captionbar {
@@ -457,6 +503,7 @@
 .sk-summary {
   position: absolute;
   inset: 0;
+  z-index: 12;
   display: flex;
   flex-direction: column;
   align-items: center;

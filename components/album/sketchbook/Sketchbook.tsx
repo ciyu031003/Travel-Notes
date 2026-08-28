@@ -139,29 +139,48 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
     bookEl.textContent = ''
     const turn = turnRef.current
 
-
     const setSketch = (img: HTMLImageElement) => {
       if (sketch) img.classList.add('sk-sketch')
     }
 
+    /* 一页书页（左右半页其一）：模糊占位 + 半页图 + 中缝阴影 + 外侧纸边 */
+    const page = (pos: 'left' | 'right', sp: Spread) => {
+      const p = div('sk-half ' + pos)
+      let blur: HTMLDivElement | null = null
+      if (sp.blur && sp.blur !== sp.image) {
+        blur = div('sk-blur')
+        blur.style.backgroundImage = 'url(' + sp.blur + ')'
+        p.appendChild(blur)
+      }
+      const img = new Image()
+      img.src = sp.image
+      img.alt = sp.title
+      img.draggable = false
+      img.decoding = 'async'
+      img.className = 'sk-half-img' + (pos === 'right' ? ' right' : '')
+      setSketch(img)
+      // 图就绪后淡出/移除模糊占位，避免"加载完仍有模糊层次"
+      const onImg = () => {
+        if (blur) {
+          blur.style.opacity = '0'
+          window.setTimeout(() => { if (blur.parentNode === p) blur.remove() }, 360)
+        }
+      }
+      img.addEventListener('load', onImg)
+      img.addEventListener('error', onImg)
+      p.appendChild(img)
+      p.appendChild(div('sk-gutter-shade ' + pos))
+      p.appendChild(div('sk-page-edge ' + (pos === 'left' ? 'l' : 'r')))
+      return p
+    }
+
     if (!turn) {
-      // 静止整页图版
-      const full = div('sk-full')
+      // 静止：打开的素描本（左右两页并排，图片跨页铺满）
+      const open = div('sk-open')
       const sp = spreads[idxRef.current]
       if (sp) {
-        // 大图未解码时先显示低清模糊占位，避免空白/整块色块
-        if (sp.blur && sp.blur !== sp.image) {
-          const blur = div('sk-blur')
-          blur.style.backgroundImage = 'url(' + sp.blur + ')'
-          full.appendChild(blur)
-        }
-        const img = new Image()
-        img.src = sp.image
-        img.alt = sp.title
-        img.draggable = false
-        img.decoding = 'async'
-        setSketch(img)
-        full.appendChild(img)
+        open.appendChild(page('left', sp))
+        open.appendChild(page('right', sp))
         if (sp.kind === 'summary') {
           const overlay = div('sk-summary')
           overlay.innerHTML =
@@ -173,36 +192,20 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
           const stats = overlay.querySelectorAll('.sk-sum-stats b')
           stats[0].textContent = String(book.dayCount || spreads.length - 2)
           stats[1].textContent = String(sp.count)
-          full.appendChild(overlay)
+          open.appendChild(overlay)
         }
       }
-      // 描绘画纸边缘阴影（克制）
       bookEl.style.setProperty('--shade', '0')
-      bookEl.appendChild(full)
+      bookEl.appendChild(open)
     } else {
+      // 翻页：左页不动，右页（或左页）抬起，另一页露出
       const next = turn.dir === 'next'
       const fromSp = spreads[turn.from]
       const toSp = spreads[turn.to]
-      const half = (pos: 'left' | 'right', sp: Spread) => {
-        const h = div('sk-half ' + pos)
-        if (sp.blur && sp.blur !== sp.image) {
-          const blur = div('sk-blur')
-          blur.style.backgroundImage = 'url(' + sp.blur + ')'
-          h.appendChild(blur)
-        }
-        const img = new Image()
-        img.src = sp.image
-        img.alt = sp.title
-        img.draggable = false
-        img.decoding = 'async'
-        img.className = 'sk-half-img' + (pos === 'right' ? ' right' : '')
-        setSketch(img)
-        h.appendChild(img)
-        h.appendChild(div('sk-gutter-shade ' + pos))
-        return h
-      }
-      if (fromSp) bookEl.appendChild(half('left', next ? fromSp : toSp))
-      if (toSp) bookEl.appendChild(half('right', next ? toSp : fromSp))
+      const open = div('sk-open')
+      if (fromSp) open.appendChild(page('left', next ? fromSp : toSp))
+      if (toSp) open.appendChild(page('right', next ? toSp : fromSp))
+      bookEl.appendChild(open)
 
       const curl = buildCurl(turn, fromSp, toSp)
       bookEl.appendChild(curl)
@@ -728,7 +731,10 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
               <div className="sk-cast hair" />
               <div className="sk-book" ref={bookRef} />
             </div>
-            {/* 放大镜（在不倾斜的坐标系里） */}
+                      {/* 点击书页侧边末端翻页 */}
+          <button type="button" className="sk-zone prev" onClick={() => step('prev')} aria-label="上一图版" />
+          <button type="button" className="sk-zone next" onClick={() => step('next')} aria-label="下一图版" />
+{/* 放大镜（在不倾斜的坐标系里） */}
             <div ref={zoomWrapRef} className="sk-zoomwrap">
               <div ref={zoomInnerRef} className="sk-zoominner" />
             </div>
