@@ -62,25 +62,27 @@ export function buildSpreads(book: Book): Spread[] {
     const chDate = iso(ch.date)
     // 避免“翻页一直是同一张照片”：封面图若与章节首图相同则不重复作为图版；
     // 同一章节内重复 URL 也只展示一次，保证每次翻页都是新的一页。
+    const uniquePhotos: { image: string; blur: string }[] = []
     const seenPhotoUrl = new Set<string>()
-    let photoNo = 0
-    photos.forEach((photo) => {
+    for (const photo of photos) {
       const image = photo.previewUrl || photo.thumbnailUrl || NO_IMG
-      if (image === coverImg || image === NO_IMG) return
-      if (seenPhotoUrl.has(image)) return
+      if (image === coverImg || image === NO_IMG) continue
+      if (seenPhotoUrl.has(image)) continue
       seenPhotoUrl.add(image)
-      photoNo += 1
+      uniquePhotos.push({ image, blur: photo.blurUrl || photo.thumbnailUrl || NO_IMG })
+    }
+    uniquePhotos.forEach((up, pi) => {
       spreads.push({
         index: spreads.length,
         kind: 'photo',
         title: chTitle,
         place,
         date: chDate,
-        image,
-        blur: photo.blurUrl || photo.thumbnailUrl || NO_IMG,
-        count: photoNo,
+        image: up.image,
+        blur: up.blur,
+        count: uniquePhotos.length,
         chapterId: ch.id,
-        photoNo,
+        photoNo: pi + 1,
       })
     })
   }
