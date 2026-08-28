@@ -1,0 +1,275 @@
+'use client'
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, MapPin, X, Camera } from 'lucide-react'
+import type { Book, BookChapter, BookPhoto } from './TravelBook'
+
+type Page =
+  | { kind: 'cover' }
+  | { kind: 'chapter'; chapter: BookChapter }
+  | { kind: 'photo'; chapter: BookChapter; photo: BookPhoto }
+  | { kind: 'summary' }
+
+const MOOD_LABEL: Record<string, string> = {
+  开心: '开心', 幸福: '幸福', 想念: '想念', 期待: '期待', 平静: '平静', 累: '累了',
+}
+
+function formatDay(dateStr: string | null): string {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+  } catch {
+    return dateStr
+  }
+}
+
+/** 把一本画册展开为「页」序列：封面 → 每章(章节标题页 + 每张照片一页) → 旅行总结 */
+function buildPages(book: Book): Page[] {
+  const pages: Page[] = [{ kind: 'cover' }]
+  for (const chapter of book.chapters) {
+    if (chapter.photos.length === 0) continue
+    pages.push({ kind: 'chapter', chapter })
+    for (const photo of chapter.photos) {
+      pages.push({ kind: 'photo', chapter, photo })
+    }
+  }
+  pages.push({ kind: 'summary' })
+  return pages
+}
+
+function ChapterIntro({ chapter }: { chapter: BookChapter }) {
+  return (
+    <div className="flex h-full flex-col justify-center px-4">
+      <div className="font-display text-[10px] font-semibold uppercase tracking-[0.4em] text-travel-bloom">
+        Chapter {String(chapter.index).padStart(2, '0')}
+      </div>
+      <div className="mt-4 font-display text-2xl font-bold text-travel-ink sm:text-3xl">
+        {chapter.title || `DAY ${String(chapter.index).padStart(2, '0')}`}
+      </div>
+      <div className="mt-3 flex items-center gap-2 text-sm text-travel-ink/60">
+        <MapPin className="h-4 w-4 text-travel-bloom" />
+        {chapter.date ? formatDay(chapter.date) : '——'}
+      </div>
+      {chapter.summary && <p className="mt-4 max-w-md text-sm leading-relaxed text-travel-ink/70">{chapter.summary}</p>}
+      {chapter.itinerary.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {chapter.itinerary.slice(0, 5).map((it) => (
+            <span key={it.id} className="inline-flex items-center gap-1 rounded-full bg-travel-mist/40 px-2.5 py-1 text-[11px] text-travel-ink/70">
+              <MapPin className="h-3 w-3 text-travel-bloom" />
+              {it.title}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PhotoPage({ chapter, photo }: { chapter: BookChapter; photo: BookPhoto }) {
+  const src = photo.previewUrl || photo.thumbnailUrl
+  const ratio = photo.width && photo.height ? `${photo.width} / ${photo.height}` : '4 / 3'
+  return (
+    <div className="relative flex h-full flex-col overflow-hidden">
+      <div className="min-h-0 flex-1" style={{ aspectRatio: ratio }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src || ''} alt="" loading="lazy" className="h-full w-full object-cover" />
+      </div>
+      <div className="flex items-center justify-between pt-2.5 text-[10px] uppercase tracking-[0.2em] text-travel-ink/45">
+        <span>Chapter {String(chapter.index).padStart(2, '0')}</span>
+        <span>{chapter.date ? formatDay(chapter.date) : ''}</span>
+      </div>
+    </div>
+  )
+}
+
+function CoverPage({ book }: { book: Book }) {
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="min-h-0 flex-1">
+        {book.coverPreview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={book.coverPreview} alt={book.title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-travel-sakura/30">
+            <Camera className="h-10 w-10 text-travel-bloom/50" />
+          </div>
+        )}
+      </div>
+      <div className="py-3 text-center">
+        <div className="font-display text-2xl font-bold text-travel-ink">{book.title}</div>
+        {book.location && (
+          <div className="mt-1 inline-flex items-center gap-1 text-xs text-travel-ink/60">
+            <MapPin className="h-3.5 w-3.5" />
+            {book.location}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SummaryPage({ book }: { book: Book }) {
+  const stats = [
+    { label: '天数', value: book.dayCount || book.chapters.length },
+    { label: '照片', value: book.photoCount },
+  ]
+  return (
+    <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+      <div className="font-display text-[10px] font-semibold uppercase tracking-[0.4em] text-travel-bloom">End · 旅行总结</div>
+      <h2 className="font-display mt-4 text-2xl font-bold text-travel-ink">{book.title}</h2>
+      <div className="mt-6 grid grid-cols-2 gap-6">
+        {stats.map((s) => (
+          <div key={s.label} className="border-t border-travel-bloom/40 pt-3">
+            <div className="font-display text-3xl font-bold text-travel-accent">{s.value}</div>
+            <div className="mt-1 text-xs tracking-widest text-travel-ink/50">{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-8 text-sm text-travel-ink/60">谢谢翻阅，收藏这段路上的时光。</p>
+    </div>
+  )
+}
+
+function PageBody({ page, book }: { page: Page; book: Book }) {
+  switch (page.kind) {
+    case 'cover': return <CoverPage book={book} />
+    case 'chapter': return <ChapterIntro chapter={page.chapter} />
+    case 'photo': return <PhotoPage chapter={page.chapter} photo={page.photo} />
+    case 'summary': return <SummaryPage book={book} />
+    default: return null
+  }
+}
+
+const PAGE_W = 440
+const PAGE_H = 560
+
+export default function BookReader({ book, onBack }: { book: Book; onBack: () => void }) {
+  const pages = useMemo(() => buildPages(book), [book])
+  const [pageIndex, setPageIndex] = useState(0) // 当前右侧页索引
+  const [turn, setTurn] = useState<'next' | 'prev' | null>(null)
+  const timer = useRef<number | null>(null)
+
+  const total = pages.length
+  const canNext = pageIndex < total - 1
+  const canPrev = pageIndex > 0
+
+  const go = useCallback((next: number) => {
+    if (turn || next < 0 || next > total - 1 || next === pageIndex) return
+    setTurn(next > pageIndex ? 'next' : 'prev')
+    if (timer.current) window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => {
+      setPageIndex(next)
+      setTurn(null)
+    }, 430)
+  }, [pageIndex, total, turn])
+
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+
+  // 键盘翻页
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') go(pageIndex + 1)
+      else if (e.key === 'ArrowLeft') go(pageIndex - 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [go, pageIndex])
+
+  // 触屏滑动
+  const touchX = useRef<number | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchX.current == null) return
+    const dx = e.changedTouches[0].clientX - touchX.current
+    touchX.current = null
+    if (dx < -50) go(pageIndex + 1)
+    else if (dx > 50) go(pageIndex - 1)
+  }
+
+  // 翻转期间展示的空间（right 页的动态内容）
+  const rightPage = pages[pageIndex]
+  const leftPage = pageIndex > 0 ? pages[pageIndex - 1] : null
+  const nextRight = turn === 'next' && pageIndex + 1 < total ? pages[pageIndex + 1] : rightPage
+  const prevLeft = turn === 'prev' && pageIndex - 2 >= 0 ? pages[pageIndex - 2] : null
+
+  return (
+    <div className="fixed inset-0 z-[105] flex flex-col bg-travel-cream">
+      <header className="flex items-center justify-between border-b border-travel-dim/40 px-4 py-2.5">
+        <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura">
+          <ChevronLeft className="h-3.5 w-3.5" />
+          我的旅行画册
+        </button>
+        <div className="font-display text-sm font-semibold text-travel-ink">{book.title}</div>
+        <button type="button" onClick={onBack} aria-label="关闭" className="rounded-full p-2 text-travel-ink/60 hover:bg-travel-sakura/40 hover:text-travel-ink">
+          <X className="h-4 w-4" />
+        </button>
+      </header>
+
+      <main className="flex flex-1 items-center justify-center overflow-hidden px-4 py-4" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className="flex items-center gap-4">
+          {/* 上一页按钮 */}
+          <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} aria-label="上一页"
+            className="hidden rounded-full bg-travel-sakura/60 p-2 text-travel-ink hover:bg-travel-sakura disabled:opacity-40 sm:block">
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+
+          {/* 书（透视容器） */}
+          <div className="book-scene" style={{ perspective: '2600px' }}>
+            <div className="book" style={{ width: PAGE_W * 2, height: PAGE_H, position: 'relative' }}>
+              {/* 左页（静态，上一页） */}
+              <div style={{ position: 'absolute', left: 0, top: 0, width: PAGE_W, height: PAGE_H, zIndex: 1 }}
+                className="book-paper flex items-center justify-center overflow-hidden rounded-l-[3px]">
+                {turn === 'prev' ? (prevLeft ? <PageBody page={prevLeft} book={book} /> : null) : leftPage ? <PageBody page={leftPage} book={book} /> : null}
+              </div>
+              {/* 右页（底，下一页/后一页） */}
+              <div style={{ position: 'absolute', right: 0, top: 0, width: PAGE_W, height: PAGE_H, zIndex: 2 }}
+                className="book-paper flex items-center justify-center overflow-hidden rounded-r-[3px]">
+                <PageBody page={nextRight} book={book} />
+              </div>
+
+              {/* 翻转页 */}
+              {turn && (
+                <div
+                  className={turn === 'next' ? 'book-flip-next' : 'book-flip-prev'}
+                  style={{
+                    position: 'absolute', top: 0, zIndex: 5,
+                    width: PAGE_W, height: PAGE_H, ...(turn === 'next' ? { right: 0 } : { left: 0 }),
+                    transformOrigin: turn === 'next' ? 'left center' : 'right center',
+                    backfaceVisibility: 'hidden',
+                  }}
+                >
+                  <PageBody page={turn === 'next' ? rightPage : (leftPage as Page)} book={book} />
+                </div>
+              )}
+              {/* 书脊 */}
+              <div style={{ position: 'absolute', left: PAGE_W - 1, top: 0, width: 2, height: PAGE_H, zIndex: 4 }}
+                className="bg-gradient-to-b from-black/10 via-black/20 to-black/10" />
+            </div>
+          </div>
+
+          {/* 下一页按钮 */}
+          <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} aria-label="下一页"
+            className="hidden rounded-full bg-travel-sakura/60 p-2 text-travel-ink hover:bg-travel-sakura disabled:opacity-40 sm:block">
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      </main>
+
+      <footer className="flex items-center justify-center gap-3 border-t border-travel-dim/40 px-4 py-3">
+        <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40">
+          <ChevronLeft className="h-3.5 w-3.5" />上一页
+        </button>
+        <div className="flex flex-wrap justify-center gap-1">
+          {pages.map((_, i) => (
+            <button key={i} type="button" onClick={() => go(i)} aria-label={`第 ${i + 1} 页`}
+              className={`h-1.5 w-1.5 rounded-full transition-all ${i === pageIndex ? 'bg-travel-bloom' : 'bg-travel-dim/40'}`} />
+          ))}
+        </div>
+        <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40">
+          下一页<ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </footer>
+    </div>
+  )
+}

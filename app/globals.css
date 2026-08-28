@@ -1008,6 +1008,22 @@ html.dark {
   z-index: 1;
 }
 
+/* ===== 旅行画册 · 翻书(BookReader) ===== */
+.book-paper {
+  background: linear-gradient(135deg, #FFFDF9, #FBF4E9);
+  box-shadow: 0 24px 60px -34px rgba(41, 39, 35, 0.55);
+}
+.book-flip-next { animation: tb-flip-next 0.42s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.book-flip-prev { animation: tb-flip-prev 0.42s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes tb-flip-next {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-180deg); }
+}
+@keyframes tb-flip-prev {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-180deg); }
+}
+
 
 
 
