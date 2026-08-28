@@ -11,6 +11,7 @@ import TravelFilmCard from '@/components/album/TravelFilmCard'
 import TravelArchiveView from '@/components/album/TravelArchiveView'
 import TravelLocationBadge from '@/components/album/TravelLocationBadge'
 import TravelTimeline from '@/components/album/TravelTimeline'
+import TravelBook from '@/components/album/travel-book/TravelBook'
 import { findCityByName } from '@/data/cities'
 import PixelPhotoChat from '@/components/album/PixelPhotoChat'
 import PixelUnlockModal from '@/components/album/PixelUnlockModal'
@@ -107,25 +108,28 @@ export default function AlbumPage() {
   const [view, setView] = useState<'gallery' | 'chat'>('gallery')
   const [albumTypeFilter, setAlbumTypeFilter] = useState<string>('ALL')
   const [albumCompanionFilter, setAlbumCompanionFilter] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'space' | 'pixel'>(() => {
+  const [viewMode, setViewMode] = useState<'book' | 'space' | 'pixel'>(() => {
     try {
-      return localStorage.getItem(VIEW_MODE_KEY) === 'pixel' ? 'pixel' : 'space'
+      const saved = localStorage.getItem(VIEW_MODE_KEY)
+      if (saved === 'pixel' || saved === 'space') return saved
+      return 'book'
     } catch {
-      return 'space'
+      return 'book'
     }
   })
 
-  const toggleViewMode = useCallback(() => {
-    setViewMode((prev) => {
-      const next = prev === 'space' ? 'pixel' : 'space'
-      try {
-        localStorage.setItem(VIEW_MODE_KEY, next)
-      } catch {
-        // 忽略
-      }
-      return next
-    })
+  const changeMode = useCallback((next: 'book' | 'space' | 'pixel') => {
+    setViewMode(next)
+    try {
+      localStorage.setItem(VIEW_MODE_KEY, next)
+    } catch {
+      // 忽略
+    }
   }, [])
+
+  const toggleViewMode = useCallback(() => {
+    changeMode(viewMode === 'space' ? 'pixel' : 'space')
+  }, [changeMode, viewMode])
 
   const loadAlbumData = async () => {
     try {
@@ -248,6 +252,11 @@ export default function AlbumPage() {
         </div>
       </div>
     )
+  }
+
+  // 旅行画册 2.0（Phase 2）：默认「旅行画册」模式，以 Travel 数据驱动，无需相册解锁
+  if (viewMode === 'book') {
+    return <TravelBook onModeChange={changeMode} />
   }
 
   if (!isUnlocked) {
@@ -440,6 +449,15 @@ export default function AlbumPage() {
             icon={<Settings2 className="w-3.5 h-3.5" />}
             className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
           />
+          <button
+            type="button"
+            onClick={() => changeMode('book')}
+            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
+            title="切换到旅行画册"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            旅行画册
+          </button>
           <button
             type="button"
             onClick={() => setShowStarMap(true)}

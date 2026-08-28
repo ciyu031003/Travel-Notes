@@ -1,0 +1,346 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { BookOpen, ChevronLeft, ChevronRight, MapPin, Camera, Users, Loader2, LayoutGrid, Orbit, X } from 'lucide-react'
+import { apiUrl } from '@/lib/api-base'
+
+type Mode = 'book' | 'space' | 'pixel'
+
+interface BookPhoto {
+  id: number
+  thumbnailUrl: string | null
+  previewUrl: string | null
+  width: number | null
+  height: number | null
+}
+
+interface BookChapter {
+  id: number
+  index: number
+  date: string | null
+  title: string | null
+  summary: string | null
+  itinerary: { id: number; title: string; locationName: string | null }[]
+  memories: { id: number; title: string; content: string | null; mood: string | null; photos: BookPhoto[] }[]
+  photos: BookPhoto[]
+}
+
+interface Book {
+  travelId: number
+  slug: string
+  title: string
+  description: string | null
+  location: string | null
+  startDate: string | null
+  endDate: string | null
+  travelType: string | null
+  companions: unknown
+  coverThumb: string | null
+  coverPreview: string | null
+  dayCount: number
+  photoCount: number
+  chapters: BookChapter[]
+}
+
+const TRAVEL_TYPE_LABELS: Record<string, string> = {
+  ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',
+}
+const MOOD_LABEL: Record<string, string> = {
+  开心: '开心', 幸福: '幸福', 想念: '想念', 期待: '期待', 平静: '平静', 累: '累了',
+}
+
+function formatDay(dateStr: string | null): string {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+  } catch {
+    return dateStr
+  }
+}
+
+function Photo({ photo, variant = 'preview' }: { photo: BookPhoto; variant?: 'preview' | 'thumb' }) {
+  const src = variant === 'preview' ? (photo.previewUrl || photo.thumbnailUrl) : (photo.thumbnailUrl || photo.previewUrl)
+  const ratio = photo.width && photo.height ? `${photo.width} / ${photo.height}` : '4 / 3'
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src || ''}
+      alt=""
+      loading="lazy"
+      className="h-full w-full rounded-[2px] object-cover"
+      style={{ aspectRatio: ratio }}
+    />
+  )
+}
+
+function ChapterPage({ chapter, totalChapters }: { chapter: BookChapter; totalChapters: number }) {
+  const photos = chapter.photos.slice(0, 12)
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* 章节头 */}
+      <header className="mb-4 border-b border-travel-dim/40 pb-3">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-travel-bloom">
+          Chapter {String(chapter.index).padStart(2, '0')}
+        </div>
+        <div className="mt-1 flex items-center gap-2 text-sm text-travel-ink/70">
+          <span>DAY {String(chapter.index).padStart(2, '0')}</span>
+          {chapter.date && <span>· {formatDay(chapter.date)}</span>}
+          {chapter.title && <span className="font-medium text-travel-ink">· {chapter.title}</span>}
+        </div>
+      </header>
+
+      {/* 照片：首图 hero，其余网格 */}
+      {photos.length > 0 && (
+        <div className="space-y-1.5">
+          <div className="aspect-[4/3] w-full overflow-hidden">
+            <Photo photo={photos[0]} />
+          </div>
+          {photos.length > 1 && (
+            <div className="grid grid-cols-2 gap-1.5">
+              {photos.slice(1).map((p) => (
+                <div key={p.id} className="aspect-square w-full overflow-hidden">
+                  <Photo photo={p} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 回忆 */}
+      {chapter.memories.filter((m) => m.content).length > 0 && (
+        <div className="mt-3 space-y-2 overflow-y-auto">
+          {chapter.memories.filter((m) => m.content).map((m) => (
+            <blockquote key={m.id} className="rounded-sm border-l-2 border-travel-bloom/50 bg-travel-sakura/20 px-3 py-2">
+              <p className="text-sm leading-relaxed text-travel-ink/85">{m.content}</p>
+              <span className="mt-1 block text-[10px] tracking-widest text-travel-ink/40">
+                {m.title}{m.mood ? ` · ${MOOD_LABEL[m.mood] || m.mood}` : ''}
+              </span>
+            </blockquote>
+          ))}
+        </div>
+      )}
+
+      {/* 行程 */}
+      {chapter.itinerary.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {chapter.itinerary.map((it) => (
+            <span key={it.id} className="inline-flex items-center gap-1 rounded-full bg-travel-mist/40 px-2.5 py-1 text-[11px] text-travel-ink/70">
+              <MapPin className="h-3 w-3 text-travel-bloom" />
+              {it.title}
+              {it.locationName ? `（${it.locationName}）` : ''}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
+  const chapters = book.chapters
+  const totalPages = chapters.length + 1
+  const [page, setPage] = useState(0)
+
+  const go = useCallback((next: number) => {
+    setPage(Math.max(0, Math.min(totalPages - 1, next)))
+  }, [totalPages])
+
+  // 键盘左右
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') go(page + 1)
+      else if (e.key === 'ArrowLeft') go(page - 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [go, page])
+
+  const isCover = page === 0
+  const chapter = !isCover ? chapters[page - 1] : null
+
+  return (
+    <div className="fixed inset-0 z-[105] flex flex-col bg-travel-cream">
+      {/* 顶栏 */}
+      <header className="flex items-center justify-between border-b border-travel-dim/40 px-4 py-2.5">
+        <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura">
+          <ChevronLeft className="h-3.5 w-3.5" />
+          我的旅行画册
+        </button>
+        <div className="flex items-center gap-2 text-sm font-semibold text-travel-ink">
+          <BookOpen className="h-4 w-4 text-travel-bloom" />
+          {book.title}
+        </div>
+        <button type="button" onClick={onBack} aria-label="关闭" className="rounded-full p-2 text-travel-ink/60 hover:bg-travel-sakura/40 hover:text-travel-ink">
+          <X className="h-4 w-4" />
+        </button>
+      </header>
+
+      {/* 页面主体 */}
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-4">
+        <div key={page} className="relative h-full max-h-[calc(100vh-150px)] w-full max-w-3xl overflow-y-auto rounded-[2px] bg-[#FFFCF7] p-6 shadow-[0_20px_60px_-30px_rgba(41,39,35,0.45)] sm:p-8">
+          {isCover ? (
+            <div className="flex min-h-full flex-col overflow-hidden">
+              {book.coverPreview ? (
+                <div className="aspect-[4/3] w-full overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={book.coverPreview} alt={book.title} className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className="flex aspect-[4/3] w-full items-center justify-center bg-travel-sakura/30">
+                  <Camera className="h-10 w-10 text-travel-bloom/50" />
+                </div>
+              )}
+              <div className="mt-5 flex flex-1 flex-col justify-end">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.4em] text-travel-bloom">Travel Notes</div>
+                <h1 className="mt-2 text-2xl font-bold text-travel-ink sm:text-3xl">{book.title}</h1>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-travel-ink/60">
+                  {book.travelType && (
+                    <span className="rounded-full bg-travel-sakura/50 px-2 py-0.5 text-travel-accent">{TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}</span>
+                  )}
+                  {book.location && (
+                    <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{book.location}</span>
+                  )}
+                  {book.startDate && <span>{formatDay(book.startDate)}</span>}
+                </div>
+                {Array.isArray(book.companions) && (book.companions as any[]).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(book.companions as any[]).map((c, i) => {
+                      const name = String(c?.name || '').trim()
+                      if (!name) return null
+                      return (
+                        <span key={`${name}-${i}`} className="inline-flex items-center gap-1 text-[11px] text-travel-ink/50">
+                          <Users className="h-3 w-3" />{name}
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+                {book.description && <p className="mt-4 text-sm leading-relaxed text-travel-ink/70">{book.description}</p>}
+              </div>
+            </div>
+          ) : chapter ? (
+            <ChapterPage chapter={chapter} totalChapters={chapters.length} />
+          ) : null}
+
+          {/* 页码 */}
+          <div className="mt-6 flex items-center justify-between border-t border-travel-dim/30 pt-3 text-xs text-travel-ink/50">
+            <span>01 / {String(totalPages).padStart(2, '0')}</span>
+            <span className="tracking-[0.3em]">{String(page + 1).padStart(2, '0')} / {String(totalPages).padStart(2, '0')}</span>
+          </div>
+        </div>
+      </main>
+
+      {/* 导航 */}
+      <footer className="flex items-center justify-center gap-3 border-t border-travel-dim/40 px-4 py-3">
+        <button type="button" onClick={() => go(page - 1)} disabled={page === 0} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40">
+          <ChevronLeft className="h-3.5 w-3.5" />上一页
+        </button>
+        <div className="flex flex-wrap justify-center gap-1">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button key={i} type="button" onClick={() => go(i)} aria-label={`第 ${i + 1} 页`} className={`h-1.5 w-1.5 rounded-full ${i === page ? 'bg-travel-bloom' : 'bg-travel-dim/40'} transition-all`} />
+          ))}
+        </div>
+        <button type="button" onClick={() => go(page + 1)} disabled={page >= totalPages - 1} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40">
+          下一页<ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </footer>
+    </div>
+  )
+}
+
+/**
+ * 旅行画册 2.0（Phase 2）：默认以 Travel 模型驱动一本本「旅行摄影杂志」。
+ * @param onModeChange 切换到照片网格(▦) / 银河空间(✨)
+ */
+export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) => void }) {
+  const [books, setBooks] = useState<Book[] | null>(null)
+  const [error, setError] = useState('')
+  const [openBook, setOpenBook] = useState<Book | null>(null)
+
+  const load = useCallback(() => {
+    fetch(apiUrl('/api/travel-book'), { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        setBooks(j?.books || [])
+        if (!j?.books?.length) setError('还没有旅行故事，去记录一次旅行吧。')
+      })
+      .catch(() => setError('旅行画册加载失败'))
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  if (openBook) return <Reader book={openBook} onBack={() => setOpenBook(null)} />
+
+  return (
+    <div className="min-h-screen bg-travel-cream">
+      {/* 顶栏 */}
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-travel-dim/40 bg-travel-cream/90 px-4 backdrop-blur-md md:px-8">
+        <div className="flex items-center gap-2 font-semibold text-travel-ink">
+          <BookOpen className="h-4 w-4 text-travel-bloom" />
+          <span className="text-sm sm:text-base">我的旅行画册</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={() => onModeChange('pixel')} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/70 hover:bg-travel-sakura/40" title="照片网格">
+            <LayoutGrid className="h-3.5 w-3.5" />网格
+          </button>
+          <button type="button" onClick={() => onModeChange('space')} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/70 hover:bg-travel-sakura/40" title="银河空间">
+            <Orbit className="h-3.5 w-3.5" />银河
+          </button>
+          <button type="button" onClick={() => onModeChange('pixel')} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura">
+            <Camera className="h-3.5 w-3.5" />相册
+          </button>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        {books === null ? (
+          <div className="flex items-center justify-center gap-2 py-24 text-travel-ink/40">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span className="text-sm">正在翻阅旅行画册...</span>
+          </div>
+        ) : books.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+            <Camera className="h-10 w-10 text-travel-bloom/40" />
+            <p className="text-sm text-travel-ink/60">{error || '还没有旅行故事'}</p>
+            <p className="text-xs text-travel-ink/40">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {books.map((book) => (
+              <button
+                key={book.travelId}
+                type="button"
+                onClick={() => setOpenBook(book)}
+                className="group overflow-hidden rounded-[2px] bg-[#FFFCF7] text-left shadow-[0_16px_50px_-28px_rgba(41,39,35,0.5)] transition-all hover:-translate-y-1 hover:shadow-[0_28px_70px_-30px_rgba(41,39,35,0.55)]"
+              >
+                <div className="aspect-[4/3] w-full overflow-hidden bg-travel-sakura/20">
+                  {book.coverThumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={book.coverThumb} alt={book.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Camera className="h-8 w-8 text-travel-bloom/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="text-base font-bold text-travel-ink">{book.title}</h3>
+                  <div className="mt-1.5 flex items-center gap-2 text-xs text-travel-ink/50">
+                    {book.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{book.location}</span>}
+                    {book.startDate && <span>{formatDay(book.startDate)}</span>}
+                  </div>
+                  <div className="mt-2 flex items-center gap-3 text-[11px] text-travel-ink/45">
+                    <span className="inline-flex items-center gap-1"><BookOpen className="h-3 w-3" />{book.dayCount} 章</span>
+                    <span className="inline-flex items-center gap-1"><Camera className="h-3 w-3" />{book.photoCount} 图</span>
+                    {book.travelType && <span className="rounded-full bg-travel-sakura/40 px-1.5 py-0.5 text-travel-accent">{TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}</span>}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
