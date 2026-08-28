@@ -51,6 +51,8 @@ services:
       STORAGE_BUCKET: ${STORAGE_BUCKET:-}
       STORAGE_REGION: ${STORAGE_REGION:-auto}
       STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-}
+      # 敏感配置(AES-256-GCM)解密主密钥, 仅服务端读取, 不进代码
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
