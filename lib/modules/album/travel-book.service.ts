@@ -236,9 +236,17 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
       box.days.set(date, chap)
     }
     const seenChap = new Set<number>(chap.photos.map((p) => p.id))
-    for (const p of imgs) if (!seenChap.has(p.id)) chap.photos.push(p)
+    for (const p of imgs) {
+      if (seenChap.has(p.id)) continue
+      seenChap.add(p.id)
+      chap.photos.push(p)
+    }
     const seenBox = new Set<number>(box.photos.map((p) => p.id))
-    for (const p of imgs) if (!seenBox.has(p.id)) box.photos.push(p)
+    for (const p of imgs) {
+      if (seenBox.has(p.id)) continue
+      seenBox.add(p.id)
+      box.photos.push(p)
+    }
   }
 
   const books: TravelBookData[] = []

@@ -60,18 +60,27 @@ export function buildSpreads(book: Book): Spread[] {
     const chTitle = ch.title || `DAY ${String(ch.index).padStart(2, '0')}`
     const place = pickPlace(book, ch.itinerary?.[0]?.locationName)
     const chDate = iso(ch.date)
-    photos.forEach((photo, pi) => {
+    // 避免“翻页一直是同一张照片”：封面图若与章节首图相同则不重复作为图版；
+    // 同一章节内重复 URL 也只展示一次，保证每次翻页都是新的一页。
+    const seenPhotoUrl = new Set<string>()
+    let photoNo = 0
+    photos.forEach((photo) => {
+      const image = photo.previewUrl || photo.thumbnailUrl || NO_IMG
+      if (image === coverImg || image === NO_IMG) return
+      if (seenPhotoUrl.has(image)) return
+      seenPhotoUrl.add(image)
+      photoNo += 1
       spreads.push({
         index: spreads.length,
         kind: 'photo',
         title: chTitle,
         place,
         date: chDate,
-        image: photo.previewUrl || photo.thumbnailUrl || NO_IMG,
+        image,
         blur: photo.blurUrl || photo.thumbnailUrl || NO_IMG,
-        count: photos.length,
+        count: photoNo,
         chapterId: ch.id,
-        photoNo: pi + 1,
+        photoNo,
       })
     })
   }
