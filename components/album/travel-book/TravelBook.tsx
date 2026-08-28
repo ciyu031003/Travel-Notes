@@ -76,11 +76,32 @@ function Photo({ photo, variant = 'preview' }: { photo: BookPhoto; variant?: 'pr
 
 function ChapterPage({ chapter, totalChapters }: { chapter: BookChapter; totalChapters: number }) {
   const photos = chapter.photos.slice(0, 12)
+  const textMemories = chapter.memories.filter((m) => m.content)
+  // Quote 页：照片极少 + 有回忆文字 → 居中大引语（杂志感）
+  if (chapter.photos.length <= 2 && textMemories.length > 0) {
+    const m = textMemories[0]
+    return (
+      <div className="flex min-h-full flex-col justify-center overflow-hidden">
+        <div className="font-display text-[10px] font-semibold uppercase tracking-[0.3em] text-travel-bloom">
+          Chapter {String(chapter.index).padStart(2, '0')}
+        </div>
+        <blockquote className="mt-6 font-display text-xl leading-relaxed text-travel-ink sm:text-2xl">
+          “{m.content}”
+        </blockquote>
+        <div className="mt-6 flex items-center gap-2 text-xs text-travel-ink/50">
+          <span className="inline-block h-px w-8 bg-travel-bloom/60" />
+          <span>{chapter.title || `DAY ${String(chapter.index).padStart(2, '0')}`}</span>
+          {chapter.date && <span>· {formatDay(chapter.date)}</span>}
+          {m.mood ? `· ${MOOD_LABEL[m.mood] || m.mood}` : ''}
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* 章节头 */}
       <header className="mb-4 border-b border-travel-dim/40 pb-3">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-travel-bloom">
+        <div className="font-display text-[10px] font-semibold uppercase tracking-[0.3em] text-travel-bloom">
           Chapter {String(chapter.index).padStart(2, '0')}
         </div>
         <div className="mt-1 flex items-center gap-2 text-sm text-travel-ink/70">
@@ -138,14 +159,44 @@ function ChapterPage({ chapter, totalChapters }: { chapter: BookChapter; totalCh
   )
 }
 
+function SummaryPage({ book, chapterCount }: { book: Book; chapterCount: number }) {
+  const stats = [
+    { label: '天数', value: book.dayCount || chapterCount },
+    { label: '照片', value: book.photoCount },
+  ]
+  return (
+    <div className="flex min-h-full flex-col justify-center overflow-hidden">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.4em] text-travel-bloom">End · 旅行总结</div>
+      <h2 className="font-display mt-3 text-2xl font-bold text-travel-ink sm:text-3xl">{book.title}</h2>
+      {book.location && (
+        <p className="mt-2 inline-flex items-center gap-1 text-sm text-travel-ink/60">
+          <MapPin className="h-3.5 w-3.5" />
+          {book.location}
+        </p>
+      )}
+      <div className="mt-6 grid max-w-xs grid-cols-2 gap-4">
+        {stats.map((s) => (
+          <div key={s.label} className="border-t border-travel-bloom/40 pt-3">
+            <div className="font-display text-3xl font-bold text-travel-accent">{s.value}</div>
+            <div className="mt-1 text-xs tracking-widest text-travel-ink/50">{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-8 border-t border-travel-dim/40 pt-4 text-sm text-travel-ink/60">谢谢翻阅，收藏这段路上的时光。</p>
+    </div>
+  )
+}
+
 function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
   const chapters = book.chapters
-  const totalPages = chapters.length + 1
+  const totalPages = chapters.length + 2 // 封面 + 章节 + 旅行总结
   const [page, setPage] = useState(0)
+  const [dir, setDir] = useState<'next' | 'prev'>('next')
 
   const go = useCallback((next: number) => {
+    setDir(next > page ? 'next' : 'prev')
     setPage(Math.max(0, Math.min(totalPages - 1, next)))
-  }, [totalPages])
+  }, [page, totalPages])
 
   // 键盘左右
   useEffect(() => {
@@ -158,7 +209,8 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
   }, [go, page])
 
   const isCover = page === 0
-  const chapter = !isCover ? chapters[page - 1] : null
+  const isSummary = page === totalPages - 1
+  const chapter = !isCover && !isSummary ? chapters[page - 1] : null
 
   return (
     <div className="fixed inset-0 z-[105] flex flex-col bg-travel-cream">
@@ -168,7 +220,7 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
           <ChevronLeft className="h-3.5 w-3.5" />
           我的旅行画册
         </button>
-        <div className="flex items-center gap-2 text-sm font-semibold text-travel-ink">
+        <div className="flex items-center gap-2 font-display text-sm font-semibold text-travel-ink">
           <BookOpen className="h-4 w-4 text-travel-bloom" />
           {book.title}
         </div>
@@ -179,7 +231,7 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
 
       {/* 页面主体 */}
       <main className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-4">
-        <div key={page} className="relative h-full max-h-[calc(100vh-150px)] w-full max-w-3xl overflow-y-auto rounded-[2px] bg-[#FFFCF7] p-6 shadow-[0_20px_60px_-30px_rgba(41,39,35,0.45)] sm:p-8">
+        <div key={page} className={`tb-paper ${dir === 'next' ? 'tb-page-next' : 'tb-page-prev'} relative h-full max-h-[calc(100vh-150px)] w-full max-w-3xl overflow-y-auto rounded-[2px] bg-[#FFFCF7] p-6 shadow-[0_20px_60px_-30px_rgba(41,39,35,0.45)] sm:p-8`}>
           {isCover ? (
             <div className="flex min-h-full flex-col overflow-hidden">
               {book.coverPreview ? (
@@ -194,7 +246,7 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
               )}
               <div className="mt-5 flex flex-1 flex-col justify-end">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.4em] text-travel-bloom">Travel Notes</div>
-                <h1 className="mt-2 text-2xl font-bold text-travel-ink sm:text-3xl">{book.title}</h1>
+                <h1 className="font-display mt-2 text-2xl font-bold text-travel-ink sm:text-3xl">{book.title}</h1>
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-travel-ink/60">
                   {book.travelType && (
                     <span className="rounded-full bg-travel-sakura/50 px-2 py-0.5 text-travel-accent">{TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}</span>
@@ -220,6 +272,8 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
                 {book.description && <p className="mt-4 text-sm leading-relaxed text-travel-ink/70">{book.description}</p>}
               </div>
             </div>
+          ) : isSummary ? (
+            <SummaryPage book={book} chapterCount={chapters.length} />
           ) : chapter ? (
             <ChapterPage chapter={chapter} totalChapters={chapters.length} />
           ) : null}
@@ -325,7 +379,7 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="text-base font-bold text-travel-ink">{book.title}</h3>
+                  <h3 className="font-display text-base font-bold text-travel-ink">{book.title}</h3>
                   <div className="mt-1.5 flex items-center gap-2 text-xs text-travel-ink/50">
                     {book.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{book.location}</span>}
                     {book.startDate && <span>{formatDay(book.startDate)}</span>}
