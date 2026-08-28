@@ -36,6 +36,7 @@ const PUBLIC_PATHS = [
   '/api/register',
   '/api/version',
   '/api/health',
+  '/api/uploads',
   '/uploads',
   '/_next',
 ]

@@ -110,7 +110,7 @@ export async function resolveLocalUrlVariants(url: string): Promise<UrlPhotoVari
     { suffix: 'blur', kind: 'BLUR' as MediaVariantKind },
   ]
   const variantPath = (suffix: string) => path.join(dir, base + '-' + suffix + '.jpg')
-  const variantUrl = (suffix: string) => '/uploads/' + base + '-' + suffix + '.jpg'
+  const variantUrl = (suffix: string) => '/api/uploads/' + base + '-' + suffix + '.jpg'
 
   // 三个变体都已存在则直接返回
   let needGenerate = false
