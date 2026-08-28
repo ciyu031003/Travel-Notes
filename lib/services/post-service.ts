@@ -1,8 +1,9 @@
 import { revalidatePath } from 'next/cache'
 import { PostRepository, type FindAllParams, type PaginatedResult, type CreatePostInput, type UpdatePostInput, type PostMetaDB, type PostDB, type VideoInfo } from '../repositories/post-repository'
-import { syncPublicPostToCircle, unpublishPublicPost } from '../modules/social/travel-post.service'
+import { unpublishPublicPost, sharePostToCircle, unsharePost } from '../modules/social/travel-post.service'
 import { CacheService } from '../infrastructure/cache'
 import { MarkdownRenderer, type TocItem } from '../infrastructure/markdown'
+import { prisma } from '../db'
 
 export interface PostDTO {
   id: number
@@ -64,8 +65,23 @@ export class PostService {
       ? await this.postRepo.findAllByType(type, userId)
       : (await this.postRepo.findAll({ userId })).data
 
-    await this.cache.set(cacheKey, posts, this.CACHE_TTL, ['posts'])
-    return posts
+    // 内容管理 2.0：附带是否已分享到旅行圈（TravelPost 是否存在）
+    const decorated = await this.decorateCircleShared(posts)
+
+    await this.cache.set(cacheKey, decorated, this.CACHE_TTL, ['posts'])
+    return decorated
+  }
+
+  /** 为一组文章打上「是否已分享到旅行圈」标记（admin 列表用） */
+  private async decorateCircleShared(posts: PostMetaDB[]): Promise<PostMetaDB[]> {
+    if (!posts || posts.length === 0) return posts
+    const ids = posts.map((p) => p.id)
+    const rows = await prisma.travelPost.findMany({
+      where: { postId: { in: ids } },
+      select: { postId: true },
+    })
+    const shared = new Set(rows.map((r) => r.postId))
+    return posts.map((p) => ({ ...p, circleShared: shared.has(p.id) }))
   }
 
   async getPostBySlug(type: string, slug: string, userId?: number | null): Promise<PostDetailDTO | null> {
@@ -165,7 +181,7 @@ export class PostService {
 
   async createPost(input: CreatePostInput): Promise<{ id: number }> {
     const result = await this.postRepo.create(input)
-    await syncPublicPostToCircle(result.id).catch(() => {})
+    // 内容管理 2.0：isPublic 变化不再自动同步到旅行圈，改为显式「分享」动作驱动
     await this.invalidateCache(input.type)
     this.invalidateIsrCache()
     return result
@@ -173,12 +189,30 @@ export class PostService {
 
   async updatePost(id: number, input: UpdatePostInput): Promise<void> {
     await this.postRepo.update(id, input)
-    await syncPublicPostToCircle(id).catch(() => {})
+    // 内容管理 2.0：isPublic 变化不再自动同步到旅行圈，改为显式「分享」动作驱动
     if (input.type) {
       await this.invalidateCache(input.type)
     } else {
       await this.invalidateAllCache()
     }
+    this.invalidateIsrCache()
+  }
+
+  /** 显式分享到旅行圈（解耦后：由文章卡片「分享」按钮驱动） */
+  async shareToCircle(
+    postId: number,
+    opts: { travelId?: number | null; visibility?: 'PUBLIC' | 'SPACE' } = {},
+  ) {
+    const result = await sharePostToCircle(postId, opts)
+    await this.invalidateAllCache()
+    this.invalidateIsrCache()
+    return result
+  }
+
+  /** 取消分享（移除旅行圈），保留文章本身 */
+  async unshareToCircle(postId: number): Promise<void> {
+    await unsharePost(postId)
+    await this.invalidateAllCache()
     this.invalidateIsrCache()
   }
 

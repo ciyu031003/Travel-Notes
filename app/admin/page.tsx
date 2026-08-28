@@ -10,6 +10,8 @@ import {
   Globe2, Lock, Loader2, X, FileText, Sparkles, ExternalLink,
 } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
+import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
 
 interface Post {
   id: number
@@ -24,6 +26,7 @@ interface Post {
   type: string
   published: boolean
   isPublic?: boolean
+  circleShared?: boolean
   createdAt: string
 }
 
@@ -51,10 +54,18 @@ export default function AdminDashboard() {
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [togglingId, setTogglingId] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
+  // 内容管理 2.0：旅行圈分享（解耦于文章可见性）
+  const [sharePost, setSharePost] = useState<Post | null>(null)
+  const [shareTravelId, setShareTravelId] = useState<number | null>(null)
+  const [shareScope, setShareScope] = useState<'PUBLIC' | 'SPACE'>('PUBLIC')
+  const [shareError, setShareError] = useState('')
+  const [sharing, setSharing] = useState<number | null>(null)
+  const [travels, setTravels] = useState<Array<{ id: number; title: string }>>([])
 
   useEffect(() => {
     checkAuth()
     fetchPosts()
+    fetchTravels()
   }, [])
 
   const checkAuth = async () => {
@@ -77,6 +88,16 @@ export default function AdminDashboard() {
       console.error('Failed to fetch posts')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchTravels = async () => {
+    try {
+      const res = await fetch('/api/admin/travels')
+      const data = await res.json()
+      setTravels(data.travels || [])
+    } catch {
+      setTravels([])
     }
   }
 
@@ -103,12 +124,67 @@ export default function AdminDashboard() {
         body: JSON.stringify({ isPublic: !post.isPublic }),
       })
       if (res.ok) {
-        setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, isPublic: !post.isPublic } : p)))
+        // 服务端成功后 refetch，保证数据库 / API / 前端三端一致（不做仅本地翻转）
+        await fetchPosts()
       }
     } catch {
       console.error('Failed to toggle public')
     } finally {
       setTogglingId(null)
+    }
+  }
+
+  // ---- 内容管理 2.0：旅行圈分享 ----
+  const openShare = (post: Post) => {
+    setSharePost(post)
+    setShareTravelId(null)
+    setShareScope('PUBLIC')
+    setShareError('')
+  }
+  const closeShare = () => {
+    setSharePost(null)
+    setShareError('')
+  }
+  const confirmShare = async () => {
+    if (!sharePost) return
+    setSharing(sharePost.id)
+    setShareError('')
+    try {
+      const res = await fetch(`/api/admin/posts/${sharePost.id}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ travelId: shareTravelId, visibility: shareScope }),
+      })
+      if (res.ok) {
+        closeShare()
+        await fetchPosts()
+      } else {
+        const j = await res.json().catch(() => ({}))
+        setShareError(j?.error || '分享失败，请重试')
+      }
+    } catch {
+      setShareError('网络错误，请重试')
+    } finally {
+      setSharing(null)
+    }
+  }
+  const confirmUnshare = async () => {
+    if (!sharePost) return
+    setSharing(sharePost.id)
+    setShareError('')
+    try {
+      const res = await fetch(`/api/admin/posts/${sharePost.id}/share`, { method: 'DELETE' })
+      if (res.ok) {
+        closeShare()
+        await fetchPosts()
+      } else {
+        const j = await res.json().catch(() => ({}))
+        setShareError(j?.error || '取消分享失败，请重试')
+      }
+    } catch {
+      setShareError('网络错误，请重试')
+    } finally {
+      setSharing(null)
     }
   }
 
@@ -337,6 +413,31 @@ export default function AdminDashboard() {
                       </button>
                     </div>
                   </div>
+
+                  {/* 旅行圈分享状态与操作（内容管理 2.0，与文章可见性解耦） */}
+                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => openShare(post)}
+                      disabled={sharing === post.id || togglingId === post.id}
+                      title={post.circleShared ? '管理旅行圈分享' : '分享到旅行圈'}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all active:scale-95 disabled:opacity-60 ${
+                        post.circleShared
+                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300'
+                          : 'bg-travel-sakura/70 text-travel-accent hover:bg-travel-sakura dark:bg-shell-surface/80 dark:text-travel-bloom'
+                      }`}
+                    >
+                      {sharing === post.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Globe2 className="h-3 w-3" />
+                      )}
+                      {post.circleShared ? '已分享到旅行圈' : '分享到旅行圈'}
+                    </button>
+                    <span className="text-xs text-[#9A958F]">
+                      {post.circleShared ? '可在旅行圈浏览' : '尚未分享到旅行圈'}
+                    </span>
+                  </div>
                 </div>
               </motion.article>
             )
@@ -396,6 +497,97 @@ export default function AdminDashboard() {
           </motion.div>
         </div>
       )}
+
+      {/* 旅行圈分享对话框（内容管理 2.0） */}
+      <Modal
+        open={!!sharePost}
+        onClose={closeShare}
+        title={sharePost?.circleShared ? '管理旅行圈分享' : '分享到旅行圈'}
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={closeShare}
+              className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-travel-ink transition-all hover:bg-black/5 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+            >
+              取消
+            </button>
+            {sharePost?.circleShared && (
+              <button
+                type="button"
+                onClick={confirmUnshare}
+                disabled={sharing === sharePost?.id}
+                className="flex items-center gap-1.5 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-500 transition-all hover:bg-red-100 disabled:opacity-60 dark:bg-red-500/10"
+              >
+                {sharing === sharePost?.id && <Loader2 className="h-4 w-4 animate-spin" />}
+                取消分享
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={confirmShare}
+              disabled={sharing === sharePost?.id}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-travel-accent to-travel-accentSoft px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:shadow-xl disabled:opacity-60"
+            >
+              {sharing === sharePost?.id && <Loader2 className="h-4 w-4 animate-spin" />}
+              {sharePost?.circleShared ? '保存' : '分享到旅行圈'}
+            </button>
+          </>
+        }
+      >
+        {sharePost && (
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-travel-sakura/30 p-4">
+              <p className="text-sm font-semibold text-travel-ink">{sharePost.title}</p>
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-travel-ink/70">
+                {sharePost.summary || '这篇旅行记录即将分享给其他旅行者。'}
+              </p>
+            </div>
+
+            <Select
+              label="所属旅行"
+              value={shareTravelId ?? ''}
+              onChange={(e) => setShareTravelId(e.target.value ? Number(e.target.value) : null)}
+              hint="可选：将分享关联到某次旅行（仅用于归档展示）"
+            >
+              <option value="">不关联旅行</option>
+              {travels.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </Select>
+
+            <fieldset className="space-y-1.5">
+              <legend className="mb-1.5 text-sm font-medium text-travel-ink dark:text-shell-muted">分享范围</legend>
+              <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-travel-line/60 bg-white/80 px-3 py-2.5 text-sm text-travel-ink dark:border-shell-line dark:bg-white/5 dark:text-shell-text">
+                <input
+                  type="radio"
+                  name="share-scope"
+                  value="PUBLIC"
+                  checked={shareScope === 'PUBLIC'}
+                  onChange={() => setShareScope('PUBLIC')}
+                  className="accent-travel-accent"
+                />
+                公开（所有人可见）
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-travel-line/60 bg-white/80 px-3 py-2.5 text-sm text-travel-ink dark:border-shell-line dark:bg-white/5 dark:text-shell-text">
+                <input
+                  type="radio"
+                  name="share-scope"
+                  value="SPACE"
+                  checked={shareScope === 'SPACE'}
+                  onChange={() => setShareScope('SPACE')}
+                  className="accent-travel-accent"
+                />
+                仅空间成员
+              </label>
+            </fieldset>
+
+            {shareError && <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-500 dark:bg-red-500/10">{shareError}</p>}
+          </div>
+        )}
+      </Modal>
     </AdminShell>
   )
 }

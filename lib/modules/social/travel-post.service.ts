@@ -186,3 +186,74 @@ export async function syncPublicPostToCircle(postId: number): Promise<TravelPost
 export async function unpublishPublicPost(postId: number): Promise<void> {
   await prisma.travelPost.deleteMany({ where: { postId } }).catch(() => {})
 }
+
+// ============================================================
+// 内容管理 2.0：把「文章可见性(Post.isPublic)」与「旅行圈分享」解耦。
+// 分享状态的事实来源 = TravelPost 记录是否存在；由用户显式动作驱动，
+// 不再由 isPublic 变化自动触发（见 post-service.updatePost/createPost）。
+// ============================================================
+export interface SharePostToCircleInput {
+  travelId?: number | null
+  visibility?: 'PUBLIC' | 'SPACE'
+}
+
+/**
+ * 显式「分享到旅行圈」：只要求文章已发布；不要求公开（私密文章也可分享出公开副本）。
+ * - 复用 TravelPost 作为旅行圈公开副本（独立于文章本身的可见性）。
+ * - 幂等：已分享则更新，未分享则创建。
+ */
+export async function sharePostToCircle(
+  postId: number,
+  opts: SharePostToCircleInput = {},
+): Promise<TravelPostSyncResult | null> {
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: {
+      id: true, userId: true, type: true, title: true, summary: true, date: true, published: true,
+    },
+  })
+  if (!post) throw new Error('文章不存在')
+  if (post.type !== 'travel') throw new Error('仅旅行记录可分享到旅行圈')
+  if (!post.published) throw new Error('请先发布文章，再分享到旅行圈')
+
+  const authorId = post.userId ?? (await resolveAuthorId(null, post.userId))
+  const summary = post.summary ?? null
+  const publishedAt = post.date ? new Date(post.date) : new Date()
+  const travelId = opts.travelId ?? null
+  const visibility = opts.visibility || 'PUBLIC'
+
+  const existing = await prisma.travelPost.findUnique({ where: { postId } })
+  if (existing) {
+    await prisma.travelPost.update({
+      where: { postId },
+      data: {
+        title: post.title,
+        summary,
+        visibility,
+        publishedAt,
+        travelId,
+        ...(authorId ? { authorId } : {}),
+      },
+    })
+    return { id: existing.id, published: true }
+  }
+
+  if (!authorId) return null
+  const created = await prisma.travelPost.create({
+    data: {
+      postId,
+      authorId,
+      visibility,
+      title: post.title,
+      summary,
+      publishedAt,
+      travelId,
+    },
+  })
+  return { id: created.id, published: true }
+}
+
+/** 取消分享（移除旅行圈），保留文章本身 */
+export async function unsharePost(postId: number): Promise<void> {
+  await prisma.travelPost.deleteMany({ where: { postId } }).catch(() => {})
+}

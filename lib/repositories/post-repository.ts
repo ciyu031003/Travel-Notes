@@ -33,6 +33,8 @@ export interface PostMetaDB {
   published: boolean
   isPublic?: boolean
   userId?: number | null
+  /** 内容管理 2.0：文章是否已分享到旅行圈（TravelPost 是否存在），admin 列表展示用 */
+  circleShared?: boolean
 }
 
 export interface PostDB extends PostMetaDB {
