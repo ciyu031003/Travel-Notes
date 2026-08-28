@@ -124,8 +124,8 @@ export default function AdminDashboard() {
         body: JSON.stringify({ isPublic: !post.isPublic }),
       })
       if (res.ok) {
-        // 服务端成功后 refetch，保证数据库 / API / 前端三端一致（不做仅本地翻转）
-        await fetchPosts()
+        // 服务端已确认写入 isPublic，就地更新该卡片（避免整页网格闪骨架屏）
+        setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, isPublic: !post.isPublic } : p)))
       }
     } catch {
       console.error('Failed to toggle public')

@@ -206,6 +206,7 @@ const metaSelect = {
   type: true,
   summary: true,
   published: true,
+  isPublic: true,
   createdAt: true,
   updatedAt: true,
 }
