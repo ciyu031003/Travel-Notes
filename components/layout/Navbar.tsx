@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, MapPin, CalendarDays, Menu, X, Moon, Sun, Settings, LogOut, Search, Compass } from 'lucide-react'
+import { Home, MapPin, CalendarDays, Menu, X, Moon, Sun, Settings, LogOut, Search, Compass, BookOpen } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -74,6 +74,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
   const navItems = [
     { href: '/', label: '首页', icon: Home },
     { href: '/travel', label: '旅行记录', icon: MapPin },
+    { href: '/album', label: '画册', icon: BookOpen },
     { href: '/circle', label: '旅行圈', icon: Compass },
     { href: '/timeline', label: '时间线', icon: CalendarDays },
   ]

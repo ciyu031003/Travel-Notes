@@ -13,7 +13,6 @@ import {
   CalendarDays,
   Image as ImageIcon,
 } from 'lucide-react'
-import AlbumUnlockModal from './AlbumUnlockModal'
 import HeroFootprintMap from '@/components/home/HeroFootprintMap'
 import MomentsStrip from '@/components/moments/MomentsStrip'
 import { DanmakuSection, type DanmakuSectionHandle } from '@/components/home/DanmakuSection'
@@ -186,7 +185,6 @@ export default function HomeClient({
   provincesVisitedCount,
   anniversaries = [],
 }: HomeClientProps) {
-  const [showAlbumUnlock, setShowAlbumUnlock] = useState(false)
   const danmakuRef = useRef<DanmakuSectionHandle | null>(null)
   const quote = getDailyQuote()
 
@@ -232,6 +230,14 @@ export default function HomeClient({
                 >
                   <MapPin className="h-4 w-4" />
                   打开旅行地图
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href="/album"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-travel-line/70 bg-white/85 px-6 py-3.5 text-sm font-semibold text-travel-ink transition-all hover:bg-travel-sakura/30 dark:border-shell-line dark:bg-shell-surface/90 dark:text-shell-text md:text-base"
+                >
+                  <ImageIcon className="h-4 w-4 text-travel-accent dark:text-travel-bloom" />
+                  旅行画册
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <span className="inline-flex items-center gap-2 rounded-xl border border-travel-line/70 bg-white/85 px-4 py-3 text-sm text-travel-ink dark:border-shell-line dark:bg-shell-surface/90 dark:text-shell-muted">
@@ -397,10 +403,10 @@ export default function HomeClient({
             <div className="grid gap-4 sm:grid-cols-3">
               <FeatureCard
                 icon={ImageIcon}
-                title="旅行相册"
-                desc="纪念日解锁，收藏旅行照片"
-                action="查看相册"
-                onClick={() => setShowAlbumUnlock(true)}
+                title="旅行画册"
+                desc="每一段旅行，都是一本杂志"
+                action="翻阅画册"
+                href="/album"
               />
               <FeatureCard
                 icon={MessageCircle}
@@ -432,9 +438,6 @@ export default function HomeClient({
           </div>
         </footer>
       </div>
-
-      {/* 相册解锁弹窗 */}
-      <AlbumUnlockModal isOpen={showAlbumUnlock} onClose={() => setShowAlbumUnlock(false)} />
     </div>
   )
 }
