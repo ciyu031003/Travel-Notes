@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket, Orbit, Settings2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket, Orbit, Settings2, Menu } from 'lucide-react'
 import ManageEntry from '@/components/layout/ManageEntry'
 import dynamicImport from 'next/dynamic'
 import PixelDeskBackground from '@/components/album/PixelDeskBackground'
@@ -104,6 +104,7 @@ export default function AlbumPage() {
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
   const [showStarMap, setShowStarMap] = useState(false)
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [chatPhoto, setChatPhoto] = useState<ChatPhoto | null>(null)
   const [view, setView] = useState<'gallery' | 'chat'>('gallery')
   const [albumTypeFilter, setAlbumTypeFilter] = useState<string>('ALL')
@@ -442,13 +443,7 @@ export default function AlbumPage() {
           <BookOpen className="w-4 h-4" />
           旅行相册 · 存档
         </div>
-        <div className="flex items-center gap-2">
-          <ManageEntry
-            href="/admin/albums"
-            label="管理相册"
-            icon={<Settings2 className="w-3.5 h-3.5" />}
-            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
-          />
+        <div className="relative flex items-center gap-2">
           <button
             type="button"
             onClick={() => changeMode('book')}
@@ -456,32 +451,91 @@ export default function AlbumPage() {
             title="切换到旅行画册"
           >
             <BookOpen className="w-3.5 h-3.5" />
-            旅行画册
+            <span className="hidden sm:inline">旅行画册</span>
+            <span className="sm:hidden">画册</span>
           </button>
+          {/* 桌面：完整操作组 */}
+          <div className="hidden md:flex items-center gap-2">
+            <ManageEntry
+              href="/admin/albums"
+              label="管理相册"
+              icon={<Settings2 className="w-3.5 h-3.5" />}
+              className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
+            />
+            <button
+              type="button"
+              onClick={() => setShowStarMap(true)}
+              className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
+              title="查看旅行星图"
+            >
+              <Orbit className="w-3.5 h-3.5" />
+              星图
+            </button>
+            <button
+              type="button"
+              onClick={toggleViewMode}
+              className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
+              title="一键切换到银河唱片空间"
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              银河风
+            </button>
+            <Link
+              href="/"
+              className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
+            >
+              进入地图
+            </Link>
+          </div>
+          {/* 移动：更多菜单 */}
           <button
             type="button"
-            onClick={() => setShowStarMap(true)}
-            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
-            title="查看旅行星图"
+            onClick={() => setShowMoreMenu((v) => !v)}
+            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5 md:hidden"
+            title="更多操作"
+            aria-expanded={showMoreMenu}
           >
-            <Orbit className="w-3.5 h-3.5" />
-            星图
+            <Menu className="w-3.5 h-3.5" />
+            更多
           </button>
-          <button
-            type="button"
-            onClick={toggleViewMode}
-            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
-            title="一键切换到银河唱片空间"
-          >
-            <Rocket className="w-3.5 h-3.5" />
-            银河风
-          </button>
-          <Link
-            href="/"
-            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
-          >
-            进入地图
-          </Link>
+          {showMoreMenu && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
+              <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-sm border border-pixel-line bg-pixel-panel shadow-[0_10px_24px_rgba(0,0,0,0.6)]">
+                <div className="p-1">
+                  <ManageEntry
+                    href="/admin/albums"
+                    label="管理相册"
+                    icon={<Settings2 className="w-3.5 h-3.5" />}
+                    className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setShowStarMap(true); setShowMoreMenu(false) }}
+                    className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
+                  >
+                    <Orbit className="w-3.5 h-3.5" />
+                    星图
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { toggleViewMode(); setShowMoreMenu(false) }}
+                    className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
+                  >
+                    <Rocket className="w-3.5 h-3.5" />
+                    银河风
+                  </button>
+                  <Link
+                    href="/"
+                    onClick={() => setShowMoreMenu(false)}
+                    className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
+                  >
+                    进入地图
+                  </Link>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </header>
 
@@ -539,7 +593,7 @@ export default function AlbumPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                    <div className="flex gap-3 justify-start overflow-x-auto pb-2 lg:flex-wrap lg:justify-start lg:overflow-visible snap-x">
                       {cities.map((city, index) => {
                         const selected = selectedCity?.name === city.name
                         const spineColor = SPINE_COLORS[index % SPINE_COLORS.length]
@@ -549,7 +603,7 @@ export default function AlbumPage() {
                             type="button"
                             onClick={() => setSelectedCity(city)}
                             title={`${city.name} · ${city.images.length} 张照片 · ${formatDate(city.date)}`}
-                            className={`relative w-12 h-32 flex flex-col items-center justify-between py-2 text-white transition-all duration-200 hover:-translate-y-1.5 group shadow-[3px_6px_8px_rgba(0,0,0,0.6)] ${spineColor} ${
+                            className={`relative w-14 h-36 shrink-0 snap-start flex flex-col items-center justify-between py-2 text-white transition-all duration-200 hover:-translate-y-1.5 group shadow-[3px_6px_8px_rgba(0,0,0,0.6)] ${spineColor} ${
                               selected ? '-translate-y-1.5' : ''
                             }`}
                           >
@@ -560,8 +614,8 @@ export default function AlbumPage() {
                             <span className="text-[10px] text-album-accent font-bold">
                               {String(index + 1).padStart(2, '0')}
                             </span>
-                            <span className="[writing-mode:vertical-rl] text-xs font-bold tracking-wide text-album-text1 max-h-16 overflow-hidden">
-                              {city.name.slice(0, 5)}
+                            <span className="[writing-mode:vertical-rl] text-xs font-bold tracking-wide text-album-text1 max-h-16 truncate">
+                              {city.name}
                             </span>
                             <span className="text-[10px] text-album-text2">{city.images.length}张</span>
                             <span className="w-full h-1 bg-album-accent/20 opacity-50" />
@@ -730,7 +784,7 @@ export default function AlbumPage() {
                 没有符合条件的相册
               </p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {filteredAlbums.map((album) => (
                   <div key={album.id} className="relative">
                     <TravelFilmCard

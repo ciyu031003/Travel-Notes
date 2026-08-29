@@ -345,15 +345,15 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
           <BookOpen className="h-4 w-4 text-travel-bloom" />
           <span className="text-sm sm:text-base">我的旅行画册</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button type="button" onClick={() => onModeChange('pixel')} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/70 hover:bg-travel-sakura/40" title="照片网格">
+        <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/60 p-0.5">
+          <button type="button" className="inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-sm" title="当前视图（旅行画册）">
+            <Camera className="h-3.5 w-3.5" />画册
+          </button>
+          <button type="button" onClick={() => onModeChange('pixel')} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink" title="切换到照片网格">
             <LayoutGrid className="h-3.5 w-3.5" />网格
           </button>
-          <button type="button" onClick={() => onModeChange('space')} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/70 hover:bg-travel-sakura/40" title="银河空间">
+          <button type="button" onClick={() => onModeChange('space')} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink" title="切换到银河空间">
             <Orbit className="h-3.5 w-3.5" />银河
-          </button>
-          <button type="button" onClick={() => onModeChange('pixel')} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura">
-            <Camera className="h-3.5 w-3.5" />相册
           </button>
         </div>
       </header>

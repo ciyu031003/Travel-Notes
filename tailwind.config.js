@@ -114,7 +114,7 @@ module.exports = {
         'travel-danger': '#ef4444',
       },
       fontFamily: {
-        display: ['"Noto Serif SC"', 'Noto Serif', 'Georgia', 'serif'],
+        display: ['"Noto Serif SC"', '"Songti SC"', 'STSong', 'SimSun', 'serif'],
         sans: ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
         zpix: ['Zpix', 'monospace', 'sans-serif'],

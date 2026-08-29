@@ -70,6 +70,7 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
   const realSrc = photo.previewUrl || photo.thumbnailUrl
   const [paint, setPaint] = useState<string | null>(null)
   const [state, setState] = useState<'loading' | 'done' | 'none'>('loading')
+  const photoAlt = chapter.title ? (chapter.title + (chapter.date ? ' · ' + formatDay(chapter.date) : '')) : '旅行照片'
 
   // 按需生成该照片的油画版（生成后缓存,后端只生成一次）；暂停/未配置时返回 {url:null}
   useEffect(() => {
@@ -90,9 +91,9 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
       <div className="relative flex h-full w-full flex-col overflow-hidden">
         <div className="relative min-h-0 flex-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={realSrc || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={realSrc || ''} alt={photoAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
         </div>
-        <div className="flex items-center justify-between pt-2.5 text-[10px] uppercase tracking-[0.2em] text-travel-ink/45">
+        <div className="flex items-center justify-between pt-2.5 text-[11px] uppercase tracking-[0.2em] text-travel-ink/65">
           <span>Chapter {String(chapter.index).padStart(2, '0')}</span>
           <span>{chapter.date ? formatDay(chapter.date) : ''}</span>
         </div>
@@ -106,16 +107,16 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
       <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
         <div className="relative min-h-0 flex-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={realSrc || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={realSrc || ''} alt={photoAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
           <span className="absolute left-2 top-2 rounded-full bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white">原图</span>
         </div>
         <div className="relative min-h-0 flex-1 border-t border-travel-dim/40 sm:border-l sm:border-t-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={paint || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={paint || ''} alt={'油画版：' + (chapter.title || '旅行照片')} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
           <span className="absolute right-2 top-2 rounded-full bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-widest text-white">油画</span>
         </div>
       </div>
-      <div className="flex items-center justify-between pt-2.5 text-[10px] uppercase tracking-[0.2em] text-travel-ink/45">
+      <div className="flex items-center justify-between pt-2.5 text-[11px] uppercase tracking-[0.2em] text-travel-ink/65">
         <span>Chapter {String(chapter.index).padStart(2, '0')}</span>
         <span>{chapter.date ? formatDay(chapter.date) : ''}</span>
       </div>
@@ -236,6 +237,21 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
     if (dx < -50) go(pageIndex + 1)
     else if (dx > 50) go(pageIndex - 1)
   }
+
+  // 预取相邻页图片，避免翻页时下一张仍在加载导致的重叠/空白
+  useEffect(() => {
+    const warm = (page: Page) => {
+      if (page.kind !== 'photo') return
+      const src = page.photo.previewUrl || page.photo.thumbnailUrl
+      if (!src) return
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = src
+    }
+    for (let i = Math.max(0, pageIndex - 1); i <= Math.min(total - 1, pageIndex + 1); i++) {
+      warm(pages[i])
+    }
+  }, [pageIndex, pages, total])
 
   const current = pages[pageIndex]
   const leftPage = pageIndex > 0 ? pages[pageIndex - 1] : null

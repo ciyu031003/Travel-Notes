@@ -885,6 +885,16 @@ body {
   outline-offset: 2px;
 }
 
+/* 像素/Minecraft/素描本交互控件：聚焦态用相册琥珀色，融入像素主题 */
+.pixel-btn:focus-visible,
+.mc-button:focus-visible,
+.sk-arrow:focus-visible,
+.book-cover-3d:has(button):focus-visible button {
+  outline: 2px solid var(--album-accent, #e8b06a);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(232, 176, 106, 0.35);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -896,6 +906,16 @@ body {
   }
   .danmaku-layer {
     display: none !important;
+  }
+  /* 相册翻书/刷页/素描 tilt：无动态偏好下直接关闭位移动画 */
+  .book-flip-next,
+  .book-flip-prev,
+  .tb-page-next,
+  .tb-page-prev,
+  .sk-tilt,
+  .sk-curl {
+    animation: none !important;
+    transition: none !important;
   }
 }
 
