@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, MapPin, X, Camera } from 'lucide-react'
+import { MOOD_LABEL, formatDay } from '@/lib/modules/album/presentation'
 import type { Book, BookChapter, BookPhoto } from './TravelBook'
 
 type Page =
@@ -9,20 +10,6 @@ type Page =
   | { kind: 'chapter'; chapter: BookChapter }
   | { kind: 'photo'; chapter: BookChapter; photo: BookPhoto }
   | { kind: 'summary' }
-
-const MOOD_LABEL: Record<string, string> = {
-  开心: '开心', 幸福: '幸福', 想念: '想念', 期待: '期待', 平静: '平静', 累: '累了',
-}
-
-function formatDay(dateStr: string | null): string {
-  if (!dateStr) return ''
-  try {
-    const d = new Date(dateStr)
-    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-  } catch {
-    return dateStr
-  }
-}
 
 /** 把一本画册展开为「页」序列：封面 → 每章(章节标题页 + 每张照片一页) → 旅行总结 */
 function buildPages(book: Book): Page[] {

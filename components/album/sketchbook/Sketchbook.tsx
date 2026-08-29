@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, X, Plus, Minus, Search, List, Paintbrush } from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, X, Plus, Minus, Search, List, Paintbrush, Maximize2 } from 'lucide-react'
 import type { Book } from '@/components/album/travel-book/TravelBook'
 import { buildSpreads, type Spread } from './spreads'
+import { formatDotDate } from '@/lib/modules/album/presentation'
 import './sketchbook.css'
 
 type Dir = 'next' | 'prev'
@@ -45,6 +46,7 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
   const [indexOpen, setIndexOpen] = useState(false)
   const [loupeOn, setLoupeOn] = useState(false)
   const [showHint, setShowHint] = useState(true)
+  const [viewer, setViewer] = useState<Spread | null>(null)
 
   const rootRef = useRef<HTMLDivElement>(null)
   const threeDRef = useRef<HTMLDivElement>(null)
@@ -187,7 +189,21 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       if (sp) {
         open.appendChild(page('left', sp))
         open.appendChild(page('right', sp))
-        if (sp.kind === 'summary') {
+        if (sp.kind === 'cover') {
+          // 封面：跨页书目信息（书名/地点/日期），压在图片上方成书封
+          const overlay = div('sk-cover')
+          overlay.innerHTML =
+            '<div class="sk-cover-kicker">Travel Notes · 旅行画册</div>' +
+            '<div class="sk-cover-title"></div>' +
+            '<div class="sk-cover-sub"></div>'
+          overlay.querySelector('.sk-cover-title')!.textContent = book.title
+          const sub = overlay.querySelector('.sk-cover-sub')!
+          const parts: string[] = []
+          if (book.location) parts.push(book.location)
+          if (book.startDate) parts.push(formatDotDate(book.startDate))
+          sub.textContent = parts.join(' · ')
+          open.appendChild(overlay)
+        } else if (sp.kind === 'summary') {
           const overlay = div('sk-summary')
           overlay.innerHTML =
             '<div class="sk-sum-kicker">End · 旅行总结</div>' +
@@ -628,12 +644,15 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
     const raw = (d.dir === 'next' ? -dx : dx) / (d.w * 0.62)
     const t = clamp(raw, 0, 1)
     const now = performance.now()
-    d.vel = (t - (turnRef.current?.t ?? 0)) / Math.max(0.001, (now - d.tPrev) / 1000)
-    d.tPrev = now
+    const dt = Math.max(0.001, (now - d.tPrev) / 1000)
     if (turnRef.current) {
+      // 平滑瞬时速度：低通滤波，避免末端抖动造成误翻
+      const inst = (t - (turnRef.current.t ?? 0)) / dt
+      d.vel = d.vel * 0.55 + inst * 0.45
       turnRef.current.t = t
       applyTurn(t)
     }
+    d.tPrev = now
   }, [applyTurn, tiltTo])
 
   const onPointerUp = useCallback(() => {
@@ -644,7 +663,9 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       commit()
       return
     }
-    const go = turnRef.current.t > 0.42 || d.vel > 1.1
+    // 翻页判定：速度达标，或慢速拖拽已过半。避免临界抖动。
+    const t = turnRef.current.t
+    const go = t > 0.5 || d.vel > 0.95 || (t > 0.34 && d.vel > 0.55)
     if (go) commit()
     else cancel()
   }, [commit, cancel])
@@ -657,7 +678,11 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       if (e.key === 'ArrowRight') { e.preventDefault(); step('next') }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); step('prev') }
-      else if (e.key === 'Escape') { setIndexOpen(false); onBack() }
+      else if (e.key === 'Escape') {
+        if (setViewer) setViewer(null)
+        setIndexOpen(false)
+        onBack()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -813,6 +838,17 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
           <button type="button" onClick={() => setIndexOpen((v) => !v)} className="sk-tool" aria-pressed={indexOpen} aria-label="图版目录">
             <List />
           </button>
+          {current?.full && (
+            <button
+              type="button"
+              onClick={() => setViewer(current)}
+              className="sk-tool"
+              aria-label="查看大图"
+              title="查看大图（原图）"
+            >
+              <Maximize2 />
+            </button>
+          )}
           {onToggleBook && (
             <>
               <span className="sk-tool-sep" />
@@ -845,6 +881,28 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
           ))}
         </ol>
       </div>
+
+      {/* 查看大图（原图）：全屏 overlay，点击遮罩或关闭按钮退出 */}
+      {viewer && (
+        <div className="sk-viewer" onClick={() => setViewer(null)} role="dialog" aria-modal="true" aria-label="查看大图">
+          <button type="button" className="sk-viewer-close" aria-label="关闭大图" onClick={() => setViewer(null)}>
+            <X />
+          </button>
+          <div className="sk-viewer-inner" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={viewer.full || viewer.image}
+              alt={viewer.title}
+              className="sk-viewer-img"
+              // eslint-disable-next-line @next/next/no-img-element
+            />
+            <p className="sk-viewer-cap">
+              {viewer.title}
+              {viewer.place ? ` · ${viewer.place}` : ''}
+              {viewer.photoNo ? ` · 第${viewer.photoNo}/${viewer.count}张` : ''}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

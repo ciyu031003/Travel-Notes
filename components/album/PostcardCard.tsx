@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { BookOpen, Camera, MapPin } from 'lucide-react'
+import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import type { Book } from '@/components/album/travel-book/TravelBook'
 import './postcard.css'
 
@@ -17,20 +18,7 @@ function baseRot(id: number): number {
   return Math.round((t * 13 - 6.5) * 10) / 10 // -6.5..6.5 度
 }
 
-function fmtDate(v: string | null): string {
-  if (!v) return ''
-  try {
-    const d = new Date(v)
-    if (isNaN(d.getTime())) return ''
-    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-  } catch {
-    return ''
-  }
-}
-
-const TRAVEL_TYPE_LABELS: Record<string, string> = {
-  ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',
-}
+const fmtDate = formatDotDate
 
 export default function PostcardCard({ book, onOpen }: { book: Book; onOpen: () => void }) {
   const ref = useRef<HTMLButtonElement>(null)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { Readable } from 'stream'
+import { ensureLocalUrlVariants } from '@/lib/infrastructure/media-variants'
 
 /**
  * 运行时文件服务：从本地磁盘按需读取 /uploads/** 资源（图片/视频）。
@@ -10,10 +11,21 @@ import { Readable } from 'stream'
  * 运行期新生成的图片变体（如按需生成的 -thumbnail/-preview/-blur.jpg）
  * 直接走 /uploads/xxx 会 404，必须重启容器才能访问。
  * 本路由在请求时从磁盘读取并返回，使运行期生成的变体立即可用。
+ * 对「变体文件尚未生成」的情况，先按需生成（并发信号量保护）再返回，避免 404。
  */
 
 function uploadDir(): string {
   return process.env.UPLOAD_DIR || 'public/uploads'
+}
+
+/** 变体文件未生成时，从变体路径反推出原图 URL（/uploads/<base>.<ext>）供按需生成。 */
+const VARIANT_RE = /-(thumbnail|preview|blur)\.(jpg|jpeg|png|webp)$/i
+function originalUploadUrlFromVariant(filePath: string): string | null {
+  const m = VARIANT_RE.exec(path.basename(filePath))
+  if (!m) return null
+  const rel = path.relative(uploadDir(), filePath).split('\\').join('/')
+  const stem = rel.replace(/-(thumbnail|preview|blur)(\.\w+)$/i, '$2')
+  return '/uploads/' + stem
 }
 
 const MIME: Record<string, string> = {
@@ -48,6 +60,18 @@ export async function GET(request: NextRequest, context: { params: Promise<{ pat
   const filePath = safeResolve(segments)
   if (!filePath) {
     return new NextResponse('Forbidden', { status: 403 })
+  }
+
+  // 变体文件尚未生成：先按需生成（并发信号量保护），生成后立即服务，避免首访 404
+  if (!fs.existsSync(filePath) && VARIANT_RE.test(path.basename(filePath))) {
+    const origUrl = originalUploadUrlFromVariant(filePath)
+    if (origUrl) {
+      try {
+        await ensureLocalUrlVariants(origUrl)
+      } catch (e) {
+        console.error('[uploads] on-demand variant generation failed', filePath, e)
+      }
+    }
   }
 
   try {

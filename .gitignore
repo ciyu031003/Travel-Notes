@@ -49,3 +49,9 @@ dev-run.log
 
 # Visual Studio 临时目录
 .vs/
+
+# codex 一次性调试脚本与渲染截图（无生产价值，勿提交）
+/.repro/
+
+# TypeScript 增量构建缓存（构建产物，勿提交）
+tsconfig.tsbuildinfo

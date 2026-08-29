@@ -19,6 +19,7 @@ import PhotoChatView from '@/components/album/PhotoChatView'
 import SpaceUnlockModal from '@/components/album/space/SpaceUnlockModal'
 import AlbumComposer from '@/components/album/AlbumComposer'
 import AddPhotoButton from '@/components/album/AddPhotoButton'
+import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import { readLocalAlbums } from '@/lib/modules/offline/album-read'
 import { useLocalMediaUrls } from '@/hooks/use-local-media-url'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
@@ -73,25 +74,13 @@ const SPINE_COLORS = [
   'book-spine-leather',
 ]
 
-// 多元场景：旅行类型（与 TravelComposer/TravelDetailShell 一致）
-const TRAVEL_TYPE_LABELS: Record<string, string> = {
-  ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',
-}
-
 function albumCompanionsOf(a: AlbumItem): Array<{ name: string; relation?: string }> {
   return Array.isArray(a.companions) ? (a.companions as any[]) : []
 }
 
 const VIEW_MODE_KEY = 'album-view-mode'
 
-function formatDate(dateStr: string) {
-  try {
-    const d = new Date(dateStr)
-    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-  } catch {
-    return dateStr
-  }
-}
+const formatDate = formatDotDate
 
 export default function AlbumPage() {
   const router = useRouter()

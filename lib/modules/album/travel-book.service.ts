@@ -18,6 +18,8 @@ export interface TravelBookChapterPhoto {
   thumbnailUrl: string | null
   previewUrl: string | null
   blurUrl: string | null
+  /** 原始图 URL（用于放大镜/查看大图按需加载，避免默认传输原图） */
+  fullUrl: string | null
   width: number | null
   height: number | null
 }
@@ -80,6 +82,7 @@ function toPhoto(m: any): TravelBookChapterPhoto {
     thumbnailUrl: variantOf(m, 'THUMBNAIL') ?? mediaUrl(m.storageKey),
     previewUrl: variantOf(m, 'PREVIEW') ?? mediaUrl(m.storageKey),
     blurUrl: variantOf(m, 'BLUR') ?? mediaUrl(m.storageKey),
+    fullUrl: mediaUrl(m.storageKey),
     width: m.width ?? null,
     height: m.height ?? null,
   }
@@ -182,6 +185,27 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
   const posts = await postService.getPostsHybrid('travel', userId)
   if (!posts || posts.length === 0) return []
 
+  // 按城市匹配最近一次 Travel，取其旅行类型/同行者作为该城市画册的徽章数据。
+  // Post 本身无 travelType/companions，这里用「城市名=地点」做稳定关联（取最新一条 Travel）。
+  const travelByLocation = new Map<string, { travelType: string | null; companions: unknown }>()
+  try {
+    const travels = await prisma.travel.findMany({
+      where: scopedWhere(userId, 'ownerId') as any,
+      select: { location: true, travelType: true, companions: true, startDate: true },
+      orderBy: { startDate: 'desc' },
+    })
+    for (const t of travels) {
+      if (!t.location) continue
+      const key = findCityByName(t.location)?.name ?? t.location
+      const existing = travelByLocation.get(key)
+      if (!existing) {
+        travelByLocation.set(key, { travelType: t.travelType ?? null, companions: (t.companions as unknown) ?? null })
+      }
+    }
+  } catch {
+    // 查询失败不阻断画册生成，仅缺徽章
+  }
+
   interface Chap {
     date: string | null
     title: string
@@ -191,6 +215,8 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
   interface CityBox {
     name: string
     location: string
+    travelType: string | null
+    companions: unknown
     days: Map<string, Chap>
     photos: TravelBookChapterPhoto[]
   }
@@ -207,6 +233,7 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
           thumbnailUrl: v?.thumbnailUrl ?? url,
           previewUrl: v?.previewUrl ?? url,
           blurUrl: v?.blurUrl ?? url,
+          fullUrl: url,
           width: null,
           height: null,
         }
@@ -226,7 +253,8 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
 
     let box = cityMap.get(name)
     if (!box) {
-      box = { name, location: post.location, days: new Map(), photos: [] }
+      const meta = travelByLocation.get(name)
+      box = { name, location: post.location, travelType: meta?.travelType ?? null, companions: meta?.companions ?? null, days: new Map(), photos: [] }
       cityMap.set(name, box)
     }
     const date = post.date ?? ''
@@ -274,8 +302,8 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
       location: box.location,
       startDate: days[0]?.date ?? null,
       endDate: null,
-      travelType: null,
-      companions: null,
+      travelType: box.travelType,
+      companions: box.companions,
       coverThumb: box.photos[0]?.thumbnailUrl ?? null,
       coverPreview: box.photos[0]?.previewUrl ?? null,
       coverBlur: box.photos[0]?.blurUrl ?? null,

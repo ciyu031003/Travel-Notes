@@ -65,6 +65,37 @@ export interface UrlPhotoVariants {
 }
 
 const LOCAL_URL_CACHE = new Map<string, UrlPhotoVariants>()
+const IN_FLIGHT = new Map<string, Promise<UrlPhotoVariants | null>>()
+
+// 并发上限：避免首访一次性对几十张原图做 sharp 处理、占满 CPU。
+const CONCURRENCY = 3
+let running = 0
+const queue: Array<() => void> = []
+
+async function runLimited<T>(fn: () => Promise<T>): Promise<T> {
+  if (running >= CONCURRENCY) {
+    await new Promise<void>((resolve) => queue.push(resolve))
+  }
+  running++
+  try {
+    return await fn()
+  } finally {
+    running--
+    const next = queue.shift()
+    if (next) next()
+  }
+}
+
+/** 并发去重：同一 URL 的生成任务只起一个，后续调用共享其结果。 */
+function scheduleLocalVariants(url: string): Promise<UrlPhotoVariants | null> {
+  const existing = IN_FLIGHT.get(url)
+  if (existing) return existing
+  const p = runLimited(() => buildLocalVariants(url))
+    .catch(() => null)
+    .finally(() => IN_FLIGHT.delete(url))
+  IN_FLIGHT.set(url, p)
+  return p
+}
 
 function uploadDir(): string {
   return process.env.UPLOAD_DIR || 'public/uploads'
@@ -86,43 +117,58 @@ function parseLocalUploadUrl(url: string): { key: string; base: string } | null 
   return { key, base: key.slice(0, key.length - ext.length) }
 }
 
+const VARIANTS: { suffix: string; kind: MediaVariantKind }[] = [
+  { suffix: 'thumbnail', kind: 'THUMBNAIL' },
+  { suffix: 'preview', kind: 'PREVIEW' },
+  { suffix: 'blur', kind: 'BLUR' },
+]
+
+function variantPathFor(dir: string, base: string, suffix: string): string {
+  return path.join(dir, base + '-' + suffix + '.jpg')
+}
+
+function variantUrlFor(base: string, suffix: string): string {
+  return '/api/uploads/' + base + '-' + suffix + '.jpg'
+}
+
 /**
- * 为存量 /uploads/media/xx.jpg 原始图（Post 文章图）按需生成缩略/预览/模糊变体并写入磁盘。
- * 变体文件与原始文件同目录、以 -thumbnail/-preview/-blur 后缀命名，天然不可变，可长期缓存。
- * 对象存储模式不落地磁盘，直接返回 null（调用方回退到原图 URL）。
+ * 仅计算某原图 URL 的三个变体 URL（不触磁盘、不生成）。
+ * 用于 API 关键路径立即返回，变体由后台调度或运行时路由按需生成，避免首访阻塞。
  */
-export async function resolveLocalUrlVariants(url: string): Promise<UrlPhotoVariants | null> {
+export function predictLocalUrlVariants(url: string): UrlPhotoVariants | null {
   if (!url) return null
-  // 对象存储场景没有本地磁盘逻辑，交给调用方回退
-  if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) return null
+  const parsed = parseLocalUploadUrl(url)
+  if (!parsed) return null
+  const { base } = parsed
+  return {
+    thumbnailUrl: variantUrlFor(base, 'thumbnail'),
+    previewUrl: variantUrlFor(base, 'preview'),
+    blurUrl: variantUrlFor(base, 'blur'),
+  }
+}
 
-  const cached = LOCAL_URL_CACHE.get(url)
-  if (cached) return cached
-
+/**
+ * 真实生成变体（并发信号量保护）。产物写磁盘（-thumbnail/-preview/-blur.jpg 同目录）。
+ * 原图不存在返回 null（调用方回退到原图 URL）。
+ */
+async function buildLocalVariants(url: string): Promise<UrlPhotoVariants | null> {
   const parsed = parseLocalUploadUrl(url)
   if (!parsed) return null
   const { key, base } = parsed
   const dir = uploadDir()
 
-  const variants = [
-    { suffix: 'thumbnail', kind: 'THUMBNAIL' as MediaVariantKind },
-    { suffix: 'preview', kind: 'PREVIEW' as MediaVariantKind },
-    { suffix: 'blur', kind: 'BLUR' as MediaVariantKind },
-  ]
-  const variantPath = (suffix: string) => path.join(dir, base + '-' + suffix + '.jpg')
-  const variantUrl = (suffix: string) => '/api/uploads/' + base + '-' + suffix + '.jpg'
+  const variantPath = (suffix: string) => variantPathFor(dir, base, suffix)
+  const variantUrl = (suffix: string) => variantUrlFor(base, suffix)
 
   // 三个变体都已存在则直接返回
   let needGenerate = false
   const existing: string[] = []
-  for (const { suffix } of variants) {
+  for (const { suffix } of VARIANTS) {
     if (fs.existsSync(variantPath(suffix))) existing.push(variantUrl(suffix))
     else needGenerate = true
   }
   if (!needGenerate) {
-    const result: UrlPhotoVariants = { thumbnailUrl: existing[0], previewUrl: existing[1], blurUrl: existing[2] }
-    LOCAL_URL_CACHE.set(url, result)
-    return result
+    return { thumbnailUrl: existing[0], previewUrl: existing[1], blurUrl: existing[2] }
   }
 
   // 至少缺一个：读取原始文件并一次性重建全部变体
@@ -133,8 +179,8 @@ export async function resolveLocalUrlVariants(url: string): Promise<UrlPhotoVari
   const generated = await generateMediaVariants(original)
   const byKind = new Map(generated.map((g) => [g.variant, g]))
   const urls: string[] = []
-  for (let i = 0; i < variants.length; i++) {
-    const { suffix, kind } = variants[i]
+  for (let i = 0; i < VARIANTS.length; i++) {
+    const { suffix, kind } = VARIANTS[i]
     const g = byKind.get(kind)
     if (g) {
       const fp = variantPath(suffix)
@@ -146,12 +192,54 @@ export async function resolveLocalUrlVariants(url: string): Promise<UrlPhotoVari
     }
   }
 
-  // 缺变体的回退到原图
-  const result: UrlPhotoVariants = {
+  return {
     thumbnailUrl: urls[0] || url,
     previewUrl: urls[1] || url,
     blurUrl: urls[2] || url,
   }
-  LOCAL_URL_CACHE.set(url, result)
+}
+
+/**
+ * 解析/生成存量 /uploads/media/xx.jpg 原始图（Post 文章图）的缩略/预览/模糊变体。
+ * 立即返回该图三个预测变体 URL（不阻塞），并把实际生成调度到后台并发队列（同 URL 去重、并发上限 3）。
+ * 调用方拿到 URL 即可渲染；变体文件由后台调度或 GET /api/uploads/... 命中时按需生成。
+ * 对象存储模式不落地磁盘，返回 null（调用方回退到原图 URL）。
+ */
+export async function resolveLocalUrlVariants(url: string): Promise<UrlPhotoVariants | null> {
+  if (!url) return null
+  // 对象存储场景没有本地磁盘逻辑，交给调用方回退
+  if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) return null
+
+  const predict = predictLocalUrlVariants(url)
+  if (!predict) return null
+
+  // 命中缓存（已生成过）直接返回，否则用预测 URL 立即返回并后台调度生成
+  const cached = LOCAL_URL_CACHE.get(url)
+  if (cached) {
+    if (cached.previewUrl !== predict.previewUrl) LOCAL_URL_CACHE.set(url, predict)
+    return cached
+  }
+
+  LOCAL_URL_CACHE.set(url, predict)
+  // 后台生成（去重 + 并发上限）；失败则回退为原图 URL
+  scheduleLocalVariants(url).then((result) => {
+    if (result) LOCAL_URL_CACHE.set(url, result)
+  })
+  return predict
+}
+
+/**
+ * 确保某原图 URL 的变体已生成（等待后台调度完成，含去重与并发信号量）。
+ * 供运行时路由在命中不存在的变体文件时按需兜底生成后再服务。
+ */
+export async function ensureLocalUrlVariants(url: string): Promise<UrlPhotoVariants | null> {
+  if (!url) return null
+  if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) return null
+  const cached = LOCAL_URL_CACHE.get(url)
+  if (cached) return cached
+  const parsed = parseLocalUploadUrl(url)
+  if (!parsed) return null
+  const result = await scheduleLocalVariants(url)
+  if (result) LOCAL_URL_CACHE.set(url, result)
   return result
 }

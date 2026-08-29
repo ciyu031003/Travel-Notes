@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, MapPin, Camera, Users, Loader2, LayoutGrid, Orbit, X } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
+import { TRAVEL_TYPE_LABELS, MOOD_LABEL, formatDay } from '@/lib/modules/album/presentation'
 import BookReader from './BookReader'
 import Sketchbook from '../sketchbook/Sketchbook'
 import PostcardCard from '../PostcardCard'
@@ -14,6 +15,7 @@ export interface BookPhoto {
   thumbnailUrl: string | null
   previewUrl: string | null
   blurUrl: string | null
+  fullUrl: string | null
   width: number | null
   height: number | null
 }
@@ -45,23 +47,6 @@ export interface Book {
   dayCount: number
   photoCount: number
   chapters: BookChapter[]
-}
-
-const TRAVEL_TYPE_LABELS: Record<string, string> = {
-  ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',
-}
-const MOOD_LABEL: Record<string, string> = {
-  开心: '开心', 幸福: '幸福', 想念: '想念', 期待: '期待', 平静: '平静', 累: '累了',
-}
-
-function formatDay(dateStr: string | null): string {
-  if (!dateStr) return ''
-  try {
-    const d = new Date(dateStr)
-    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-  } catch {
-    return dateStr
-  }
 }
 
 function Photo({ photo, variant = 'preview' }: { photo: BookPhoto; variant?: 'preview' | 'thumb' }) {
