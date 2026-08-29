@@ -40,7 +40,7 @@ function buildPages(book: Book): Page[] {
 
 function ChapterIntro({ chapter }: { chapter: BookChapter }) {
   return (
-    <div className="flex h-full flex-col justify-center px-4">
+    <div className="flex h-full w-full flex-col justify-center px-4">
       <div className="font-display text-[10px] font-semibold uppercase tracking-[0.4em] text-travel-bloom">
         Chapter {String(chapter.index).padStart(2, '0')}
       </div>
@@ -87,7 +87,7 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
   // 无油画（暂停通义 API / 生成失败/未配置）：整页原图
   if (!showSplit) {
     return (
-      <div className="relative flex h-full flex-col overflow-hidden">
+      <div className="relative flex h-full w-full flex-col overflow-hidden">
         <div className="relative min-h-0 flex-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={realSrc || ''} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
@@ -102,7 +102,7 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
 
   // 有油画：左原图 / 右油画 跨页
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
         <div className="relative min-h-0 flex-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,7 +125,7 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
 
 function CoverPage({ book }: { book: Book }) {
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="min-h-0 flex-1">
         {book.coverPreview ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -155,7 +155,7 @@ function SummaryPage({ book }: { book: Book }) {
     { label: '照片', value: book.photoCount },
   ]
   return (
-    <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+    <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
       <div className="font-display text-[10px] font-semibold uppercase tracking-[0.4em] text-travel-bloom">End · 旅行总结</div>
       <h2 className="font-display mt-4 text-2xl font-bold text-travel-ink">{book.title}</h2>
       <div className="mt-6 grid grid-cols-2 gap-6">
