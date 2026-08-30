@@ -12,6 +12,8 @@ interface CityDay {
   date: string
   title: string
   images: string[]
+  /** 内部去重用，响应前剥离 */
+  seen: Set<string>
 }
 
 interface CityAlbumPayload {
@@ -22,6 +24,8 @@ interface CityAlbumPayload {
   date: string
   postSlug: string
   days: CityDay[]
+  /** 内部去重用，响应前剥离 */
+  seen: Set<string>
 }
 
 export async function GET(request: Request) {
@@ -48,11 +52,18 @@ export async function GET(request: Request) {
       const province = findProvinceByLocation(post.location)
       if (!city) continue
 
+      const seen = new Set<string>()
       const images: string[] = []
-      if (post.cover) images.push(post.cover)
+      if (post.cover) {
+        seen.add(post.cover)
+        images.push(post.cover)
+      }
       if (post.images && post.images.length > 0) {
         for (const img of post.images) {
-          if (!images.includes(img)) images.push(img)
+          if (img && !seen.has(img)) {
+            seen.add(img)
+            images.push(img)
+          }
         }
       }
       if (images.length === 0) continue
@@ -62,6 +73,7 @@ export async function GET(request: Request) {
         date: post.date,
         title: post.title || `旅行记录`,
         images,
+        seen: new Set(images),
       }
 
       if (!cityMap.has(key)) {
@@ -73,16 +85,23 @@ export async function GET(request: Request) {
           date: post.date,
           postSlug: post.slug,
           days: [day],
+          seen: new Set(images),
         })
       } else {
         const existing = cityMap.get(key)!
         for (const img of images) {
-          if (!existing.images.includes(img)) existing.images.push(img)
+          if (!existing.seen.has(img)) {
+            existing.seen.add(img)
+            existing.images.push(img)
+          }
         }
         const sameDay = existing.days.find((d) => d.date === post.date)
         if (sameDay) {
           for (const img of images) {
-            if (!sameDay.images.includes(img)) sameDay.images.push(img)
+            if (!sameDay.seen.has(img)) {
+              sameDay.seen.add(img)
+              sameDay.images.push(img)
+            }
           }
         } else {
           existing.days.push(day)
@@ -95,9 +114,17 @@ export async function GET(request: Request) {
       city.days.sort((a: CityDay, b: CityDay) => new Date(a.date).getTime() - new Date(b.date).getTime())
     }
 
-    const cities = Array.from(cityMap.values()).sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    )
+    const cities = Array.from(cityMap.values())
+      .map((c) => ({
+        name: c.name,
+        province: c.province,
+        provinceId: c.provinceId,
+        images: c.images,
+        date: c.date,
+        postSlug: c.postSlug,
+        days: c.days.map(({ seen, ...d }) => d),
+      }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     const albums = await listAlbums(userId)
 

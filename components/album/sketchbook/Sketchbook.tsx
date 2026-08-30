@@ -72,6 +72,8 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
   const hintTimer = useRef<number | null>(null)
   /* ---------- 图片预取缓存（避免翻页时旧图重叠/空白） ---------- */
   const imgCacheRef = useRef<Map<string, HTMLImageElement>>(new Map())
+  // 缓存上限：超大画册翻完全书会把全部解码位图常驻内存，超限按插入序淘汰最旧
+  const IMG_CACHE_MAX = 600
 
   useEffect(() => {
     reducedRef.current = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -104,6 +106,10 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       img.loading = 'eager'
       img.src = url
       imgCacheRef.current.set(url, img)
+      if (imgCacheRef.current.size > IMG_CACHE_MAX) {
+        const oldest = imgCacheRef.current.keys().next().value
+        if (oldest !== undefined && oldest !== url) imgCacheRef.current.delete(oldest)
+      }
     }
     return img
   }, [])
@@ -435,10 +441,20 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
   }, [setView])
 
   /* ---------- 翻页 ---------- */
+  /** 处理进行中的翻页：已过半视为翻成，未过半视为弹回。
+   *  此前一律按“已完成”取 turn.to，拖拽弹回动画中点按钮会跳过一页。 */
+  const settleTurn = useCallback((): void => {
+    const turn = turnRef.current
+    if (!turn) return
+    idxRef.current = (turn.t ?? 0) > 0.5 ? turn.to : turn.from
+    turnRef.current = null
+    paint()
+  }, [paint])
+
   const goTo = useCallback((i: number) => {
     const total = spreads.length
     if (i === idxRef.current || i < 0 || i >= total) return
-    if (turnRef.current) idxRef.current = turnRef.current.to
+    settleTurn()
     const fwd = (i - idxRef.current + total) % total
     const back = (idxRef.current - i + total) % total
     if (Math.min(fwd, back) === 1) {
@@ -449,11 +465,12 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       turnRef.current = null
       paint()
     }
-  }, [spreads.length, paint])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spreads.length, paint, settleTurn])
 
   const startTurn = useCallback(async (dir: Dir, t: number, awaitReady = false) => {
     springRef.current = null
-    if (turnRef.current) idxRef.current = turnRef.current.to
+    settleTurn()
     const from = idxRef.current
     const total = spreads.length
     const to = dir === 'next' ? (from + 1) % total : (from - 1 + total) % total
@@ -467,7 +484,7 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
     shoveLoupe(dir)
     turnRef.current = { dir, from, to, t: t || 0, strips: [] }
     paint()
-  }, [paint, shoveLoupe, spreads.length, waitImageReady])
+  }, [paint, shoveLoupe, spreads.length, settleTurn, waitImageReady])
 
   const commit = useCallback(() => {
     const turn = turnRef.current
@@ -496,12 +513,9 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
   }, [paint])
 
   const step = useCallback((dir: Dir) => {
-    if (turnRef.current) {
-      idxRef.current = turnRef.current.to
-      turnRef.current = null
-    }
+    settleTurn()
     startTurn(dir, 0, true).then(() => commit())
-  }, [startTurn, commit])
+  }, [settleTurn, startTurn, commit])
 
   const animateTo = useCallback((target: number, onDone: () => void, stiff: number, damp: number) => {
     springRef.current = { kind: 'spring', v: 0, target, done: onDone, k: stiff || 150, c: damp || 22 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { BookOpen, Camera, MapPin } from 'lucide-react'
 import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
-import type { Book } from '@/components/album/travel-book/TravelBook'
+import type { BookSummary } from '@/components/album/travel-book/TravelBook'
 import './postcard.css'
 
 // 倾斜强度（度）
@@ -29,7 +29,7 @@ function baseRot(seed: number): number {
 
 const fmtDate = formatDotDate
 
-export default function PostcardCard({ book, onOpen }: { book: Book; onOpen: () => void }) {
+export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOpen: () => void }) {
   const ref = useRef<HTMLButtonElement>(null)
   const rot = baseRot(hashKey(book.bookKey || String(book.travelId)))
   const reducedRef = useRef(false)

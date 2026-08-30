@@ -83,7 +83,8 @@ function toPhoto(m: any): TravelBookChapterPhoto {
     id: m.id,
     thumbnailUrl: variantOf(m, 'THUMBNAIL') ?? mediaUrl(m.storageKey),
     previewUrl: variantOf(m, 'PREVIEW') ?? mediaUrl(m.storageKey),
-    blurUrl: variantOf(m, 'BLUR') ?? mediaUrl(m.storageKey),
+    // 无 BLUR 变体时返回 null（消费方回退缩略图占位），避免拿原图冒充模糊层多拉大图
+    blurUrl: variantOf(m, 'BLUR'),
     fullUrl: mediaUrl(m.storageKey),
     width: m.width ?? null,
     height: m.height ?? null,
@@ -125,7 +126,6 @@ async function listTravelModelBooks(userId?: number | null): Promise<TravelBookD
         const linked = (mem.mediaLinks || []).map((l: any) => toPhoto(l.media))
         const seen = new Set<number>()
         const photos = [...primary, ...linked].filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
-        photoCount += photos.length
         return {
           id: mem.id,
           title: mem.title,
@@ -137,6 +137,8 @@ async function listTravelModelBooks(userId?: number | null): Promise<TravelBookD
       })
       const seen = new Set<number>()
       const photos = memories.flatMap((mem: any) => mem.photos).filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
+      // 照片数按「章内去重后」累计，与翻页实际页数一致
+      photoCount += photos.length
       return {
         id: d.id,
         index: idx + 1,
@@ -170,7 +172,7 @@ async function listTravelModelBooks(userId?: number | null): Promise<TravelBookD
       companions: travel.companions ?? null,
       coverThumb: travel.coverMedia ? (variantOf(travel.coverMedia, 'THUMBNAIL') ?? mediaUrl(travel.coverMedia.storageKey)) : (travel.cover ?? null),
       coverPreview: travel.coverMedia ? (variantOf(travel.coverMedia, 'PREVIEW') ?? mediaUrl(travel.coverMedia.storageKey)) : (travel.cover ?? null),
-      coverBlur: travel.coverMedia ? (variantOf(travel.coverMedia, 'BLUR') ?? mediaUrl(travel.coverMedia.storageKey)) : (travel.cover ?? null),
+      coverBlur: travel.coverMedia ? variantOf(travel.coverMedia, 'BLUR') : null,
       dayCount: (travel.days || []).length,
       photoCount,
       chapters,
@@ -235,7 +237,7 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
           id: photoSeq++,
           thumbnailUrl: v?.thumbnailUrl ?? url,
           previewUrl: v?.previewUrl ?? url,
-          blurUrl: v?.blurUrl ?? url,
+          blurUrl: v?.blurUrl ?? null,
           fullUrl: url,
           width: null,
           height: null,
@@ -349,4 +351,20 @@ export async function listTravelBooks(userId?: number | null): Promise<TravelBoo
     return !!loc && travelCities.has(findCityByName(loc)?.name ?? loc)
   }
   return [...travelBooks, ...cityBooks.filter((b) => !isCityCovered(b))]
+}
+
+/** 列表摘要：不含章节/照片明细（封面 + 统计），供画册墙渲染；打开某本再拉全书。 */
+export async function listTravelBookSummaries(userId?: number | null) {
+  const books = await listTravelBooks(userId)
+  return books.map(({ chapters, ...rest }) => ({
+    ...rest,
+    dayCount: rest.dayCount || chapters.length,
+  }))
+}
+
+/** 按 bookKey 取单本完整画册（travel:{id} / city:{城市名}）。 */
+export async function getTravelBookByKey(key: string, userId?: number | null): Promise<TravelBookData | null> {
+  if (!key) return null
+  const books = await listTravelBooks(userId)
+  return books.find((b) => b.bookKey === key) ?? null
 }

@@ -31,7 +31,7 @@ export interface BookChapter {
 }
 
 export interface Book {
-  /** 稳定唯一键：travel:{id} / city:{城市名}（React key 用，城市画册 travelId 恒为 0） */
+  /** 稳定唯一键：travel:{id} / city:{城市名}（React key / 打开单本拉取用，城市画册 travelId 恒为 0） */
   bookKey: string
   travelId: number
   slug: string
@@ -50,12 +50,15 @@ export interface Book {
   chapters: BookChapter[]
 }
 
+/** 列表摘要（不含章节明细）：画册墙用，打开某本再拉全书 */
+export type BookSummary = Omit<Book, 'chapters'>
+
 /**
  * 旅行画册 2.0（Phase 2）：默认以 Travel 模型驱动一本本「旅行摄影杂志」。
  * @param onModeChange 切换到照片网格(▦) / 银河空间(✨)
  */
 export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) => void }) {
-  const [books, setBooks] = useState<Book[] | null>(null)
+  const [books, setBooks] = useState<BookSummary[] | null>(null)
   const [error, setError] = useState('')
   const [openBook, setOpenBook] = useState<Book | null>(null)
   const [readerMode, setReaderMode] = useState<'sketch' | 'book'>('sketch')
@@ -68,7 +71,7 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
         return r.json()
       })
       .then((j) => {
-        const list: Book[] = Array.isArray(j?.books) ? j.books : []
+        const list: BookSummary[] = Array.isArray(j?.books) ? j.books : []
         setBooks(list)
         setError(list.length ? '' : '还没有旅行故事，去记录一次旅行吧。')
       })
@@ -81,6 +84,20 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
     return () => ac.abort()
   }, [])
   useEffect(() => load(), [load])
+
+  // 打开某本：先拉全书（章节/照片明细），再进阅读器
+  const openBookByKey = useCallback((summary: BookSummary) => {
+    fetch(apiUrl(`/api/travel-book?key=${encodeURIComponent(summary.bookKey)}`), { credentials: 'include' })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then((j) => {
+        if (j?.book) setOpenBook(j.book)
+        else setError('画册打开失败，请稍后重试。')
+      })
+      .catch(() => setError('画册打开失败，请稍后重试。'))
+  }, [])
 
   if (openBook) {
     if (readerMode === 'book') {
@@ -135,7 +152,7 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
         ) : (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3">
             {books.map((book) => (
-              <PostcardCard key={book.bookKey || book.travelId} book={book} onOpen={() => setOpenBook(book)} />
+              <PostcardCard key={book.bookKey || book.travelId} book={book} onOpen={() => openBookByKey(book)} />
             ))}
           </div>
         )}

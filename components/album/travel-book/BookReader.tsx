@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, MapPin, X, Camera } from 'lucide-react'
 import { MOOD_LABEL, formatDay } from '@/lib/modules/album/presentation'
+import { apiUrl } from '@/lib/api-base'
 import type { Book, BookChapter, BookPhoto } from './TravelBook'
 
 type Page =
@@ -10,6 +11,9 @@ type Page =
   | { kind: 'chapter'; chapter: BookChapter }
   | { kind: 'photo'; chapter: BookChapter; photo: BookPhoto }
   | { kind: 'summary' }
+
+/** 油画结果客户端缓存：快速翻页/来回翻不重复请求（服务端另有计费去重） */
+const oilCache = new Map<string, string | null>()
 
 /** 把一本画册展开为「页」序列：封面 → 每章(章节标题页 + 每张照片一页) → 旅行总结 */
 function buildPages(book: Book): Page[] {
@@ -61,13 +65,28 @@ function PhotoSpread({ chapter, photo }: { chapter: BookChapter; photo: BookPhot
 
   // 按需生成该照片的油画版（生成后缓存,后端只生成一次）；暂停/未配置时返回 {url:null}
   useEffect(() => {
-    let alive = true
     if (!realSrc) { setState('none'); return }
-    fetch(`/api/travel-book/oil?url=${encodeURIComponent(realSrc)}`, { credentials: 'include' })
+    const cached = oilCache.get(realSrc)
+    if (cached !== undefined) {
+      if (cached) { setPaint(cached); setState('done') } else { setState('none') }
+      return
+    }
+    const ac = new AbortController()
+    fetch(apiUrl(`/api/travel-book/oil?url=${encodeURIComponent(realSrc)}`), {
+      credentials: 'include',
+      signal: ac.signal,
+    })
       .then((r) => r.json())
-      .then((j) => { if (alive) { if (j?.url) { setPaint(j.url); setState('done') } else { setState('none') } } })
-      .catch(() => { if (alive) setState('none') })
-    return () => { alive = false }
+      .then((j) => {
+        const url: string | null = j?.url || null
+        oilCache.set(realSrc, url)
+        if (url) { setPaint(url); setState('done') } else { setState('none') }
+      })
+      .catch((err) => {
+        if (!ac.signal.aborted) setState('none')
+        void err
+      })
+    return () => ac.abort()
   }, [realSrc])
 
   const showSplit = state === 'done' && !!paint
@@ -176,7 +195,11 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
   const timer = useRef<number | null>(null)
 
   // 视口：桌面双页 / 移动单页 + 自适应尺寸
-  const [vp, setVp] = useState({ w: 1280, h: 800 })
+  // 仅在用户交互后挂载（无 SSR），可直接读 window 消除移动端首帧 1280x800 闪跳
+  const [vp, setVp] = useState(() => ({
+    w: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    h: typeof window !== 'undefined' ? window.innerHeight : 800,
+  }))
   useEffect(() => {
     const onR = () => setVp({ w: window.innerWidth, h: window.innerHeight })
     onR()
@@ -204,15 +227,16 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
 
   useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
 
-  // 键盘翻页
+  // 键盘翻页 + Escape 关闭
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') go(pageIndex + 1)
       else if (e.key === 'ArrowLeft') go(pageIndex - 1)
+      else if (e.key === 'Escape') onBack()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [go, pageIndex])
+  }, [go, pageIndex, onBack])
 
   // 触屏滑动
   const touchX = useRef<number | null>(null)
@@ -337,15 +361,24 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
         </div>
       </main>
 
-      <footer className="flex items-center justify-center gap-3 border-t border-travel-dim/40 px-4 py-3">
+      <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-4 py-3 sm:justify-center">
         <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} className={navBtn}>
           <ChevronLeft className="h-3.5 w-3.5" />上一页
         </button>
-        <div className="flex flex-wrap justify-center gap-1">
-          {pages.map((_, i) => (
-            <button key={i} type="button" onClick={() => go(i)} aria-label={`第 ${i + 1} 页`}
-              className={`h-1.5 w-1.5 rounded-full transition-all ${i === pageIndex ? 'bg-travel-bloom' : 'bg-travel-dim/40'}`} />
-          ))}
+        {/* 进度条 + 页码（长画册不再渲染成百上千个圆点，命中区也更大） */}
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none sm:gap-3">
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, total - 1)}
+            value={pageIndex}
+            onChange={(e) => go(Number(e.target.value))}
+            aria-label={`跳转到第 ${pageIndex + 1} 页，共 ${total} 页`}
+            className="h-1.5 min-w-0 flex-1 cursor-pointer accent-travel-bloom sm:w-40"
+          />
+          <span className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60">
+            {String(pageIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+          </span>
         </div>
         <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} className={navBtn}>
           下一页<ChevronRight className="h-3.5 w-3.5" />
