@@ -25,7 +25,8 @@ import { useLocalMediaUrls } from '@/hooks/use-local-media-url'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 
 // v3.1 M3-D2：Canvas/WebGL 重组件按需加载（首屏不打包；渲染时才拉取）
-const PolaroidWall = dynamicImport(() => import('@/components/album/PolaroidWall'), { ssr: false })
+const DriftWall = dynamicImport(() => import('@/components/album/driftwall/DriftWall'), { ssr: false })
+const PhotoMorphViewer = dynamicImport(() => import('@/components/album/PhotoMorphViewer'), { ssr: false })
 const TravelStarMap = dynamicImport(() => import('@/components/album/TravelStarMap'), { ssr: false })
 const GalaxyAlbumScene = dynamicImport(() => import('@/components/album/space/GalaxyAlbumScene'), { ssr: false })
 
@@ -96,6 +97,7 @@ export default function AlbumPage() {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [chatPhoto, setChatPhoto] = useState<ChatPhoto | null>(null)
   const [view, setView] = useState<'gallery' | 'chat'>('gallery')
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const [albumTypeFilter, setAlbumTypeFilter] = useState<string>('ALL')
   const [albumCompanionFilter, setAlbumCompanionFilter] = useState<string | null>(null)
   // SSR 与客户端首帧必须一致（默认画册模式），挂载后再读本地偏好，避免 hydration mismatch
@@ -673,20 +675,27 @@ export default function AlbumPage() {
                 </div>
 
                 <div className="lg:h-[calc(100vh-230px)] min-h-[420px]">
-                  <PolaroidWall
-                    images={selectedCity.images}
-                    cityName={selectedCity.name}
-                    date={formatDate(selectedCity.date)}
-                    onPhotoClick={(index) => {
-                      const url = selectedCity.images[index]
-                      setChatPhoto({
-                        url,
-                        key: url,
-                        cityName: selectedCity.name,
-                        date: formatDate(selectedCity.date),
-                      })
-                      setView('chat')
-                    }}
+                  <DriftWall
+                    items={selectedCity.images.map((src, i) => ({
+                      image: src,
+                      title: `${selectedCity.name} · ${i + 1}`,
+                      onClick: () => setViewerIndex(i),
+                    }))}
+                    columns={4}
+                    tileWidth={200}
+                    tileHeight={140}
+                    gap={18}
+                    radius={14}
+                    tilt={16}
+                    turn={-14}
+                    depth={120}
+                    speed={42}
+                    variance={0.45}
+                    parallax={0.6}
+                    pauseOnHover
+                    lift={64}
+                    fade={0.6}
+                    dim={0.55}
                   />
                 </div>
               </>
@@ -823,6 +832,18 @@ export default function AlbumPage() {
               <TravelStarMap cities={starCities} stats={{ cities: starCities.length, days: totalDays, photos: totalPhotos }} onSelectCity={handleStarMapSelect} />
             </main>
           </div>
+        )}
+        {viewerIndex !== null && selectedCity && (
+          <PhotoMorphViewer
+            images={selectedCity.images}
+            initialIndex={viewerIndex}
+            onClose={() => setViewerIndex(null)}
+            cityName={selectedCity.name}
+            onChat={(url, index) => {
+              setChatPhoto({ url, key: url, cityName: selectedCity.name, date: formatDate(selectedCity.date) })
+              setView('chat')
+            }}
+          />
         )}
       </div>
     </div>
