@@ -98,15 +98,17 @@ export default function AlbumPage() {
   const [view, setView] = useState<'gallery' | 'chat'>('gallery')
   const [albumTypeFilter, setAlbumTypeFilter] = useState<string>('ALL')
   const [albumCompanionFilter, setAlbumCompanionFilter] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'book' | 'space' | 'pixel'>(() => {
+  // SSR 与客户端首帧必须一致（默认画册模式），挂载后再读本地偏好，避免 hydration mismatch
+  const [viewMode, setViewMode] = useState<'book' | 'space' | 'pixel'>('book')
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(VIEW_MODE_KEY)
-      if (saved === 'pixel' || saved === 'space') return saved
-      return 'book'
+      if (saved === 'pixel' || saved === 'space') setViewMode(saved)
     } catch {
-      return 'book'
+      // 忽略
     }
-  })
+  }, [])
 
   const changeMode = useCallback((next: 'book' | 'space' | 'pixel') => {
     setViewMode(next)

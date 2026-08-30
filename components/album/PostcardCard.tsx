@@ -12,9 +12,18 @@ const TILT_Y = 11
 // 波浪滚动附加（度）
 const ROLL = 1.4
 // 静止随机倾斜（东倒西歪但不重叠）：伪随机哈希混合正负角度，
-// 让连续 id 也能出现左倾/右倾交错，而不是全朝同一方向倒。
-function baseRot(id: number): number {
-  const t = Math.abs(Math.sin(id * 12.9898) * 43758.5453) % 1
+// 让相邻卡片也能出现左倾/右倾交错，而不是全朝同一方向倒。
+// 种子用稳定 bookKey（城市画册 travelId 恒为 0，不能再用数字 id）。
+function hashKey(key: string): number {
+  let h = 2166136261
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+function baseRot(seed: number): number {
+  const t = Math.abs(Math.sin(seed * 12.9898) * 43758.5453) % 1
   return Math.round((t * 13 - 6.5) * 10) / 10 // -6.5..6.5 度
 }
 
@@ -22,7 +31,7 @@ const fmtDate = formatDotDate
 
 export default function PostcardCard({ book, onOpen }: { book: Book; onOpen: () => void }) {
   const ref = useRef<HTMLButtonElement>(null)
-  const rot = baseRot(book.travelId || 0)
+  const rot = baseRot(hashKey(book.bookKey || String(book.travelId)))
   const reducedRef = useRef(false)
 
   useEffect(() => {

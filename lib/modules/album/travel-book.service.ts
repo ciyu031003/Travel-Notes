@@ -36,6 +36,8 @@ export interface TravelBookChapter {
 }
 
 export interface TravelBookData {
+  /** 稳定唯一键：Travel 画册 `travel:{id}`，Post 城市画册 `city:{城市名}`（React key / 伪随机种子用） */
+  bookKey: string
   travelId: number
   slug: string
   title: string
@@ -156,6 +158,7 @@ async function listTravelModelBooks(userId?: number | null): Promise<TravelBookD
     })
 
     return {
+      bookKey: `travel:${travel.id}`,
       travelId: travel.id,
       slug: travel.slug,
       title: travel.title,
@@ -280,7 +283,10 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
   const books: TravelBookData[] = []
   let chapterSeq = 1
   for (const box of Array.from(cityMap.values())) {
-    const days = Array.from(box.days.values())
+    // 章节按日期升序（DAY 01 = 旅行第一天），与 /api/album 的聚合口径一致
+    const days = Array.from(box.days.values()).sort((a, b) =>
+      String(a.date || '').localeCompare(String(b.date || ''))
+    )
     const chapters: TravelBookChapter[] = days.map((d) => ({
       id: chapterSeq++,
       index: 0, // 下方按序重排
@@ -295,6 +301,7 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
     }))
     chapters.forEach((c, i) => (c.index = i + 1))
     books.push({
+      bookKey: `city:${box.name}`,
       travelId: 0,
       slug: '',
       title: box.name,
@@ -318,11 +325,28 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
   return books
 }
 
-/** 旅行画册数据：合并「Travel 模型画册」+「旅行文章(Post)城市画册」，Travel 优先。 */
+/**
+ * 旅行画册数据：合并「Travel 模型画册」+「旅行文章(Post)城市画册」。
+ * Travel 优先：城市已有 Travel 画册时不再输出该城市的 Post 城市画册（避免同地两本内容重叠）。
+ */
 export async function listTravelBooks(userId?: number | null): Promise<TravelBookData[]> {
   const [travelBooks, cityBooks] = await Promise.all([
     listTravelModelBooks(userId),
     listPostCityBooks(userId),
   ])
-  return [...travelBooks, ...cityBooks]
+  if (travelBooks.length === 0) return cityBooks
+  if (cityBooks.length === 0) return travelBooks
+
+  const travelCities = new Set<string>()
+  for (const b of travelBooks) {
+    const loc = b.location || ''
+    if (!loc) continue
+    travelCities.add(findCityByName(loc)?.name ?? loc)
+  }
+  const isCityCovered = (b: TravelBookData): boolean => {
+    if (travelCities.has(b.title)) return true
+    const loc = b.location || ''
+    return !!loc && travelCities.has(findCityByName(loc)?.name ?? loc)
+  }
+  return [...travelBooks, ...cityBooks.filter((b) => !isCityCovered(b))]
 }

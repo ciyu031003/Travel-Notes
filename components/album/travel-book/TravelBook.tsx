@@ -32,6 +32,8 @@ export interface BookChapter {
 }
 
 export interface Book {
+  /** 稳定唯一键：travel:{id} / city:{城市名}（React key 用，城市画册 travelId 恒为 0） */
+  bookKey: string
   travelId: number
   slug: string
   title: string
@@ -305,15 +307,26 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
   const [readerMode, setReaderMode] = useState<'sketch' | 'book'>('sketch')
 
   const load = useCallback(() => {
-    fetch(apiUrl('/api/travel-book'), { credentials: 'include' })
-      .then((r) => r.json())
-      .then((j) => {
-        setBooks(j?.books || [])
-        if (!j?.books?.length) setError('还没有旅行故事，去记录一次旅行吧。')
+    const ac = new AbortController()
+    fetch(apiUrl('/api/travel-book'), { credentials: 'include', signal: ac.signal })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
       })
-      .catch(() => setError('旅行画册加载失败'))
+      .then((j) => {
+        const list: Book[] = Array.isArray(j?.books) ? j.books : []
+        setBooks(list)
+        setError(list.length ? '' : '还没有旅行故事，去记录一次旅行吧。')
+      })
+      .catch((err) => {
+        if (ac.signal.aborted) return
+        setBooks([])
+        setError('旅行画册加载失败，请稍后重试。')
+        void err
+      })
+    return () => ac.abort()
   }, [])
-  useEffect(() => { load() }, [load])
+  useEffect(() => load(), [load])
 
   if (openBook) {
     if (readerMode === 'book') {
@@ -353,12 +366,22 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <Camera className="h-10 w-10 text-travel-bloom/40" />
             <p className="text-sm text-travel-ink/60">{error || '还没有旅行故事'}</p>
-            <p className="text-xs text-travel-ink/40">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
+            {error.startsWith('旅行画册加载失败') ? (
+              <button
+                type="button"
+                onClick={() => { setBooks(null); load() }}
+                className="rounded-full bg-travel-sakura px-4 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura/70"
+              >
+                重试
+              </button>
+            ) : (
+              <p className="text-xs text-travel-ink/40">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3">
             {books.map((book) => (
-              <PostcardCard key={book.travelId} book={book} onOpen={() => setOpenBook(book)} />
+              <PostcardCard key={book.bookKey || book.travelId} book={book} onOpen={() => setOpenBook(book)} />
             ))}
           </div>
         )}

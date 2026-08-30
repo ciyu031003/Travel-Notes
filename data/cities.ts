@@ -463,7 +463,24 @@ export const getCitiesByProvince = (provinceId: string): City[] => {
   return CITIES_BY_PROVINCE[provinceId] || [];
 };
 
+const ADMIN_SUFFIX = /[市区州盟省县]/;
+
 export const findCityByName = (name: string): City | undefined => {
+  const q = (name || '').trim();
+  if (!q) return undefined;
   const all = getAllCities();
-  return all.find(c => name.includes(c.name) || c.name.includes(name));
+  // 1) 精确匹配优先
+  const exact = all.find(c => c.name === q);
+  if (exact) return exact;
+  // 2) 城市名开头 + 行政后缀（"南京市玄武区"），避免"南京路"这类地名误入城市画册
+  const prefixed = all.find(
+    c => q.startsWith(c.name) && (q.length === c.name.length || ADMIN_SUFFIX.test(q[c.name.length]))
+  );
+  if (prefixed) return prefixed;
+  // 3) 以城市名结尾（"中国·南京"）
+  const suffixed = all.find(c => q.length > c.name.length && q.endsWith(c.name));
+  if (suffixed) return suffixed;
+  // 4) 城市名包含查询（"吉隆坡" → "吉隆坡市"），要求查询足够长避免误匹配
+  if (q.length >= 3) return all.find(c => c.name.includes(q));
+  return undefined;
 };

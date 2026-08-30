@@ -90,7 +90,8 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
   }, [])
 
   const loupeSize = useCallback(() => {
-    return Math.round(Math.max(165, Math.min(262, bookRef.current?.clientWidth ?? 0 * 0.235)))
+    // 书宽的 23.5%（165-262 取整），此前 `?? 0 * 0.235` 优先级写反使比例失效
+    return Math.round(Math.max(165, Math.min(262, (bookRef.current?.clientWidth ?? 0) * 0.235)))
   }, [])
 
   /* ---------- 图片预取（立即发送请求 + 判断/等待解码） ---------- */
@@ -619,6 +620,7 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
   /* ---------- 指针交互（翻页 + 倾斜 + 放大镜拖拽） ---------- */
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     if (e.button !== 0) return
+    if (dragRef.current) return // 手势进行中（触屏多指），忽略后续手指
     const target = e.target as HTMLElement
     if (target.closest('.sk-loupe, .sk-tools, button, .sk-index, a')) return
     e.preventDefault()
@@ -630,14 +632,43 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       const r = book.getBoundingClientRect()
       const dir: Dir = (e.clientX - r.left) / r.width > 0.5 ? 'next' : 'prev'
       startTurn(dir, 0)
-      dragRef.current = { dir, x0: e.clientX, w: r.width, moved: 0, vel: 0, tPrev: performance.now() }
+      dragRef.current = {
+        dir,
+        x0: e.clientX,
+        y0: e.clientY,
+        w: r.width,
+        moved: 0,
+        driftY: 0,
+        vel: 0,
+        tPrev: performance.now(),
+        pointerId: e.pointerId,
+        pointerType: e.pointerType,
+      }
     }
   }, [startTurn])
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') return
-    tiltTo(e.clientX, e.clientY)
     const d = dragRef.current
+    if (e.pointerType === 'touch') {
+      // 触屏：只跟随发起翻页的那根手指，横向拖拽驱动翻页（纵向留给页面滚动）
+      if (!d || d.pointerId !== e.pointerId) return
+      const dx = e.clientX - d.x0
+      d.driftY = Math.max(d.driftY, Math.abs(e.clientY - d.y0))
+      d.moved = Math.max(d.moved, Math.abs(dx))
+      if (!turnRef.current) return
+      const raw = (d.dir === 'next' ? -dx : dx) / (d.w * 0.62)
+      const t = clamp(raw, 0, 1)
+      const now = performance.now()
+      const dt = Math.max(0.001, (now - d.tPrev) / 1000)
+      // 平滑瞬时速度：低通滤波，避免末端抖动造成误翻
+      const inst = (t - (turnRef.current.t ?? 0)) / dt
+      d.vel = d.vel * 0.55 + inst * 0.45
+      turnRef.current.t = t
+      applyTurn(t)
+      d.tPrev = now
+      return
+    }
+    tiltTo(e.clientX, e.clientY)
     if (!d) return
     const dx = e.clientX - d.x0
     d.moved = Math.max(d.moved, Math.abs(dx))
@@ -655,10 +686,16 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
     d.tPrev = now
   }, [applyTurn, tiltTo])
 
-  const onPointerUp = useCallback(() => {
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
     const d = dragRef.current
+    if (d && d.pointerId !== undefined && e.pointerId !== undefined && d.pointerId !== e.pointerId) return
     dragRef.current = null
     if (!d || !turnRef.current) return
+    // 触屏纵向滚动意图（上下位移大于横向）→ 回弹，不翻页
+    if (d.pointerType === 'touch' && d.driftY > 8 && d.driftY > d.moved) {
+      cancel()
+      return
+    }
     if (d.moved < 6) {
       commit()
       return
@@ -670,6 +707,14 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
     else cancel()
   }, [commit, cancel])
 
+  // 触屏滚动被浏览器接管时会派发 pointercancel → 回弹当前翻页，不当作点击翻页
+  const onPointerCancel = useCallback((e: React.PointerEvent) => {
+    const d = dragRef.current
+    if (d && d.pointerId !== undefined && e.pointerId !== undefined && d.pointerId !== e.pointerId) return
+    dragRef.current = null
+    if (turnRef.current) cancel()
+  }, [cancel])
+
   /* ---------- 键盘 ---------- */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -679,14 +724,15 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
       if (e.key === 'ArrowRight') { e.preventDefault(); step('next') }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); step('prev') }
       else if (e.key === 'Escape') {
-        if (setViewer) setViewer(null)
-        setIndexOpen(false)
-        onBack()
+        // 分层退出：大图查看器 > 图版目录 > 整本素描本
+        if (viewer) setViewer(null)
+        else if (indexOpen) setIndexOpen(false)
+        else onBack()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onBack, step])
+  }, [onBack, step, viewer, indexOpen])
 
   /* ---------- 放大镜拖拽 ---------- */
   const onLoupeDown = useCallback((e: React.PointerEvent) => {
@@ -748,7 +794,7 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
+          onPointerCancel={onPointerCancel}
           onDoubleClick={onResetZoom}
         >
           <button type="button" className="sk-arrow left" onClick={() => step('prev')} aria-label="上一图版">

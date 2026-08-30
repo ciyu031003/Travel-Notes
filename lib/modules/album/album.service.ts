@@ -174,16 +174,47 @@ export async function updateAlbum(id: number, input: Partial<CreateAlbumInput>):
   await prisma.album.update({ where: { id }, data })
 }
 
+/**
+ * 删除前引用检查：同一 Media 可挂多个相册（AlbumMedia @@unique([albumId, mediaId])），
+ * 也可能被回忆引用（MemoryMedia）。仍被引用的媒体只解除当前关联，不删 Media 记录与存储文件，
+ * 避免删 A 相册打碎 B 相册/回忆里的同一张图。
+ */
+async function mediaReferencedElsewhere(mediaIds: number[], excludeAlbumId?: number): Promise<Set<number>> {
+  const refs = new Set<number>()
+  if (mediaIds.length === 0) return refs
+  const [otherAlbumLinks, memoryLinks] = await Promise.all([
+    prisma.albumMedia.findMany({
+      where: {
+        mediaId: { in: mediaIds },
+        ...(excludeAlbumId ? { albumId: { not: excludeAlbumId } } : {}),
+      },
+      select: { mediaId: true },
+    }),
+    prisma.memoryMedia.findMany({ where: { mediaId: { in: mediaIds } }, select: { mediaId: true } }),
+  ])
+  for (const l of otherAlbumLinks) refs.add(l.mediaId)
+  for (const l of memoryLinks) refs.add(l.mediaId)
+  return refs
+}
+
 export async function deleteAlbum(id: number): Promise<void> {
-  // 先收集媒体，删除相册后一并清理 Media 记录与存储文件（避免孤儿数据）
+  // 先收集媒体，删除相册后一并清理 Media 记录与存储文件（避免孤儿数据）；
+  // 仍被其他相册/回忆引用的媒体只随级联解除本相册关联，不删记录与文件。
   const links = await prisma.albumMedia.findMany({
     where: { albumId: id },
     select: { mediaId: true, media: { select: { storageKey: true } } },
   })
   const mediaIds = links.map((l) => l.mediaId)
-  const storageKeys = links.map((l) => l.media?.storageKey).filter(Boolean) as string[]
+  const referenced = await mediaReferencedElsewhere(mediaIds, id)
+  const deletableIds = mediaIds.filter((mid) => !referenced.has(mid))
+  const storageKeys = links
+    .filter((l) => !referenced.has(l.mediaId))
+    .map((l) => l.media?.storageKey)
+    .filter(Boolean) as string[]
 
-  await prisma.media.deleteMany({ where: { id: { in: mediaIds } } }).catch(() => {})
+  if (deletableIds.length > 0) {
+    await prisma.media.deleteMany({ where: { id: { in: deletableIds } } }).catch(() => {})
+  }
   await prisma.album.delete({ where: { id } })
 
   const storage = getStorageService()
@@ -299,6 +330,9 @@ export async function removeMediaFromAlbum(albumId: number, mediaId: number): Pr
 
   const media = await prisma.media.findUnique({ where: { id: mediaId } })
   if (media) {
+    // 仍被其他相册或回忆引用时保留媒体与文件，只解除本相册关联
+    const referenced = await mediaReferencedElsewhere([mediaId], albumId)
+    if (referenced.has(mediaId)) return
     await prisma.media.delete({ where: { id: mediaId } }).catch(() => {})
     if (media.storageKey) {
       getStorageService().delete(media.storageKey).catch(() => {})
