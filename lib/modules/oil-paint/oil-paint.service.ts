@@ -31,7 +31,8 @@ function serverOrigin(): string {
  * WHATWG URL 会把 `/\evil.com`、`\\evil.com` 里的反斜杠归一为 `/`，
  * 简单的字符串前缀拦截可被绕过；这里解析后强校验 origin + 协议。
  */
-function resolveImageUrl(url: string): string {
+/** 测试导出：同源校验是 SSRF 防护的权威门，需单测覆盖 */
+export function resolveImageUrl(url: string): string {
   const base = serverOrigin()
   const parsed = new URL(url, base)
   if (parsed.origin !== new URL(base).origin) throw new Error('blocked-non-local-url')
