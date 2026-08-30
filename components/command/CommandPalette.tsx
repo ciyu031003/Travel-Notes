@@ -7,7 +7,6 @@ import {
   Home,
   MapPin,
   Image as ImageIcon,
-  Images,
   CalendarDays,
   Sparkles,
   X,
@@ -39,8 +38,7 @@ const QUICK_LINKS: QuickLink[] = [
   { href: '/', label: '首页', icon: Home },
   { href: '/travel', label: '旅行记录', icon: MapPin },
   { href: '/timeline', label: '时间线', icon: CalendarDays },
-  { href: '/album', label: '私密照片墙', icon: ImageIcon },
-  { href: '/albums', label: '纪念相册', icon: Images },
+  { href: '/album', label: '旅行相册', icon: ImageIcon },
   { href: '/moments', label: '碎碎念', icon: Sparkles },
   { href: '/search', label: '全站搜索', icon: Search },
 ]

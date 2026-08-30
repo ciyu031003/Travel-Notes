@@ -2,6 +2,47 @@
 
 本项目所有值得注意的变更均记录于此。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [3.0.1] - 2026-08-30
+
+### Fixed
+- 相册正确性止血（全面体检 Phase A）：
+  - TravelBook 加载失败无限转圈（补 res.ok/失败态 UI/重试/AbortController）
+  - 城市画册 React key 重复（travelId 恒 0 → 新增稳定 bookKey）
+  - 删相册/移除媒体打碎其他相册或回忆引用（新增 AlbumMedia/MemoryMedia 引用检查）
+  - 素描本 Escape 恒穿透（分层退出：查看器 > 目录 > 整本）
+  - 素描本触屏拖拽翻页不跟手（touch 手势支持 + pointercancel 回弹 + 纵向滚动意图识别）
+  - /album viewMode hydration mismatch（改挂载后读 localStorage）
+  - 城市画册章节倒序（改日期升序，DAY 01=第一天）+ 跨源画册去重（Travel 优先）
+  - 城市串册（findCityByName 收紧为精确/行政后缀/结尾/长查询四级）
+
+### Security
+- 油画链路 SSRF 根治（同源强校验，杜绝反斜杠/编码绕过）+ 同图计费去重 + 每用户限流
+- /api/uploads 扩展名白名单（拒 .sql/.db/.svg 等）+ 单段 Range/206 实现
+- 中间件：/api/admin/settings 移出公开白名单（子路由均自带鉴权）+ 段边界匹配
+- 验证码日志脱敏（生产不落明文）；secret-crypto 解密失败留痕
+- 删除含明文密码的 setup.sql
+
+### Added
+- 后台「油画生成」设置 Tab：总开关（DB 优先/环境变量回退）+ DashScope API key 在线管理（AES-256-GCM 加密落库，只回打码掩码）
+
+### Removed
+- 死代码清理：PhotoRiver/ParticleImageBg/GalaxyBackground/AlbumLightbox 组件、TravelBook 内 215 行死 Reader、/albums/[id] 死路由、复数 /api/albums 与 /api/video 路由（测试重定向到现役路由）
+- 孤儿依赖 markmap-common/lib/view；@types/* 与 @capacitor/cli 移至 devDependencies
+- v1.x 裸机部署时代文件（migrate-db.cjs/deploy.sh/ecosystem.config.js）
+
+## [3.0.0] - 2026-08-25
+
+### Added
+- 产品定位升级「行迹 · 个人旅行记忆空间」（去情侣化）
+- Capacitor Android 移动端（离线 SQLite、同步中心、APK 构建链）
+- 多元旅行场景：Travel.travelType + companions（独旅/情侣/家庭/朋友/闺蜜/结伴）+ Space.spaceType + 相册类型分组/同行者筛选 + 档案「和 TA 们去过」聚合
+- 旅行画册 2.0（Post 城市聚合出册）+ 内容管理 2.0（文章可见性 × 旅行圈分享解耦）
+- UI V2/V3：品牌色暖陶土统一、语义 token、ui/ 组件库补全、暗色归一、移动端地图触摸手势
+
+### Fixed
+- Prisma Json 序列化严重 bug（jsonStrings:true）修复 companions 写读全崩
+- MySQL 枚举迁移三步走（COUPLE→SPACE）修复部署顺序 bug
+
 ## [2.5.0] - 2026-08-16
 
 ### Added
