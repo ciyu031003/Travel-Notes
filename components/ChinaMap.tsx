@@ -126,6 +126,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
   }, [selectedCity, selectedProvince, citiesByPostLocation])
 
   // 选中省份后，将该省每个城市按经纬度投影为地图上的圆点
+  // 珠三角等城市密集区域圆点容易重叠，做一次简单的碰撞分散，确保每个城市点可被独立点击
   const cityDots = useMemo<CityDot[]>(() => {
     if (!selectedProvince) return []
     const projection = makeProjection(width, height, 24)
@@ -143,6 +144,36 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
         hasPosts: posts.length > 0,
         count: posts.length,
       })
+    }
+    // 碰撞分散：两两距离小于 MIN_DIST 时沿连线方向把两者推开（多次迭代收敛）
+    const MIN_DIST = 16
+    const PAD = 40
+    for (let iter = 0; iter < 60; iter++) {
+      let moved = false
+      for (let i = 0; i < dots.length; i++) {
+        for (let j = i + 1; j < dots.length; j++) {
+          let dx = dots[j].x - dots[i].x
+          let dy = dots[j].y - dots[i].y
+          let dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < MIN_DIST) {
+            moved = true
+            if (dist === 0) { dx = 1; dy = 0; dist = 1 }
+            const push = (MIN_DIST - dist) / 2
+            const nx = dx / dist
+            const ny = dy / dist
+            dots[i].x -= nx * push
+            dots[i].y -= ny * push
+            dots[j].x += nx * push
+            dots[j].y += ny * push
+          }
+        }
+      }
+      if (!moved) break
+    }
+    // 限制圆点落在视图范围内，避免被推出地图边缘
+    for (const d of dots) {
+      d.x = Math.max(PAD, Math.min(width - PAD, d.x))
+      d.y = Math.max(PAD, Math.min(height - PAD, d.y))
     }
     return dots
   }, [selectedProvince, citiesByPostLocation])
