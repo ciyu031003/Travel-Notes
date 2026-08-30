@@ -202,3 +202,70 @@ ssh ubuntu@106.55.2.197 "cd /home/ubuntu/travel-notes && docker compose up -d --
 ```
 
 > 服务器源码目录非 git 仓库，用「打包 → scp → 解包覆盖」方式同步，**务必排除 `.env`/`data`/`content` 以免覆盖生产数据**。
+
+---
+
+## 4.3 IP 直连 `8443` 证书（保持 IP 可访问）
+
+> **背景**：`8443` 端口面向 IP `106.55.2.197` 直连访问。原配置直接复用 Let's Encrypt 域名证书（`travel-notes.yuanabd.cn`），其 SAN 不包含 IP，导致浏览器访问 `https://106.55.2.197:8443` 时提示 **`NET::ERR_CERT_COMMON_NAME_INVALID`**（证书与访问的 IP 不匹配，无法进入）。域名 `travel-notes.yuanabd.cn` 走 `443` 不受影响。
+
+**解决方案**：为 `8443` 单独签发一个本地 CA 自签证书，SAN 同时包含 `IP:106.55.2.197` 与 `DNS:travel-notes.yuanabd.cn`，并让 nginx `8443` 块使用该证书；`443` 域名块仍由 certbot 管理的 Let's Encrypt 证书服务（不改动）。
+
+### 证书存放（服务器 `/etc/nginx/ssl/travel-notes-ip/`）
+
+| 文件 | 说明 | 是否可分发 |
+|---|---|---|
+| `ca.crt` | 本地 CA（公开） | ✅ 可安装到各设备作为受信任根 |
+| `server.key` | 叶子私钥 | ❌ 仅服务器保留，勿外传/入库 |
+| `server.crt` | 叶子证书（SAN 含 IP） | ✅ |
+| `chain.crt` | `server.crt` + `ca.crt` 拼接链 | ✅（nginx 实际引用） |
+
+nginx `8443` 块关键行：
+
+```nginx
+server {
+    listen 8443 ssl;
+    listen [::]:8443 ssl;
+    server_name 106.55.2.197;
+    client_max_body_size 100m;
+
+    location / { proxy_pass http://127.0.0.1:3000; /* … */ }
+
+    ssl_certificate         /etc/nginx/ssl/travel-notes-ip/chain.crt;
+    ssl_certificate_key     /etc/nginx/ssl/travel-notes-ip/server.key;
+    ssl_trusted_certificate /etc/nginx/ssl/travel-notes-ip/ca.crt;
+    include                 /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam             /etc/letsencrypt/ssl-dhparams.pem;
+}
+```
+
+### 客户端处理
+
+- **临时访问**：浏览器首次会提示「证书不受信任（自签名）」，点「高级 → 继续前往 …」即可（证书已与 IP 匹配，只是 CA 未受信任）。
+- **消除提示（推荐）**：将本仓库 `docs/certs/travel-notes-ca.crt` 导入/安装为受信任根证书（每台设备一次）；之后访问 `https://106.55.2.197:8443` 将完全信任、无警告。
+
+### 重新生成（私钥保留在服务器）
+
+```bash
+DIR=/etc/nginx/ssl/travel-notes-ip
+sudo mkdir -p "$DIR" && cd "$DIR"
+# CA
+sudo openssl genrsa -out ca.key 4096
+sudo openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.crt \
+  -subj '/CN=Travel Notes Local CA' \
+  -addext 'basicConstraints=critical,CA:TRUE' -addext 'keyUsage=critical,keyCertSign,cRLSign'
+# 叶子证书（SAN 含 IP + 域名）
+printf '%s\n' '[req]' 'distinguished_name=dn' '[dn]' '[v3_req]' 'subjectAltName=@alt_names' \
+  '[alt_names]' 'IP.1=106.55.2.197' 'DNS.1=travel-notes.yuanabd.cn' | sudo tee server.cnf >/dev/null
+sudo openssl genrsa -out server.key 2048
+sudo openssl req -new -key server.key -out server.csr -config server.cnf -subj '/CN=106.55.2.197'
+printf '%s\n' 'basicConstraints=critical,CA:FALSE' 'keyUsage=critical,digitalSignature,keyEncipherment' \
+  'extendedKeyUsage=serverAuth' 'subjectAltName=@alt_names' '[alt_names]' 'IP.1=106.55.2.197' \
+  'DNS.1=travel-notes.yuanabd.cn' | sudo tee chain.cnf >/dev/null
+sudo openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+  -out server.crt -days 3650 -sha256 -extfile chain.cnf
+sudo sh -c 'cat server.crt ca.crt > chain.crt'
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+> **注意**：`8443` 的自签证书**不会被 certbot 自动续期**（有效期 10 年），也不会被 `certbot renew` 覆盖；`443` 域名证书仍由 certbot 正常管理。
