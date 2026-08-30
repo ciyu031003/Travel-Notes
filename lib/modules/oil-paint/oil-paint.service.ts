@@ -26,9 +26,17 @@ function serverOrigin(): string {
   return `http://127.0.0.1:${port}`
 }
 
-async function resolveImageUrl(url: string): Promise<string> {
-  if (/^(https?:)?\/\//.test(url)) return url
-  return new URL(url, serverOrigin()).toString()
+/**
+ * 只允许解析为「本站同源」的 URL（SSRF 根治）。
+ * WHATWG URL 会把 `/\evil.com`、`\\evil.com` 里的反斜杠归一为 `/`，
+ * 简单的字符串前缀拦截可被绕过；这里解析后强校验 origin + 协议。
+ */
+function resolveImageUrl(url: string): string {
+  const base = serverOrigin()
+  const parsed = new URL(url, base)
+  if (parsed.origin !== new URL(base).origin) throw new Error('blocked-non-local-url')
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('blocked-protocol')
+  return parsed.toString()
 }
 
 async function fetchBuffer(url: string, timeoutMs = 20_000): Promise<Buffer> {
@@ -85,22 +93,15 @@ async function pollResult(apiKey: string, taskId: string): Promise<string | null
   return null
 }
 
-/** 生成（或取缓存）某张照片的油画版, 返回我们存储的 URL。失败返回 null。 */
-export async function getOilPainting(photoUrl: string): Promise<string | null> {
-  // 开关：未显式开启(OIL_PAINT_ENABLED !== 'true')则暂停使用通义 API, 不调用/不计费, 前端回退原图
-  if (process.env.OIL_PAINT_ENABLED !== 'true') return null
+/** 同一张图并发请求合并为一次生成（避免重复计费） */
+const IN_FLIGHT = new Map<string, Promise<string | null>>()
 
-  if (!photoUrl) return null
-  const sk = sourceKey(photoUrl)
-
-  const cached = await prisma.oilPainting.findUnique({ where: { sourceKey: sk } })
-  if (cached) return cached.url
-
+async function generateOilPainting(photoUrl: string, sk: string): Promise<string | null> {
   const apiKey = await getSecret('DASHSCOPE_API_KEY')
   if (!apiKey) return null // 未配置 key → 回退原图
 
   try {
-    const bytes = await fetchBuffer(await resolveImageUrl(photoUrl))
+    const bytes = await fetchBuffer(resolveImageUrl(photoUrl))
     const small = await sharp(bytes).resize({ width: 1536, height: 1536, fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()
     const b64 = `data:image/jpeg;base64,${small.toString('base64')}`
 
@@ -118,10 +119,34 @@ export async function getOilPainting(photoUrl: string): Promise<string | null> {
       where: { sourceKey: sk },
       create: { sourceKey: sk, url: ourUrl },
       update: { url: ourUrl },
-    }).catch(() => {})
+    }).catch((e) => {
+      // 缓存写失败会导致下次同图重复计费，必须留痕
+      console.error('[OilPaint] 缓存写入失败(同图可能重复计费):', (e as Error)?.message || e)
+    })
     return ourUrl || stored.url
   } catch (err) {
     console.error('[OilPaint] 生成失败:', (err as Error)?.message || err)
     return null
   }
+}
+
+/** 生成（或取缓存）某张照片的油画版, 返回我们存储的 URL。失败返回 null。 */
+export async function getOilPainting(photoUrl: string): Promise<string | null> {
+  // 开关：未显式开启(OIL_PAINT_ENABLED !== 'true')则暂停使用通义 API, 不调用/不计费, 前端回退原图
+  if (process.env.OIL_PAINT_ENABLED !== 'true') return null
+
+  if (!photoUrl) return null
+  const sk = sourceKey(photoUrl)
+
+  const cached = await prisma.oilPainting.findUnique({ where: { sourceKey: sk } })
+  if (cached) return cached.url
+
+  const existing = IN_FLIGHT.get(sk)
+  if (existing) return existing
+
+  const task = generateOilPainting(photoUrl, sk).finally(() => {
+    IN_FLIGHT.delete(sk)
+  })
+  IN_FLIGHT.set(sk, task)
+  return task
 }

@@ -45,20 +45,28 @@ export async function POST(request: Request) {
     const code = generateVerificationCode()
     await storeVerificationCode(email, code)
 
+    // 日志脱敏：不输出完整邮箱与验证码明文（验证码仅本地开发时输出）
+    const maskedEmail = (email as string).replace(/^(.).*(@.*)$/, '$1***$2')
     if (isEmailDeliveryConfigured()) {
       // TODO: 接入真实邮件服务（nodemailer/Resend/阿里云邮件等）后在此发送
-      console.log(`[Email Verification] Send code to ${email}: ${code}`)
+      console.log(`[Email Verification] Send code to ${maskedEmail}`)
       return NextResponse.json({
         success: true,
         message: '验证码已发送到您的邮箱，请在 5 分钟内完成验证',
       })
     }
 
-    // 未配置邮件服务：验证码仅写入服务端日志，不向前端回显
-    console.log(`[Email Verification] Code for ${email}: ${code}（未配置邮件服务，仅本地调试）`)
+    // 未配置邮件服务：开发环境可从服务端日志取验证码；生产环境不落明文
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[Email Verification] Code for ${maskedEmail}: ${code}（未配置邮件服务，仅本地调试）`)
+    } else {
+      console.warn('[Email Verification] SMTP 未配置且处于生产环境，验证码无法送达，请配置 SMTP_* 环境变量')
+    }
     return NextResponse.json({
       success: true,
-      message: '验证码已发送（未配置邮件服务，请查看服务器日志获取验证码）',
+      message: isEmailDeliveryConfigured()
+        ? '验证码已发送'
+        : '邮件服务未配置：开发环境请查看服务器日志获取验证码',
     })
   } catch {
     return NextResponse.json({ error: '发送失败' }, { status: 500 })

@@ -1,6 +1,5 @@
-# 招花：每日 08:00 官方源+互联网源
-0 8 * * * cd /home/ubuntu/learn-workbench && sudo docker compose exec -T web node /app/scripts/jobs_official.mjs >> logs/jobs-cron.log 2>&1 && sudo docker compose exec -T web node /app/scripts/jobs_browser.mjs >> logs/jobs-cron.log 2>&1
-# 招花：每周一 06:00 更新 hosts 注册表并增量抓取
-0 6 * * 1 cd /home/ubuntu/learn-workbench && sudo docker compose exec -T web node /app/scripts/update_job_hosts.mjs >> logs/hosts-cron.log 2>&1 && sudo docker compose exec -T web node /app/scripts/jobs_official.mjs >> logs/hosts-cron.log 2>&1
+# travel-notes 服务器 crontab（本项目的条目）
+# 注意：服务器 crontab 另有 learn-workbench 项目的两条任务（每日/每周一），
+# 属于其他项目，勿在此文件维护，也勿用本文件直接覆盖服务器 crontab。
 # travel-notes：每周日 04:30 docker 磁盘清理，防构建缓存打满
 30 4 * * 0 bash /home/ubuntu/travel-notes/scripts/disk-clean.sh >> /home/ubuntu/travel-notes/logs/disk-clean-cron.log 2>&1

@@ -30,7 +30,7 @@ const PUBLIC_PATHS = [
   '/api/admin/check',
   '/api/admin/logout',
   '/api/admin/setup',
-  '/api/admin/settings',
+  // '/api/admin/settings' 有意不在公开列表：全部子路由各自 requireAuth（不应整段公开）
   '/api/admin/force-change-password',
   '/api/forgot-password',
   '/api/register',
@@ -40,6 +40,11 @@ const PUBLIC_PATHS = [
   '/uploads',
   '/_next',
 ]
+
+/** 段边界匹配：/api/login 命中 /api/login 与 /api/login/x，但不误放 /api/login-xyz */
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p.endsWith('/') ? p : p + '/'))
+}
 
 /**
  * 安全响应头（Security Headers）：
@@ -208,9 +213,9 @@ export async function middleware(request: NextRequest) {
   if (csrfResponse) return applyCorsHeaders(csrfResponse, request)
 
   // 首页及公开前缀路径直接放行（首页需精确匹配，不能用 startsWith('/')）
-  if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
+  if (isPublicPath(pathname)) {
     let res = finalizeResponse(NextResponse.next(), request)
-    if (pathname.startsWith('/uploads')) res = applyStaticCacheHeaders(res, pathname)
+    if (pathname === '/uploads' || pathname.startsWith('/uploads/')) res = applyStaticCacheHeaders(res, pathname)
     return res
   }
 

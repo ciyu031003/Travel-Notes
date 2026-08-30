@@ -68,8 +68,12 @@ crontab -l                                              # 查看 cron
 | `COOKIE_SECURE` | Cookie Secure（https 设 true） | false |
 | `NEXT_PUBLIC_SITE_URL` | 站点 URL | http://localhost:3000 |
 | `NEXT_PUBLIC_SITE_TITLE` | 站点标题 | Travel-Notes |
+| `APP_ENCRYPTION_KEY` | AppSecret 表（如 DASHSCOPE_API_KEY）的 AES-256-GCM 主密钥 | 空（未配置则敏感配置功能禁用） |
+| `OIL_PAINT_ENABLED` | 油画生成（通义 API，按张计费）总开关，需为 `true` 才启用 | false |
 | `SMTP_*` + `MAIL_FROM` | 邮件发送（可选） | 空 |
 | `STORAGE_*` | S3 兼容对象存储（可选） | 空 |
+
+> **APP_ENCRYPTION_KEY 强度要求**：至少 32 字节随机值（`openssl rand -hex 32`）。该值经 SHA-256 归一后直接作为 AES-256 密钥，弱口令会被无盐归一掩盖成"合法"密钥——务必使用随机值，且一旦投入使用不可更换（换钥后已有密文无法解密）。可用 `node scripts/seed-secret.cjs` 写入密钥类敏感配置。
 
 ---
 

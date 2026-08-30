@@ -37,7 +37,9 @@ export function decryptSecret(valueEnc: string, ivB64: string): string | null {
     const decipher = createDecipheriv('aes-256-gcm', key, iv)
     decipher.setAuthTag(tag)
     return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8')
-  } catch {
+  } catch (err) {
+    // 静默失败会让「密钥配错/数据损坏」被误判为「未配置」，必须留痕（不输出密文）
+    console.error('[SecretCrypto] 解密失败(密钥不匹配或数据损坏):', (err as Error)?.message || err)
     return null
   }
 }

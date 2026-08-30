@@ -35,12 +35,15 @@ const MIME: Record<string, string> = {
   '.webp': 'image/webp',
   '.gif': 'image/gif',
   '.avif': 'image/avif',
-  '.svg': 'image/svg+xml',
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
   '.mov': 'video/quicktime',
   '.ico': 'image/x-icon',
 }
+// 注：不放行 .svg —— SVG 可携带脚本，且上传校验本就不允许 SVG 入库
+
+// 扩展名白名单： uploads 目录内的非媒体文件(.sql/.db/.bak/.env 等)一律 404，不对外提供
+const ALLOWED_EXTS = new Set(Object.keys(MIME))
 
 function safeResolve(segments: string[]): string | null {
   // 拒绝路径穿越：任何一段都不能是 .. 或包含 / 或 \\
@@ -81,20 +84,61 @@ export async function GET(request: NextRequest, context: { params: Promise<{ pat
     }
 
     const ext = path.extname(filePath).toLowerCase()
-    const mime = MIME[ext] || 'application/octet-stream'
+    if (!ALLOWED_EXTS.has(ext)) {
+      // 非白名单类型：按不存在处理，不暴露 uploads 内的非媒体文件
+      return new NextResponse('Not Found', { status: 404 })
+    }
+    const mime = MIME[ext]
 
     const isImmutableVariant = /-(thumbnail|preview|blur)\.(jpg|jpeg|png|webp)$/.test(filePath)
-    const headers = new Headers()
-    headers.set('Content-Type', mime)
-    headers.set('Content-Length', String(stat.size))
-    headers.set('Accept-Ranges', 'bytes')
-    headers.set('X-Content-Type-Options', 'nosniff')
-    if (isImmutableVariant) {
-      headers.set('Cache-Control', 'public, max-age=31536000, immutable')
-    } else {
-      headers.set('Cache-Control', 'public, max-age=86400')
+    const baseHeaders = (): Headers => {
+      const h = new Headers()
+      h.set('Content-Type', mime)
+      h.set('Accept-Ranges', 'bytes')
+      h.set('X-Content-Type-Options', 'nosniff')
+      h.set(
+        'Cache-Control',
+        isImmutableVariant ? 'public, max-age=31536000, immutable' : 'public, max-age=86400'
+      )
+      return h
     }
 
+    // 单段 Range 支持（视频 seek / 断点续传），`bytes=start-end` 与 `bytes=-suffix`
+    const range = request.headers.get('range')
+    const rangeMatch = range ? /^bytes=(\d*)-(\d*)$/.exec(range.trim()) : null
+    if (rangeMatch && (rangeMatch[1] !== '' || rangeMatch[2] !== '')) {
+      const size = stat.size
+      let start: number
+      let end: number
+      if (rangeMatch[1] === '') {
+        const suffix = parseInt(rangeMatch[2], 10)
+        if (suffix <= 0) {
+          return new NextResponse('Range Not Satisfiable', {
+            status: 416,
+            headers: { 'Content-Range': `bytes */${size}` },
+          })
+        }
+        start = Math.max(0, size - suffix)
+        end = size - 1
+      } else {
+        start = parseInt(rangeMatch[1], 10)
+        end = rangeMatch[2] === '' ? size - 1 : parseInt(rangeMatch[2], 10)
+      }
+      if (Number.isNaN(start) || Number.isNaN(end) || start > end || start >= size || end >= size) {
+        return new NextResponse('Range Not Satisfiable', {
+          status: 416,
+          headers: { 'Content-Range': `bytes */${size}` },
+        })
+      }
+      const headers = baseHeaders()
+      headers.set('Content-Range', `bytes ${start}-${end}/${size}`)
+      headers.set('Content-Length', String(end - start + 1))
+      const stream = Readable.toWeb(fs.createReadStream(filePath, { start, end })) as ReadableStream
+      return new NextResponse(stream, { status: 206, headers })
+    }
+
+    const headers = baseHeaders()
+    headers.set('Content-Length', String(stat.size))
     const stream = Readable.toWeb(fs.createReadStream(filePath)) as ReadableStream
     return new NextResponse(stream, { status: 200, headers })
   } catch (error: any) {
