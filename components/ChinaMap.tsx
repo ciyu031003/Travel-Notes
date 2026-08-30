@@ -61,6 +61,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     pinchDist: 0, pinchMid: { x: 0, y: 0 }, moved: false,
   })
   const suppressClickRef = useRef(false)
+  const dragMovedRef = useRef(false)
   const offsetRef = useRef(offset)
   offsetRef.current = offset
 
@@ -182,6 +183,10 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     const rect = containerRef.current?.getBoundingClientRect()
     if (rect) setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
     if (isDragging) {
+      // 拖拽位移超过阈值才视为拖动，避免点击误判
+      if (Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y) > 4) {
+        dragMovedRef.current = true
+      }
       setOffset({
         x: initialOffset.x + (e.clientX - dragStart.x),
         y: initialOffset.y + (e.clientY - dragStart.y),
@@ -193,12 +198,20 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return
     suppressClickRef.current = false
+    dragMovedRef.current = false
     setIsDragging(true)
     setDragStart({ x: e.clientX, y: e.clientY })
     setInitialOffset({ ...offset })
   }
 
-  const handleMouseUp = () => setIsDragging(false)
+  const handleMouseUp = () => {
+    setIsDragging(false)
+    // 真正的拖拽/捏合后抑制合成 click，避免触发省份选中或空白返回
+    if (dragMovedRef.current) {
+      suppressClickRef.current = true
+      dragMovedRef.current = false
+    }
+  }
   const handleMouseLeave = () => { setIsDragging(false); setHoveredProvince(null) }
 
   const zoomIn = () => { setScale((prev) => Math.min(MAX_SCALE, prev + 0.3)); setLocated(false) }
@@ -375,6 +388,29 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
   const closeCityModal = () => setShowCityModal(false)
   const backToProvinceList = () => setSelectedCity(null)
 
+  // 点击省份放大后，点击地图空白区域（非省份/城市/控件/弹层）回到全国视图
+  const handleMapClick = (e: React.MouseEvent) => {
+    if (!selectedProvince) return
+    // 从事件目标向上查找，命中省份、城市圆点或地图 UI 覆盖层时交由对应逻辑处理
+    let el: Element | null = e.target as Element | null
+    while (el && el !== containerRef.current) {
+      if (
+        el.getAttribute?.('data-province-id') ||
+        el.getAttribute?.('data-city-id') ||
+        el.getAttribute?.('data-map-overlay')
+      ) {
+        return
+      }
+      el = el.parentElement
+    }
+    // 空白区域：清除省份聚焦与城市弹窗，恢复全国视图
+    setSelectedProvince(null)
+    setSelectedCity(null)
+    setHoveredProvince(null)
+    setShowCityModal(false)
+    resetZoom()
+  }
+
   return (
     <div
       ref={containerRef}
@@ -384,6 +420,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
       onClickCapture={handleClickCapture}
+      onClick={handleMapClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

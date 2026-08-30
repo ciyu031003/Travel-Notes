@@ -24,9 +24,9 @@ export default function ProvinceCityPanel({
   return (
     <>
       {/* 移动端遮罩：点击关闭（桌面端右侧滑入不需要） */}
-      <div className="fixed inset-0 bg-black/20 z-40 md:hidden" onClick={onClose} />
+      <div data-map-overlay className="fixed inset-0 bg-black/20 z-40 md:hidden" onClick={onClose} />
 
-      <div className="fixed inset-x-0 bottom-0 h-[60vh] z-50 rounded-t-2xl animate-[slideUp_0.3s_ease-out] md:absolute md:inset-y-0 md:right-0 md:h-auto md:w-[min(380px,100%)] md:rounded-none md:animate-[slideIn_0.3s_ease-out] bg-travel-cream/97 backdrop-blur-md border-t md:border-t-0 md:border-l border-travel-dim/60 shadow-[-12px_0_40px_-8px_rgba(90,102,112,0.12)] flex flex-col">
+      <div data-map-overlay className="fixed inset-x-0 bottom-0 h-[60vh] z-50 rounded-t-2xl animate-[slideUp_0.3s_ease-out] md:absolute md:inset-y-0 md:right-0 md:h-auto md:w-[min(380px,100%)] md:rounded-none md:animate-[slideIn_0.3s_ease-out] bg-travel-cream/97 backdrop-blur-md border-t md:border-t-0 md:border-l border-travel-dim/60 shadow-[-12px_0_40px_-8px_rgba(90,102,112,0.12)] flex flex-col">
         <style>{`
           @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }

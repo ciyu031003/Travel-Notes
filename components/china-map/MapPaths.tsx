@@ -169,6 +169,7 @@ export default function MapPaths({
         return (
           <g
             key={`tap-${path.id}`}
+            data-province-id={path.id}
             className="cursor-pointer transition-all duration-300"
             onMouseEnter={() => onProvinceHover(path.id)}
             onMouseLeave={() => onProvinceHover(null)}

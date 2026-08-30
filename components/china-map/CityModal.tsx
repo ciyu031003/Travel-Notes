@@ -25,7 +25,7 @@ export default function CityModal({
   const [activeTab, setActiveTab] = useState<'view' | 'add'>('view')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div data-map-overlay className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="bg-travel-cream rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-travel-dim/60 animate-[fadeIn_0.2s_ease-out]">
         <style>{`
           @keyframes fadeIn {

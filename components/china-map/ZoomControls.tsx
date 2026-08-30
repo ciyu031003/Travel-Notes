@@ -20,7 +20,7 @@ export default function ZoomControls({
   located = false,
 }: ZoomControlsProps) {
   return (
-    <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
+    <div data-map-overlay className="absolute top-4 left-4 flex flex-col gap-2 z-20">
       <div className="flex flex-col gap-1">
         <button
           onClick={(e) => { e.stopPropagation(); onZoomIn() }}
