@@ -18,7 +18,7 @@ import ProvinceTooltip from './china-map/ProvinceTooltip'
 import MapLegend from './china-map/MapLegend'
 import ProvinceCityPanel from './china-map/ProvinceCityPanel'
 import CityModal from './china-map/CityModal'
-import type { PostMeta, ProvincePath } from './china-map/types'
+import type { PostMeta, ProvincePath, CityDot } from './china-map/types'
 
 export type { PostMeta } from './china-map/types'
 
@@ -124,6 +124,28 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     const key = `${selectedCity.name}-${selectedProvince}`
     return citiesByPostLocation.get(key) || []
   }, [selectedCity, selectedProvince, citiesByPostLocation])
+
+  // 选中省份后，将该省每个城市按经纬度投影为地图上的圆点
+  const cityDots = useMemo<CityDot[]>(() => {
+    if (!selectedProvince) return []
+    const projection = makeProjection(width, height, 24)
+    const cities = getCitiesByProvince(selectedProvince)
+    const dots: CityDot[] = []
+    for (const city of cities) {
+      const projected = projection([city.lng, city.lat])
+      if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) continue
+      const key = `${city.name}-${selectedProvince}`
+      const posts = citiesByPostLocation.get(key) || []
+      dots.push({
+        city,
+        x: Number(projected[0].toFixed(2)),
+        y: Number(projected[1].toFixed(2)),
+        hasPosts: posts.length > 0,
+        count: posts.length,
+      })
+    }
+    return dots
+  }, [selectedProvince, citiesByPostLocation])
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect()
@@ -277,9 +299,46 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     setLocated(true)
   }
 
+
+  // ---- 单独显示省份：聚焦选中省份包围盒，其余省份变暗 ----
+  const focusProvince = (provinceId: string) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect || rect.width === 0 || rect.height === 0) return
+    const feature = chinaFeatures.find((f) => provinceIdOf(f) === provinceId)
+    if (!feature) return
+    const projection = makeProjection(width, height, 24)
+    const pathGen = makePath(projection)
+    const bounds = pathGen.bounds(feature as never)
+    if (!bounds || !Number.isFinite(bounds[0][0]) || !Number.isFinite(bounds[0][1])) return
+    const [topLeft, bottomRight] = bounds
+    const vbW = Math.max(1, bottomRight[0] - topLeft[0])
+    const vbH = Math.max(1, bottomRight[1] - topLeft[1])
+    const bc = { x: (topLeft[0] + bottomRight[0]) / 2, y: (topLeft[1] + bottomRight[1]) / 2 }
+    // viewBox 到容器像素的缩放与偏移（SVG preserveAspectRatio=meet）
+    const k = Math.min(rect.width / width, rect.height / height)
+    const cx0 = (rect.width - width * k) / 2
+    const cy0 = (rect.height - height * k) / 2
+    // 目标屏幕中心：预留右侧面板（桌面 md+ 面板宽约 380px）
+    const panelW = typeof window !== 'undefined' && window.innerWidth >= 768 ? 380 : 0
+    const pad = Math.min(rect.width, rect.height) * 0.1
+    const availW = Math.max(1, rect.width - panelW - pad * 2)
+    const availH = Math.max(1, rect.height - pad * 2)
+    let s = Math.min(availW / (vbW * k), availH / (vbH * k))
+    s = Math.max(MIN_SCALE, Math.min(MAX_SCALE, s))
+    const center = { x: rect.width / 2, y: rect.height / 2 }
+    const target = { x: (rect.width - panelW) / 2, y: rect.height / 2 }
+    const pbc = { x: cx0 + bc.x * k, y: cy0 + bc.y * k }
+    const ox = target.x - center.x - (pbc.x - center.x) * s
+    const oy = target.y - center.y - (pbc.y - center.y) * s
+    setScale(s)
+    setOffset({ x: ox, y: oy })
+    setLocated(true)
+  }
   const handleProvinceClick = (provinceId: string) => {
     setSelectedProvince(provinceId)
     setSelectedCity(null)
+    setHoveredProvince(null)
+    focusProvince(provinceId)
   }
   const handleCityClick = (city: City) => { setSelectedCity(city); setShowCityModal(true) }
   const closeCityModal = () => setShowCityModal(false)
@@ -310,7 +369,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
           touchAction: 'none',
         }}
       >
-        <MapPaths paths={paths} dashPath={dashPath} hoveredProvince={hoveredProvince} selectedProvince={selectedProvince} onProvinceHover={setHoveredProvince} onProvinceClick={handleProvinceClick} />
+        <MapPaths paths={paths} dashPath={dashPath} hoveredProvince={hoveredProvince} selectedProvince={selectedProvince} cityDots={cityDots} onProvinceHover={setHoveredProvince} onProvinceClick={handleProvinceClick} onCityClick={handleCityClick} />
         <SouthChinaSeaInset />
       </div>
 
@@ -323,7 +382,7 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
       <MapLegend />
 
       {selectedProvinceInfo && !selectedCity && (
-        <ProvinceCityPanel provinceInfo={selectedProvinceInfo} cities={selectedProvinceCities} posts={selectedPosts} citiesWithPosts={citiesByPostLocation} onClose={() => setSelectedProvince(null)} onCityClick={handleCityClick} />
+        <ProvinceCityPanel provinceInfo={selectedProvinceInfo} cities={selectedProvinceCities} posts={selectedPosts} citiesWithPosts={citiesByPostLocation} onClose={() => { setSelectedProvince(null); resetZoom() }} onCityClick={handleCityClick} />
       )}
 
       {showCityModal && selectedCity && (

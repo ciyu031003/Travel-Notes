@@ -1,3 +1,4 @@
+import type { City } from '@/data/cities'
 export interface PostMeta {
   slug: string
   title: string
@@ -16,6 +17,15 @@ export interface ProvincePath {
   nameEn: string
   lit: boolean
   centroid: [number, number] | null
+}
+
+/** 省份内单个城市在地图上的投影圆点 */
+export interface CityDot {
+  city: City
+  x: number
+  y: number
+  hasPosts: boolean
+  count: number
 }
 
 export const ChinaMapColors = {
