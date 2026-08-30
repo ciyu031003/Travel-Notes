@@ -26,3 +26,7 @@ export async function hasSecret(name: string): Promise<boolean> {
   const row = await prisma.appSecret.findUnique({ where: { name }, select: { id: true } })
   return Boolean(row)
 }
+
+export async function deleteSecret(name: string): Promise<void> {
+  await prisma.appSecret.deleteMany({ where: { name } })
+}

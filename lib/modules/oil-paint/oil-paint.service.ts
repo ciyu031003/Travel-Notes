@@ -130,10 +130,25 @@ async function generateOilPainting(photoUrl: string, sk: string): Promise<string
   }
 }
 
+/**
+ * 开关读取：DB(AppSecret: OIL_PAINT_ENABLED) 优先，未设置时回退环境变量。
+ * 后台设置页可在线切换；DB 不可达时按环境变量兜底，不阻断画册渲染。
+ */
+export async function isOilPaintEnabled(): Promise<boolean> {
+  try {
+    const flag = await getSecret('OIL_PAINT_ENABLED')
+    if (flag === 'true') return true
+    if (flag === 'false') return false
+  } catch {
+    // DB 不可达 → 环境变量兜底
+  }
+  return process.env.OIL_PAINT_ENABLED === 'true'
+}
+
 /** 生成（或取缓存）某张照片的油画版, 返回我们存储的 URL。失败返回 null。 */
 export async function getOilPainting(photoUrl: string): Promise<string | null> {
-  // 开关：未显式开启(OIL_PAINT_ENABLED !== 'true')则暂停使用通义 API, 不调用/不计费, 前端回退原图
-  if (process.env.OIL_PAINT_ENABLED !== 'true') return null
+  // 开关：未开启则不调用通义 API, 不计费, 前端回退原图
+  if (!(await isOilPaintEnabled())) return null
 
   if (!photoUrl) return null
   const sk = sourceKey(photoUrl)
