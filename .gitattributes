@@ -1,0 +1,2 @@
+# 统一 shell 脚本行尾为 LF（Windows autocrlf 会把 git archive 输出转成 CRLF，导致容器内 shebang 失效）
+*.sh text eol=lf
