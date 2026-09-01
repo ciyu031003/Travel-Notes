@@ -250,3 +250,11 @@ Capacitor Android WebView（源 http(s)://localhost）
 - **OTA**：`/api/version` 返回 `{"version":"1.0.0","buildNumber":1,"downloadUrl":"https://travel-notes.yuanabd.cn/downloads/tiantu.apk"}`；nginx `/downloads/` 直出 `/var/www/travel-notes-downloads/tiantu.apk`（attachment + Range）。
 - **下载链接**：https://travel-notes.yuanabd.cn/downloads/tiantu.apk
 - **备注**：旧版 3.0.1 的 OTA 比较器（isNewerVersion / buildNumber）按数值比较，1.0.0 小于 3.0.1 不会触发「发现新版本」提示——本次为全新起点，用户直接下载安装即可；后续从 1.0.x 递增版本可正常 OTA。
+
+### 8.4 门户下载入口（2026-09-01）
+
+- **/download 下载页**（app/download/page.tsx，已上线）：Android 自动下载、版本/更新日志、安装三步说明、qrcode 扫码下载、复制链接、App 内「已安装」态。
+- **门户首页（静态落地页 /var/www/travel-landing/travel.html）**：原已内置「Android APK 直装」链接 → https://travel-notes.yuanabd.cn/downloads/tiantu.apk（已核实可达）。
+- **登录门 /login + 首页**：新增「下载 App」入口（右上角胶囊 / 页脚链接 / 移动端悬浮钮），指向 /download。
+- **OTA**：/api/version = 1.0.0 / build 1；APK（含新壳）已重打并更新至下载目录（90.9MB）。
+- 新依赖：qrcode；/download 已加入中间件公开白名单。
