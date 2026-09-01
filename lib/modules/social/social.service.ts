@@ -6,6 +6,8 @@
  */
 import { prisma } from '../../db'
 import { checkContent } from '../content/policy'
+import { appCache } from '../../cache'
+import { absoluteMediaUrl } from '../../media-url'
 
 export type SocialFeedTab = 'recommended' | 'latest' | 'hot' | 'following'
 export type NotificationTypeName = 'LIKE' | 'COMMENT' | 'REPLY' | 'FAVORITE' | 'FOLLOW'
@@ -32,9 +34,9 @@ function iso(v: Date | string | null | undefined): string | null {
 function mediaUrl(storageKey: string): string {
   if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) {
     const base = (process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')
-    return base + '/' + storageKey
+    return absoluteMediaUrl(base + '/' + storageKey) ?? (base + '/' + storageKey)
   }
-  return '/uploads/' + storageKey
+  return absoluteMediaUrl('/uploads/' + storageKey) ?? ('/uploads/' + storageKey)
 }
 
 function travelCoverUrl(travel: any): string | null {
@@ -49,28 +51,29 @@ function serializeAuthor(author: any) {
     id: author.id,
     username: author.username,
     nickname: author.nickname ?? null,
-    avatarUrl: author.avatarUrl ?? null,
+    avatarUrl: absoluteMediaUrl(author.avatarUrl),
     accountId: author.accountId ?? null,
   }
 }
 
 function postImages(post: any): string[] {
-  if (!post) return []
-  if (Array.isArray(post.images)) return post.images.filter((v: any) => typeof v === 'string')
-  if (typeof post.images === 'string') {
+  let raw: string[] = []
+  if (!post) return raw
+  if (Array.isArray(post.images)) raw = post.images.filter((v: any) => typeof v === 'string')
+  else if (typeof post.images === 'string') {
     try {
       const parsed = JSON.parse(post.images)
-      if (Array.isArray(parsed)) return parsed.filter((v: any) => typeof v === 'string')
+      if (Array.isArray(parsed)) raw = parsed.filter((v: any) => typeof v === 'string')
     } catch {}
   }
-  return []
+  return raw.map((u) => absoluteMediaUrl(u) ?? u)
 }
 
 function serializePost(row: any, likedIds: Set<number>, favoriteIds: Set<number>) {
   const travel = row.travel ?? null
   const post = row.post ?? null
   const photos = post ? postImages(post) : []
-  const coverUrl = post ? (post.cover || photos[0] || null) : travelCoverUrl(travel)
+  const coverUrl = absoluteMediaUrl(post ? (post.cover || photos[0] || null) : travelCoverUrl(travel))
   return {
     id: row.id,
     travelId: row.travelId ?? null,
@@ -168,16 +171,25 @@ export async function listSocialFeed(params: {
   }
 
   // recommended：近 90 天候选按热度分排序（第一版简单算法）
+  // 阶段 A · A3：候选 + 评分结果内存缓存 60s，避免每个请求都重算 500 条热度排序
   const since = new Date(Date.now() - 90 * 24 * 3600 * 1000)
-  const candidates = await prisma.travelPost.findMany({
-    where: { ...baseWhere, publishedAt: { gte: since } },
-    include: POST_INCLUDE,
-    orderBy: { publishedAt: 'desc' },
-    take: 500,
-  })
-  const scored = candidates
-    .map((p) => ({ p, score: heatScore(p) }))
-    .sort((a, b) => b.score - a.score)
+  const feedCacheKey = `social:feed:recommended:u${userId ?? 'anon'}`
+  const cachedScored = await appCache.get<Array<{ p: any; score: number }>>(feedCacheKey)
+  let scored: Array<{ p: any; score: number }>
+  if (cachedScored) {
+    scored = cachedScored
+  } else {
+    const candidates = await prisma.travelPost.findMany({
+      where: { ...baseWhere, publishedAt: { gte: since } },
+      include: POST_INCLUDE,
+      orderBy: { publishedAt: 'desc' },
+      take: 500,
+    })
+    scored = candidates
+      .map((p) => ({ p, score: heatScore(p) }))
+      .sort((a, b) => b.score - a.score)
+    await appCache.set(feedCacheKey, scored, 60_000)
+  }
   const total = scored.length
   const slice = scored.slice((page - 1) * pageSize, page * pageSize).map((s) => s.p)
   const data = await attachViewerState(slice, userId)
@@ -398,15 +410,29 @@ export async function unblockUser(actorId: number, targetId: number) {
 }
 
 export async function getUserProfile(targetId: number, viewerId?: number | null) {
-  const user = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true, createdAt: true } })
+  // 阶段 A · A3：帖子/粉丝/关注三个 count 合并进 user 查询的 _count（过滤计数），
+  // 从 3 次 count 降为 0 次额外查询（isFollowing/isBlocked 仍按需单独查）。
+  const user = await prisma.user.findUnique({
+    where: { id: targetId },
+    select: {
+      id: true, username: true, nickname: true, avatarUrl: true, accountId: true, createdAt: true,
+      _count: {
+        select: {
+          travelPosts: { where: { visibility: 'PUBLIC' } },
+          followers: true,
+          following: true,
+        },
+      },
+    },
+  })
   if (!user) return null
-  const [postCount, followerCount, followingCount, isFollowing, isBlocked] = await Promise.all([
-    prisma.travelPost.count({ where: { authorId: targetId, visibility: 'PUBLIC' } }),
-    prisma.userFollow.count({ where: { followingId: targetId } }),
-    prisma.userFollow.count({ where: { followerId: targetId } }),
+  const [isFollowing, isBlocked] = await Promise.all([
     viewerId ? prisma.userFollow.findUnique({ where: { followerId_followingId: { followerId: viewerId, followingId: targetId } } }) : Promise.resolve(null),
     viewerId ? prisma.userBlock.findUnique({ where: { blockerId_blockedId: { blockerId: viewerId, blockedId: targetId } } }) : Promise.resolve(null),
   ])
+  const postCount = user._count.travelPosts
+  const followerCount = user._count.followers
+  const followingCount = user._count.following
   const recent = await prisma.travelPost.findMany({ where: { authorId: targetId, visibility: 'PUBLIC' }, orderBy: { publishedAt: 'desc' }, take: 12, include: POST_INCLUDE })
   const posts = await attachViewerState(recent, viewerId)
   return {

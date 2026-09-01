@@ -63,3 +63,34 @@ server {
 #
 #     # ... 其余配置同上
 # }
+
+# ============================================================
+# 媒体直出（可选 · 阶段 A A4）
+# 目标：让 /uploads 与 /api/uploads 的媒体不经 Node 流式拷贝，由 nginx 直接读盘回包，
+#       释放 Node 事件循环与内存，提升并发能力（尤其视频 / 相册原图）。
+# 前置：
+#   1) 上传目录对 nginx 可读。Docker 部署时把 named volume 改为 bind mount：
+#      volumes: - /srv/travel-notes/uploads:/app/public/uploads
+#   2) 应用设置 UPLOAD_X_ACCEL=1（/api/uploads 变体直出开关，见 DEPLOYMENT.md）。
+# 说明：/uploads 原图本为公开静态资源（现状即公开），nginx 直出与现状语义一致；
+#       相册/私人内容的访问控制由 API 层（album_token / JWT）负责，不依赖媒体 URL 保密。
+# 注意：必须用 ^~ 前缀匹配，否则会被下方图片正则 location 抢先匹配而仍然反代到 Node。
+# ------------------------------------------------------------
+
+# /uploads 原图直出（可选：与「全部反代」二选一启用）
+# location ^~ /uploads/ {
+#     alias /srv/travel-notes/uploads/;
+#     access_log off;
+#     expires 7d;
+#     add_header Cache-Control "public, max-age=604800";
+#     add_header X-Content-Type-Options nosniff;
+# }
+
+# /api/uploads 变体经 X-Accel-Redirect 内部直出（需应用 UPLOAD_X_ACCEL=1）
+# location ^~ /internal-uploads/ {
+#     internal;   # 仅允许 X-Accel-Redirect 内部访问，外部直接请求返回 404
+#     alias /srv/travel-notes/uploads/;
+#     access_log off;
+#     expires 1y;
+#     add_header Cache-Control "public, max-age=31536000, immutable";
+# }

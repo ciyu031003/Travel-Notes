@@ -1,5 +1,6 @@
 import { prisma } from '../db'
 import { scopedWhere } from '../visibility'
+import { absoluteMediaUrl } from '../media-url'
 
 /**
  * 低内存构建优化：构建阶段（next build）跳过数据库读取。
@@ -108,10 +109,12 @@ function parseImages(images: string | null | undefined): string[] {
   try {
     const parsed = JSON.parse(images)
     if (!Array.isArray(parsed)) return []
-    return parsed.map((item: any) => {
-      if (typeof item === 'number') return `/api/images/${item}`
-      return String(item)
-    })
+    return parsed
+      .map((item: any) => {
+        if (typeof item === 'number') return `/api/images/${item}`
+        return String(item)
+      })
+      .map((u) => absoluteMediaUrl(u) ?? u)
   } catch {
     return []
   }
@@ -141,10 +144,14 @@ function parseVideos(videos: string | null | undefined): VideoInfo[] {
 
 function toImageUrl(value: string | number | null | undefined): string | undefined {
   if (!value) return undefined
-  if (typeof value === 'number') return `/api/images/${value}`
-  const str = String(value)
-  if (/^\d+$/.test(str)) return `/api/images/${str}`
-  return str
+  let url: string
+  if (typeof value === 'number') {
+    url = `/api/images/${value}`
+  } else {
+    const str = String(value)
+    url = /^\d+$/.test(str) ? `/api/images/${str}` : str
+  }
+  return absoluteMediaUrl(url) ?? undefined
 }
 
 function toISOString(date: any): string {

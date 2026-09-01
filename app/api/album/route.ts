@@ -5,6 +5,7 @@ import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
 import { verifyAlbumToken, ALBUM_COOKIE } from '@/lib/album-auth'
 import { getCurrentUserId } from '@/lib/current-user'
+import { applyCacheControl } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -128,11 +129,13 @@ export async function GET(request: Request) {
 
     const albums = await listAlbums(userId)
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       cities,
       albums,
       totalPosts: posts.length,
     })
+    // 相册为私人内容（纪念日锁保护），只允许浏览器私有缓存，不进共享缓存
+    return applyCacheControl(res, 'private', !!userId)
   } catch (error) {
     console.error('[Album API] Failed:', error)
     return NextResponse.json({ error: '获取相册数据失败' }, { status: 500 })

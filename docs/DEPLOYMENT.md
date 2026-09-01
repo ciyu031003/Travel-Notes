@@ -65,10 +65,12 @@ crontab -l                                              # 查看 cron
 | `JWT_SECRET` / `SESSION_SECRET` | 会话签名密钥 | 自动生成 |
 | `ADMIN_USERNAME` | 初始化管理员用户名 | admin |
 | `ADMIN_PASSWORD_HASH` | 预置管理员密码哈希（可选） | 空 |
-| `COOKIE_SECURE` | Cookie Secure（https 设 true） | false |
+| `COOKIE_SECURE` | Cookie Secure（https 设 true；App 端登录已代码固定 SameSite=None+Secure） | false |
 | `NEXT_PUBLIC_SITE_URL` | 站点 URL | http://localhost:3000 |
 | `NEXT_PUBLIC_SITE_TITLE` | 站点标题 | Travel-Notes |
 | `APP_ENCRYPTION_KEY` | AppSecret 表（如 DASHSCOPE_API_KEY）的 AES-256-GCM 主密钥 | 空（未配置则敏感配置功能禁用） |
+| `APP_VERSION` / `APP_BUILD_NUMBER` | OTA 版本（/api/version 供 App 检查更新；每次发版递增构建号） | 3.0.1 / 6 |
+| `APP_DOWNLOAD_URL` | 新版 APK 下载地址（需 nginx 静态目录 /downloads/） | https://travel-notes.yuanabd.cn/downloads/tiantu.apk |
 | `OIL_PAINT_ENABLED` | 油画生成（通义 API，按张计费）总开关，需为 `true` 才启用 | false |
 | `SMTP_*` + `MAIL_FROM` | 邮件发送（可选） | 空 |
 | `STORAGE_*` | S3 兼容对象存储（可选） | 空 |
@@ -269,3 +271,49 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 > **注意**：`8443` 的自签证书**不会被 certbot 自动续期**（有效期 10 年），也不会被 `certbot renew` 覆盖；`443` 域名证书仍由 certbot 正常管理。
+
+---
+
+## 十二、媒体直出（可选 · 阶段 A A4）
+
+> 背景：默认架构下所有媒体（/uploads 原图 + /api/uploads 变体）都经 Next.js Node 进程流式返回，
+> 视频 seek 与按需 sharp 变体生成也占用 Node 事件循环。并发看图/视频时会拖高动态 API 延迟。
+> 本方案把媒体从 Node 卸到 nginx 直出，**代码已就绪（UPLOAD_X_ACCEL=1 开关），按需启用**。
+
+### 12.1 操作步骤（宿主机 + Docker）
+
+1. 把上传卷从 named volume 改为 bind mount（便于 nginx 读盘），在 docker-compose.yml 的 app 服务下：
+
+   ```yaml
+   volumes:
+     - /srv/travel-notes/uploads:/app/public/uploads   # 替换原来的 uploads-data:/app/public/uploads
+   ```
+
+   迁移旧数据（一次性）：`docker run --rm -v travel-notes_uploads-data:/src -v /srv/travel-notes/uploads:/dst alpine sh -c 'cp -a /src/. /dst/'`
+
+2. 在 .env 增加 `UPLOAD_X_ACCEL=1`，重启应用：`docker compose up -d app`。
+
+3. Nginx 增加内部直出 location（示例见 docs/nginx.conf.example）：
+
+   ```nginx
+   location ^~ /uploads/ {
+       alias /srv/travel-notes/uploads/;
+       access_log off;
+       expires 7d;
+       add_header Cache-Control "public, max-age=604800";
+       add_header X-Content-Type-Options nosniff;
+   }
+   location ^~ /internal-uploads/ {
+       internal;
+       alias /srv/travel-notes/uploads/;
+       access_log off;
+       expires 1y;
+       add_header Cache-Control "public, max-age=31536000, immutable";
+   }
+   ```
+
+   `sudo nginx -t && sudo systemctl reload nginx`
+
+4. 验证：请求任意媒体，响应头出现 X-Accel-Redirect 时由 nginx 直出；`curl -I` 确认不再经 Node 流式路径。
+
+> 更彻底的方案（推荐后续做）：启用对象存储 + CDN（STORAGE_* 配置即启用），媒体 URL 直指 CDN，Node 零负担。

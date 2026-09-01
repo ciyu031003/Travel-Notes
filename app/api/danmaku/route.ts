@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/db'
 import { ok, fail, unauthorized } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth-middleware'
+import { applyCacheControl } from '@/lib/http-cache'
+import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { getClientIp } from '@/lib/request-utils'
 
 // 公开接口：获取全部弹幕（从最近到最早）
 export async function GET() {
@@ -18,7 +21,8 @@ export async function GET() {
       timestamp: d.createdAt.getTime(),
     }))
 
-    return ok({ danmakus })
+    const res = ok({ danmakus })
+    return applyCacheControl(res, 'public', false)
   } catch (error: any) {
     console.error('[GET /api/danmaku] Error:', error?.message)
     return ok({ danmakus: [] })
@@ -28,6 +32,13 @@ export async function GET() {
 // 公开接口：写入一条新弹幕
 export async function POST(request: NextRequest) {
   try {
+    // 阶段 A · A6：公开写接口按 IP 限流，防止刷弹幕
+    const ip = getClientIp(request)
+    const limit = rateLimit({ prefix: 'danmaku:ip', key: ip || 'unknown', limit: 10, windowMs: 60_000 })
+    if (!limit.ok) {
+      return fail('发送过于频繁，请稍后再试', 429)
+    }
+
     const body = await request.json()
     const text = (body?.text || '').toString().trim()
     if (!text) {

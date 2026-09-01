@@ -1,6 +1,8 @@
 import { prisma } from '../../db'
 import { findProvinceByLocation } from '../../province-map'
 import { getUserCapabilities, type UserCapabilities } from '../space/permissions'
+import { invalidateCurrentUserCache } from '../../current-user'
+import { absoluteMediaUrl } from '../../media-url'
 
 function iso(v: Date | null | undefined): string | null {
   if (!v) return null
@@ -23,10 +25,11 @@ function parseImageTokens(images: string | null | undefined): string[] {
 /** 将图片标识（数字 ID / URL）统一解析为可访问 URL，用于去重与展示 */
 function resolveImageUrl(value: string | number | null | undefined): string | null {
   if (value == null) return null
-  if (typeof value === 'number') return `/api/images/${value}`
+  if (typeof value === 'number') return absoluteMediaUrl(`/api/images/${value}`)
   const str = String(value).trim()
   if (!str) return null
-  return /^\d+$/.test(str) ? `/api/images/${str}` : str
+  const raw = /^\d+$/.test(str) ? `/api/images/${str}` : str
+  return absoluteMediaUrl(raw)
 }
 
 /** 单篇旅行记录的照片数（cover + images 去重） */
@@ -205,7 +208,7 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
     username: user.username,
     nickname: user.nickname,
     bio: user.bio,
-    avatarUrl: user.avatarUrl,
+    avatarUrl: absoluteMediaUrl(user.avatarUrl),
     accountId: user.accountId,
     createdAt: iso(user.createdAt),
     summary: {
@@ -264,6 +267,7 @@ export async function updateMyProfile(
   if (!user) throw new Error('用户不存在')
 
   const updated = await prisma.user.update({ where: { id: userId }, data })
+  invalidateCurrentUserCache(userId)
   return { nickname: updated.nickname, bio: updated.bio }
 }
 
@@ -271,5 +275,6 @@ export async function updateMyAvatar(userId: number, avatarUrl: string) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
   if (!user) throw new Error('用户不存在')
   const updated = await prisma.user.update({ where: { id: userId }, data: { avatarUrl } })
-  return { avatarUrl: updated.avatarUrl }
+  invalidateCurrentUserCache(userId)
+  return { avatarUrl: absoluteMediaUrl(updated.avatarUrl) }
 }

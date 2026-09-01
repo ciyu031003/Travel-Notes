@@ -91,6 +91,21 @@ export async function GET(request: NextRequest, context: { params: Promise<{ pat
     const mime = MIME[ext]
 
     const isImmutableVariant = /-(thumbnail|preview|blur)\.(jpg|jpeg|png|webp)$/.test(filePath)
+
+    // 阶段 A · A4：可选 nginx X-Accel-Redirect 直出（媒体不经过 Node 流式拷贝）。
+    // 设置 UPLOAD_X_ACCEL=1 时，这里只返回内部重定向头，由 nginx 直接读盘回包
+    // （视频 Range/seek 也由 nginx 原生处理）。需 nginx 配置 internal location
+    // /internal-uploads/（见 docs/nginx.conf.example），并让 nginx 可读上传目录。
+    if (process.env.UPLOAD_X_ACCEL === '1') {
+      const rel = path.relative(uploadDir(), filePath).split('\\').join('/')
+      const xh = new Headers()
+      xh.set('Content-Type', mime)
+      xh.set('Accept-Ranges', 'bytes')
+      xh.set('Cache-Control', isImmutableVariant ? 'public, max-age=31536000, immutable' : 'public, max-age=86400')
+      xh.set('X-Accel-Redirect', '/internal-uploads/' + rel)
+      return new NextResponse(null, { status: 200, headers: xh })
+    }
+
     const baseHeaders = (): Headers => {
       const h = new Headers()
       h.set('Content-Type', mime)

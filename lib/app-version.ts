@@ -5,7 +5,7 @@
 export const APP_VERSION = process.env.APP_VERSION || process.env.NEXT_PUBLIC_APP_VERSION || '3.0.1'
 
 /** 递增的构建号（每次发版 +1，用于客户端判断是否有更新） */
-export const APP_BUILD_NUMBER = Number(process.env.APP_BUILD_NUMBER || process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || 5)
+export const APP_BUILD_NUMBER = Number(process.env.APP_BUILD_NUMBER || process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || 6)
 
 /** 新版 APK 下载地址（可经环境变量覆盖） */
 export const APP_DOWNLOAD_URL =

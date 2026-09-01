@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPostService } from '@/lib/container'
 import { getCurrentUserId } from '@/lib/current-user'
+import { applyCacheControl } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,8 @@ export async function GET(_request: NextRequest) {
     const userId = await getCurrentUserId()
     const postService = getPostService()
     const posts = await postService.getPostsHybrid('travel', userId)
-    return NextResponse.json({ posts })
+    const res = NextResponse.json({ posts })
+    return applyCacheControl(res, 'user', !!userId)
   } catch (error) {
     console.error('[GET /api/travels]', error)
     return NextResponse.json({ error: '获取旅行记录失败' }, { status: 500 })

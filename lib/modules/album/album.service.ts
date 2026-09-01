@@ -5,6 +5,7 @@ import { prisma } from '../../db'
 import { scopedWhere } from '../../visibility'
 import { randomUUID } from 'crypto'
 import { getStorageService } from '../../infrastructure/storage'
+import { absoluteMediaUrl } from '../../media-url'
 import { generateMediaVariants } from '../../infrastructure/media-variants'
 import {
   validateAndSanitizeImage,
@@ -66,9 +67,9 @@ const EXT_BY_MIME: Record<string, string> = {
 export function mediaPublicUrl(storageKey: string): string {
   if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) {
     const base = (process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')
-    return `${base}/${storageKey}`
+    return absoluteMediaUrl(`${base}/${storageKey}`) ?? `${base}/${storageKey}`
   }
-  return `/uploads/${storageKey}`
+  return absoluteMediaUrl(`/uploads/${storageKey}`) ?? `/uploads/${storageKey}`
 }
 
 function mapAlbum(a: any): AlbumItem {

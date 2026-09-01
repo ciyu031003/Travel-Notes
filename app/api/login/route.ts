@@ -91,7 +91,9 @@ export async function POST(request: Request) {
     if (result.token) {
       response.cookies.set('admin_session', result.token, {
         httpOnly: true,
-        secure: process.env.COOKIE_SECURE === 'true',
+        // App 端：SameSite=None 必须配 Secure，否则 WebView 拒收 Cookie（登录态丢失）。
+        // App 的 API base 恒为 HTTPS，故强制 Secure；Web 端仍由 COOKIE_SECURE 控制。
+        secure: clientType === 'app' ? true : process.env.COOKIE_SECURE === 'true',
         // App 跨域（本地壳 → 服务器 API）需 SameSite=None 才会带上 Cookie；Web 同源用 Lax
         sameSite: clientType === 'app' ? 'none' : 'lax',
         maxAge: sessionSeconds,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listTravelBookSummaries, getTravelBookByKey } from '@/lib/modules/album/travel-book.service'
 import { getCurrentUserId } from '@/lib/current-user'
+import { applyCacheControl } from '@/lib/http-cache'
 
 /**
  * Travel Book（旅行画册 2.0）：以 Travel 模型 + 存量旅行文章聚合旅行故事。
@@ -23,10 +24,12 @@ export async function GET(request: NextRequest) {
       if (!book) {
         return NextResponse.json({ error: '画册不存在' }, { status: 404 })
       }
-      return NextResponse.json({ book })
+      const resBook = NextResponse.json({ book })
+      return applyCacheControl(resBook, 'user', !!userId)
     }
     const books = await listTravelBookSummaries(userId)
-    return NextResponse.json({ books })
+    const res = NextResponse.json({ books })
+    return applyCacheControl(res, 'user', !!userId)
   } catch (error) {
     console.error('[TravelBook API] Failed:', error)
     return NextResponse.json({ error: '画册加载失败' }, { status: 500 })

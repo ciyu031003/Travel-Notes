@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Loader2, Sparkles, X } from 'lucide-react'
 import { createTravel } from '@/lib/modules/offline/travel-write'
+import { apiUrl } from '@/lib/api-base'
 
 const TRAVEL_TYPES: { value: string; label: string }[] = [
   { value: 'ALONE', label: '独旅' },
@@ -26,6 +28,7 @@ const MAX_COMPANIONS = 10
  * 移动端不设 /admin，此即 /travel 模块内的新建入口。
  */
 export default function TravelComposer({ onCreated }: { onCreated?: () => void }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -82,11 +85,26 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
     setSubmitting(false)
   }
 
+  // 游客可浏览公开内容，但记录自己的旅行需登录/注册（M0 · 产品规则）
+  const tryOpen = async () => {
+    try {
+      const res = await fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
+      const data = await res.json().catch(() => null)
+      if (data && data.authenticated) {
+        setOpen(true)
+      } else {
+        router.push('/login?redirect=/travel')
+      }
+    } catch {
+      router.push('/login?redirect=/travel')
+    }
+  }
+
   if (!open) {
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={tryOpen}
         className="inline-flex items-center gap-1.5 rounded-full bg-travel-bloom px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-[#DDA5B2]"
       >
         <Plus className="h-4 w-4" />

@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { MapPin, Sparkles, CalendarDays } from 'lucide-react'
 import TimelineCover from '@/components/timeline/TimelineCover'
 import AsyncState from '@/components/AsyncState'
 import { formatDate } from '@/lib/utils'
+import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 
 interface TimelineEntry {
@@ -26,24 +26,19 @@ interface TimelineYear {
   entries: TimelineEntry[]
 }
 
-export default function TimelinePage() {
-  const [years, setYears] = useState<TimelineYear[] | null>(null)
-  const [error, setError] = useState('')
+interface TimelineApiData {
+  years: TimelineYear[]
+}
 
-  useEffect(() => {
-    fetch(apiUrl('/api/timeline'))
-      .then((r) => r.json())
-      .then((j) => {
-        if (j && j.error) setError(String(j.error))
-        else setYears(j?.years || [])
-      })
-      .catch(() => setError('网络错误，请稍后重试'))
-  }, [])
+export default function TimelinePage() {
+  // 阶段 A · A2：统一取数层
+  const { data, error, loading } = useApi<TimelineApiData>(apiUrl('/api/timeline'))
+  const years = data?.years ?? []
 
   if (error) {
     return <AsyncState variant="error" message={error} title="时间线加载失败" />
   }
-  if (!years) {
+  if (loading) {
     return <AsyncState variant="loading" message="正在整理你的旅行时间线…" />
   }
 

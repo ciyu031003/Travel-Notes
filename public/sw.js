@@ -3,9 +3,9 @@
 //  - 页面导航：网络优先，失败回退缓存（断网可开已缓存的首页）
 //  - 静态资源（_next/ 与图片/字体）：缓存优先 + 后台更新
 //  - API GET（排除 /api/admin/）：网络优先，失败回退缓存（stale-while-revalidate）
-const SHELL_CACHE = 'tiantu-shell-v1'
-const ASSET_CACHE = 'tiantu-assets-v1'
-const API_CACHE = 'tiantu-api-v1'
+const SHELL_CACHE = 'tiantu-shell-v2'
+const ASSET_CACHE = 'tiantu-assets-v2'
+const API_CACHE = 'tiantu-api-v2'
 
 // 首屏预缓存（安装时写入，断网冷启动可直接命中）
 const PRECACHE_URLS = ['/', '/login', '/manifest.json']

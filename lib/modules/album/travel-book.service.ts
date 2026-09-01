@@ -12,6 +12,7 @@ import { skipDbOnBuild } from '../../db-guard'
 import { getPostService } from '../../container'
 import { findCityByName } from '../../../data/cities'
 import { resolveLocalUrlVariants } from '../../infrastructure/media-variants'
+import { absoluteMediaUrl } from '../../media-url'
 
 export interface TravelBookChapterPhoto {
   id: number
@@ -70,7 +71,7 @@ function storageBase(): string | null {
 
 function mediaUrl(storageKey: string): string {
   const base = storageBase()
-  return base ? `${base}/${storageKey}` : `/uploads/${storageKey}`
+  return base ? (absoluteMediaUrl(`${base}/${storageKey}`) ?? `${base}/${storageKey}`) : (absoluteMediaUrl(`/uploads/${storageKey}`) ?? `/uploads/${storageKey}`)
 }
 
 function variantOf(media: any, variant: string): string | null {
@@ -170,8 +171,8 @@ async function listTravelModelBooks(userId?: number | null): Promise<TravelBookD
       endDate: iso(travel.endDate),
       travelType: travel.travelType ?? null,
       companions: travel.companions ?? null,
-      coverThumb: travel.coverMedia ? (variantOf(travel.coverMedia, 'THUMBNAIL') ?? mediaUrl(travel.coverMedia.storageKey)) : (travel.cover ?? null),
-      coverPreview: travel.coverMedia ? (variantOf(travel.coverMedia, 'PREVIEW') ?? mediaUrl(travel.coverMedia.storageKey)) : (travel.cover ?? null),
+      coverThumb: travel.coverMedia ? (variantOf(travel.coverMedia, 'THUMBNAIL') ?? mediaUrl(travel.coverMedia.storageKey)) : absoluteMediaUrl(travel.cover ?? null),
+      coverPreview: travel.coverMedia ? (variantOf(travel.coverMedia, 'PREVIEW') ?? mediaUrl(travel.coverMedia.storageKey)) : absoluteMediaUrl(travel.cover ?? null),
       coverBlur: travel.coverMedia ? variantOf(travel.coverMedia, 'BLUR') : null,
       dayCount: (travel.days || []).length,
       photoCount,
@@ -233,12 +234,13 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
     if (!existing) {
       existing = (async () => {
         const v = await resolveLocalUrlVariants(url)
+        const abs = (u: string | null | undefined) => absoluteMediaUrl(u)
         return {
           id: photoSeq++,
-          thumbnailUrl: v?.thumbnailUrl ?? url,
-          previewUrl: v?.previewUrl ?? url,
-          blurUrl: v?.blurUrl ?? null,
-          fullUrl: url,
+          thumbnailUrl: abs(v?.thumbnailUrl ?? url),
+          previewUrl: abs(v?.previewUrl ?? url),
+          blurUrl: abs(v?.blurUrl),
+          fullUrl: abs(url),
           width: null,
           height: null,
         }

@@ -62,6 +62,7 @@ try {
       MOBILE_EXPORT: '1',
       NEXT_PUBLIC_API_BASE: apiBase,
       NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '3.0.1',
+      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '6',
       SKIP_DB_ON_BUILD: '1',
     },
   })

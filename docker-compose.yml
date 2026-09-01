@@ -34,6 +34,7 @@ services:
       DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD:-Abd123456.}@db:3306/travel_notes"
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-secret}
       SESSION_SECRET: ${SESSION_SECRET:-change-me-to-a-long-random-secret}
+      # App 端登录 Cookie 强制 SameSite=None+Secure（代码已固定），Web 端这里控制；HTTPS 部署建议 true
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
@@ -53,6 +54,10 @@ services:
       STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-}
       # 敏感配置(AES-256-GCM)解密主密钥, 仅服务端读取, 不进代码
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
+      # OTA 版本（/api/version 供 App 检查更新；每次发版递增 APP_BUILD_NUMBER）
+      APP_VERSION: ${APP_VERSION:-3.0.1}
+      APP_BUILD_NUMBER: ${APP_BUILD_NUMBER:-6}
+      APP_DOWNLOAD_URL: ${APP_DOWNLOAD_URL:-https://travel-notes.yuanabd.cn/downloads/tiantu.apk}
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { getCurrentUserId } from '@/lib/current-user'
 import { getUserProfile } from '@/lib/modules/social/social.service'
 import { ok, notFound, serverError, fail } from '@/lib/api-response'
+import { applyCacheControl } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const viewerId = await getCurrentUserId()
     const profile = await getUserProfile(targetId, viewerId)
     if (!profile) return notFound('用户不存在')
-    return ok(profile)
+    const res = ok(profile)
+    return applyCacheControl(res, 'user', !!viewerId)
   } catch (e: any) {
     console.error('[GET /api/social/users/[id]]', e?.message || e)
     return serverError()

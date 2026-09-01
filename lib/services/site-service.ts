@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '../db'
 import { CacheService } from '../infrastructure/cache'
 import { verifyPassword, hashPassword } from '../auth-utils'
+import { invalidateCurrentUserCache } from '../current-user'
 
 export interface SiteConfigDTO {
   username: string
@@ -70,6 +71,7 @@ export class SiteService {
     if (exists && exists.id !== user.id) return { success: false, error: '该用户名已被占用' }
 
     await prisma.user.update({ where: { id: user.id }, data: { username } })
+    invalidateCurrentUserCache(user.id)
     await this.cache.deleteByTag('site')
     return { success: true }
   }
@@ -94,6 +96,7 @@ export class SiteService {
       if (!valid) return { success: false, error: '当前密码错误' }
     }
     await prisma.user.update({ where: { id: user.id }, data: { email: email || null } })
+    invalidateCurrentUserCache(user.id)
     await this.cache.deleteByTag('site')
     return { success: true }
   }

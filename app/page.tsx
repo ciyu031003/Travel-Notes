@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import HomeClient from '@/components/HomeClient'
 import AsyncState from '@/components/AsyncState'
+import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 
 interface HomeData {
@@ -12,23 +12,13 @@ interface HomeData {
 }
 
 export default function HomePage() {
-  const [data, setData] = useState<HomeData | null>(null)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    fetch(apiUrl('/api/home'))
-      .then((r) => r.json())
-      .then((j) => {
-        if (j && j.error) setError(String(j.error))
-        else setData(j as HomeData)
-      })
-      .catch(() => setError('网络错误，请稍后重试'))
-  }, [])
+  // 阶段 A · A2：统一取数层（去重/取消/统一错误），服务端 Cache-Control 兜底浏览器缓存
+  const { data, error, loading } = useApi<HomeData>(apiUrl('/api/home'))
 
   if (error) {
     return <AsyncState variant="error" message={error} title="首页加载失败" />
   }
-  if (!data) {
+  if (loading || !data) {
     return <AsyncState variant="loading" message="正在翻开你的旅行记忆…" />
   }
   return (

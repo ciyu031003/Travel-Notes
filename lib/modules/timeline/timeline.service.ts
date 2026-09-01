@@ -52,11 +52,13 @@ export async function getTimeline(userId?: number | null): Promise<TimelineYear[
       where: { ...scopedWhere(userId, 'ownerId'), visibility: { in: ['SPACE', 'PUBLIC'] } } as any,
       select: { id: true, title: true, slug: true, startDate: true, description: true, cover: true },
       orderBy: { startDate: 'asc' },
+      take: 500,
     }),
     prisma.post.findMany({
       where: { ...scopedWhere(userId), type: 'travel', published: true } as any,
       select: { id: true, title: true, slug: true, date: true, summary: true, location: true, cover: true },
       orderBy: { date: 'asc' },
+      take: 500,
     }),
     prisma.memory.findMany({
       where: userId
@@ -72,6 +74,7 @@ export async function getTimeline(userId?: number | null): Promise<TimelineYear[
         travel: { select: { title: true } },
       },
       orderBy: { happenedAt: 'asc' },
+      take: 500,
     }),
   ])
 
