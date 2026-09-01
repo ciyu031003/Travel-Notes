@@ -241,3 +241,12 @@ Capacitor Android WebView（源 http(s)://localhost）
 - **生产验证**：`/api/health` ok（buildNumber 6）；游客读 /api/travels、/api/timeline、/api/social/posts、/api/search、/api/travel-book、/api/danmaku 均 200 且带 Cache-Control；公开帖子封面为绝对 URL（`https://travel-notes.yuanabd.cn/uploads/...`）；写请求（POST /api/travels）仍 307 要求登录；Web 首页仍走登录门；相册未解锁 403 自守卫正常。
 - **新增修复（部署中发现）**：Windows `git archive`（autocrlf=true）会把 *.sh 转成 CRLF 导致容器 entrypoint 失效 → 已加 `.gitattributes`（*.sh eol=lf）并修复服务器脚本；中间件原白名单未放行游客读公开内容（与产品规则冲突）→ 新增 `PUBLIC_READ_PATHS`（GET/HEAD 放行、写仍登录）。
 - **剩余手动步骤**：打 APK（`npx cap sync android && cd android && ./gradlew assembleRelease`）→ 上传 `/downloads/tiantu.apk` → 真机验收（游客浏览公开内容图片正常；登录后杀进程重开保持登录态；「新建旅行」无需重复登录；旧 APK 收到 OTA 更新）。
+
+### 8.3 APK 打包与 OTA 上线（2026-09-01）
+
+- **版本重置 1.0.0**：删除全部历史 git 标签（v1.0.0~v3.0.1 共 10 个，本地+远程），新建 `v1.0.0`；代码内 versionCode=1 / versionName=1.0.0，`APP_VERSION=1.0.0`、`APP_BUILD_NUMBER=1`。
+- **服务器打包环境**（一次性）：OpenJDK 17+21、Node 22（/opt/node）、Android SDK 36（/opt/android-sdk，build-tools 36.0.0 + platform android-36）；`npm ci` + `npx prisma generate` 后 `scripts/build-mobile.cjs` 生成 www → `npx cap sync android` → `./gradlew assembleRelease`（AGP 8.13 / Gradle 8.14.3，release 签名 tiantuan-release.keystore）。
+- **产物**：`app-release.apk`（约 90.9MB，versionCode 1 / versionName 1.0.0）。
+- **OTA**：`/api/version` 返回 `{"version":"1.0.0","buildNumber":1,"downloadUrl":"https://travel-notes.yuanabd.cn/downloads/tiantu.apk"}`；nginx `/downloads/` 直出 `/var/www/travel-notes-downloads/tiantu.apk`（attachment + Range）。
+- **下载链接**：https://travel-notes.yuanabd.cn/downloads/tiantu.apk
+- **备注**：旧版 3.0.1 的 OTA 比较器（isNewerVersion / buildNumber）按数值比较，1.0.0 小于 3.0.1 不会触发「发现新版本」提示——本次为全新起点，用户直接下载安装即可；后续从 1.0.x 递增版本可正常 OTA。
