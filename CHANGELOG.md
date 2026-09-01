@@ -1,3 +1,12 @@
+## [1.0.0] - 2026-09-01
+
+### 版本重置 · 全新起点
+- 删除全部历史版本标签（v1.0.0~v3.0.1），从 1.0.0 重新开始版本号（versionCode=1）。
+- 移动端（甜途 App）正式上线：媒体绝对 URL 修复、Cookie Secure、OTA 版本机制、游客可浏览公开内容。
+- 包含阶段 A 性能优化（API 缓存头、统一取数层、查询优化、媒体直出、限流）。
+
+---
+
 # Changelog
 
 本项目所有值得注意的变更均记录于此。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循 [SemVer](https://semver.org/lang/zh-CN/)。

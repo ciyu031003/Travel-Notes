@@ -2,10 +2,10 @@
  * 移动端 App 版本（OTA 版本更新用）。
  * 服务端读 APP_VERSION，客户端（静态壳构建）读 NEXT_PUBLIC_APP_VERSION，缺省回落 2.5.0。
  */
-export const APP_VERSION = process.env.APP_VERSION || process.env.NEXT_PUBLIC_APP_VERSION || '3.0.1'
+export const APP_VERSION = process.env.APP_VERSION || process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0'
 
 /** 递增的构建号（每次发版 +1，用于客户端判断是否有更新） */
-export const APP_BUILD_NUMBER = Number(process.env.APP_BUILD_NUMBER || process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || 6)
+export const APP_BUILD_NUMBER = Number(process.env.APP_BUILD_NUMBER || process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || 1)
 
 /** 新版 APK 下载地址（可经环境变量覆盖） */
 export const APP_DOWNLOAD_URL =
