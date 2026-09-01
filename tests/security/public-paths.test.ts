@@ -4,6 +4,7 @@ import { isPublicPath, isPublicRequest, PUBLIC_PATHS, PUBLIC_READ_PATHS } from '
 describe('middleware 公开白名单（段边界匹配）', () => {
   it('精确路径命中', () => {
     expect(isPublicPath('/login')).toBe(true)
+    expect(isPublicPath('/download')).toBe(true)
     expect(isPublicPath('/api/health')).toBe(true)
     expect(isPublicPath('/api/version')).toBe(true)
   })

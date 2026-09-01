@@ -10,6 +10,7 @@
 
 export const PUBLIC_PATHS = [
   '/login',
+  '/download',
   '/admin/login',
   '/admin/setup',
   '/admin/change-password',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, type ComponentType, type CSSProperties } from 'react'
+import { useState, useRef, type ComponentType } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -12,6 +12,7 @@ import {
   Quote,
   CalendarDays,
   Image as ImageIcon,
+  Smartphone,
 } from 'lucide-react'
 import HeroFootprintMap from '@/components/home/HeroFootprintMap'
 import MomentsStrip from '@/components/moments/MomentsStrip'
@@ -78,18 +79,6 @@ const dailyQuotes = [
   '想要的都拥有，得不到的都释怀',
 ]
 
-interface DanmakuSectionRef {
-  open: () => void
-}
-
-const danmakuColors = [
-  '#D98E9E',
-  '#C97E55',
-  '#A85F3A',
-  '#E4B478',
-  '#B85A6D',
-  '#D4A5B0',
-]
 
 function getDailyQuote(): string {
   const today = new Date()
@@ -435,8 +424,25 @@ export default function HomeClient({
             <p className="mt-2 text-xs text-travel-ink dark:text-shell-muted">
               © {new Date().getFullYear()} All rights reserved.
             </p>
+            <Link
+              href="/download"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-travel-line bg-white/70 px-4 py-2 text-xs font-medium text-travel-accent transition hover:bg-white dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom dark:hover:bg-shell-surface"
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+              下载甜途 App
+            </Link>
           </div>
         </footer>
+
+        {/* 移动端悬浮下载入口（首页可见，位于底部导航上方） */}
+        <Link
+          href="/download"
+          aria-label="下载甜途 App"
+          className="fixed bottom-20 right-4 z-30 inline-flex items-center gap-1.5 rounded-full bg-travel-accent px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-travel-accent/30 transition active:scale-95 hover:bg-travel-accentStrong md:hidden"
+        >
+          <Smartphone className="h-4 w-4" />
+          下载 App
+        </Link>
       </div>
     </div>
   )

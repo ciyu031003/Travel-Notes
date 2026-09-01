@@ -7,8 +7,9 @@ export const APP_VERSION = process.env.APP_VERSION || process.env.NEXT_PUBLIC_AP
 /** 递增的构建号（每次发版 +1，用于客户端判断是否有更新） */
 export const APP_BUILD_NUMBER = Number(process.env.APP_BUILD_NUMBER || process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || 1)
 
-/** 新版 APK 下载地址（可经环境变量覆盖） */
+/** 新版 APK 下载地址（可经环境变量覆盖；NEXT_PUBLIC_ 供客户端页面/壳内联使用） */
 export const APP_DOWNLOAD_URL =
+  process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL ||
   process.env.APP_DOWNLOAD_URL ||
   'https://travel-notes.yuanabd.cn/downloads/tiantu.apk'
 

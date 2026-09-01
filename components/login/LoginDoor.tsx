@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { MapPin } from 'lucide-react'
+import Link from 'next/link'
+import { MapPin, Smartphone } from 'lucide-react'
 import DoorMap from './DoorMap'
 
 type Phase = 'closed' | 'opening' | 'open'
@@ -100,6 +101,15 @@ export default function LoginDoor({ children }: LoginDoorProps) {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
+      {/* 门户下载入口：右上角悬浮胶囊 → /download */}
+      <Link
+        href="/download"
+        aria-label="下载甜途 App"
+        className="fixed right-4 top-4 z-30 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/25 px-3.5 py-2 text-xs font-medium text-white shadow-lg backdrop-blur-md transition hover:bg-black/40 active:scale-95"
+      >
+        <Smartphone className="h-4 w-4" />
+        下载 App
+      </Link>
       {/* 动态背景（mp4） */}
       <video
         aria-hidden="true"
