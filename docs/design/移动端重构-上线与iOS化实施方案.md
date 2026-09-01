@@ -233,3 +233,11 @@ Capacitor Android WebView（源 http(s)://localhost）
 2. **确认生产 `.env`**：建议设 `COOKIE_SECURE=true`（B2 代码已对 App 端强制 Secure，Web 端按此配置）；`APP_VERSION=3.0.1`、`APP_BUILD_NUMBER=6`、`APP_DOWNLOAD_URL` 指向可访问的 APK。
 3. **打 APK 并上传**：`npx cap sync android && cd android && ./gradlew assembleRelease` → 产出 APK → 上传到服务器 `/downloads/tiantu.apk`（需 nginx 静态目录）。
 4. **验收**：真机安装新 APK → 游客浏览公开内容（图片正常）→ 登录 → 杀进程重开保持登录态 → 点「新建旅行」无需重复登录；旧 APK 启动收到 OTA 更新提示。
+
+### 8.2 部署与上线状态（2026-09-01）
+
+- **git**：已推送 master，提交 `0263e4f`（阶段A+M0）、`a3c71a7`（.gitattributes 强制 *.sh LF）、`d07e905`（游客公开读路径）。
+- **服务器部署**（106.55.2.197，/home/ubuntu/travel-notes）：`git archive` 同步 + `docker compose up -d --build app` 重建成功。
+- **生产验证**：`/api/health` ok（buildNumber 6）；游客读 /api/travels、/api/timeline、/api/social/posts、/api/search、/api/travel-book、/api/danmaku 均 200 且带 Cache-Control；公开帖子封面为绝对 URL（`https://travel-notes.yuanabd.cn/uploads/...`）；写请求（POST /api/travels）仍 307 要求登录；Web 首页仍走登录门；相册未解锁 403 自守卫正常。
+- **新增修复（部署中发现）**：Windows `git archive`（autocrlf=true）会把 *.sh 转成 CRLF 导致容器 entrypoint 失效 → 已加 `.gitattributes`（*.sh eol=lf）并修复服务器脚本；中间件原白名单未放行游客读公开内容（与产品规则冲突）→ 新增 `PUBLIC_READ_PATHS`（GET/HEAD 放行、写仍登录）。
+- **剩余手动步骤**：打 APK（`npx cap sync android && cd android && ./gradlew assembleRelease`）→ 上传 `/downloads/tiantu.apk` → 真机验收（游客浏览公开内容图片正常；登录后杀进程重开保持登录态；「新建旅行」无需重复登录；旧 APK 收到 OTA 更新）。
