@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { isPublicPath, PUBLIC_PATHS } from '@/lib/public-paths'
+import { isPublicPath, isPublicRequest, PUBLIC_PATHS, PUBLIC_READ_PATHS } from '@/lib/public-paths'
 
 describe('middleware 公开白名单（段边界匹配）', () => {
   it('精确路径命中', () => {
@@ -37,5 +37,51 @@ describe('middleware 公开白名单（段边界匹配）', () => {
     expect(isPublicPath('/admin')).toBe(false)
     expect(isPublicPath('/api/me')).toBe(false)
     expect(isPublicPath('/api/travel-book')).toBe(false)
+  })
+})
+
+describe('isPublicRequest（公开内容读路径 · 游客可浏览公开内容）', () => {
+  it('公开内容 API 的 GET 放行', () => {
+    expect(isPublicRequest('/api/travels', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/home', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/timeline', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/dashboard', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/moments', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/search', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/social/posts', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/social/users/1', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/travel-book', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/album', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/anniversaries', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/danmaku', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/images/12', 'GET')).toBe(true)
+    expect(isPublicRequest('/feed.xml', 'GET')).toBe(true)
+  })
+
+  it('公开内容路径的写请求不放行（记录需登录）', () => {
+    expect(isPublicRequest('/api/travels', 'POST')).toBe(false)
+    expect(isPublicRequest('/api/moments', 'POST')).toBe(false)
+    expect(isPublicRequest('/api/social/posts', 'POST')).toBe(false)
+    expect(isPublicRequest('/api/album', 'POST')).toBe(false)
+    expect(isPublicRequest('/api/travel-book', 'DELETE')).toBe(false)
+  })
+
+  it('私人接口与页面不放行', () => {
+    expect(isPublicRequest('/api/me', 'GET')).toBe(false)
+    expect(isPublicRequest('/travel', 'GET')).toBe(false)
+    expect(isPublicRequest('/admin', 'GET')).toBe(false)
+    expect(isPublicRequest('/api/admin/settings', 'GET')).toBe(false)
+    expect(isPublicRequest('/api/export/archive', 'GET')).toBe(false)
+  })
+
+  it('完全公开路径不区分方法（登录/注册/健康等）', () => {
+    expect(isPublicRequest('/api/login', 'POST')).toBe(true)
+    expect(isPublicRequest('/api/register', 'POST')).toBe(true)
+    expect(isPublicRequest('/api/health', 'GET')).toBe(true)
+    expect(isPublicRequest('/api/check-auth', 'GET')).toBe(true)
+  })
+
+  it('白名单无重复项', () => {
+    expect(new Set(PUBLIC_READ_PATHS).size).toBe(PUBLIC_READ_PATHS.length)
   })
 })

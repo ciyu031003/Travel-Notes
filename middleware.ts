@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
-import { isPublicPath } from '@/lib/public-paths'
+import { isPublicRequest } from '@/lib/public-paths'
 
 function resolveJwtSecret(): string {
   const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET
@@ -183,8 +183,8 @@ export async function middleware(request: NextRequest) {
   const csrfResponse = rejectCrossOrigin(request)
   if (csrfResponse) return applyCorsHeaders(csrfResponse, request)
 
-  // 首页及公开前缀路径直接放行（首页需精确匹配，不能用 startsWith('/')）
-  if (isPublicPath(pathname)) {
+  // 首页及公开前缀路径直接放行；公开内容读路径（游客浏览）也放行（写请求仍要求登录）
+  if (isPublicRequest(pathname, request.method)) {
     let res = finalizeResponse(NextResponse.next(), request)
     if (pathname === '/uploads' || pathname.startsWith('/uploads/')) res = applyStaticCacheHeaders(res, pathname)
     return res
