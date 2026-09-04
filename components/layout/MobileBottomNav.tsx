@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, MapPin, Compass, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { apiUrl } from '@/lib/api-base'
 
 const TABS = [
   { href: '/', label: '首页', icon: Home },
@@ -24,7 +25,7 @@ export default function MobileBottomNav() {
   // 游客可浏览公开内容，但记录旅行需先登录（M0 产品规则）
   const handleRecord = async () => {
     try {
-      const res = await fetch('/api/check-auth')
+      const res = await fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
       const data = await res.json().catch(() => null)
       if (data && data.authenticated) {
         router.push('/travel?compose=1')

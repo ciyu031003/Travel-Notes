@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, LogOut, Camera, Pencil, Loader2, MapPin, Images, NotebookPen, Bookmark, ChevronRight, RefreshCw, Settings, ShieldCheck, Users, Download } from 'lucide-react'
+import { Home, LogOut, Camera, Pencil, Loader2, MapPin, Images, NotebookPen, Bookmark, RefreshCw, Settings, ShieldCheck, Users, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import SpacePanel from '@/components/space/SpacePanel'
 import { Modal } from '@/components/ui/Modal'
+import { apiUrl } from '@/lib/api-base'
 
 interface RecentTravel {
   id: number
@@ -81,7 +82,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     setPostsLoading(true)
     setPostsError(false)
     try {
-      const r = await fetch('/api/social/users/' + initial.id)
+      const r = await fetch(apiUrl('/api/social/users/' + initial.id), { credentials: 'include' })
       const j = await r.json()
       setPosts(j.data?.posts || [])
     } catch {
@@ -93,7 +94,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
   useEffect(() => {
     loadPosts()
-    fetch('/api/social/notifications?page=1&pageSize=1')
+    fetch(apiUrl('/api/social/notifications?page=1&pageSize=1'), { credentials: 'include' })
       .then((r) => r.json())
       .then((j) => { if (j.data?.unread != null) setUnread(j.data.unread) })
       .catch(() => {})
@@ -102,8 +103,9 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   const saveProfile = async () => {
     setSaving(true); setError('')
     try {
-      const res = await fetch('/api/me/profile', {
+      const res = await fetch(apiUrl('/api/me/profile'), {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nickname, bio }),
       })
@@ -124,7 +126,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     try {
       const form = new FormData()
       form.append('avatar', file)
-      const res = await fetch('/api/me/avatar', { method: 'POST', body: form })
+      const res = await fetch(apiUrl('/api/me/avatar'), { method: 'POST', credentials: 'include', body: form })
       const json = await res.json()
       if (res.ok && json.data) setProfile((p) => ({ ...p, avatarUrl: json.data.avatarUrl }))
       else setError(json.error || '头像上传失败')
@@ -135,7 +137,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   }
 
   const logout = async () => {
-    try { await fetch('/api/logout', { method: 'POST' }) } catch {}
+    try { await fetch(apiUrl('/api/logout'), { method: 'POST', credentials: 'include' }) } catch {}
     router.push('/login')
   }
 
@@ -145,7 +147,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     if (exporting) return
     setExporting(true)
     try {
-      const res = await fetch('/api/export/archive', { credentials: 'include' })
+      const res = await fetch(apiUrl('/api/export/archive'), { credentials: 'include' })
       if (!res.ok) {
         setError('导出失败，请稍后重试')
         return
@@ -344,7 +346,9 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">我的旅行故事</h2>
             <div className="h-px flex-1 bg-[var(--social-line)]" />
-            <Link href={'/circle/user/' + profile.id} className="text-xs text-[var(--social-faint)] transition hover:text-[var(--social-text)]">查看全部 <ChevronRight className="inline h-3 w-3" /></Link>
+            {!postsLoading && !postsError && posts.length > 0 && (
+              <span className="text-xs text-[var(--social-faint)]">共 {posts.length} 篇</span>
+            )}
           </div>
 
           {postsLoading ? (
@@ -391,12 +395,12 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             {exporting ? '导出中...' : '导出记忆档案'}
           </button>
           {profile.capabilities.canManageSettings && (
-            <Link href="/admin/settings" className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)]">
+            <Link href="/admin/settings" className="hidden items-center gap-1.5 transition hover:text-[var(--social-accent)] md:inline-flex">
               <Settings className="h-3.5 w-3.5" />账号设置
             </Link>
           )}
           {profile.capabilities.isOwner && (
-            <Link href="/admin" className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)]">
+            <Link href="/admin" className="hidden items-center gap-1.5 transition hover:text-[var(--social-accent)] md:inline-flex">
               <ShieldCheck className="h-3.5 w-3.5" />管理后台
             </Link>
           )}

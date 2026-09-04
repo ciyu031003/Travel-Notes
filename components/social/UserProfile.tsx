@@ -8,6 +8,7 @@ import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { apiUrl } from '@/lib/api-base'
 
 interface Profile {
   id: number
@@ -45,7 +46,7 @@ export default function UserProfile({ userId }: { userId: number }) {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    fetch('/api/social/users/' + userId)
+    fetch(apiUrl('/api/social/users/' + userId), { credentials: 'include' })
       .then((r) => r.json())
       .then((json) => { if (json.data) setProfile(json.data); else setError(json.error || '用户不存在') })
       .catch(() => setError('网络错误'))
@@ -59,7 +60,7 @@ export default function UserProfile({ userId }: { userId: number }) {
     setBusy(true)
     setProfile({ ...profile, isFollowing: next, stats: { ...profile.stats, followerCount: profile.stats.followerCount + (next ? 1 : -1) } })
     try {
-      const res = await fetch('/api/social/users/' + userId + '/follow', { method: next ? 'POST' : 'DELETE' })
+      const res = await fetch(apiUrl('/api/social/users/' + userId + '/follow'), { method: next ? 'POST' : 'DELETE', credentials: 'include' })
       if (!res.ok) throw new Error()
     } catch { setProfile(snapshot) } finally { setBusy(false) }
   }
@@ -71,7 +72,7 @@ export default function UserProfile({ userId }: { userId: number }) {
     setBusy(true)
     setProfile({ ...profile, isBlocked: next })
     try {
-      const res = await fetch('/api/social/users/' + userId + '/block', { method: next ? 'POST' : 'DELETE' })
+      const res = await fetch(apiUrl('/api/social/users/' + userId + '/block'), { method: next ? 'POST' : 'DELETE', credentials: 'include' })
       if (!res.ok) throw new Error()
     } catch { setProfile(snapshot) } finally { setBusy(false) }
   }

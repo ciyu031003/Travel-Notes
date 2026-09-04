@@ -9,6 +9,7 @@ import { MapPin, Calendar, ArrowRight, Plus, Image as ImageIcon, WifiOff } from 
 import { formatDate, cn } from '@/lib/utils'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
+import { apiUrl } from '@/lib/api-base'
 
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
 
@@ -52,7 +53,7 @@ export default function TravelMobileClient({
 
   const handleRecord = async () => {
     try {
-      const res = await fetch('/api/check-auth')
+      const res = await fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
       const data = await res.json().catch(() => null)
       if (data?.authenticated) router.push('/travel?compose=1')
       else router.push('/login?redirect=' + encodeURIComponent('/travel?compose=1'))

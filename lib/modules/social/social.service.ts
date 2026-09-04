@@ -232,9 +232,52 @@ export async function getSocialPost(id: number, userId?: number | null) {
   const [post] = await attachViewerState([row], userId)
   return {
     ...post,
+    postId: row.postId ?? null,
+    canEdit: row.authorId != null && userId != null && row.authorId === userId,
     slug: row.travel?.slug ?? row.post?.slug ?? null,
     photos: row.post ? postImages(row.post) : row.travelId ? await collectTravelPhotos(row.travelId) : [],
   }
+}
+
+/** 编辑公开旅行帖（仅作者本人）：同步更新 TravelPost 与底层 Post/Travel 的标题与摘要。 */
+export async function updateSocialPost(
+  id: number,
+  userId: number,
+  input: { title?: string; summary?: string },
+) {
+  const row: any = await prisma.travelPost.findUnique({ where: { id } })
+  if (!row) return null
+  if (row.authorId !== userId) return null
+
+  const title = input.title !== undefined ? String(input.title).trim().slice(0, 255) : undefined
+  const summary = input.summary !== undefined
+    ? String(input.summary).trim()
+    : undefined
+
+  if (title !== undefined && !title) throw new Error('标题不能为空')
+
+  const data: { title?: string; summary?: string | null } = {}
+  if (title !== undefined) data.title = title
+  if (summary !== undefined) data.summary = summary || null
+  if (Object.keys(data).length === 0) return getSocialPost(id, userId)
+
+  await prisma.travelPost.update({ where: { id }, data })
+
+  // 同步底层数据源，保证后续 feed / 详情刷新后仍一致。
+  if (row.postId) {
+    const postData: { title?: string; summary?: string | null } = {}
+    if (title !== undefined) postData.title = title
+    if (summary !== undefined) postData.summary = summary || null
+    await prisma.post.update({ where: { id: row.postId }, data: postData }).catch(() => {})
+  }
+  if (row.travelId) {
+    const travelData: { title?: string; description?: string | null } = {}
+    if (title !== undefined) travelData.title = title
+    if (summary !== undefined) travelData.description = summary || null
+    await prisma.travel.update({ where: { id: row.travelId }, data: travelData }).catch(() => {})
+  }
+
+  return getSocialPost(id, userId)
 }
 
 async function notify(recipientId: number | null, actorId: number, type: NotificationTypeName, refType: string, refId: number) {
