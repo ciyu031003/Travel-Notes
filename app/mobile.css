@@ -1,0 +1,185 @@
+/* ==========================================================================
+   移动端独立设计系统（M1）—— 与 Web 端视觉解耦
+   iOS 观感：更亮、更柔、色彩更丰富，触控反馈与安全区优先。
+   所有移动端专属 token 统一以 --m- 前缀命名，避免污染 Web 端变量。
+   ========================================================================== */
+
+:root {
+  --m-bg: #FFF9F2;
+  --m-bg-soft: #FFF1E6;
+  --m-surface: rgba(255, 255, 255, 0.82);
+  --m-surface-solid: #FFFFFF;
+  --m-surface-2: #FFF5EC;
+  --m-text: #3D2B20;
+  --m-muted: #9A8574;
+  --m-faint: #C4B4A6;
+  --m-accent: #C67A4E;
+  --m-accent-strong: #A85F3A;
+  --m-accent-soft: rgba(198, 122, 78, 0.14);
+  --m-sun: #E4B478;
+  --m-blush: #F3C6B5;
+  --m-sky: #A8C8DC;
+  --m-mint: #9CC7B2;
+  --m-line: rgba(168, 95, 58, 0.10);
+  --m-line-strong: rgba(168, 95, 58, 0.22);
+  --m-shadow-sm: 0 8px 24px -12px rgba(168, 95, 58, 0.28);
+  --m-shadow-md: 0 18px 44px -18px rgba(168, 95, 58, 0.32);
+  --m-radius-lg: 24px;
+  --m-radius-md: 18px;
+  --m-radius-sm: 12px;
+  --m-tab-h: 60px;
+  --m-fab-size: 56px;
+}
+
+html.dark {
+  --m-bg: #100C0A;
+  --m-bg-soft: #171210;
+  --m-surface: rgba(23, 18, 16, 0.82);
+  --m-surface-solid: #1B1512;
+  --m-surface-2: #211A16;
+  --m-text: #F5F1EA;
+  --m-muted: #A99B90;
+  --m-faint: #6E6259;
+  --m-accent: #E8B36A;
+  --m-accent-strong: #F2C88A;
+  --m-accent-soft: rgba(232, 179, 106, 0.16);
+  --m-sun: #F2C88A;
+  --m-blush: #C8897D;
+  --m-sky: #93B7CC;
+  --m-mint: #7FA996;
+  --m-line: rgba(245, 241, 234, 0.10);
+  --m-line-strong: rgba(245, 241, 234, 0.18);
+  --m-shadow-sm: 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+  --m-shadow-md: 0 18px 44px -18px rgba(0, 0, 0, 0.55);
+}
+
+@media (max-width: 767px) {
+  body {
+    background-color: var(--m-bg);
+    color: var(--m-text);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.m-glass {
+  background: var(--m-surface);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid var(--m-line);
+}
+
+.m-card {
+  background: var(--m-surface-solid);
+  border: 1px solid var(--m-line);
+  border-radius: var(--m-radius-lg);
+  box-shadow: var(--m-shadow-sm);
+}
+
+.m-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--m-muted);
+  background: var(--m-surface);
+  border: 1px solid var(--m-line);
+  transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s;
+}
+.m-chip:active {
+  transform: scale(0.96);
+}
+.m-chip-active {
+  color: #FFFFFF;
+  background: var(--m-accent);
+  border-color: transparent;
+}
+
+.m-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--m-text);
+}
+
+.m-spring {
+  transition-property: transform, opacity;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.m-press {
+  transition: transform 0.12s ease;
+}
+.m-press:active {
+  transform: scale(0.96);
+}
+
+@keyframes m-enter {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.m-enter {
+  animation: m-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes m-tab-pop {
+  0%   { transform: translateY(2px) scale(0.6); opacity: 0; }
+  60%  { transform: translateY(-1px) scale(1.08); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.m-tab-active-dot {
+  animation: m-tab-pop 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes m-fab-glow {
+  0%, 100% { box-shadow: 0 10px 26px -8px rgba(198, 122, 78, 0.55), 0 0 0 0 rgba(198, 122, 78, 0.18); }
+  50%      { box-shadow: 0 10px 30px -6px rgba(198, 122, 78, 0.7), 0 0 0 8px rgba(198, 122, 78, 0); }
+}
+.m-fab {
+  animation: m-fab-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes m-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.m-shimmer {
+  background-image: linear-gradient(110deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0) 70%);
+  background-size: 200% 100%;
+  animation: m-shimmer 5s linear infinite;
+}
+
+@keyframes m-list-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.m-list-item {
+  animation: m-list-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes m-soft-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+
+.m-soft-pulse {
+  animation: m-soft-pulse 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-spring, .m-press, .m-enter, .m-fab, .m-shimmer, .m-list-item, .m-soft-pulse {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
+import { cn } from '@/lib/utils'
 
 export default function LayoutContent({
   children,
@@ -24,30 +25,15 @@ export default function LayoutContent({
     return <>{children}</>
   }
 
-  // UI-V3 壳层收口：/me /circle /sync 接入底部导航（保留自绘 header），桌面不受影响（导航 md:hidden）
-  if (isCirclePage || isMePage || isSyncPage) {
-    return (
-      <>
-        {children}
-        <MobileBottomNav />
-      </>
-    )
-  }
-
-  if (isTravelPage) {
-    return (
-      <>
-        {children}
-        <MobileBottomNav />
-      </>
-    )
-  }
-
+  // 四个主导航 Tab：移动端各自携带页面级 header / hero，底部统一走 MobileBottomNav。
+  // 桌面端壳层不受影响。
   if (isHomePage) {
     return (
       <>
-        <Navbar />
-        <main id="main-content" className="flex-1 pt-16 pb-14 md:pb-0">
+        <div className="hidden md:block">
+          <Navbar />
+        </div>
+        <main id="main-content" className="flex-1 pt-0 md:pt-16">
           {children}
         </main>
         <MobileBottomNav />
@@ -55,13 +41,26 @@ export default function LayoutContent({
     )
   }
 
+  if (isTravelPage || isCirclePage || isMePage || isSyncPage) {
+    return (
+      <>
+        {children}
+        <MobileBottomNav />
+      </>
+    )
+  }
+
+  // 次级页面（时间线 / 碎碎念 / 搜索等）：移动端仍保留全局导航用于返回与设置，
+  // 但页脚仅在桌面展示，移动端不显示 Web 版页脚。
   return (
     <>
       <Navbar />
-      <main id="main-content" className="flex-1 pt-20 pb-20 md:pb-12">
+      <main id="main-content" className="flex-1 pt-20 pb-24 md:pb-12">
         {children}
       </main>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
       <MobileBottomNav />
     </>
   )

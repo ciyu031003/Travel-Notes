@@ -1,6 +1,7 @@
 'use client'
 
 import HomeClient from '@/components/HomeClient'
+import HomeMobile from '@/components/HomeMobile'
 import AsyncState from '@/components/AsyncState'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
@@ -22,10 +23,21 @@ export default function HomePage() {
     return <AsyncState variant="loading" message="正在翻开你的旅行记忆…" />
   }
   return (
-    <HomeClient
-      travelPosts={data.travelPosts as never[]}
-      provincesVisitedCount={data.provincesVisitedCount}
-      anniversaries={data.anniversaries as never[]}
-    />
+    <>
+      <div className="hidden md:block">
+        <HomeClient
+          travelPosts={data.travelPosts as never[]}
+          provincesVisitedCount={data.provincesVisitedCount}
+          anniversaries={data.anniversaries as never[]}
+        />
+      </div>
+      <div className="md:hidden">
+        <HomeMobile
+          travelPosts={data.travelPosts as never[]}
+          provincesVisitedCount={data.provincesVisitedCount}
+          anniversaries={data.anniversaries as never[]}
+        />
+      </div>
+    </>
   )
 }

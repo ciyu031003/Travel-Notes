@@ -1,5 +1,6 @@
 @import 'highlight.js/styles/github-dark.css';
 @import 'katex/dist/katex.min.css';
+@import './mobile.css';
 
 /* 自托管 latin 子集字体（D3：消除 Google Fonts 第三方阻塞，中文回退系统字体） */
 @font-face {

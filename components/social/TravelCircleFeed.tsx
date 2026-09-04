@@ -130,16 +130,21 @@ export default function TravelCircleFeed() {
   })
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-24 text-[var(--social-text)]">
+    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.06),transparent_60%)]" />
-      <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <header className="mb-8 flex items-start justify-between gap-4">
+      <div className="relative mx-auto max-w-6xl px-4 pb-8 pt-[max(26px,env(safe-area-inset-top))] sm:px-6 sm:pt-8">
+        <header className="m-enter mb-7 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">Travel Circle</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--social-text)] sm:text-4xl">旅行圈</h1>
-            <p className="mt-2 max-w-md text-sm text-[var(--social-muted)]">看看别人眼中的世界，发现正在发生的旅途。</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--social-accent)]">Travel Circle</p>
+            <h1 className="mt-1.5 text-[30px] font-semibold leading-none tracking-tight text-[var(--social-text)]">旅行圈</h1>
+            <p className="mt-2 max-w-md text-sm leading-6 text-[var(--social-muted)]">看看别人眼中的世界，发现正在发生的旅途。</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2"><SocialThemeToggle /><Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)]"><Home className="h-4 w-4" />返回首页</Link></div>
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <SocialThemeToggle />
+            <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)]">
+              <Home className="h-4 w-4" />返回首页
+            </Link>
+          </div>
         </header>
 
         {offline && (
@@ -149,22 +154,22 @@ export default function TravelCircleFeed() {
           </div>
         )}
 
-        <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+        <div className="sticky top-[max(10px,env(safe-area-inset-top))] z-20 mb-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 pt-1 backdrop-blur-sm [mask-image:linear-gradient(to_right,transparent,black_8px,black_calc(100%-8px),transparent)]">
           {TABS.map((t) => (
             <button key={t.key} type="button" onClick={() => switchTab(t.key)}
-              className={cn('shrink-0 rounded-full px-4 py-1.5 text-sm transition',
-                tab === t.key ? 'bg-[var(--social-accent)] text-[var(--social-on-accent)]' : 'bg-[var(--social-surface)] text-[var(--social-muted)] ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]')}>
+              className={cn('shrink-0 rounded-full px-4 py-2 text-sm transition active:scale-95',
+                tab === t.key ? 'bg-[var(--social-accent)] text-[var(--social-on-accent)] shadow-[0_8px_18px_-8px_var(--social-accent)]' : 'bg-[var(--social-surface)] text-[var(--social-muted)] ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]')}>
               {t.label}
             </button>
           ))}
         </div>
 
-        <div className="mb-8">
+        <div className="mb-8 md:mb-10">
           <div className="mb-3 flex items-center gap-3">
             <span className="text-sm font-semibold tracking-wide text-[var(--social-text)]">探索旅途</span>
             <span className="h-px flex-1 bg-[var(--social-line)]" />
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {THEMES.map((theme) => {
               const active = activeTheme === theme
               return (
@@ -197,8 +202,8 @@ export default function TravelCircleFeed() {
         ) : (
           <>
             {/* 移动端：保留紧凑 hero 大图叙事（桌面端走瀑布流，避免全宽巨卡） */}
-            {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="mb-8 md:hidden" />}
-            <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
+            {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="m-enter mb-8 md:hidden" />}
+            <div className="m-enter columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
               {posts.map((p, i) => (
                 <SocialFilmCard
                   key={p.id}

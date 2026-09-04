@@ -27,9 +27,19 @@ const MAX_COMPANIONS = 10
  * 新建旅行：离线时本地乐观写 + 入同步队列（联网自动上传云端），在线直接创建。
  * 移动端不设 /admin，此即 /travel 模块内的新建入口。
  */
-export default function TravelComposer({ onCreated }: { onCreated?: () => void }) {
+export default function TravelComposer({
+  onCreated,
+  autoOpen = false,
+  hideTrigger = false,
+  onClose,
+}: {
+  onCreated?: () => void
+  autoOpen?: boolean
+  hideTrigger?: boolean
+  onClose?: () => void
+}) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(autoOpen)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [startDate, setStartDate] = useState('')
@@ -78,6 +88,7 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
       setTimeout(() => {
         setOpen(false)
         setMessage(null)
+        onClose?.()
       }, 1200)
     } else {
       setMessage({ type: 'err', text: r.error || '创建失败' })
@@ -101,6 +112,9 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
   }
 
   if (!open) {
+    if (hideTrigger) {
+      return null
+    }
     return (
       <button
         type="button"
@@ -120,7 +134,10 @@ export default function TravelComposer({ onCreated }: { onCreated?: () => void }
     >
       <button
         type="button"
-        onClick={() => setOpen(false)}
+        onClick={() => {
+          setOpen(false)
+          onClose?.()
+        }}
         className="absolute right-2 top-2 rounded-full p-1 text-travel-ink/50 hover:bg-travel-dim/50"
         aria-label="关闭"
       >

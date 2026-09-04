@@ -15,9 +15,9 @@ import {
   ShieldCheck,
   CheckCircle2,
   ArrowLeft,
-  Zap,
   Package,
   Info,
+  X,
 } from 'lucide-react'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
@@ -40,7 +40,7 @@ const INSTALL_STEPS = [
 export default function DownloadPage() {
   const { data: manifest } = useApi<VersionManifest>(apiUrl('/api/version'), { ttlMs: 60000 })
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
-  const [autoStarted, setAutoStarted] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const downloadUrl = manifest?.downloadUrl || APP_DOWNLOAD_URL
@@ -49,23 +49,6 @@ export default function DownloadPage() {
   const changelog =
     manifest?.changelog || '移动端正式上线：离线浏览与自动同步、旅行记录、相册、旅行圈。'
   const native = isNativePlatform()
-
-  // Android 自动下载
-  useEffect(() => {
-    if (native || !downloadUrl) return
-    const isAndroid = /Android/i.test(navigator.userAgent)
-    if (!isAndroid) return
-    const t = window.setTimeout(() => {
-      const a = document.createElement('a')
-      a.href = downloadUrl
-      a.download = 'tiantu.apk'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      setAutoStarted(true)
-    }, 900)
-    return () => window.clearTimeout(t)
-  }, [downloadUrl, native])
 
   // 二维码
   useEffect(() => {
@@ -87,6 +70,16 @@ export default function DownloadPage() {
     } catch {
       window.prompt('复制下载链接', downloadUrl)
     }
+  }
+
+  const startDownload = () => {
+    const a = document.createElement('a')
+    a.href = downloadUrl
+    a.download = 'tiantu.apk'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setModalOpen(false)
   }
 
   return (
@@ -135,22 +128,16 @@ export default function DownloadPage() {
           </section>
         ) : (
           <>
-            {/* 下载按钮 */}
+            {/* 下载按钮：点击弹出更新与扫码弹窗，避免浏览器右上角直接下载 */}
             <section className="mt-8">
-              <a
-                href={downloadUrl}
-                download="tiantu.apk"
+              <button
+                type="button"
+                onClick={() => setModalOpen(true)}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-travel-accent py-4 text-base font-semibold text-white shadow-lg shadow-travel-accent/25 transition active:scale-[0.98] hover:bg-travel-accentStrong"
               >
                 <Download className="h-5 w-5" />
                 下载 Android 安装包（{version}）
-              </a>
-              {autoStarted && (
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-travel-accent dark:text-travel-bloom">
-                  <Zap className="h-4 w-4" />
-                  检测到 Android，已开始自动下载…
-                </p>
-              )}
+              </button>
               <button
                 type="button"
                 onClick={copyLink}
@@ -203,6 +190,81 @@ export default function DownloadPage() {
               </p>
             </section>
           </>
+        )}
+
+        {/* 下载弹窗：更新说明 + 扫码下载 */}
+        {!native && modalOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-travel-ink/40 backdrop-blur-sm sm:items-center sm:p-4"
+            onClick={() => setModalOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="下载甜途 App"
+          >
+            <div
+              className="m-enter w-full max-w-md rounded-t-3xl bg-travel-cream p-6 shadow-2xl dark:bg-shell-surface sm:rounded-3xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-travel-inkStrong dark:text-shell-text">
+                  下载甜途 App
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  aria-label="关闭"
+                  className="rounded-full p-2 text-travel-ink/50 transition hover:bg-travel-sakura dark:text-shell-muted dark:hover:bg-white/10"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-1 flex items-center gap-2 text-sm text-travel-accent dark:text-travel-bloom">
+                <Package className="h-4 w-4" />
+                版本 v{version} · build {buildNumber}
+              </div>
+
+              <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+                <div className="rounded-2xl bg-white p-3 shadow-inner ring-1 ring-travel-line/60 dark:ring-shell-line">
+                  {qrDataUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={qrDataUrl} alt="扫码下载甜途 App" width={184} height={184} className="h-44 w-44" />
+                  ) : (
+                    <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/40">
+                      二维码生成中…
+                    </div>
+                  )}
+                </div>
+                <div className="text-center sm:text-left">
+                  <p className="text-sm font-medium text-travel-inkStrong dark:text-shell-text">
+                    手机扫码下载
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/60 dark:text-shell-muted">
+                    用手机浏览器扫码，直达最新安装包。
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-travel-line bg-white/70 p-4 dark:border-shell-line dark:bg-shell-surface/70">
+                <p className="text-xs font-medium text-travel-inkStrong dark:text-shell-text">本次更新</p>
+                <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+                  {changelog}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={startDownload}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-travel-accent py-3.5 text-base font-semibold text-white shadow-lg shadow-travel-accent/25 transition active:scale-[0.98] hover:bg-travel-accentStrong"
+              >
+                <Download className="h-5 w-5" />
+                立即下载 APK
+              </button>
+              <p className="mt-2 text-center text-xs text-travel-ink/40 dark:text-shell-faint">
+                约 91MB · 下载后请允许安装未知来源应用
+              </p>
+            </div>
+          </div>
         )}
 
         {/* 安装说明 */}

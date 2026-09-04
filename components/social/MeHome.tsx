@@ -197,13 +197,13 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   ] as const
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
+    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.05),transparent_60%)]" />
-      <div className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <div className="relative mx-auto max-w-5xl px-4 pb-6 pt-[max(24px,env(safe-area-inset-top))] sm:px-6 sm:pt-8">
         <header className="mb-8 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--social-accent)]">My Archive</p>
-            <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight">我的旅行档案</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--social-accent)]">My Archive</p>
+            <h1 className="mt-1.5 truncate text-[30px] font-semibold leading-none tracking-tight">我的旅行档案</h1>
           </div>
           <div className="flex shrink-0 items-center gap-1 md:gap-2">
             <SocialThemeToggle />
@@ -213,23 +213,23 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 onClick={() => setShowSpace(true)}
                 title="旅行空间"
                 aria-label="旅行空间"
-                className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"
+                className="hidden rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"
               >
                 <Users className="h-4 w-4" />
               </button>
             )}
-            <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><RefreshCw className="h-4 w-4" /></Link>
+            <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="hidden rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><RefreshCw className="h-4 w-4" /></Link>
             <Link href="/me/notifications" aria-label="通知" className="relative rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><span className="text-base">✦</span>{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
-            <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Home className="h-4 w-4" />返回首页</Link>
+            <Link href="/" className="hidden items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><Home className="h-4 w-4" />返回首页</Link>
           </div>
         </header>
 
-        <section className="grid gap-10 lg:grid-cols-[1.1fr_1.4fr]">
+        <section className="m-enter grid gap-8 lg:grid-cols-[1.1fr_1.4fr] lg:gap-10">
           {/* 个人身份信息 */}
           <div>
-            <div className="flex items-end gap-5">
+            <div className="flex items-end gap-4">
               <div className="relative">
-                <SocialAvatar name={displayName} avatarUrl={profile.avatarUrl} size={92} className="text-3xl" />
+                <SocialAvatar name={displayName} avatarUrl={profile.avatarUrl} size={92} className="text-[26px]" />
                 <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="上传头像"
                   className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)] ring-2 ring-[var(--social-bg)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-60">
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
@@ -242,7 +242,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               </button>
             </div>
 
-            <h2 className="mt-5 text-3xl font-semibold tracking-tight">{displayName}</h2>
+            <h2 className="mt-5 text-[28px] font-semibold leading-tight tracking-tight">{displayName}</h2>
             <p className="mt-1 text-sm text-[var(--social-muted)]">@{profile.username}</p>
             {profile.accountId && <span className="mt-3 inline-block rounded-full bg-[var(--social-accent-soft)] px-3 py-1 text-xs text-[var(--social-accent)]">ID {profile.accountId}</span>}
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-[var(--social-muted)]">「{bioText}」</p>
@@ -252,7 +252,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           <div className="lg:pt-4">
             {recent ? (
               <Link href={'/travel/' + encodeURIComponent(recent.slug)} className="group relative block overflow-hidden rounded-[2rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
-                <div className="relative aspect-[16/10]">
+            <div className="relative aspect-[16/10]">
                   {recent.coverUrl ? (
                     <img src={recent.coverUrl} alt={recent.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   ) : (
@@ -305,7 +305,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
         </section>
 
         {/* 我的记忆 */}
-        <section className="mt-16">
+        <section className="m-enter mt-16">
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">我的记忆</h2>
             <div className="h-px flex-1 bg-[var(--social-line)]" />
@@ -340,7 +340,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
         </section>
 
         {/* 我的旅行故事 */}
-        <section className="mt-16">
+        <section className="m-enter mt-14">
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">我的旅行故事</h2>
             <div className="h-px flex-1 bg-[var(--social-line)]" />
