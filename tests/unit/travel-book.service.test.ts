@@ -63,6 +63,33 @@ function travelRow(overrides: Record<string, unknown> = {}) {
   }
 }
 
+// 带一天一忆一图的 Travel（photoCount>0）：只有「有内容」的 Travel 才覆盖同城城市册
+function travelRowWithPhoto(overrides: Record<string, unknown> = {}) {
+  return travelRow({
+    days: [
+      {
+        id: 11,
+        date: new Date('2026-05-01'),
+        title: 'DAY 1',
+        summary: null,
+        itineraryItems: [],
+        memories: [
+          {
+            id: 111,
+            title: '初到南京',
+            content: null,
+            mood: null,
+            happenedAt: null,
+            media: [{ id: 500, storageKey: 't/1.jpg', variants: [], width: null, height: null }],
+            mediaLinks: [],
+          },
+        ],
+      },
+    ],
+    ...overrides,
+  })
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   ;(getPostService as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ getPostsHybrid })
@@ -96,8 +123,8 @@ describe('travel-book.service 聚合', () => {
     expect(cityBook!.bookKey).toBe('city:苏州')
   })
 
-  it('跨源去重：城市已有 Travel 画册时不再输出该城市 Post 城市画册', async () => {
-    findMany.mockResolvedValueOnce([travelRow()]).mockResolvedValueOnce([])
+  it('跨源去重：城市已有「有内容」的 Travel 画册时不再输出该城市 Post 城市画册', async () => {
+    findMany.mockResolvedValueOnce([travelRowWithPhoto()]).mockResolvedValueOnce([])
     getPostsHybrid.mockResolvedValue([
       { slug: 'a', title: '南京记', date: '2026-06-01', location: '南京', cover: '/uploads/n.jpg', images: [] },
       { slug: 'b', title: '苏州记', date: '2026-06-02', location: '苏州', cover: '/uploads/s.jpg', images: [] },
@@ -105,9 +132,21 @@ describe('travel-book.service 聚合', () => {
 
     const books = await listTravelBooks(1)
     const keys = books.map((b) => b.bookKey)
-    expect(keys).not.toContain('city:南京') // Post 城市画册被 Travel 覆盖
+    expect(keys).not.toContain('city:南京') // Post 城市画册被有内容的 Travel 覆盖
     expect(keys).toContain('travel:1') // Travel 画册保留（title 南京行）
     expect(keys).toContain('city:苏州') // 其他城市不受影响
+  })
+
+  it('空壳 Travel（0 章 0 图）不隐藏有内容的 Post 城市画册', async () => {
+    findMany.mockResolvedValueOnce([travelRow()]).mockResolvedValueOnce([])
+    getPostsHybrid.mockResolvedValue([
+      { slug: 'a', title: '南京记', date: '2026-06-01', location: '南京', cover: '/uploads/n.jpg', images: [] },
+    ])
+
+    const books = await listTravelBooks(1)
+    const keys = books.map((b) => b.bookKey)
+    expect(keys).toContain('travel:1') // 空壳 Travel 照常显示
+    expect(keys).toContain('city:南京') // 城市册不被空壳覆盖
   })
 
   it('同一文章的封面与图片去重，photoCount 不重复计', async () => {

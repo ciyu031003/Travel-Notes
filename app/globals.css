@@ -986,6 +986,10 @@ html.dark {
 }
 
 /* ===== 通用 UI 动效（空间管理/弹窗等）===== */
+@keyframes menuDrop {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

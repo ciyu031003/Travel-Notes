@@ -158,9 +158,9 @@ function LoginPageContent() {
   return (
     <>
       <LoginDoor>
-        <div className="flex min-h-screen items-center justify-center p-4 py-10">
+        <div className="flex min-h-dvh items-start justify-center p-4 py-6 md:items-center md:py-10">
           <div className="w-full max-w-md">
-            <div className="rounded-3xl border border-white/60 bg-white/85 p-7 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl dark:border-shell-line dark:bg-shell-surface/85 md:p-9">
+            <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-shell-line dark:bg-shell-surface/90 sm:p-7 md:p-9">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-travel-accentSoft shadow-sm">
@@ -178,16 +178,16 @@ function LoginPageContent() {
                 )}
               </div>
 
-              <h1 className="mt-7 font-display text-3xl font-bold leading-tight text-[#2D3842] dark:text-shell-text md:text-4xl">
+              <h1 className="mt-5 font-display text-[26px] font-bold leading-snug text-balance text-[#2D3842] dark:text-shell-text sm:text-3xl md:mt-7 md:text-4xl">
                 {mode === 'login' ? '登录你的旅行记忆空间' : '注册一个新的行迹账号'}
               </h1>
-              <p className="mt-3 text-sm leading-relaxed text-travel-ink dark:text-shell-muted">
+              <p className="mt-2.5 text-sm leading-relaxed text-travel-ink dark:text-shell-muted md:mt-3">
                 {mode === 'login'
                   ? '登录后继续沉淀你的旅行与故事。'
                   : '注册后开启属于你的旅行记忆空间。'}
               </p>
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              <form onSubmit={handleSubmit} className="mt-6 space-y-4 md:mt-8">
                 <div>
                   <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
                     <Lock className="h-4 w-4" />
@@ -313,12 +313,12 @@ function LoginPageContent() {
                 相册解锁
               </button>
 
-              <div className="mt-7 border-t border-travel-line/60 pt-5 dark:border-shell-line">
+              <div className="mt-5 border-t border-travel-line/60 pt-4 dark:border-shell-line">
                 <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                   {cityThumbnails.map((city, i) => (
                     <div
                       key={i}
-                      className="flex h-14 w-14 flex-shrink-0 rotate-[-4deg] items-center justify-center rounded-full border-2 border-dashed border-travel-bloom/80 bg-travel-parchment dark:border-travel-bloom/50 dark:bg-shell-surface"
+                      className="flex h-12 w-12 flex-shrink-0 rotate-[-4deg] items-center justify-center rounded-full border-2 border-dashed border-travel-bloom/80 bg-travel-parchment dark:border-travel-bloom/50 dark:bg-shell-surface sm:h-14 sm:w-14"
                     >
                       <span className="text-center text-[10px] font-medium leading-tight text-travel-accent dark:text-travel-bloom">
                         {city}
@@ -326,7 +326,7 @@ function LoginPageContent() {
                     </div>
                   ))}
                 </div>
-                <p className="mt-3 text-center text-xs text-travel-ink dark:text-shell-muted">
+                <p className="mt-2.5 text-center text-xs text-travel-ink dark:text-shell-muted">
                   {cityThumbnails.length} 座城市的记忆邮戳
                 </p>
               </div>

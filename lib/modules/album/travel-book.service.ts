@@ -331,7 +331,9 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
 
 /**
  * 旅行画册数据：合并「Travel 模型画册」+「旅行文章(Post)城市画册」。
- * Travel 优先：城市已有 Travel 画册时不再输出该城市的 Post 城市画册（避免同地两本内容重叠）。
+ * Travel 优先：城市已有 **有内容**（photoCount>0）的 Travel 画册时，不再输出该城市的
+ * Post 城市画册（避免同地两本内容重叠）。空壳 Travel（0 章 0 图）不覆盖城市册，
+ * 否则存量文章照片会被一本空画册挡住。
  */
 export async function listTravelBooks(userId?: number | null): Promise<TravelBookData[]> {
   const [travelBooks, cityBooks] = await Promise.all([
@@ -341,16 +343,18 @@ export async function listTravelBooks(userId?: number | null): Promise<TravelBoo
   if (travelBooks.length === 0) return cityBooks
   if (cityBooks.length === 0) return travelBooks
 
-  const travelCities = new Set<string>()
+  const travelCityPhotos = new Map<string, number>()
   for (const b of travelBooks) {
     const loc = b.location || ''
     if (!loc) continue
-    travelCities.add(findCityByName(loc)?.name ?? loc)
+    const key = findCityByName(loc)?.name ?? loc
+    travelCityPhotos.set(key, Math.max(travelCityPhotos.get(key) ?? 0, b.photoCount))
   }
   const isCityCovered = (b: TravelBookData): boolean => {
-    if (travelCities.has(b.title)) return true
+    if ((travelCityPhotos.get(b.title) ?? 0) > 0) return true
     const loc = b.location || ''
-    return !!loc && travelCities.has(findCityByName(loc)?.name ?? loc)
+    if (!loc) return false
+    return (travelCityPhotos.get(findCityByName(loc)?.name ?? loc) ?? 0) > 0
   }
   return [...travelBooks, ...cityBooks.filter((b) => !isCityCovered(b))]
 }

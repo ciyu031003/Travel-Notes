@@ -174,7 +174,7 @@ export default function TravelCircleFeed() {
               const active = activeTheme === theme
               return (
                 <button key={theme} type="button" onClick={() => setActiveTheme(active ? null : theme)}
-                  className={cn('rounded-full px-3 py-1 text-xs transition',
+                  className={cn('shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs transition',
                     active
                       ? 'bg-[var(--social-accent)] text-[var(--social-on-accent)]'
                       : 'text-[var(--social-muted)] hover:bg-[var(--social-accent-soft)] hover:text-[var(--social-accent)]')}>

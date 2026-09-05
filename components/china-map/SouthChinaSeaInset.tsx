@@ -2,7 +2,8 @@ import { ChinaMapColors as colors } from './types'
 
 export default function SouthChinaSeaInset() {
   return (
-    <div className="absolute bottom-4 left-4 w-[116px] h-[162px] rounded-lg border-2 border-travel-dim/60 bg-travel-cream/60 backdrop-blur-sm p-1.5 pointer-events-none">
+    // 移动端 40vh 小地图上原尺寸(116x162)会盖住近半主图：小屏缩小并贴角，桌面保持原样
+    <div className="absolute bottom-2 left-2 w-[68px] h-[95px] rounded-lg border-2 border-travel-dim/60 bg-travel-cream/60 backdrop-blur-sm p-1.5 pointer-events-none opacity-80 md:bottom-4 md:left-4 md:h-[162px] md:w-[116px] md:opacity-100">
       <svg
         viewBox="0 0 116 162"
         className="w-full h-full"

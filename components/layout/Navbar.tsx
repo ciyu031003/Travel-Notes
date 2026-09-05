@@ -60,6 +60,16 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
     }
   }, [])
 
+  // 抽屉打开时锁定 body 滚动
+  useEffect(() => {
+    if (!isMenuOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [isMenuOpen])
+
   const toggleTheme = () => {
     if (isDark) {
       document.documentElement.classList.remove('dark')
@@ -241,60 +251,69 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
         </div>
       </nav>
 
+      {/* 移动端全屏抽屉：遮罩 + 当前页高亮（点击遮罩或条目关闭） */}
       {isMenuOpen && (
-        <div
-          className={cn(
-            'md:hidden border-t',
-            isTransparent
-              ? 'bg-white dark:bg-shell-bg border-travel-line/60 dark:border-shell-line'
-              : 'bg-white dark:bg-shell-bg border-travel-line/60 dark:border-shell-line'
-          )}
-        >
-          <div className="container-custom py-4 space-y-1">
-            {navItems.map((item) => (
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="导航菜单">
+          {/* 遮罩从导航栏以下开始，条形栏保持可见可关 */}
+          <div
+            className="absolute inset-x-0 bottom-0 top-16 bg-black/45 backdrop-blur-[2px] motion-safe:animate-[fadeIn_.18s_ease-out]"
+            onClick={() => setIsMenuOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="absolute inset-x-0 top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-b-2xl border-t border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-bg shadow-[0_24px_48px_rgba(0,0,0,0.25)] motion-safe:animate-[menuDrop_.22s_cubic-bezier(0.22,1,0.36,1)]">
+            <div className="container-custom py-4 space-y-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                  className={cn(
+                    'px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3',
+                    isActive(item.href)
+                      ? 'bg-travel-sakura/50 text-travel-accentStrong dark:bg-white/10 dark:text-travel-accentSoft'
+                      : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
+                  )}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                </Link>
+              ))}
               <Link
-                key={item.href}
-                href={item.href}
+                href="/search"
                 onClick={() => setIsMenuOpen(false)}
+                aria-current={isActive('/search') ? 'page' : undefined}
                 className={cn(
                   'px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3',
-                  isActive(item.href)
+                  isActive('/search')
                     ? 'bg-travel-sakura/50 text-travel-accentStrong dark:bg-white/10 dark:text-travel-accentSoft'
                     : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
                 )}
               >
-                <item.icon className="w-5 h-5" />
-                {item.label}
+                <Search className="w-5 h-5" />
+                搜索
               </Link>
-            ))}
-            <Link
-              href="/search"
-              onClick={() => setIsMenuOpen(false)}
-              className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink"
-            >
-              <Search className="w-5 h-5" />
-              搜索
-            </Link>
-            <Link
-              href="/admin"
-              onClick={() => setIsMenuOpen(false)}
-              className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink border-t border-travel-line/60 dark:border-shell-line mt-2 pt-3"
-            >
-              <Settings className="w-5 h-5" />
-              管理后台
-            </Link>
-            {username && (
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false)
-                  handleLogout()
-                }}
-                className="w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-danger dark:text-travel-danger hover:bg-travel-danger/10 dark:hover:bg-travel-danger/10"
+              <Link
+                href="/admin"
+                onClick={() => setIsMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white border-t border-travel-line/60 dark:border-shell-line mt-2 pt-3"
               >
-                <LogOut className="w-5 h-5" />
-                退出登录 ({username})
-              </button>
-            )}
+                <Settings className="w-5 h-5" />
+                管理后台
+              </Link>
+              {username && (
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    handleLogout()
+                  }}
+                  className="w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-danger dark:text-travel-danger hover:bg-travel-danger/10 dark:hover:bg-travel-danger/10"
+                >
+                  <LogOut className="w-5 h-5" />
+                  退出登录 ({username})
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -96,7 +96,7 @@ const DriftWall = ({
   const pointerDampedRef = useRef({ x: 0, y: 0 });
   const lastTsRef = useRef<number | null>(null);
 
-  const [containerHeight, setContainerHeight] = useState(600);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 600 });
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeIdRef = useRef<string | null>(null);
   const [reduced, setReduced] = useState(false);
@@ -109,25 +109,47 @@ const DriftWall = ({
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
+  // 窄容器自动收列缩卡：桌面参数（如 4 列 × 200px ≈ 872px）在小屏会把照片
+  // 全部挤出视口外（实测 x≈-320），按容器宽等比收缩列数与卡片，保证照片可见。
+  const fitted = useMemo(() => {
+    const unit = tileWidth + gap;
+    const w = containerSize.w;
+    if (!w || w >= columns * unit) {
+      return { columns, tileWidth, tileHeight, gap };
+    }
+    const cols = Math.max(2, Math.min(columns, Math.floor(w / unit)));
+    const target = cols * unit;
+    const k = Math.max(0.55, Math.min(1, w / target));
+    return {
+      columns: cols,
+      tileWidth: Math.round(tileWidth * k),
+      tileHeight: Math.round(tileHeight * k),
+      gap: Math.max(10, Math.round(gap * k)),
+    };
+  }, [containerSize.w, columns, tileWidth, tileHeight, gap]);
+
   const columnItems = useMemo<DriftWallItem[][]>(() => {
-    const cols: DriftWallItem[][] = Array.from({ length: columns }, () => []);
-    items.forEach((item, i) => cols[i % columns].push(item));
+    const cols: DriftWallItem[][] = Array.from({ length: fitted.columns }, () => []);
+    items.forEach((item, i) => cols[i % fitted.columns].push(item));
     return cols.map(col => (col.length ? col : items.slice(0, 1)));
-  }, [items, columns]);
+  }, [items, fitted]);
 
   const columnMeta = useMemo<ColumnMeta[]>(() => {
-    const unit = tileHeight + gap;
+    const unit = fitted.tileHeight + fitted.gap;
     return columnItems.map(col => {
       const copyHeight = Math.max(unit, col.length * unit);
-      const copies = Math.max(2, Math.ceil((containerHeight * 1.6) / copyHeight) + 1);
+      const copies = Math.max(2, Math.ceil((containerSize.h * 1.6) / copyHeight) + 1);
       return { copyHeight, copies };
     });
-  }, [columnItems, tileHeight, gap, containerHeight]);
+  }, [columnItems, fitted, containerSize.h]);
 
   useLayoutEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver(([entry]) => {
-      setContainerHeight(entry.contentRect.height || 600);
+      setContainerSize({
+        w: entry.contentRect.width || 0,
+        h: entry.contentRect.height || 600,
+      });
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
@@ -250,9 +272,9 @@ const DriftWall = ({
   const cssVars = useMemo<CSSProperties>(
     () =>
       ({
-        '--dw-tile-w': `${tileWidth}px`,
-        '--dw-tile-h': `${tileHeight}px`,
-        '--dw-gap': `${gap}px`,
+        '--dw-tile-w': `${fitted.tileWidth}px`,
+        '--dw-tile-h': `${fitted.tileHeight}px`,
+        '--dw-gap': `${fitted.gap}px`,
         '--dw-radius': `${radius}px`,
         '--dw-perspective': `${perspective}px`,
         '--dw-lift': `${lift}px`,
@@ -262,7 +284,7 @@ const DriftWall = ({
         '--dw-edge': `${Math.max(0, (1 - fade) * 100)}%`,
         ...style
       }) as CSSProperties,
-    [tileWidth, tileHeight, gap, radius, perspective, lift, dim, grayscale, overlayColor, fade, style]
+    [fitted, radius, perspective, lift, dim, grayscale, overlayColor, fade, style]
   );
 
   const renderTile = (item: DriftWallItem, id: string, colIndex: number) => {

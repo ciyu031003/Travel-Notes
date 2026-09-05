@@ -423,20 +423,21 @@ export default function AlbumPage() {
         </div>
       )}
 
-      {/* 顶部导航 */}
-      <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 md:px-8 border-b-4 border-black bg-black/45">
+      {/* 顶部导航：移动端两翼收窄，标题中置可截断；「重新锁定」收进更多菜单 */}
+      <header className="sticky top-0 z-40 h-14 flex items-center justify-between gap-2 px-3 md:px-8 border-b-4 border-black bg-black/45">
         <Link
-          href="/login"
-          className="pixel-btn pixel-border-stone px-3 py-1.5 text-xs font-bold rounded-sm"
+          href="/"
+          className="pixel-btn pixel-border-stone px-3 py-1.5 text-xs font-bold rounded-sm shrink-0"
+          aria-label="返回首页"
         >
-          <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-          返回登录
+          <ArrowLeft className="w-3.5 h-3.5 sm:mr-1" />
+          <span className="hidden sm:inline">返回首页</span>
         </Link>
-        <div className="font-zpix text-album-accent text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)] flex items-center gap-2">
-          <BookOpen className="w-4 h-4" />
-          旅行相册 · 存档
+        <div className="font-zpix text-album-accent text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)] flex items-center gap-2 min-w-0 truncate">
+          <BookOpen className="w-4 h-4 shrink-0" />
+          <span className="truncate">旅行相册<span className="hidden sm:inline"> · 存档</span></span>
         </div>
-        <div className="relative flex items-center gap-2">
+        <div className="relative flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => changeMode('book')}
@@ -525,6 +526,18 @@ export default function AlbumPage() {
                   >
                     进入地图
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // 清除相册解锁 cookie 并刷新，回到上锁态（原「返回登录」入口的正规语义）
+                      document.cookie = 'album_token=; Max-Age=0; path=/'
+                      window.location.reload()
+                    }}
+                    className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    重新锁定相册
+                  </button>
                 </div>
               </div>
             </>

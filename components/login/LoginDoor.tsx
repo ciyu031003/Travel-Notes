@@ -111,8 +111,8 @@ export default function LoginDoor({ children }: LoginDoorProps) {
         className="absolute inset-0 h-full w-full object-cover"
         src="/videos/clover.mp4"
       />
-      {/* 可读性遮罩 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/15 to-black/45" />
+      {/* 可读性遮罩（中部加深，保证登录卡与输入框在花哨视频上可读） */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
 
       {/* 登录内容 */}
       <div
