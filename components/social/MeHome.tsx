@@ -11,6 +11,7 @@ import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import SpacePanel from '@/components/space/SpacePanel'
 import { Modal } from '@/components/ui/Modal'
 import { apiUrl } from '@/lib/api-base'
+import { travelDetailHref } from '@/lib/routes'
 
 interface RecentTravel {
   id: number
@@ -253,7 +254,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           {/* 最近的一次旅行（第一视觉焦点） */}
           <div className="lg:pt-4">
             {recent ? (
-              <Link href={'/travel/' + encodeURIComponent(recent.slug)} className="group relative block overflow-hidden rounded-[2rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
+              <Link href={travelDetailHref(recent.slug)} className="group relative block overflow-hidden rounded-[2rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
             <div className="relative aspect-[16/10]">
                   {recent.coverUrl ? (
                     <img src={recent.coverUrl} alt={recent.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />

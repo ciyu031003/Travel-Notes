@@ -7,6 +7,7 @@ import AsyncState from '@/components/AsyncState'
 import { formatDate } from '@/lib/utils'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
+import { travelDetailHref } from '@/lib/routes'
 
 interface TimelineEntry {
   id: number
@@ -42,51 +43,70 @@ export default function TimelinePage() {
     return <AsyncState variant="loading" message="正在整理你的旅行时间线…" />
   }
 
+  const allEntries = years.flatMap((y) => y.entries)
+  const travelCount = allEntries.filter((e) => e.type === 'travel').length
+  const memoryCount = allEntries.length - travelCount
+
   return (
-    <div className="container-custom py-10 md:py-14">
-      <header className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-accentSoft rounded-full text-sm mb-4">
-          <CalendarDays className="w-4 h-4" />
-          <span>旅行时间线</span>
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-travel-inkStrong dark:text-shell-text">走过的时光</h1>
-        <p className="text-travel-ink/70 dark:text-shell-muted mt-2">按年份回顾每一段旅行与回忆</p>
-      </header>
+    <div className="relative min-h-screen overflow-x-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(228,180,120,0.16),transparent_72%)]" />
 
-      {years.length === 0 ? (
-        <div className="card p-12 text-center text-travel-ink/60">
-          <Sparkles className="w-10 h-10 mx-auto mb-3 text-travel-accentSoft" />
-          <p>时间线还是空的，从第一段旅行开始记录吧</p>
-        </div>
-      ) : (
-        <div className="max-w-3xl mx-auto">
-          {years.map(({ year, entries }) => (
-            <section key={year} className="relative pl-8 md:pl-12 mb-10">
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-travel-sakura via-travel-sakura to-transparent dark:from-travel-accentStrong/60 dark:via-travel-accentStrong/30" />
-              <h2 className="relative inline-flex items-center gap-2 mb-6">
-                <span className="absolute -left-8 md:-left-12 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-travel-accentSoft border-4 border-white dark:border-shell-bg shadow" />
-                <span className="text-2xl font-bold text-travel-inkStrong dark:text-shell-text">{year}</span>
-              </h2>
+      <div className="relative container-custom py-10 md:py-14">
+        <header className="mb-12 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-5xl">走过的时光</h1>
+          <div className="mx-auto mt-4 flex items-center justify-center gap-3">
+            <span className="h-px w-10 bg-travel-bloom/60" />
+            <span className="text-sm text-travel-ink/70 dark:text-shell-muted">按年份回顾每一段旅行与回忆</span>
+            <span className="h-px w-10 bg-travel-bloom/60" />
+          </div>
+          <p className="mt-3 text-xs tracking-[0.28em] text-travel-accent/80 dark:text-travel-bloom/80">
+            {travelCount} 段旅程 · {memoryCount} 段回忆
+          </p>
+        </header>
 
-              <div className="space-y-4">
-                {entries.map((entry) => (
-                  <div key={entry.type + '-' + entry.id} className="group">
-                    {entry.type === 'travel' && entry.slug ? (
-                      <Link href={'/travel/' + entry.slug} className="card ribbon-hover block p-5 hover:border-travel-sakura dark:hover:border-travel-accentStrong transition-colors">
-                        <TimelineItem entry={entry} />
-                      </Link>
-                    ) : (
-                      <div className="card p-5">
-                        <TimelineItem entry={entry} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
+        {years.length === 0 ? (
+          <div className="relative mx-auto max-w-xl rounded-2xl border border-travel-line/70 bg-white/90 px-6 py-14 text-center shadow-[0_18px_40px_-28px_rgba(90,102,112,0.4)] dark:bg-shell-surface/90">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-travel-sakura/60 text-travel-accent">
+              <Sparkles className="h-7 w-7" />
+            </div>
+            <p className="mt-4 text-base font-medium text-travel-inkStrong dark:text-shell-text">时间线还是空的</p>
+            <p className="mt-1 text-sm text-travel-ink/60 dark:text-shell-muted">从第一段旅行开始，慢慢收藏路上的光</p>
+          </div>
+        ) : (
+          <div className="relative mx-auto max-w-3xl">
+            {years.map(({ year, entries }) => (
+              <section key={year} className="relative mb-12 pl-8 md:pl-12">
+                <div className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-travel-bloom via-travel-sakura to-transparent dark:from-travel-bloom/60 dark:via-travel-sakura/25" />
+                <h2 className="relative mb-6 flex items-center gap-3">
+                  <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-travel-accentSoft shadow ring-4 ring-white dark:ring-[#12161C] md:-left-12" />
+                  <span className="text-2xl font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-3xl">{year}</span>
+                  <span className="h-px flex-1 bg-gradient-to-r from-travel-sakura/70 to-transparent" />
+                </h2>
+
+                <div className="space-y-5">
+                  {entries.map((entry) => (
+                    <div key={entry.type + '-' + entry.id} className="group relative">
+                      <span className="absolute -left-8 top-7 h-3 w-3 -translate-x-1/2 rounded-full bg-[var(--surface,white)] ring-2 ring-travel-bloom/70 dark:bg-[#161B22] md:-left-12" />
+                      {entry.type === 'travel' && entry.slug ? (
+                        <Link
+                          href={travelDetailHref(entry.slug)}
+                          className="block rounded-2xl border border-travel-line/70 bg-white/90 p-5 shadow-[0_14px_34px_-24px_rgba(90,102,112,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_20px_44px_-24px_rgba(168,95,58,0.4)] dark:bg-shell-surface/90"
+                        >
+                          <TimelineItem entry={entry} />
+                        </Link>
+                      ) : (
+                        <div className="rounded-2xl border border-travel-line/70 bg-white/80 p-5 shadow-[0_14px_34px_-26px_rgba(90,102,112,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/50 dark:bg-shell-surface/80">
+                          <TimelineItem entry={entry} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

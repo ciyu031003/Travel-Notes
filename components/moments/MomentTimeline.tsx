@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Sparkles, Loader2, Inbox } from 'lucide-react'
+import { Sparkles, Loader2, Inbox, Quote } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import LikeButton from '@/components/like/LikeButton'
 import { apiUrl } from '@/lib/api-base'
@@ -90,9 +90,16 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
 
   if (moments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-travel-sand/70 dark:text-shell-faint">
-        <Inbox className="w-12 h-12 mb-3 opacity-40" />
-        <p className="text-sm">还没有碎碎念，稍后再来看看吧~</p>
+      <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-travel-line/70 bg-white/60 px-6 py-16 text-center dark:border-shell-line dark:bg-shell-surface/50">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-travel-sakura/40 text-travel-accent dark:bg-travel-accent/15 dark:text-travel-accentSoft">
+          <Inbox className="h-6 w-6" />
+        </span>
+        <p className="mt-4 text-sm font-medium text-travel-inkStrong dark:text-shell-text">
+          还没有碎碎念
+        </p>
+        <p className="mt-1.5 text-sm text-travel-sand dark:text-shell-muted">
+          把脑海里一闪而过的念头留在这里吧
+        </p>
       </div>
     )
   }
@@ -100,22 +107,24 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
   return (
     <div className="space-y-4">
       {moments.map((moment, idx) => (
-        <div key={moment.id} className="relative pl-8">
+        <div key={moment.id} className="group relative pl-8">
           {/* 时间线竖线 + 节点 */}
           {idx < moments.length - 1 && (
-            <span className="absolute left-[9px] top-8 bottom-[-18px] w-px bg-gradient-to-b from-travel-sakura to-transparent dark:from-travel-accentStrong/40" />
+            <span className="absolute left-[9px] top-9 bottom-[-18px] w-px bg-gradient-to-b from-travel-bloom/70 via-travel-sakura/50 to-transparent dark:from-travel-accentStrong/40" />
           )}
-          <span className="absolute left-0 top-1.5 w-5 h-5 rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom flex items-center justify-center shadow-sm">
-            <Sparkles className="w-2.5 h-2.5 text-white" />
+          <span className="absolute left-0 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom shadow-[0_4px_12px_-4px_rgba(168,95,58,0.5)]">
+            <Sparkles className="h-2.5 w-2.5 text-white" />
           </span>
 
-          <div className="card p-5 hover:border-travel-sakura dark:hover:border-travel-accentStrong transition-colors">
-            <p className="text-travel-ink dark:text-shell-text leading-relaxed whitespace-pre-wrap break-words">
+          <div className="relative overflow-hidden rounded-[22px] border border-travel-line/70 bg-white/85 p-5 shadow-[0_12px_30px_-24px_rgba(90,102,112,0.35)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-24px_rgba(198,122,78,0.45)] dark:border-shell-line dark:bg-shell-surface/85 dark:hover:border-travel-accentStrong/60">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[radial-gradient(closest-side,rgba(228,180,120,0.14),transparent)]" />
+            <Quote className="relative mb-2 h-4 w-4 text-travel-bloom/70" />
+            <p className="relative whitespace-pre-wrap break-words text-[15px] leading-7 text-travel-ink dark:text-shell-text">
               {moment.content}
             </p>
-            <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
+            <div className="relative mt-4 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-travel-sand/70 dark:text-shell-faint">
+                <span className="text-xs text-travel-sand dark:text-shell-faint">
                   {formatRelativeTime(moment.createdAt)}
                 </span>
                 {moment.tags && moment.tags.length > 0 && (
@@ -123,7 +132,7 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
                     {moment.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-xs px-2 py-0.5 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accent dark:text-travel-accentSoft"
+                        className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-xs text-travel-accent dark:bg-travel-accent/15 dark:text-travel-accentSoft"
                       >
                         #{tag}
                       </span>
@@ -138,12 +147,12 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
       ))}
 
       {hasMore && (
-        <div className="text-center pt-2">
+        <div className="pt-2 text-center">
           <button
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="px-5 py-2 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accent dark:text-travel-accentSoft text-sm hover:bg-travel-sakura dark:hover:bg-travel-accentStrong/40 transition-colors disabled:opacity-50"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-travel-sakura/60 px-5 text-sm font-medium text-travel-accent transition-all hover:bg-travel-sakura hover:shadow-sm disabled:opacity-50 dark:bg-travel-accent/15 dark:text-travel-accentSoft dark:hover:bg-travel-accentStrong/30"
           >
             {loadingMore ? '加载中...' : '加载更多'}
           </button>

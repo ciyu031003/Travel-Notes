@@ -24,6 +24,12 @@ export type { PostMeta } from './china-map/types'
 
 export interface ChinaMapProps {
   posts: PostMeta[]
+  /** 移动端由父级渲染底部抽屉，地图只负责选中与聚焦，不内嵌右侧/底部面板 */
+  externalPanel?: boolean
+  onProvinceSelect?: (provinceId: string) => void
+  onCitySelect?: (city: City) => void
+  /** 父级抽屉关闭时递增，用于清除地图内部选中态与缩放 */
+  resetToken?: number
 }
 
 const width = 1100
@@ -42,7 +48,7 @@ interface TouchState {
   moved: boolean
 }
 
-export default function ChinaMap({ posts }: ChinaMapProps) {
+export default function ChinaMap({ posts, externalPanel = false, onProvinceSelect, onCitySelect, resetToken }: ChinaMapProps) {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedCity, setSelectedCity] = useState<City | null>(null)
   const [showCityModal, setShowCityModal] = useState(false)
@@ -383,10 +389,28 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
     setSelectedCity(null)
     setHoveredProvince(null)
     focusProvince(provinceId)
+    onProvinceSelect?.(provinceId)
   }
-  const handleCityClick = (city: City) => { setSelectedCity(city); setShowCityModal(true) }
+  const handleCityClick = (city: City) => {
+    setSelectedCity(city)
+    if (externalPanel && onCitySelect) {
+      onCitySelect(city)
+    } else {
+      setShowCityModal(true)
+    }
+  }
   const closeCityModal = () => setShowCityModal(false)
   const backToProvinceList = () => setSelectedCity(null)
+
+  // 父级关闭右下抽屉时，重置地图选中/缩放（移动端外部面板模式）
+  useEffect(() => {
+    if (externalPanel && resetToken != null && resetToken !== 0) {
+      setSelectedProvince(null)
+      setSelectedCity(null)
+      setShowCityModal(false)
+      resetZoom()
+    }
+  }, [resetToken, externalPanel])
 
   // 点击省份放大后，点击地图空白区域（非省份/城市/控件/弹层）回到全国视图
   const handleMapClick = (e: React.MouseEvent) => {
@@ -449,11 +473,11 @@ export default function ChinaMap({ posts }: ChinaMapProps) {
 
       <MapLegend />
 
-      {selectedProvinceInfo && !selectedCity && (
+      {!externalPanel && selectedProvinceInfo && !selectedCity && (
         <ProvinceCityPanel provinceInfo={selectedProvinceInfo} cities={selectedProvinceCities} posts={selectedPosts} citiesWithPosts={citiesByPostLocation} onClose={() => { setSelectedProvince(null); resetZoom() }} onCityClick={handleCityClick} />
       )}
 
-      {showCityModal && selectedCity && (
+      {!externalPanel && showCityModal && selectedCity && (
         <CityModal city={selectedCity} provinceInfo={selectedProvinceInfo} cityPosts={cityPosts} onClose={closeCityModal} onBack={backToProvinceList} />
       )}
     </div>

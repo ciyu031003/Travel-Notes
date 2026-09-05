@@ -17,6 +17,8 @@ import {
   FileText,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { travelDetailHref } from '@/lib/routes'
+import { apiUrl } from '@/lib/api-base'
 
 interface SearchResult {
   id: number
@@ -70,7 +72,7 @@ export default function CommandPalette() {
     }
     setLoading(true)
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
+      const res = await fetch(apiUrl(`/api/search?q=${encodeURIComponent(trimmed)}`))
       if (res.ok) {
         const json = await res.json()
         const list = json?.data?.results ?? []
@@ -143,7 +145,7 @@ export default function CommandPalette() {
       e.preventDefault()
       if (query.trim() && results.length > 0 && activeIndex < results.length) {
         const item = results[activeIndex]
-        router.push(`/travel/${item.slug}`)
+        router.push(travelDetailHref(item.slug))
         close()
       } else if (!query.trim() && QUICK_LINKS[activeIndex]) {
         router.push(QUICK_LINKS[activeIndex].href)
@@ -243,7 +245,7 @@ export default function CommandPalette() {
                       key={`${item.slug}-${item.id}`}
                       type="button"
                       onClick={() => {
-                        router.push(`/travel/${item.slug}`)
+                        router.push(travelDetailHref(item.slug))
                         close()
                       }}
                       onMouseEnter={() => setActiveIndex(idx)}
@@ -292,6 +294,4 @@ export default function CommandPalette() {
     </div>
   )
 }
-
-
 

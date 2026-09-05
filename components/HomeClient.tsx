@@ -251,6 +251,30 @@ export default function HomeClient({
           </div>
         </section>
 
+        {/* 每日一言：作为首页视觉焦点，位于“走过的地方”与“最近旅行”之间 */}
+        <section className="px-3 pb-10 md:px-6 md:pb-12">
+          <div className="mx-auto max-w-3xl">
+            <div className="rounded-2xl border border-travel-bloom/40 dark:border-shell-line bg-white/90 dark:bg-shell-surface/95 px-6 py-8 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-10">
+              <div className="inline-flex items-center gap-2 text-sm font-medium text-travel-accent dark:text-travel-bloom">
+                <Quote className="h-4 w-4" />
+                <span>每日一言</span>
+                <Quote className="h-4 w-4" />
+              </div>
+              <p className="mt-4 text-lg font-medium leading-relaxed text-travel-ink dark:text-shell-text md:text-2xl">
+                「{quote}」
+              </p>
+              <div className="mx-auto mt-5 flex h-20 w-20 rotate-[-6deg] items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft dark:border-travel-bloom/70">
+                <div className="text-center text-travel-accent dark:text-travel-bloom">
+                  <p className="text-[9px] tracking-[0.25em]">DAILY</p>
+                  <p className="font-display text-base font-bold">
+                    {new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* 最近旅行 */}
         <section className="px-3 pb-12 md:px-6 md:pb-16">
           <div className="mx-auto max-w-7xl">
@@ -361,30 +385,6 @@ export default function HomeClient({
             </div>
           </section>
         )}
-
-        {/* 每日一言 */}
-        <section className="px-3 pb-12 md:px-6 md:pb-16">
-          <div className="mx-auto max-w-3xl">
-            <div className="rounded-2xl border border-travel-bloom/40 dark:border-shell-line bg-white/90 dark:bg-shell-surface/95 px-6 py-10 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-12">
-              <div className="inline-flex items-center gap-2 text-sm font-medium text-travel-accent dark:text-travel-bloom">
-                <Quote className="h-4 w-4" />
-                <span>每日一言</span>
-                <Quote className="h-4 w-4" />
-              </div>
-              <p className="mt-4 text-lg font-medium leading-relaxed text-travel-ink dark:text-shell-text md:text-2xl">
-                「{quote}」
-              </p>
-              <div className="mx-auto mt-5 flex h-20 w-20 rotate-[-6deg] items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft dark:border-travel-bloom/70">
-                <div className="text-center text-travel-accent dark:text-travel-bloom">
-                  <p className="text-[9px] tracking-[0.25em]">DAILY</p>
-                  <p className="font-display text-base font-bold">
-                    {new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* 功能入口 */}
         <section className="px-3 pb-16 md:px-6 md:pb-20">

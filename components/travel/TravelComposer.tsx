@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Loader2, Sparkles, X } from 'lucide-react'
 import { createTravel } from '@/lib/modules/offline/travel-write'
@@ -50,6 +50,11 @@ export default function TravelComposer({
   const [companionRelation, setCompanionRelation] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+
+  // 父级稍后通过 compose=1 将 autoOpen 置为 true 时，需要同步展开表单
+  useEffect(() => {
+    if (autoOpen) setOpen(true)
+  }, [autoOpen])
 
   const addCompanion = () => {
     const name = companionName.trim()

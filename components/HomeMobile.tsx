@@ -14,6 +14,8 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { travelDetailHref } from '@/lib/routes'
+import { apiUrl } from '@/lib/api-base'
 
 interface PostMeta {
   slug: string
@@ -96,7 +98,7 @@ function MobileMoments() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/moments?page=1&pageSize=3')
+    fetch(apiUrl('/api/moments?page=1&pageSize=3'), { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
         if (!cancelled && json?.data?.data) setItems(json.data.data)
@@ -231,6 +233,20 @@ export default function HomeMobile({
           </div>
         </section>
 
+        {/* 每日一言：作为首页焦点，紧跟 hero，位于“最近旅行”上方 */}
+        <section className="px-4 pb-8">
+          <div className="m-enter m-card relative overflow-hidden p-5 text-center">
+            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(228,180,120,0.22),transparent_70%)]" />
+            <div className="relative">
+              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
+                <Quote className="h-5 w-5" />
+              </div>
+              <p className="mt-4 text-[17px] font-semibold leading-8 tracking-tight">「{quote}」</p>
+              <p className="mt-3 text-xs tracking-[0.24em] text-[var(--m-muted)]">DAILY WORDS</p>
+            </div>
+          </div>
+        </section>
+
         {/* 最近旅行：大卡片横向滑动，不是 Web 缩小版列表 */}
         <section className="px-4 pb-10">
           <div className="m-section-title">
@@ -257,7 +273,7 @@ export default function HomeMobile({
               {recent.map((post) => (
                 <Link
                   key={post.slug}
-                  href={`/travel/${post.slug}`}
+                  href={travelDetailHref(post.slug)}
                   className="m-press m-card relative h-[230px] w-[82vw] max-w-[320px] flex-shrink-0 snap-start overflow-hidden"
                 >
                   {post.cover ? (
@@ -331,20 +347,6 @@ export default function HomeMobile({
             </div>
           </section>
         )}
-
-        {/* 每日一言：更像移动卡片 */}
-        <section className="px-4 pb-10">
-          <div className="m-enter m-card relative overflow-hidden p-5 text-center">
-            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(228,180,120,0.22),transparent_70%)]" />
-            <div className="relative">
-              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
-                <Quote className="h-5 w-5" />
-              </div>
-              <p className="mt-4 text-[17px] font-semibold leading-8 tracking-tight">「{quote}」</p>
-              <p className="mt-3 text-xs tracking-[0.24em] text-[var(--m-muted)]">DAILY WORDS</p>
-            </div>
-          </div>
-        </section>
 
         {/* 功能入口：移动端扁平列表，减少层级 */}
         <section className="px-4 pb-4">

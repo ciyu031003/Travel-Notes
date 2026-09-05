@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Search, X, MapPin, Tag, Loader2, ArrowRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { travelDetailHref } from '@/lib/routes'
+import { apiUrl } from '@/lib/api-base'
 
 interface SearchResult {
   id: number
@@ -75,7 +77,7 @@ function SearchContent() {
     }
     setLoading(true)
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
+      const res = await fetch(apiUrl(`/api/search?q=${encodeURIComponent(trimmed)}`))
       if (res.ok) {
         const json = (await res.json()) as { data?: { results?: SearchResult[] } }
         const list = json?.data?.results ?? []
@@ -216,7 +218,7 @@ function SearchContent() {
               return (
                 <Link
                   key={`${post.slug}-${post.id}`}
-                  href={`/travel/${post.slug}`}
+                  href={travelDetailHref(post.slug)}
                   className="card ribbon-hover block p-5 hover:border-travel-sakura dark:hover:border-travel-accentStrong group"
                 >
                   <div className="flex items-center gap-2 mb-2">

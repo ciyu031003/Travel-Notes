@@ -61,6 +61,7 @@ try {
       ...process.env,
       MOBILE_EXPORT: '1',
       NEXT_PUBLIC_API_BASE: apiBase,
+      NEXT_PUBLIC_APP_PLATFORM: 'mobile',
       NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
       NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '1',
       NEXT_PUBLIC_APP_DOWNLOAD_URL: process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL || 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk',

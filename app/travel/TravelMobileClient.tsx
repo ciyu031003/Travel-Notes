@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -8,8 +8,10 @@ import dynamicImport from 'next/dynamic'
 import { MapPin, Calendar, ArrowRight, Plus, Image as ImageIcon, WifiOff } from 'lucide-react'
 import { formatDate, cn } from '@/lib/utils'
 import { findProvinceByLocation } from '@/lib/province-map'
-import { findCityByName } from '@/data/cities'
+import { findCityByName, type City } from '@/data/cities'
 import { apiUrl } from '@/lib/api-base'
+import { travelDetailHref } from '@/lib/routes'
+import MobileProvinceDrawer from '@/components/china-map/MobileProvinceDrawer'
 
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
 
@@ -32,6 +34,36 @@ export default function TravelMobileClient({
   offline?: boolean
 }) {
   const router = useRouter()
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string | null>(null)
+  const [selectedCity, setSelectedCity] = useState<City | null>(null)
+  const [drawerExpanded, setDrawerExpanded] = useState(false)
+  const [resetToken, setResetToken] = useState(0)
+
+  const postsByProvince = useMemo(() => {
+    const map = new Map<string, PostMeta[]>()
+    for (const post of posts) {
+      const province = post.location ? findProvinceByLocation(post.location) : null
+      if (province) {
+        if (!map.has(province.id)) map.set(province.id, [])
+        map.get(province.id)!.push(post)
+      }
+    }
+    return map
+  }, [posts])
+
+  const citiesWithPosts = useMemo(() => {
+    const map = new Map<string, PostMeta[]>()
+    for (const post of posts) {
+      const city = post.location ? findCityByName(post.location) : null
+      const province = post.location ? findProvinceByLocation(post.location) : null
+      if (city) {
+        const key = `${city.name}-${province?.id || ''}`
+        if (!map.has(key)) map.set(key, [])
+        map.get(key)!.push(post)
+      }
+    }
+    return map
+  }, [posts])
 
   const provincesVisited = useMemo(() => {
     const set = new Set<string>()
@@ -60,6 +92,16 @@ export default function TravelMobileClient({
     } catch {
       router.push('/login?redirect=' + encodeURIComponent('/travel?compose=1'))
     }
+  }
+
+  const handleProvinceSelect = (provinceId: string) => {
+    setSelectedProvinceId(provinceId)
+    setSelectedCity(null)
+    setDrawerExpanded(false)
+  }
+
+  const handleCitySelect = (city: City) => {
+    setSelectedCity(city)
   }
 
   return (
@@ -97,7 +139,13 @@ export default function TravelMobileClient({
         <section className="px-4">
           <div className="m-enter m-card overflow-hidden">
             <div className="relative h-[310px] bg-[linear-gradient(165deg,#FFF8EF,#EAF2F4)]">
-              <ChinaMap posts={posts} />
+              <ChinaMap
+                posts={posts}
+                externalPanel
+                onProvinceSelect={handleProvinceSelect}
+                onCitySelect={handleCitySelect}
+                resetToken={resetToken}
+              />
             </div>
             <div className="flex items-center justify-between border-t border-[var(--m-line)] px-4 py-3">
               <div className="flex items-center gap-2">
@@ -137,7 +185,7 @@ export default function TravelMobileClient({
                 return (
                   <Link
                     key={post.slug}
-                    href={`/travel/${post.slug}`}
+                    href={travelDetailHref(post.slug)}
                     className={cn(
                       'm-enter m-press block overflow-hidden rounded-[26px] border border-[var(--m-line)] bg-[var(--m-surface-solid)] shadow-[var(--m-shadow-sm)]',
                       index % 2 === 1 && 'rounded-[30px] border-[var(--m-line-strong)]',
@@ -187,6 +235,23 @@ export default function TravelMobileClient({
         <footer className="px-5 pb-3 pt-10 text-center text-xs text-[var(--m-faint)]">
           行迹 · 用足迹丈量中国
         </footer>
+
+        <MobileProvinceDrawer
+          postsByProvince={postsByProvince}
+          citiesWithPosts={citiesWithPosts}
+          provinceId={selectedProvinceId}
+          city={selectedCity}
+          expanded={drawerExpanded}
+          onToggleExpand={() => setDrawerExpanded((v) => !v)}
+          onClose={() => {
+            setSelectedProvinceId(null)
+            setSelectedCity(null)
+            setDrawerExpanded(false)
+            setResetToken((t) => t + 1)
+          }}
+          onCityClick={handleCitySelect}
+          onBack={() => setSelectedCity(null)}
+        />
       </div>
     </div>
   )

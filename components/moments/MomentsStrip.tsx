@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Sparkles, ArrowRight } from 'lucide-react'
+import { apiUrl } from '@/lib/api-base'
 
 interface MomentItem {
   id: number
@@ -41,7 +42,7 @@ export default function MomentsStrip() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/moments?page=1&pageSize=3')
+    fetch(apiUrl('/api/moments?page=1&pageSize=3'), { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (!cancelled && json?.data?.data) setMoments(json.data.data)

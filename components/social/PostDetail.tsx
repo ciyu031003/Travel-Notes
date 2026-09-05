@@ -12,6 +12,7 @@ import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialPostById } from '@/lib/modules/offline/social-read'
+import { travelDetailHref } from '@/lib/routes'
 
 interface PostDetailData {
   id: number
@@ -291,7 +292,7 @@ export default function PostDetail({ postId }: { postId: number }) {
         )}
 
         {post.slug && (
-          <Link href={'/travel/' + encodeURIComponent(post.slug)} className="mt-10 inline-flex items-center gap-2 text-sm text-[var(--social-accent)] transition hover:text-[var(--social-accent-strong)]">查看完整旅行记录</Link>
+          <Link href={travelDetailHref(post.slug)} className="mt-10 inline-flex items-center gap-2 text-sm text-[var(--social-accent)] transition hover:text-[var(--social-accent-strong)]">查看完整旅行记录</Link>
         )}
       </div>
 

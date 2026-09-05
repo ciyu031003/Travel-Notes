@@ -64,7 +64,11 @@ export default function TravelPage() {
     <>
       {isNativePlatform() && (
         <div className="fixed right-4 top-16 z-40">
-          <TravelComposer onCreated={load} />
+          <TravelComposer
+            onCreated={load}
+            autoOpen={autoCompose}
+            onClose={() => setAutoCompose(false)}
+          />
         </div>
       )}
       {!isNativePlatform() && autoCompose && (

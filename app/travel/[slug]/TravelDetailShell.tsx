@@ -11,6 +11,7 @@ import TravelTimeline from '@/components/travel/TravelTimeline'
 import AsyncState from '@/components/AsyncState'
 import dynamicImport from 'next/dynamic'
 import { apiUrl } from '@/lib/api-base'
+import { travelRecordHref } from '@/lib/routes'
 
 const VideoPlayer = dynamicImport(() => import('@/components/VideoPlayer'))
 
@@ -56,9 +57,9 @@ interface DetailData {
   videos: any[]
 }
 
-export default function TravelDetailShell() {
+export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   const params = useParams<{ slug: string }>()
-  const slug = decodeURIComponent(params?.slug || '')
+  const slug = slugProp ? decodeURIComponent(slugProp) : decodeURIComponent(params?.slug || '')
   const [data, setData] = useState<DetailData | null>(null)
   const [error, setError] = useState('')
 
@@ -107,7 +108,7 @@ export default function TravelDetailShell() {
 
       <div className="container-custom pt-6">
         <Link
-          href={`/travel/${slug}/record`}
+          href={travelRecordHref(slug)}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-travel-sakura border border-travel-bloom/50 text-travel-ink rounded-full text-sm font-medium hover:bg-[#EED2D8] transition-colors"
         >
           ✍️ 记录今日
