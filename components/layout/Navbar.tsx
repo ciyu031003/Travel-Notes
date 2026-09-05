@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, MapPin, CalendarDays, Menu, X, Moon, Sun, Settings, LogOut, Search, Compass, BookOpen } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 
 interface NavbarProps {
@@ -251,16 +252,18 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
         </div>
       </nav>
 
-      {/* 移动端全屏抽屉：遮罩 + 当前页高亮（点击遮罩或条目关闭） */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="导航菜单">
-          {/* 遮罩从导航栏以下开始，条形栏保持可见可关 */}
-          <div
-            className="absolute inset-x-0 bottom-0 top-16 bg-black/45 backdrop-blur-[2px] motion-safe:animate-[fadeIn_.18s_ease-out]"
-            onClick={() => setIsMenuOpen(false)}
-            aria-hidden="true"
-          />
-          <div className="absolute inset-x-0 top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-b-2xl border-t border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-bg shadow-[0_24px_48px_rgba(0,0,0,0.25)] motion-safe:animate-[menuDrop_.22s_cubic-bezier(0.22,1,0.36,1)]">
+      {/* 移动端全屏抽屉：遮罩 + 当前页高亮（点击遮罩或条目关闭）。
+          必须 portal 到 body：header 的 backdrop-blur 会使 fixed 后代相对 header 定位，scrim 会塌成 0 高。 */}
+      {isMenuOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="导航菜单">
+            {/* 遮罩从导航栏以下开始，条形栏保持可见可关 */}
+            <div
+              className="absolute inset-x-0 bottom-0 top-16 bg-black/45 backdrop-blur-[2px] motion-safe:animate-[fadeIn_.18s_ease-out]"
+              onClick={() => setIsMenuOpen(false)}
+              aria-hidden="true"
+            />
+            <div className="absolute inset-x-0 top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-b-2xl border-t border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-bg shadow-[0_24px_48px_rgba(0,0,0,0.25)] motion-safe:animate-[menuDrop_.22s_cubic-bezier(0.22,1,0.36,1)]">
             <div className="container-custom py-4 space-y-1">
               {navItems.map((item) => (
                 <Link
@@ -315,8 +318,9 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               )}
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
     </header>
   )
 }
