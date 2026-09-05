@@ -39,9 +39,6 @@ export default function TimelinePage() {
   if (error) {
     return <AsyncState variant="error" message={error} title="时间线加载失败" />
   }
-  if (loading) {
-    return <AsyncState variant="loading" message="正在整理你的旅行时间线…" />
-  }
 
   const allEntries = years.flatMap((y) => y.entries)
   const travelCount = allEntries.filter((e) => e.type === 'travel').length
@@ -60,11 +57,17 @@ export default function TimelinePage() {
             <span className="h-px w-10 bg-travel-bloom/60" />
           </div>
           <p className="mt-3 text-xs tracking-[0.28em] text-travel-accent/80 dark:text-travel-bloom/80">
-            {travelCount} 段旅程 · {memoryCount} 段回忆
+            {loading ? (
+              <span className="inline-block h-3 w-28 rounded bg-travel-sakura/40 motion-safe:animate-pulse dark:bg-white/10" />
+            ) : (
+              <>{travelCount} 段旅程 · {memoryCount} 段回忆</>
+            )}
           </p>
         </header>
 
-        {years.length === 0 ? (
+        {loading ? (
+          <TimelineSkeleton />
+        ) : years.length === 0 ? (
           <div className="relative mx-auto max-w-xl rounded-2xl border border-travel-line/70 bg-white/90 px-6 py-14 text-center shadow-[0_18px_40px_-28px_rgba(90,102,112,0.4)] dark:bg-shell-surface/90">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-travel-sakura/60 text-travel-accent">
               <Sparkles className="h-7 w-7" />
@@ -107,6 +110,37 @@ export default function TimelinePage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function TimelineSkeleton() {
+  // 分块骨架：与最终布局同构（年份块 + 条目卡），motion-safe 下才做脉冲动画
+  return (
+    <div className="relative mx-auto max-w-3xl" aria-hidden="true">
+      {[0, 1].map((s) => (
+        <section key={s} className="relative mb-12 pl-8 md:pl-12">
+          <div className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-travel-bloom/40 via-travel-sakura/30 to-transparent" />
+          <div className="relative mb-6 flex items-center gap-3">
+            <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-travel-accentSoft/60 ring-4 ring-white dark:ring-[#12161C] md:-left-12" />
+            <span className="h-8 w-20 rounded-lg bg-travel-sakura/50 motion-safe:animate-pulse dark:bg-white/10" />
+            <span className="h-px flex-1 bg-gradient-to-r from-travel-sakura/50 to-transparent" />
+          </div>
+          <div className="space-y-5">
+            {(s === 0 ? [0, 1, 2] : [0, 1]).map((i) => (
+              <div key={i} className="rounded-2xl border border-travel-line/70 bg-white/90 p-5 dark:bg-shell-surface/90">
+                <div className="flex items-center gap-2">
+                  <span className="h-5 w-14 rounded-full bg-travel-sakura/40 motion-safe:animate-pulse dark:bg-white/10" />
+                  <span className="h-3.5 w-20 rounded bg-travel-mist/60 motion-safe:animate-pulse dark:bg-white/5" />
+                </div>
+                <div className="mt-3 h-4 w-2/3 rounded bg-travel-sakura/40 motion-safe:animate-pulse dark:bg-white/10" />
+                <div className="mt-2 h-3 w-full rounded bg-travel-mist/50 motion-safe:animate-pulse dark:bg-white/5" />
+                <div className="mt-1.5 h-3 w-4/5 rounded bg-travel-mist/50 motion-safe:animate-pulse dark:bg-white/5" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   )
 }

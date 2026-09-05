@@ -160,9 +160,9 @@ export default function SyncCenter() {
                   role="switch"
                   aria-checked={lockEnabled}
                   onClick={() => { const next = !lockEnabled; setLockEnabled(next); setPrivacyLockEnabled(next) }}
-                  className={`relative h-7 w-12 shrink-0 rounded-full transition ${lockEnabled ? 'bg-[var(--social-accent)]' : 'bg-[var(--social-line-strong)]'}`}
+                  className={`relative h-9 w-14 shrink-0 rounded-full transition ${lockEnabled ? 'bg-[var(--social-accent)]' : 'bg-[var(--social-line-strong)]'}`}
                 >
-                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${lockEnabled ? 'left-6' : 'left-1'}`} />
+                  <span className={`absolute top-2 h-5 w-5 rounded-full bg-white transition-all ${lockEnabled ? 'left-8' : 'left-2'}`} />
                 </button>
               </div>
             </section>

@@ -216,12 +216,12 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 onClick={() => setShowSpace(true)}
                 title="旅行空间"
                 aria-label="旅行空间"
-                className="hidden rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"
+                className="hidden h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"
               >
                 <Users className="h-4 w-4" />
               </button>
             )}
-            <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="hidden rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><RefreshCw className="h-4 w-4" /></Link>
+            <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="hidden h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><RefreshCw className="h-4 w-4" /></Link>
             <Link href="/me/notifications" aria-label="通知" className="relative rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><span className="text-base">✦</span>{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
             <Link href="/" className="hidden items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><Home className="h-4 w-4" />返回首页</Link>
           </div>
@@ -234,13 +234,13 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               <div className="relative">
                 <SocialAvatar name={displayName} avatarUrl={profile.avatarUrl} size={92} className="text-[26px]" />
                 <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="上传头像"
-                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)] ring-2 ring-[var(--social-bg)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-60">
+                  className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)] ring-2 ring-[var(--social-bg)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-60">
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
               </div>
               <button type="button" onClick={() => { setNickname(profile.nickname || ''); setBio(profile.bio || ''); setError(''); setShowEdit(true) }} aria-label="编辑资料"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]">
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3.5 py-2.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]">
                 <Pencil className="h-3.5 w-3.5" />编辑资料
               </button>
             </div>
@@ -327,14 +327,13 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                   <div className="flex h-full min-h-[120px] flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-[var(--social-surface2)] to-[var(--social-surface)] p-4">
                     <m.icon className="h-6 w-6 text-[var(--social-accent)]" />
                     <div className="text-2xl font-semibold tracking-tight tabular-nums text-[var(--social-text)]">{m.value}</div>
-                    <div className="text-xs text-[var(--social-muted)]">{m.label} · {m.suffix}</div>
+                    <div className="text-xs text-[var(--social-muted)]">{m.suffix} · {m.label}</div>
                   </div>
                 )}
                 {m.photo && (
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <div className="text-2xl font-semibold tracking-tight tabular-nums text-white">{m.value}</div>
-                    <div className="mt-0.5 text-xs text-white/80">{m.label}</div>
-                    <div className="text-xs text-white/60">{m.suffix}</div>
+                    <div className="mt-0.5 text-xs text-white/80">{m.suffix} · {m.label}</div>
                   </div>
                 )}
               </Link>

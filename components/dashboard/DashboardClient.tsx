@@ -90,7 +90,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               <MapPin className="h-5 w-5 text-travel-accent" />
               我的旅行足迹
             </h2>
-            <Link href="/travel" className="inline-flex items-center gap-1 text-xs text-travel-accent hover:text-travel-accentStrong">
+            <Link href="/travel" className="inline-flex items-center gap-1 py-2 pl-2 -my-2 text-xs text-travel-accent hover:text-travel-accentStrong">
               去旅行记录 <ArrowRight className="h-3 w-3" />
             </Link>
           </div>

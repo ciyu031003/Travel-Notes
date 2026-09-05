@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Image from 'next/image'
-import { Loader2, MessageCircle, Sparkles, RotateCcw } from 'lucide-react'
+import { Loader2, MessageCircle, Sparkles, RotateCcw, ArrowLeft, BookOpen, Map } from 'lucide-react'
 import { GalaxyAlbumEngine } from './galaxyEngine'
 import type { CityData } from './particlePhoto'
 import SpaceAlbumHUD from './SpaceAlbumHUD'
@@ -97,6 +97,31 @@ export default function GalaxyAlbumScene({
   if (cities.length === 0) {
     return (
       <div className="fixed inset-0 z-[90] bg-album-bg0 flex flex-col items-center justify-center gap-4">
+        {/* 空态也保留顶栏（返回首页 + 标题 + 模式切换），与像素/画册模式同构，避免被困在空银河 */}
+        <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between gap-3 px-3 sm:px-5 py-3 space-glass rounded-none border-x-0 border-t-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <a
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              返回
+            </a>
+            <div className="flex items-center gap-2 min-w-0">
+              <BookOpen className="w-4 h-4 text-album-accent shrink-0" />
+              <h1 className="text-album-text1 text-sm font-semibold tracking-widest truncate">银河相册</h1>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onTogglePixel}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
+            title="一键切换到复古像素风"
+          >
+            <Map className="w-3.5 h-3.5" />
+            像素风
+          </button>
+        </header>
         <Sparkles className="w-10 h-10 text-album-accent" />
         <p className="text-album-text2 text-sm tracking-widest">银河中还没有旅行唱片</p>
         <p className="text-album-text2 text-xs">等待新的旅行记忆被点亮...</p>

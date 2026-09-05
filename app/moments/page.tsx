@@ -28,7 +28,7 @@ export default function MomentsPage() {
               href="/admin/moments"
               label="管理碎碎念"
               icon={<Settings2 className="h-3.5 w-3.5" />}
-              className="rounded-full px-3 py-1.5 text-sm text-travel-sand transition-colors hover:bg-travel-sakura/50 hover:text-travel-accent dark:text-shell-muted dark:hover:bg-travel-accent/15 dark:hover:text-travel-accentSoft"
+              className="rounded-full px-3 py-2.5 text-sm text-travel-sand transition-colors hover:bg-travel-sakura/50 hover:text-travel-accent dark:text-shell-muted dark:hover:bg-travel-accent/15 dark:hover:text-travel-accentSoft"
             />
           </div>
 

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { BookOpen, Camera, Loader2, LayoutGrid, Orbit } from 'lucide-react'
+import Link from 'next/link'
+import { BookOpen, Camera, Loader2, LayoutGrid, Orbit, ArrowLeft } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
 import BookReader from './BookReader'
 import Sketchbook from '../sketchbook/Sketchbook'
@@ -108,11 +109,21 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
 
   return (
     <div className="min-h-screen bg-travel-cream">
-      {/* 顶栏 */}
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-travel-dim/40 bg-travel-cream/90 px-4 backdrop-blur-md md:px-8">
-        <div className="flex items-center gap-2 font-semibold text-travel-ink">
-          <BookOpen className="h-4 w-4 text-travel-bloom" />
-          <span className="text-sm sm:text-base">我的旅行画册</span>
+      {/* 顶栏：与像素/银河模式同构（返回首页 + 标题 + 模式切换） */}
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-travel-dim/40 bg-travel-cream/90 px-3 backdrop-blur-md md:px-8">
+        <div className="flex min-w-0 items-center gap-2">
+          <Link
+            href="/"
+            aria-label="返回首页"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">返回首页</span>
+          </Link>
+          <div className="flex items-center gap-2 font-semibold text-travel-ink">
+            <BookOpen className="h-4 w-4 text-travel-bloom" />
+            <span className="truncate text-sm sm:text-base">我的旅行画册</span>
+          </div>
         </div>
         <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/60 p-0.5">
           <button type="button" className="inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-sm" title="当前视图（旅行画册）">

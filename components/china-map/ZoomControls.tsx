@@ -25,7 +25,7 @@ export default function ZoomControls({
         <button
           onClick={(e) => { e.stopPropagation(); onZoomIn() }}
           onMouseDown={(e) => e.stopPropagation()}
-          className="w-8 h-8 md:w-9 md:h-9 bg-travel-cream/95 border border-travel-dim rounded-lg flex items-center justify-center hover:bg-travel-sakura/30 transition-colors shadow-md"
+          className="w-11 h-11 md:w-9 md:h-9 bg-travel-cream/95 border border-travel-dim rounded-lg flex items-center justify-center hover:bg-travel-sakura/30 transition-colors shadow-md"
           title="放大"
           aria-label="放大"
         >
@@ -34,7 +34,7 @@ export default function ZoomControls({
         <button
           onClick={(e) => { e.stopPropagation(); onZoomOut() }}
           onMouseDown={(e) => e.stopPropagation()}
-          className="w-8 h-8 md:w-9 md:h-9 bg-travel-cream/95 border border-travel-dim rounded-lg flex items-center justify-center hover:bg-travel-sakura/30 transition-colors shadow-md"
+          className="w-11 h-11 md:w-9 md:h-9 bg-travel-cream/95 border border-travel-dim rounded-lg flex items-center justify-center hover:bg-travel-sakura/30 transition-colors shadow-md"
           title="缩小"
           aria-label="缩小"
         >
@@ -54,7 +54,7 @@ export default function ZoomControls({
         <button
           onClick={(e) => { e.stopPropagation(); onLocate() }}
           onMouseDown={(e) => e.stopPropagation()}
-          className={`w-8 h-8 md:w-9 md:h-9 bg-travel-cream/95 border rounded-lg flex items-center justify-center transition-colors shadow-md ${
+          className={`w-11 h-11 md:w-9 md:h-9 bg-travel-cream/95 border rounded-lg flex items-center justify-center transition-colors shadow-md ${
             located
               ? 'border-travel-bloom bg-travel-sakura/40 text-travel-accentStrong'
               : 'border-travel-dim hover:bg-travel-sakura/30 text-travel-ink'

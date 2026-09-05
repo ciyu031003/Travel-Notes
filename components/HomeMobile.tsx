@@ -336,7 +336,7 @@ export default function HomeMobile({
               <MapPin className="h-[18px] w-[18px] text-[var(--m-accent)]" />
               最近旅行
             </span>
-            <Link href="/travel" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--m-accent-strong)]">
+            <Link href="/travel" className="inline-flex items-center gap-1 py-2 pl-2 -my-2 text-xs font-medium text-[var(--m-accent-strong)]">
               查看全部
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
