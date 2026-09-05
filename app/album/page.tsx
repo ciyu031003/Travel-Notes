@@ -687,7 +687,8 @@ export default function AlbumPage() {
                   />
                 </div>
 
-                <div className="lg:h-[calc(100vh-230px)] min-h-[420px]">
+                {/* 移动端也用显式高度（min-h 不触发 .drift-wall 的 height:100%，曾致整面照片墙零高不可见） */}
+                <div className="h-[440px] lg:h-[calc(100vh-230px)]">
                   <DriftWall
                     items={selectedCity.images.map((src, i) => ({
                       image: src,
