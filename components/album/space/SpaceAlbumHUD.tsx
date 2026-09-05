@@ -73,12 +73,15 @@ export default function SpaceAlbumHUD({
         </div>
 
         <div className="flex items-center gap-2">
-          <ManageEntry
-            href="/admin/albums"
-            label="管理相册"
-            icon={<Settings2 className="w-3.5 h-3.5" />}
-            className="px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
-          />
+          {/* 管理入口低频，移动端收起（与像素模式「管理在更多菜单」一致） */}
+          <div className="hidden sm:block">
+            <ManageEntry
+              href="/admin/albums"
+              label="管理相册"
+              icon={<Settings2 className="w-3.5 h-3.5" />}
+              className="px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
+            />
+          </div>
           <button
             type="button"
             onClick={onTogglePixel}
