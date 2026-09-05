@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
-import { isPublicRequest } from '@/lib/public-paths'
+import { isPublicRequest, isStaticAssetPath } from '@/lib/public-paths'
 
 function resolveJwtSecret(): string {
   const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET
@@ -171,6 +171,11 @@ function rejectCrossOrigin(request: NextRequest): NextResponse | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // 静态资源早放行（matcher 只排除 _next；带点动态段不再整条绕过登录门禁）
+  if (isStaticAssetPath(pathname)) {
+    return finalizeResponse(NextResponse.next(), request)
+  }
+
   // CORS 预检（移动端本地壳跨域访问服务器 API）
   if (request.method === 'OPTIONS') {
     const res = new NextResponse(null, { status: 204 })
@@ -212,5 +217,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)', '/uploads/:path*'],
+  // 注意：不得用「路径含点即排除」(.*) —— 带点动态段会整条绕过登录门禁；
+  // 静态资源豁免收敛到 isStaticAssetPath()（lib/public-paths.ts，测试共用）。
+  matcher: ['/((?!_next/static|_next/image).*)', '/uploads/:path*'],
 }

@@ -65,6 +65,24 @@ export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p.endsWith('/') ? p : p + '/'))
 }
 
+/**
+ * 静态资源路径判定（middleware matcher 的代码内版本）。
+ *
+ * 背景：matcher 曾用「路径含点即排除」（`.*\..*`），任何带点动态段
+ * （如 /travel/x.y、/api/social/posts/1.json）都会整条绕过中间件登录门禁。
+ * 现改为只豁免已知静态扩展名，且 /api/ 一律不豁免——API 数据安全不受影响；
+ * 页面路径即使被 Next 以带点 slug 命中，也只是客户端壳，数据仍由 API 层门禁。
+ */
+const STATIC_ASSET_RE = new RegExp(
+  '\\.(?:png|jpg|jpeg|gif|svg|webp|avif|ico|css|js|mjs|map|txt|xml|json|webmanifest|woff2?|ttf|otf|eot|mp4|webm|mp3|wav|wasm)$',
+  'i',
+)
+
+export function isStaticAssetPath(pathname: string): boolean {
+  if (pathname.startsWith('/api/')) return false
+  return STATIC_ASSET_RE.test(pathname)
+}
+
 function isPublicReadPath(pathname: string): boolean {
   return PUBLIC_READ_PATHS.some((p) => pathname === p || pathname.startsWith(p.endsWith('/') ? p : p + '/'))
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { isPublicPath, isPublicRequest, PUBLIC_PATHS, PUBLIC_READ_PATHS } from '@/lib/public-paths'
+import { isPublicPath, isPublicRequest, isStaticAssetPath, PUBLIC_PATHS, PUBLIC_READ_PATHS } from '@/lib/public-paths'
 
 describe('middleware 公开白名单（段边界匹配）', () => {
   it('精确路径命中', () => {
@@ -84,5 +84,34 @@ describe('isPublicRequest（公开内容读路径 · 游客可浏览公开内容
 
   it('白名单无重复项', () => {
     expect(new Set(PUBLIC_READ_PATHS).size).toBe(PUBLIC_READ_PATHS.length)
+  })
+})
+
+describe('isStaticAssetPath（含点动态段不再绕过登录门禁）', () => {
+  it('已知静态扩展名豁免', () => {
+    expect(isStaticAssetPath('/icon.png')).toBe(true)
+    expect(isStaticAssetPath('/fonts/inter.woff2')).toBe(true)
+    expect(isStaticAssetPath('/sw.js')).toBe(true)
+    expect(isStaticAssetPath('/manifest.webmanifest')).toBe(true)
+    expect(isStaticAssetPath('/robots.txt')).toBe(true)
+    expect(isStaticAssetPath('/videos/clover.mp4')).toBe(true)
+    expect(isStaticAssetPath('/favicon.ico')).toBe(true)
+  })
+
+  it('带点动态段不再豁免（修复的绕过向量）', () => {
+    expect(isStaticAssetPath('/travel/abc.def')).toBe(false)
+    expect(isStaticAssetPath('/me/settings')).toBe(false)
+    expect(isStaticAssetPath('/admin/social')).toBe(false)
+  })
+
+  it('/api/ 一律不豁免（数据安全优先）', () => {
+    expect(isStaticAssetPath('/api/social/posts/1.json')).toBe(false)
+    expect(isStaticAssetPath('/api/travels/x.js')).toBe(false)
+    expect(isStaticAssetPath('/api/uploads/photo.jpg')).toBe(false)
+  })
+
+  it('大小写不敏感', () => {
+    expect(isStaticAssetPath('/icon.PNG')).toBe(true)
+    expect(isStaticAssetPath('/font.WOFF2')).toBe(true)
   })
 })
