@@ -61,8 +61,9 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
-      - uploads-data:/app/public/uploads
+      # 媒体存储已迁移至 COS 存储桶（cosfs 挂载于宿主机 /data）。
+      # 迁移日 2026-09-06：原 uploads-data 卷保留未删作为回滚备份（/var/lib/docker/volumes/travel-notes_uploads-data）。
+      - /data/travel-notes/uploads:/app/public/uploads
 
 volumes:
   mysql-data:
-  uploads-data:
