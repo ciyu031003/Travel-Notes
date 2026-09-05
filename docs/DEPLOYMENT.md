@@ -11,10 +11,10 @@
 |---|---|
 | 应用容器 `travel-notes-app` | Next.js 15，监听容器内 `3000` |
 | 数据库容器 `travel-notes-db` | MySQL 8.4（utf8mb4），named volume `mysql-data` |
-| 上传文件 | named volume `uploads-data` → `/app/public/uploads` |
+| 上传文件 | **COS 存储桶**（cosfs 挂载宿主机 `/data`）→ bind mount `/data/travel-notes/uploads` → `/app/public/uploads`（2026-09-06 迁移，原 `uploads-data` 卷保留作回滚备份，未删除） |
 | Nginx | 宿主机反代 `80/443` → `127.0.0.1:3000`；`8443` 端口 HTTPS 对外 |
 
-数据持久化在两个命名卷：`mysql-data`（数据库）与 `uploads-data`（上传文件），**删除容器不丢数据，`docker compose down -v` 才会清空**。
+数据持久化：数据库在 named volume `mysql-data`（**不可迁移到对象存储挂载**，COSFS 无块设备语义）；媒体在 COS 桶 `/data/travel-notes/uploads`。**`docker compose down -v` 不会清空媒体数据**（bind mount），但会清空数据库卷——仍然禁止执行。
 
 ---
 
@@ -146,8 +146,8 @@ crontab -e
 
 ### 6.2 媒体备份
 
-- 本地：`uploads-data` 卷（相册/视频）
-- 对象存储：桶自带版本控制/生命周期
+- **当前：媒体已在 COS 存储桶**（cosfs 挂载 `/data/travel-notes/uploads`）——桶本身即云端持久化，按桶的版本控制/生命周期策略保护；回滚备份为迁移日快照 `/home/ubuntu/backups/uploads-data-20260906-014607.tar.gz`（216M，对应迁移前 named volume 全量）。
+- 旧 `uploads-data` 卷仍在宿主机 `/var/lib/docker/volumes/travel-notes_uploads-data/`（未删除）。**确认 COS 运行稳定一段时间后可 `docker volume rm travel-notes_uploads-data` 回收**，删除前可再打一次 tar。
 
 ```bash
 rclone sync public/uploads remote:trip-media --checksum   # 异地增量同步（示例）
