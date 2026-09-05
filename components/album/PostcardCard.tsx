@@ -90,7 +90,13 @@ export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOp
             // eslint-disable-next-line @next/next/no-img-element
             <img src={cover} alt={book.title} loading="lazy" />
           ) : (
-            <span className="pcard-empty"><Camera className="h-8 w-8" /></span>
+            /* 空封面：布纹纸底 + 书名首字 + 细线框，替代裸相机占位 */
+            <span className="pcard-empty" aria-hidden="true">
+              <span className="pcard-empty-frame">
+                <span className="pcard-empty-glyph">{(book.title || '行').trim().charAt(0)}</span>
+                <span className="pcard-empty-sub">待补照片</span>
+              </span>
+            </span>
           )}
         </span>
         <span className="pcard-body">

@@ -49,20 +49,20 @@ export default function SpaceAlbumHUD({
 
   return (
     <>
-      {/* 顶部玻璃栏 */}
+      {/* 顶部玻璃栏：结构与画册/像素模式同构（返回首页 + 标题 + 模式切换/管理） */}
       <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between gap-3 px-3 sm:px-5 py-3 space-glass rounded-none border-x-0 border-t-0">
         <div className="flex items-center gap-3 min-w-0">
           <a
-            href="/login"
+            href="/"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             返回
           </a>
-          <div className="hidden sm:flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             <BookOpen className="w-4 h-4 text-album-accent shrink-0" />
             <h1 className="text-album-text1 text-sm font-semibold tracking-widest truncate">
-              旅行相册 · 银河存档
+              银河相册
             </h1>
           </div>
         </div>

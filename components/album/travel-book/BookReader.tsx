@@ -207,8 +207,13 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
     return () => window.removeEventListener('resize', onR)
   }, [])
   const isDesktop = vp.w >= 640
-  const pageW = Math.round(isDesktop ? Math.min(440, (vp.w - 190) / 2) : Math.min(vp.w * 0.92, 460))
-  const pageH = Math.round(Math.min(pageW * 1.25, vp.h - 200))
+  // 移动单页按高度驱动：书页占满视口剩余空间（上下只留顶栏/页脚），横向不足再收宽
+  const pageH = Math.round(isDesktop ? Math.min(760, vp.h - 210) : Math.min(vp.h - 176, 780))
+  const pageW = Math.round(
+    isDesktop
+      ? Math.min(440, (vp.w - 190) / 2, pageH * 0.78)
+      : Math.min(vp.w * 0.92, 460, pageH * 0.72)
+  )
 
   const total = pages.length
   const canNext = pageIndex < total - 1

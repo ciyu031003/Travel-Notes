@@ -250,7 +250,11 @@ export default function AlbumPage() {
 
   // 旅行画册 2.0（Phase 2）：默认「旅行画册」模式，以 Travel 数据驱动，无需相册解锁
   if (viewMode === 'book') {
-    return <TravelBook onModeChange={changeMode} />
+    return (
+      <div key="mode-book" className="motion-safe:animate-[fadeIn_.2s_ease-out]">
+        <TravelBook onModeChange={changeMode} />
+      </div>
+    )
   }
 
   if (!isUnlocked) {
@@ -386,7 +390,7 @@ export default function AlbumPage() {
   // 银河模式：360° 全景唱片空间（留言页作为覆盖层叠在上方，返回无需重建场景）
   if (viewMode === 'space') {
     return (
-      <>
+      <div key="mode-space" className="motion-safe:animate-[fadeIn_.2s_ease-out]">
         <GalaxyAlbumScene
           cities={cities}
           onTogglePixel={toggleViewMode}
@@ -407,12 +411,12 @@ export default function AlbumPage() {
             }}
           />
         )}
-      </>
+      </div>
     )
   }
 
   return (
-    <div className="min-h-screen album-pixel-root bg-album-bg1 relative overflow-hidden">
+    <div className="min-h-screen album-pixel-root bg-album-bg1 relative overflow-hidden motion-safe:animate-[fadeIn_.2s_ease-out]">
       {/* 像素木屋桌面背景 */}
       <PixelDeskBackground />
 

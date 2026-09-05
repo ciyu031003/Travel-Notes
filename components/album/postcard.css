@@ -73,6 +73,38 @@
   justify-content: center;
   color: #d9a3b4;
 }
+/* 空封面：布纹纸底 + 书名首字大字 + 双细线框（替代裸相机占位） */
+.pcard-empty {
+  background:
+    repeating-linear-gradient(45deg, rgba(168, 95, 58, 0.04) 0 2px, transparent 2px 6px),
+    linear-gradient(160deg, #f8efe6, #f3e4d8);
+}
+.pcard-empty-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 72%;
+  padding: 14px 8px;
+  border: 1px solid rgba(168, 95, 58, 0.4);
+  outline: 1px solid rgba(168, 95, 58, 0.18);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.pcard-empty-glyph {
+  font-family: var(--font-display, serif);
+  font-size: clamp(30px, 9vw, 44px);
+  font-weight: 700;
+  line-height: 1;
+  color: #a85f3a;
+  opacity: 0.85;
+}
+.pcard-empty-sub {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: rgba(168, 95, 58, 0.55);
+}
 
 .pcard-body { display: block; padding: 11px 14px 13px; }
 .pcard-title {

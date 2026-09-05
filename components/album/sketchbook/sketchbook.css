@@ -551,12 +551,15 @@
 
 /* ---- 响应式 ---- */
 @media (max-width: 640px) {
-  .sk-stage { padding: 8px 8px 0; gap: 4px; }
+  /* 竖屏下横开本（约 1.42:1）高度有限：书本靠顶对齐、图注紧跟其后、工具条仍锚底，
+     消除"书悬浮在大片空白中间"的松散感 */
+  .sk-stage { flex: 0 0 auto; align-items: flex-start; padding: 10px 8px 0; gap: 4px; }
+  .sk-captionbar { flex: 1 0 auto; justify-content: flex-start; padding-top: 10px; }
   .sk-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 70; padding: 10px 6px; }
   .sk-arrow.left { left: 2px; }
   .sk-arrow.right { right: 2px; }
   .sk-arrow svg { width: 20px; height: 20px; }
-  .sk-3d { width: 96vw; }
+  .sk-3d { width: 98vw; }
   .sk-hint { font-size: 9.5px; letter-spacing: 0.1em; padding: 0 16px; text-align: center; }
   .sk-toolbar { padding: 8px 12px 12px; }
 }
