@@ -8,6 +8,7 @@ import {
   Menu, X, Home, CalendarDays, Sparkles, MapPin, Images, Users, ShieldCheck,
   Settings, LogOut, FileText, Heart, ExternalLink, Loader2, MessageCircle, Compass,
 } from 'lucide-react'
+import BrandLogo from '@/components/brand/BrandLogo'
 
 export interface AdminNavItem {
   href: string
@@ -140,9 +141,7 @@ export default function AdminShell({
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-travel-line/40 bg-white/75 dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:flex">
         {/* 品牌 */}
         <div className="flex h-16 items-center gap-3 border-b border-travel-line/50 dark:border-white/5 px-5">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${accent} shadow-md shadow-travel-accent/20`}>
-            <Compass className="h-4.5 w-4.5 text-white" />
-          </div>
+          <BrandLogo size={36} />
           <div className="leading-tight">
             <p className="text-sm font-bold text-travel-inkStrong dark:text-white">行迹</p>
             <p className="text-xs text-travel-ink/50 dark:text-gray-500">旅行记忆空间</p>

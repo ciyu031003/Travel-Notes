@@ -12,6 +12,8 @@ import {
   Image as ImageIcon,
   MessageCircle,
   Sparkles,
+  BarChart3,
+  BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { travelDetailHref } from '@/lib/routes'
@@ -41,6 +43,17 @@ interface MomentItem {
   content: string
   tags: string[] | null
   createdAt: string
+}
+
+/** 画册摘要（/api/travel-book 摘要口径，不含章节明细） */
+interface BookSummaryMeta {
+  bookKey: string
+  title: string
+  location: string | null
+  startDate: string | null
+  coverThumb: string | null
+  dayCount: number
+  photoCount: number
 }
 
 const DAILY_QUOTES = [
@@ -90,6 +103,71 @@ function timeAgo(value: string): string {
   if (days < 30) return days + ' 天前'
   const d = new Date(value)
   return d.toLocaleDateString('zh-CN')
+}
+
+/** 首页画册横滑：摘要接口取前 6 本，点开进 /album 阅读（M3-1：给最重要的内容一个首页入口） */
+function MobileBooks() {
+  const [books, setBooks] = useState<BookSummaryMeta[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(apiUrl('/api/travel-book'), { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (!cancelled && Array.isArray(json?.books)) setBooks(json.books.slice(0, 6))
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (loading || books.length === 0) return null
+
+  return (
+    <section className="px-4 pb-10">
+      <div className="m-section-title">
+        <span className="flex items-center gap-2">
+          <BookOpen className="h-[18px] w-[18px] text-[var(--m-accent)]" />
+          旅行画册
+        </span>
+        <Link href="/album" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--m-accent-strong)]">
+          全部画册
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {books.map((book) => (
+          <Link
+            key={book.bookKey}
+            href="/album"
+            className="m-press m-card w-[46vw] max-w-[190px] flex-shrink-0 snap-start overflow-hidden"
+          >
+            <div className="relative aspect-[4/3] w-full">
+              {book.coverThumb ? (
+                <Image src={book.coverThumb} alt={book.title} fill sizes="46vw" className="object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,var(--m-bg-soft),var(--m-surface-2))]">
+                  <BookOpen className="h-8 w-8 text-[var(--m-faint)]" />
+                </div>
+              )}
+            </div>
+            <div className="p-3">
+              <p className="line-clamp-1 text-[14px] font-semibold text-[var(--m-text)]">{book.title}</p>
+              <p className="mt-0.5 text-[11px] text-[var(--m-muted)]">
+                {book.dayCount} 章 · {book.photoCount} 图
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 function MobileMoments() {
@@ -215,20 +293,21 @@ export default function HomeMobile({
             </div>
 
             <div className="m-card mt-5 grid grid-cols-2 gap-x-4 gap-y-3 p-4">
-              <div>
+              {/* 统计卡可点击：省份/旅程 → 旅行地图（M3-2 动线） */}
+              <Link href="/travel" className="m-press rounded-lg">
                 <div className="flex items-end gap-1.5">
                   <span className="text-3xl font-bold tracking-tight text-[var(--m-accent-strong)]">{provincesVisitedCount}</span>
                   <span className="pb-1 text-xs text-[var(--m-muted)]">个省份</span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--m-muted)]">已点亮足迹</p>
-              </div>
-              <div>
+              </Link>
+              <Link href="/travel" className="m-press rounded-lg">
                 <div className="flex items-end gap-1.5">
                   <span className="text-3xl font-bold tracking-tight text-[var(--m-accent-strong)]">{travelPosts.length}</span>
                   <span className="pb-1 text-xs text-[var(--m-muted)]">篇旅行</span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--m-muted)]">收藏沿途记忆</p>
-              </div>
+              </Link>
             </div>
           </div>
         </section>
@@ -246,6 +325,9 @@ export default function HomeMobile({
             </div>
           </div>
         </section>
+
+        {/* 旅行画册：横滑入口（最近旅行之前） */}
+        <MobileBooks />
 
         {/* 最近旅行：大卡片横向滑动，不是 Web 缩小版列表 */}
         <section className="px-4 pb-10">
@@ -374,6 +456,16 @@ export default function HomeMobile({
               <span className="min-w-0 flex-1">
                 <span className="block text-[15px] font-semibold">碎碎念</span>
                 <span className="mt-0.5 block text-xs text-[var(--m-muted)]">写下此刻想说的话</span>
+              </span>
+              <ArrowRight className="h-5 w-5 text-[var(--m-faint)]" />
+            </Link>
+            <Link href="/dashboard" className="m-list-item m-press m-card flex items-center gap-4 p-4">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EAF0E9] text-[#6E9070]">
+                <BarChart3 className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold">数据看板</span>
+                <span className="mt-0.5 block text-xs text-[var(--m-muted)]">足迹与照片的全部沉淀</span>
               </span>
               <ArrowRight className="h-5 w-5 text-[var(--m-faint)]" />
             </Link>

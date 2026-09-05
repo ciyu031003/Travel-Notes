@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Home, MapPin, CalendarDays, Menu, X, Moon, Sun, Settings, LogOut, Search, Compass, BookOpen } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import BrandLogo from '@/components/brand/BrandLogo'
 import { cn } from '@/lib/utils'
 
 interface NavbarProps {
@@ -117,9 +118,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             useDarkText ? '!text-white' : 'text-travel-inkStrong dark:text-shell-text'
           )}
         >
-          <span className="w-8 h-8 bg-gradient-to-br from-travel-accent to-travel-bloom rounded-xl flex items-center justify-center shadow-sm">
-            <Compass className="w-5 h-5 text-white" />
-          </span>
+          <BrandLogo size={32} />
           <span>行迹</span>
         </Link>
 

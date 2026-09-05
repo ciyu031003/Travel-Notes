@@ -20,7 +20,7 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#FAF6EE" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        {/* favicon 由 app/icon.png / app/apple-icon.png 文件约定自动注入（源：public/brand/logo.png） */}
         <script src="/register-sw.js" defer />
       </head>
       <body className="min-h-screen flex flex-col">

@@ -3,8 +3,9 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Lock, Eye, EyeOff, ArrowRight, X, Heart, MapPin } from 'lucide-react'
+import { Lock, Eye, EyeOff, ArrowRight, X, Heart } from 'lucide-react'
 import LoginDoor from '@/components/login/LoginDoor'
+import BrandLogo from '@/components/brand/BrandLogo'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 
@@ -163,9 +164,7 @@ function LoginPageContent() {
             <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-shell-line dark:bg-shell-surface/90 sm:p-7 md:p-9">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-travel-accentSoft shadow-sm">
-                    <MapPin className="h-4 w-4 text-white" />
-                  </span>
+                  <BrandLogo size={36} rounded="rounded-lg" />
                   <span className="font-bold text-[#3D4852] dark:text-shell-text">行迹</span>
                 </div>
                 {isAuthed && (

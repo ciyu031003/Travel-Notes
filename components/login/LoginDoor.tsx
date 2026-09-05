@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { MapPin } from 'lucide-react'
+import BrandLogo from "@/components/brand/BrandLogo"
+import { MapPin } from "lucide-react"
 import DoorMap from './DoorMap'
 
 type Phase = 'closed' | 'opening' | 'open'
@@ -141,9 +142,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
               <DoorMap className="h-full w-full" />
             </div>
             <div className="absolute left-6 top-6 flex items-center gap-2 md:left-10 md:top-10">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-travel-accentSoft shadow-sm">
-                <MapPin className="h-4 w-4 text-white" />
-              </span>
+              <BrandLogo size={36} rounded="rounded-lg" />
               <span className="font-bold text-[#3D4852] dark:text-shell-text">行迹</span>
             </div>
             <div className="absolute bottom-8 left-8 hidden max-w-[240px] md:block">
