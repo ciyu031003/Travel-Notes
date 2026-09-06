@@ -15,6 +15,11 @@ RUN npx prisma generate \
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
+# ffmpeg：视频转码管线（720p 变体）依赖；缺 ffmpeg 时转码模块自动降级跳过
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+
 COPY --from=base /app /app
 
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

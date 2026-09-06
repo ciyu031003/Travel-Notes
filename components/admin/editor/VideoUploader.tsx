@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Upload, Play, ChevronUp, ChevronDown, Trash2, Video, Eye } from 'lucide-react'
+import { uploadVideoResumable } from '@/lib/upload/resumable-upload'
 
 export interface VideoItem {
   url: string
@@ -16,6 +17,11 @@ export interface VideoUploaderProps {
   onReordered: (videos: VideoItem[]) => void
 }
 
+interface UploadState {
+  label: string
+  percent: number
+}
+
 export default function VideoUploader({
   videos,
   onUploaded,
@@ -23,9 +29,37 @@ export default function VideoUploader({
   onReordered,
 }: VideoUploaderProps) {
   const [videoUploading, setVideoUploading] = useState(false)
+  const [uploadState, setUploadState] = useState<UploadState | null>(null)
   const [videoDraggedIndex, setVideoDraggedIndex] = useState<number | null>(null)
   const [videoPreview, setVideoPreview] = useState<string | null>(null)
   const videoFileInputRef = useRef<HTMLInputElement>(null)
+  // 转码轮询完成后要把列表里的原始 URL 换成变体，用 ref 拿最新列表避免闭包过期
+  const videosRef = useRef(videos)
+  useEffect(() => {
+    videosRef.current = videos
+  }, [videos])
+
+  const pollTranscode = (originalUrl: string, filename: string) => {
+    const started = Date.now()
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/admin/videos/resumable', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'transcode-status', filename }),
+        })
+        const st = await res.json()
+        if (st?.status === 'done' && st.url) {
+          clearInterval(timer)
+          onUploaded(videosRef.current.map((v) => (v.url === originalUrl ? { ...v, url: st.url } : v)))
+        } else if (st?.status === 'skipped' || st?.status === 'none' || Date.now() - started > 15 * 60_000) {
+          clearInterval(timer)
+        }
+      } catch {
+        // 网络抖动轮询下一轮继续
+      }
+    }, 3_000)
+  }
 
   const handleVideoUpload = async (files: FileList | File[]) => {
     const fileArray = Array.from(files)
@@ -33,28 +67,21 @@ export default function VideoUploader({
 
     setVideoUploading(true)
     try {
-      const formUpload = new FormData()
-      fileArray.forEach((file) => {
-        formUpload.append('files', file)
-      })
-
-      const res = await fetch('/api/admin/videos/upload', {
-        method: 'POST',
-        body: formUpload,
-      })
-
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || '视频上传失败')
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i]
+        setUploadState({ label: fileArray.length > 1 ? `视频 ${i + 1}/${fileArray.length} 上传中` : '视频上传中', percent: 0 })
+        const r = await uploadVideoResumable(file, {
+          onProgress: (percent) => setUploadState((s) => (s ? { ...s, percent } : s)),
+        })
+        onUploaded([...videosRef.current, { url: r.url }])
+        setUploadState({ label: '转码优化中…（完成后自动切换流畅版）', percent: 100 })
+        if (r.transcode === 'queued') pollTranscode(r.url, r.filename)
       }
-
-      const data = await res.json()
-      const newVideos = data.videos.map((v: any) => ({ url: v.url }))
-      onUploaded(newVideos)
     } catch (error: any) {
       alert(error.message || '视频上传失败')
     } finally {
       setVideoUploading(false)
+      setUploadState(null)
       if (videoFileInputRef.current) {
         videoFileInputRef.current.value = ''
       }
@@ -119,7 +146,14 @@ export default function VideoUploader({
         {videoUploading ? (
           <div className="flex flex-col items-center gap-2">
             <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">视频上传中...</p>
+            <p className="text-sm text-gray-500">{uploadState?.label || '视频上传中...'}</p>
+            <div className="w-56 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary-500 transition-all duration-300"
+                style={{ width: `${uploadState?.percent ?? 0}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-400">{uploadState?.percent ?? 0}% · 支持断点续传，中断后重新选择同一文件可续传</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
@@ -128,7 +162,7 @@ export default function VideoUploader({
               点击上传视频文件
             </p>
             <p className="text-xs text-gray-400">
-              支持 MP4 / WebM / MOV 等格式，单个视频最大 500MB
+              支持 MP4 / WebM / MOV 等格式，单个最大 500MB · 分片断点续传 · 完成后自动转 720p 流畅版
             </p>
           </div>
         )}

@@ -13,6 +13,8 @@ import {
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
 import { getClientIp } from '@/lib/request-utils'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
+import { enqueueTranscode, sweepAndEnqueue } from '@/lib/infrastructure/video-transcode'
+import { TRANSCODE_MIN_SIZE } from '@/lib/infrastructure/video-upload-shared'
 
 function getVideoDir(): string {
   const cwd = process.cwd()
@@ -135,7 +137,14 @@ export async function POST(request: NextRequest) {
       })
 
       console.log('[Video Upload] Saved:', url, 'size:', stat.size)
+
+      // 转码管线：大视频入队生成 720p 变体（后台执行，不阻塞响应）
+      if (stat.size >= TRANSCODE_MIN_SIZE) {
+        enqueueTranscode(filename)
+      }
     }
+
+    sweepAndEnqueue()
 
     writeAuditLog({
       username: auth.username || 'unknown',
