@@ -64,6 +64,9 @@ services:
       # 媒体存储已迁移至 COS 存储桶（cosfs 挂载于宿主机 /data）。
       # 迁移日 2026-09-06：原 uploads-data 卷保留未删作为回滚备份（/var/lib/docker/volumes/travel-notes_uploads-data）。
       - /data/travel-notes/uploads:/app/public/uploads
+      # ffmpeg：宿主机静态二进制只读挂载（视频转码管线；镜像内不走 apt，5M 带宽拉不动 400MB 依赖）。
+      # 缺失时转码模块自动降级跳过。二进制来源 @ffmpeg-installer/linux-x64（静态链接，glibc 兼容）。
+      - /usr/local/bin/ffmpeg:/usr/local/bin/ffmpeg:ro
 
 volumes:
   mysql-data:

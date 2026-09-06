@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import { requireAuth } from '@/lib/auth-middleware'
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
@@ -31,7 +32,9 @@ export const dynamic = 'force-dynamic'
  * 临时目录 24h TTL，init 时顺带清理过期会话。
  */
 const VIDEO_DIR = path.join(process.cwd(), 'public', 'uploads', 'videos')
-const TMP_ROOT = path.join(VIDEO_DIR, '.tmp')
+// 分片临时目录放容器本地盘：COSFS 是对象存储语义（unlink 后目录列表有最终一致性延迟，
+// rmdir 会 ENOTEMPTY），且分片是纯瞬态数据——只有拼装完成的成品才写 COS。
+const TMP_ROOT = path.join(os.tmpdir(), 'tn-vuploads')
 
 function tmpDirOf(uploadId: string): string {
   return path.join(TMP_ROOT, uploadId)
@@ -214,12 +217,15 @@ export async function POST(request: NextRequest) {
         fs.closeSync(fd)
         realMime = validateVideoBuffer(header, meta.mimeType)
       } catch (err: any) {
-        fs.unlinkSync(finalPath)
-        fs.rmSync(dir, { recursive: true, force: true })
+        try { fs.unlinkSync(finalPath) } catch {}
+        try { fs.rmSync(dir, { recursive: true, force: true }) } catch {}
         return NextResponse.json({ error: `文件校验失败: ${err.message}` }, { status: 400 })
       }
 
-      fs.rmSync(dir, { recursive: true, force: true })
+      try { fs.rmSync(dir, { recursive: true, force: true }) } catch (e) {
+        // 清理是尽力而为（本地盘）；残留会话由 init 的 24h TTL 清扫兜底
+        console.warn('[Video Resumable] 临时目录清理失败:', (e as Error).message)
+      }
       const stat = fs.statSync(finalPath)
 
       let transcode: 'queued' | 'skipped' = 'skipped'

@@ -15,6 +15,25 @@ module.exports = {
         },
       },
       colors: {
+        // ★ semantic.* 语义层（UI-V3 收敛续篇 · 组件与色板解耦的约定层）：
+        //   值走 CSS 变量（globals.css :root 亮色 / html.dark 暗色），组件写 bg-semantic-surface
+        //   即自动双主题，无需 dark: 变体。新页面/新组件一律用 semantic.*；存量 travel.*/shell.*
+        //   逐步迁移（ui/ 组件库已试点）。
+        semantic: {
+          bg: 'var(--semantic-bg)',
+          surface: 'var(--semantic-surface)',
+          surface2: 'var(--semantic-surface2)',
+          line: 'var(--semantic-line)',
+          text: 'var(--semantic-text)',
+          heading: 'var(--semantic-heading)',
+          muted: 'var(--semantic-muted)',
+          faint: 'var(--semantic-faint)',
+          accent: 'var(--semantic-accent)',
+          accentStrong: 'var(--semantic-accent-strong)',
+          accentSoft: 'var(--semantic-accent-soft)',
+          accentWeak: 'var(--semantic-accent-weak)',
+          onAccent: 'var(--semantic-on-accent)',
+        },
         // ★ primary 语义色：对齐 travel 暖陶土（原为天蓝 #0ea5e9，与暖陶土品牌冲突）
         //   改为品牌主色后，admin 主按钮/聚焦环/上传态全局统一，一次性消除 primary 蓝残留
         primary: {

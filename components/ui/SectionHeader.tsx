@@ -19,18 +19,18 @@ export default function SectionHeader({
       <div className="flex items-end justify-between gap-4">
         <div>
           {eyebrow && (
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-travel-accent dark:text-travel-bloom">
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-semantic-accent">
               {eyebrow}
             </p>
           )}
-          <h2 className="mt-1 font-display text-xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-2xl">
+          <h2 className="mt-1 font-display text-xl font-semibold tracking-tight text-semantic-heading md:text-2xl">
             {title}
           </h2>
         </div>
         {action}
       </div>
       {subtitle && (
-        <p className="mt-1 text-sm leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+        <p className="mt-1 text-sm leading-relaxed text-semantic-muted">
           {subtitle}
         </p>
       )}

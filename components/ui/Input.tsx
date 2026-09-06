@@ -4,7 +4,7 @@ import type { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode } from 'rea
 import { cn } from '@/lib/utils'
 
 const inputBase =
-  'w-full rounded-xl border border-travel-line/60 bg-white/80 px-4 py-2.5 text-sm text-travel-ink placeholder-travel-sand/50 shadow-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-white/5 dark:text-shell-text dark:placeholder-travel-sandSoft/50'
+  'w-full rounded-xl border border-semantic-line bg-semantic-surface px-4 py-2.5 text-sm text-semantic-text placeholder-semantic-faint shadow-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-semantic-accentSoft/50'
 
 interface InputFieldProps {
   label?: string
@@ -25,13 +25,13 @@ export function Input({
   return (
     <div className={className}>
       {label && (
-        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-travel-ink dark:text-shell-muted">
+        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-semantic-text">
           {label}
           {required && <span className="ml-0.5 text-travel-danger">*</span>}
         </label>
       )}
       <input id={inputId} className={cn(inputBase)} {...props} />
-      {hint && <p className="mt-1 text-xs text-travel-ink/50 dark:text-shell-faint">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-semantic-faint">{hint}</p>}
     </div>
   )
 }
@@ -49,13 +49,13 @@ export function Textarea({
   return (
     <div className={className}>
       {label && (
-        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-travel-ink dark:text-shell-muted">
+        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-semantic-text">
           {label}
           {required && <span className="ml-0.5 text-travel-danger">*</span>}
         </label>
       )}
       <textarea id={inputId} className={cn(inputBase, 'resize-none py-3')} {...props} />
-      {hint && <p className="mt-1 text-xs text-travel-ink/50 dark:text-shell-faint">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-semantic-faint">{hint}</p>}
     </div>
   )
 }

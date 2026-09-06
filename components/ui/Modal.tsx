@@ -78,7 +78,7 @@ export function Modal({
         ref={panelRef}
         tabIndex={-1}
         className={cn(
-          'relative w-full max-w-md rounded-2xl bg-white p-5 shadow-xl outline-none dark:bg-shell-surface',
+          'relative w-full max-w-md rounded-2xl bg-semantic-surface p-5 shadow-xl outline-none',
           'motion-safe:animate-scale-in',
           className
         )}
@@ -86,7 +86,7 @@ export function Modal({
         {(title || showClose) && (
           <div className="mb-4 flex items-center justify-between gap-3">
             {title && (
-              <h3 id={titleId} className="text-base font-semibold text-travel-inkStrong dark:text-shell-text">
+              <h3 id={titleId} className="text-base font-semibold text-semantic-heading">
                 {title}
               </h3>
             )}
@@ -95,7 +95,7 @@ export function Modal({
                 type="button"
                 onClick={onClose}
                 aria-label="关闭"
-                className="ml-auto rounded-full p-1 text-travel-ink/50 transition hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10"
+                className="ml-auto rounded-full p-1 text-semantic-muted transition hover:bg-semantic-accentWeak hover:text-semantic-text"
               >
                 <X className="h-4 w-4" />
               </button>

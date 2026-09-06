@@ -10,6 +10,7 @@
  */
 import { spawn } from 'child_process'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import { variantFilenameFor, TRANSCODE_MIN_SIZE } from './video-upload-shared'
 
@@ -76,12 +77,17 @@ async function processQueue(): Promise<void> {
     const variant = variantFilenameFor(filename)
     const dst = path.join(VIDEO_DIR, variant)
     const marker = src + MARKER_SUFFIX
+    // COSFS（对象存储语义）不友好于 ffmpeg 的渐进写 + faststart 二次重写——
+    // 先转码到容器本地盘，成功后整文件落到媒体目录。
+    const tmpDst = path.join(os.tmpdir(), 'tn-transcode-' + variant)
     try {
       if (!fs.existsSync(src) || fs.existsSync(dst)) continue
       if (!isFfmpegAvailable()) continue
       fs.writeFileSync(marker, String(Date.now()))
       const t0 = Date.now()
-      await runFfmpeg(src, dst)
+      try { fs.unlinkSync(tmpDst) } catch {}
+      await runFfmpeg(src, tmpDst)
+      fs.copyFileSync(tmpDst, dst)
       const kb = Math.round(fs.statSync(dst).size / 1024)
       console.log(`[video-transcode] ${filename} -> ${variant} (${kb}KB, ${Date.now() - t0}ms)`)
     } catch (e) {
@@ -89,6 +95,7 @@ async function processQueue(): Promise<void> {
       // 失败清半成品，避免留下坏变体
       try { if (fs.existsSync(dst)) fs.unlinkSync(dst) } catch {}
     } finally {
+      try { if (fs.existsSync(tmpDst)) fs.unlinkSync(tmpDst) } catch {}
       try { if (fs.existsSync(marker)) fs.unlinkSync(marker) } catch {}
     }
   }

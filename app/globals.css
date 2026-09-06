@@ -929,6 +929,40 @@ html.dark {
   color-scheme: dark;
 }
 
+/* ★ semantic.* 语义层变量（组件写 bg-semantic-* 即自动双主题，无需 dark: 变体）
+   亮色 = travel 暖陶土色板；暗色 = shell 深色色板。 */
+:root {
+  --semantic-bg: #FAF6EE;
+  --semantic-surface: #FFFFFF;
+  --semantic-surface2: #FDF5ED;
+  --semantic-line: #E8DDD4;
+  --semantic-text: #585450;
+  --semantic-heading: #5A4A3A;
+  --semantic-muted: #8B7355;
+  --semantic-faint: #C2AF9A;
+  --semantic-accent: #A85F3A;
+  --semantic-accent-strong: #8A4A2B;
+  --semantic-accent-soft: #C97E55;
+  --semantic-accent-weak: rgba(168, 95, 58, 0.10);
+  --semantic-on-accent: #FFFFFF;
+}
+
+html.dark {
+  --semantic-bg: #12161C;
+  --semantic-surface: #1B2128;
+  --semantic-surface2: #161B22;
+  --semantic-line: #2C343E;
+  --semantic-text: #E8E6E1;
+  --semantic-heading: #E8E6E1;
+  --semantic-muted: #9BA3AE;
+  --semantic-faint: #6E6A64;
+  --semantic-accent: #E4B478;
+  --semantic-accent-strong: #F0C68C;
+  --semantic-accent-soft: #C9A06A;
+  --semantic-accent-weak: rgba(228, 180, 120, 0.12);
+  --semantic-on-accent: #12161C;
+}
+
 /* 登录卡片弹出 */
 @keyframes card-pop {
   from {

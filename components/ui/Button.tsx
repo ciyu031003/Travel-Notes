@@ -12,11 +12,11 @@ const base =
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-travel-accent text-white rounded-xl hover:bg-travel-accentStrong shadow-lg shadow-travel-accent/20',
+    'bg-semantic-accent text-semantic-onAccent rounded-xl hover:bg-semantic-accentStrong shadow-lg shadow-travel-accent/20',
   secondary:
-    'bg-travel-sakura/60 text-travel-accentStrong rounded-xl hover:bg-travel-sakura dark:bg-white/10 dark:text-travel-accentSoft',
+    'bg-semantic-accentWeak text-semantic-accentStrong rounded-xl hover:bg-semantic-accentWeak/70',
   ghost:
-    'text-travel-ink/80 rounded-xl hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10',
+    'text-semantic-text rounded-xl hover:bg-semantic-accentWeak hover:text-semantic-heading',
   danger:
     'bg-travel-danger/10 text-travel-danger rounded-xl hover:bg-travel-danger/20',
 }
