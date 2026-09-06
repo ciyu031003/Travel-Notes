@@ -50,7 +50,7 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
     try {
       const result = await readWithFallback<MomentsResponse>(
         async () => {
-          const res = await fetch(apiUrl(`/api/moments?page=${targetPage}&pageSize=${limit}`), { credentials: 'include' })
+          const res = await fetch(apiUrl(`/api/moments?page=${targetPage}&pageSize=${limit}`), { credentials: 'include', cache: 'no-cache' })
           if (!res.ok) throw new Error('http ' + res.status)
           return (await res.json()) as MomentsResponse
         },

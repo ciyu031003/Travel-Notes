@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -68,6 +69,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.0",
+    "@playwright/test": "^1.63.0",
     "@types/archiver": "^6.0.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/d3-geo": "^3.1.1",

@@ -20,7 +20,7 @@ export default function TravelPage() {
     try {
       const result = await readWithFallback<unknown[]>(
         async () => {
-          const res = await fetch(apiUrl('/api/travels'), { credentials: 'include' })
+          const res = await fetch(apiUrl('/api/travels'), { credentials: 'include', cache: 'no-cache' })
           if (!res.ok) throw new Error('http ' + res.status)
           const j = await res.json()
           if (j && j.error) throw new Error(String(j.error))
