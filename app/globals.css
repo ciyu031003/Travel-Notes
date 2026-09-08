@@ -1243,12 +1243,25 @@ html.dark {
   background: linear-gradient(to right, rgba(28,30,24,0.12), rgba(28,30,24,0.03) 40%, transparent);
 }
 
-
-
-
-
-
-
-
-
-
+/* ===== ArtFlipBook 容器（page-flip 库） ===== */
+.art-flip-rig {
+  display: grid;
+  place-items: center;
+  width: min(92vw, calc((100dvh - 132px) * 1.4285714));
+  height: min(calc(100dvh - 132px), 640px);
+  min-height: 260px;
+}
+.art-flipbook-container {
+  isolation: isolate;
+  position: relative;
+  width: 100%;
+}
+.art-flipbook-container .art-flip-page {
+  position: relative;
+  overflow: hidden;
+  background: var(--art-paper);
+}
+.art-flipbook-container .art-flip-page > * {
+  width: 100%;
+  height: 100%;
+}

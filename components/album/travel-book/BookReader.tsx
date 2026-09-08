@@ -5,6 +5,7 @@ import { BookOpen, ChevronLeft, ChevronRight, MapPin, X, Camera } from 'lucide-r
 import { MOOD_LABEL, formatDay } from '@/lib/modules/album/presentation'
 import { apiUrl } from '@/lib/api-base'
 import type { Book, BookChapter, BookPhoto } from './TravelBook'
+import ArtFlipBook, { type ArtFlipBookHandle } from '../reader/ArtFlipBook'
 import { ArtPageBody, type ArtPage } from '../reader/ArtPage'
 
 type Mode = 'classic' | 'art'
@@ -219,6 +220,7 @@ export default function BookReader({
   const [pageIndex, setPageIndex] = useState(0)
   const [turn, setTurn] = useState<'next' | 'prev' | null>(null)
   const timer = useRef<number | null>(null)
+  const artFlipRef = useRef<ArtFlipBookHandle>(null)
 
   // 视口
   const [vp, setVp] = useState(() => ({
@@ -259,13 +261,19 @@ export default function BookReader({
   // 键盘翻页 + Escape 关闭
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') go(pageIndex + 1)
-      else if (e.key === 'ArrowLeft') go(pageIndex - 1)
+      if (e.key === 'ArrowRight') {
+        if (mode === 'art') artFlipRef.current?.flipNext()
+        else go(pageIndex + 1)
+      }
+      else if (e.key === 'ArrowLeft') {
+        if (mode === 'art') artFlipRef.current?.flipPrev()
+        else go(pageIndex - 1)
+      }
       else if (e.key === 'Escape') onBack()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [go, pageIndex, onBack])
+  }, [go, pageIndex, onBack, mode])
 
   // 触屏滑动
   const touchX = useRef<number | null>(null)
@@ -294,6 +302,13 @@ export default function BookReader({
   }, [pageIndex, pages, total])
 
   const current = pages[pageIndex]
+  const [artPageIndex, setArtPageIndex] = useState(0)
+
+  // 进入画册模式时从封面开始读
+  useEffect(() => {
+    if (mode === 'art') setArtPageIndex(0)
+  }, [mode])
+
   const leftPage = pageIndex > 0 ? pages[pageIndex - 1] : null
   const revealed = turn === 'next'
     ? (pageIndex + 1 < total ? pages[pageIndex + 1] : current)
@@ -311,6 +326,19 @@ export default function BookReader({
     return <PageBody page={page} book={book} />
   }
 
+
+  /** Art Mode pages array */
+  const artPages = useMemo(() =>
+    pages.map((page, i) => (
+      <ArtPageBody key={i} page={pageToArtPage(page, book)} book={book} />
+    )),
+    [pages, book],
+  )
+
+  /** Art Mode page change callback */
+  const handleArtPageChange = useCallback((idx: number) => {
+    setArtPageIndex(idx)
+  }, [])
   const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40'
 
   return (
@@ -345,15 +373,27 @@ export default function BookReader({
         </div>
       </header>
 
-      <main className="flex flex-1 items-center justify-center overflow-hidden px-3 py-4" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <main className="flex flex-1 items-center justify-center overflow-hidden px-3 py-4" onTouchStart={mode === 'art' ? undefined : onTouchStart} onTouchEnd={mode === 'art' ? undefined : onTouchEnd}>
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} aria-label="上一页"
-            className={`${navBtn} hidden sm:inline-flex`}>
-            <ChevronLeft className="h-4 w-4" />
-          </button>
+          {mode !== 'art' && (
+            <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} aria-label="上一页"
+              className={`${navBtn} hidden sm:inline-flex`}>
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          )}
 
-          {/* 书（透视容器） */}
-          <div className="book-scene" style={{ perspective: '2600px' }}>
+          {mode === 'art' ? (
+            <div className="art-flip-rig">
+              <ArtFlipBook
+                ref={artFlipRef}
+                pages={artPages}
+                onPageChange={handleArtPageChange}
+                currentPage={artPageIndex}
+              />
+            </div>
+          ) : (
+            <>
+            <div className="book-scene" style={{ perspective: '2600px' }}>
             <div className="book" style={{ width: isDesktop ? pageW * 2 : pageW, height: pageH, position: 'relative' }}>
               {/* 底部页 */}
               <div
@@ -400,37 +440,40 @@ export default function BookReader({
                   className="bg-gradient-to-b from-black/10 via-black/25 to-black/10" />
               )}
             </div>
-          </div>
+            </div>
+            </>
+          )}
 
-          <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} aria-label="下一页"
-            className={`${navBtn} hidden sm:inline-flex`}>
-            <ChevronRight className="h-4 w-4" />
-          </button>
+          {mode !== 'art' && (
+            <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} aria-label="下一页"
+              className={`${navBtn} hidden sm:inline-flex`}>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </main>
 
+      {mode === 'art' ? (
+        <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-4 py-3 sm:justify-center">
+          <button type="button" onClick={() => artFlipRef.current?.flipPrev()} className={navBtn}>
+            <ChevronLeft className="h-3.5 w-3.5" />上一页
+          </button>
+          <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none sm:gap-3">
+            <span className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60">
+              {String(artPageIndex + 1).padStart(2, '0')} / {String(artPages.length).padStart(2, '0')}
+            </span>
+          </div>
+          <button type="button" onClick={() => artFlipRef.current?.flipNext()} className={navBtn}>
+            下一页<ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </footer>
+      ) : (
       <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-4 py-3 sm:justify-center">
-        <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} className={navBtn}>
-          <ChevronLeft className="h-3.5 w-3.5" />上一页
-        </button>
-        <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none sm:gap-3">
-          <input
-            type="range"
-            min={0}
-            max={Math.max(0, total - 1)}
-            value={pageIndex}
-            onChange={(e) => go(Number(e.target.value))}
-            aria-label={`跳转到第 ${pageIndex + 1} 页，共 ${total} 页`}
-            className="h-1.5 min-w-0 flex-1 cursor-pointer accent-travel-bloom sm:w-40"
-          />
-          <span className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60">
-            {String(pageIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
-          </span>
-        </div>
-        <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} className={navBtn}>
-          下一页<ChevronRight className="h-3.5 w-3.5" />
-        </button>
+        <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} className={navBtn}><ChevronLeft className="h-3.5 w-3.5" />上一页</button>
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none sm:gap-3"><input type="range" min={0} max={Math.max(0, total - 1)} value={pageIndex} onChange={(e) => go(Number(e.target.value))} aria-label={`跳转到第 ${pageIndex + 1} 页，共 ${total} 页`} className="h-1.5 min-w-0 flex-1 cursor-pointer accent-travel-bloom sm:w-40" /><span className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60">{String(pageIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}</span></div>
+        <button type="button" onClick={() => go(pageIndex + 1)} disabled={!canNext} className={navBtn}>下一页<ChevronRight className="h-3.5 w-3.5" /></button>
       </footer>
+      )}
     </div>
   )
 }
