@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { BookOpen, Camera, Loader2, LayoutGrid, Orbit, ArrowLeft } from 'lucide-react'
+import { BookOpen, Camera, Loader2, LayoutGrid, Orbit, ArrowLeft, ArrowDownUp, Images, CalendarDays } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
 import BookReader from './BookReader'
 import Sketchbook from '../sketchbook/Sketchbook'
@@ -63,6 +63,32 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
   const [error, setError] = useState('')
   const [openBook, setOpenBook] = useState<Book | null>(null)
   const [readerMode, setReaderMode] = useState<'classic' | 'art' | 'sketch'>('classic')
+  const [sortBy, setSortBy] = useState<'latest' | 'days' | 'photos'>('latest')
+
+  const sortedBooks = useMemo(() => {
+    if (!books) return []
+    const list = [...books]
+    if (sortBy === 'days') {
+      list.sort((a, b) => (b.dayCount || 0) - (a.dayCount || 0))
+    } else if (sortBy === 'photos') {
+      list.sort((a, b) => (b.photoCount || 0) - (a.photoCount || 0))
+    } else {
+      list.sort((a, b) => (
+        (Date.parse(b.startDate || b.endDate || '') || 0) -
+        (Date.parse(a.startDate || a.endDate || '') || 0)
+      ))
+    }
+    return list
+  }, [books, sortBy])
+
+  const wallStats = useMemo(() => {
+    const list = books || []
+    return {
+      count: list.length,
+      days: list.reduce((sum, book) => sum + (book.dayCount || 0), 0),
+      photos: list.reduce((sum, book) => sum + (book.photoCount || 0), 0),
+    }
+  }, [books])
 
   const load = useCallback(() => {
     const ac = new AbortController()
@@ -169,11 +195,37 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3">
-            {books.map((book) => (
-              <PostcardCard key={book.bookKey || book.travelId} book={book} onOpen={() => openBookByKey(book)} />
-            ))}
-          </div>
+          <>
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="font-display text-sm font-semibold text-travel-ink">旅行画册</h2>
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-travel-ink/55">
+                  <span className="inline-flex items-center gap-1.5">{wallStats.count} 本</span>
+                  <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />{wallStats.days} 天</span>
+                  <span className="inline-flex items-center gap-1.5"><Images className="h-3.5 w-3.5" />{wallStats.photos} 张照片</span>
+                </p>
+              </div>
+              <label className="inline-flex items-center gap-2 text-xs text-travel-ink/60">
+                <ArrowDownUp className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">排序</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'latest' | 'days' | 'photos')}
+                  aria-label="画册排序方式"
+                  className="rounded-md border border-travel-dim/60 bg-travel-cream px-2.5 py-1.5 text-xs text-travel-ink outline-none focus:border-travel-bloom"
+                >
+                  <option value="latest">按旅行时间</option>
+                  <option value="days">按天数</option>
+                  <option value="photos">按照片数</option>
+                </select>
+              </label>
+            </div>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3">
+              {sortedBooks.map((book) => (
+                <PostcardCard key={book.bookKey || book.travelId} book={book} onOpen={() => openBookByKey(book)} />
+              ))}
+            </div>
+          </>
         )}
       </main>
     </div>

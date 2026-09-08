@@ -55,10 +55,24 @@
 
 .pcard-media {
   display: block;
-  aspect-ratio: 4 / 3;
+  position: relative;
+  aspect-ratio: 4 / 5;
   width: 100%;
   overflow: hidden;
   background: #f6e9e2;
+  transform: translateZ(1px);
+}
+.pcard-media::after {
+  content: "";
+  position: absolute;
+  inset-block: 6%;
+  left: 3.2%;
+  width: clamp(8px, 2.2%, 18px);
+  background:
+    linear-gradient(90deg, rgba(58, 54, 48, 0.18), rgba(58, 54, 48, 0.04) 70%, transparent),
+    linear-gradient(90deg, transparent 46%, rgba(255, 255, 255, 0.16) 52%, transparent 58%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 .pcard-media img {
   width: 100%;
@@ -144,4 +158,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pcard { transform: rotate(var(--rot)) !important; transition: none !important; }
+}
+
+/* 竖屏窄视口下关闭卡片倾斜：封面改为竖版后，旋转外接盒会顶出横向滚动 */
+@media (max-width: 640px) {
+  .pcard { transform: none !important; }
 }
