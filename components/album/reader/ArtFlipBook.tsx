@@ -78,13 +78,13 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
 
     // 首次初始化
     const pageFlip = new St.PageFlip(container, {
-      width: 400,
-      height: 560,
+      width: 512,
+      height: 640,
       size: 'stretch',
-      minWidth: Math.max(1, Math.round(400 * 0.56)),
-      maxWidth: Math.max(1, Math.round(400 * 1.04)),
-      minHeight: Math.max(1, Math.round(560 * 0.56)),
-      maxHeight: Math.max(1, Math.round(560 * 1.04)),
+      minWidth: Math.max(1, Math.round(512 * 0.56)),
+      maxWidth: Math.max(1, Math.round(512 * 1.04)),
+      minHeight: Math.max(1, Math.round(640 * 0.56)),
+      maxHeight: Math.max(1, Math.round(640 * 1.04)),
       drawShadow: true,
       flippingTime,
       usePortrait: true,

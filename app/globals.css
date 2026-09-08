@@ -1247,14 +1247,15 @@ html.dark {
 .art-flip-rig {
   display: grid;
   place-items: center;
-  width: min(92vw, calc((100dvh - 132px) * 1.4285714));
-  height: min(calc(100dvh - 132px), 640px);
-  min-height: 260px;
+  width: min(92vw, calc((100dvh - 108px) * 1.6), 1080px);
+  height: min(calc(100dvh - 108px), 720px);
+  min-height: 280px;
 }
 .art-flipbook-container {
   isolation: isolate;
   position: relative;
   width: 100%;
+  filter: drop-shadow(0 20px 30px rgba(29, 37, 21, 0.2));
 }
 .art-flipbook-container .art-flip-page {
   position: relative;
@@ -1264,4 +1265,7 @@ html.dark {
 .art-flipbook-container .art-flip-page > * {
   width: 100%;
   height: 100%;
+}
+.art-flipbook-container .art-page img {
+  filter: saturate(0.92) contrast(1.03) sepia(0.07);
 }
