@@ -5,6 +5,9 @@ import { BookOpen, ChevronLeft, ChevronRight, MapPin, X, Camera } from 'lucide-r
 import { MOOD_LABEL, formatDay } from '@/lib/modules/album/presentation'
 import { apiUrl } from '@/lib/api-base'
 import type { Book, BookChapter, BookPhoto } from './TravelBook'
+import { ArtPageBody, type ArtPage } from '../reader/ArtPage'
+
+type Mode = 'classic' | 'art'
 
 type Page =
   | { kind: 'cover' }
@@ -188,14 +191,36 @@ function PageBody({ page, book }: { page: Page; book: Book }) {
   }
 }
 
-export default function BookReader({ book, onBack, onToggleSketch }: { book: Book; onBack: () => void; onToggleSketch?: () => void }) {
+/** 将 Page 转为 ArtPage（用于 art mode 渲染） */
+function pageToArtPage(page: Page, book: Book): ArtPage {
+  switch (page.kind) {
+    case 'cover': return { kind: 'cover' }
+    case 'chapter': return { kind: 'chapter', chapter: page.chapter }
+    case 'photo': return { kind: 'photo', chapter: page.chapter, photo: page.photo }
+    case 'summary': return { kind: 'summary' }
+    default: return { kind: 'cover' }
+  }
+}
+
+export default function BookReader({
+  book,
+  onBack,
+  onToggleSketch,
+  onToggleArt,
+  mode = 'classic',
+}: {
+  book: Book
+  onBack: () => void
+  onToggleSketch?: () => void
+  onToggleArt?: () => void
+  mode?: Mode
+}) {
   const pages = useMemo(() => buildPages(book), [book])
-  const [pageIndex, setPageIndex] = useState(0) // 当前页索引（桌面=右页）
+  const [pageIndex, setPageIndex] = useState(0)
   const [turn, setTurn] = useState<'next' | 'prev' | null>(null)
   const timer = useRef<number | null>(null)
 
-  // 视口：桌面双页 / 移动单页 + 自适应尺寸
-  // 仅在用户交互后挂载（无 SSR），可直接读 window 消除移动端首帧 1280x800 闪跳
+  // 视口
   const [vp, setVp] = useState(() => ({
     w: typeof window !== 'undefined' ? window.innerWidth : 1280,
     h: typeof window !== 'undefined' ? window.innerHeight : 800,
@@ -207,7 +232,6 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
     return () => window.removeEventListener('resize', onR)
   }, [])
   const isDesktop = vp.w >= 640
-  // 移动单页按高度驱动：书页占满视口剩余空间（上下只留顶栏/页脚），横向不足再收宽
   const pageH = Math.round(isDesktop ? Math.min(760, vp.h - 210) : Math.min(vp.h - 176, 780))
   const pageW = Math.round(
     isDesktop
@@ -254,7 +278,7 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
     else if (dx > 50) go(pageIndex - 1)
   }
 
-  // 预取相邻页图片，避免翻页时下一张仍在加载导致的重叠/空白
+  // 预取相邻页图片
   useEffect(() => {
     const warm = (page: Page) => {
       if (page.kind !== 'photo') return
@@ -279,6 +303,14 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
   const flipPage = turn ? (turn === 'prev' && isDesktop ? leftPage : current) : null
   const prevLeft = turn === 'prev' && pageIndex - 2 >= 0 ? pages[pageIndex - 2] : null
 
+  /** 根据 mode 渲染页面内容 */
+  const renderPage = (page: Page) => {
+    if (mode === 'art') {
+      return <ArtPageBody page={pageToArtPage(page, book)} book={book} />
+    }
+    return <PageBody page={page} book={book} />
+  }
+
   const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura disabled:opacity-40'
 
   return (
@@ -290,6 +322,17 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
         </button>
         <div className="font-display text-sm font-semibold text-travel-ink">{book.title}</div>
         <div className="flex items-center gap-1.5">
+          {onToggleArt && (
+            <button
+              type="button"
+              onClick={onToggleArt}
+              className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura"
+              title={mode === 'art' ? '切换为经典书页' : '切换为摄影画册'}
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              {mode === 'art' ? '经典' : '画册'}
+            </button>
+          )}
           {onToggleSketch && (
             <button type="button" onClick={onToggleSketch} className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura" title="切换为素描本">
               <BookOpen className="h-3.5 w-3.5" />
@@ -312,7 +355,7 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
           {/* 书（透视容器） */}
           <div className="book-scene" style={{ perspective: '2600px' }}>
             <div className="book" style={{ width: isDesktop ? pageW * 2 : pageW, height: pageH, position: 'relative' }}>
-              {/* 底部页（翻开后露出的页 / 静态页） */}
+              {/* 底部页 */}
               <div
                 style={{ position: 'absolute', inset: 0, zIndex: 2 }}
                 className="book-paper flex items-center justify-center overflow-hidden rounded-[3px]"
@@ -320,15 +363,15 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
                 {isDesktop ? (
                   <div className="flex h-full w-full">
                     <div className="flex h-full w-1/2 items-center justify-center overflow-hidden rounded-l-[3px]">
-                      {turn === 'prev' ? (prevLeft ? <PageBody page={prevLeft} book={book} /> : null) : leftPage ? <PageBody page={leftPage} book={book} /> : null}
+                      {turn === 'prev' ? (prevLeft ? renderPage(prevLeft) : null) : leftPage ? renderPage(leftPage) : null}
                     </div>
                     <div className="flex h-full w-1/2 items-center justify-center overflow-hidden rounded-r-[3px]">
-                      {turn === 'next' ? <PageBody page={revealed} book={book} /> : <PageBody page={current} book={book} />}
+                      {turn === 'next' ? renderPage(revealed) : renderPage(current)}
                     </div>
                   </div>
                 ) : (
                   <div className="h-full w-full">
-                    <PageBody page={revealed} book={book} />
+                    {renderPage(revealed)}
                   </div>
                 )}
               </div>
@@ -346,7 +389,7 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
                   }}
                 >
                   <div className="book-paper h-full w-full overflow-hidden rounded-[3px]">
-                    <PageBody page={flipPage as Page} book={book} />
+                    {renderPage(flipPage as Page)}
                   </div>
                 </div>
               )}
@@ -370,7 +413,6 @@ export default function BookReader({ book, onBack, onToggleSketch }: { book: Boo
         <button type="button" onClick={() => go(pageIndex - 1)} disabled={!canPrev} className={navBtn}>
           <ChevronLeft className="h-3.5 w-3.5" />上一页
         </button>
-        {/* 进度条 + 页码（长画册不再渲染成百上千个圆点，命中区也更大） */}
         <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none sm:gap-3">
           <input
             type="range"

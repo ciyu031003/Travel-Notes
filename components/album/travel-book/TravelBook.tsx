@@ -62,7 +62,7 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
   const [books, setBooks] = useState<BookSummary[] | null>(null)
   const [error, setError] = useState('')
   const [openBook, setOpenBook] = useState<Book | null>(null)
-  const [readerMode, setReaderMode] = useState<'sketch' | 'book'>('sketch')
+  const [readerMode, setReaderMode] = useState<'classic' | 'art' | 'sketch'>('classic')
 
   const load = useCallback(() => {
     const ac = new AbortController()
@@ -101,10 +101,18 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
   }, [])
 
   if (openBook) {
-    if (readerMode === 'book') {
-      return <BookReader book={openBook} onBack={() => setOpenBook(null)} onToggleSketch={() => setReaderMode('sketch')} />
+    if (readerMode === 'classic' || readerMode === 'art') {
+      return (
+        <BookReader
+          book={openBook}
+          onBack={() => setOpenBook(null)}
+          mode={readerMode === 'art' ? 'art' : 'classic'}
+          onToggleArt={() => setReaderMode(readerMode === 'art' ? 'classic' : 'art')}
+          onToggleSketch={() => setReaderMode('sketch')}
+        />
+      )
     }
-    return <Sketchbook book={openBook} onBack={() => setOpenBook(null)} onToggleBook={() => setReaderMode('book')} />
+    return <Sketchbook book={openBook} onBack={() => setOpenBook(null)} onToggleBook={() => setReaderMode('classic')} />
   }
 
   return (

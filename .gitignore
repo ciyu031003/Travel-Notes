@@ -60,3 +60,4 @@ tsconfig.tsbuildinfo
 test-results/
 playwright-report/
 tests/e2e/.auth/
+\n# Review screenshots\n.review-shots/
