@@ -26,12 +26,19 @@ function baseRot(seed: number): number {
   const t = Math.abs(Math.sin(seed * 12.9898) * 43758.5453) % 1
   return Math.round((t * 13 - 6.5) * 10) / 10 // -6.5..6.5 度
 }
+// 纵向错落（东倒西歪的「倒」）：-6..22px，让相邻卡片高度不一，更像散落陈列。
+function baseShift(seed: number): number {
+  const t = Math.abs(Math.sin(seed * 78.233) * 43758.5453) % 1
+  return Math.round((t * 28 - 6) * 10) / 10
+}
 
 const fmtDate = formatDotDate
 
 export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOpen: () => void }) {
   const ref = useRef<HTMLButtonElement>(null)
-  const rot = baseRot(hashKey(book.bookKey || String(book.travelId)))
+  const seed = hashKey(book.bookKey || String(book.travelId))
+  const rot = baseRot(seed)
+  const shift = baseShift(seed)
   const reducedRef = useRef(false)
 
   useEffect(() => {
@@ -49,15 +56,15 @@ export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOp
     const ry = (px - 0.5) * TILT_Y * 2
     const rz = (px - 0.5) * 2 * ROLL
     el.style.transition = 'transform 45ms linear'
-    el.style.transform = `perspective(920px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotate(${(rot + rz).toFixed(2)}deg) translateY(-3px)`
-  }, [rot])
+    el.style.transform = `perspective(920px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotate(${(rot + rz).toFixed(2)}deg) translateY(${(shift - 4).toFixed(2)}px)`
+  }, [rot, shift])
 
   const onLeave = useCallback(() => {
     const el = ref.current
     if (!el || reducedRef.current) return
     el.style.transition = 'transform 680ms cubic-bezier(0.16,1,0.3,1)'
-    el.style.transform = `rotate(${rot}deg)`
-  }, [rot])
+    el.style.transform = `translateY(${shift.toFixed(2)}px) rotate(${rot}deg)`
+  }, [rot, shift])
 
   useEffect(() => {
     const el = ref.current
@@ -75,7 +82,7 @@ export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOp
       type="button"
       onClick={onOpen}
       className="pcard"
-      style={{ '--rot': rot + 'deg' } as React.CSSProperties}
+      style={{ '--rot': rot + 'deg', '--shift': shift + 'px' } as React.CSSProperties}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       aria-label={`打开《${book.title}》旅行画册`}

@@ -34,6 +34,8 @@ export function ArtCoverPage({ book }: { book: Book }) {
 export function ArtChapterIntro({ chapter }: { chapter: BookChapter }) {
   return (
     <div className="art-page paper">
+      <span className="oil-edge oil-faint oil-tl" aria-hidden="true" />
+      <span className="oil-edge oil-faint oil-br" aria-hidden="true" />
       <div className="title-block">
         <h2>{chapter.title || 'DAY ' + String(chapter.index).padStart(2, '0')}</h2>
         <p>{chapter.summary || '——'}</p>
@@ -56,10 +58,14 @@ export function ArtPhotoSpread({ chapter, photo }: { chapter: BookChapter; photo
     : '旅行照片'
 
   return (
-    <div className="art-page paper">
-      <figure className="plate medium">
+    <div className="art-page paper painted">
+      <figure className="plate full">
         <img src={realSrc || ''} alt={photoAlt} loading="lazy" />
       </figure>
+      <span className="oil-edge oil-tl" aria-hidden="true" />
+      <span className="oil-edge oil-tr" aria-hidden="true" />
+      <span className="oil-edge oil-bl" aria-hidden="true" />
+      <span className="oil-edge oil-br" aria-hidden="true" />
       <span className="folio">
         {String(chapter.index).padStart(2, '0')}
       </span>
@@ -71,6 +77,8 @@ export function ArtPhotoSpread({ chapter, photo }: { chapter: BookChapter; photo
 export function ArtSummaryPage({ book }: { book: Book }) {
   return (
     <div className="art-page endpaper">
+      <span className="oil-edge oil-faint oil-tr" aria-hidden="true" />
+      <span className="oil-edge oil-faint oil-bl" aria-hidden="true" />
       <div className="colophon">
         <p>{book.title}</p>
         {book.location && <p>{book.location}</p>}

@@ -1,7 +1,7 @@
 /* ==========================================================================
    PostcardCard  — mengto 风格相册卡片
    1) 邮票齿孔（穿孔）边框：穿孔是「背景纸」上的圆孔，内容层盖住中间，只露出边缘一排穿孔。
-   2) 静止时每张卡片有轻微随机倾斜（东倒西歪但不重叠）。
+   2) 静止时每张卡片有轻微随机倾斜 + 纵向错落（东倒西歪但不重叠，偏移由组件按 seed 注入）。
    3) hover 时跟随鼠标前倾/后仰 + 轻微波浪滚动，松手用弹性回位。
    ========================================================================== */
 .pcard {
@@ -9,6 +9,7 @@
   --step: 17px;     /* 齿孔间距 */
   --paper: #FFFCF7;
   --rot: 0deg;      /* 由组件按 travelId 注入的静止倾斜 */
+  --shift: 0px;     /* 由组件按 seed 注入的纵向错落 */
   position: relative;
   display: block;
   width: 100%;
@@ -18,7 +19,7 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transform: rotate(var(--rot));
+  transform: rotate(var(--rot)) translateY(var(--shift));
   transform-style: preserve-3d;
   will-change: transform;
   -webkit-tap-highlight-color: transparent;

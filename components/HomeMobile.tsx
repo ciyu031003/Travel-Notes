@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -18,6 +18,7 @@ import {
 import { cn } from '@/lib/utils'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
+import { findProvinceByLocation } from '@/lib/province-map'
 
 interface PostMeta {
   slug: string
@@ -250,6 +251,19 @@ export default function HomeMobile({
 }) {
   const quote = dailyQuote()
   const recent = travelPosts.slice(0, 6)
+  const provincePills = useMemo(() => {
+    const seen = new Set<string>()
+    const list: { id: string; name: string }[] = []
+    for (const post of travelPosts) {
+      if (!post.location) continue
+      const p = findProvinceByLocation(post.location)
+      if (!p || seen.has(p.id)) continue
+      seen.add(p.id)
+      list.push({ id: p.id, name: p.name })
+      if (list.length >= 6) break
+    }
+    return list
+  }, [travelPosts])
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
@@ -263,15 +277,15 @@ export default function HomeMobile({
 
           <div className="m-enter relative">
             <p className="text-[11px] font-semibold tracking-[0.24em] text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
-            <h1 className="mt-3 text-[40px] font-bold leading-[1.08] tracking-[-0.04em] text-[var(--m-text)]">
-              走过的
+            <h1 className="mt-3 text-[34px] font-bold leading-[1.08] tracking-[-0.04em] text-[var(--m-text)]">
+              把走过的路
               <span className="block mt-1">
-                地方
+                变成自己的故事
                 <span className="ml-2 inline-block h-[22px] w-[76px] rounded-full bg-[linear-gradient(90deg,rgba(228,180,120,0.5),rgba(168,95,58,0.18))]" />
               </span>
             </h1>
             <p className="mt-4 max-w-[290px] text-[15px] leading-7 text-[var(--m-muted)]">
-              用文字记录生活，用照片定格瞬间，收藏每一段旅行记忆。
+              每个城市一本画册，照片铺满书页，把走过的路变成自己的故事。
             </p>
 
             <div className="mt-6 flex gap-3">
@@ -291,6 +305,20 @@ export default function HomeMobile({
                 旅行画册
               </Link>
             </div>
+
+            {provincePills.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {provincePills.map((item) => (
+                  <span
+                    key={item.id}
+                    className="inline-flex items-center gap-1 rounded-full border border-[var(--m-line-strong)] bg-[var(--m-surface-2)] px-3 py-1 text-xs font-medium text-[var(--m-accent-strong)]"
+                  >
+                    <MapPin className="h-3 w-3" />
+                    {item.name}
+                  </span>
+                ))}
+              </div>
+            )}
 
             <div className="m-card mt-5 grid grid-cols-2 gap-x-4 gap-y-3 p-4">
               {/* 统计卡可点击：省份/旅程 → 旅行地图（M3-2 动线） */}

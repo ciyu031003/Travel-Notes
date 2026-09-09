@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Camera, LayoutGrid, Loader2, Orbit } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
@@ -52,27 +52,45 @@ export interface Book {
 export type BookSummary = Omit<Book, 'chapters'>
 
 /**
- * 相册统一入口：只保留上传图片生成的这一本旅行画册。
- * 点击进入阅读器后统一使用 page-flip 摄影画册，不再拆分经典/素描本子模块。
+ * 旅行画册统一入口：每个城市一本画册（Travel 模型优先 + Post 城市画册兜底）。
+ * 墙上以「东倒西歪」的散落卡片陈列所有城市画册，点击某本进入 page-flip 翻页阅读器。
  */
 export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) => void }) {
   const [books, setBooks] = useState<BookSummary[] | null>(null)
   const [error, setError] = useState('')
   const [openBook, setOpenBook] = useState<Book | null>(null)
   const [opening, setOpening] = useState(false)
+  const [openingTitle, setOpeningTitle] = useState('')
+
+  const wallStats = useMemo(() => {
+    const list = books || []
+    return {
+      count: list.length,
+      days: list.reduce((sum, book) => sum + (book.dayCount || 0), 0),
+      photos: list.reduce((sum, book) => sum + (book.photoCount || 0), 0),
+    }
+  }, [books])
 
   const openBookByKey = useCallback((summary: BookSummary) => {
     setOpening(true)
+    setOpeningTitle(summary.title || '旅行画册')
     fetch(apiUrl(`/api/travel-book?key=${encodeURIComponent(summary.bookKey)}`), { credentials: 'include' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
       })
       .then((j) => {
-        if (j?.book) setOpenBook(j.book)
-        else setError('画册打开失败，请稍后重试。')
+        if (j?.book) {
+          setOpenBook(j.book)
+          setError('')
+        } else {
+          setError('画册打开失败，请稍后重试。')
+        }
       })
-      .catch(() => setError('画册打开失败，请稍后重试。'))
+      .catch(() => {
+        setError('画册打开失败，请稍后重试。')
+        setOpeningTitle('')
+      })
       .finally(() => setOpening(false))
   }, [])
 
@@ -143,17 +161,17 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
         </div>
       </header>
 
-      <main className="flex min-h-[calc(100dvh-56px)] items-center justify-center px-4 py-8">
-        {books === null || opening ? (
-          <div className="flex items-center justify-center gap-2 text-travel-ink/45">
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        {books === null ? (
+          <div className="flex items-center justify-center gap-2 py-24 text-travel-ink/45">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm">{opening ? '正在翻开旅行画册...' : '正在翻开旅行画册...'}</span>
+            <span className="text-sm">正在翻阅旅行画册...</span>
           </div>
         ) : books.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+          <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <Camera className="h-10 w-10 text-travel-bloom/40" />
             <p className="text-sm text-travel-ink/60">{error || '还没有旅行故事'}</p>
-            {error ? (
+            {error.startsWith('旅行画册加载失败') ? (
               <button
                 type="button"
                 onClick={() => {
@@ -169,9 +187,38 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
             )}
           </div>
         ) : (
-          <div className="w-full max-w-sm">
-            <PostcardCard book={books[0]} onOpen={() => openBookByKey(books[0])} />
-          </div>
+          <>
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="font-display text-lg font-semibold text-travel-ink">旅行画册</h2>
+                <p className="mt-1.5 text-xs text-travel-ink/55">
+                  {wallStats.count} 本 · 每个城市一本 · 点开卡片翻页阅读
+                </p>
+              </div>
+              <p className="text-xs text-travel-ink/55">
+                共 {wallStats.days} 天 · {wallStats.photos} 张照片
+              </p>
+            </div>
+
+            <div className="album-scatter grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+              {books.map((book) => (
+                <PostcardCard
+                  key={book.bookKey || book.travelId}
+                  book={book}
+                  onOpen={() => openBookByKey(book)}
+                />
+              ))}
+            </div>
+
+            {opening && (
+              <div className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-travel-cream/40 backdrop-blur-[2px]">
+                <div className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm text-travel-ink/70 shadow-[0_10px_30px_-10px_rgba(41,39,35,0.35)]">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  正在翻开《{openingTitle}》...
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
