@@ -22,7 +22,7 @@ interface ArtFlipBookProps {
   /** 翻页动画时长（ms） */
   flippingTime?: number
   /** 页面切换回调 */
-  onPageChange?: (pageIndex: number) => void
+  onPageChange?: (pageIndex: number, spreadIndex?: number, spreadTotal?: number) => void
   /** 外部控制当前页 */
   currentPage?: number
 }
@@ -102,9 +102,27 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
 
     pageFlip.loadFromHTML(pageElements)
 
-    pageFlip.on('flip', (event: any) => {
+    // 把「当前翻动单位」一并上报：landscape 双页展开下 spread 数才是总页数，
+    // 单页（portrait）模式下 spread 即页面本身，两种模式同一条路径。
+    const reportCurrent = (pf: any) => {
+      const col = pf?.getPageCollection?.()
+      let spreadIndex: number | undefined
+      let spreadTotal: number | undefined
+      if (col) {
+        const spreads = col.getSpread?.()
+        if (Array.isArray(spreads)) {
+          spreadIndex = col.getCurrentSpreadIndex?.()
+          spreadTotal = spreads.length
+        }
+      }
+      onPageChangeRef.current?.(pf?.getCurrentPageIndex?.() ?? 0, spreadIndex, spreadTotal)
+    }
+
+    pageFlip.on('init', () => reportCurrent(pageFlip))
+    pageFlip.on('update', () => reportCurrent(pageFlip))
+    pageFlip.on('flip', () => {
       if (syncingRef.current) return
-      onPageChangeRef.current?.(event.data)
+      reportCurrent(pageFlip)
     })
 
     pageFlipRef.current = pageFlip

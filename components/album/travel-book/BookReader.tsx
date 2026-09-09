@@ -74,6 +74,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
   const pages = useMemo(() => buildPages(book, measured), [book, measured])
   const artFlipRef = useRef<ArtFlipBookHandle>(null)
   const [artPageIndex, setArtPageIndex] = useState(0)
+  const [spreadInfo, setSpreadInfo] = useState<{ index: number; total: number } | null>(null)
 
   const artPages = useMemo(() =>
     pages.map((page, i) => (
@@ -87,9 +88,15 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
     [pages, book, onPhotoMeasured],
   )
 
-  const handleArtPageChange = useCallback((idx: number) => {
-    setArtPageIndex(idx)
-  }, [])
+  const handleArtPageChange = useCallback(
+    (idx: number, spreadIndex?: number, spreadTotal?: number) => {
+      setArtPageIndex(idx)
+      if (typeof spreadIndex === 'number' && typeof spreadTotal === 'number') {
+        setSpreadInfo({ index: spreadIndex, total: spreadTotal })
+      }
+    },
+    [],
+  )
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -144,8 +151,12 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           <ChevronLeft className="h-3.5 w-3.5" />上一页
         </button>
         <div className="flex min-w-0 flex-1 items-center justify-center sm:flex-none sm:px-5">
-          <span className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60">
-            {String(artPageIndex + 1).padStart(2, '0')} / {String(artPages.length).padStart(2, '0')}
+          <span
+            aria-live="polite"
+            className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60"
+          >
+            {String((spreadInfo?.index ?? artPageIndex) + 1).padStart(2, '0')} /{' '}
+            {String(spreadInfo?.total ?? artPages.length).padStart(2, '0')}
           </span>
         </div>
         <button type="button" onClick={() => artFlipRef.current?.flipNext()} className={navBtn}>
