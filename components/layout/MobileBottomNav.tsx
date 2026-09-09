@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Home, MapPin, Compass, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiUrl } from '@/lib/api-base'
+import { hapticLight } from '@/lib/mobile/haptics'
 
 const TABS = [
   { href: '/', label: '首页', icon: Home },
@@ -24,6 +25,7 @@ export default function MobileBottomNav() {
 
   // 游客可浏览公开内容，但记录旅行需先登录（M0 产品规则）
   const handleRecord = async () => {
+    void hapticLight()
     try {
       const res = await fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
       const data = await res.json().catch(() => null)
@@ -40,7 +42,7 @@ export default function MobileBottomNav() {
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 m-glass pt-[6px] pb-[max(6px,env(safe-area-inset-bottom))] md:hidden"
-      style={{ borderTop: '1px solid var(--m-line)', background: 'var(--m-surface)' }}
+      style={{ borderTop: '0.5px solid var(--m-line-strong)', background: 'var(--m-surface)' }}
       aria-label="移动端导航"
     >
       <div className="relative mx-auto grid max-w-md grid-cols-5 items-end">
@@ -79,13 +81,14 @@ function TabItem({
 }) {
   const Icon = item.icon
   return (
-    <Link
-      href={item.href}
-      aria-current={active ? 'page' : undefined}
-      className={cn(
-        'm-spring relative flex min-h-[52px] flex-col items-center justify-center gap-1 text-[11px] font-medium select-none',
-        active ? 'text-[var(--m-accent-strong)]' : 'text-[var(--m-muted)] active:text-[var(--m-text)]'
-      )}
+      <Link
+        href={item.href}
+        aria-current={active ? 'page' : undefined}
+        onClick={() => void hapticLight()}
+        className={cn(
+          'm-spring m-pressable relative flex min-h-[52px] flex-col items-center justify-center gap-1 text-[11px] font-medium select-none',
+          active ? 'text-[var(--m-accent-strong)]' : 'text-[var(--m-muted)] active:text-[var(--m-text)]'
+        )}
     >
       <span className="relative flex h-7 w-7 items-center justify-center">
         <Icon

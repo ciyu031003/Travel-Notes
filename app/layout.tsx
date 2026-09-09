@@ -4,6 +4,7 @@ import LayoutContent from '@/components/layout/LayoutContent'
 import CommandPalette from '@/components/command/CommandPalette'
 import AppUpdatePrompt from '@/components/offline/AppUpdatePrompt'
 import OfflineBootstrap from '@/components/offline/OfflineBootstrap'
+import { ToastHost } from '@/components/mobile/Toast'
 
 export const metadata: Metadata = {
   title: '行迹 | 旅行记忆空间',
@@ -34,6 +35,7 @@ export default function RootLayout({
         <CommandPalette />
         <AppUpdatePrompt />
         <OfflineBootstrap />
+        <ToastHost />
       </body>
     </html>
   )
