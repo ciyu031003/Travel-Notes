@@ -1108,6 +1108,8 @@ html.dark {
 }
 .art-page {
   container-type: inline-size;
+  /* 容器查询单位变量：现代浏览器等同 1cqw；老内核由 @supports not 兜底为像素近似值 */
+  --cq: 1cqw;
   position: relative;
   aspect-ratio: 0.8;
   overflow: hidden;
@@ -1115,6 +1117,13 @@ html.dark {
   color: var(--art-ink);
   font-family: var(--art-serif);
   font-weight: 400;
+}
+/* cqw 兜底：不支持 container-type 的老 WebView（Chrome<105 / iOS<16）用 512px 设计基准换算像素 */
+@supports not (container-type: inline-size) {
+  .art-page {
+    container-type: normal;
+    --cq: 5.12px;
+  }
 }
 .art-page img {
   display: block;
@@ -1150,7 +1159,10 @@ html.dark {
   right: 7.7%;
   margin: 0;
   color: #73766c;
-  font: 400 1.5cqw/1 var(--art-serif);
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.5);
+  line-height: 1;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -1163,14 +1175,20 @@ html.dark {
   right: 10%;
   top: 15%;
   margin: 0;
-  font: 400 7.2cqw/1.12 var(--art-serif);
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 7.2);
+  line-height: 1.12;
   letter-spacing: -0.02em;
 }
 .art-page .cover-subtitle {
   position: absolute;
   left: 13.5%;
   top: 33%;
-  font: 400 2.1cqw/1.4 var(--art-serif);
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 2.1);
+  line-height: 1.4;
   margin: 0;
   letter-spacing: 0.025em;
 }
@@ -1186,7 +1204,10 @@ html.dark {
   position: absolute;
   bottom: 7%;
   left: 13.5%;
-  font: 400 1.6cqw/1.4 sans-serif;
+  font-family: sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.6);
+  line-height: 1.4;
   letter-spacing: 0.13em;
 }
 .art-page .title-block {
@@ -1196,12 +1217,18 @@ html.dark {
   right: 12%;
 }
 .art-page .title-block h2 {
-  font: 400 4.5cqw/1.2 var(--art-serif);
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 4.5);
+  line-height: 1.2;
   letter-spacing: -0.01em;
-  margin: 0 0 6cqw;
+  margin: 0 0 calc(var(--cq) * 6);
 }
 .art-page .title-block p {
-  font: 400 2.1cqw/1.6 var(--art-serif);
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 2.1);
+  line-height: 1.6;
   margin: 0;
 }
 .art-page .colophon {
@@ -1209,18 +1236,27 @@ html.dark {
   left: 16%;
   right: 18%;
   top: 52%;
-  font: 400 2.2cqw/1.55 var(--art-serif);
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 2.2);
+  line-height: 1.55;
 }
-.art-page .colophon p { margin: 0 0 4cqw; }
+.art-page .colophon p { margin: 0 0 calc(var(--cq) * 4); }
 .art-page .colophon .small-print {
-  font: 400 1.7cqw/1.65 sans-serif;
+  font-family: sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.7);
+  line-height: 1.65;
   color: #6f7268;
 }
 .art-page .back-mark {
   position: absolute;
   bottom: 10%;
   left: 13.5%;
-  font: 400 2cqw/1.4 var(--art-serif);
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 2);
+  line-height: 1.4;
 }
 
 /* 照片页整页出血：图片铺满整个书页（跟书页一样大） */
@@ -1258,7 +1294,10 @@ html.dark {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  font: 400 2cqw/1 var(--art-serif);
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 2);
+  line-height: 1;
   color: rgba(94, 98, 86, 0.55);
   letter-spacing: 0.12em;
   white-space: nowrap;

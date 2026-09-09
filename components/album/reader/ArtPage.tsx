@@ -57,7 +57,7 @@ export function ArtChapterIntro({ chapter }: { chapter: BookChapter }) {
         <h2>{chapter.title || 'DAY ' + String(chapter.index).padStart(2, '0')}</h2>
         <p>{chapter.summary || '——'}</p>
         {chapter.date && (
-          <p style={{ marginTop: '3cqw', fontSize: '1.8cqw', color: '#73766c' }}>
+          <p style={{ marginTop: 'calc(var(--cq) * 3)', fontSize: 'calc(var(--cq) * 1.8)', color: '#73766c' }}>
             {formatDay(chapter.date)}
           </p>
         )}
@@ -164,7 +164,7 @@ export function ArtSummaryPage({ book }: { book: Book }) {
         <p className="small-print">
           {book.dayCount || book.chapters.length} 天 · {book.photoCount} 张照片
         </p>
-        <p className="small-print" style={{ marginTop: '2cqw' }}>
+        <p className="small-print" style={{ marginTop: 'calc(var(--cq) * 2)' }}>
           谢谢翻阅，收藏这段路上的时光。
         </p>
       </div>
