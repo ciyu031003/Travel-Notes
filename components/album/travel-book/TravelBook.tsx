@@ -1,13 +1,28 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Camera, LayoutGrid, Loader2, Orbit } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  Camera,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  Loader2,
+  Orbit,
+  X,
+} from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
+import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import BookReader from './BookReader'
 import PostcardCard from '../PostcardCard'
 
 type Mode = 'book' | 'space' | 'pixel'
+
+const WALL_VIEW_KEY = 'album-wall-view'
+type WallView = 'wall' | 'list'
 
 export interface BookPhoto {
   id: number
@@ -57,10 +72,13 @@ export type BookSummary = Omit<Book, 'chapters'>
  */
 export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) => void }) {
   const [books, setBooks] = useState<BookSummary[] | null>(null)
-  const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [openError, setOpenError] = useState('')
   const [openBook, setOpenBook] = useState<Book | null>(null)
   const [opening, setOpening] = useState(false)
   const [openingTitle, setOpeningTitle] = useState('')
+  const [wallView, setWallView] = useState<WallView>('wall')
+  const abortRef = useRef<AbortController | null>(null)
 
   const wallStats = useMemo(() => {
     const list = books || []
@@ -74,6 +92,7 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
   const openBookByKey = useCallback((summary: BookSummary) => {
     setOpening(true)
     setOpeningTitle(summary.title || '旅行画册')
+    setOpenError('')
     fetch(apiUrl(`/api/travel-book?key=${encodeURIComponent(summary.bookKey)}`), { credentials: 'include' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
@@ -82,40 +101,68 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
       .then((j) => {
         if (j?.book) {
           setOpenBook(j.book)
-          setError('')
         } else {
-          setError('画册打开失败，请稍后重试。')
+          setOpenError('画册打开失败，请稍后重试。')
         }
       })
       .catch(() => {
-        setError('画册打开失败，请稍后重试。')
-        setOpeningTitle('')
+        setOpenError('画册打开失败，请稍后重试。')
       })
       .finally(() => setOpening(false))
   }, [])
 
   const load = useCallback(() => {
+    abortRef.current?.abort()
     const ac = new AbortController()
+    abortRef.current = ac
     fetch(apiUrl('/api/travel-book'), { credentials: 'include', signal: ac.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
       })
       .then((j) => {
+        if (ac.signal.aborted) return
         const list: BookSummary[] = Array.isArray(j?.books) ? j.books : []
         setBooks(list)
-        setError(list.length ? '' : '还没有旅行故事，去记录一次旅行吧。')
+        setLoadError('')
       })
       .catch((err) => {
         if (ac.signal.aborted) return
         setBooks([])
-        setError('旅行画册加载失败，请稍后重试。')
+        setLoadError('旅行画册加载失败，请稍后重试。')
         void err
       })
-    return () => ac.abort()
   }, [])
 
-  useEffect(() => load(), [load])
+  useEffect(() => {
+    load()
+    return () => abortRef.current?.abort()
+  }, [load])
+
+  // 画册墙陈列偏好：卡片墙 / 目录列表，本地记忆
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(WALL_VIEW_KEY)
+      if (saved === 'wall' || saved === 'list') setWallView(saved)
+    } catch {
+      // 忽略
+    }
+  }, [])
+
+  const changeWallView = useCallback((next: WallView) => {
+    setWallView(next)
+    try {
+      localStorage.setItem(WALL_VIEW_KEY, next)
+    } catch {
+      // 忽略
+    }
+  }, [])
+
+  const retryLoad = useCallback(() => {
+    setBooks(null)
+    setLoadError('')
+    load()
+  }, [load])
 
   if (openBook) {
     return <BookReader book={openBook} onBack={() => setOpenBook(null)} />
@@ -162,29 +209,28 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        {books === null ? (
+        {books === null && !loadError ? (
           <div className="flex items-center justify-center gap-2 py-24 text-travel-ink/45">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm">正在翻阅旅行画册...</span>
+            <span className="text-sm">正在翻阅旅行画册，把走过的城市一本本摊开...</span>
           </div>
-        ) : books.length === 0 ? (
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+            <AlertCircle className="h-10 w-10 text-red-400/70" />
+            <p className="text-sm text-travel-ink/60">{loadError}</p>
+            <button
+              type="button"
+              onClick={retryLoad}
+              className="rounded-full bg-travel-sakura px-4 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura/70"
+            >
+              重试
+            </button>
+          </div>
+        ) : books && books.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <Camera className="h-10 w-10 text-travel-bloom/40" />
-            <p className="text-sm text-travel-ink/60">{error || '还没有旅行故事'}</p>
-            {error.startsWith('旅行画册加载失败') ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setBooks(null)
-                  load()
-                }}
-                className="rounded-full bg-travel-sakura px-4 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura/70"
-              >
-                重试
-              </button>
-            ) : (
-              <p className="text-xs text-travel-ink/40">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
-            )}
+            <p className="text-sm text-travel-ink/60">还没有旅行故事，去记录一次旅行吧。</p>
+            <p className="text-xs text-travel-ink/40">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
           </div>
         ) : (
           <>
@@ -195,20 +241,123 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
                   {wallStats.count} 本 · 每个城市一本 · 点开卡片翻页阅读
                 </p>
               </div>
-              <p className="text-xs text-travel-ink/55">
-                共 {wallStats.days} 天 · {wallStats.photos} 张照片
-              </p>
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+                <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/80 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => changeWallView('wall')}
+                    aria-pressed={wallView === 'wall'}
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      wallView === 'wall'
+                        ? 'bg-travel-sakura text-travel-ink shadow-sm'
+                        : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink'
+                    }`}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />卡片墙
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeWallView('list')}
+                    aria-pressed={wallView === 'list'}
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      wallView === 'list'
+                        ? 'bg-travel-sakura text-travel-ink shadow-sm'
+                        : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink'
+                    }`}
+                  >
+                    <List className="h-3.5 w-3.5" />目录
+                  </button>
+                </div>
+                <p className="text-xs text-travel-ink/55">
+                  共 {wallStats.days} 天 · {wallStats.photos} 张照片
+                </p>
+              </div>
             </div>
 
-            <div className="album-scatter grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-              {books.map((book) => (
-                <PostcardCard
-                  key={book.bookKey || book.travelId}
-                  book={book}
-                  onOpen={() => openBookByKey(book)}
-                />
-              ))}
-            </div>
+            {openError && (
+              <div
+                role="alert"
+                className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-red-200/70 bg-red-50/80 px-3.5 py-2.5 text-xs text-red-700"
+              >
+                <span className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {openError}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOpenError('')}
+                  aria-label="收起提示"
+                  className="rounded-full p-1 transition-colors hover:bg-red-100"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
+            {wallView === 'wall' ? (
+              <div className="album-scatter grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+                {(books || []).map((book) => (
+                  <PostcardCard
+                    key={book.bookKey || book.travelId}
+                    book={book}
+                    onOpen={() => openBookByKey(book)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="divide-y divide-travel-dim/30 overflow-hidden rounded-2xl border border-travel-dim/30 bg-[#FFFCF7] shadow-[0_30px_50px_-34px_rgba(41,39,35,0.45)]">
+                {(books || []).map((book) => {
+                  const cover = book.coverThumb || book.coverPreview
+                  const date = book.startDate
+                    ? formatDotDate(book.startDate) +
+                      (book.endDate && book.endDate !== book.startDate
+                        ? ` ~ ${formatDotDate(book.endDate)}`
+                        : '')
+                    : ''
+                  return (
+                    <button
+                      key={book.bookKey || book.travelId}
+                      type="button"
+                      onClick={() => openBookByKey(book)}
+                      aria-label={`打开《${book.title}》旅行画册`}
+                      className="group flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-travel-sakura/25 sm:gap-4 sm:px-5"
+                    >
+                      <span className="relative flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-travel-dim/15 ring-1 ring-travel-dim/20">
+                        {cover ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={cover} alt="" loading="lazy" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="font-display text-lg font-semibold text-travel-ink/40">
+                            {(book.title || '行').trim().charAt(0)}
+                          </span>
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-display text-sm font-semibold text-travel-ink">
+                          {book.title}
+                        </span>
+                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-travel-ink/55">
+                          {book.location && <span>{book.location}</span>}
+                          {date && <span className="tabular-nums">{date}</span>}
+                        </span>
+                      </span>
+                      <span className="hidden shrink-0 items-center gap-1.5 text-xs text-travel-ink/50 sm:flex">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        {book.dayCount} 章
+                        <Camera className="ml-2 h-3.5 w-3.5" />
+                        {book.photoCount} 图
+                      </span>
+                      {book.travelType && (
+                        <span className="hidden shrink-0 rounded-full bg-travel-sakura/40 px-2 py-0.5 text-[11px] text-travel-ink/70 md:inline">
+                          {TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}
+                        </span>
+                      )}
+                      <ChevronRight className="h-4 w-4 shrink-0 text-travel-ink/35 transition-transform group-hover:translate-x-0.5 group-hover:text-travel-ink/70" />
+                    </button>
+                  )
+                })}
+              </div>
+            )}
 
             {opening && (
               <div className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-travel-cream/40 backdrop-blur-[2px]">
