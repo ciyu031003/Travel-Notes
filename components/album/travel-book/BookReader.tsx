@@ -6,7 +6,7 @@ import type { Book, BookChapter, BookPhoto } from './TravelBook'
 import ArtFlipBook, { type ArtFlipBookHandle } from '../reader/ArtFlipBook'
 import {
   ArtPageBody,
-  photoOrientation,
+  photoSpreadFits,
   type ArtPage,
   type PhotoVariant,
 } from '../reader/ArtPage'
@@ -21,8 +21,17 @@ type Page =
 /** 封面 → 章节标题/照片 → 总结，顺序与 demo 的 page-flip 页面序列一致。 */
 type MeasuredMap = Record<number, { w: number; h: number }>
 
-/** 封面 -> 章节标题/照片 -> 总结；横屏照片跨两页出血，竖屏照片单页完整展示。 */
-function buildPages(book: Book, measured: MeasuredMap): Page[] {
+/**
+ * 封面 -> 章节标题/照片 -> 总结；
+ * - 双页模式（桌面，spreadEnabled=true）：宽高比 ≥ 1.6 的真横屏照片跨两页出血，
+ *   其余照片（竖屏 + 4:3/3:2 准横屏）单页 contain 完整展示，头脚绝不裁切；
+ * - 单页模式（窄屏，spreadEnabled=false）：所有照片单页 contain 完整展示。
+ */
+function buildPages(
+  book: Book,
+  measured: MeasuredMap,
+  spreadEnabled: boolean,
+): Page[] {
   const pages: Page[] = [{ kind: 'cover' }]
   // 封面之后已排版页数：page-flip 双页模式按 (奇数页, 偶数页) 成对铺开，
   // 跨页照片必须落在奇数页起始，否则左右半页会错位配对。
@@ -35,9 +44,9 @@ function buildPages(book: Book, measured: MeasuredMap): Page[] {
     if (chapter.photos.length === 0) continue
     push({ kind: 'chapter', chapter })
     for (const photo of chapter.photos) {
-      const isLandscape =
-        photoOrientation(photo, measured[photo.id] ?? null) === 'landscape'
-      if (!isLandscape) {
+      // 只有双页模式 + 宽高比足够（≥1.6）的横屏照片才跨页出血；
+      // 其余一律单页 contain（竖屏完整展示，准横屏也不会被上下裁切）。
+      if (!spreadEnabled || !photoSpreadFits(photo, measured[photo.id] ?? null)) {
         push({ kind: 'photo', chapter, photo, variant: 'single' })
         continue
       }
@@ -64,6 +73,20 @@ function pageToArtPage(page: Page, _book: Book): ArtPage {
 
 export default function BookReader({ book, onBack }: { book: Book; onBack: () => void }) {
   const [measured, setMeasured] = useState<MeasuredMap>({})
+  // 桌面双页翻页 / 窄屏单页翻页：交互动画 mode 由 page-flip 的 usePortrait 决定，
+  // 超过 768px 使用双页展开（真跨页出血），否则单页完整展示。
+  const [isWide, setIsWide] = useState(true)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const sync = () => setIsWide(mq.matches)
+    sync()
+    mq.addEventListener?.('change', sync)
+    window.addEventListener('resize', sync)
+    return () => {
+      mq.removeEventListener?.('change', sync)
+      window.removeEventListener('resize', sync)
+    }
+  }, [])
   const onPhotoMeasured = useCallback((id: number, w: number, h: number) => {
     setMeasured((prev) => {
       const cur = prev[id]
@@ -71,7 +94,10 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
       return { ...prev, [id]: { w, h } }
     })
   }, [])
-  const pages = useMemo(() => buildPages(book, measured), [book, measured])
+  const pages = useMemo(
+    () => buildPages(book, measured, isWide),
+    [book, measured, isWide],
+  )
   const artFlipRef = useRef<ArtFlipBookHandle>(null)
   const [artPageIndex, setArtPageIndex] = useState(0)
   const [spreadInfo, setSpreadInfo] = useState<{ index: number; total: number } | null>(null)
@@ -136,12 +162,13 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
       </header>
 
       <main className="flex flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-3">
-        <div className="art-flip-rig">
+        <div className={`art-flip-rig${isWide ? '' : ' art-flip-rig--single'}`}>
           <ArtFlipBook
             ref={artFlipRef}
             pages={artPages}
             onPageChange={handleArtPageChange}
             currentPage={artPageIndex}
+            portrait={!isWide}
           />
         </div>
       </main>

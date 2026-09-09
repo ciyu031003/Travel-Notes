@@ -1544,6 +1544,10 @@ html.dark {
   height: min(calc(100dvh - 108px), 720px);
   min-height: 280px;
 }
+/* 单页翻页（窄屏）模式：书页画幅 0.8，容器收窄避免单页被拉宽变形 */
+.art-flip-rig--single {
+  width: min(92vw, calc((100dvh - 108px) * 0.8), 640px);
+}
 .art-flipbook-container {
   isolation: isolate;
   position: relative;
@@ -1563,8 +1567,8 @@ html.dark {
   filter: saturate(0.92) contrast(1.03) sepia(0.07);
 }
 
-/* 单页模式（窄屏，page-flip portrait）降级：
-   跨页照片退化为单页全图 contain，保证头脚完整不裁切 */
+/* 单页模式（窄屏，page-flip portrait）兜底：
+   若双页渲染期间跨页照片仍存在，退化为单页全图 contain，保证头脚完整不裁切 */
 @media (max-width: 640px) {
   .art-page.spread-photo .spread-img,
   .art-page.spread-photo.spread-right .spread-img {

@@ -21,6 +21,8 @@ interface ArtFlipBookProps {
   pages: React.ReactNode[]
   /** 翻页动画时长（ms） */
   flippingTime?: number
+  /** 单页（竖排）模式：窄屏 true 一页一页翻；宽屏 false 双页展开（横屏照片真跨页） */
+  portrait?: boolean
   /** 页面切换回调 */
   onPageChange?: (pageIndex: number, spreadIndex?: number, spreadTotal?: number) => void
   /** 外部控制当前页 */
@@ -37,7 +39,7 @@ interface ArtFlipBookProps {
  * - 边缘点击、滑动翻页
  */
 const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function ArtFlipBook(
-  { pages, flippingTime = 760, onPageChange, currentPage },
+  { pages, flippingTime = 760, portrait = true, onPageChange, currentPage },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -87,7 +89,7 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
       maxHeight: Math.max(1, Math.round(640 * 1.04)),
       drawShadow: true,
       flippingTime,
-      usePortrait: true,
+      usePortrait: portrait,
       startZIndex: 10,
       autoSize: true,
       maxShadowOpacity: 0.42,
@@ -135,7 +137,7 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
       }
       pageFlipRef.current = null
     }
-  }, [ready, flippingTime])
+  }, [ready, flippingTime, portrait])
 
   // 页面内容变化时同步到已初始化的实例（保留当前页码）
   useEffect(() => {

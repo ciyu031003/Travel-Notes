@@ -11,23 +11,20 @@ import type { Book, BookChapter, BookPhoto } from '../travel-book/TravelBook'
    - 材质质感（纸纹/布面/油角点缀）
    ========================================================================== */
 
-/* ---------- 照片横竖屏判定 ---------- */
-export type PhotoVariant = 'single' | 'spread-left' | 'spread-right'
+/* ---------- 照片横竖屏判定（纯逻辑收敛至 lib/modules/album/photo-layout） ---------- */
+import {
+  SPREAD_ASPECT,
+  photoOrientation,
+  photoSpreadFits,
+  type PhotoVariant,
+} from '@/lib/modules/album/photo-layout'
 
-/**
- * 判定照片横竖屏：
- * - 宽 > 高 × 1.05 视为横屏（跨两页出血展示）
- * - 其余（含未知宽高）视为竖屏（单页完整展示，不裁剪）
- */
-export function photoOrientation(
-  photo: BookPhoto,
-  measured?: { w: number; h: number } | null,
-): 'landscape' | 'portrait' {
-  const w = measured?.w ?? photo.width
-  const h = measured?.h ?? photo.height
-  if (w && h && w > h * 1.05) return 'landscape'
-  return 'portrait'
-}
+export {
+  SPREAD_ASPECT,
+  photoOrientation,
+  photoSpreadFits,
+  type PhotoVariant,
+} from '@/lib/modules/album/photo-layout'
 
 /* ---------- 封面（cloth 布面 + 书名/副标题/封面图） ---------- */
 export function ArtCoverPage({ book }: { book: Book }) {
