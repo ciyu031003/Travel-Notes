@@ -4,12 +4,11 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
-import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info, Lock, Settings2 } from 'lucide-react'
+import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info, Settings2 } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 import ManageEntry from '@/components/layout/ManageEntry'
 import TravelImageCarousel from '@/components/TravelImageCarousel'
 import TravelInfoPanel from '@/components/TravelInfoPanel'
-import AlbumUnlockModal from '@/components/AlbumUnlockModal'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
 
@@ -37,7 +36,6 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const [anniversaryStart, setAnniversaryStart] = useState<string | undefined>(undefined)
-  const [showAlbumUnlock, setShowAlbumUnlock] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const visiblePosts = showAll ? posts : posts.slice(0, 6)
 
@@ -131,47 +129,15 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
         }}
       />
 
-      {/* 顶部导航（旅行工作区专用，与全局 Navbar 同风格） */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-travel-cream/80 backdrop-blur-md border-b border-travel-line/50 dark:border-shell-line">        <nav className="w-full mx-auto h-14 flex items-center justify-between px-4 md:px-8">
-          <Link
-            href="/"
-            className="font-bold text-lg text-travel-inkStrong dark:text-shell-text"
-          >
-            行迹
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm text-travel-ink/80 hover:text-travel-ink transition-colors"
-            >
-              返回首页
-            </Link>
-            <button
-              onClick={() => setShowAlbumUnlock(true)}
-              className="px-4 py-2 text-sm text-travel-ink/80 hover:text-travel-ink transition-colors flex items-center gap-1.5"
-            >
-              <ImageIcon className="w-4 h-4" />
-              相册
-            </button>
-            <ManageEntry
-              href="/admin/travels"
-              label="管理旅行"
-              icon={<Settings2 className="w-4 h-4" />}
-              className="px-4 py-2 text-sm text-travel-ink/80 hover:text-travel-ink transition-colors"
-            />
-          </div>
-        </nav>
-      </header>
-
       {/* 主要内容 */}
-      <div className="relative z-10 pt-14">
+      <div className="relative z-10">
         {offline && (
           <div className="bg-travel-bloom/15 border-b border-travel-bloom/30 px-6 py-2 text-center text-xs text-travel-accent dark:text-travel-bloom">
             离线模式：当前显示本地缓存的旅行记录，联网后自动同步
           </div>
         )}
         {/* 地图区 - 可收起侧边栏布局（移动端 40vh，列表前置） */}
-        <section className="relative h-[40vh] md:h-[calc(100vh-56px)] overflow-hidden">
+        <section className="relative h-[40vh] md:h-[calc(100vh-64px)] overflow-hidden">
           {/* 地图容器 */}
           <div className="absolute inset-0 p-2 md:p-4">
             <div className="w-full h-full rounded-2xl border border-travel-dim/60 bg-travel-cream p-3 md:p-5 shadow-[0_10px_28px_rgba(90,102,112,0.08)]">
@@ -212,14 +178,16 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                   intervalMs={8000}
                 />
               </div>
-              {/* 收起按钮 */}
-              <button
-                onClick={() => setLeftOpen(false)}
-                className="w-6 h-12 self-center bg-travel-cream border border-travel-dim rounded-r-lg flex items-center justify-center hover:bg-travel-sakura/30 transition-colors shadow-md"
-                aria-label="收起左侧面板"
-              >
-                <ChevronLeft className="w-4 h-4 text-travel-ink" />
-              </button>
+              {/* 收起按钮（浮动圆钮，44px 触达） */}
+              <div className="self-center">
+                <button
+                  onClick={() => setLeftOpen(false)}
+                  className="w-9 h-9 md:w-10 md:h-10 bg-travel-cream/95 border border-travel-dim rounded-full flex items-center justify-center hover:bg-travel-sakura/40 transition-colors shadow-lg"
+                  aria-label="收起左侧照片面板"
+                >
+                  <ChevronLeft className="w-4 h-4 text-travel-ink" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -227,8 +195,8 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
           {!leftOpen && (
             <button
               onClick={() => setLeftOpen(true)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-travel-cream border border-travel-dim border-l-0 rounded-r-lg flex items-center justify-center hover:bg-travel-sakura/30 transition-colors shadow-md z-30"
-              aria-label="展开左侧面板"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-10 md:h-10 bg-travel-cream/95 border border-travel-dim rounded-full flex items-center justify-center hover:bg-travel-sakura/40 transition-colors shadow-lg z-30"
+              aria-label="展开左侧照片面板"
             >
               <ChevronRight className="w-4 h-4 text-travel-ink" />
             </button>
@@ -251,14 +219,16 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                   totalCities={300}
                 />
               </div>
-              {/* 收起按钮 */}
-              <button
-                onClick={() => setRightOpen(false)}
-                className="w-6 h-12 self-center bg-travel-cream border border-travel-dim rounded-l-lg flex items-center justify-center hover:bg-travel-mist/30 transition-colors shadow-md"
-                aria-label="收起右侧面板"
-              >
-                <ChevronRight className="w-4 h-4 text-travel-ink" />
-              </button>
+              {/* 收起按钮（浮动圆钮，44px 触达） */}
+              <div className="self-center">
+                <button
+                  onClick={() => setRightOpen(false)}
+                  className="w-9 h-9 md:w-10 md:h-10 bg-travel-cream/95 border border-travel-dim rounded-full flex items-center justify-center hover:bg-travel-mist/40 transition-colors shadow-lg"
+                  aria-label="收起右侧足迹面板"
+                >
+                  <ChevronRight className="w-4 h-4 text-travel-ink" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -266,8 +236,8 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
           {!rightOpen && (
             <button
               onClick={() => setRightOpen(true)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-travel-cream border border-travel-dim border-r-0 rounded-l-lg flex items-center justify-center hover:bg-travel-mist/30 transition-colors shadow-md z-30"
-              aria-label="展开右侧面板"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-10 md:h-10 bg-travel-cream/95 border border-travel-dim rounded-full flex items-center justify-center hover:bg-travel-mist/40 transition-colors shadow-lg z-30"
+              aria-label="展开右侧足迹面板"
             >
               <ChevronLeft className="w-4 h-4 text-travel-ink" />
             </button>
@@ -282,9 +252,17 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                 <span className="w-1 h-6 rounded-full bg-travel-bloom" />
                 全部旅行记录
               </h2>
-              <span className="text-sm text-travel-ink/50">
-                共 {posts.length} 篇
-              </span>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-travel-ink/50">
+                  共 {posts.length} 篇
+                </span>
+                <ManageEntry
+                  href="/admin/travels"
+                  label="管理旅行"
+                  icon={<Settings2 className="w-4 h-4" />}
+                  className="text-sm text-travel-ink/70 hover:text-travel-accent transition-colors inline-flex items-center gap-1.5"
+                />
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -363,21 +341,8 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
           </div>
         </section>
 
-        {/* 底部 */}
-        <footer className="relative z-10 border-t border-travel-dim/50 py-8 px-6">
-          <div className="max-w-6xl mx-auto text-center">
-            <p className="text-travel-ink/50 text-sm">
-              © {new Date().getFullYear()} 行迹 · 用足迹丈量中国
-            </p>
-          </div>
-        </footer>
       </div>
 
-      {/* 相册解锁弹窗 */}
-      <AlbumUnlockModal
-        isOpen={showAlbumUnlock}
-        onClose={() => setShowAlbumUnlock(false)}
-      />
     </div>
   )
 }

@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import BrandLogo from "@/components/brand/BrandLogo"
 import { MapPin } from "lucide-react"
-import DoorMap from './DoorMap'
+import dynamicImport from 'next/dynamic'
+
+// 门面地图按需加载：把 china-geo 全量地理数据 + d3-geo 拆出登录页首屏 chunk
+const DoorMap = dynamicImport(() => import('./DoorMap'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full" aria-hidden="true" />,
+})
 
 type Phase = 'closed' | 'opening' | 'open'
 

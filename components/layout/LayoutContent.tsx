@@ -25,6 +25,24 @@ export default function LayoutContent({
     return <>{children}</>
   }
 
+  // /travel 走标准壳：桌面端统一 Navbar + Footer，移动端走底部导航。
+  if (isTravelPage) {
+    return (
+      <>
+        <div className="hidden md:block">
+          <Navbar />
+        </div>
+        <main id="main-content" className="flex-1 pt-0 md:pt-16">
+          {children}
+        </main>
+        <div className="hidden md:block">
+          <Footer />
+        </div>
+        <MobileBottomNav />
+      </>
+    )
+  }
+
   // 四个主导航 Tab：移动端各自携带页面级 header / hero，底部统一走 MobileBottomNav。
   // 桌面端壳层不受影响。
   if (isHomePage) {
@@ -41,7 +59,7 @@ export default function LayoutContent({
     )
   }
 
-  if (isTravelPage || isCirclePage || isMePage || isSyncPage) {
+  if (isCirclePage || isMePage || isSyncPage) {
     return (
       <>
         {children}

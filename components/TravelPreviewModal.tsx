@@ -7,6 +7,10 @@ import { remark } from 'remark'
 import remarkGfm from 'remark-gfm'
 import remarkHtml from 'remark-html'
 
+// Markdown 预览渲染 KaTeX / 代码高亮所需样式（仅本组件加载）
+import 'katex/dist/katex.min.css'
+import 'highlight.js/styles/github-dark.css'
+
 interface VideoInfo {
   url: string
   thumbnail?: string
@@ -127,7 +131,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
               {mediaItems.length > 0 && (
                 <div className="mb-8">
                   {mediaItems.length === 1 ? (
-                    <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-travel-sakura via-[#E8D5E0] to-travel-mist">
+                    <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-travel-sakura via-travel-bloom/30 to-travel-mist">
                       {mediaItems[0].type === 'image' ? (
                         <Image
                           src={mediaItems[0].url}
@@ -154,7 +158,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                     </div>
                   ) : (
                     <>
-                      <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-travel-sakura via-[#E8D5E0] to-travel-mist">
+                      <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-travel-sakura via-travel-bloom/30 to-travel-mist">
                         <div className="relative aspect-[16/9] bg-travel-sakura/60 dark:bg-shell-surface2">
                           {mediaItems.map((item, index) => (
                             item.type === 'image' ? (

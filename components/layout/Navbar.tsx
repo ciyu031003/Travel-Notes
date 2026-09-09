@@ -151,6 +151,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-accent dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="搜索"
+            aria-label="搜索"
           >
             <Search className="w-5 h-5" />
           </Link>
@@ -162,6 +163,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 ? 'text-white/70 hover:bg-white/10'
                 : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
+            aria-label={isDark ? '切换到亮色模式' : '切换到暗色模式'}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
@@ -174,6 +176,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="管理后台"
+            aria-label="管理后台"
           >
             <Settings className="w-5 h-5" />
           </Link>
@@ -211,6 +214,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-accent dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="搜索"
+            aria-label="搜索"
           >
             <Search className="w-5 h-5" />
           </Link>
@@ -222,6 +226,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 ? 'text-white/70'
                 : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
+            aria-label={isDark ? '切换到亮色模式' : '切换到暗色模式'}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
@@ -234,6 +239,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
             title="管理后台"
+            aria-label="管理后台"
           >
             <Settings className="w-5 h-5" />
           </Link>
@@ -245,6 +251,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 ? 'text-white/70'
                 : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
             )}
+            aria-label={isMenuOpen ? '关闭导航菜单' : '打开导航菜单'}
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -323,4 +330,3 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
     </header>
   )
 }
-

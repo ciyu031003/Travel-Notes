@@ -23,7 +23,7 @@ type AsyncStateProps = {
  * - loading：转圈 + 文案
  * - error：警示图标 + 文案 + 可选「重试」
  * - empty：叙事性空状态（遵循设计规范「公开旅行为空时使用叙事性 Empty State」）
- * 全部使用 travel.* 暖色 token，替换各页面重复的 text-gray-500 占位。
+ * 全部使用 travel.* 暖色 token，替换各页面重复的冷灰色占位。
  */
 export default function AsyncState({
   variant,

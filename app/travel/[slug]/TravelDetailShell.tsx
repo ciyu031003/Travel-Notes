@@ -13,6 +13,10 @@ import dynamicImport from 'next/dynamic'
 import { apiUrl } from '@/lib/api-base'
 import { travelRecordHref } from '@/lib/routes'
 
+// 仅本页渲染服务端生成的 Markdown HTML（含 KaTeX 公式 / 代码高亮）时按需加载样式
+import 'katex/dist/katex.min.css'
+import 'highlight.js/styles/github-dark.css'
+
 const VideoPlayer = dynamicImport(() => import('@/components/VideoPlayer'))
 
 const TRAVEL_TYPE_LABELS: Record<string, string> = {
@@ -109,7 +113,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       <div className="container-custom pt-6">
         <Link
           href={travelRecordHref(slug)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-travel-sakura border border-travel-bloom/50 text-travel-ink rounded-full text-sm font-medium hover:bg-[#EED2D8] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-travel-sakura border border-travel-bloom/50 text-travel-ink rounded-full text-sm font-medium hover:bg-travel-bloom/25 transition-colors"
         >
           ✍️ 记录今日
         </Link>

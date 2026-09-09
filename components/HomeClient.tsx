@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, type ComponentType } from 'react'
+import { useState, useRef, useEffect, type ComponentType } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -13,10 +13,12 @@ import {
   CalendarDays,
   Image as ImageIcon,
   Smartphone,
+  BookOpen,
 } from 'lucide-react'
 import HeroFootprintMap from '@/components/home/HeroFootprintMap'
 import MomentsStrip from '@/components/moments/MomentsStrip'
 import { DanmakuSection, type DanmakuSectionHandle } from '@/components/home/DanmakuSection'
+import { apiUrl } from '@/lib/api-base'
 
 interface PostMeta {
   slug: string
@@ -41,6 +43,17 @@ interface HomeClientProps {
   travelPosts: PostMeta[]
   provincesVisitedCount: number
   anniversaries?: AnniversaryItem[]
+}
+
+/** 画册摘要（/api/travel-book 摘要口径，与移动端横滑条一致） */
+interface BookSummaryMeta {
+  bookKey: string
+  title: string
+  location: string | null
+  startDate: string | null
+  coverThumb: string | null
+  dayCount: number
+  photoCount: number
 }
 
 function daysUntil(date: string, recurring: boolean): number {
@@ -166,6 +179,86 @@ function FeatureCard({
     <button type="button" onClick={onClick} className={cls} onMouseMove={onMove}>
       {body}
     </button>
+  )
+}
+
+/** 首页画册目录（桌面版）：每个城市一本画册，摘要接口取前 8 本，点开进 /album 阅读 */
+function HomeBooks() {
+  const [books, setBooks] = useState<BookSummaryMeta[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(apiUrl('/api/travel-book'), { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (!cancelled && Array.isArray(json?.books)) setBooks(json.books.slice(0, 8))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (books.length === 0) return null
+
+  return (
+    <section className="px-3 pb-12 md:px-6 md:pb-16">
+      <div className="mx-auto max-w-7xl">
+        <div className="rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
+          <SectionTitle
+            icon={BookOpen}
+            action={
+              <Link
+                href="/album"
+                className="inline-flex items-center gap-1 text-xs text-travel-accent dark:text-travel-bloom transition-colors hover:text-travel-accentStrong"
+              >
+                全部画册
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            }
+          >
+            旅行画册 · 每个城市一本
+          </SectionTitle>
+
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-5">
+            {books.map((book, i) => (
+              <Link
+                key={book.bookKey}
+                href="/album"
+                title={book.title}
+                className="group overflow-hidden rounded-xl border border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-surface transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_12px_30px_-14px_rgba(168,95,58,0.35)]"
+                style={{ transform: i % 2 === 1 ? 'rotate(0.6deg)' : 'rotate(-0.6deg)' }}
+              >
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-travel-parchment via-travel-sakura/50 to-travel-mist/40 dark:from-shell-surface dark:via-shell-surface2 dark:to-shell-surface">
+                  {book.coverThumb ? (
+                    <Image
+                      src={book.coverThumb}
+                      alt={book.title}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <BookOpen className="h-8 w-8 text-travel-accentSoft dark:text-travel-bloom/60" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-3.5">
+                  <p className="line-clamp-1 font-medium text-travel-ink dark:text-shell-text transition-colors group-hover:text-travel-accent">
+                    {book.title}
+                  </p>
+                  <p className="mt-1 text-xs text-travel-ink dark:text-shell-muted">
+                    {book.location ? `${book.location} · ` : ''}
+                    {book.dayCount} 章 · {book.photoCount} 图
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -347,6 +440,9 @@ export default function HomeClient({
             </div>
           </div>
         </section>
+
+        {/* 旅行画册 · 每个城市一本 */}
+        <HomeBooks />
 
         {/* 碎碎念 */}
         <MomentsStrip />

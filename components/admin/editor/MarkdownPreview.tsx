@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 
+// 编辑器预览渲染服务端 Markdown HTML（KaTeX / 代码高亮）所需样式
+import 'katex/dist/katex.min.css'
+import 'highlight.js/styles/github-dark.css'
+
 export interface MarkdownPreviewProps {
   content: string
 }
