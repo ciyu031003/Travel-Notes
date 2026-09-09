@@ -14,6 +14,8 @@ import { apiUrl } from '@/lib/api-base'
 import { travelDetailHref } from '@/lib/routes'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { CountUp } from '@/components/mobile/CountUp'
+import { Stagger } from '@/components/mobile/Stagger'
 
 interface RecentTravel {
   id: number
@@ -312,7 +314,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             <div className="mt-8 grid grid-cols-3 divide-x divide-[var(--social-line)] rounded-[1.6rem] bg-[var(--social-surface-50)] py-7 ring-1 ring-[var(--social-line)]">
               {coreStats.map(([label, value]) => (
                 <div key={label} className="text-center">
-                  <div className="text-3xl font-semibold tracking-tight text-[var(--social-text)] tabular-nums sm:text-4xl">{value}</div>
+                  <CountUp value={value} mobileOnly className="text-3xl font-semibold tracking-tight text-[var(--social-text)] tabular-nums sm:text-4xl" />
                   <div className="mt-1.5 text-xs text-[var(--social-muted)]">{label}</div>
                 </div>
               ))}
@@ -345,7 +347,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">我的记忆</h2>
             <div className="h-px flex-1 bg-[var(--social-line)]" />
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Stagger className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4" delayBase={60} step={30}>
             {memories.map((m, i) => (
               <Link key={m.label} href={m.href}
                 className={cn('group relative overflow-hidden rounded-[1.4rem] ring-1 ring-[var(--social-line)] transition hover:ring-[var(--social-line-strong)] active:scale-[0.98]', i === 0 && 'ring-[var(--social-accent)]/40')}
@@ -370,7 +372,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 )}
               </Link>
             ))}
-          </div>
+          </Stagger>
         </section>
 
         {/* 我的旅行故事 */}
@@ -402,9 +404,9 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               <button onClick={loadPosts} className="mt-5 inline-block rounded-full bg-[var(--social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--social-on-accent)]">重新加载 →</button>
             </div>
           ) : posts.length > 0 ? (
-            <div className="mt-6 columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
+            <Stagger className="mt-6 columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]" delayBase={60} step={36}>
               {posts.slice(0, 6).map((p, i) => <SocialFilmCard key={p.id} {...cardProps(p, FRAMES[i % FRAMES.length])} className="mb-5 break-inside-avoid" />)}
-            </div>
+            </Stagger>
           ) : (
             <div className="mt-6 rounded-[2rem] bg-[var(--social-surface-50)] px-6 py-16 text-center ring-1 ring-[var(--social-line)]">
               <p className="text-sm text-[var(--social-text)]">还没有把故事分享出去。</p>

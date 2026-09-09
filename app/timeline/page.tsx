@@ -11,6 +11,7 @@ import { travelDetailHref } from '@/lib/routes'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
+import { Stagger } from '@/components/mobile/Stagger'
 
 interface TimelineEntry {
   id: number
@@ -114,7 +115,7 @@ export default function TimelinePage() {
                   <span className="h-px flex-1 bg-gradient-to-r from-travel-sakura/70 to-transparent" />
                 </h2>
 
-                <div className="space-y-5">
+                <Stagger className="space-y-5" delayBase={60} step={30}>
                   {entries.map((entry) => (
                     <div key={entry.type + '-' + entry.id} className="group relative">
                       <span className="absolute -left-8 top-7 h-3 w-3 -translate-x-1/2 rounded-full bg-[var(--surface,white)] ring-2 ring-travel-bloom/70 dark:bg-[#161B22] md:-left-12" />
@@ -132,7 +133,7 @@ export default function TimelinePage() {
                       )}
                     </div>
                   ))}
-                </div>
+                </Stagger>
               </section>
             ))}
           </div>

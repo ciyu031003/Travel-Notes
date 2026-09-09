@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
+import { MobilePageTransition } from '@/components/mobile/MobilePageTransition'
 import { cn } from '@/lib/utils'
 
 export default function LayoutContent({
@@ -28,18 +29,20 @@ export default function LayoutContent({
   // /travel 走标准壳：桌面端统一 Navbar + Footer，移动端走底部导航。
   if (isTravelPage) {
     return (
-      <>
-        <div className="hidden md:block">
-          <Navbar />
-        </div>
-        <main id="main-content" className="flex-1 pt-0 md:pt-16">
-          {children}
-        </main>
-        <div className="hidden md:block">
-          <Footer />
-        </div>
-        <MobileBottomNav />
-      </>
+      <MobilePageTransition>
+        <>
+          <div className="hidden md:block">
+            <Navbar />
+          </div>
+          <main id="main-content" className="flex-1 pt-0 md:pt-16">
+            {children}
+          </main>
+          <div className="hidden md:block">
+            <Footer />
+          </div>
+          <MobileBottomNav />
+        </>
+      </MobilePageTransition>
     )
   }
 
@@ -47,40 +50,46 @@ export default function LayoutContent({
   // 桌面端壳层不受影响。
   if (isHomePage) {
     return (
-      <>
-        <div className="hidden md:block">
-          <Navbar />
-        </div>
-        <main id="main-content" className="flex-1 pt-0 md:pt-16">
-          {children}
-        </main>
-        <MobileBottomNav />
-      </>
+      <MobilePageTransition>
+        <>
+          <div className="hidden md:block">
+            <Navbar />
+          </div>
+          <main id="main-content" className="flex-1 pt-0 md:pt-16">
+            {children}
+          </main>
+          <MobileBottomNav />
+        </>
+      </MobilePageTransition>
     )
   }
 
   if (isCirclePage || isMePage || isSyncPage) {
     return (
-      <>
-        {children}
-        <MobileBottomNav />
-      </>
+      <MobilePageTransition>
+        <>
+          {children}
+          <MobileBottomNav />
+        </>
+      </MobilePageTransition>
     )
   }
 
   // 次级页面（时间线 / 碎碎念 / 搜索等）：移动端仍保留全局导航用于返回与设置，
   // 但页脚仅在桌面展示，移动端不显示 Web 版页脚。
   return (
-    <>
-      <Navbar />
-      <main id="main-content" className="flex-1 pt-20 pb-24 md:pb-12">
-        {children}
-      </main>
-      <div className="hidden md:block">
-        <Footer />
-      </div>
-      <MobileBottomNav />
-    </>
+    <MobilePageTransition>
+      <>
+        <Navbar />
+        <main id="main-content" className="flex-1 pt-20 pb-24 md:pb-12">
+          {children}
+        </main>
+        <div className="hidden md:block">
+          <Footer />
+        </div>
+        <MobileBottomNav />
+      </>
+    </MobilePageTransition>
   )
 }
 

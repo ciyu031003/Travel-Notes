@@ -23,6 +23,8 @@ import { findProvinceByLocation } from '@/lib/province-map'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Skeleton, SkeletonCard, SkeletonLines } from '@/components/mobile/Skeleton'
+import { Stagger } from '@/components/mobile/Stagger'
+import { CountUp } from '@/components/mobile/CountUp'
 
 interface PostMeta {
   slug: string
@@ -234,7 +236,7 @@ function MobileMoments() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
+        <Stagger className="space-y-3" delayBase={120}>
           {items.map((moment) => (
             <Link key={moment.id} href="/moments" className="m-press m-card block p-4">
               <p className="whitespace-pre-wrap break-words text-[15px] leading-7 text-[var(--m-text)]">{moment.content}</p>
@@ -246,7 +248,7 @@ function MobileMoments() {
               </div>
             </Link>
           ))}
-        </div>
+        </Stagger>
       )}
     </section>
   )
@@ -340,14 +342,18 @@ export default function HomeMobile({
               {/* 统计卡可点击：省份/旅程 → 旅行地图（M3-2 动线） */}
               <Link href="/travel" className="m-press rounded-lg">
                 <div className="flex items-end gap-1.5">
-                  <span className="text-3xl font-bold tracking-tight text-[var(--m-accent-strong)]">{provincesVisitedCount}</span>
+                  <span className="text-3xl font-bold tracking-tight text-[var(--m-accent-strong)]">
+                    <CountUp value={provincesVisitedCount} className="tabular-nums" />
+                  </span>
                   <span className="pb-1 text-xs text-[var(--m-muted)]">个省份</span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--m-muted)]">已点亮足迹</p>
               </Link>
               <Link href="/travel" className="m-press rounded-lg">
                 <div className="flex items-end gap-1.5">
-                  <span className="text-3xl font-bold tracking-tight text-[var(--m-accent-strong)]">{travelPosts.length}</span>
+                  <span className="text-3xl font-bold tracking-tight text-[var(--m-accent-strong)]">
+                    <CountUp value={travelPosts.length} className="tabular-nums" />
+                  </span>
                   <span className="pb-1 text-xs text-[var(--m-muted)]">篇旅行</span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--m-muted)]">收藏沿途记忆</p>
@@ -395,7 +401,10 @@ export default function HomeMobile({
               <ArrowRight className="h-5 w-5 text-[var(--m-accent)]" />
             </Link>
           ) : (
-            <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Stagger
+              className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              delayBase={80}
+            >
               {recent.map((post) => (
                 <Link
                   key={post.slug}
@@ -429,7 +438,7 @@ export default function HomeMobile({
                   </div>
                 </Link>
               ))}
-            </div>
+            </Stagger>
           )}
         </section>
 
@@ -444,7 +453,7 @@ export default function HomeMobile({
                 重要日子
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <Stagger className="grid grid-cols-2 gap-3" delayBase={120}>
               {anniversaries.map((item, i) => {
                 const days = daysUntil(item.date, item.recurring)
                 const palettes = [
@@ -470,7 +479,7 @@ export default function HomeMobile({
                   </div>
                 )
               })}
-            </div>
+            </Stagger>
           </section>
           )}
 
@@ -482,7 +491,7 @@ export default function HomeMobile({
               更多玩法
             </span>
           </div>
-          <div className="space-y-3">
+          <Stagger className="space-y-3" delayBase={80}>
             <Link href="/timeline" className="m-list-item m-press m-card flex items-center gap-4 p-4">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F7E6D9] text-[var(--m-accent-strong)]">
                 <CalendarDays className="h-5 w-5" />
@@ -513,7 +522,7 @@ export default function HomeMobile({
               </span>
               <ArrowRight className="h-5 w-5 text-[var(--m-faint)]" />
             </Link>
-          </div>
+          </Stagger>
           </section>
         </div>
       </PullToRefresh>

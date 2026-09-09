@@ -12,6 +12,8 @@ import { getSyncEngine } from '@/lib/modules/offline/bootstrap'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Switch } from '@/components/mobile/Switch'
+import { CountUp } from '@/components/mobile/CountUp'
+import { Stagger } from '@/components/mobile/Stagger'
 
 type StatCounts = { PENDING: number; SYNCING: number; FAILED: number }
 
@@ -112,7 +114,7 @@ export default function SyncCenter() {
                 ['失败', stats.FAILED],
               ] as Array<[string, number]>).map(([label, value]) => (
                 <div key={label} className="rounded-[1.4rem] bg-[var(--social-surface-80)] p-5 text-center ring-1 ring-[var(--social-line)]">
-                  <div className="text-2xl font-semibold tabular-nums">{value}</div>
+                  <CountUp value={value} mobileOnly className="text-2xl font-semibold tabular-nums" />
                   <div className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--social-accent)]">{label}</div>
                 </div>
               ))}
@@ -140,7 +142,7 @@ export default function SyncCenter() {
                     <RefreshCw className="h-3.5 w-3.5" />全部重试
                   </button>
                 </div>
-                <div className="mt-4 space-y-2">
+                <Stagger className="mt-4 space-y-2" delayBase={60} step={30}>
                   {failed.map((f) => (
                     <div key={f.id} className="m-pressable flex items-center gap-3 rounded-[1.2rem] bg-[var(--social-surface-80)] px-4 py-3 ring-1 ring-[var(--social-line)]">
                       <div className="min-w-0 flex-1">
@@ -150,7 +152,7 @@ export default function SyncCenter() {
                       <button type="button" onClick={() => retryOne(f.id)} disabled={busy} className="rounded-full bg-[var(--social-accent-soft)] px-3 py-1.5 text-xs text-[var(--social-accent)] transition hover:bg-[var(--social-accent)] hover:text-[var(--social-on-accent)] active:scale-95 disabled:opacity-50">重试</button>
                     </div>
                   ))}
-                </div>
+                </Stagger>
               </section>
             )}
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getVisitorId } from '@/lib/visitor-id'
+import { hapticLight } from '@/lib/mobile/haptics'
 
 interface LikeButtonProps {
   targetType: 'post' | 'moment'
@@ -26,6 +27,7 @@ export default function LikeButton({
   const [state, setState] = useState<LikeState>({ count: 0, liked: false })
   const [loading, setLoading] = useState(false)
   const [ready, setReady] = useState(false)
+  const [popKey, setPopKey] = useState(0)
 
   const fetchState = useCallback(async (visitorId?: string) => {
     try {
@@ -59,6 +61,8 @@ export default function LikeButton({
     if (loading) return
     setLoading(true)
     // 乐观更新
+    setPopKey((k) => k + 1)
+    void hapticLight()
     setState((prev) => ({
       count: prev.liked ? Math.max(0, prev.count - 1) : prev.count + 1,
       liked: !prev.liked,
@@ -104,15 +108,16 @@ export default function LikeButton({
       )}
     >
       <Heart
+        key={popKey}
         className={cn(
           'transition-transform',
           sm ? 'w-3.5 h-3.5' : 'w-4 h-4',
-          state.liked && 'fill-travel-accent scale-110'
+          state.liked && 'fill-travel-accent scale-110',
+          state.liked && popKey > 0 && 'm-pop'
         )}
       />
       <span className="tabular-nums">{state.count > 0 ? state.count : '点赞'}</span>
     </button>
   )
 }
-
 

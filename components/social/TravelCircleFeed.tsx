@@ -15,6 +15,7 @@ import { SegmentedControl } from '@/components/mobile/SegmentedControl'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
+import { Stagger } from '@/components/mobile/Stagger'
 
 const TABS = [
   { key: 'recommended', label: '推荐' },
@@ -257,7 +258,7 @@ export default function TravelCircleFeed() {
           <>
             {/* 移动端：保留紧凑 hero 大图叙事（桌面端走瀑布流，避免全宽巨卡） */}
             {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="m-enter mb-8 md:hidden" />}
-            <div className="m-enter columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
+            <Stagger className="m-enter columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]" delayBase={60} step={36}>
               {posts.map((p, i) => (
                 <SocialFilmCard
                   key={p.id}
@@ -265,7 +266,7 @@ export default function TravelCircleFeed() {
                   className={cn('mb-5 break-inside-avoid', hero && p.id === hero.id && 'hidden md:block')}
                 />
               ))}
-            </div>
+            </Stagger>
             <div className="mt-6 flex justify-center">
               {hasMore ? (
                 <button type="button" onClick={loadMore} disabled={loadingMore}

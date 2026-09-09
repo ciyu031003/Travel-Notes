@@ -15,6 +15,8 @@ import MobileProvinceDrawer from '@/components/china-map/MobileProvinceDrawer'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 import { EmptyState } from '@/components/mobile/EmptyState'
+import { Stagger } from '@/components/mobile/Stagger'
+import { CountUp } from '@/components/mobile/CountUp'
 
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
 
@@ -128,7 +130,7 @@ export default function TravelMobileClient({
             <p className="text-[11px] font-semibold tracking-[0.22em] text-[var(--m-accent-strong)]">MY JOURNEYS</p>
             <h1 className="mt-2 text-[32px] font-bold leading-none tracking-[-0.03em] text-[var(--m-text)]">旅行记录</h1>
             <p className="mt-2 text-sm text-[var(--m-muted)]">
-              {posts.length} 篇旅途 · {provincesVisited} 个省 · {cityCount} 个城市
+              <CountUp value={posts.length} /> 篇旅途 · <CountUp value={provincesVisited} /> 个省 · <CountUp value={cityCount} /> 个城市
             </p>
           </div>
           <button
@@ -185,7 +187,7 @@ export default function TravelMobileClient({
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <Stagger className="space-y-4" delayBase={120} step={40}>
               {posts.map((post, index) => {
                 const cover = post.cover || post.images?.[0]
                 return (
@@ -234,7 +236,7 @@ export default function TravelMobileClient({
                   </Link>
                 )
               })}
-            </div>
+            </Stagger>
           )}
         </section>
 

@@ -129,6 +129,8 @@ html.dark {
 }
 .m-enter {
   animation: m-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* M4：在 Stagger 包裹下按 --m-delay 逐项入场；未包裹的既有元素默认 0ms，行为不变 */
+  animation-delay: var(--m-delay, 0ms);
 }
 
 @keyframes m-tab-pop {
@@ -165,7 +167,15 @@ html.dark {
 }
 
 .m-list-item {
-  animation: m-list-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--m-delay, 0ms);
+}
+
+/* M4：stagger 仅移动端生效——桌面端即使带上 m-list-item 类也保持零动画（零回归） */
+@media (max-width: 767.98px) {
+  .m-list-item {
+    animation: m-list-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--m-delay, 0ms);
+  }
 }
 
 @keyframes m-soft-pulse {
@@ -175,6 +185,28 @@ html.dark {
 
 .m-soft-pulse {
   animation: m-soft-pulse 3s ease-in-out infinite;
+}
+
+@keyframes m-page-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* M4：移动端路由淡入。只做 opacity——页面内含 position:fixed 元素，translate 会让 fixed 锚点错乱 */
+.m-page-fade {
+  animation: m-page-fade 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes m-pop {
+  0%   { transform: scale(0.6); }
+  45%  { transform: scale(1.28); }
+  70%  { transform: scale(0.94); }
+  100% { transform: scale(1.06); }
+}
+
+/* M4：点赞等成功反馈的图标弹簧（无 fill，动画结束后回落到底层缩放类） */
+.m-pop {
+  animation: m-pop 0.38s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ==========================================================================
@@ -418,7 +450,7 @@ html.dark .m-skeleton::after {
 @media (prefers-reduced-motion: reduce) {
   .m-spring, .m-press, .m-enter, .m-fab, .m-shimmer, .m-list-item, .m-soft-pulse,
   .m-pressable, .m-seg-thumb, .m-switch, .m-switch-knob, .m-sheet, .m-sheet-backdrop,
-  .m-skeleton::after, .m-ptr-spin, .m-action-item {
+  .m-skeleton::after, .m-ptr-spin, .m-action-item, .m-page-fade, .m-pop {
     animation: none !important;
     transition: none !important;
   }

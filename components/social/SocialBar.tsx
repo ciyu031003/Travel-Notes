@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Heart, MessageCircle, Bookmark } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toggleLike as offlineToggleLike, toggleFavorite as offlineToggleFavorite } from '@/lib/modules/offline/social-write'
+import { hapticLight } from '@/lib/mobile/haptics'
 
 interface SocialBarProps {
   postId: number
@@ -41,6 +42,7 @@ export default function SocialBar({
   const dark = variant === 'on-dark'
 
   const toggleLike = async () => {
+    void hapticLight()
     const prevLiked = isLiked
     const prevCount = likes
     const next = !prevLiked
@@ -51,6 +53,7 @@ export default function SocialBar({
   }
 
   const toggleFavorite = async () => {
+    void hapticLight()
     const prevFav = isFavorited
     const prevCount = favorites
     const next = !prevFav

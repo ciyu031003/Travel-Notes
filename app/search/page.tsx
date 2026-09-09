@@ -10,6 +10,7 @@ import { apiUrl } from '@/lib/api-base'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { SkeletonCard } from '@/components/mobile/Skeleton'
 import { EmptyState } from '@/components/mobile/EmptyState'
+import { Stagger } from '@/components/mobile/Stagger'
 
 interface SearchResult {
   id: number
@@ -340,7 +341,7 @@ function SearchContent() {
 
             {/* 结果列表 */}
             {!loading && hasResults && (
-              <div className="space-y-3">
+              <Stagger className="space-y-3" delayBase={80} step={30}>
                 {results.map((post) => (
                   <Link
                     key={`${post.slug}-${post.id}`}
@@ -378,7 +379,7 @@ function SearchContent() {
                     )}
                   </Link>
                 ))}
-              </div>
+              </Stagger>
             )}
           </div>
         </div>

@@ -8,6 +8,7 @@ import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalMoments } from '@/lib/modules/offline/moment-read'
 import { SkeletonCard } from '@/components/mobile/Skeleton'
+import { Stagger } from '@/components/mobile/Stagger'
 
 export interface MomentItem {
   id: number | string
@@ -121,8 +122,9 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
 
   return (
     <div className="space-y-4">
-      {moments.map((moment, idx) => (
-        <div key={moment.id} className="group relative pl-8">
+      <Stagger className="space-y-4" delayBase={60} step={30}>
+        {moments.map((moment, idx) => (
+          <div key={moment.id} className="group relative pl-8">
           {/* 时间线竖线 + 节点 */}
           {idx < moments.length - 1 && (
             <span className="absolute left-[9px] top-9 bottom-[-18px] w-px bg-gradient-to-b from-travel-bloom/70 via-travel-sakura/50 to-transparent dark:from-travel-accentStrong/40" />
@@ -158,8 +160,9 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
               <LikeButton targetType="moment" targetId={String(moment.id)} size="sm" />
             </div>
           </div>
-        </div>
-      ))}
+          </div>
+        ))}
+      </Stagger>
 
       {hasMore && (
         <div className="pt-2 text-center">

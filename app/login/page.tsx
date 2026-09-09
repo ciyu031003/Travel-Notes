@@ -9,6 +9,7 @@ import BrandLogo from '@/components/brand/BrandLogo'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
+import { hapticError, hapticSuccess } from '@/lib/mobile/haptics'
 
 const allCities = [
   '北京', '上海', '广州', '深圳', '杭州', '成都', '西安', '南京', '武汉',
@@ -75,13 +76,16 @@ function LoginPageContent() {
       })
 
       if (res.ok) {
+        void hapticSuccess()
         router.push(redirect)
       } else {
         const data = await res.json()
         setError(data.error || '登录失败')
+        void hapticError()
       }
     } catch {
       setError('网络错误，请重试')
+      void hapticError()
     } finally {
       setLoading(false)
     }
@@ -107,13 +111,16 @@ function LoginPageContent() {
         body: JSON.stringify({ username, password, rememberMe, clientType: isNativePlatform() ? 'app' : 'web' }),
       })
       if (res.ok) {
+        void hapticSuccess()
         router.push(redirect)
       } else {
         const data = await res.json()
         setError(data.error || '注册失败')
+        void hapticError()
       }
     } catch {
       setError('网络错误，请重试')
+      void hapticError()
     } finally {
       setIsRegistering(false)
     }
@@ -140,15 +147,18 @@ function LoginPageContent() {
       })
 
       if (res.ok) {
+        void hapticSuccess()
         setShowAlbumLock(false)
         setAlbumPassword('')
         router.push('/album')
       } else {
         const data = await res.json()
         setAlbumError(data.error || '验证失败')
+        void hapticError()
       }
     } catch {
       setAlbumError('网络错误，请重试')
+      void hapticError()
     } finally {
       setAlbumVerifying(false)
     }
