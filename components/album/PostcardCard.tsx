@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { BookOpen, Camera, MapPin } from 'lucide-react'
 import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import type { BookSummary } from '@/components/album/travel-book/TravelBook'
@@ -36,6 +36,7 @@ const fmtDate = formatDotDate
 
 export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOpen: () => void }) {
   const ref = useRef<HTMLButtonElement>(null)
+  const [imgLoaded, setImgLoaded] = useState(false)
   const seed = hashKey(book.bookKey || String(book.travelId))
   const rot = baseRot(seed)
   const shift = baseShift(seed)
@@ -94,8 +95,24 @@ export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOp
       <span className="pcard-inner">
         <span className="pcard-media">
           {cover ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={cover} alt={book.title} loading="lazy" />
+            <>
+              {book.coverBlur && (
+                <span
+                  className="pcard-blur"
+                  style={{ backgroundImage: `url(${book.coverBlur})` }}
+                  aria-hidden="true"
+                />
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={cover}
+                alt={book.title}
+                loading="lazy"
+                className={imgLoaded ? 'is-img-loaded' : ''}
+                onLoad={() => setImgLoaded(true)}
+                onError={() => setImgLoaded(true)}
+              />
+            </>
           ) : (
             /* 空封面：布纹纸底 + 书名首字 + 细线框，替代裸相机占位 */
             <span className="pcard-empty" aria-hidden="true">

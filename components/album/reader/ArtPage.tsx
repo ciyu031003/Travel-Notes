@@ -1,6 +1,6 @@
 'use client'
 
-import type { SyntheticEvent } from 'react'
+import { useState, type SyntheticEvent } from 'react'
 import { MOOD_LABEL, formatDay } from '@/lib/modules/album/presentation'
 import type { Book, BookChapter, BookPhoto } from '../travel-book/TravelBook'
 
@@ -31,13 +31,28 @@ export function photoOrientation(
 
 /* ---------- 封面（cloth 布面 + 书名/副标题/封面图） ---------- */
 export function ArtCoverPage({ book }: { book: Book }) {
+  const [loaded, setLoaded] = useState(false)
   return (
     <div className="art-page cloth">
       <h2 className="cover-title">{book.title}</h2>
       {book.location && <p className="cover-subtitle">{book.location}</p>}
       {book.coverPreview && (
         <figure className="cover-plate">
-          <img src={book.coverPreview} alt={book.title} />
+          {book.coverBlur && (
+            <span
+              className="photo-blur"
+              style={{ backgroundImage: `url(${book.coverBlur})` }}
+              aria-hidden="true"
+            />
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={book.coverPreview}
+            alt={book.title}
+            className={loaded ? 'is-img-loaded' : ''}
+            onLoad={() => setLoaded(true)}
+            onError={() => setLoaded(true)}
+          />
         </figure>
       )}
       <p className="cover-foot">
@@ -134,6 +149,7 @@ export function ArtPhotoSpread({
   variant?: PhotoVariant
   onPhotoMeasure?: (id: number, w: number, h: number) => void
 }) {
+  const [loaded, setLoaded] = useState(false)
   const realSrc = photo.previewUrl || photo.thumbnailUrl
   const photoAlt = chapter.title
     ? chapter.title + (chapter.date ? ' · ' + formatDay(chapter.date) : '')
@@ -153,12 +169,23 @@ export function ArtPhotoSpread({
     return (
       <div className={`art-page paper spread-photo${isLeft ? ' verso' : ''} ${variant}`}>
         <figure className="plate full">
+          {photo.blurUrl && (
+            <span
+              className="photo-blur"
+              style={{ backgroundImage: `url(${photo.blurUrl})` }}
+              aria-hidden="true"
+            />
+          )}
           <img
             src={realSrc || ''}
             alt={photoAlt}
             loading="lazy"
-            className="spread-img"
-            onLoad={handleLoad}
+            className={loaded ? 'spread-img is-img-loaded' : 'spread-img'}
+            onLoad={(e) => {
+              handleLoad(e)
+              setLoaded(true)
+            }}
+            onError={() => setLoaded(true)}
           />
         </figure>
         <span className={`oil-edge ${isLeft ? 'oil-tl' : 'oil-tr'}`} aria-hidden="true" />
@@ -173,7 +200,24 @@ export function ArtPhotoSpread({
   return (
     <div className="art-page paper painted">
       <figure className="plate full single-photo">
-        <img src={realSrc || ''} alt={photoAlt} loading="lazy" onLoad={handleLoad} />
+        {photo.blurUrl && (
+          <span
+            className="photo-blur"
+            style={{ backgroundImage: `url(${photo.blurUrl})` }}
+            aria-hidden="true"
+          />
+        )}
+        <img
+          src={realSrc || ''}
+          alt={photoAlt}
+          loading="lazy"
+          className={loaded ? 'is-img-loaded' : ''}
+          onLoad={(e) => {
+            handleLoad(e)
+            setLoaded(true)
+          }}
+          onError={() => setLoaded(true)}
+        />
       </figure>
       <span className="oil-edge oil-tl" aria-hidden="true" />
       <span className="oil-edge oil-tr" aria-hidden="true" />

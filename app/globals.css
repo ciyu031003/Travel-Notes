@@ -1415,6 +1415,27 @@ html.dark {
 }
 .art-page .plate.full img { object-fit: cover; }
 
+/* blurUrl 模糊占位 + 图片载入淡入（封面 / 照片页） */
+.art-page .cover-plate img,
+.art-page .plate img {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.art-page .cover-plate img.is-img-loaded,
+.art-page .plate img.is-img-loaded {
+  opacity: 1;
+}
+.art-page .photo-blur {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(18px) saturate(1.08);
+  transform: scale(1.1);
+  pointer-events: none;
+}
+
 /* 竖屏照片单页：contain 完整展示，不裁剪头脚 */
 .art-page .plate.full.single-photo img { object-fit: contain; }
 

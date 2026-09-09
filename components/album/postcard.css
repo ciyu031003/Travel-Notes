@@ -80,6 +80,21 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  opacity: 0;
+  transition: opacity 0.55s ease;
+}
+.pcard-media img.is-img-loaded {
+  opacity: 1;
+}
+.pcard-blur {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(16px) saturate(1.08);
+  transform: scale(1.08);
+  pointer-events: none;
+  z-index: 0;
 }
 .pcard-media .pcard-empty {
   display: flex;
