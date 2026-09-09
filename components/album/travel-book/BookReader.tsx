@@ -4,25 +4,50 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import type { Book, BookChapter, BookPhoto } from './TravelBook'
 import ArtFlipBook, { type ArtFlipBookHandle } from '../reader/ArtFlipBook'
-import { ArtPageBody, type ArtPage } from '../reader/ArtPage'
+import {
+  ArtPageBody,
+  photoOrientation,
+  type ArtPage,
+  type PhotoVariant,
+} from '../reader/ArtPage'
 
 type Page =
   | { kind: 'cover' }
   | { kind: 'chapter'; chapter: BookChapter }
-  | { kind: 'photo'; chapter: BookChapter; photo: BookPhoto }
+  | { kind: 'photo'; chapter: BookChapter; photo: BookPhoto; variant: PhotoVariant }
+  | { kind: 'blank'; chapter?: BookChapter }
   | { kind: 'summary' }
 
 /** 封面 → 章节标题/照片 → 总结，顺序与 demo 的 page-flip 页面序列一致。 */
-function buildPages(book: Book): Page[] {
+type MeasuredMap = Record<number, { w: number; h: number }>
+
+/** 封面 -> 章节标题/照片 -> 总结；横屏照片跨两页出血，竖屏照片单页完整展示。 */
+function buildPages(book: Book, measured: MeasuredMap): Page[] {
   const pages: Page[] = [{ kind: 'cover' }]
+  // 封面之后已排版页数：page-flip 双页模式按 (奇数页, 偶数页) 成对铺开，
+  // 跨页照片必须落在奇数页起始，否则左右半页会错位配对。
+  let placed = 0
+  const push = (page: Page) => {
+    pages.push(page)
+    placed += 1
+  }
   for (const chapter of book.chapters) {
     if (chapter.photos.length === 0) continue
-    pages.push({ kind: 'chapter', chapter })
+    push({ kind: 'chapter', chapter })
     for (const photo of chapter.photos) {
-      pages.push({ kind: 'photo', chapter, photo })
+      const isLandscape =
+        photoOrientation(photo, measured[photo.id] ?? null) === 'landscape'
+      if (!isLandscape) {
+        push({ kind: 'photo', chapter, photo, variant: 'single' })
+        continue
+      }
+      // 奇数页落单时先补一张空白衬页，保证跨页左右成对
+      if (placed % 2 === 1) push({ kind: 'blank', chapter })
+      push({ kind: 'photo', chapter, photo, variant: 'spread-left' })
+      push({ kind: 'photo', chapter, photo, variant: 'spread-right' })
     }
   }
-  pages.push({ kind: 'summary' })
+  push({ kind: 'summary' })
   return pages
 }
 
@@ -30,22 +55,36 @@ function pageToArtPage(page: Page, _book: Book): ArtPage {
   switch (page.kind) {
     case 'cover': return { kind: 'cover' }
     case 'chapter': return { kind: 'chapter', chapter: page.chapter }
-    case 'photo': return { kind: 'photo', chapter: page.chapter, photo: page.photo }
+    case 'photo': return { kind: 'photo', chapter: page.chapter, photo: page.photo, variant: page.variant }
+    case 'blank': return { kind: 'blank', chapter: page.chapter }
     case 'summary': return { kind: 'summary' }
     default: return { kind: 'cover' }
   }
 }
 
 export default function BookReader({ book, onBack }: { book: Book; onBack: () => void }) {
-  const pages = useMemo(() => buildPages(book), [book])
+  const [measured, setMeasured] = useState<MeasuredMap>({})
+  const onPhotoMeasured = useCallback((id: number, w: number, h: number) => {
+    setMeasured((prev) => {
+      const cur = prev[id]
+      if (cur && cur.w === w && cur.h === h) return prev
+      return { ...prev, [id]: { w, h } }
+    })
+  }, [])
+  const pages = useMemo(() => buildPages(book, measured), [book, measured])
   const artFlipRef = useRef<ArtFlipBookHandle>(null)
   const [artPageIndex, setArtPageIndex] = useState(0)
 
   const artPages = useMemo(() =>
     pages.map((page, i) => (
-      <ArtPageBody key={i} page={pageToArtPage(page, book)} book={book} />
+      <ArtPageBody
+        key={i}
+        page={pageToArtPage(page, book)}
+        book={book}
+        onPhotoMeasure={onPhotoMeasured}
+      />
     )),
-    [pages, book],
+    [pages, book, onPhotoMeasured],
   )
 
   const handleArtPageChange = useCallback((idx: number) => {

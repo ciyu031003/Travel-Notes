@@ -1233,6 +1233,37 @@ html.dark {
 }
 .art-page .plate.full img { object-fit: cover; }
 
+/* 竖屏照片单页：contain 完整展示，不裁剪头脚 */
+.art-page .plate.full.single-photo img { object-fit: contain; }
+
+/* 横屏照片跨页：整幅出血，左右两页各显一半，接缝无缝拼接 */
+.art-page.spread-photo { background: transparent; }
+.art-page.spread-photo .spread-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 200%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+}
+.art-page.spread-photo.spread-right .spread-img { left: -100%; }
+.art-page.spread-photo .oil-edge { z-index: 3; }
+
+/* 空白衬页：跨页配平用，淡油角 + 居中章节角标 */
+.art-page.blank-page { background: #f4f1e6; }
+.art-page.blank-page .blank-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font: 400 2cqw/1 var(--art-serif);
+  color: rgba(94, 98, 86, 0.55);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
 /* 书页边缘油画点缀：四角暖色笔触晕染（赭石/土黄/苔绿），内衬双线画框 */
 .art-page .oil-edge {
   position: absolute;
@@ -1273,7 +1304,8 @@ html.dark {
 
 /* 照片页页码：白晕描边便于在图片上阅读 */
 .art-page .folio { z-index: 4; }
-.art-page.painted .folio {
+.art-page.painted .folio,
+.art-page.spread-photo .folio {
   color: #faf6ec;
   text-shadow:
     0 1px 2px rgba(30, 26, 18, 0.55),
@@ -1325,4 +1357,15 @@ html.dark {
 }
 .art-flipbook-container .art-page img {
   filter: saturate(0.92) contrast(1.03) sepia(0.07);
+}
+
+/* 单页模式（窄屏，page-flip portrait）降级：
+   跨页照片退化为单页全图 contain，保证头脚完整不裁切 */
+@media (max-width: 640px) {
+  .art-page.spread-photo .spread-img,
+  .art-page.spread-photo.spread-right .spread-img {
+    width: 100%;
+    left: 0;
+    object-fit: contain;
+  }
 }
