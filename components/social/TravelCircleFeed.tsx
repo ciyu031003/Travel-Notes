@@ -10,6 +10,11 @@ import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialFeed } from '@/lib/modules/offline/social-read'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
+import { SegmentedControl } from '@/components/mobile/SegmentedControl'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { EmptyState } from '@/components/mobile/EmptyState'
+import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 
 const TABS = [
   { key: 'recommended', label: '推荐' },
@@ -133,7 +138,8 @@ export default function TravelCircleFeed() {
     <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.06),transparent_60%)]" />
       <div className="relative mx-auto max-w-6xl px-4 pb-8 pt-[max(26px,env(safe-area-inset-top))] sm:px-6 sm:pt-8">
-        <header className="m-enter mb-7 flex items-start justify-between gap-4">
+        <PullToRefresh onRefresh={() => load(tab, 1, false)}>
+        <header className="m-enter mb-7 hidden items-start justify-between gap-4 md:flex">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--social-accent)]">Travel Circle</p>
             <h1 className="mt-1.5 text-[30px] font-semibold leading-none tracking-tight text-[var(--social-text)]">旅行圈</h1>
@@ -147,6 +153,15 @@ export default function TravelCircleFeed() {
           </div>
         </header>
 
+        {/* 移动端：iOS 大标题 + 分段控制器 */}
+        <div className="md:hidden">
+          <LargeTitle
+            title="旅行圈"
+            subtitle="看看别人眼中的世界，发现正在发生的旅途。"
+            trailing={<SocialThemeToggle />}
+          />
+        </div>
+
         {offline && (
           <div className="mb-6 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
             <WifiOff className="h-3.5 w-3.5" />
@@ -154,7 +169,15 @@ export default function TravelCircleFeed() {
           </div>
         )}
 
-        <div className="sticky top-[max(10px,env(safe-area-inset-top))] z-20 mb-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 pt-1 backdrop-blur-sm [mask-image:linear-gradient(to_right,transparent,black_8px,black_calc(100%-8px),transparent)]">
+        <div className="mb-4 md:hidden">
+          <SegmentedControl
+            value={tab}
+            options={TABS.map((t) => ({ value: t.key, label: t.label }))}
+            onChange={switchTab}
+          />
+        </div>
+
+        <div className="sticky top-[max(10px,env(safe-area-inset-top))] z-20 mb-4 -mx-4 hidden gap-2 overflow-x-auto px-4 pb-2 pt-1 backdrop-blur-sm md:flex [mask-image:linear-gradient(to_right,transparent,black_8px,black_calc(100%-8px),transparent)]">
           {TABS.map((t) => (
             <button key={t.key} type="button" onClick={() => switchTab(t.key)}
               className={cn('shrink-0 rounded-full px-4 py-2 text-sm transition active:scale-95',
@@ -174,7 +197,7 @@ export default function TravelCircleFeed() {
               const active = activeTheme === theme
               return (
                 <button key={theme} type="button" onClick={() => setActiveTheme(active ? null : theme)}
-                  className={cn('shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-xs transition',
+                  className={cn('shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-xs transition active:scale-95',
                     active
                       ? 'bg-[var(--social-accent)] text-[var(--social-on-accent)]'
                       : 'text-[var(--social-muted)] hover:bg-[var(--social-accent-soft)] hover:text-[var(--social-accent)]')}>
@@ -186,11 +209,31 @@ export default function TravelCircleFeed() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center gap-3 py-28 text-[var(--social-faint)]"><Loader2 className="h-7 w-7 animate-spin text-[var(--social-accent)]" /><span className="text-sm">正在翻阅旅行相册…</span></div>
+          <>
+            <div className="hidden flex-col items-center gap-3 py-28 text-[var(--social-faint)] md:flex"><Loader2 className="h-7 w-7 animate-spin text-[var(--social-accent)]" /><span className="text-sm">正在翻阅旅行相册…</span></div>
+            <div className="space-y-4 md:hidden">
+              <Skeleton className="h-72 w-full !rounded-[26px]" />
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+          </>
         ) : error ? (
-          <div className="py-20 text-center text-sm text-[var(--social-muted)]">{error}</div>
+          <>
+            <div className="hidden py-20 text-center text-sm text-[var(--social-muted)] md:block">{error}</div>
+            <div className="md:hidden">
+              <EmptyState
+                icon={WifiOff}
+                title="网络开小差了"
+                description={error}
+                action={
+                  <button type="button" onClick={() => load(tab, 1, false)} className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm">重新加载</button>
+                }
+              />
+            </div>
+          </>
         ) : posts.length === 0 ? (
-          <div className="relative overflow-hidden rounded-[2rem] bg-[var(--social-surface-60)] px-6 py-28 text-center ring-1 ring-[var(--social-line)]">
+          <>
+          <div className="relative hidden overflow-hidden rounded-[2rem] bg-[var(--social-surface-60)] px-6 py-28 text-center ring-1 ring-[var(--social-line)] md:block">
             <div className="absolute inset-0 bg-[radial-gradient(40%_50%_at_50%_30%,rgba(232,179,106,0.08),transparent_70%)]" />
             <div className="relative">
               <Compass className="mx-auto h-10 w-10 text-[var(--social-accent)]" />
@@ -199,6 +242,17 @@ export default function TravelCircleFeed() {
               <button type="button" onClick={() => router.push('/travel')} className="mt-6 rounded-full bg-[var(--social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--social-on-accent)]">去我的旅行</button>
             </div>
           </div>
+          <div className="md:hidden">
+            <EmptyState
+              icon={Compass}
+              title="这里还没有故事"
+              description="去看看自己的旅途，也许下一段故事就从那里开始。"
+              action={
+                <button type="button" onClick={() => router.push('/travel')} className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm">去我的旅行</button>
+              }
+            />
+          </div>
+          </>
         ) : (
           <>
             {/* 移动端：保留紧凑 hero 大图叙事（桌面端走瀑布流，避免全宽巨卡） */}
@@ -215,7 +269,7 @@ export default function TravelCircleFeed() {
             <div className="mt-6 flex justify-center">
               {hasMore ? (
                 <button type="button" onClick={loadMore} disabled={loadingMore}
-                  className="rounded-full bg-[var(--social-surface)] px-6 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)] disabled:opacity-50">
+                  className="rounded-full bg-[var(--social-surface)] px-6 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)] active:scale-95 disabled:opacity-50">
                   {loadingMore ? '加载中…' : '加载更多'}
                 </button>
               ) : (
@@ -224,6 +278,7 @@ export default function TravelCircleFeed() {
             </div>
           </>
         )}
+        </PullToRefresh>
       </div>
     </div>
   )

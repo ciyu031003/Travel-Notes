@@ -12,6 +12,9 @@ import { findCityByName, type City } from '@/data/cities'
 import { apiUrl } from '@/lib/api-base'
 import { travelDetailHref } from '@/lib/routes'
 import MobileProvinceDrawer from '@/components/china-map/MobileProvinceDrawer'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
+import { EmptyState } from '@/components/mobile/EmptyState'
 
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
 
@@ -29,9 +32,11 @@ interface PostMeta {
 export default function TravelMobileClient({
   posts,
   offline = false,
+  onRefresh = async () => {},
 }: {
   posts: PostMeta[]
   offline?: boolean
+  onRefresh?: () => Promise<unknown> | void
 }) {
   const router = useRouter()
   const [selectedProvinceId, setSelectedProvinceId] = useState<string | null>(null)
@@ -108,7 +113,8 @@ export default function TravelMobileClient({
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[340px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(191,205,216,0.26),transparent_72%),radial-gradient(35%_35%_at_100%_0%,rgba(228,180,120,0.12),transparent_60%)]" />
 
-      <div className="relative z-10">
+      <PullToRefresh onRefresh={onRefresh}>
+        <div className="relative z-10">
         {offline && (
           <div className="m-chip mx-4 mt-3 flex h-auto items-center gap-2 rounded-2xl bg-[var(--m-accent-soft)] px-4 py-3 text-xs text-[var(--m-accent-strong)]">
             <WifiOff className="h-4 w-4 shrink-0" />
@@ -252,7 +258,57 @@ export default function TravelMobileClient({
           onCityClick={handleCitySelect}
           onBack={() => setSelectedCity(null)}
         />
+        </div>
+      </PullToRefresh>
+    </div>
+  )
+}
+
+/** 旅行页移动端加载骨架 / 错误态（替代 AsyncState 整页转圈） */
+export function TravelMobileLoading({ message }: { message?: string }) {
+  if (message) {
+    return (
+      <div className="flex min-h-screen flex-col bg-[var(--m-bg)] pt-[max(48px,env(safe-area-inset-top))] text-[var(--m-text)]">
+        <EmptyState
+          icon={MapPin}
+          title="旅行记录加载失败"
+          description={message}
+          action={
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm"
+            >
+              重新加载
+            </button>
+          }
+        />
       </div>
+    )
+  }
+  return (
+    <div className="min-h-screen bg-[var(--m-bg)] text-[var(--m-text)]">
+      <div className="space-y-5 px-5 pb-10 pt-[max(40px,env(safe-area-inset-top))]">
+        <div>
+          <Skeleton className="h-3.5 w-24" />
+          <Skeleton className="mt-3 h-9 w-44" />
+          <SkeletonLines2 />
+        </div>
+        <div className="m-card overflow-hidden">
+          <Skeleton className="m-0 h-[310px] w-full !rounded-none" />
+        </div>
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    </div>
+  )
+}
+
+function SkeletonLines2() {
+  return (
+    <div className="mt-2.5 flex flex-col gap-2" aria-hidden="true">
+      <Skeleton className="h-3 w-40" />
+      <Skeleton className="h-3 w-28" />
     </div>
   )
 }

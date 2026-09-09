@@ -8,6 +8,9 @@ import { formatDate } from '@/lib/utils'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 import { travelDetailHref } from '@/lib/routes'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 
 interface TimelineEntry {
   id: number
@@ -33,7 +36,7 @@ interface TimelineApiData {
 
 export default function TimelinePage() {
   // 阶段 A · A2：统一取数层
-  const { data, error, loading } = useApi<TimelineApiData>(apiUrl('/api/timeline'))
+  const { data, error, loading, reload } = useApi<TimelineApiData>(apiUrl('/api/timeline'))
   const years = data?.years ?? []
 
   if (error) {
@@ -49,7 +52,8 @@ export default function TimelinePage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(228,180,120,0.16),transparent_72%)]" />
 
       <div className="relative container-custom py-10 md:py-14">
-        <header className="mb-12 text-center">
+        <PullToRefresh onRefresh={reload}>
+        <header className="mb-12 hidden text-center md:block">
           <h1 className="text-3xl font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-5xl">走过的时光</h1>
           <div className="mx-auto mt-4 flex items-center justify-center gap-3">
             <span className="h-px w-10 bg-travel-bloom/60" />
@@ -65,16 +69,40 @@ export default function TimelinePage() {
           </p>
         </header>
 
+        {/* 移动端：iOS 大标题 */}
+        <div className="md:hidden">
+          <LargeTitle
+            title="走过的时光"
+            subtitle={loading ? '正在翻阅…' : `${travelCount} 段旅程 · ${memoryCount} 段回忆`}
+          />
+        </div>
+
         {loading ? (
-          <TimelineSkeleton />
+          <>
+            <div className="hidden md:block">
+              <TimelineSkeleton />
+            </div>
+            <div className="md:hidden">
+              <TimelineMobileSkeleton />
+            </div>
+          </>
         ) : years.length === 0 ? (
-          <div className="relative mx-auto max-w-xl rounded-2xl border border-travel-line/70 bg-white/90 px-6 py-14 text-center shadow-[0_18px_40px_-28px_rgba(90,102,112,0.4)] dark:bg-shell-surface/90">
+          <>
+          <div className="relative mx-auto hidden max-w-xl rounded-2xl border border-travel-line/70 bg-white/90 px-6 py-14 text-center shadow-[0_18px_40px_-28px_rgba(90,102,112,0.4)] dark:bg-shell-surface/90 md:block">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-travel-sakura/60 text-travel-accent">
               <Sparkles className="h-7 w-7" />
             </div>
             <p className="mt-4 text-base font-medium text-travel-inkStrong dark:text-shell-text">时间线还是空的</p>
             <p className="mt-1 text-sm text-travel-ink/60 dark:text-shell-muted">从第一段旅行开始，慢慢收藏路上的光</p>
           </div>
+          <div className="m-card mx-0 p-6 md:hidden">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
+              <Sparkles className="h-7 w-7" />
+            </div>
+            <p className="mt-4 text-center text-base font-semibold text-[var(--m-text)]">时间线还是空的</p>
+            <p className="mt-1 text-center text-sm text-[var(--m-muted)]">从第一段旅行开始，慢慢收藏路上的光</p>
+          </div>
+          </>
         ) : (
           <div className="relative mx-auto max-w-3xl">
             {years.map(({ year, entries }) => (
@@ -93,12 +121,12 @@ export default function TimelinePage() {
                       {entry.type === 'travel' && entry.slug ? (
                         <Link
                           href={travelDetailHref(entry.slug)}
-                          className="block rounded-2xl border border-travel-line/70 bg-white/90 p-5 shadow-[0_14px_34px_-24px_rgba(90,102,112,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_20px_44px_-24px_rgba(168,95,58,0.4)] dark:bg-shell-surface/90"
+                          className="block rounded-[22px] border border-travel-line/70 bg-white/90 p-5 shadow-[0_14px_34px_-24px_rgba(90,102,112,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_20px_44px_-24px_rgba(168,95,58,0.4)] active:scale-[0.98] dark:bg-shell-surface/90 md:rounded-2xl"
                         >
                           <TimelineItem entry={entry} />
                         </Link>
                       ) : (
-                        <div className="rounded-2xl border border-travel-line/70 bg-white/80 p-5 shadow-[0_14px_34px_-26px_rgba(90,102,112,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/50 dark:bg-shell-surface/80">
+                        <div className="rounded-[22px] border border-travel-line/70 bg-white/80 p-5 shadow-[0_14px_34px_-26px_rgba(90,102,112,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/50 active:scale-[0.98] dark:bg-shell-surface/80 md:rounded-2xl">
                           <TimelineItem entry={entry} />
                         </div>
                       )}
@@ -109,7 +137,26 @@ export default function TimelinePage() {
             ))}
           </div>
         )}
+        </PullToRefresh>
       </div>
+    </div>
+  )
+}
+
+/** 移动端时间线骨架：年份块 + 卡片（m-* 设计系统占位） */
+function TimelineMobileSkeleton() {
+  return (
+    <div className="mx-auto max-w-3xl" aria-hidden="true">
+      {[0, 1].map((block) => (
+        <div key={block} className="mb-10">
+          <Skeleton className="h-8 w-24" />
+          <div className="mt-5 space-y-4">
+            {[0, 1, 2].map((card) => (
+              <SkeletonCard key={card} />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

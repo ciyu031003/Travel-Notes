@@ -12,6 +12,8 @@ import SpacePanel from '@/components/space/SpacePanel'
 import { Modal } from '@/components/ui/Modal'
 import { apiUrl } from '@/lib/api-base'
 import { travelDetailHref } from '@/lib/routes'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 
 interface RecentTravel {
   id: number
@@ -99,6 +101,18 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
       .then((r) => r.json())
       .then((j) => { if (j.data?.unread != null) setUnread(j.data.unread) })
       .catch(() => {})
+  }, [loadPosts])
+
+  // M2：下拉刷新 —— 重拉旅行故事 + 我的档案（保留本地编辑态，失败静默）
+  const refreshAll = useCallback(async () => {
+    await loadPosts()
+    try {
+      const r = await fetch(apiUrl('/api/me'), { credentials: 'include' })
+      const j = await r.json()
+      if (j?.data) setProfile(j.data)
+    } catch {
+      // 保留现有档案
+    }
   }, [loadPosts])
 
   const saveProfile = async () => {
@@ -203,7 +217,25 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.05),transparent_60%)]" />
       <div className="relative mx-auto max-w-5xl px-4 pb-6 pt-[max(24px,env(safe-area-inset-top))] sm:px-6 sm:pt-8">
-        <header className="mb-8 flex items-start justify-between gap-3">
+        <PullToRefresh onRefresh={refreshAll}>
+        {/* 移动端：iOS 大标题 + 关键操作 */}
+        <div className="md:hidden">
+          <LargeTitle
+            title="我的旅行档案"
+            subtitle={displayName}
+            trailing={
+              <div className="flex items-center gap-2">
+                <SocialThemeToggle />
+                <Link href="/me/notifications" aria-label="通知" className="m-pressable relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)]">
+                  <span className="text-base">✦</span>
+                  {unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}
+                </Link>
+              </div>
+            }
+          />
+        </div>
+
+        <header className="mb-8 hidden items-start justify-between gap-3 md:flex">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--social-accent)]">My Archive</p>
             <h1 className="mt-1.5 truncate text-[30px] font-semibold leading-none tracking-tight">我的旅行档案</h1>
@@ -316,7 +348,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {memories.map((m, i) => (
               <Link key={m.label} href={m.href}
-                className={cn('group relative overflow-hidden rounded-[1.4rem] ring-1 ring-[var(--social-line)] transition hover:ring-[var(--social-line-strong)]', i === 0 && 'ring-[var(--social-accent)]/40')}
+                className={cn('group relative overflow-hidden rounded-[1.4rem] ring-1 ring-[var(--social-line)] transition hover:ring-[var(--social-line-strong)] active:scale-[0.98]', i === 0 && 'ring-[var(--social-accent)]/40')}
                 style={m.photo ? { aspectRatio: '1 / 1' } : { minHeight: '120px' }}>
                 {m.photo ? (
                   <>
@@ -408,6 +440,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             <LogOut className="h-3.5 w-3.5" />退出登录
           </button>
         </div>
+        </PullToRefresh>
       </div>
 
       {showSpace && <SpacePanel open={showSpace} onClose={() => setShowSpace(false)} />}

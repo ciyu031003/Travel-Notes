@@ -14,11 +14,15 @@ import {
   Sparkles,
   BarChart3,
   BookOpen,
+  WifiOff,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
 import { findProvinceByLocation } from '@/lib/province-map'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { EmptyState } from '@/components/mobile/EmptyState'
+import { Skeleton, SkeletonCard, SkeletonLines } from '@/components/mobile/Skeleton'
 
 interface PostMeta {
   slug: string
@@ -73,6 +77,14 @@ function dailyQuote(): string {
   const start = new Date(now.getFullYear(), 0, 0).getTime()
   const day = Math.floor((now.getTime() - start) / 86400000)
   return DAILY_QUOTES[day % DAILY_QUOTES.length]
+}
+
+function greeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 6) return '夜深了，还在回味旅途吗？'
+  if (hour < 12) return '早上好，今天也要出发吗？'
+  if (hour < 18) return '下午好，抬头看看窗外的云'
+  return '晚上好，翻开今天的旅行记忆'
 }
 
 function daysUntil(date: string, recurring: boolean): number {
@@ -244,10 +256,12 @@ export default function HomeMobile({
   travelPosts,
   provincesVisitedCount,
   anniversaries = [],
+  onRefresh = async () => {},
 }: {
   travelPosts: PostMeta[]
   provincesVisitedCount: number
   anniversaries?: AnniversaryItem[]
+  onRefresh?: () => Promise<unknown> | void
 }) {
   const quote = dailyQuote()
   const recent = travelPosts.slice(0, 6)
@@ -269,14 +283,16 @@ export default function HomeMobile({
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(231,174,113,0.22),transparent_70%)]" />
 
-      <div className="relative z-10">
-        {/* M3 移动 Hero：色彩更丰富，信息更聚焦 */}
-        <section className="relative overflow-hidden px-5 pb-7 pt-[max(30px,env(safe-area-inset-top))]">
-          <div className="pointer-events-none absolute -right-16 top-8 h-44 w-44 rounded-full bg-[radial-gradient(circle_at_35%_35%,rgba(255,222,184,0.8),rgba(198,122,78,0.05)_68%)] blur-sm" />
-          <div className="pointer-events-none absolute -left-10 bottom-2 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(156,199,178,0.35),transparent_70%)]" />
+      <PullToRefresh onRefresh={onRefresh}>
+        <div className="relative z-10">
+          {/* M3 移动 Hero：色彩更丰富，信息更聚焦 */}
+          <section className="relative overflow-hidden px-5 pb-7 pt-[max(30px,env(safe-area-inset-top))]">
+            <div className="pointer-events-none absolute -right-16 top-8 h-44 w-44 rounded-full bg-[radial-gradient(circle_at_35%_35%,rgba(255,222,184,0.8),rgba(198,122,78,0.05)_68%)] blur-sm" />
+            <div className="pointer-events-none absolute -left-10 bottom-2 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(156,199,178,0.35),transparent_70%)]" />
 
-          <div className="m-enter relative">
-            <p className="text-[11px] font-semibold tracking-[0.24em] text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
+            <div className="m-enter relative">
+              <p className="text-[13px] font-semibold text-[var(--m-accent-strong)]">{greeting()}</p>
+              <p className="mt-3 text-[11px] font-semibold tracking-[0.24em] text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
             <h1 className="mt-3 text-[34px] font-bold leading-[1.08] tracking-[-0.04em] text-[var(--m-text)]">
               把走过的路
               <span className="block mt-1">
@@ -337,8 +353,8 @@ export default function HomeMobile({
                 <p className="mt-1 text-xs text-[var(--m-muted)]">收藏沿途记忆</p>
               </Link>
             </div>
-          </div>
-        </section>
+            </div>
+          </section>
 
         {/* 每日一言：作为首页焦点，紧跟 hero，位于“最近旅行”上方 */}
         <section className="px-4 pb-8">
@@ -355,7 +371,7 @@ export default function HomeMobile({
         </section>
 
         {/* 旅行画册：横滑入口（最近旅行之前） */}
-        <MobileBooks />
+          <MobileBooks />
 
         {/* 最近旅行：大卡片横向滑动，不是 Web 缩小版列表 */}
         <section className="px-4 pb-10">
@@ -417,10 +433,10 @@ export default function HomeMobile({
           )}
         </section>
 
-        <MobileMoments />
+          <MobileMoments />
 
-        {/* 重要日子：色彩卡片 */}
-        {anniversaries.length > 0 && (
+          {/* 重要日子：色彩卡片 */}
+          {anniversaries.length > 0 && (
           <section className="px-4 pb-10">
             <div className="m-section-title">
               <span className="flex items-center gap-2">
@@ -456,10 +472,10 @@ export default function HomeMobile({
               })}
             </div>
           </section>
-        )}
+          )}
 
-        {/* 功能入口：移动端扁平列表，减少层级 */}
-        <section className="px-4 pb-4">
+          {/* 功能入口：移动端扁平列表，减少层级 */}
+          <section className="px-4 pb-4">
           <div className="m-section-title">
             <span className="flex items-center gap-2">
               <Heart className="h-[18px] w-[18px] text-[var(--m-accent)]" />
@@ -498,8 +514,55 @@ export default function HomeMobile({
               <ArrowRight className="h-5 w-5 text-[var(--m-faint)]" />
             </Link>
           </div>
-        </section>
+          </section>
+        </div>
+      </PullToRefresh>
+    </div>
+  )
+}
+
+/** 首页移动端加载骨架（替代 AsyncState 整页转圈，防 CLS 抖动） */
+export function HomeMobileLoading() {
+  return (
+    <div className="min-h-screen bg-[var(--m-bg)] text-[var(--m-text)]">
+      <div className="space-y-6 px-5 pb-10 pt-[max(40px,env(safe-area-inset-top))]">
+        <div>
+          <Skeleton className="h-3.5 w-28" />
+          <div className="mt-4 space-y-2.5">
+            <Skeleton className="h-9 w-3/4" />
+            <Skeleton className="h-9 w-1/2" />
+          </div>
+          <SkeletonLines lines={2} className="mt-5 w-4/5" />
+          <div className="mt-7 flex gap-3">
+            <Skeleton className="h-12 w-40 !rounded-full" />
+            <Skeleton className="h-12 w-28 !rounded-full" />
+          </div>
+        </div>
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
+    </div>
+  )
+}
+
+/** 首页移动端错误态（带重试） */
+export function HomeMobileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-[var(--m-bg)] pt-[max(48px,env(safe-area-inset-top))] text-[var(--m-text)]">
+      <EmptyState
+        icon={WifiOff}
+        title="首页加载失败"
+        description={message}
+        action={
+          <button
+            type="button"
+            onClick={onRetry}
+            className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm"
+          >
+            重新加载
+          </button>
+        }
+      />
     </div>
   )
 }

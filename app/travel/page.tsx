@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import TravelClient from './TravelClient'
-import TravelMobileClient from './TravelMobileClient'
+import TravelMobileClient, { TravelMobileLoading } from './TravelMobileClient'
 import TravelComposer from '@/components/travel/TravelComposer'
 import AsyncState from '@/components/AsyncState'
 import { apiUrl } from '@/lib/api-base'
@@ -55,10 +55,28 @@ export default function TravelPage() {
   }, [])
 
   if (error) {
-    return <AsyncState variant="error" message={error} title="旅行记录加载失败" />
+    return (
+      <>
+        <div className="hidden md:block">
+          <AsyncState variant="error" message={error} title="旅行记录加载失败" />
+        </div>
+        <div className="md:hidden">
+          <TravelMobileLoading message={error} />
+        </div>
+      </>
+    )
   }
   if (!posts) {
-    return <AsyncState variant="loading" message="正在加载旅行记录…" />
+    return (
+      <>
+        <div className="hidden md:block">
+          <AsyncState variant="loading" message="正在加载旅行记录…" />
+        </div>
+        <div className="md:hidden">
+          <TravelMobileLoading />
+        </div>
+      </>
+    )
   }
   return (
     <>
@@ -87,7 +105,7 @@ export default function TravelPage() {
         <TravelClient posts={posts as never[]} offline={offline} />
       </div>
       <div className="md:hidden">
-        <TravelMobileClient posts={posts as never[]} offline={offline} />
+        <TravelMobileClient posts={posts as never[]} offline={offline} onRefresh={load} />
       </div>
     </>
   )
