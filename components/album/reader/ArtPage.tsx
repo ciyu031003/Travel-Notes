@@ -1,7 +1,7 @@
 'use client'
 
 import type { SyntheticEvent } from 'react'
-import { formatDay } from '@/lib/modules/album/presentation'
+import { MOOD_LABEL, formatDay } from '@/lib/modules/album/presentation'
 import type { Book, BookChapter, BookPhoto } from '../travel-book/TravelBook'
 
 /* ==========================================================================
@@ -47,22 +47,72 @@ export function ArtCoverPage({ book }: { book: Book }) {
   )
 }
 
-/* ---------- 章节标题页（内页 title-block） ---------- */
+/* ---------- 章节标题页（DAY 引导页：行程 / 回忆 / 照片计数） ---------- */
 export function ArtChapterIntro({ chapter }: { chapter: BookChapter }) {
+  const day = String(chapter.index).padStart(2, '0')
+  const title = chapter.title || `DAY ${day}`
+  const itinerary = chapter.itinerary || []
+  const memories = chapter.memories || []
+  const photoCount = chapter.photos?.length ?? 0
+  const itineraryCut = itinerary.length > 6
+  const memoriesCut = memories.length > 3
   return (
-    <div className="art-page paper">
+    <div className="art-page paper chapter-intro">
       <span className="oil-edge oil-faint oil-tl" aria-hidden="true" />
       <span className="oil-edge oil-faint oil-br" aria-hidden="true" />
-      <div className="title-block">
-        <h2>{chapter.title || 'DAY ' + String(chapter.index).padStart(2, '0')}</h2>
-        <p>{chapter.summary || '——'}</p>
-        {chapter.date && (
-          <p style={{ marginTop: 'calc(var(--cq) * 3)', fontSize: 'calc(var(--cq) * 1.8)', color: '#73766c' }}>
-            {formatDay(chapter.date)}
-          </p>
+      <div className="chapter-intro-inner">
+        <p className="chapter-kicker">DAY · {day}</p>
+        <h2 className="chapter-title">{title}</h2>
+        {chapter.date && <p className="chapter-date">{formatDay(chapter.date)}</p>}
+        {chapter.summary && <p className="chapter-summary">{chapter.summary}</p>}
+
+        {itinerary.length > 0 && (
+          <section className="chapter-section" aria-label="行程">
+            <h3>行程</h3>
+            <ul className="chapter-itinerary">
+              {itinerary.slice(0, 6).map((it) => (
+                <li key={it.id}>
+                  <span className="it-spine" aria-hidden="true" />
+                  <span className="it-label">{it.title || '未命名行程'}</span>
+                  {it.locationName && it.locationName !== it.title && (
+                    <span className="it-loc">{it.locationName}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {itineraryCut && (
+              <p className="chapter-more">还有 {itinerary.length - 6} 处停留</p>
+            )}
+          </section>
+        )}
+
+        {memories.length > 0 && (
+          <section className="chapter-section" aria-label="回忆">
+            <h3>回忆</h3>
+            <div className="chapter-memories">
+              {memories.slice(0, 3).map((mem) => (
+                <div className="memory-line" key={mem.id}>
+                  <p className="memory-title">
+                    {mem.title || '未命名回忆'}
+                    {mem.mood ? (
+                      <span className="memory-mood">{MOOD_LABEL[mem.mood] || mem.mood}</span>
+                    ) : null}
+                  </p>
+                  {mem.content && <p className="memory-content">{mem.content}</p>}
+                </div>
+              ))}
+            </div>
+            {memoriesCut && (
+              <p className="chapter-more">还有 {memories.length - 3} 条回忆</p>
+            )}
+          </section>
+        )}
+
+        {photoCount > 0 && (
+          <p className="chapter-count">{photoCount} 张照片</p>
         )}
       </div>
-      <span className="folio">{String(chapter.index).padStart(2, '0')}</span>
+      <span className="folio">{day}</span>
     </div>
   )
 }

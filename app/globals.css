@@ -1210,26 +1210,172 @@ html.dark {
   line-height: 1.4;
   letter-spacing: 0.13em;
 }
-.art-page .title-block {
-  position: absolute;
-  top: 26%;
-  left: 16%;
-  right: 12%;
+/* 章节标题页：DAY 引导 + 行程清单 / 回忆摘记 / 照片计数（内容超长时向内收拢，不溢出书页） */
+.art-page.chapter-intro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.art-page .title-block h2 {
-  font-family: var(--art-serif);
-  font-weight: 400;
-  font-size: calc(var(--cq) * 4.5);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  margin: 0 0 calc(var(--cq) * 6);
+.art-page .chapter-intro-inner {
+  position: relative;
+  width: 76%;
+  max-height: 92%;
+  overflow: hidden;
 }
-.art-page .title-block p {
-  font-family: var(--art-serif);
-  font-weight: 400;
-  font-size: calc(var(--cq) * 2.1);
-  line-height: 1.6;
+.art-page .chapter-kicker {
   margin: 0;
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 2.2);
+  line-height: 1;
+  letter-spacing: 0.42em;
+  color: #a85f3a;
+}
+.art-page .chapter-title {
+  margin: calc(var(--cq) * 2.6) 0 0;
+  font-family: var(--art-serif);
+  font-weight: 700;
+  font-size: calc(var(--cq) * 5);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.art-page .chapter-date {
+  margin: calc(var(--cq) * 1.6) 0 0;
+  font-family: sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.7);
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  color: #73766c;
+}
+.art-page .chapter-summary {
+  margin: calc(var(--cq) * 3) 0 0;
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 2.2);
+  line-height: 1.55;
+  color: rgba(41, 44, 38, 0.82);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.art-page .chapter-section {
+  margin-top: calc(var(--cq) * 3.6);
+}
+.art-page .chapter-section h3 {
+  margin: 0 0 calc(var(--cq) * 2);
+  font-family: sans-serif;
+  font-weight: 600;
+  font-size: calc(var(--cq) * 1.5);
+  line-height: 1;
+  letter-spacing: 0.3em;
+  color: #a85f3a;
+}
+.art-page .chapter-itinerary {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid rgba(168, 95, 58, 0.32);
+}
+.art-page .chapter-itinerary li {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--cq) * 1.8);
+  margin: 0;
+  padding: calc(var(--cq) * 1.1) 0 calc(var(--cq) * 1.1) calc(var(--cq) * 2.4);
+  position: relative;
+}
+.art-page .chapter-itinerary .it-spine {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: calc(var(--cq) * 0.9);
+  height: calc(var(--cq) * 0.9);
+  border-radius: 50%;
+  background: #a85f3a;
+  transform: translate(-50%, -50%);
+  opacity: 0.75;
+}
+.art-page .chapter-itinerary .it-label {
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 2);
+  line-height: 1.4;
+  color: rgba(41, 44, 38, 0.9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.art-page .chapter-itinerary .it-loc {
+  flex-shrink: 0;
+  font-family: sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.5);
+  line-height: 1.4;
+  color: rgba(115, 118, 108, 0.9);
+}
+.art-page .chapter-memories {
+  display: grid;
+  gap: calc(var(--cq) * 2);
+}
+.art-page .memory-line {
+  margin: 0;
+  padding: 0 0 0 calc(var(--cq) * 2.6);
+  border-left: 2px solid rgba(168, 95, 58, 0.35);
+}
+.art-page .memory-title {
+  margin: 0;
+  font-family: var(--art-serif);
+  font-weight: 700;
+  font-size: calc(var(--cq) * 1.9);
+  line-height: 1.35;
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--cq) * 1.6);
+}
+.art-page .memory-mood {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: rgba(217, 163, 180, 0.3);
+  color: #a85f3a;
+  padding: 0.1em 0.7em;
+  font-family: sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.3);
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+}
+.art-page .memory-content {
+  margin: calc(var(--cq) * 0.9) 0 0;
+  font-family: var(--art-serif);
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.7);
+  line-height: 1.5;
+  color: rgba(41, 44, 38, 0.68);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.art-page .chapter-more {
+  margin: calc(var(--cq) * 1.4) 0 0;
+  font-family: sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.5);
+  line-height: 1.4;
+  color: rgba(115, 118, 108, 0.85);
+}
+.art-page .chapter-count {
+  margin: calc(var(--cq) * 3.4) 0 0;
+  padding-top: calc(var(--cq) * 1.8);
+  border-top: 1px solid rgba(41, 44, 38, 0.14);
+  font-family: sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--cq) * 1.6);
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  color: #73766c;
 }
 .art-page .colophon {
   position: absolute;
