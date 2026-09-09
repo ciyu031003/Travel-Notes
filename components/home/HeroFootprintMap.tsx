@@ -24,7 +24,7 @@ interface HeroFootprintMapProps {
  * - 每个去过省份盖一枚小邮戳点
  */
 export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
-  const { provincePaths, litIds, routeD, dots } = useMemo(() => {
+  const { provincePaths, litIds, routeD, dots, labelById } = useMemo(() => {
     const projection = makeProjection(WIDTH, HEIGHT, 24)
     const pathGen = makePath(projection)
     const provincePaths = chinaFeatures.map((feature) => ({
@@ -32,7 +32,7 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
       d: pathGen(feature as never) || '',
     }))
 
-    const byProvince = new Map<string, { count: number; first: number }>()
+    const byProvince = new Map<string, { count: number; first: number; name: string }>()
     for (const post of posts) {
       if (!post.location) continue
       const province = findProvinceByLocation(post.location)
@@ -40,7 +40,7 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
       const t = new Date(post.date).getTime()
       const cur = byProvince.get(province.id)
       if (!cur) {
-        byProvince.set(province.id, { count: 1, first: t })
+        byProvince.set(province.id, { count: 1, first: t, name: province.name })
       } else {
         cur.count += 1
         if (t < cur.first) cur.first = t
@@ -50,7 +50,7 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
     const litIds = new Set(byProvince.keys())
 
     const ordered = Array.from(byProvince.entries()).sort((a, b) => a[1].first - b[1].first)
-    const dots: { id: string; x: number; y: number; count: number }[] = []
+    const dots: { id: string; x: number; y: number; count: number; name: string }[] = []
     const centroids: [number, number][] = []
     for (const [id, info] of ordered) {
       const feature = chinaFeatures.find((f) => provinceIdOf(f) === id)
@@ -61,7 +61,7 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
         const x = Math.round(c[0] * 100) / 100
         const y = Math.round(c[1] * 100) / 100
         centroids.push([x, y])
-        dots.push({ id, x, y, count: info.count })
+        dots.push({ id, x, y, count: info.count, name: info.name })
       }
     }
 
@@ -70,7 +70,17 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
       routeD = 'M' + centroids.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L')
     }
 
-    return { provincePaths, litIds, routeD, dots }
+    // 标签绘制：按首访顺序左右交替，横向 <46 或纵向 <24 时跳过，避免东部密集省份互相压字
+    const labelById = new Map<string, 'l' | 'r'>()
+    const placed: { x: number; y: number }[] = []
+    for (const d of dots) {
+      const crowded = placed.some((p) => Math.abs(p.x - d.x) < 46 && Math.abs(p.y - d.y) < 24)
+      if (crowded) continue
+      labelById.set(d.id, placed.length % 2 === 0 ? 'l' : 'r')
+      placed.push({ x: d.x, y: d.y })
+    }
+
+    return { provincePaths, litIds, routeD, dots, labelById }
   }, [posts])
 
   return (
@@ -112,6 +122,24 @@ export default function HeroFootprintMap({ posts }: HeroFootprintMapProps) {
         <g key={d.id}>
           <circle cx={d.x} cy={d.y} r="8" fill="#A85F3A" opacity="0.18" />
           <circle cx={d.x} cy={d.y} r="3.6" fill="#C97E55" stroke="#FBF3E9" strokeWidth="1" />
+          {labelById.has(d.id) && (
+            <text
+              x={labelById.get(d.id) === 'l' ? d.x - 13 : d.x + 13}
+              y={d.y + 5}
+              textAnchor={labelById.get(d.id) === 'l' ? 'end' : 'start'}
+              fontSize="15"
+              fontWeight="600"
+              fill="#8A4A2B"
+              style={{
+                paintOrder: 'stroke',
+                stroke: '#FBF3E9',
+                strokeWidth: 3,
+                strokeLinejoin: 'round',
+              }}
+            >
+              {d.name}
+            </text>
+          )}
         </g>
       ))}
     </svg>

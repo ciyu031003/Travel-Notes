@@ -2,6 +2,23 @@
 @import 'katex/dist/katex.min.css';
 @import './mobile.css';
 
+/* Source Serif 4 — 摄影画册正文衬线体（Art Mode） */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/SourceSerif4-Regular.otf.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/SourceSerif4-It.otf.woff2') format('woff2');
+}
+
+
 /* 自托管 latin 子集字体（D3：消除 Google Fonts 第三方阻塞，中文回退系统字体） */
 @font-face {
   font-family: 'Inter';
@@ -1082,12 +1099,230 @@ html.dark {
   from { transform: rotateY(0deg); }
   to   { transform: rotateY(-180deg); }
 }
+/* ===== 摄影画册 · Art Mode（源自 create-photo-flipbook-ui skill） ===== */
+:root {
+  --art-paper: #f7f6f0;
+  --art-ink: #292c26;
+  --art-cloth: #7d8572;
+  --art-serif: 'Source Serif 4', 'Songti SC', 'Noto Serif CJK SC', Georgia, serif;
+}
+.art-page {
+  container-type: inline-size;
+  position: relative;
+  aspect-ratio: 0.8;
+  overflow: hidden;
+  background: var(--art-paper) url(/textures/paper-grain.svg) repeat;
+  color: var(--art-ink);
+  font-family: var(--art-serif);
+  font-weight: 400;
+}
+.art-page img {
+  display: block;
+  object-fit: contain;
+  filter: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.art-page .plate {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%,-50%);
+  width: 74%;
+  height: 72%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.art-page .plate img { width: 100%; height: 100%; object-fit: contain; }
+.art-page .plate.small { width: 49%; height: 53%; }
+.art-page .plate.medium { width: 68%; height: 65%; }
+.art-page .plate.large { width: 86%; height: 82%; }
+.art-page .plate.portrait { width: 67%; height: 66%; }
+.art-page .plate.high { top: 40%; }
+.art-page .plate.low { top: 55%; }
+.art-page .plate.aside { left: 55%; }
+.art-page .folio {
+  position: absolute;
+  bottom: 4.7%;
+  right: 7.7%;
+  margin: 0;
+  color: #73766c;
+  font: 400 1.5cqw/1 var(--art-serif);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.art-page.verso .folio { left: 7.7%; right: auto; }
+.art-page.endpaper { background-color: #e9e9dc; }
+.art-page.cloth { background: var(--art-cloth) url(/textures/cloth-weave.svg) repeat; color: #f2efdf; }
+.art-page .cover-title {
+  position: absolute;
+  left: 13.5%;
+  right: 10%;
+  top: 15%;
+  margin: 0;
+  font: 400 7.2cqw/1.12 var(--art-serif);
+  letter-spacing: -0.02em;
+}
+.art-page .cover-subtitle {
+  position: absolute;
+  left: 13.5%;
+  top: 33%;
+  font: 400 2.1cqw/1.4 var(--art-serif);
+  margin: 0;
+  letter-spacing: 0.025em;
+}
+.art-page .cover-plate {
+  position: absolute;
+  left: 13.5%;
+  bottom: 18%;
+  width: 52%;
+  margin: 0;
+}
+.art-page .cover-plate img { width: 100%; height: auto; }
+.art-page .cover-foot {
+  position: absolute;
+  bottom: 7%;
+  left: 13.5%;
+  font: 400 1.6cqw/1.4 sans-serif;
+  letter-spacing: 0.13em;
+}
+.art-page .title-block {
+  position: absolute;
+  top: 26%;
+  left: 16%;
+  right: 12%;
+}
+.art-page .title-block h2 {
+  font: 400 4.5cqw/1.2 var(--art-serif);
+  letter-spacing: -0.01em;
+  margin: 0 0 6cqw;
+}
+.art-page .title-block p {
+  font: 400 2.1cqw/1.6 var(--art-serif);
+  margin: 0;
+}
+.art-page .colophon {
+  position: absolute;
+  left: 16%;
+  right: 18%;
+  top: 52%;
+  font: 400 2.2cqw/1.55 var(--art-serif);
+}
+.art-page .colophon p { margin: 0 0 4cqw; }
+.art-page .colophon .small-print {
+  font: 400 1.7cqw/1.65 sans-serif;
+  color: #6f7268;
+}
+.art-page .back-mark {
+  position: absolute;
+  bottom: 10%;
+  left: 13.5%;
+  font: 400 2cqw/1.4 var(--art-serif);
+}
 
+/* 照片页整页出血：图片铺满整个书页（跟书页一样大） */
+.art-page .plate.full {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+.art-page .plate.full img { object-fit: cover; }
 
+/* 书页边缘油画点缀：四角暖色笔触晕染（赭石/土黄/苔绿），内衬双线画框 */
+.art-page .oil-edge {
+  position: absolute;
+  z-index: 2;
+  width: 30%;
+  height: 30%;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+  opacity: 0.85;
+  filter: blur(1px) saturate(1.12);
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(185, 106, 60, 0.5), transparent 52%),
+    radial-gradient(90% 80% at 18% 22%, rgba(216, 164, 96, 0.42), transparent 60%),
+    radial-gradient(60% 60% at 68% 68%, rgba(138, 154, 110, 0.3), transparent 70%);
+}
+.art-page .oil-tr { top: 0; right: 0; transform: scaleX(-1); }
+.art-page .oil-bl { bottom: 0; left: 0; transform: scaleY(-1); }
+.art-page .oil-br  { bottom: 0; right: 0; transform: scale(-1); }
+.art-page .oil-faint {
+  width: 26%;
+  height: 26%;
+  opacity: 0.4;
+  filter: blur(2px) saturate(1.05);
+}
 
+/* 照片页内衬双线画框 */
+.art-page.painted::after {
+  content: "";
+  position: absolute;
+  inset: 2.6%;
+  z-index: 1;
+  pointer-events: none;
+  border: 1px solid rgba(250, 244, 232, 0.66);
+  outline: 1px solid rgba(70, 60, 48, 0.22);
+  outline-offset: 7px;
+  box-sizing: border-box;
+}
 
+/* 照片页页码：白晕描边便于在图片上阅读 */
+.art-page .folio { z-index: 4; }
+.art-page.painted .folio {
+  color: #faf6ec;
+  text-shadow:
+    0 1px 2px rgba(30, 26, 18, 0.55),
+    0 0 10px rgba(30, 26, 18, 0.35);
+}
+.art-page.--left::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  z-index: 3;
+  width: clamp(14px, 4%, 28px);
+  pointer-events: none;
+  background: linear-gradient(to left, rgba(28,30,24,0.12), rgba(28,30,24,0.03) 40%, transparent);
+}
+.art-page.--right::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  z-index: 3;
+  width: clamp(14px, 4%, 28px);
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(28,30,24,0.12), rgba(28,30,24,0.03) 40%, transparent);
+}
 
-
-
-
-
+/* ===== ArtFlipBook 容器（page-flip 库） ===== */
+.art-flip-rig {
+  display: grid;
+  place-items: center;
+  width: min(92vw, calc((100dvh - 108px) * 1.6), 1080px);
+  height: min(calc(100dvh - 108px), 720px);
+  min-height: 280px;
+}
+.art-flipbook-container {
+  isolation: isolate;
+  position: relative;
+  width: 100%;
+  filter: drop-shadow(0 20px 30px rgba(29, 37, 21, 0.2));
+}
+.art-flipbook-container .art-flip-page {
+  position: relative;
+  overflow: hidden;
+  background: var(--art-paper);
+}
+.art-flipbook-container .art-flip-page > * {
+  width: 100%;
+  height: 100%;
+}
+.art-flipbook-container .art-page img {
+  filter: saturate(0.92) contrast(1.03) sepia(0.07);
+}

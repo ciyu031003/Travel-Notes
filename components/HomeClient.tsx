@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useRef, type ComponentType } from 'react'
 import Image from 'next/image'
@@ -183,13 +183,17 @@ export default function HomeClient({
 
       <div className="relative z-10">
         {/* Hero 区域 - 沉浸足迹地图 */}
-        <section className="px-3 pt-8 pb-6 md:px-6 md:pt-16 md:pb-10">
-          <div className="mx-auto grid max-w-7xl items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
+        <section className="relative overflow-hidden px-3 pt-8 pb-6 md:px-6 md:pt-16 md:pb-10">
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+            <div className="absolute -left-28 top-4 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_35%_35%,rgba(255,214,170,0.5),rgba(198,122,78,0.05)_68%)] blur-2xl" />
+            <div className="absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_60%_40%,rgba(156,199,178,0.38),transparent_70%)] blur-2xl" />
+          </div>
+          <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
             <div className="animate-[fade-in-up_0.7s_ease-out_both] text-center md:text-left">
               <h1 className="font-display text-display-hero font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-6xl xl:text-7xl">
-                <span className="block">走过的</span>
+                <span className="block">把走过的路</span>
                 <span className="relative mt-1 inline-block">
-                  地方
+                  变成自己的故事
                   <svg
                     className="absolute -bottom-1.5 left-0 h-3 w-full text-travel-bloom/70"
                     viewBox="0 0 200 12"
@@ -210,7 +214,7 @@ export default function HomeClient({
                 行迹 · 记录每一段旅行时光
               </p>
               <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-travel-ink dark:text-shell-muted md:mx-0 md:text-lg">
-                用文字记录生活，用照片定格瞬间 —— 在这里，收藏每一段旅行记忆
+                每个城市一本画册，照片铺满书页 —— 把走过的路，变成自己的故事
               </p>
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3 md:justify-start">
                 <Link
@@ -241,7 +245,7 @@ export default function HomeClient({
             </div>
 
             <div className="relative animate-[fade-in-up_0.7s_ease-out_0.15s_both]">
-              <div className="relative h-[260px] overflow-hidden rounded-2xl border border-travel-line/40 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/40 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.35)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128] md:h-[400px] lg:h-[430px]">
+              <div className="relative h-[260px] overflow-hidden rounded-2xl border border-travel-line/40 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/40 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.35)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128] md:h-[440px] lg:h-[470px]">
                 <HeroFootprintMap posts={travelPosts} />
               </div>
               <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FBF3E9] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-travel-bloom/70 dark:bg-shell-surface dark:text-travel-bloom">

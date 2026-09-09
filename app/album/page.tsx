@@ -106,7 +106,9 @@ export default function AlbumPage() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(VIEW_MODE_KEY)
-      if (saved === 'pixel' || saved === 'space') setViewMode(saved)
+      // 银河模式初始化较重，不做「用户上次选择」恢复，避免再次成为相册默认首页。
+      if (saved === 'pixel') setViewMode('pixel')
+      else if (saved === 'space') localStorage.removeItem(VIEW_MODE_KEY)
     } catch {
       // 忽略
     }

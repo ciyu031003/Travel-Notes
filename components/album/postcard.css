@@ -1,7 +1,7 @@
 /* ==========================================================================
    PostcardCard  — mengto 风格相册卡片
    1) 邮票齿孔（穿孔）边框：穿孔是「背景纸」上的圆孔，内容层盖住中间，只露出边缘一排穿孔。
-   2) 静止时每张卡片有轻微随机倾斜（东倒西歪但不重叠）。
+   2) 静止时每张卡片有轻微随机倾斜 + 纵向错落（东倒西歪但不重叠，偏移由组件按 seed 注入）。
    3) hover 时跟随鼠标前倾/后仰 + 轻微波浪滚动，松手用弹性回位。
    ========================================================================== */
 .pcard {
@@ -9,6 +9,7 @@
   --step: 17px;     /* 齿孔间距 */
   --paper: #FFFCF7;
   --rot: 0deg;      /* 由组件按 travelId 注入的静止倾斜 */
+  --shift: 0px;     /* 由组件按 seed 注入的纵向错落 */
   position: relative;
   display: block;
   width: 100%;
@@ -18,7 +19,7 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transform: rotate(var(--rot));
+  transform: rotate(var(--rot)) translateY(var(--shift));
   transform-style: preserve-3d;
   will-change: transform;
   -webkit-tap-highlight-color: transparent;
@@ -55,10 +56,24 @@
 
 .pcard-media {
   display: block;
-  aspect-ratio: 4 / 3;
+  position: relative;
+  aspect-ratio: 4 / 5;
   width: 100%;
   overflow: hidden;
   background: #f6e9e2;
+  transform: translateZ(1px);
+}
+.pcard-media::after {
+  content: "";
+  position: absolute;
+  inset-block: 6%;
+  left: 3.2%;
+  width: clamp(8px, 2.2%, 18px);
+  background:
+    linear-gradient(90deg, rgba(58, 54, 48, 0.18), rgba(58, 54, 48, 0.04) 70%, transparent),
+    linear-gradient(90deg, transparent 46%, rgba(255, 255, 255, 0.16) 52%, transparent 58%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 .pcard-media img {
   width: 100%;
@@ -144,4 +159,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pcard { transform: rotate(var(--rot)) !important; transition: none !important; }
+}
+
+/* 竖屏窄视口下关闭卡片倾斜：封面改为竖版后，旋转外接盒会顶出横向滚动 */
+@media (max-width: 640px) {
+  .pcard { transform: none !important; }
 }
