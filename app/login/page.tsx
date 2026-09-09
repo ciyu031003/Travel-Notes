@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Lock, Eye, EyeOff, ArrowRight, X, Heart } from 'lucide-react'
 import LoginDoor from '@/components/login/LoginDoor'
 import BrandLogo from '@/components/brand/BrandLogo'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 
@@ -159,7 +160,7 @@ function LoginPageContent() {
   return (
     <>
       <LoginDoor>
-        <div className="flex min-h-dvh items-start justify-center p-4 py-6 md:items-center md:py-10">
+        <div className="flex min-h-dvh items-start justify-center px-4 pb-[max(28px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] md:items-center md:py-10">
           <div className="w-full max-w-md">
             <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-shell-line dark:bg-shell-surface/90 sm:p-7 md:p-9">
               <div className="flex items-center justify-between">
@@ -339,7 +340,7 @@ function LoginPageContent() {
       </LoginDoor>
 
       {showAlbumLock && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4 backdrop-blur-sm md:flex">
           <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-shell-line dark:bg-shell-surface/95">
             <div className="relative bg-gradient-to-br from-travel-parchment to-travel-parchmentDim p-8 dark:from-[#1E1A1C] dark:to-[#241E22]">
               <button
@@ -400,6 +401,61 @@ function LoginPageContent() {
               </form>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 移动端：相册锁 iOS 底部面板 */}
+      {showAlbumLock && (
+        <div className="md:hidden">
+          <BottomSheet open onClose={() => {
+            setShowAlbumLock(false)
+            setAlbumPassword('')
+            setAlbumError('')
+          }}>
+            <div className="flex flex-col items-center px-1 pt-6 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
+                <Heart className="h-7 w-7 fill-current" />
+              </span>
+              <h3 className="mt-4 text-[22px] font-bold tracking-[-0.02em] text-[var(--m-text)]">
+                相册已上锁
+              </h3>
+              <p className="mt-1.5 text-sm text-[var(--m-muted)]">
+                请输入纪念日作为解锁密码
+              </p>
+
+              <form onSubmit={handleAlbumUnlock} className="mt-6 w-full space-y-3">
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--m-faint)]" />
+                  <input
+                    type="text"
+                    value={albumPassword}
+                    onChange={(e) => setAlbumPassword(e.target.value)}
+                    className="w-full rounded-2xl border border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] py-3.5 pl-11 pr-4 text-[15px] text-[var(--m-text)] outline-none transition-all placeholder:text-[var(--m-faint)] focus:border-transparent focus:ring-2 focus:ring-[var(--m-accent)]"
+                    placeholder="如 2023-06-20"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <p className="text-center text-xs text-[var(--m-faint)]">
+                  支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
+                </p>
+
+                {albumError && (
+                  <div className="rounded-xl border border-[rgba(224,108,108,0.35)] bg-[rgba(224,108,108,0.12)] px-4 py-2.5 text-center text-sm text-[#E06C6C]">
+                    {albumError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={albumVerifying}
+                  className="m-press m-chip m-chip-active !mt-4 flex h-12 w-full items-center justify-center gap-2 !rounded-2xl !text-[15px] font-semibold"
+                >
+                  {albumVerifying ? '验证中…' : '解锁相册'}
+                </button>
+              </form>
+            </div>
+          </BottomSheet>
         </div>
       )}
     </>

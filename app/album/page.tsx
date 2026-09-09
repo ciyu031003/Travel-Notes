@@ -262,7 +262,7 @@ export default function AlbumPage() {
   if (!isUnlocked) {
     if (viewMode === 'space') {
       return (
-        <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-album-bg0">
+        <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-[max(16px,env(safe-area-inset-bottom))] bg-album-bg0">
           {/* 星空氛围底（纯 CSS 星点，避免未解锁时启动 WebGL） */}
           <div className="absolute inset-0 opacity-70" aria-hidden="true">
             {Array.from({ length: 60 }, (_, i) => (
@@ -328,7 +328,7 @@ export default function AlbumPage() {
     }
 
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-album-bg1">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-[max(16px,env(safe-area-inset-bottom))] bg-album-bg1">
         <PixelDeskBackground />
         <div className="relative z-10 w-full max-w-md pixel-book-container rounded-sm p-8 text-center">
           <div className="pixel-corner-gold-tl" />
@@ -551,7 +551,7 @@ export default function AlbumPage() {
         </div>
       </header>
 
-      <div className="relative z-10 pt-4 pb-12 min-h-screen">
+      <div className="relative z-10 pt-4 pb-[max(48px,env(safe-area-inset-bottom))] min-h-screen md:pb-12">
         {/* 相册封面横幅 */}
         <div className="max-w-6xl mx-auto px-4 mb-5">
           <div className="book-cover-3d relative rounded-sm p-4 sm:p-5 flex items-center justify-between gap-4">

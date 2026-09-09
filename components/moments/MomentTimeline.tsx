@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { forwardRef, useImperativeHandle, useState, useEffect, useCallback } from 'react'
 import { Sparkles, Loader2, Inbox, Quote } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import LikeButton from '@/components/like/LikeButton'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalMoments } from '@/lib/modules/offline/moment-read'
+import { SkeletonCard } from '@/components/mobile/Skeleton'
 
 export interface MomentItem {
   id: number | string
@@ -38,7 +39,12 @@ function formatRelativeTime(dateStr: string): string {
   return formatDate(dateStr)
 }
 
-export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
+export interface MomentTimelineHandle {
+  /** 下拉刷新：重拉第一页（列表保持可见，成功后原位替换） */
+  reload: () => Promise<void>
+}
+
+const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(function MomentTimeline({ limit = 20 }, ref) {
   const [moments, setMoments] = useState<MomentItem[]>([])
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
@@ -79,12 +85,21 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
 
   const loadMore = () => load(page + 1, true)
 
+  useImperativeHandle(ref, () => ({
+    reload: () => load(1, false),
+  }), [load])
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-travel-sand/70 dark:text-shell-faint">
-        <Loader2 className="w-6 h-6 animate-spin mb-3" />
-        <p className="text-sm">加载中...</p>
-      </div>
+      <>
+        <div className="hidden flex-col items-center justify-center py-16 text-travel-sand/70 md:flex dark:text-shell-faint">
+          <Loader2 className="w-6 h-6 animate-spin mb-3" />
+          <p className="text-sm">加载中...</p>
+        </div>
+        <div className="space-y-4 md:hidden">
+          {[0, 1, 2].map((index) => <SkeletonCard key={index} />)}
+        </div>
+      </>
     )
   }
 
@@ -116,7 +131,7 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
             <Sparkles className="h-2.5 w-2.5 text-white" />
           </span>
 
-          <div className="relative overflow-hidden rounded-[22px] border border-travel-line/70 bg-white/85 p-5 shadow-[0_12px_30px_-24px_rgba(90,102,112,0.35)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-24px_rgba(198,122,78,0.45)] dark:border-shell-line dark:bg-shell-surface/85 dark:hover:border-travel-accentStrong/60">
+          <div className="relative overflow-hidden rounded-[22px] border border-travel-line/70 bg-white/85 p-5 shadow-[0_12px_30px_-24px_rgba(90,102,112,0.35)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-24px_rgba(198,122,78,0.45)] active:scale-[0.98] dark:border-shell-line dark:bg-shell-surface/85 dark:hover:border-travel-accentStrong/60">
             <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[radial-gradient(closest-side,rgba(228,180,120,0.14),transparent)]" />
             <Quote className="relative mb-2 h-4 w-4 text-travel-bloom/70" />
             <p className="relative whitespace-pre-wrap break-words text-[15px] leading-7 text-travel-ink dark:text-shell-text">
@@ -160,6 +175,8 @@ export default function MomentTimeline({ limit = 20 }: { limit?: number }) {
       )}
     </div>
   )
-}
+})
+
+export default MomentTimeline
 
 

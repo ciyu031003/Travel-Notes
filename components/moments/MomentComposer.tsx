@@ -3,11 +3,18 @@
 import { useState } from 'react'
 import { Send, Loader2, Sparkles, Feather } from 'lucide-react'
 import { createMoment } from '@/lib/modules/offline/moment-write'
+import { cn } from '@/lib/utils'
 
 /**
  * 碎碎念发布器：离线时本地乐观写 + 入同步队列（联网自动上传云端），在线直接发布。
  */
-export default function MomentComposer({ onCreated }: { onCreated?: () => void }) {
+export default function MomentComposer({
+  onCreated,
+  className,
+}: {
+  onCreated?: () => void
+  className?: string
+}) {
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -34,7 +41,10 @@ export default function MomentComposer({ onCreated }: { onCreated?: () => void }
   return (
     <form
       onSubmit={submit}
-      className="mb-8 rounded-[28px] border border-travel-sakura/50 bg-white/80 p-5 shadow-[0_16px_40px_-24px_rgba(168,95,58,0.45)] backdrop-blur-sm transition-colors focus-within:border-travel-bloom/70 focus-within:shadow-[0_18px_44px_-22px_rgba(168,95,58,0.5)] dark:border-travel-accent/20 dark:bg-shell-surface/70"
+      className={cn(
+        'mb-8 rounded-[28px] border border-travel-sakura/50 bg-white/80 p-5 shadow-[0_16px_40px_-24px_rgba(168,95,58,0.45)] backdrop-blur-sm transition-colors focus-within:border-travel-bloom/70 focus-within:shadow-[0_18px_44px_-22px_rgba(168,95,58,0.5)] dark:border-travel-accent/20 dark:bg-shell-surface/70',
+        className,
+      )}
     >
       <div className="mb-2 flex items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom text-white shadow-sm">

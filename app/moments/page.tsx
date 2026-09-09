@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Sparkles, Settings2, Feather, Heart } from 'lucide-react'
 import MomentsContent from '@/components/moments/MomentsContent'
 import ManageEntry from '@/components/layout/ManageEntry'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
 
 export const metadata: Metadata = {
   title: '碎碎念 | 生活随记',
@@ -32,7 +33,7 @@ export default function MomentsPage() {
             />
           </div>
 
-          <header className="mb-8 text-center">
+          <header className="mb-8 hidden text-center md:block">
             <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-travel-sakura/60 to-travel-bloom/30 px-4 py-1.5 text-sm font-medium text-travel-accent dark:from-travel-accent/25 dark:to-travel-bloom/20 dark:text-travel-accentSoft">
               <Feather className="h-4 w-4" />
               <span>碎碎念</span>
@@ -45,6 +46,22 @@ export default function MomentsPage() {
               一句话、一个小确幸、一次突然的想念，都可以放在这里
             </p>
           </header>
+
+          {/* 移动端：iOS 大标题 */}
+          <div className="md:hidden">
+            <LargeTitle
+              title="碎碎念"
+              subtitle="生活里的灵光、随想与小确幸"
+              trailing={
+                <ManageEntry
+                  href="/admin/moments"
+                  label="管理"
+                  icon={<Settings2 className="h-3.5 w-3.5" />}
+                  className="rounded-full px-2.5 py-1.5 text-xs text-[var(--m-muted)] transition-colors active:bg-[var(--m-accent-soft)] active:text-[var(--m-accent-strong)]"
+                />
+              }
+            />
+          </div>
 
           <MomentsContent />
         </div>

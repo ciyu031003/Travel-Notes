@@ -9,6 +9,9 @@ import type { SyncQueueItem } from '@/lib/modules/offline/types'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { getPrivacyLockEnabled, setPrivacyLockEnabled } from '@/lib/modules/offline/privacy-lock'
 import { getSyncEngine } from '@/lib/modules/offline/bootstrap'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Switch } from '@/components/mobile/Switch'
 
 type StatCounts = { PENDING: number; SYNCING: number; FAILED: number }
 
@@ -76,10 +79,11 @@ export default function SyncCenter() {
   const total = stats.PENDING + stats.SYNCING + stats.FAILED
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
+    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-2xl px-4 py-6">
-        <header className="mb-8 flex items-center gap-3">
+        <PullToRefresh onRefresh={load}>
+        <header className="mb-8 hidden items-center gap-3 md:flex">
           <div className="ml-auto"><SocialThemeToggle /></div>
           <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
           <div>
@@ -87,6 +91,15 @@ export default function SyncCenter() {
             <h1 className="text-xl font-semibold">数据与同步</h1>
           </div>
         </header>
+
+        {/* 移动端：iOS 大标题 */}
+        <div className="md:hidden">
+          <LargeTitle
+            title="数据与同步"
+            subtitle="离线队列、隐私锁与同步状态"
+            trailing={<SocialThemeToggle />}
+          />
+        </div>
 
         {loading ? (
           <div className="py-20 text-center text-[var(--social-faint)]"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
@@ -123,18 +136,18 @@ export default function SyncCenter() {
                 <div className="flex items-center gap-3">
                   <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">失败项</h2>
                   <div className="h-px flex-1 bg-[var(--social-line)]" />
-                  <button type="button" onClick={retryAll} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-1.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] disabled:opacity-50">
+                  <button type="button" onClick={retryAll} disabled={busy} className="m-pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-1.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] active:scale-95 disabled:opacity-50">
                     <RefreshCw className="h-3.5 w-3.5" />全部重试
                   </button>
                 </div>
                 <div className="mt-4 space-y-2">
                   {failed.map((f) => (
-                    <div key={f.id} className="flex items-center gap-3 rounded-[1.2rem] bg-[var(--social-surface-80)] px-4 py-3 ring-1 ring-[var(--social-line)]">
+                    <div key={f.id} className="m-pressable flex items-center gap-3 rounded-[1.2rem] bg-[var(--social-surface-80)] px-4 py-3 ring-1 ring-[var(--social-line)]">
                       <div className="min-w-0 flex-1">
                         <div className="text-sm">{f.entityType} · {f.operation}</div>
                         <div className="mt-0.5 truncate text-xs text-[var(--social-faint)]">{f.lastError || '同步失败'}</div>
                       </div>
-                      <button type="button" onClick={() => retryOne(f.id)} disabled={busy} className="rounded-full bg-[var(--social-accent-soft)] px-3 py-1.5 text-xs text-[var(--social-accent)] transition hover:bg-[var(--social-accent)] hover:text-[var(--social-on-accent)] disabled:opacity-50">重试</button>
+                      <button type="button" onClick={() => retryOne(f.id)} disabled={busy} className="rounded-full bg-[var(--social-accent-soft)] px-3 py-1.5 text-xs text-[var(--social-accent)] transition hover:bg-[var(--social-accent)] hover:text-[var(--social-on-accent)] active:scale-95 disabled:opacity-50">重试</button>
                     </div>
                   ))}
                 </div>
@@ -143,31 +156,21 @@ export default function SyncCenter() {
 
             {error && <p className="mt-6 text-sm text-[#E06C6C]">{error}</p>}
 
-            {/* v3.1 M4-C3：本地隐私锁 */}
-            <section className="mt-10 rounded-[1.6rem] bg-[var(--social-surface-60)] p-5 ring-1 ring-[var(--social-line)]">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[var(--social-accent)]" />
-                  <div>
-                    <h2 className="text-sm font-medium">本地隐私锁</h2>
-                    <p className="mt-1 text-xs leading-relaxed text-[var(--social-faint)]">
-                      开启后，打开相册、回忆等私密模块前需验证 PIN / 生物识别；本地数据库可启用加密（真机生效）。
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={lockEnabled}
-                  onClick={() => { const next = !lockEnabled; setLockEnabled(next); setPrivacyLockEnabled(next) }}
-                  className={`relative h-9 w-14 shrink-0 rounded-full transition ${lockEnabled ? 'bg-[var(--social-accent)]' : 'bg-[var(--social-line-strong)]'}`}
-                >
-                  <span className={`absolute top-2 h-5 w-5 rounded-full bg-white transition-all ${lockEnabled ? 'left-8' : 'left-2'}`} />
-                </button>
-              </div>
+            {/* v3.1 M4-C3：本地隐私锁（统一移动端 Switch 组件） */}
+            <section className="mt-10">
+              <Switch
+                checked={lockEnabled}
+                onCheckedChange={(next) => {
+                  setLockEnabled(next)
+                  setPrivacyLockEnabled(next)
+                }}
+                label="本地隐私锁"
+                description="开启后，打开相册、回忆等私密模块前需验证 PIN / 生物识别；本地数据库可启用加密（真机生效）。"
+              />
             </section>
           </>
         )}
+        </PullToRefresh>
       </div>
     </div>
   )

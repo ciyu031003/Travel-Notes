@@ -7,6 +7,9 @@ import { Search, X, MapPin, Tag, Loader2, ArrowRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
+import { SkeletonCard } from '@/components/mobile/Skeleton'
+import { EmptyState } from '@/components/mobile/EmptyState'
 
 interface SearchResult {
   id: number
@@ -136,7 +139,9 @@ function SearchContent() {
   const hasResults = useMemo(() => results.length > 0, [results])
 
   return (
-    <div className="container-custom py-10 md:py-14">
+    <>
+    {/* 桌面端：保留既有杂志风格搜索 */}
+    <div className="container-custom hidden py-10 md:block md:py-14">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold text-travel-inkStrong dark:text-shell-text mb-2">
           搜索旅行记录
@@ -263,5 +268,122 @@ function SearchContent() {
         )}
       </div>
     </div>
+
+    {/* 移动端：iOS 大标题内嵌搜索 + 结果骨架 */}
+    <div className="md:hidden">
+      <div className="min-h-screen bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
+        <LargeTitle title="搜索" subtitle="输入关键词，找回每一段旅行足迹" />
+        <div className="px-4 pt-1">
+          {/* iOS 搜索栏 */}
+          <div className="flex items-center gap-2.5 rounded-2xl bg-[var(--m-surface-2)] px-3.5 transition-all focus-within:ring-2 focus-within:ring-[var(--m-accent)]">
+            <Search className="h-[18px] w-[18px] shrink-0 text-[var(--m-faint)]" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') performSearch(query)
+              }}
+              placeholder="搜索城市、地点或关键词"
+              enterKeyHint="search"
+              className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)]"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={handleClear}
+                aria-label="清空搜索"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgb(255,255,255,0.55)] text-[var(--m-muted)] transition-transform active:scale-90 dark:bg-[rgb(255,255,255,0.14)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="mt-5">
+            {/* 结果骨架 */}
+            {loading && (
+              <div className="space-y-4">
+                {[0, 1, 2].map((index) => <SkeletonCard key={index} />)}
+              </div>
+            )}
+
+            {/* 未搜索：热门标签 */}
+            {!loading && !hasSearched && (
+              <div className="px-1">
+                <p className="text-[13px] text-[var(--m-muted)]">试试以下热门标签：</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {SUGGESTED_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setQuery(tag)}
+                      className="m-press m-chip inline-flex items-center gap-1.5"
+                    >
+                      <Tag className="h-3.5 w-3.5" />
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 无结果 */}
+            {!loading && hasSearched && !hasResults && (
+              <EmptyState
+                icon={MapPin}
+                title="未找到相关内容"
+                description={keyword ? `没有匹配「${keyword}」的旅行记录` : '请输入搜索关键词'}
+              />
+            )}
+
+            {/* 结果列表 */}
+            {!loading && hasResults && (
+              <div className="space-y-3">
+                {results.map((post) => (
+                  <Link
+                    key={`${post.slug}-${post.id}`}
+                    href={travelDetailHref(post.slug)}
+                    className="m-card block p-4 transition-transform active:scale-[0.98]"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--m-accent-strong)]">
+                        <MapPin className="h-3.5 w-3.5" />
+                        旅行记录
+                      </span>
+                      <span className="text-xs text-[var(--m-faint)]">{formatDate(post.date)}</span>
+                    </div>
+                    <h3
+                      className="mt-2 text-[16px] font-semibold leading-snug text-[var(--m-text)]"
+                      dangerouslySetInnerHTML={{ __html: highlight(post.title, keyword) }}
+                    />
+                    {post.description && (
+                      <p
+                        className="mt-1 text-[13px] leading-relaxed text-[var(--m-muted)] line-clamp-2"
+                        dangerouslySetInnerHTML={{ __html: highlight(post.description, keyword) }}
+                      />
+                    )}
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        {post.tags.slice(0, 5).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-[var(--m-accent-soft)] px-2.5 py-0.5 text-xs text-[var(--m-accent-strong)]"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+    </>
   )
 }

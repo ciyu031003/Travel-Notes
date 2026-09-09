@@ -206,7 +206,7 @@ export default function PostDetail({ postId }: { postId: number }) {
   const authorName = post.author ? post.author.nickname || post.author.username : '旅行者'
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
+    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%)]" />
       <div className="relative mx-auto max-w-3xl px-4 py-6">
         {offline && (

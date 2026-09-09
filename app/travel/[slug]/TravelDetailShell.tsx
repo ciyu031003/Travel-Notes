@@ -113,13 +113,13 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       <div className="container-custom pt-6">
         <Link
           href={travelRecordHref(slug)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-travel-sakura border border-travel-bloom/50 text-travel-ink rounded-full text-sm font-medium hover:bg-travel-bloom/25 transition-colors"
+          className="inline-flex items-center gap-2 rounded-full border border-travel-bloom/50 bg-travel-sakura px-4 py-3 text-sm font-medium text-travel-ink transition-all hover:bg-travel-bloom/25 active:scale-[0.98]"
         >
           ✍️ 记录今日
         </Link>
       </div>
       <div id={`detail-${slug}`} className="container-custom">
-        <article className="max-w-3xl mx-auto pt-24 pb-16">
+        <article className="mx-auto max-w-3xl pb-[calc(96px+env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] md:pb-16 md:pt-24">
           <header className="mb-8 text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-travel-ink">{detailTitle}</h1>
             {travel?.travelType && (
