@@ -140,20 +140,20 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
     return () => window.removeEventListener('keydown', onKey)
   }, [onBack])
 
-  const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/70 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura'
+  const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/70 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20'
 
   return (
-    <div className="fixed inset-0 z-[105] flex flex-col bg-travel-cream">
-      <header className="flex items-center justify-between border-b border-travel-dim/40 px-3 py-2.5 sm:px-4">
+    <div className="fixed inset-0 z-[105] flex flex-col bg-travel-cream dark:bg-shell-bg">
+      <header className="flex items-center justify-between border-b border-travel-dim/40 px-3 py-2.5 sm:px-4 dark:border-shell-line">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura"
+          className="inline-flex items-center gap-1.5 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           我的旅行画册
         </button>
-        <div className="flex min-w-0 items-center gap-1.5 font-display text-sm font-semibold text-travel-ink">
+        <div className="flex min-w-0 items-center gap-1.5 font-display text-sm font-semibold text-travel-ink dark:text-shell-text">
           <BookOpen className="h-4 w-4 shrink-0 text-travel-bloom" />
           <span className="truncate">{book.title}</span>
         </div>
@@ -161,7 +161,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           type="button"
           onClick={onBack}
           aria-label="关闭"
-          className="rounded-full p-2 text-travel-ink/60 transition-colors hover:bg-travel-sakura/40 hover:text-travel-ink"
+          className="rounded-full p-2 text-travel-ink/60 transition-colors hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
         >
           <X className="h-4 w-4" />
         </button>
@@ -179,14 +179,14 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
         </div>
       </main>
 
-      <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-3 py-2.5 sm:justify-center sm:px-4">
+      <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-3 py-2.5 sm:justify-center sm:px-4 dark:border-shell-line">
         <button type="button" onClick={() => artFlipRef.current?.flipPrev()} className={navBtn}>
           <ChevronLeft className="h-3.5 w-3.5" />上一页
         </button>
         <div className="flex min-w-0 flex-1 items-center justify-center sm:flex-none sm:px-5">
           <span
             aria-live="polite"
-            className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60"
+            className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60 dark:text-shell-muted"
           >
             {String((spreadInfo?.index ?? artPageIndex) + 1).padStart(2, '0')} /{' '}
             {String(spreadInfo?.total ?? artPages.length).padStart(2, '0')}

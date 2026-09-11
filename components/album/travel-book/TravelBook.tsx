@@ -231,30 +231,30 @@ export default function TravelBook({
   }
 
   return (
-    <div className="min-h-screen bg-travel-cream">
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-travel-dim/40 bg-travel-cream/90 px-3 backdrop-blur-md md:px-8">
+    <div className="min-h-screen bg-travel-cream dark:bg-shell-bg">
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-travel-dim/40 bg-travel-cream/90 px-3 backdrop-blur-md md:px-8 dark:border-shell-line dark:bg-shell-bg/90">
         <div className="flex min-w-0 items-center gap-2">
           <Link
             href="/"
             aria-label="返回首页"
-            className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">返回首页</span>
           </Link>
-          <div className="flex items-center gap-2 font-semibold text-travel-ink">
+          <div className="flex items-center gap-2 font-semibold text-travel-ink dark:text-shell-text">
             <BookOpen className="h-4 w-4 text-travel-bloom" />
             <span className="truncate text-sm sm:text-base">我的旅行画册</span>
           </div>
         </div>
-        <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/60 p-0.5">
-          <button type="button" className="inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-sm" title="当前视图（旅行画册）">
+        <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/60 p-0.5 dark:border-shell-line dark:bg-shell-surface3/80">
+          <button type="button" className="inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom" title="当前视图（旅行画册）">
             <Camera className="h-3.5 w-3.5" />画册
           </button>
           <button
             type="button"
             onClick={() => onModeChange('pixel')}
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink"
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
             title="切换到照片网格"
           >
             <LayoutGrid className="h-3.5 w-3.5" />网格
@@ -262,7 +262,7 @@ export default function TravelBook({
           <button
             type="button"
             onClick={() => onModeChange('space')}
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink"
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
             title="切换到银河空间"
           >
             <Orbit className="h-3.5 w-3.5" />银河
@@ -272,14 +272,14 @@ export default function TravelBook({
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {books === null && !loadError ? (
-          <div className="flex items-center justify-center gap-2 py-24 text-travel-ink/45">
+          <div className="flex items-center justify-center gap-2 py-24 text-travel-ink/45 dark:text-shell-faint">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span className="text-sm">正在翻阅旅行画册，把走过的城市一本本摊开...</span>
           </div>
         ) : loadError ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <AlertCircle className="h-10 w-10 text-red-400/70" />
-            <p className="text-sm text-travel-ink/60">{loadError}</p>
+            <p className="text-sm text-travel-ink/60 dark:text-shell-muted">{loadError}</p>
             <button
               type="button"
               onClick={retryLoad}
@@ -291,28 +291,28 @@ export default function TravelBook({
         ) : books && books.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <Camera className="h-10 w-10 text-travel-bloom/40" />
-            <p className="text-sm text-travel-ink/60">还没有旅行故事，去记录一次旅行吧。</p>
-            <p className="text-xs text-travel-ink/40">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
+            <p className="text-sm text-travel-ink/60 dark:text-shell-muted">还没有旅行故事，去记录一次旅行吧。</p>
+            <p className="text-xs text-travel-ink/40 dark:text-shell-faint">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
           </div>
         ) : (
           <>
             <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="font-display text-lg font-semibold text-travel-ink">旅行画册</h2>
-                <p className="mt-1.5 text-xs text-travel-ink/55">
+                <h2 className="font-display text-lg font-semibold text-travel-ink dark:text-shell-text">旅行画册</h2>
+                <p className="mt-1.5 text-xs text-travel-ink/55 dark:text-shell-muted">
                   {wallStats.count} 本 · 每个城市一本 · 点开卡片翻页阅读
                 </p>
               </div>
               <div className="flex flex-col items-start gap-2 sm:items-end">
-                <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/80 p-0.5">
+                <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/80 p-0.5 dark:border-shell-line dark:bg-shell-surface3/80">
                   <button
                     type="button"
                     onClick={() => changeWallView('wall')}
                     aria-pressed={wallView === 'wall'}
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       wallView === 'wall'
-                        ? 'bg-travel-sakura text-travel-ink shadow-sm'
-                        : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink'
+                        ? 'bg-travel-sakura text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
+                        : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                     }`}
                   >
                     <LayoutGrid className="h-3.5 w-3.5" />卡片墙
@@ -323,14 +323,14 @@ export default function TravelBook({
                     aria-pressed={wallView === 'list'}
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       wallView === 'list'
-                        ? 'bg-travel-sakura text-travel-ink shadow-sm'
-                        : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink'
+                        ? 'bg-travel-sakura text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
+                        : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                     }`}
                   >
                     <List className="h-3.5 w-3.5" />目录
                   </button>
                 </div>
-                <p className="text-xs text-travel-ink/55">
+                <p className="text-xs text-travel-ink/55 dark:text-shell-muted">
                   共 {wallStats.days} 天 · {wallStats.photos} 张照片
                 </p>
               </div>
@@ -339,7 +339,7 @@ export default function TravelBook({
             {openError && (
               <div
                 role="alert"
-                className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-red-200/70 bg-red-50/80 px-3.5 py-2.5 text-xs text-red-700"
+                className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-red-200/70 bg-red-50/80 px-3.5 py-2.5 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
               >
                 <span className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 shrink-0" />
@@ -349,7 +349,7 @@ export default function TravelBook({
                   type="button"
                   onClick={() => setOpenError('')}
                   aria-label="收起提示"
-                  className="rounded-full p-1 transition-colors hover:bg-red-100"
+                  className="rounded-full p-1 transition-colors hover:bg-red-100 dark:hover:bg-red-500/20"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -368,7 +368,7 @@ export default function TravelBook({
                 ))}
               </div>
             ) : (
-              <div className="divide-y divide-travel-dim/30 overflow-hidden rounded-2xl border border-travel-dim/30 bg-[#FFFCF7] shadow-[0_30px_50px_-34px_rgba(41,39,35,0.45)]">
+              <div className="divide-y divide-travel-dim/30 dark:divide-shell-line dark:border-shell-line overflow-hidden rounded-2xl border border-travel-dim/30 bg-[#FFFCF7] dark:bg-shell-surface shadow-[0_30px_50px_-34px_rgba(41,39,35,0.45)]">
                 {(books || []).map((book) => {
                   const cover = book.coverThumb || book.coverPreview
                   const date = book.startDate
@@ -396,26 +396,26 @@ export default function TravelBook({
                         )}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate font-display text-sm font-semibold text-travel-ink">
+                        <span className="block truncate font-display text-sm font-semibold text-travel-ink dark:text-shell-text">
                           {book.title}
                         </span>
-                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-travel-ink/55">
+                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-travel-ink/55 dark:text-shell-muted">
                           {book.location && <span>{book.location}</span>}
                           {date && <span className="tabular-nums">{date}</span>}
                         </span>
                       </span>
-                      <span className="hidden shrink-0 items-center gap-1.5 text-xs text-travel-ink/50 sm:flex">
+                      <span className="hidden shrink-0 items-center gap-1.5 text-xs text-travel-ink/50 sm:flex dark:text-shell-muted">
                         <BookOpen className="h-3.5 w-3.5" />
                         {book.dayCount} 章
                         <Camera className="ml-2 h-3.5 w-3.5" />
                         {book.photoCount} 图
                       </span>
                       {book.travelType && (
-                        <span className="hidden shrink-0 rounded-full bg-travel-sakura/40 px-2 py-0.5 text-[11px] text-travel-ink/70 md:inline">
+                        <span className="hidden shrink-0 rounded-full bg-travel-sakura/40 px-2 py-0.5 text-[11px] text-travel-ink/70 md:inline dark:bg-white/10 dark:text-shell-muted">
                           {TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}
                         </span>
                       )}
-                      <ChevronRight className="h-4 w-4 shrink-0 text-travel-ink/35 transition-transform group-hover:translate-x-0.5 group-hover:text-travel-ink/70" />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-travel-ink/35 transition-transform group-hover:translate-x-0.5 group-hover:text-travel-ink/70 dark:text-shell-faint dark:group-hover:text-shell-muted" />
                     </button>
                   )
                 })}
@@ -423,8 +423,8 @@ export default function TravelBook({
             )}
 
             {opening && (
-              <div className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-travel-cream/40 backdrop-blur-[2px]">
-                <div className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm text-travel-ink/70 shadow-[0_10px_30px_-10px_rgba(41,39,35,0.35)]">
+              <div className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-travel-cream/40 dark:bg-shell-bg/40 backdrop-blur-[2px]">
+                <div className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm text-travel-ink/70 dark:bg-shell-surface/90 dark:text-shell-text shadow-[0_10px_30px_-10px_rgba(41,39,35,0.35)]">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   正在翻开《{openingTitle}》...
                 </div>
