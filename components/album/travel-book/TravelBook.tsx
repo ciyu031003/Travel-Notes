@@ -70,7 +70,13 @@ export type BookSummary = Omit<Book, 'chapters'>
  * 旅行画册统一入口：每个城市一本画册（Travel 模型优先 + Post 城市画册兜底）。
  * 墙上以「东倒西歪」的散落卡片陈列所有城市画册，点击某本进入 page-flip 翻页阅读器。
  */
-export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) => void }) {
+export default function TravelBook({
+  onModeChange,
+  initialBookKey,
+}: {
+  onModeChange: (m: Mode) => void
+  initialBookKey?: string | null
+}) {
   const [books, setBooks] = useState<BookSummary[] | null>(null)
   const [loadError, setLoadError] = useState('')
   const [openError, setOpenError] = useState('')
@@ -110,6 +116,30 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
       })
       .finally(() => setOpening(false))
   }, [])
+
+  // 深链直达：/album?book=<bookKey> 打开指定画册（首页画册目录 → 城市直达）
+  const openedKeyRef = useRef('')
+  useEffect(() => {
+    if (!initialBookKey || openedKeyRef.current === initialBookKey) return
+    openedKeyRef.current = initialBookKey
+    const summary = books?.find((b) => b.bookKey === initialBookKey)
+    if (summary) {
+      openBookByKey(summary)
+    } else if (books && books.length > 0) {
+      // 摘要里没有（可能刚产生/缓存不同步）：尝试按 key 直接拉全书
+      setOpening(true)
+      setOpeningTitle('旅行画册')
+      setOpenError('')
+      fetch(apiUrl(`/api/travel-book?key=${encodeURIComponent(initialBookKey)}`), { credentials: 'include' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          if (j?.book) setOpenBook(j.book)
+          else setOpenError('画册打开失败，请稍后重试。')
+        })
+        .catch(() => setOpenError('画册打开失败，请稍后重试。'))
+        .finally(() => setOpening(false))
+    }
+  }, [initialBookKey, books, openBookByKey])
 
   const load = useCallback(() => {
     abortRef.current?.abort()

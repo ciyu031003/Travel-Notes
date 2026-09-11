@@ -100,8 +100,19 @@ export default function AlbumPage() {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const [albumTypeFilter, setAlbumTypeFilter] = useState<string>('ALL')
   const [albumCompanionFilter, setAlbumCompanionFilter] = useState<string | null>(null)
+  // 深链直达：/album?book=<bookKey>（首页画册目录 → 直开某城市画册）
+  const [initialBookKey, setInitialBookKey] = useState<string | null>(null)
   // SSR 与客户端首帧必须一致（默认画册模式），挂载后再读本地偏好，避免 hydration mismatch
   const [viewMode, setViewMode] = useState<'book' | 'space' | 'pixel'>('book')
+
+  useEffect(() => {
+    try {
+      const book = new URLSearchParams(window.location.search).get('book')
+      if (book) setInitialBookKey(book)
+    } catch {
+      // 忽略
+    }
+  }, [])
 
   useEffect(() => {
     try {
@@ -254,7 +265,7 @@ export default function AlbumPage() {
   if (viewMode === 'book') {
     return (
       <div key="mode-book" className="motion-safe:animate-[fadeIn_.2s_ease-out]">
-        <TravelBook onModeChange={changeMode} />
+        <TravelBook onModeChange={changeMode} initialBookKey={initialBookKey} />
       </div>
     )
   }

@@ -19,6 +19,7 @@ import HeroFootprintMap from '@/components/home/HeroFootprintMap'
 import MomentsStrip from '@/components/moments/MomentsStrip'
 import { DanmakuSection, type DanmakuSectionHandle } from '@/components/home/DanmakuSection'
 import { apiUrl } from '@/lib/api-base'
+import { albumDeepLink } from '@/lib/album-deep-link'
 
 interface PostMeta {
   slug: string
@@ -224,7 +225,7 @@ function HomeBooks() {
             {books.map((book, i) => (
               <Link
                 key={book.bookKey}
-                href="/album"
+                href={albumDeepLink(book.bookKey)}
                 title={book.title}
                 className="group overflow-hidden rounded-xl border border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-surface transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_12px_30px_-14px_rgba(168,95,58,0.35)]"
                 style={{ transform: i % 2 === 1 ? 'rotate(0.6deg)' : 'rotate(-0.6deg)' }}

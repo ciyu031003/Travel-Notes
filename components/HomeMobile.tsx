@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
+import { albumDeepLink } from '@/lib/album-deep-link'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { EmptyState } from '@/components/mobile/EmptyState'
@@ -160,8 +161,9 @@ function MobileBooks() {
         {books.map((book) => (
           <Link
             key={book.bookKey}
-            href="/album"
+            href={albumDeepLink(book.bookKey)}
             className="m-press m-card w-[46vw] max-w-[190px] flex-shrink-0 snap-start overflow-hidden"
+            aria-label={`打开《${book.title}》旅行画册`}
           >
             <div className="relative aspect-[4/3] w-full">
               {book.coverThumb ? (
