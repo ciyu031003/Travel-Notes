@@ -38,7 +38,7 @@ export default function CityModal({
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 w-8 h-8 bg-white/30 hover:bg-white/40 backdrop-blur rounded-full flex items-center justify-center transition-colors"
+            className="absolute top-3 right-3 w-10 h-10 bg-white/30 hover:bg-white/40 backdrop-blur rounded-full flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4 text-white" />
           </button>

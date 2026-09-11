@@ -73,7 +73,7 @@ export default function MobileProvinceDrawer({
                 <button
                   type="button"
                   onClick={onBack}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]"
                   aria-label="返回省份"
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -98,7 +98,7 @@ export default function MobileProvinceDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-2)] text-[var(--m-muted)]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-2)] text-[var(--m-muted)]"
             aria-label="关闭"
           >
             <X className="h-5 w-5" />
