@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, List, X } from 'lucide-react'
 import type { Book, BookChapter, BookPhoto } from './TravelBook'
 import ArtFlipBook, { type ArtFlipBookHandle } from '../reader/ArtFlipBook'
 import {
@@ -98,6 +98,14 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
     () => buildPages(book, measured, isWide),
     [book, measured, isWide],
   )
+  // 各章节引导页在全书中的起始页码（封面跳章用）
+  const chapterStarts = useMemo(() => {
+    const starts: { chapter: BookChapter; pageIndex: number }[] = []
+    pages.forEach((page, i) => {
+      if (page.kind === 'chapter') starts.push({ chapter: page.chapter, pageIndex: i })
+    })
+    return starts
+  }, [pages])
   const artFlipRef = useRef<ArtFlipBookHandle>(null)
   const [artPageIndex, setArtPageIndex] = useState(0)
   const [spreadInfo, setSpreadInfo] = useState<{ index: number; total: number } | null>(null)
@@ -132,15 +140,35 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') artFlipRef.current?.flipNext()
-      else if (e.key === 'ArrowLeft') artFlipRef.current?.flipPrev()
-      else if (e.key === 'Escape') onBack()
+      // 输入框 / 按钮获得焦点时交还给原生行为（如空格触发按钮点击），避免重复翻页
+      const t = e.target as HTMLElement | null
+      if (
+        t &&
+        (t instanceof HTMLInputElement ||
+          t instanceof HTMLTextAreaElement ||
+          t instanceof HTMLSelectElement ||
+          t instanceof HTMLButtonElement ||
+          t.isContentEditable)
+      ) {
+        return
+      }
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault()
+        artFlipRef.current?.flipNext()
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault()
+        artFlipRef.current?.flipPrev()
+      } else if (e.key === 'Escape') {
+        onBack()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onBack])
 
   const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/70 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20'
+  const isCover = artPageIndex === 0
+  const showChapterJump = isWide && isCover && chapterStarts.length > 0
 
   return (
     <div className="fixed inset-0 z-[105] flex flex-col bg-travel-cream dark:bg-shell-bg">
@@ -151,7 +179,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           className="inline-flex items-center gap-1.5 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
-          我的旅行画册
+          返回画册墙
         </button>
         <div className="flex min-w-0 items-center gap-1.5 font-display text-sm font-semibold text-travel-ink dark:text-shell-text">
           <BookOpen className="h-4 w-4 shrink-0 text-travel-bloom" />
@@ -167,7 +195,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
         </button>
       </header>
 
-      <main className="flex flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-3">
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-3">
         <div className={`art-flip-rig${isWide ? '' : ' art-flip-rig--single'}`}>
           <ArtFlipBook
             ref={artFlipRef}
@@ -177,6 +205,27 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
             portrait={!isWide}
           />
         </div>
+        {showChapterJump && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center">
+            <div
+              role="group"
+              aria-label="章节直达"
+              className="pointer-events-auto flex max-w-[min(92%,720px)] items-center gap-1 overflow-x-auto rounded-full border border-travel-dim/50 bg-travel-cream/90 px-2 py-1.5 shadow-[0_8px_24px_-12px_rgba(90,60,40,0.35)] backdrop-blur dark:border-shell-line dark:bg-shell-surface/90 dark:shadow-black/40"
+            >
+              <List className="mx-1 h-3.5 w-3.5 shrink-0 text-travel-bloom dark:text-travel-bloom" />
+              {chapterStarts.map(({ chapter, pageIndex }) => (
+                <button
+                  key={chapter.index}
+                  type="button"
+                  onClick={() => artFlipRef.current?.turnToPage(pageIndex)}
+                  className="shrink-0 rounded-full px-2.5 py-1 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/80 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
+                >
+                  DAY {String(chapter.index).padStart(2, '0')} · {chapter.title || `DAY ${String(chapter.index).padStart(2, '0')}`}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-3 py-2.5 sm:justify-center sm:px-4 dark:border-shell-line">
