@@ -33,7 +33,11 @@ export function useAppUpdate() {
       .catch(() => {})
   }, [])
 
-  const dismiss = () => setDismissed(true)
+  const dismiss = () => {
+    // 强制更新不可跳过：dismiss 无效，提示持续阻断直到安装新版
+    if (manifest?.forceUpdate) return
+    setDismissed(true)
+  }
 
   const download = () => {
     if (!manifest?.downloadUrl) return

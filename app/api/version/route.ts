@@ -8,11 +8,13 @@ export const dynamic = 'force-dynamic'
  * 返回最新版本号 / 构建号 / APK 下载地址，客户端据此提示「发现新版本」并引导下载安装。
  */
 export async function GET() {
+  // 部署时 APP_FORCE_UPDATE=1 开启强制更新（默认不强制）
+  const forceUpdate = process.env.APP_FORCE_UPDATE === '1'
   return NextResponse.json({
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
     changelog: '优化体验，支持离线浏览与自动同步',
-    forceUpdate: false,
+    forceUpdate,
   })
 }
