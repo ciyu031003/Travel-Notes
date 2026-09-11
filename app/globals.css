@@ -207,10 +207,16 @@ pre code.hljs {
 
 html {
   scroll-behavior: smooth;
+  /* 首帧底色：暖米白铺底，D2 启动/水合前不再闪白（暗色由各页自身背景接管） */
+  background-color: #FAF6EE;
 }
 
 body {
   overflow-x: hidden;
+}
+
+html.dark {
+  background-color: #12161C;
 }
 
 .scrollbar-hide {
