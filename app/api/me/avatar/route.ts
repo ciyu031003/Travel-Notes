@@ -4,6 +4,7 @@ import path from 'path'
 import sharp from 'sharp'
 import { getCurrentUserId } from '@/lib/current-user'
 import { updateMyAvatar, getMyProfile } from '@/lib/modules/social/profile.service'
+import { avatarFilePaths } from '@/lib/modules/social/avatar-variants'
 import { ok, unauthorized, fail, serverError } from '@/lib/api-response'
 
 export const dynamic = 'force-dynamic'
@@ -27,20 +28,40 @@ export async function POST(request: NextRequest) {
     const dir = path.join(process.cwd(), 'public', 'uploads', 'avatars')
     await mkdir(dir, { recursive: true })
 
-    const output = await sharp(buffer)
-      .rotate()
-      .resize(256, 256, { fit: 'cover', position: 'attention' })
-      .webp({ quality: 82 })
-      .toBuffer()
+    // 主图 256×256（列表/评论），preview 1024×1024（个人主页高分屏），blur 16px（低质占位）
+    const [main, preview, blur] = await Promise.all([
+      sharp(buffer)
+        .rotate()
+        .resize(256, 256, { fit: 'cover', position: 'attention' })
+        .webp({ quality: 82 })
+        .toBuffer(),
+      sharp(buffer)
+        .rotate()
+        .resize(1024, 1024, { fit: 'cover', position: 'attention' })
+        .webp({ quality: 88 })
+        .toBuffer(),
+      sharp(buffer)
+        .rotate()
+        .resize(16, 16, { fit: 'cover', position: 'attention' })
+        .jpeg({ quality: 60 })
+        .toBuffer(),
+    ])
 
-    const fileName = 'avatar-' + userId + '-' + Date.now() + '.webp'
-    await writeFile(path.join(dir, fileName), output)
-    const avatarUrl = '/uploads/avatars/' + fileName
+    const fileName = 'avatar-' + userId + '-' + Date.now()
+    await Promise.all([
+      writeFile(path.join(dir, fileName + '.webp'), main),
+      writeFile(path.join(dir, fileName + '-preview.webp'), preview),
+      writeFile(path.join(dir, fileName + '-blur.jpg'), blur),
+    ])
+    const avatarUrl = '/uploads/avatars/' + fileName + '.webp'
 
     const previous = await getMyProfile(userId)
     if (previous?.avatarUrl && previous.avatarUrl.startsWith('/uploads/avatars/')) {
-      const oldPath = path.join(process.cwd(), 'public', previous.avatarUrl.slice(1))
-      unlink(oldPath).catch(() => {})
+      avatarFilePaths(previous.avatarUrl).forEach((urlPath) => {
+        // 去掉前导 / 再拼 public 目录（path.join 遇绝对路径会重置）
+        const relFile = urlPath.replace(/^\//, '')
+        unlink(path.join(process.cwd(), 'public', relFile)).catch(() => {})
+      })
     }
 
     const data = await updateMyAvatar(userId, avatarUrl)

@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { avatarVariantUrl } from '@/lib/modules/social/avatar-variants'
 
 interface SocialAvatarProps {
   name: string
@@ -12,13 +14,24 @@ interface SocialAvatarProps {
 
 /** 旅行圈/个人主页统一头像：照片优先，无照片时使用暖金首字母。 */
 export default function SocialAvatar({ name, avatarUrl, size = 40, className }: SocialAvatarProps) {
-  if (avatarUrl) {
+  const [failed, setFailed] = useState<string | null>(null)
+  // 大头像（资料页/个人主页，≥72）优先使用 1024 preview 变体；旧头像无变体时回退主图
+  const previewSrc = avatarUrl && size >= 72 ? avatarVariantUrl(avatarUrl, 'preview') : null
+  const src =
+    failed === null
+      ? previewSrc ?? avatarUrl ?? null
+      : failed === previewSrc
+        ? (avatarUrl ?? null)
+        : null
+
+  if (avatarUrl && src) {
     return (
       <Image
-        src={avatarUrl}
+        src={src}
         alt={name}
         width={size}
         height={size}
+        onError={() => setFailed(src)}
         className={cn('shrink-0 rounded-full object-cover ring-1 ring-[var(--social-line)]', className)}
         style={{ width: size, height: size }}
       />
