@@ -124,6 +124,12 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
     [],
   )
 
+  // 挂载：若存在「返回墙位置」预留（草稿，滚动恢复由 TravelBook 在 onBack 里执行），
+  // 此处只负责把阅读器顶到内容起点，避免从墙点击后继续停在旧位置造成视觉错位。
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior })
+  }, [])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') artFlipRef.current?.flipNext()

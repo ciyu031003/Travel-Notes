@@ -24,6 +24,9 @@ type Mode = 'book' | 'space' | 'pixel'
 const WALL_VIEW_KEY = 'album-wall-view'
 type WallView = 'wall' | 'list'
 
+/** 打开画册前保存墙位，返回时恢复（session 级，刷新作废） */
+const WALL_SCROLL_KEY = 'album-wall-scroll-y'
+
 export interface BookPhoto {
   id: number
   thumbnailUrl: string | null
@@ -96,6 +99,11 @@ export default function TravelBook({
   }, [books])
 
   const openBookByKey = useCallback((summary: BookSummary) => {
+    try {
+      sessionStorage.setItem(WALL_SCROLL_KEY, String(window.scrollY || 0))
+    } catch {
+      // 忽略
+    }
     setOpening(true)
     setOpeningTitle(summary.title || '旅行画册')
     setOpenError('')
@@ -194,8 +202,32 @@ export default function TravelBook({
     load()
   }, [load])
 
+  const closeReader = useCallback(() => {
+    setOpenBook(null)
+    // 返回墙：恢复打开前的滚动位置
+    let saved = 0
+    try {
+      const raw = sessionStorage.getItem(WALL_SCROLL_KEY)
+      if (raw) saved = Number(raw) || 0
+      sessionStorage.removeItem(WALL_SCROLL_KEY)
+    } catch {
+      // 忽略
+    }
+    requestAnimationFrame(() => window.scrollTo({ top: saved, left: 0, behavior: 'instant' as ScrollBehavior }))
+    // 深链/直达返回时清理 URL 参数，避免再次进入自动重开
+    if (window.location.search.includes('book=')) {
+      try {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('book')
+        window.history.replaceState(null, '', url.href)
+      } catch {
+        // 忽略
+      }
+    }
+  }, [])
+
   if (openBook) {
-    return <BookReader book={openBook} onBack={() => setOpenBook(null)} />
+    return <BookReader book={openBook} onBack={closeReader} />
   }
 
   return (
