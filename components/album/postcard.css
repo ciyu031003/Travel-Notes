@@ -27,6 +27,48 @@
 }
 .pcard:focus-visible { outline: 2px solid #d98ba0; outline-offset: 4px; }
 
+/* 进墙动画：卡片散落摊开（仅桌面端，移动端保持直出避免滚动区跳动） */
+@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+  .pcard {
+    opacity: 0;
+    transform: translateY(8px) rotate(var(--rot));
+    animation: pcard-scatter-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: var(--m-delay, 0ms);
+  }
+}
+@keyframes pcard-scatter-in {
+  to {
+    opacity: 1;
+    transform: rotate(var(--rot)) translateY(var(--shift));
+  }
+}
+
+/* 桌面 hover：淡入「翻开」引导，指向书页展开 */
+@media (hover: hover) and (min-width: 641px) {
+  .pcard-open-hint {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    background: rgba(41, 39, 35, 0.28);
+    color: #FFFCF7;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-indent: 0.28em;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    backdrop-filter: blur(1.5px);
+  }
+  .pcard:hover .pcard-open-hint {
+    opacity: 1;
+  }
+}
+
 /* 穿孔纸底：打满圆孔，内容层会盖住中间，只露出边缘齿孔 */
 .pcard-frame {
   position: absolute;

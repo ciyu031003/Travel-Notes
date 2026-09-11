@@ -295,12 +295,13 @@ export default function TravelBook({ onModeChange }: { onModeChange: (m: Mode) =
             )}
 
             {wallView === 'wall' ? (
-              <div className="album-scatter grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-                {(books || []).map((book) => (
+              <div className="album-scatter grid grid-cols-1 gap-x-6 gap-y-9 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3 xl:grid-cols-4">
+                {(books || []).map((book, i) => (
                   <PostcardCard
                     key={book.bookKey || book.travelId}
                     book={book}
                     onOpen={() => openBookByKey(book)}
+                    index={i}
                   />
                 ))}
               </div>

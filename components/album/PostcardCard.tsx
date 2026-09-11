@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BookOpen, Camera, MapPin } from 'lucide-react'
+import { BookOpen, BookMarked, Camera, MapPin } from 'lucide-react'
 import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import type { BookSummary } from '@/components/album/travel-book/TravelBook'
 import './postcard.css'
@@ -34,7 +34,15 @@ function baseShift(seed: number): number {
 
 const fmtDate = formatDotDate
 
-export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOpen: () => void }) {
+export default function PostcardCard({
+  book,
+  onOpen,
+  index = 0,
+}: {
+  book: BookSummary
+  onOpen: () => void
+  index?: number
+}) {
   const ref = useRef<HTMLButtonElement>(null)
   const [imgLoaded, setImgLoaded] = useState(false)
   const seed = hashKey(book.bookKey || String(book.travelId))
@@ -83,11 +91,23 @@ export default function PostcardCard({ book, onOpen }: { book: BookSummary; onOp
       type="button"
       onClick={onOpen}
       className="pcard"
-      style={{ '--rot': rot + 'deg', '--shift': shift + 'px' } as React.CSSProperties}
+      style={
+        {
+          '--rot': rot + 'deg',
+          '--shift': shift + 'px',
+          '--m-delay': `${Math.min(index * 45, 500)}ms`,
+        } as React.CSSProperties
+      }
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       aria-label={`打开《${book.title}》旅行画册`}
     >
+      {/* 桌面 hover：翻开引导（指示点不做交互）*/}
+      <span className="pcard-open-hint" aria-hidden="true">
+        <BookMarked className="mr-1.5 h-3.5 w-3.5" />
+        翻开
+      </span>
+
       {/* 穿孔纸底 */}
       <span className="pcard-frame" aria-hidden="true" />
 
