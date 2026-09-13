@@ -70,12 +70,15 @@ crontab -l                                              # 查看 cron
 | `NEXT_PUBLIC_SITE_TITLE` | 站点标题 | Travel-Notes |
 | `APP_ENCRYPTION_KEY` | AppSecret 表（如 DASHSCOPE_API_KEY）的 AES-256-GCM 主密钥 | 空（未配置则敏感配置功能禁用） |
 | `APP_VERSION` / `APP_BUILD_NUMBER` | OTA 版本（/api/version 供 App 检查更新；每次发版递增构建号） | 3.0.1 / 6 |
-| `APP_DOWNLOAD_URL` | 新版 APK 下载地址（需 nginx 静态目录 /downloads/） | https://travel-notes.yuanabd.cn/downloads/tiantu.apk |
+| `APP_DOWNLOAD_URL` | 新版 APK 下载地址（COS/CDN 公开地址，可用 scripts/publish-apk.cjs 发布；nginx /downloads/ 仅作回退） | https://travel-notes.yuanabd.cn/downloads/tiantu.apk |
+| `COS_ENDPOINT` / `COS_REGION` / `COS_BUCKET` / `COS_ACCESS_KEY_ID` / `COS_SECRET_ACCESS_KEY` / `COS_CDN_BASE_URL` | APK 上传腾讯云 COS 的发布配置（scripts/publish-apk.cjs） | 空 |
 | `OIL_PAINT_ENABLED` | 油画生成（通义 API，按张计费）总开关，需为 `true` 才启用 | false |
 | `SMTP_*` + `MAIL_FROM` | 邮件发送（可选） | 空 |
 | `STORAGE_*` | S3 兼容对象存储（可选） | 空 |
 
 > **APP_ENCRYPTION_KEY 强度要求**：至少 32 字节随机值（`openssl rand -hex 32`）。该值经 SHA-256 归一后直接作为 AES-256 密钥，弱口令会被无盐归一掩盖成"合法"密钥——务必使用随机值，且一旦投入使用不可更换（换钥后已有密文无法解密）。可用 `node scripts/seed-secret.cjs` 写入密钥类敏感配置。
+
+> **APK 分发（COS + CDN）**：新版 APK 先经 `node --env-file=.env scripts/publish-apk.cjs` 上传腾讯云 COS，脚本会输出 `APP_DOWNLOAD_URL`；未设置 `COS_OBJECT_KEY` 时对象 key 自动带版本号（如 `downloads/tiantu-1.5.0.apk`），避免 CDN 一年长缓存。生产 `.env` 填入脚本输出的 CDN 地址并 `docker compose up -d --build app` 后，`/api/version` 与 App 内更新入口即指向 CDN。`nginx /downloads/` 目录可保留作回退，需支持 `Range` 请求。
 
 ---
 

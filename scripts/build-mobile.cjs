@@ -62,9 +62,9 @@ try {
       MOBILE_EXPORT: '1',
       NEXT_PUBLIC_API_BASE: apiBase,
       NEXT_PUBLIC_APP_PLATFORM: 'mobile',
-      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.4.0',
-      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '5',
-      NEXT_PUBLIC_APP_DOWNLOAD_URL: process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL || 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk',
+      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.5.0',
+      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '6',
+      NEXT_PUBLIC_APP_DOWNLOAD_URL: process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL || process.env.APP_DOWNLOAD_URL || 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk',
       SKIP_DB_ON_BUILD: '1',
     },
   })
@@ -79,5 +79,14 @@ if (fs.existsSync(outDir)) {
   if (fs.existsSync(wwwDir)) fs.rmSync(wwwDir, { recursive: true, force: true })
   fs.cpSync(outDir, wwwDir, { recursive: true })
   fs.rmSync(outDir, { recursive: true, force: true })
+
+  // 移动端照片/视频由服务端按需提供（/uploads、COS/CDN），不在壳内冗余打包；
+  // 移除 public/uploads/media 的静态导出副本后，release APK 可减少约 64MB。
+  const bundledMediaDir = path.join(wwwDir, 'uploads', 'media')
+  if (fs.existsSync(bundledMediaDir)) {
+    fs.rmSync(bundledMediaDir, { recursive: true, force: true })
+    console.log('[build-mobile] 已移除打包冗余：www/uploads/media（照片改为运行期从服务端加载）')
+  }
+
   console.log('[build-mobile] 完成：www/ 已生成，可 npx cap sync android')
 }
