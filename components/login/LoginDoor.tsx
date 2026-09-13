@@ -107,17 +107,20 @@ export default function LoginDoor({ children }: LoginDoorProps) {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* 动态背景（mp4） */}
-      <video
-        aria-hidden="true"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        className="absolute inset-0 h-full w-full object-cover"
-        src="/videos/clover.mp4"
-      />
+      {/* 动态背景（mp4）：延迟到门开始打开后才加载/播放，
+          避免首屏即拉 2.9MB 视频（减轻登录首屏网络负担） */}
+      {(phase === 'opening' || showContent) && (
+        <video
+          aria-hidden="true"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          className="absolute inset-0 h-full w-full object-cover"
+          src="/videos/clover.mp4"
+        />
+      )}
       {/* 可读性遮罩（中部加深，保证登录卡与输入框在花哨视频上可读） */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
 

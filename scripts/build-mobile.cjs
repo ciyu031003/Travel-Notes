@@ -88,5 +88,13 @@ if (fs.existsSync(outDir)) {
     console.log('[build-mobile] 已移除打包冗余：www/uploads/media（照片改为运行期从服务端加载）')
   }
 
+  // 运行时品牌标志用 logo-512.png（258KB）；2048×2048 的 logo.png 仅作为
+  // gen-splash/gen-icons 的生成源，剔除其静态导出副本避免 ~2MB 冗余打进 APK。
+  const bundledLogo = path.join(wwwDir, 'brand', 'logo.png')
+  if (fs.existsSync(bundledLogo)) {
+    fs.rmSync(bundledLogo, { force: true })
+    console.log('[build-mobile] 已移除打包冗余：www/brand/logo.png（运行时品牌用 logo-512.png，源图仅生成用）')
+  }
+
   console.log('[build-mobile] 完成：www/ 已生成，可 npx cap sync android')
 }
