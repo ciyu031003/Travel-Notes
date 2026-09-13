@@ -5,11 +5,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import dynamicImport from 'next/dynamic'
-import { MapPin, Calendar, ArrowRight, Plus, Image as ImageIcon, WifiOff } from 'lucide-react'
+import { MapPin, Calendar, ArrowRight, Image as ImageIcon, WifiOff } from 'lucide-react'
 import { formatDate, cn } from '@/lib/utils'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName, type City } from '@/data/cities'
-import { apiUrl } from '@/lib/api-base'
 import { travelDetailHref } from '@/lib/routes'
 import MobileProvinceDrawer from '@/components/china-map/MobileProvinceDrawer'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
@@ -91,14 +90,7 @@ export default function TravelMobileClient({
   }, [posts])
 
   const handleRecord = async () => {
-    try {
-      const res = await fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
-      const data = await res.json().catch(() => null)
-      if (data?.authenticated) router.push('/travel?compose=1')
-      else router.push('/login?redirect=' + encodeURIComponent('/travel?compose=1'))
-    } catch {
-      router.push('/login?redirect=' + encodeURIComponent('/travel?compose=1'))
-    }
+    router.push('/travel/new')
   }
 
   const handleProvinceSelect = (provinceId: string) => {
@@ -124,7 +116,7 @@ export default function TravelMobileClient({
           </div>
         )}
 
-        {/* 顶部移动标题 + 新建入口 */}
+        {/* 顶部移动标题（新建旅行统一走底部 Dock 栏「+」入口） */}
         <header className="flex items-end justify-between px-5 pt-[max(26px,env(safe-area-inset-top))] pb-5">
           <div>
             <p className="text-[11px] font-semibold tracking-[0.22em] text-[var(--m-accent-strong)]">MY JOURNEYS</p>
@@ -133,14 +125,6 @@ export default function TravelMobileClient({
               <CountUp value={posts.length} /> 篇旅途 · <CountUp value={provincesVisited} /> 个省 · <CountUp value={cityCount} /> 个城市
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleRecord}
-            aria-label="记录旅行"
-            className="m-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#D58A58,#A85F3A)] text-white shadow-[0_12px_26px_-10px_rgba(168,95,58,0.55)]"
-          >
-            <Plus className="h-6 w-6" strokeWidth={2.6} />
-          </button>
         </header>
 
         {/* 移动地图：独立迷你卡片，不携带侧栏 */}

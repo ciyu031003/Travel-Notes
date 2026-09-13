@@ -30,12 +30,12 @@ export default function MobileBottomNav() {
       const res = await fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
       const data = await res.json().catch(() => null)
       if (data && data.authenticated) {
-        router.push('/travel?compose=1')
+        router.push('/travel/new')
       } else {
-        router.push('/login?redirect=' + encodeURIComponent('/travel?compose=1'))
+        router.push('/login?redirect=' + encodeURIComponent('/travel/new'))
       }
     } catch {
-      router.push('/login?redirect=' + encodeURIComponent('/travel?compose=1'))
+      router.push('/login?redirect=' + encodeURIComponent('/travel/new'))
     }
   }
 

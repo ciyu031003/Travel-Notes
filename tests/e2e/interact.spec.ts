@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 /**
  * 互动冒烟（已登录）：
- * 1. 建旅行 — /travel?compose=1 移动端自动弹出的 TravelComposer（Web 端唯一新建入口）。
+ * 1. 建旅行 — /travel/new 全屏新建页（Dock 栏「+」跳入，独立页面非弹窗）。
  * 2. 发碎碎念 — /moments MomentComposer（Web 在线直发）。
  * 测试数据由 global-teardown 按 e2e_runner 名下清理。
  */
@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test'
 test('新建旅行（标题+类型）→ 列表可见', async ({ page }) => {
   const title = `E2E 冒烟旅行 ${Date.now()}`
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/travel?compose=1')
+  await page.goto('/travel/new')
 
   const titleInput = page.getByPlaceholder('旅行名称（必填）')
   await expect(titleInput).toBeVisible({ timeout: 20_000 })
