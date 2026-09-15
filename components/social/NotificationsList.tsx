@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, CheckCheck } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 
@@ -39,17 +40,17 @@ export default function NotificationsList() {
       <div className="relative mx-auto max-w-2xl px-4 py-6">
         <header className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
+            <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Inbox</p>
               <h1 className="text-xl font-semibold">我的通知</h1>
             </div>
             {unread > 0 && <span className="rounded-full bg-[var(--social-accent-soft)] px-2 py-0.5 text-xs text-[var(--social-accent)]">{unread} 未读</span>}
           </div>
-          <div className="flex items-center gap-2"><SocialThemeToggle /><button onClick={markAll} disabled={busy || unread === 0} className="inline-flex items-center gap-1 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)] disabled:opacity-40"><CheckCheck className="h-3.5 w-3.5" />全部已读</button></div>
+          <div className="flex items-center gap-2"><SocialThemeToggle /><button onClick={markAll} disabled={busy || unread === 0} className="inline-flex items-center gap-1 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)] disabled:opacity-40"><Icon icon={CheckCheck} size="sm" />全部已读</button></div>
         </header>
         {loading ? (
-          <div className="py-20 text-center text-[var(--social-faint)]"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
+          <div className="py-20 text-center text-[var(--social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : data.length === 0 ? (
           <p className="py-20 text-center text-sm text-[var(--social-faint)]">暂无通知。</p>
         ) : (

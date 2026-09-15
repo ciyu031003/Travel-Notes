@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { Send, X, CornerDownRight } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import { cn } from '@/lib/utils'
 import { createComment } from '@/lib/modules/offline/social-write'
@@ -93,7 +94,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
             <p className="mt-1 break-words text-sm leading-relaxed text-[var(--social-muted)]">{c.content}</p>
             <button type="button" onClick={() => setReplyTo({ id: c.id, username: name })}
               className="mt-1.5 inline-flex items-center gap-1 text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]">
-              <CornerDownRight className="h-3 w-3" /> 回复
+              <Icon icon={CornerDownRight} size="sm" /> 回复
             </button>
           </div>
         </div>
@@ -108,7 +109,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
       <div className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[80vh] max-w-2xl flex-col overflow-hidden rounded-t-[1.8rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
         <div className="flex items-center justify-between border-b border-[var(--social-line)] px-5 py-4">
           <h3 className="text-sm font-semibold text-[var(--social-text)]">评论 {total > 0 ? '(' + total + ')' : ''}</h3>
-          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[var(--social-muted)] hover:text-[var(--social-text)]"><X className="h-4 w-4" /></button>
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[var(--social-muted)] hover:text-[var(--social-text)]"><Icon icon={X} size="sm" /></button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2">
@@ -136,7 +137,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
               className="h-11 min-w-0 flex-1 rounded-full bg-[var(--social-bg)] px-4 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] placeholder:text-[var(--social-faint)] focus:ring-[var(--social-accent)]" />
             <button type="button" onClick={submit} disabled={submitting || !content.trim()}
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)] transition active:scale-90 disabled:opacity-40">
-              <Send className="h-4 w-4" />
+              <Icon icon={Send} size="sm" tone="inverse" />
             </button>
           </div>
         </div>

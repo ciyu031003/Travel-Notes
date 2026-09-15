@@ -20,7 +20,11 @@ const allCities = [
 function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/'
+  // 登录后落地页：仅接受站内相对路径（防开放重定向），默认进应用首页 /
+  // （生产环境的 / 由 Next.js 应用服务；若 / 仍被门户遮蔽，务必按
+  // docs/DEPLOY-PORTAL-HOMEPAGE.md 把门户迁到 /portal，让 / 恢复为应用首页。）
+  const rawRedirect = searchParams.get('redirect')
+  const redirect = rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

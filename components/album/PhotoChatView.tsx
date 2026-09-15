@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { ArrowLeft, Send, Moon, Loader2, MessageCircle, Sparkles } from 'lucide-react'
 import ParticlePhotoBackground from './space/ParticlePhotoBackground'
 import StarfieldBackground from './StarfieldBackground'
+import { Icon } from '@/components/mobile/Icon'
 
 interface Message {
   id: number
@@ -159,8 +160,9 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
           className="absolute z-10 top-[54px] bottom-[58px] inset-x-0 overflow-y-auto px-3 py-3 space-y-2.5 scrollbar-thin"
         >
           <div className="flex justify-center">
-            <span className="text-xs text-album-text2 bg-white/10 backdrop-blur-md rounded-lg px-2.5 py-1">
-              这张照片在星河中等候你的留言 ✨
+            <span className="flex items-center gap-1.5 text-xs text-album-text2 bg-white/10 backdrop-blur-md rounded-lg px-2.5 py-1">
+              这张照片在星河中等候你的留言
+              <Icon icon={Sparkles} size="sm" />
             </span>
           </div>
 

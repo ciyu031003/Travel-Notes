@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 
@@ -19,14 +20,14 @@ export default function UserList({ endpoint, title }: { endpoint: string; title:
       <div className="relative mx-auto max-w-2xl px-4 py-6">
         <header className="mb-8 flex items-center gap-3">
           <div className="ml-auto"><SocialThemeToggle /></div>
-          <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
+          <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">People</p>
             <h1 className="text-xl font-semibold">{title}</h1>
           </div>
         </header>
         {loading ? (
-          <div className="py-20 text-center text-[var(--social-faint)]"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
+          <div className="py-20 text-center text-[var(--social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : users.length === 0 ? (
           <p className="py-20 text-center text-sm text-[var(--social-faint)]">暂无数据。</p>
         ) : (

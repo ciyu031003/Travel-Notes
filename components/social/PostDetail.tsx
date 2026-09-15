@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, MapPin, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, X, WifiOff, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, X, WifiOff, Pencil, Trash2 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import SocialBar from './SocialBar'
 import CommentPanel from './CommentPanel'
 import SocialAvatar from '@/components/social/SocialAvatar'
@@ -196,7 +197,7 @@ export default function PostDetail({ postId }: { postId: number }) {
   }
 
   if (loading) {
-    return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]"><Loader2 className="h-7 w-7 animate-spin" />加载中…</div>
+    return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]"><Icon icon={Loader2} size="lg" className="animate-spin" />加载中…</div>
   }
   if (error || !post) {
     return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]">{error || '帖子不存在'}<Link href="/circle" className="text-[var(--social-accent)]">返回旅行圈</Link></div>
@@ -211,12 +212,12 @@ export default function PostDetail({ postId }: { postId: number }) {
       <div className="relative mx-auto max-w-3xl px-4 py-6">
         {offline && (
           <div className="mb-4 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
-            <WifiOff className="h-3.5 w-3.5" />
+            <Icon icon={WifiOff} size="sm" />
             离线模式：显示已缓存的帖子内容
           </div>
         )}
         <header className="mb-7 flex items-center gap-3">
-          <Link href="/circle" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
+          <Link href="/circle" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
           <span className="text-sm text-[var(--social-muted)]">旅行圈</span>
           <div className="ml-auto flex items-center gap-2">
             {post.canEdit && (
@@ -225,7 +226,7 @@ export default function PostDetail({ postId }: { postId: number }) {
                 onClick={openEdit}
                 className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-accent)] px-4 py-2 text-sm font-medium text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] active:scale-95"
               >
-                <Pencil className="h-4 w-4" />编辑
+                <Icon icon={Pencil} size="sm" />编辑
               </button>
             )}
             <SocialThemeToggle />
@@ -242,8 +243,8 @@ export default function PostDetail({ postId }: { postId: number }) {
           {post.location && <div className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">{post.location}</div>}
           <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{post.title}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--social-muted)]">
-            {dateText && <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />{dateText}</span>}
-            <span className="inline-flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" />{post.photoCount} 张 · DAY {post.dayCount}</span>
+            {dateText && <span className="inline-flex items-center gap-1.5"><Icon icon={CalendarDays} size="sm" />{dateText}</span>}
+            <span className="inline-flex items-center gap-1.5"><Icon icon={ImageIcon} size="sm" />{post.photoCount} 张 · DAY {post.dayCount}</span>
           </div>
 
           {post.author && (
@@ -268,9 +269,9 @@ export default function PostDetail({ postId }: { postId: number }) {
         />
 
         <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-[var(--social-faint)]">
-          <button type="button" onClick={() => setShowReport(true)} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-[var(--social-text)]"><Flag className="h-3.5 w-3.5" />举报</button>
+          <button type="button" onClick={() => setShowReport(true)} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-[var(--social-text)]"><Icon icon={Flag} size="sm" />举报</button>
           {post.author && !blocked && (
-            <button type="button" onClick={blockAuthor} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-[var(--social-text)]"><Ban className="h-3.5 w-3.5" />屏蔽作者</button>
+            <button type="button" onClick={blockAuthor} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-[var(--social-text)]"><Icon icon={Ban} size="sm" />屏蔽作者</button>
           )}
           {blocked && <span>已屏蔽该作者</span>}
         </div>
@@ -302,7 +303,7 @@ export default function PostDetail({ postId }: { postId: number }) {
           <div className="absolute left-1/2 top-1/2 w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[1.6rem] bg-[var(--social-surface)] p-5 ring-1 ring-[var(--social-line)]">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-base font-semibold">举报该旅行</h3>
-              <button onClick={() => setShowReport(false)} className="text-[var(--social-muted)] hover:text-[var(--social-text)]"><X className="h-4 w-4" /></button>
+              <button onClick={() => setShowReport(false)} className="text-[var(--social-muted)] hover:text-[var(--social-text)]"><Icon icon={X} size="sm" /></button>
             </div>
             <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl bg-[var(--social-bg)] px-3 py-2 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--social-accent)]" />
             <button onClick={submitReport} disabled={reporting || !reportReason.trim()} className="mt-3 w-full rounded-full bg-[var(--social-accent)] py-2.5 text-sm font-medium text-[var(--social-on-accent)] disabled:opacity-40">{reporting ? '提交中…' : '提交举报'}</button>
@@ -315,7 +316,7 @@ export default function PostDetail({ postId }: { postId: number }) {
           <div className="absolute left-1/2 top-1/2 max-h-[88vh] w-[92%] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[1.6rem] bg-[var(--social-surface)] p-5 ring-1 ring-[var(--social-line)]">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">编辑旅行故事</h3>
-              <button type="button" onClick={() => setShowEdit(false)} className="text-[var(--social-muted)] transition hover:text-[var(--social-text)]" aria-label="关闭编辑"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={() => setShowEdit(false)} className="text-[var(--social-muted)] transition hover:text-[var(--social-text)]" aria-label="关闭编辑"><Icon icon={X} size="md" /></button>
             </div>
 
             <label className="mb-1.5 block text-xs text-[var(--social-muted)]">标题</label>
@@ -346,7 +347,7 @@ export default function PostDetail({ postId }: { postId: number }) {
                     disabled={uploading}
                     className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs text-[var(--social-accent)] ring-1 ring-[var(--social-line)] transition hover:ring-[var(--social-accent)] disabled:opacity-50"
                   >
-                    {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+                    {uploading ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />}
                     上传图片
                   </button>
                   <input
@@ -370,7 +371,7 @@ export default function PostDetail({ postId }: { postId: number }) {
                           aria-label="删除图片"
                           className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Icon icon={Trash2} size="sm" tone="inverse" />
                         </button>
                       </div>
                     ))}
@@ -399,7 +400,7 @@ export default function PostDetail({ postId }: { postId: number }) {
                 disabled={editSaving || uploading}
                 className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-50"
               >
-                {editSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {editSaving ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null}
                 保存
               </button>
             </div>

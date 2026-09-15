@@ -16,6 +16,8 @@ import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Stagger } from '@/components/mobile/Stagger'
 import { CountUp } from '@/components/mobile/CountUp'
+import { Icon } from '@/components/mobile/Icon'
+import { StatRow } from '@/components/mobile/StatBlock'
 
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
 
@@ -105,25 +107,28 @@ export default function TravelMobileClient({
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-[340px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(191,205,216,0.26),transparent_72%),radial-gradient(35%_35%_at_100%_0%,rgba(228,180,120,0.12),transparent_60%)]" />
-
       <PullToRefresh onRefresh={onRefresh}>
         <div className="relative z-10">
         {offline && (
           <div className="m-chip mx-4 mt-3 flex h-auto items-center gap-2 rounded-2xl bg-[var(--m-accent-soft)] px-4 py-3 text-xs text-[var(--m-accent-strong)]">
-            <WifiOff className="h-4 w-4 shrink-0" />
+            <Icon icon={WifiOff} size="sm" className="shrink-0" />
             离线模式：显示本地缓存旅行记录，联网后自动同步
           </div>
         )}
 
         {/* 顶部移动标题（新建旅行统一走底部 Dock 栏「+」入口） */}
-        <header className="flex items-end justify-between px-5 pt-[max(26px,env(safe-area-inset-top))] pb-5">
+        <header className="m-gutter m-safe-top flex items-end justify-between pb-5">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.22em] text-[var(--m-accent-strong)]">MY JOURNEYS</p>
-            <h1 className="mt-2 text-[32px] font-bold leading-none tracking-[-0.03em] text-[var(--m-text)]">旅行记录</h1>
-            <p className="mt-2 text-sm text-[var(--m-muted)]">
-              <CountUp value={posts.length} /> 篇旅途 · <CountUp value={provincesVisited} /> 个省 · <CountUp value={cityCount} /> 个城市
-            </p>
+            <p className="m-label text-[var(--m-accent-strong)]">MY JOURNEYS</p>
+            <h1 className="m-title-1 mt-2 text-[var(--m-text)]">旅行记录</h1>
+            <StatRow
+              className="mt-2"
+              items={[
+                { value: <CountUp value={posts.length} />, unit: '篇旅途' },
+                { value: <CountUp value={provincesVisited} />, unit: '个省' },
+                { value: <CountUp value={cityCount} />, unit: '个城市' },
+              ]}
+            />
           </div>
         </header>
 
@@ -141,7 +146,7 @@ export default function TravelMobileClient({
             </div>
             <div className="flex items-center justify-between border-t border-[var(--m-line)] px-4 py-3">
               <div className="flex items-center gap-2">
-                <ImageIcon className="h-4 w-4 text-[var(--m-accent)]" />
+                <Icon icon={ImageIcon} size="sm" tone="accent" />
                 <span className="text-xs font-medium text-[var(--m-muted)]">足迹地图</span>
               </div>
               <span className="rounded-full bg-[var(--m-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--m-accent-strong)]">
@@ -160,7 +165,7 @@ export default function TravelMobileClient({
 
           {posts.length === 0 ? (
             <div className="m-card px-5 py-10 text-center">
-              <MapPin className="mx-auto h-8 w-8 text-[var(--m-faint)]" />
+              <Icon icon={MapPin} size="lg" tone="faint" className="mx-auto" />
               <p className="mt-3 text-sm text-[var(--m-muted)]">还没有旅行记录</p>
               <button
                 type="button"
@@ -194,7 +199,7 @@ export default function TravelMobileClient({
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center">
-                          <MapPin className="h-10 w-10 text-[var(--m-faint)]" />
+                          <Icon icon={MapPin} size="lg" tone="faint" />
                         </div>
                       )}
                       <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(26,16,9,0.62),rgba(26,16,9,0)_65%)]" />
@@ -209,12 +214,12 @@ export default function TravelMobileClient({
                     </div>
                     <div className="flex items-center justify-between px-4 py-3.5">
                       <span className="flex items-center gap-1.5 text-xs text-[var(--m-muted)]">
-                        <Calendar className="h-4 w-4 text-[var(--m-accent)]" />
+                        <Icon icon={Calendar} size="sm" tone="accent" />
                         {formatDate(post.date)}
                       </span>
                       <span className="flex items-center gap-1 text-xs font-semibold text-[var(--m-accent-strong)]">
                         阅读游记
-                        <ArrowRight className="h-4 w-4" />
+                        <Icon icon={ArrowRight} size="sm" />
                       </span>
                     </div>
                   </Link>

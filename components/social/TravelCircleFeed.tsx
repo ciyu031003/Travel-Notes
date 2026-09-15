@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, Compass, Home, WifiOff } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
@@ -149,7 +150,7 @@ export default function TravelCircleFeed() {
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
             <SocialThemeToggle />
             <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)]">
-              <Home className="h-4 w-4" />返回首页
+              <Icon icon={Home} size="sm" />返回首页
             </Link>
           </div>
         </header>
@@ -165,7 +166,7 @@ export default function TravelCircleFeed() {
 
         {offline && (
           <div className="mb-6 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
-            <WifiOff className="h-3.5 w-3.5" />
+            <Icon icon={WifiOff} size="sm" />
             离线模式：显示已缓存的旅行圈内容
           </div>
         )}
@@ -211,7 +212,7 @@ export default function TravelCircleFeed() {
 
         {loading ? (
           <>
-            <div className="hidden flex-col items-center gap-3 py-28 text-[var(--social-faint)] md:flex"><Loader2 className="h-7 w-7 animate-spin text-[var(--social-accent)]" /><span className="text-sm">正在翻阅旅行相册…</span></div>
+            <div className="hidden flex-col items-center gap-3 py-28 text-[var(--social-faint)] md:flex"><Icon icon={Loader2} size="lg" tone="accent" className="animate-spin" /><span className="text-sm">正在翻阅旅行相册…</span></div>
             <div className="space-y-4 md:hidden">
               <Skeleton className="h-72 w-full !rounded-[26px]" />
               <SkeletonCard />
@@ -237,7 +238,7 @@ export default function TravelCircleFeed() {
           <div className="relative hidden overflow-hidden rounded-[2rem] bg-[var(--social-surface-60)] px-6 py-28 text-center ring-1 ring-[var(--social-line)] md:block">
             <div className="absolute inset-0 bg-[radial-gradient(40%_50%_at_50%_30%,rgba(232,179,106,0.08),transparent_70%)]" />
             <div className="relative">
-              <Compass className="mx-auto h-10 w-10 text-[var(--social-accent)]" />
+              <Icon icon={Compass} size="lg" tone="accent" className="mx-auto" />
               <p className="mt-4 text-base text-[var(--social-text)]">这里还没有故事。</p>
               <p className="mt-2 text-sm text-[var(--social-muted)]">去看看自己的旅途，也许下一段故事就从那里开始。</p>
               <button type="button" onClick={() => router.push('/travel')} className="mt-6 rounded-full bg-[var(--social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--social-on-accent)]">去我的旅行</button>

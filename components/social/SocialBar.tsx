@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Heart, MessageCircle, Bookmark } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { cn } from '@/lib/utils'
 import { toggleLike as offlineToggleLike, toggleFavorite as offlineToggleFavorite } from '@/lib/modules/offline/social-write'
 import { hapticLight } from '@/lib/mobile/haptics'
@@ -71,19 +72,19 @@ export default function SocialBar({
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       <button type="button" onClick={toggleLike} aria-pressed={isLiked}
         className={cn(btn, chip, isLiked ? 'text-travel-accent' : idle)}>
-        <Heart className={cn('h-4 w-4', isLiked && 'fill-current')} />
+        <Icon icon={Heart} size="sm" className={cn(isLiked && 'fill-current')} />
         <span>{likes}</span>
       </button>
 
       <button type="button" onClick={onOpenComments}
         className={cn(btn, chip, idle)}>
-        <MessageCircle className="h-4 w-4" />
+        <Icon icon={MessageCircle} size="sm" />
         <span>{commentCount}</span>
       </button>
 
       <button type="button" onClick={toggleFavorite} aria-pressed={isFavorited}
         className={cn(btn, chip, isFavorited ? 'text-travel-accent' : idle)}>
-        <Bookmark className={cn('h-4 w-4', isFavorited && 'fill-current')} />
+        <Icon icon={Bookmark} size="sm" className={cn(isFavorited && 'fill-current')} />
         <span>{favorites}</span>
       </button>
     </div>

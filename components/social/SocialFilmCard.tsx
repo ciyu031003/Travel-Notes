@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { Heart, MessageCircle, Bookmark, MapPin, ImageIcon } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import { cn } from '@/lib/utils'
 
@@ -61,13 +62,13 @@ export default function SocialFilmCard({
   const statsNode = (
     <div className="flex items-center gap-3 text-[var(--social-muted)]">
       {stats?.likes !== undefined && (
-        <span className="inline-flex items-center gap-1 text-xs tabular-nums"><Heart className="h-3.5 w-3.5" />{stats.likes}</span>
+        <span className="inline-flex items-center gap-1 text-xs tabular-nums"><Icon icon={Heart} size="sm" />{stats.likes}</span>
       )}
       {stats?.comments !== undefined && (
-        <span className="inline-flex items-center gap-1 text-xs tabular-nums"><MessageCircle className="h-3.5 w-3.5" />{stats.comments}</span>
+        <span className="inline-flex items-center gap-1 text-xs tabular-nums"><Icon icon={MessageCircle} size="sm" />{stats.comments}</span>
       )}
       {stats?.bookmarks !== undefined && (
-        <span className="inline-flex items-center gap-1 text-xs tabular-nums"><Bookmark className="h-3.5 w-3.5" />{stats.bookmarks}</span>
+        <span className="inline-flex items-center gap-1 text-xs tabular-nums"><Icon icon={Bookmark} size="sm" />{stats.bookmarks}</span>
       )}
     </div>
   )
@@ -77,7 +78,7 @@ export default function SocialFilmCard({
       {coverUrl ? (
         <Image src={coverUrl} alt={title || cityName || '旅行封面'} fill sizes={variant === 'hero' ? '100vw' : '(max-width: 768px) 100vw, 33vw'} className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-[var(--social-faint)]"><ImageIcon className="h-8 w-8" /></div>
+        <div className="absolute inset-0 flex items-center justify-center text-[var(--social-faint)]"><Icon icon={ImageIcon} size="lg" /></div>
       )}
     </div>
   )
@@ -107,7 +108,7 @@ export default function SocialFilmCard({
         onOpen && 'hover:-translate-y-0.5 hover:bg-[var(--social-surface)] hover:ring-[var(--social-line-strong)]', className)}>
       {cover(FRAME[frame])}
       <div className="space-y-2 p-4">
-        {cityName && <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--social-accent)]"><MapPin className="h-3 w-3" />{cityName}</div>}
+        {cityName && <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--social-accent)]"><Icon icon={MapPin} size="sm" />{cityName}</div>}
         {title && <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--social-text)]">{title}</h3>}
         {summary && <p className="line-clamp-2 text-sm leading-relaxed text-[var(--social-muted)]">{summary}</p>}
         <div className="flex items-center gap-x-2 gap-y-1 text-xs text-[var(--social-faint)]">

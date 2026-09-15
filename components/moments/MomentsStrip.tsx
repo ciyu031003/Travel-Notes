@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Sparkles, ArrowRight } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 
 interface MomentItem {
@@ -62,7 +63,7 @@ export default function MomentsStrip() {
         <div className="rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="flex items-center gap-2.5 text-lg font-semibold text-[#3D4852] dark:text-shell-text">
-              <Sparkles className="h-[18px] w-[18px] text-travel-accent dark:text-travel-bloom" />
+              <Icon icon={Sparkles} size="md" className="text-travel-accent dark:text-travel-bloom" />
               碎碎念
             </h2>
             <Link
@@ -70,7 +71,7 @@ export default function MomentsStrip() {
               className="inline-flex items-center gap-1 text-xs text-travel-accent dark:text-travel-bloom transition-colors hover:text-travel-accentStrong"
             >
               全部
-              <ArrowRight className="h-3 w-3" />
+              <Icon icon={ArrowRight} size="sm" />
             </Link>
           </div>
 
@@ -82,14 +83,14 @@ export default function MomentsStrip() {
             </div>
           ) : moments.length === 0 ? (
             <div className="py-10 text-center">
-              <Sparkles className="mx-auto h-8 w-8 text-travel-bloom" />
+              <Icon icon={Sparkles} size="lg" tone="accent" className="mx-auto" />
               <p className="mt-3 text-sm text-travel-ink dark:text-shell-muted">还没有碎碎念，来写第一条吧</p>
               <Link
                 href="/admin/moments"
                 className="mt-4 inline-flex items-center gap-1 rounded-xl bg-travel-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-travel-accentStrong"
               >
                 写一条碎碎念
-                <ArrowRight className="h-4 w-4" />
+                <Icon icon={ArrowRight} size="sm" />
               </Link>
             </div>
           ) : (

@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import MomentComposer from './MomentComposer'
 import MomentTimeline, { type MomentTimelineHandle } from './MomentTimeline'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
@@ -44,7 +45,7 @@ export default function MomentsContent() {
             background: 'linear-gradient(135deg, #C67A4E 0%, #A85F3A 60%, #8A4A2B 100%)',
           }}
         >
-          <Plus className="h-7 w-7" strokeWidth={2.4} />
+          <Icon icon={Plus} size="lg" />
         </button>
 
         <BottomSheet open={composerOpen} onClose={() => setComposerOpen(false)} title="写下此刻">

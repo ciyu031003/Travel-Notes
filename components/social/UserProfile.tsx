@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2, UserPlus, UserMinus, Ban } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
@@ -77,7 +78,7 @@ export default function UserProfile({ userId }: { userId: number }) {
     } catch { setProfile(snapshot) } finally { setBusy(false) }
   }
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--social-bg)] text-[var(--social-faint)]"><Loader2 className="h-7 w-7 animate-spin" /></div>
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--social-bg)] text-[var(--social-faint)]"><Icon icon={Loader2} size="lg" className="animate-spin" /></div>
   if (error || !profile) return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]">{error || '用户不存在'}<Link href="/circle" className="text-[var(--social-accent)]">返回旅行圈</Link></div>
 
   const cardProps = (p: any, frame: (typeof FRAMES)[number]) => ({
@@ -101,7 +102,7 @@ export default function UserProfile({ userId }: { userId: number }) {
       <div className="relative mx-auto max-w-5xl px-4 py-6">
         <header className="mb-8 flex items-center gap-3">
           <div className="ml-auto"><SocialThemeToggle /></div>
-          <button type="button" onClick={() => router.back()} className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></button>
+          <button type="button" onClick={() => router.back()} className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></button>
           <span className="text-sm text-[var(--social-muted)]">旅行者主页</span>
         </header>
 
@@ -120,12 +121,12 @@ export default function UserProfile({ userId }: { userId: number }) {
               <button type="button" onClick={follow} disabled={busy}
                 className={cn('inline-flex items-center gap-1.5 rounded-full px-6 py-2.5 text-sm font-medium transition active:scale-95 disabled:opacity-50',
                   profile.isFollowing ? 'bg-[var(--social-surface)] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]' : 'bg-[var(--social-accent)] text-[var(--social-on-accent)]')}>
-                {profile.isFollowing ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                {profile.isFollowing ? <Icon icon={UserMinus} size="sm" /> : <Icon icon={UserPlus} size="sm" />}
                 {profile.isFollowing ? '取消关注' : '关注'}
               </button>
               <button type="button" onClick={toggleBlock} disabled={busy}
                 className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-6 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] disabled:opacity-50">
-                <Ban className="h-4 w-4" />{profile.isBlocked ? '取消屏蔽' : '屏蔽'}
+                <Icon icon={Ban} size="sm" />{profile.isBlocked ? '取消屏蔽' : '屏蔽'}
               </button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { Sparkles, Settings2, Feather, Heart } from 'lucide-react'
+import { Settings2, Feather, Heart } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import MomentsContent from '@/components/moments/MomentsContent'
 import ManageEntry from '@/components/layout/ManageEntry'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
@@ -28,21 +29,21 @@ export default function MomentsPage() {
             <ManageEntry
               href="/admin/moments"
               label="管理碎碎念"
-              icon={<Settings2 className="h-3.5 w-3.5" />}
+              icon={<Icon icon={Settings2} size="sm" />}
               className="rounded-full px-3 py-2.5 text-sm text-travel-sand transition-colors hover:bg-travel-sakura/50 hover:text-travel-accent dark:text-shell-muted dark:hover:bg-travel-accent/15 dark:hover:text-travel-accentSoft"
             />
           </div>
 
           <header className="mb-8 hidden text-center md:block">
             <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-travel-sakura/60 to-travel-bloom/30 px-4 py-1.5 text-sm font-medium text-travel-accent dark:from-travel-accent/25 dark:to-travel-bloom/20 dark:text-travel-accentSoft">
-              <Feather className="h-4 w-4" />
+              <Icon icon={Feather} size="sm" />
               <span>碎碎念</span>
             </div>
             <h1 className="mx-auto mt-4 max-w-xl text-2xl font-bold leading-snug text-travel-inkStrong sm:text-3xl dark:text-shell-text">
               生活里那些值得被记住的柔软片刻
             </h1>
             <p className="mx-auto mt-3 flex max-w-md items-center justify-center gap-1.5 text-sm leading-6 text-travel-sand dark:text-shell-muted">
-              <Heart className="h-3.5 w-3.5 shrink-0 text-travel-bloom" />
+              <Icon icon={Heart} size="sm" tone="accent" className="shrink-0" />
               一句话、一个小确幸、一次突然的想念，都可以放在这里
             </p>
           </header>
@@ -56,7 +57,7 @@ export default function MomentsPage() {
                 <ManageEntry
                   href="/admin/moments"
                   label="管理"
-                  icon={<Settings2 className="h-3.5 w-3.5" />}
+                  icon={<Icon icon={Settings2} size="sm" />}
                   className="rounded-full px-2.5 py-1.5 text-xs text-[var(--m-muted)] transition-colors active:bg-[var(--m-accent-soft)] active:text-[var(--m-accent-strong)]"
                 />
               }

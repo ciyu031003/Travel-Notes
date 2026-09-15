@@ -11,15 +11,16 @@ import {
   LayoutGrid,
   List,
   Loader2,
-  Orbit,
   X,
 } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
+import { Icon } from '@/components/mobile/Icon'
+import { ALBUM_MODES, type AlbumModeKey } from '@/lib/album-modes'
 import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import BookReader from './BookReader'
 import PostcardCard from '../PostcardCard'
 
-type Mode = 'book' | 'space' | 'pixel'
+type Mode = AlbumModeKey
 
 const WALL_VIEW_KEY = 'album-wall-view'
 type WallView = 'wall' | 'list'
@@ -239,34 +240,36 @@ export default function TravelBook({
             aria-label="返回首页"
             className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">返回首页</span>
+            <Icon icon={ArrowLeft} size="sm" />
+            <span className="hidden sm:inline">返回</span>
           </Link>
           <div className="flex items-center gap-2 font-semibold text-travel-ink dark:text-shell-text">
-            <BookOpen className="h-4 w-4 text-travel-bloom" />
+            <Icon icon={BookOpen} size="sm" tone="accent" />
             <span className="truncate text-sm sm:text-base">我的旅行画册</span>
           </div>
         </div>
         <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/60 p-0.5 dark:border-shell-line dark:bg-shell-surface3/80">
-          <button type="button" className="inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom" title="当前视图（旅行画册）">
-            <Camera className="h-3.5 w-3.5" />画册
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('pixel')}
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
-            title="切换到照片网格"
-          >
-            <LayoutGrid className="h-3.5 w-3.5" />网格
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('space')}
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
-            title="切换到银河空间"
-          >
-            <Orbit className="h-3.5 w-3.5" />银河
-          </button>
+          {/* 模式切换：名称/顺序/图标统一取自 lib/album-modes（防止命名漂移） */}
+          {ALBUM_MODES.map((m) => {
+            const isCurrent = m.key === 'book'
+            return (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => !isCurrent && onModeChange(m.key)}
+                aria-current={isCurrent ? 'true' : undefined}
+                title={isCurrent ? `当前视图（${m.label}）` : m.title}
+                className={
+                  isCurrent
+                    ? 'inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
+                    : 'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
+                }
+              >
+                <Icon icon={m.icon} size="sm" />
+                {m.label}
+              </button>
+            )
+          })}
         </div>
       </header>
 

@@ -2,6 +2,7 @@
 
 import { forwardRef, useImperativeHandle, useState, useEffect, useCallback } from 'react'
 import { Sparkles, Loader2, Inbox, Quote } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { formatDate } from '@/lib/utils'
 import LikeButton from '@/components/like/LikeButton'
 import { apiUrl } from '@/lib/api-base'
@@ -94,7 +95,7 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
     return (
       <>
         <div className="hidden flex-col items-center justify-center py-16 text-travel-sand/70 md:flex dark:text-shell-faint">
-          <Loader2 className="w-6 h-6 animate-spin mb-3" />
+          <Icon icon={Loader2} size="md" className="animate-spin mb-3" />
           <p className="text-sm">加载中...</p>
         </div>
         <div className="space-y-4 md:hidden">
@@ -108,7 +109,7 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
     return (
       <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-travel-line/70 bg-white/60 px-6 py-16 text-center dark:border-shell-line dark:bg-shell-surface/50">
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-travel-sakura/40 text-travel-accent dark:bg-travel-accent/15 dark:text-travel-accentSoft">
-          <Inbox className="h-6 w-6" />
+          <Icon icon={Inbox} size="md" />
         </span>
         <p className="mt-4 text-sm font-medium text-travel-inkStrong dark:text-shell-text">
           还没有碎碎念
@@ -130,12 +131,12 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
             <span className="absolute left-[9px] top-9 bottom-[-18px] w-px bg-gradient-to-b from-travel-bloom/70 via-travel-sakura/50 to-transparent dark:from-travel-accentStrong/40" />
           )}
           <span className="absolute left-0 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom shadow-[0_4px_12px_-4px_rgba(168,95,58,0.5)]">
-            <Sparkles className="h-2.5 w-2.5 text-white" />
+            <Icon icon={Sparkles} size="sm" tone="inverse" />
           </span>
 
           <div className="relative overflow-hidden rounded-[22px] border border-travel-line/70 bg-white/85 p-5 shadow-[0_12px_30px_-24px_rgba(90,102,112,0.35)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-24px_rgba(198,122,78,0.45)] active:scale-[0.98] dark:border-shell-line dark:bg-shell-surface/85 dark:hover:border-travel-accentStrong/60">
             <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[radial-gradient(closest-side,rgba(228,180,120,0.14),transparent)]" />
-            <Quote className="relative mb-2 h-4 w-4 text-travel-bloom/70" />
+            <Icon icon={Quote} size="sm" className="relative mb-2 text-travel-bloom/70" />
             <p className="relative whitespace-pre-wrap break-words text-[15px] leading-7 text-travel-ink dark:text-shell-text">
               {moment.content}
             </p>

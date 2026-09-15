@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { cn } from '@/lib/utils'
 
 /** 底部抽屉：毛玻璃 + 拖拽把手 + 遮罩点击关闭 + 安全区，内容区可滚动 */
@@ -56,7 +57,7 @@ export function BottomSheet({
         <span className="m-sheet-grabber" aria-hidden="true" />
         {title && (
           <div className="m-sheet-head">
-            <h2 className="text-[17px] font-semibold text-[var(--m-text)]">{title}</h2>
+            <h2 className="m-title-2 font-semibold text-[var(--m-text)]">{title}</h2>
             {dismissible && (
               <button
                 type="button"
@@ -64,7 +65,7 @@ export function BottomSheet({
                 aria-label="关闭"
                 className="m-sheet-close"
               >
-                <X className="h-5 w-5" />
+                <Icon icon={X} size="md" />
               </button>
             )}
           </div>

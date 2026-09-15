@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, RefreshCw, Loader2, CheckCheck, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Loader2, CheckCheck } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { SyncQueue } from '@/lib/modules/offline/sync-queue'
 import { getSyncQueueStorage } from '@/lib/modules/offline/storage'
 import type { SyncQueueItem } from '@/lib/modules/offline/types'
@@ -87,7 +88,7 @@ export default function SyncCenter() {
         <PullToRefresh onRefresh={load}>
         <header className="mb-8 hidden items-center gap-3 md:flex">
           <div className="ml-auto"><SocialThemeToggle /></div>
-          <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><ArrowLeft className="h-5 w-5" /></Link>
+          <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Sync</p>
             <h1 className="text-xl font-semibold">数据与同步</h1>
@@ -104,7 +105,7 @@ export default function SyncCenter() {
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-[var(--social-faint)]"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
+          <div className="py-20 text-center text-[var(--social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3">
@@ -122,7 +123,7 @@ export default function SyncCenter() {
 
             {total === 0 && (
               <div className="mt-6 rounded-[2rem] bg-[var(--social-surface-50)] px-6 py-14 text-center ring-1 ring-[var(--social-line)]">
-                <CheckCheck className="mx-auto h-8 w-8 text-[var(--social-accent)]" />
+                <Icon icon={CheckCheck} size="lg" className="mx-auto text-[var(--social-accent)]" />
                 <p className="mt-4 text-sm text-[var(--social-muted)]">所有改动都已同步。</p>
                 <p className="mt-1 text-xs leading-relaxed text-[var(--social-faint)]">离线写的照片、留言、碎碎念会进入队列，联网后自动上传。</p>
                 {lastSync && (
@@ -139,7 +140,7 @@ export default function SyncCenter() {
                   <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">失败项</h2>
                   <div className="h-px flex-1 bg-[var(--social-line)]" />
                   <button type="button" onClick={retryAll} disabled={busy} className="m-pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-1.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] active:scale-95 disabled:opacity-50">
-                    <RefreshCw className="h-3.5 w-3.5" />全部重试
+                    <Icon icon={RefreshCw} size="sm" />全部重试
                   </button>
                 </div>
                 <Stagger className="mt-4 space-y-2" delayBase={60} step={30}>

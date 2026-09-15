@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Home, LogOut, Camera, Pencil, Loader2, MapPin, Images, NotebookPen, Bookmark, RefreshCw, Settings, ShieldCheck, Users, Download } from 'lucide-react'
+import { Home, LogOut, Camera, Pencil, Loader2, MapPin, Images, NotebookPen, Bookmark, RefreshCw, Settings, ShieldCheck, Users, Download, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
@@ -16,6 +16,7 @@ import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Stagger } from '@/components/mobile/Stagger'
+import { Icon } from '@/components/mobile/Icon'
 
 interface RecentTravel {
   id: number
@@ -229,7 +230,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               <div className="flex items-center gap-2">
                 <SocialThemeToggle />
                 <Link href="/me/notifications" aria-label="通知" className="m-pressable relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)]">
-                  <span className="text-base">✦</span>
+                  <Icon icon={Bell} size="md" />
                   {unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}
                 </Link>
               </div>
@@ -256,7 +257,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               </button>
             )}
             <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="hidden h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><RefreshCw className="h-4 w-4" /></Link>
-            <Link href="/me/notifications" aria-label="通知" className="relative rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><span className="text-base">✦</span>{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
+            <Link href="/me/notifications" aria-label="通知" className="relative flex h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={Bell} size="md" />{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
             <Link href="/" className="hidden items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><Home className="h-4 w-4" />返回首页</Link>
           </div>
         </header>

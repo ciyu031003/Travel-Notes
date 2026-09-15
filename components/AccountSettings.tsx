@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Settings, Save, Eye, EyeOff, Key, User, X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 export default function AccountSettings() {
   const [currentUsername, setCurrentUsername] = useState('')
@@ -84,7 +85,7 @@ export default function AccountSettings() {
     <div className="bg-white dark:bg-shell-surface rounded-xl shadow-sm p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-gradient-to-br from-travel-accent to-travel-accentSoft rounded-lg flex items-center justify-center">
-          <Settings className="w-5 h-5 text-white" />
+          <Icon icon={Settings} size="md" tone="inverse" />
         </div>
         <div>
           <h2 className="text-lg font-semibold text-travel-inkStrong dark:text-shell-text">账号设置</h2>
@@ -95,7 +96,7 @@ export default function AccountSettings() {
       <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
         <div>
           <label className="block text-sm font-medium text-travel-ink dark:text-shell-text mb-2">
-            <User className="w-4 h-4 inline mr-2" />
+            <Icon icon={User} size="sm" className="inline mr-2" />
             用户名
           </label>
           <input
@@ -109,7 +110,7 @@ export default function AccountSettings() {
 
         <div>
           <label className="block text-sm font-medium text-travel-ink dark:text-shell-text mb-2">
-            <Key className="w-4 h-4 inline mr-2" />
+            <Icon icon={Key} size="sm" className="inline mr-2" />
             当前密码
           </label>
           <div className="relative">
@@ -126,7 +127,7 @@ export default function AccountSettings() {
               onClick={() => setShowCurrentPwd(!showCurrentPwd)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-sand/70 hover:text-travel-ink"
             >
-              {showCurrentPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showCurrentPwd ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
             </button>
           </div>
         </div>
@@ -154,7 +155,7 @@ export default function AccountSettings() {
                   onClick={() => setShowNewPwd(!showNewPwd)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-sand/70 hover:text-travel-ink"
                 >
-                  {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showNewPwd ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
                 </button>
               </div>
             </div>
@@ -176,7 +177,7 @@ export default function AccountSettings() {
                   onClick={() => setShowConfirmPwd(!showConfirmPwd)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-sand/70 hover:text-travel-ink"
                 >
-                  {showConfirmPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showConfirmPwd ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
                 </button>
               </div>
             </div>
@@ -192,9 +193,9 @@ export default function AccountSettings() {
             }`}
           >
             {message.type === 'success' ? (
-              <Save className="w-4 h-4" />
+              <Icon icon={Save} size="sm" />
             ) : (
-              <X className="w-4 h-4" />
+              <Icon icon={X} size="sm" />
             )}
             <span>{message.text}</span>
           </div>
@@ -205,7 +206,7 @@ export default function AccountSettings() {
           disabled={loading}
           className="inline-flex items-center gap-2 px-6 py-2.5 bg-travel-accent hover:bg-travel-accentStrong text-white font-medium rounded-lg transition-colors disabled:opacity-50"
         >
-          <Save className="w-4 h-4" />
+          <Icon icon={Save} size="sm" />
           {loading ? '保存中...' : '保存修改'}
         </button>
       </form>

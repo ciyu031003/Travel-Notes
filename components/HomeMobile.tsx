@@ -1,22 +1,22 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import dynamicImport from 'next/dynamic'
 import {
   MapPin,
   ArrowRight,
   CalendarDays,
   Quote,
-  Heart,
-  Image as ImageIcon,
+  Images,
   MessageCircle,
   Sparkles,
-  BarChart3,
+  ChartColumn,
   BookOpen,
+  PenLine,
   WifiOff,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
 import { albumDeepLink } from '@/lib/album-deep-link'
@@ -26,6 +26,20 @@ import { EmptyState } from '@/components/mobile/EmptyState'
 import { Skeleton, SkeletonCard, SkeletonLines } from '@/components/mobile/Skeleton'
 import { Stagger } from '@/components/mobile/Stagger'
 import { CountUp } from '@/components/mobile/CountUp'
+import { Icon } from '@/components/mobile/Icon'
+import { IconBadge } from '@/components/mobile/IconBadge'
+import { ListSection, ListRow } from '@/components/mobile/ListRow'
+
+/**
+ * 首页 Hero 足迹地图：懒加载。
+ * lib/geo.ts 静态引入 582KB 的 china-geo.json —— 直接 import 会把这份数据
+ * 打进首页首屏包（登录页的 DoorMap 同样用 dynamic 规避）。ssr:false 亦避免
+ * SVG path 浮点差异造成的 hydration mismatch。
+ */
+const HeroFootprintMapLazy = dynamicImport(() => import('@/components/home/HeroFootprintMap'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse" />,
+})
 
 interface PostMeta {
   slug: string
@@ -148,12 +162,12 @@ function MobileBooks() {
     <section className="px-4 pb-10">
       <div className="m-section-title">
         <span className="flex items-center gap-2">
-          <BookOpen className="h-[18px] w-[18px] text-[var(--m-accent)]" />
+          <Icon icon={BookOpen} size="md" tone="accent" />
           旅行画册
         </span>
         <Link href="/album" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--m-accent-strong)]">
           全部画册
-          <ArrowRight className="h-3.5 w-3.5" />
+          <Icon icon={ArrowRight} size="sm" />
         </Link>
       </div>
 
@@ -170,13 +184,13 @@ function MobileBooks() {
                 <Image src={book.coverThumb} alt={book.title} fill sizes="46vw" className="object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,var(--m-bg-soft),var(--m-surface-2))]">
-                  <BookOpen className="h-8 w-8 text-[var(--m-faint)]" />
+                  <Icon icon={BookOpen} size="lg" tone="faint" />
                 </div>
               )}
             </div>
             <div className="p-3">
-              <p className="line-clamp-1 text-[14px] font-semibold text-[var(--m-text)]">{book.title}</p>
-              <p className="mt-0.5 text-[11px] text-[var(--m-muted)]">
+              <p className="m-body line-clamp-1 font-semibold text-[var(--m-text)]">{book.title}</p>
+              <p className="m-caption mt-0.5 text-[var(--m-muted)]">
                 {book.dayCount} 章 · {book.photoCount} 图
               </p>
             </div>
@@ -211,12 +225,12 @@ function MobileMoments() {
     <section className="m-enter px-4 pb-10">
       <div className="m-section-title">
         <span className="flex items-center gap-2">
-          <Sparkles className="h-[18px] w-[18px] text-[var(--m-accent)]" />
+          <Icon icon={Sparkles} size="md" tone="accent" />
           碎碎念
         </span>
         <Link href="/moments" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--m-accent-strong)]">
           全部
-          <ArrowRight className="h-3.5 w-3.5" />
+          <Icon icon={ArrowRight} size="sm" />
         </Link>
       </div>
 
@@ -231,7 +245,7 @@ function MobileMoments() {
         </div>
       ) : items.length === 0 ? (
         <div className="m-card px-4 py-8 text-center">
-          <Sparkles className="mx-auto h-6 w-6 text-[var(--m-faint)]" />
+          <Icon icon={Sparkles} size="lg" tone="faint" className="mx-auto" />
           <p className="mt-2 text-sm text-[var(--m-muted)]">还没有碎碎念，来写下此刻心情吧</p>
           <Link href="/admin/moments" className="m-chip m-chip-active mt-4 !h-10 !px-5 !text-sm">
             写一条碎碎念
@@ -269,111 +283,79 @@ export default function HomeMobile({
 }) {
   const quote = dailyQuote()
   const recent = travelPosts.slice(0, 6)
-  const provincePills = useMemo(() => {
-    const seen = new Set<string>()
-    const list: { id: string; name: string }[] = []
-    for (const post of travelPosts) {
-      if (!post.location) continue
-      const p = findProvinceByLocation(post.location)
-      if (!p || seen.has(p.id)) continue
-      seen.add(p.id)
-      list.push({ id: p.id, name: p.name })
-      if (list.length >= 6) break
-    }
-    return list
-  }, [travelPosts])
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(231,174,113,0.22),transparent_70%)]" />
 
       <PullToRefresh onRefresh={onRefresh}>
         <div className="relative z-10">
-          {/* M3 移动 Hero：色彩更丰富，信息更聚焦 */}
-          <section className="relative overflow-hidden px-5 pb-7 pt-[max(30px,env(safe-area-inset-top))]">
-            <div className="pointer-events-none absolute -right-16 top-8 h-44 w-44 rounded-full bg-[radial-gradient(circle_at_35%_35%,rgba(255,222,184,0.8),rgba(198,122,78,0.05)_68%)] blur-sm" />
-            <div className="pointer-events-none absolute -left-10 bottom-2 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(156,199,178,0.35),transparent_70%)]" />
-
+          {/* Hero：以「足迹地图」为唯一视觉最重元素 —— 新用户不看文案也能明白这是什么 App。
+              原营销大标题下移（并入每日一言），装饰光斑与独立统计卡删除（统计并入地图卡）。 */}
+          <section className="m-gutter m-safe-top relative overflow-hidden pb-6">
             <div className="m-enter relative">
-              <p className="text-[13px] font-semibold text-[var(--m-accent-strong)]">{greeting()}</p>
-              <p className="mt-3 text-[11px] font-semibold tracking-[0.24em] text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
-            <h1 className="mt-3 text-[34px] font-bold leading-[1.08] tracking-[-0.04em] text-[var(--m-text)]">
-              把走过的路
-              <span className="block mt-1">
-                变成自己的故事
-                <span className="ml-2 inline-block h-[22px] w-[76px] rounded-full bg-[linear-gradient(90deg,rgba(228,180,120,0.5),rgba(168,95,58,0.18))]" />
-              </span>
-            </h1>
-            <p className="mt-4 max-w-[290px] text-[15px] leading-7 text-[var(--m-muted)]">
-              每个城市一本画册，照片铺满书页，把走过的路变成自己的故事。
-            </p>
+              <p className="m-caption font-semibold text-[var(--m-accent-strong)]">{greeting()}</p>
+              <p className="m-label mt-3 text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
+              <h1 className="m-title-1 mt-2 text-[var(--m-text)]">我的旅行足迹</h1>
 
-            <div className="mt-6 flex gap-3">
+              {/* 足迹地图：唯一视觉主体。懒加载 —— lib/geo 静态引入 582KB china-geo.json，
+                  直接 import 会让首页包体暴涨（登录页同样用 dynamic 规避）。 */}
               <Link
                 href="/travel"
-                className="m-press inline-flex h-12 items-center gap-2 rounded-full bg-[linear-gradient(135deg,#D58A58,#A85F3A)] px-5 text-sm font-semibold text-white shadow-[0_12px_30px_-10px_rgba(168,95,58,0.55)]"
+                className="m-press m-card mt-5 block overflow-hidden"
+                aria-label={`打开旅行地图，已点亮 ${provincesVisitedCount} 个省份`}
               >
-                <MapPin className="h-5 w-5" />
-                打开旅行地图
-                <ArrowRight className="h-4 w-4" />
+                <div className="relative h-[200px] bg-[linear-gradient(165deg,var(--m-bg-soft),var(--m-surface-2))]">
+                  <HeroFootprintMapLazy posts={travelPosts} />
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-[linear-gradient(to_top,var(--m-surface-solid)_55%,transparent)] px-4 pb-3 pt-10">
+                    <span className="m-caption text-[var(--m-muted)]">
+                      已点亮
+                      <b className="mx-1 text-[15px] font-bold tabular-nums text-[var(--m-accent-strong)]">
+                        <CountUp value={provincesVisitedCount} />
+                      </b>
+                      省 ·
+                      <b className="mx-1 text-[15px] font-bold tabular-nums text-[var(--m-accent-strong)]">
+                        <CountUp value={travelPosts.length} />
+                      </b>
+                      篇旅行
+                    </span>
+                    <span className="m-caption flex flex-none items-center gap-1 font-semibold text-[var(--m-accent-strong)]">
+                      看地图
+                      <Icon icon={ArrowRight} size="sm" />
+                    </span>
+                  </div>
+                </div>
               </Link>
-              <Link
-                href="/album"
-                className="m-press inline-flex h-12 items-center gap-2 rounded-full border border-[var(--m-line-strong)] bg-[var(--m-surface)] px-5 text-sm font-semibold text-[var(--m-text)]"
-              >
-                <ImageIcon className="h-5 w-5 text-[var(--m-accent)]" />
-                旅行画册
-              </Link>
-            </div>
 
-            {provincePills.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {provincePills.map((item) => (
-                  <span
-                    key={item.id}
-                    className="inline-flex items-center gap-1 rounded-full border border-[var(--m-line-strong)] bg-[var(--m-surface-2)] px-3 py-1 text-xs font-medium text-[var(--m-accent-strong)]"
-                  >
-                    <MapPin className="h-3 w-3" />
-                    {item.name}
-                  </span>
-                ))}
+              <div className="mt-4 flex gap-3">
+                <Link
+                  href="/travel/new"
+                  className="m-press m-body inline-flex h-12 items-center gap-2 rounded-full bg-[var(--m-accent)] px-5 font-semibold text-white"
+                >
+                  <Icon icon={PenLine} size="sm" />
+                  记录一次旅行
+                </Link>
+                <Link
+                  href="/album"
+                  className="m-press m-body inline-flex h-12 items-center gap-2 rounded-full border border-[var(--m-line-strong)] bg-[var(--m-surface)] px-5 font-semibold text-[var(--m-text)]"
+                >
+                  <Icon icon={Images} size="sm" tone="accent" />
+                  旅行画册
+                </Link>
               </div>
-            )}
-
-            <div className="m-card mt-5 grid grid-cols-2 gap-x-4 gap-y-3 p-4">
-              {/* 统计卡可点击：省份/旅程 → 旅行地图（M3-2 动线） */}
-              <Link href="/travel" className="m-press rounded-lg">
-                <div className="flex items-end gap-1.5">
-                  <span className="text-3xl font-bold tracking-tight text-[var(--m-accent-strong)]">
-                    <CountUp value={provincesVisitedCount} className="tabular-nums" />
-                  </span>
-                  <span className="pb-1 text-xs text-[var(--m-muted)]">个省份</span>
-                </div>
-                <p className="mt-1 text-xs text-[var(--m-muted)]">已点亮足迹</p>
-              </Link>
-              <Link href="/travel" className="m-press rounded-lg">
-                <div className="flex items-end gap-1.5">
-                  <span className="text-3xl font-bold tracking-tight text-[var(--m-accent-strong)]">
-                    <CountUp value={travelPosts.length} className="tabular-nums" />
-                  </span>
-                  <span className="pb-1 text-xs text-[var(--m-muted)]">篇旅行</span>
-                </div>
-                <p className="mt-1 text-xs text-[var(--m-muted)]">收藏沿途记忆</p>
-              </Link>
-            </div>
             </div>
           </section>
 
-        {/* 每日一言：作为首页焦点，紧跟 hero，位于“最近旅行”上方 */}
-        <section className="px-4 pb-8">
+        {/* 每日一言（保留）：品牌语 + 每日一句。原 Hero 大标题下移到这里，
+            既保留品牌表达，又不与足迹地图争首屏焦点。 */}
+        <section className="m-gutter pb-8">
           <div className="m-enter m-card relative overflow-hidden p-5 text-center">
-            <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(228,180,120,0.22),transparent_70%)]" />
             <div className="relative">
-              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
-                <Quote className="h-5 w-5" />
-              </div>
-              <p className="mt-4 text-[17px] font-semibold leading-8 tracking-tight">「{quote}」</p>
-              <p className="mt-3 text-xs tracking-[0.24em] text-[var(--m-muted)]">DAILY WORDS</p>
+              <IconBadge icon={Quote} tone="accent" shape="circle" className="mx-auto" />
+              <p className="m-caption mt-4 font-semibold text-[var(--m-accent-strong)]">
+                把走过的路，变成自己的故事
+              </p>
+              <p className="m-title-2 mt-2">「{quote}」</p>
+              <p className="m-label mt-3 text-[var(--m-muted)]">DAILY WORDS</p>
             </div>
           </div>
         </section>
@@ -385,22 +367,22 @@ export default function HomeMobile({
         <section className="px-4 pb-10">
           <div className="m-section-title">
             <span className="flex items-center gap-2">
-              <MapPin className="h-[18px] w-[18px] text-[var(--m-accent)]" />
+              <Icon icon={MapPin} size="md" tone="accent" />
               最近旅行
             </span>
             <Link href="/travel" className="inline-flex items-center gap-1 py-2 pl-2 -my-2 text-xs font-medium text-[var(--m-accent-strong)]">
               查看全部
-              <ArrowRight className="h-3.5 w-3.5" />
+              <Icon icon={ArrowRight} size="sm" />
             </Link>
           </div>
 
           {recent.length === 0 ? (
             <Link href="/travel" className="m-press m-card flex items-center justify-between p-5">
               <div>
-                <p className="text-[15px] font-semibold">还没有旅行记录</p>
+                <p className="m-body font-semibold">还没有旅行记录</p>
                 <p className="mt-1 text-sm text-[var(--m-muted)]">去旅行地图看看</p>
               </div>
-              <ArrowRight className="h-5 w-5 text-[var(--m-accent)]" />
+              <Icon icon={ArrowRight} size="md" tone="accent" />
             </Link>
           ) : (
             <Stagger
@@ -423,7 +405,7 @@ export default function HomeMobile({
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,var(--m-bg-soft),var(--m-surface-2))]">
-                      <MapPin className="h-9 w-9 text-[var(--m-faint)]" />
+                      <Icon icon={MapPin} size="lg" tone="faint" />
                     </div>
                   )}
                   <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(24,15,9,0.72),rgba(24,15,9,0)_62%)]" />
@@ -433,7 +415,7 @@ export default function HomeMobile({
                         {post.location}
                       </span>
                     )}
-                    <h3 className="mt-2 line-clamp-1 text-[18px] font-bold tracking-tight">{post.title}</h3>
+                    <h3 className="m-title-2 mt-2 line-clamp-1">{post.title}</h3>
                     <p className="mt-1 text-xs text-white/72">
                       {new Date(post.date).toLocaleDateString('zh-CN')}
                     </p>
@@ -451,33 +433,35 @@ export default function HomeMobile({
           <section className="px-4 pb-10">
             <div className="m-section-title">
               <span className="flex items-center gap-2">
-                <CalendarDays className="h-[18px] w-[18px] text-[var(--m-accent)]" />
+                <Icon icon={CalendarDays} size="md" tone="accent" />
                 重要日子
               </span>
             </div>
             <Stagger className="grid grid-cols-2 gap-3" delayBase={120}>
               {anniversaries.map((item, i) => {
                 const days = daysUntil(item.date, item.recurring)
-                const palettes = [
-                  'linear-gradient(135deg,#FFF1E2,#F8CFB0)',
-                  'linear-gradient(135deg,#E9F3F6,#BFD8E1)',
-                  'linear-gradient(135deg,#EEF6ED,#C9E2C8)',
-                ]
+                // 用统一暖色 token + 左侧强调竖条，替代原先 3 套硬编码渐变
+                const tones = ['accent', 'sun', 'blush'] as const
+                const tone = tones[i % tones.length]
                 return (
                   <div
                     key={item.id}
-                    className="m-enter m-press rounded-[22px] p-4"
-                    style={{ background: palettes[i % palettes.length] }}
+                    className="m-enter m-press m-card relative overflow-hidden p-4 pl-5"
                   >
-                    <p className="text-[11px] font-medium text-[var(--m-accent-strong)]">
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-y-3 left-0 w-[3px] rounded-full"
+                      style={{ background: `var(--m-tone-${tone}-fg)` }}
+                    />
+                    <p className="m-caption font-medium text-[var(--m-accent-strong)]">
                       {item.recurring ? '周年纪念' : '纪念日'} · {formatAnniversaryDate(item.date)}
                     </p>
-                    <p className="mt-2 line-clamp-1 text-[15px] font-semibold text-[var(--m-text)]">{item.title}</p>
+                    <p className="m-body mt-2 line-clamp-1 font-semibold text-[var(--m-text)]">{item.title}</p>
                     <div className="mt-3 flex items-end gap-1">
-                      <span className="text-[34px] font-bold leading-none tracking-tight text-[var(--m-accent-strong)]">{days}</span>
-                      <span className="pb-1 text-xs text-[var(--m-muted)]">天</span>
+                      <span className="m-stat text-[var(--m-accent-strong)]">{days}</span>
+                      <span className="m-caption pb-1 text-[var(--m-muted)]">天</span>
                     </div>
-                    <p className="mt-1 text-xs text-[var(--m-muted)]">{days === 0 ? '就是今天' : '距离这个日子还有'}</p>
+                    <p className="m-caption mt-1 text-[var(--m-muted)]">{days === 0 ? '就是今天' : '距离这个日子还有'}</p>
                   </div>
                 )
               })}
@@ -485,47 +469,31 @@ export default function HomeMobile({
           </section>
           )}
 
-          {/* 功能入口：移动端扁平列表，减少层级 */}
-          <section className="px-4 pb-4">
-          <div className="m-section-title">
-            <span className="flex items-center gap-2">
-              <Heart className="h-[18px] w-[18px] text-[var(--m-accent)]" />
-              更多玩法
-            </span>
-          </div>
-          <Stagger className="space-y-3" delayBase={80}>
-            <Link href="/timeline" className="m-list-item m-press m-card flex items-center gap-4 p-4">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F7E6D9] text-[var(--m-accent-strong)]">
-                <CalendarDays className="h-5 w-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold">时间线</span>
-                <span className="mt-0.5 block text-xs text-[var(--m-muted)]">按年份回顾每一段旅程</span>
-              </span>
-              <ArrowRight className="h-5 w-5 text-[var(--m-faint)]" />
-            </Link>
-            <Link href="/moments" className="m-list-item m-press m-card flex items-center gap-4 p-4">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E7F1F5] text-[#6C8EA6]">
-                <MessageCircle className="h-5 w-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold">碎碎念</span>
-                <span className="mt-0.5 block text-xs text-[var(--m-muted)]">写下此刻想说的话</span>
-              </span>
-              <ArrowRight className="h-5 w-5 text-[var(--m-faint)]" />
-            </Link>
-            <Link href="/dashboard" className="m-list-item m-press m-card flex items-center gap-4 p-4">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EAF0E9] text-[#6E9070]">
-                <BarChart3 className="h-5 w-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold">数据看板</span>
-                <span className="mt-0.5 block text-xs text-[var(--m-muted)]">足迹与照片的全部沉淀</span>
-              </span>
-              <ArrowRight className="h-5 w-5 text-[var(--m-faint)]" />
-            </Link>
-          </Stagger>
-          </section>
+          {/* 功能入口：统一 ListRow 结构（暖色 IconBadge + 一致字号），
+              替代原先三处硬编码彩色方块（bg-[#F7E6D9] / #E7F1F5 / #EAF0E9） */}
+          <ListSection title="更多玩法" className="pb-4">
+            <ListRow
+              icon={CalendarDays}
+              tone="accent"
+              title="时间线"
+              description="按年份回顾每一段旅程"
+              href="/timeline"
+            />
+            <ListRow
+              icon={MessageCircle}
+              tone="sun"
+              title="碎碎念"
+              description="写下此刻想说的话"
+              href="/moments"
+            />
+            <ListRow
+              icon={ChartColumn}
+              tone="clay"
+              title="数据看板"
+              description="足迹与照片的全部沉淀"
+              href="/dashboard"
+            />
+          </ListSection>
         </div>
       </PullToRefresh>
     </div>

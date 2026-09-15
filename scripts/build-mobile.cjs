@@ -26,6 +26,9 @@ const EXCLUDES = [
   ['app/feed.xml', 'feed.xml'],
   ['app/admin', 'admin'],
   ['app/albums', 'albums'],
+  // 开发用组件预览台（/dev/ui）：生产构建本已 404，但仍会生成一个冗余页面，
+  // 且开发工具不应进入发给用户的安装包 —— 与 /admin 同理移出。
+  ['app/dev', 'dev'],
   ['middleware.ts', 'middleware.ts'],
 ]
 
@@ -62,8 +65,8 @@ try {
       MOBILE_EXPORT: '1',
       NEXT_PUBLIC_API_BASE: apiBase,
       NEXT_PUBLIC_APP_PLATFORM: 'mobile',
-      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.5.0',
-      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '6',
+      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.6.0',
+      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '7',
       NEXT_PUBLIC_APP_DOWNLOAD_URL: process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL || process.env.APP_DOWNLOAD_URL || 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk',
       SKIP_DB_ON_BUILD: '1',
     },

@@ -2,10 +2,15 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Image from 'next/image'
-import { Loader2, MessageCircle, Sparkles, RotateCcw, ArrowLeft, BookOpen, Map } from 'lucide-react'
+import { Loader2, MessageCircle, Sparkles, RotateCcw, ArrowLeft, BookOpen } from 'lucide-react'
 import { GalaxyAlbumEngine } from './galaxyEngine'
 import type { CityData } from './particlePhoto'
 import SpaceAlbumHUD from './SpaceAlbumHUD'
+import { Icon } from '@/components/mobile/Icon'
+import { albumModeOf } from '@/lib/album-modes'
+
+/** 模式文案/图标统一取自 lib/album-modes */
+const PIXEL_MODE = albumModeOf('pixel')
 import SpaceRadar from './SpaceRadar'
 import GlassPanel from './GlassPanel'
 
@@ -98,17 +103,17 @@ export default function GalaxyAlbumScene({
     return (
       <div className="fixed inset-0 z-[90] bg-album-bg0 flex flex-col items-center justify-center gap-4">
         {/* 空态也保留顶栏（返回首页 + 标题 + 模式切换），与像素/画册模式同构，避免被困在空银河 */}
-        <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between gap-3 px-3 sm:px-5 py-3 space-glass rounded-none border-x-0 border-t-0">
+        <header className="absolute top-0 inset-x-0 z-40 flex h-14 items-center justify-between gap-2 px-3 md:px-8 space-glass rounded-none border-x-0 border-t-0">
           <div className="flex items-center gap-3 min-w-0">
             <a
               href="/"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <Icon icon={ArrowLeft} size="sm" />
               返回
             </a>
             <div className="flex items-center gap-2 min-w-0">
-              <BookOpen className="w-4 h-4 text-album-accent shrink-0" />
+              <Icon icon={BookOpen} size="sm" className="shrink-0 text-album-accent" />
               <h1 className="text-album-text1 text-sm font-semibold tracking-widest truncate">银河相册</h1>
             </div>
           </div>
@@ -116,13 +121,13 @@ export default function GalaxyAlbumScene({
             type="button"
             onClick={onTogglePixel}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
-            title="一键切换到复古像素风"
+            title={PIXEL_MODE.title}
           >
-            <Map className="w-3.5 h-3.5" />
-            像素风
+            <Icon icon={PIXEL_MODE.icon} size="sm" />
+            {PIXEL_MODE.label}
           </button>
         </header>
-        <Sparkles className="w-10 h-10 text-album-accent" />
+        <Icon icon={Sparkles} size="lg" className="text-album-accent" />
         <p className="text-album-text2 text-sm tracking-widest">银河中还没有旅行唱片</p>
         <p className="text-album-text2 text-xs">等待新的旅行记忆被点亮...</p>
       </div>
@@ -140,7 +145,7 @@ export default function GalaxyAlbumScene({
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border border-white/15" />
             <div className="absolute inset-0 rounded-full border-t-2 border-album-accent animate-spin" />
-            <Sparkles className="absolute inset-0 m-auto w-5 h-5 text-album-accent" />
+            <Icon icon={Sparkles} size="md" className="absolute inset-0 m-auto text-album-accent" />
           </div>
           <p className="text-album-text2 text-sm tracking-widest">正在唤醒银河，装载旅行唱片...</p>
           <div className="w-48 h-1 rounded-full bg-white/10 overflow-hidden">
@@ -191,7 +196,7 @@ export default function GalaxyAlbumScene({
                     onClick={() => engineRef.current?.exitCloseup()}
                     className="space-glass-btn rounded-full px-3 py-1.5 flex items-center gap-1.5 text-album-text1 text-xs shrink-0"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    <Icon icon={RotateCcw} size="sm" />
                     返回银河
                   </button>
                 </div>
@@ -214,7 +219,7 @@ export default function GalaxyAlbumScene({
                         className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <span className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition-colors flex items-center justify-center">
-                        <MessageCircle className="w-4 h-4 text-album-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <Icon icon={MessageCircle} size="sm" className="text-album-accent opacity-0 transition-opacity group-hover:opacity-100" />
                       </span>
                     </button>
                   ))}

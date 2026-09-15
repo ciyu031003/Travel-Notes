@@ -1,8 +1,13 @@
 'use client'
 
-import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Map, Minus, Plus, RotateCcw, Sparkles, Settings2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Sparkles, Settings2 } from 'lucide-react'
 import type { CityData } from './particlePhoto'
 import ManageEntry from '@/components/layout/ManageEntry'
+import { Icon } from '@/components/mobile/Icon'
+import { albumModeOf } from '@/lib/album-modes'
+
+/** 模式文案/图标统一取自 lib/album-modes */
+const PIXEL_MODE = albumModeOf('pixel')
 
 interface SpaceAlbumHUDProps {
   cities: CityData[]
@@ -49,18 +54,19 @@ export default function SpaceAlbumHUD({
 
   return (
     <>
-      {/* 顶部玻璃栏：结构与画册/像素模式同构（返回首页 + 标题 + 模式切换/管理） */}
-      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between gap-3 px-3 sm:px-5 py-3 space-glass rounded-none border-x-0 border-t-0">
+      {/* 顶部玻璃栏：几何与画册/像素模式统一（h-14 · z-40 · px-3 md:px-8），仅皮肤保留玻璃 */}
+      <header className="absolute top-0 inset-x-0 z-40 flex h-14 items-center justify-between gap-2 px-3 md:px-8 space-glass rounded-none border-x-0 border-t-0">
         <div className="flex items-center gap-3 min-w-0">
           <a
             href="/"
+            aria-label="返回首页"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <Icon icon={ArrowLeft} size="sm" />
             返回
           </a>
           <div className="flex items-center gap-2 min-w-0">
-            <BookOpen className="w-4 h-4 text-album-accent shrink-0" />
+            <Icon icon={BookOpen} size="sm" className="shrink-0 text-album-accent" />
             <h1 className="text-album-text1 text-sm font-semibold tracking-widest truncate">
               银河相册
             </h1>
@@ -68,7 +74,7 @@ export default function SpaceAlbumHUD({
         </div>
 
         <div className="hidden md:flex items-center gap-2 text-xs text-album-text2 select-none">
-          <Sparkles className="w-3.5 h-3.5 text-album-accent" />
+          <Icon icon={Sparkles} size="sm" className="text-album-accent" />
           <span>{cities.length} 座城市 · {totalPhotos} 张照片</span>
         </div>
 
@@ -78,7 +84,7 @@ export default function SpaceAlbumHUD({
             <ManageEntry
               href="/admin/albums"
               label="管理相册"
-              icon={<Settings2 className="w-3.5 h-3.5" />}
+              icon={<Icon icon={Settings2} size="sm" />}
               className="px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
             />
           </div>
@@ -86,10 +92,10 @@ export default function SpaceAlbumHUD({
             type="button"
             onClick={onTogglePixel}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs font-bold"
-            title="一键切换到复古像素风"
+            title={PIXEL_MODE.title}
           >
-            <Map className="w-3.5 h-3.5" />
-            像素风
+            <Icon icon={PIXEL_MODE.icon} size="sm" />
+            {PIXEL_MODE.label}
           </button>
         </div>
       </header>
@@ -103,7 +109,7 @@ export default function SpaceAlbumHUD({
             className="space-glass-btn w-9 h-9 rounded-full flex items-center justify-center text-album-text1 shrink-0"
             aria-label="上一张唱片"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <Icon icon={ChevronLeft} size="sm" />
           </button>
 
           <div className="min-w-0 text-center px-1 select-none">
@@ -121,7 +127,7 @@ export default function SpaceAlbumHUD({
             className="space-glass-btn w-9 h-9 rounded-full flex items-center justify-center text-album-text1 shrink-0"
             aria-label="下一张唱片"
           >
-            <ChevronRight className="w-4 h-4" />
+            <Icon icon={ChevronRight} size="sm" />
           </button>
 
           <div className="hidden lg:flex items-center gap-1.5 px-2 text-xs text-album-text2 select-none whitespace-nowrap">
@@ -140,7 +146,7 @@ export default function SpaceAlbumHUD({
             className="space-glass-btn w-9 h-9 rounded-full flex items-center justify-center text-album-text1 shrink-0"
             aria-label="缩小"
           >
-            <Minus className="w-4 h-4" />
+            <Icon icon={Minus} size="sm" />
           </button>
           <button
             type="button"
@@ -148,7 +154,7 @@ export default function SpaceAlbumHUD({
             className="space-glass-btn w-9 h-9 rounded-full flex items-center justify-center text-album-text1 shrink-0"
             aria-label="放大"
           >
-            <Plus className="w-4 h-4" />
+            <Icon icon={Plus} size="sm" />
           </button>
 
           {closeup && (
@@ -157,7 +163,7 @@ export default function SpaceAlbumHUD({
               onClick={onExitCloseup}
               className="space-glass-btn rounded-full px-3 h-9 flex items-center gap-1.5 text-album-accentStrong text-xs font-bold shrink-0"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <Icon icon={RotateCcw} size="sm" />
               返回银河
             </button>
           )}

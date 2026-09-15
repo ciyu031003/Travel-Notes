@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
-import { Calendar, MapPin, Users } from 'lucide-react'
+import { Calendar, MapPin, Users, PenLine } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
 import TravelTimeline from '@/components/travel/TravelTimeline'
@@ -12,25 +12,14 @@ import AsyncState from '@/components/AsyncState'
 import dynamicImport from 'next/dynamic'
 import { apiUrl } from '@/lib/api-base'
 import { travelRecordHref } from '@/lib/routes'
+import { TravelTypePill } from '@/components/mobile/Pills'
+import { Icon } from '@/components/mobile/Icon'
 
 // 仅本页渲染服务端生成的 Markdown HTML（含 KaTeX 公式 / 代码高亮）时按需加载样式
 import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/github-dark.css'
 
 const VideoPlayer = dynamicImport(() => import('@/components/VideoPlayer'))
-
-const TRAVEL_TYPE_LABELS: Record<string, string> = {
-  ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',
-}
-const TRAVEL_TYPE_STYLES: Record<string, string> = {
-  ALONE: 'bg-travel-mist/50 text-travel-sky',
-  COUPLE: 'bg-travel-sakura/60 text-travel-accent',
-  FAMILY: 'bg-travel-sakura/50 text-travel-accentStrong',
-  FRIENDS: 'bg-travel-mist/40 text-travel-sky',
-  BFF: 'bg-travel-sakura/50 text-travel-accent',
-  GROUP: 'bg-travel-mist/50 text-travel-sky',
-  OTHER: 'bg-travel-dim/40 text-travel-ink/70',
-}
 
 interface DetailData {
   travel: {
@@ -115,7 +104,8 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
           href={travelRecordHref(slug)}
           className="inline-flex items-center gap-2 rounded-full border border-travel-bloom/50 bg-travel-sakura px-4 py-3 text-sm font-medium text-travel-ink transition-all hover:bg-travel-bloom/25 active:scale-[0.98]"
         >
-          ✍️ 记录今日
+          <Icon icon={PenLine} size="sm" />
+          记录今日
         </Link>
       </div>
       <div id={`detail-${slug}`} className="container-custom">
@@ -123,9 +113,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
           <header className="mb-8 text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-travel-ink">{detailTitle}</h1>
             {travel?.travelType && (
-              <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${TRAVEL_TYPE_STYLES[travel.travelType] || TRAVEL_TYPE_STYLES.OTHER}`}>
-                {TRAVEL_TYPE_LABELS[travel.travelType] || travel.travelType}
-              </span>
+              <TravelTypePill type={travel.travelType} />
             )}
             {Array.isArray(travel?.companions) && (travel.companions as any[]).length > 0 && (
               <div className="mt-3 flex flex-wrap justify-center gap-1.5">

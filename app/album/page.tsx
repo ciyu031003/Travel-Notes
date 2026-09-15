@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket, Orbit, Settings2, Menu } from 'lucide-react'
 import ManageEntry from '@/components/layout/ManageEntry'
+import { Icon } from '@/components/mobile/Icon'
+import { albumModeOf } from '@/lib/album-modes'
+
+/** 模式文案/图标统一取自 lib/album-modes */
+const BOOK_MODE = albumModeOf('book')
+const SPACE_MODE = albumModeOf('space')
 import dynamicImport from 'next/dynamic'
 import PixelDeskBackground from '@/components/album/PixelDeskBackground'
 import TravelFilmCard from '@/components/album/TravelFilmCard'
@@ -295,7 +301,7 @@ export default function AlbumPage() {
 
           <div className="relative z-10 w-full max-w-md space-glass rounded-3xl p-8 text-center">
             <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-album-bg0/70 border border-white/15 flex items-center justify-center shadow-[0_0_40px_var(--album-accent-dim)]">
-              <Lock className="w-8 h-8 text-album-accent" />
+              <Icon icon={Lock} size="lg" className="text-album-accent" />
             </div>
             <h2 className="text-album-text1 text-2xl font-bold tracking-[0.3em]">旅行相册 · 银河存档</h2>
             <p className="text-album-text2 text-xs mt-3 leading-relaxed">
@@ -323,8 +329,8 @@ export default function AlbumPage() {
                 onClick={toggleViewMode}
                 className="space-glass-btn rounded-full px-4 py-2 text-xs text-album-text2 flex items-center gap-1.5"
               >
-                <Rocket className="w-3.5 h-3.5" />
-                切到像素风
+                <Icon icon={Rocket} size="sm" />
+                切到像素
               </button>
             </div>
           </div>
@@ -447,11 +453,11 @@ export default function AlbumPage() {
           className="pixel-btn pixel-border-stone px-3 py-1.5 text-xs font-bold rounded-sm shrink-0"
           aria-label="返回首页"
         >
-          <ArrowLeft className="w-3.5 h-3.5 sm:mr-1" />
-          <span className="hidden sm:inline">返回首页</span>
+          <Icon icon={ArrowLeft} size="sm" className="sm:mr-1" />
+          <span className="hidden sm:inline">返回</span>
         </Link>
         <div className="font-zpix text-album-accent text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)] flex items-center gap-2 min-w-0 truncate">
-          <BookOpen className="w-4 h-4 shrink-0" />
+          <Icon icon={BookOpen} size="sm" className="shrink-0" />
           <span className="truncate">旅行相册<span className="hidden sm:inline"> · 存档</span></span>
         </div>
         <div className="relative flex items-center gap-2 shrink-0">
@@ -459,18 +465,29 @@ export default function AlbumPage() {
             type="button"
             onClick={() => changeMode('book')}
             className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
-            title="切换到旅行画册"
+            title={BOOK_MODE.title}
           >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">旅行画册</span>
-            <span className="sm:hidden">画册</span>
+            <Icon icon={BOOK_MODE.icon} size="sm" />
+            <span className="hidden sm:inline">{BOOK_MODE.label}</span>
+          </button>
+          {/* 银河：移动端也必须可达 ——
+              此前该按钮只存在于下方 `hidden md:flex` 的桌面操作组里，
+              导致移动端从像素模式无法切到银河（真实可用性缺陷）。 */}
+          <button
+            type="button"
+            onClick={toggleViewMode}
+            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
+            title={SPACE_MODE.title}
+          >
+            <Icon icon={SPACE_MODE.icon} size="sm" />
+            <span className="hidden sm:inline">{SPACE_MODE.label}</span>
           </button>
           {/* 桌面：完整操作组 */}
           <div className="hidden md:flex items-center gap-2">
             <ManageEntry
               href="/admin/albums"
               label="管理相册"
-              icon={<Settings2 className="w-3.5 h-3.5" />}
+              icon={<Icon icon={Settings2} size="sm" />}
               className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
             />
             <button
@@ -479,17 +496,8 @@ export default function AlbumPage() {
               className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
               title="查看旅行星图"
             >
-              <Orbit className="w-3.5 h-3.5" />
+              <Icon icon={Orbit} size="sm" />
               星图
-            </button>
-            <button
-              type="button"
-              onClick={toggleViewMode}
-              className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
-              title="一键切换到银河唱片空间"
-            >
-              <Rocket className="w-3.5 h-3.5" />
-              银河风
             </button>
             <Link
               href="/"
@@ -506,7 +514,7 @@ export default function AlbumPage() {
             title="更多操作"
             aria-expanded={showMoreMenu}
           >
-            <Menu className="w-3.5 h-3.5" />
+            <Icon icon={Menu} size="sm" />
             更多
           </button>
           {showMoreMenu && (
@@ -517,7 +525,7 @@ export default function AlbumPage() {
                   <ManageEntry
                     href="/admin/albums"
                     label="管理相册"
-                    icon={<Settings2 className="w-3.5 h-3.5" />}
+                    icon={<Icon icon={Settings2} size="sm" />}
                     className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
                   />
                   <button
@@ -525,7 +533,7 @@ export default function AlbumPage() {
                     onClick={() => { setShowStarMap(true); setShowMoreMenu(false) }}
                     className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
                   >
-                    <Orbit className="w-3.5 h-3.5" />
+                    <Icon icon={Orbit} size="sm" />
                     星图
                   </button>
                   <button
@@ -533,7 +541,7 @@ export default function AlbumPage() {
                     onClick={() => { toggleViewMode(); setShowMoreMenu(false) }}
                     className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
                   >
-                    <Rocket className="w-3.5 h-3.5" />
+                    <Icon icon={Rocket} size="sm" />
                     银河风
                   </button>
                   <Link
@@ -552,7 +560,7 @@ export default function AlbumPage() {
                     }}
                     className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
                   >
-                    <Lock className="w-3.5 h-3.5" />
+                    <Icon icon={Lock} size="sm" />
                     重新锁定相册
                   </button>
                 </div>
@@ -573,7 +581,7 @@ export default function AlbumPage() {
 
             <div className="flex items-center gap-4">
               <div className="item-frame w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center hidden sm:flex">
-                <BookOpen className="w-7 h-7 text-album-accent" />
+                <Icon icon={BookOpen} size="lg" className="text-album-accent" />
               </div>
               <div>
                 <h1 className="font-zpix text-xl sm:text-2xl font-bold text-album-accent tracking-wider drop-shadow-[0_3px_0_rgba(0,0,0,0.7)]">
@@ -611,7 +619,7 @@ export default function AlbumPage() {
                   <div className="text-album-warm text-xs py-6 text-center tracking-wider">装载中...</div>
                 ) : cities.length === 0 ? (
                   <div className="text-album-warm text-xs py-6 text-center tracking-wider">
-                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    <Icon icon={MapPin} size="lg" className="mx-auto mb-2 opacity-40" />
                     还没有旅行记录
                   </div>
                 ) : (
@@ -677,11 +685,11 @@ export default function AlbumPage() {
                     onClick={() => setShowArchive(true)}
                     className="pixel-btn pixel-border-gold px-2.5 py-1 text-xs font-bold rounded-sm flex items-center gap-1.5"
                   >
-                    <BookOpen className="w-3.5 h-3.5" />
+                    <Icon icon={BookOpen} size="sm" />
                     档案
                   </button>
                   <p className="text-xs text-album-warm flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-album-accent" />
+                    <Icon icon={Sparkles} size="sm" className="text-album-accent" />
                     {formatDate(selectedCity.date)} · 点击照片开启留言
                   </p>
                 </div>
@@ -733,7 +741,7 @@ export default function AlbumPage() {
             ) : (
               <div className="flex flex-col items-center justify-center h-[420px] text-album-warm gap-3">
                 <div className="item-frame w-20 h-20 flex items-center justify-center">
-                  <MapPin className="w-8 h-8 text-album-accent opacity-60" />
+                  <Icon icon={MapPin} size="lg" className="text-album-accent opacity-60" />
                 </div>
                 <p className="text-sm font-bold tracking-wider">从书架选择一本相册</p>
                 <p className="text-xs text-album-warm">点亮属于你们的旅行记忆</p>
@@ -746,7 +754,7 @@ export default function AlbumPage() {
         {albums.length > 0 && (
           <section className="max-w-6xl mx-auto px-4 mt-8">
             <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="w-4 h-4 text-album-accent" />
+              <Icon icon={BookOpen} size="sm" className="text-album-accent" />
               <h2 className="font-zpix text-lg font-bold text-album-accent tracking-wide drop-shadow-[2px_2px_0_rgba(0,0,0,0.7)]">
                 纪念相册
               </h2>

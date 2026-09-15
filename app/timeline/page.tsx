@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, Sparkles, CalendarDays } from 'lucide-react'
+import { MapPin, Sparkles } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import TimelineCover from '@/components/timeline/TimelineCover'
 import AsyncState from '@/components/AsyncState'
 import { formatDate } from '@/lib/utils'
@@ -91,14 +92,14 @@ export default function TimelinePage() {
           <>
           <div className="relative mx-auto hidden max-w-xl rounded-2xl border border-travel-line/70 bg-white/90 px-6 py-14 text-center shadow-[0_18px_40px_-28px_rgba(90,102,112,0.4)] dark:bg-shell-surface/90 md:block">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-travel-sakura/60 text-travel-accent">
-              <Sparkles className="h-7 w-7" />
+              <Icon icon={Sparkles} size="lg" />
             </div>
             <p className="mt-4 text-base font-medium text-travel-inkStrong dark:text-shell-text">时间线还是空的</p>
             <p className="mt-1 text-sm text-travel-ink/60 dark:text-shell-muted">从第一段旅行开始，慢慢收藏路上的光</p>
           </div>
           <div className="m-card mx-0 p-6 md:hidden">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
-              <Sparkles className="h-7 w-7" />
+              <Icon icon={Sparkles} size="lg" />
             </div>
             <p className="mt-4 text-center text-base font-semibold text-[var(--m-text)]">时间线还是空的</p>
             <p className="mt-1 text-center text-sm text-[var(--m-muted)]">从第一段旅行开始，慢慢收藏路上的光</p>
@@ -205,7 +206,7 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-2">
           <span className={'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ' + (isTravel ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-accentSoft' : 'bg-travel-mist/50 dark:bg-travel-sky/20 text-travel-sky dark:text-travel-sky')}>
-            {isTravel ? <MapPin className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+            {isTravel ? <Icon icon={MapPin} size="sm" /> : <Icon icon={Sparkles} size="sm" />}
             {isTravel ? '旅行' : '回忆'}
           </span>
           <span className="text-xs text-travel-ink/50 dark:text-shell-muted">{formatDate(entry.date)}</span>
@@ -217,7 +218,7 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
           <div className="mt-2 flex flex-wrap gap-1.5">
             {entry.location && (
               <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">
-                <MapPin className="w-3 h-3" />
+                <Icon icon={MapPin} size="sm" />
                 {entry.location}
               </span>
             )}

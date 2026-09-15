@@ -9,8 +9,11 @@ interface AlbumDayDividerProps {
 }
 
 /**
- * 相册 DAY 分隔符：像素记忆符号 + mono 数字。
- * 只承担"时间节点"语义，不作为大装饰带。
+ * 相册 DAY 分隔符：只承担"时间节点"语义，不作为装饰带。
+ *
+ * 修订：原先两端用字符 "✦" 装饰。字符字形依赖字体覆盖（像素字体 zpix
+ * 未必含 U+2726，会回退到系统字体 → 跨端不一致、无法对齐、无法控制粗细）。
+ * 现直接移除装饰字符，改由发丝线 + 字距表达节奏。
  */
 export default function AlbumDayDivider({ day, label, className }: AlbumDayDividerProps) {
   return (
@@ -21,8 +24,8 @@ export default function AlbumDayDivider({ day, label, className }: AlbumDayDivid
     >
       <span className="h-px flex-1 bg-album-accent/25" />
       <span className="font-zpix text-xs tracking-[0.2em] text-album-accent">
-        ✦ DAY {String(day).padStart(2, '0')}
-        {label ? ` · ${label}` : ''} ✦
+        DAY {String(day).padStart(2, '0')}
+        {label ? ` · ${label}` : ''}
       </span>
       <span className="h-px flex-1 bg-album-accent/25" />
     </div>

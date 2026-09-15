@@ -123,7 +123,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
           ← 返回相册
         </button>
         <div className="font-zpix text-album-accent text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
-          ✦ 旅行相册 · 存档 ✦
+          旅行相册 · 存档
         </div>
         <div className="w-20 md:w-24" aria-hidden="true" />
       </header>
@@ -212,7 +212,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                     <p className="text-xs text-album-warm font-bold leading-relaxed">
                       还没有留言，
                       <br />
-                      写下第一句吧 ✍
+                      写下第一句吧
                     </p>
                   </div>
                 ) : (

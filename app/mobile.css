@@ -5,28 +5,82 @@
    ========================================================================== */
 
 :root {
-  --m-bg: #FFF9F2;
-  --m-bg-soft: #FFF1E6;
+  /* ── 中性层（承载 90% 界面）────────────────────────────── */
+  --m-bg: #FFFBF7;
+  --m-bg-soft: #FFF3E9;
   --m-surface: rgba(255, 255, 255, 0.82);
   --m-surface-solid: #FFFFFF;
-  --m-surface-2: #FFF5EC;
+  --m-surface-2: #F7F3EF;
   --m-text: #3D2B20;
-  --m-muted: #9A8574;
-  --m-faint: #C4B4A6;
+  /* 对比度：修复前 #9A8574 on #FFFBF7 = 3.36:1（不达标）；#7D6754 = 5.10:1 ✅ */
+  --m-muted: #7D6754;
+  --m-faint: #B9A897;
+
+  /* ── 强调层（唯一强调色：陶土）──────────────────────────── */
   --m-accent: #C67A4E;
   --m-accent-strong: #A85F3A;
   --m-accent-soft: rgba(198, 122, 78, 0.14);
+
+  /* ── 暖色色板（仅用于图标底色/内容，不用于界面框架）────────── */
   --m-sun: #E4B478;
   --m-blush: #F3C6B5;
+  --m-clay: #B4705C;
+  /* 保留旧名以免回归（本项目历史使用了 sky/mint，新代码请优先用暖色）*/
   --m-sky: #A8C8DC;
   --m-mint: #9CC7B2;
+
+  /* ── 图标/徽标色调（IconBadge tone → 背景 + 前景，全部暖调）──
+     前景色均已按 WCAG AA（≥4.5:1）在对应浅底上校核。 */
+  --m-tone-accent-bg: rgba(198, 122, 78, 0.12);
+  --m-tone-accent-fg: #A85F3A;
+  --m-tone-sun-bg: rgba(228, 180, 120, 0.20);
+  --m-tone-sun-fg: #A96C22;
+  --m-tone-blush-bg: rgba(243, 198, 181, 0.30);
+  --m-tone-blush-fg: #A85F4A;
+  --m-tone-clay-bg: rgba(180, 112, 92, 0.14);
+  --m-tone-clay-fg: #8A4A2B;
+  --m-tone-neutral-bg: #F2EDE8;
+  --m-tone-neutral-fg: #7D6754;
+
+  /* ── 语义色（状态表达，不参与装饰）────────────────────── */
+  --m-success: #3F8F62;
+  --m-warning: #B8801F;
+  --m-danger: #C0453F;
+
+  /* ── 描边与分隔 ─────────────────────────────────────── */
   --m-line: rgba(168, 95, 58, 0.10);
   --m-line-strong: rgba(168, 95, 58, 0.22);
-  --m-shadow-sm: 0 8px 24px -12px rgba(168, 95, 58, 0.28);
-  --m-shadow-md: 0 18px 44px -18px rgba(168, 95, 58, 0.32);
-  --m-radius-lg: 24px;
-  --m-radius-md: 18px;
+  --m-hairline: 0.5px solid var(--m-line-strong);
+
+  /* ── 阴影分级（L1 卡片 / L2 悬浮）────────────────────── */
+  --m-shadow-l1: 0 1px 2px rgba(61, 43, 32, 0.04), 0 8px 24px -16px rgba(61, 43, 32, 0.18);
+  --m-shadow-l2: 0 8px 32px -12px rgba(61, 43, 32, 0.28);
+  /* 旧名保留（历史组件在用），指向新分级 */
+  --m-shadow-sm: var(--m-shadow-l1);
+  --m-shadow-md: var(--m-shadow-l2);
+
+  /* ── 圆角（收敛为 3 档 + 胶囊 + 面板）────────────────── */
+  --m-radius-card: 20px;
+  --m-radius-control: 14px;
+  --m-radius-sheet: 24px;
+  --m-radius-pill: 999px;
+  /* 旧名保留（历史组件在用） */
+  --m-radius-lg: 20px;
+  --m-radius-md: 14px;
   --m-radius-sm: 12px;
+
+  /* ── 间距节奏（4pt 基准，8pt 主节奏）──────────────────── */
+  --m-gutter: 20px;         /* 页面横向内边距统一值 */
+  --m-section-gap: 32px;    /* 区块间垂直间距统一值 */
+  --m-safe-top: max(20px, env(safe-area-inset-top));
+
+  /* ── 图标体系（唯一事实源，勿在组件内另写数值）──────────── */
+  --m-icon-sm: 16px;
+  --m-icon-md: 20px;
+  --m-icon-lg: 24px;
+  --m-icon-stroke: 2;
+  --m-icon-stroke-lg: 1.75;
+
   --m-tab-h: 60px;
   --m-fab-size: 56px;
 }
@@ -45,12 +99,32 @@ html.dark {
   --m-accent-soft: rgba(232, 179, 106, 0.16);
   --m-sun: #F2C88A;
   --m-blush: #C8897D;
+  --m-clay: #C8897D;
   --m-sky: #93B7CC;
   --m-mint: #7FA996;
+
+  /* 暗色下暖色色调：底色用低透明度暖光，前景提亮保证对比度 */
+  --m-tone-accent-bg: rgba(232, 179, 106, 0.16);
+  --m-tone-accent-fg: #F2C88A;
+  --m-tone-sun-bg: rgba(242, 200, 138, 0.16);
+  --m-tone-sun-fg: #F5D49B;
+  --m-tone-blush-bg: rgba(200, 137, 125, 0.20);
+  --m-tone-blush-fg: #E4A896;
+  --m-tone-clay-bg: rgba(200, 137, 125, 0.16);
+  --m-tone-clay-fg: #E0A88F;
+  --m-tone-neutral-bg: #241D19;
+  --m-tone-neutral-fg: #A99B90;
+
+  --m-success: #6FBF8F;
+  --m-warning: #E0B45C;
+  --m-danger: #E2706A;
+
   --m-line: rgba(245, 241, 234, 0.10);
   --m-line-strong: rgba(245, 241, 234, 0.18);
-  --m-shadow-sm: 0 8px 24px -12px rgba(0, 0, 0, 0.5);
-  --m-shadow-md: 0 18px 44px -18px rgba(0, 0, 0, 0.55);
+  --m-shadow-l1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 8px 24px -16px rgba(0, 0, 0, 0.50);
+  --m-shadow-l2: 0 8px 32px -12px rgba(0, 0, 0, 0.55);
+  --m-shadow-sm: var(--m-shadow-l1);
+  --m-shadow-md: var(--m-shadow-l2);
 }
 
 @media (max-width: 767px) {
@@ -62,6 +136,83 @@ html.dark {
   }
 }
 
+/* ==========================================================================
+   字阶（收敛为 7 档）—— 唯一事实源。
+   规则：一个页面最多 2 个大标题级别；英文眉标字距统一 0.08em（不再用 0.24em）。
+   ========================================================================== */
+.m-display {
+  font-size: 32px;
+  line-height: 38px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.m-title-1 {
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.m-title-2 {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.m-body {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 400;
+}
+.m-caption {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+}
+.m-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.m-stat {
+  font-size: 32px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+/* Tab 栏标签：11px + 无字距（中文标签不适用 m-label 的 0.08em 字距） */
+.m-tab-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* ==========================================================================
+   布局节奏工具类（8pt 网格）
+   ========================================================================== */
+.m-gutter {
+  padding-left: var(--m-gutter);
+  padding-right: var(--m-gutter);
+}
+.m-safe-top {
+  padding-top: var(--m-safe-top);
+}
+
+/* ==========================================================================
+   图标体系工具类（配合 components/mobile/Icon.tsx 使用）
+   尺寸仅 3 档、描边仅 2 档 —— 禁止在组件内另写数值。
+   ========================================================================== */
+.m-icon {
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+}
+.m-icon-sm { width: var(--m-icon-sm); height: var(--m-icon-sm); }
+.m-icon-md { width: var(--m-icon-md); height: var(--m-icon-md); }
+.m-icon-lg { width: var(--m-icon-lg); height: var(--m-icon-lg); }
+
 .m-glass {
   background: var(--m-surface);
   backdrop-filter: blur(18px) saturate(1.5);
@@ -72,8 +223,13 @@ html.dark {
 .m-card {
   background: var(--m-surface-solid);
   border: 1px solid var(--m-line);
-  border-radius: var(--m-radius-lg);
-  box-shadow: var(--m-shadow-sm);
+  border-radius: var(--m-radius-card);
+  box-shadow: var(--m-shadow-l1);
+}
+.m-card-flat {
+  background: var(--m-surface-solid);
+  border: 1px solid var(--m-line);
+  border-radius: var(--m-radius-card);
 }
 
 .m-chip {
@@ -104,7 +260,8 @@ html.dark {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
-  font-size: 17px;
+  font-size: 18px;
+  line-height: 24px;
   font-weight: 650;
   letter-spacing: -0.01em;
   color: var(--m-text);
@@ -142,12 +299,11 @@ html.dark {
   animation: m-tab-pop 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-@keyframes m-fab-glow {
-  0%, 100% { box-shadow: 0 10px 26px -8px rgba(198, 122, 78, 0.55), 0 0 0 0 rgba(198, 122, 78, 0.18); }
-  50%      { box-shadow: 0 10px 30px -6px rgba(198, 122, 78, 0.7), 0 0 0 8px rgba(198, 122, 78, 0); }
-}
+/* FAB：静态投影。
+   原 m-fab-glow（2.6s 无限呼吸）已移除 —— 常驻装饰动画是"廉价感"的典型来源，
+   规范要求：除 loading 外禁止无限循环动画。 */
 .m-fab {
-  animation: m-fab-glow 2.6s ease-in-out infinite;
+  box-shadow: var(--m-shadow-l2);
 }
 
 @keyframes m-shimmer {

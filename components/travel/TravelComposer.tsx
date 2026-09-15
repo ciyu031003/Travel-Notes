@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Loader2, Sparkles, X, ArrowLeft } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { createTravel } from '@/lib/modules/offline/travel-write'
 import { apiUrl } from '@/lib/api-base'
 
@@ -161,7 +162,7 @@ export default function TravelComposer({
         onClick={tryOpen}
         className="inline-flex items-center gap-1.5 rounded-full bg-travel-bloom px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-[#DDA5B2]"
       >
-        <Plus className="h-4 w-4" />
+        <Icon icon={Plus} size="sm" />
         新建旅行
       </button>
     )
@@ -181,7 +182,7 @@ export default function TravelComposer({
         className="absolute right-2 top-2 rounded-full p-1 text-travel-ink/50 hover:bg-travel-dim/50"
         aria-label="关闭"
       >
-        <X className="h-4 w-4" />
+        <Icon icon={X} size="sm" />
       </button>
       <h3 className="mb-3 font-semibold text-travel-ink">新建旅行</h3>
       <div className="space-y-3">
@@ -244,7 +245,7 @@ export default function TravelComposer({
               disabled={!companionName.trim() || companions.length >= MAX_COMPANIONS}
               className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-travel-dim/40 px-3 py-2 text-xs font-medium text-travel-ink/70 transition hover:bg-travel-dim/70 disabled:opacity-40"
             >
-              <Plus className="h-3.5 w-3.5" />添加
+              <Icon icon={Plus} size="sm" />添加
             </button>
           </div>
           {companions.length > 0 && (
@@ -262,7 +263,7 @@ export default function TravelComposer({
                     aria-label={`移除 ${c.name}`}
                     className="ml-0.5 rounded-full p-0.5 text-travel-ink/50 transition hover:bg-travel-bloom/20 hover:text-travel-ink"
                   >
-                    <X className="h-3 w-3" />
+                    <Icon icon={X} size="sm" />
                   </button>
                 </span>
               ))}
@@ -293,7 +294,7 @@ export default function TravelComposer({
       <div className="mt-4 flex items-center justify-between gap-3">
         {message && (
           <p className={`flex items-center gap-1.5 text-xs ${message.type === 'ok' ? 'text-emerald-600' : 'text-red-500'}`}>
-            <Sparkles className="h-3 w-3" />
+            <Icon icon={Sparkles} size="sm" />
             {message.text}
           </p>
         )}
@@ -302,7 +303,7 @@ export default function TravelComposer({
           disabled={submitting || !title.trim()}
           className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-travel-bloom px-4 py-1.5 text-sm font-medium text-white transition hover:bg-[#DDA5B2] disabled:opacity-50"
         >
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          {submitting ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />}
           保存
         </button>
       </div>
@@ -339,7 +340,7 @@ function FullPageComposer({
         style={{ background: 'color-mix(in srgb, var(--m-bg) 82%, transparent)' }}>
         <button type="button" onClick={onBack} aria-label="返回"
           className="-ml-1 flex h-11 w-11 items-center justify-center rounded-full text-[var(--m-text)] active:scale-95 transition">
-          <ArrowLeft className="h-6 w-6" />
+          <Icon icon={ArrowLeft} size="md" />
         </button>
         <div>
           <h1 className="text-[26px] font-bold leading-none tracking-[-0.02em]">新建旅行</h1>
@@ -389,7 +390,7 @@ function FullPageComposer({
                 className="w-28 rounded-xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]" />
               <button type="button" onClick={addCompanion} disabled={!companionName.trim() || companions.length >= MAX_COMPANIONS}
                 className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-[var(--m-accent-soft)] px-3.5 text-[13px] font-medium text-[var(--m-accent-strong)] disabled:opacity-40">
-                <Plus className="h-4 w-4" />添加
+                <Icon icon={Plus} size="sm" />添加
               </button>
             </div>
             {companions.length > 0 && (
@@ -398,7 +399,7 @@ function FullPageComposer({
                   <span key={`${c.name}-${i}`} className="inline-flex items-center gap-1 rounded-full border border-[var(--m-line)] px-3 py-1.5 text-[13px] text-[var(--m-text)]">
                     {c.name}{c.relation ? <span className="text-[var(--m-faint)]">· {c.relation}</span> : null}
                     <button type="button" onClick={() => removeCompanion(i)} aria-label={`移除 ${c.name}`}
-                      className="ml-0.5 rounded-full p-0.5 text-[var(--m-faint)] hover:text-[var(--m-text)]"><X className="h-3.5 w-3.5" /></button>
+                      className="ml-0.5 rounded-full p-0.5 text-[var(--m-faint)] hover:text-[var(--m-text)]"><Icon icon={X} size="sm" /></button>
                   </span>
                 ))}
               </div>
@@ -422,7 +423,7 @@ function FullPageComposer({
 
           {message && (
             <p className={`flex items-center gap-1.5 text-[13px] ${message.type === 'ok' ? 'text-emerald-600' : 'text-red-500'}`}>
-              <Sparkles className="h-3.5 w-3.5" />{message.text}
+              <Icon icon={Sparkles} size="sm" />{message.text}
             </p>
           )}
 
@@ -431,7 +432,7 @@ function FullPageComposer({
             style={{ background: 'linear-gradient(to top, var(--m-bg) 75%, transparent)' }}>
             <button type="submit" disabled={submitting || !title.trim()}
               className="h-13 min-h-[52px] w-full rounded-2xl bg-[var(--m-accent)] text-[16px] font-semibold text-white shadow-[var(--m-shadow-lg)] transition active:scale-[0.98] disabled:opacity-50">
-              {submitting ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : '保存旅行'}
+              {submitting ? <Icon icon={Loader2} size="md" className="mx-auto animate-spin" /> : '保存旅行'}
             </button>
           </div>
         </form>

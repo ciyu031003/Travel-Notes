@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { CalendarDays, MapPin, Camera, Sparkles, Loader2 } from 'lucide-react'
+import { CalendarDays, Camera, Sparkles, Loader2 } from 'lucide-react'
 import { apiUrl } from '@/lib/api-base'
+import { ItineraryChip } from '@/components/mobile/Pills'
 import MemoryPhotoPicker from './MemoryPhotoPicker'
 
 interface TimelineDay {
@@ -98,15 +99,14 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                 </div>
                 {day.summary && <p className="mt-1.5 text-sm text-travel-ink/70 leading-relaxed">{day.summary}</p>}
 
-                {/* 行程项 */}
+                {/* 行程项：按 type 显示对应图标（景点/餐厅/住宿/交通/活动/其他）
+                    此前对全部类型硬编码同一个 MapPin，type 字段完全没用上 */}
                 {day.itinerary.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {day.itinerary.map((it) => (
-                      <span key={it.id} className="inline-flex items-center gap-1 rounded-full bg-travel-mist/40 px-2.5 py-1 text-xs text-travel-ink/80">
-                        <MapPin className="h-3 w-3 text-travel-bloom" />
+                      <ItineraryChip key={it.id} type={it.type} locationName={it.locationName}>
                         {it.title}
-                        {it.locationName ? `（${it.locationName}）` : ''}
-                      </span>
+                      </ItineraryChip>
                     ))}
                   </div>
                 )}

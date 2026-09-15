@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Send, Loader2, Sparkles, Feather } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { createMoment } from '@/lib/modules/offline/moment-write'
 import { cn } from '@/lib/utils'
 
@@ -48,7 +49,7 @@ export default function MomentComposer({
     >
       <div className="mb-2 flex items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom text-white shadow-sm">
-          <Feather className="h-4 w-4" />
+          <Icon icon={Feather} size="sm" />
         </span>
         <span className="text-sm font-semibold text-travel-inkStrong dark:text-shell-text">
           写下此刻
@@ -75,13 +76,13 @@ export default function MomentComposer({
           disabled={submitting || !content.trim()}
           className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-travel-accent to-travel-accentStrong px-5 text-sm font-semibold text-white shadow-[0_10px_24px_-10px_rgba(168,95,58,0.6)] transition-all hover:shadow-[0_12px_28px_-10px_rgba(168,95,58,0.7)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none"
         >
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          {submitting ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Send} size="sm" />}
           发布
         </button>
       </div>
       {message && (
         <p className={`mt-3 flex items-center gap-1.5 text-xs ${message.type === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
-          <Sparkles className="h-3 w-3" />
+          <Icon icon={Sparkles} size="sm" />
           {message.text}
         </p>
       )}
