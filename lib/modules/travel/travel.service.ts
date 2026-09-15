@@ -7,6 +7,7 @@ import { scopedWhere } from '../../visibility'
 import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
 import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
+import { absoluteMediaUrl, storageKeyToUrl } from '../../media-url'
 
 export interface TravelSummary {
   id: number
@@ -19,6 +20,9 @@ export interface TravelSummary {
   dayCount: number
   expenseTotal: number
   cover: string | null
+  coverMediaId: number | null
+  /** 旅行内回忆照片（缩略图优先），用于旅行地图左侧照片轮播 */
+  photos: string[]
   tags: string[] | null
   location: string | null
   updatedAt: string | null
@@ -97,26 +101,72 @@ export async function listTravels(userId?: number | null): Promise<TravelSummary
     include: {
       _count: { select: { days: true } },
       expenses: true,
+      coverMedia: { include: { variants: true } },
+      days: {
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          memories: {
+            orderBy: { happenedAt: 'asc' },
+            include: {
+              media: {
+                select: { id: true, storageKey: true, variants: { where: { variant: 'THUMBNAIL' }, select: { storageKey: true } } },
+              },
+            },
+          },
+        },
+      },
     },
   })
-  return rows.map((t: any) => ({
-    id: t.id,
-    title: t.title,
-    slug: t.slug,
-    description: t.description,
-    startDate: iso(t.startDate),
-    endDate: iso(t.endDate),
-    status: t.status,
-    dayCount: t._count.days,
-    expenseTotal: t.expenses.reduce((s: number, e: any) => s + (e.amount || 0), 0),
-    cover: t.cover ?? null,
-    tags: t.tags ? safeParseTags(t.tags) : null,
-    location: t.location ?? null,
-    updatedAt: iso(t.updatedAt),
-    visibility: t.visibility ?? 'SPACE',
-    spaceId: t.spaceId ?? null,
-    ownerId: t.ownerId ?? null,
-  }))
+
+  /** 单条 media → 优先缩略图，无变体回退原图（减流量，用于旅行地图左侧照片画廊） */
+  const thumbOf = (m: any): string | null => {
+    const thumb = m?.variants?.find((v: any) => v.variant === 'THUMBNAIL')
+    return storageKeyToUrl(thumb?.storageKey ?? m?.storageKey ?? null)
+  }
+
+  return rows.map((t: any) => {
+    // 收集该旅行的回忆照片（去重），用于旅行地图左侧照片轮播
+    const seen = new Set<string>()
+    const photos: string[] = []
+    for (const day of t.days || []) {
+      for (const mem of day.memories || []) {
+        for (const m of mem.media || []) {
+          const url = thumbOf(m)
+          if (url && !seen.has(url)) {
+            seen.add(url)
+            photos.push(url)
+          }
+        }
+      }
+    }
+
+    // 封面：优先 coverMedia（缩略图→原图），回退 legacy cover 字段（统一绝对化）
+    const coverThumb = t.coverMedia?.variants?.find((v: any) => v.variant === 'THUMBNAIL')?.storageKey
+    const coverMediaKey = t.coverMedia?.storageKey
+    const coverUrl =
+      storageKeyToUrl(coverThumb ?? coverMediaKey ?? null) ?? absoluteMediaUrl(t.cover ?? null)
+
+    return {
+      id: t.id,
+      title: t.title,
+      slug: t.slug,
+      description: t.description,
+      startDate: iso(t.startDate),
+      endDate: iso(t.endDate),
+      status: t.status,
+      dayCount: t._count.days,
+      expenseTotal: t.expenses.reduce((s: number, e: any) => s + (e.amount || 0), 0),
+      cover: coverUrl ?? t.cover ?? null,
+      coverMediaId: t.coverMediaId ?? null,
+      photos,
+      tags: t.tags ? safeParseTags(t.tags) : null,
+      location: t.location ?? null,
+      updatedAt: iso(t.updatedAt),
+      visibility: t.visibility ?? 'SPACE',
+      spaceId: t.spaceId ?? null,
+      ownerId: t.ownerId ?? null,
+    }
+  })
 }
 
 export async function getTravelDetail(id: number, userId?: number | null): Promise<TravelDetail | null> {

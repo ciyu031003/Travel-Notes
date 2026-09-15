@@ -33,8 +33,10 @@ export async function GET(_request: NextRequest) {
       title: t.title,
       date: t.startDate ?? '',
       description: t.description ?? undefined,
+      // cover 已由 listTravels 规范化为封面缩略图/原图 URL（coverMedia 优先，回退 legacy cover 绝对化）
       cover: t.cover ?? undefined,
-      images: [] as string[],
+      // 旅行内回忆照片（缩略图优先），填充旅行地图左侧照片轮播
+      images: (t.photos ?? []) as string[],
       videos: [] as unknown[],
       tags: t.tags ?? [],
       location: t.location ?? undefined,

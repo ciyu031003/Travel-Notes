@@ -6,6 +6,7 @@
  */
 import { prisma } from '../../db'
 import { isPublishedToCircle } from './social-permissions'
+import { storageKeyToUrl, absoluteMediaUrl } from '../../media-url'
 
 function toIso(v: Date | null | undefined): string | null {
   if (!v) return null
@@ -124,8 +125,8 @@ export function serializeTravelPost(row: any) {
     title: row.title,
     summary: row.summary,
     coverUrl: row.travel?.coverMedia?.storageKey
-      ? '/' + row.travel.coverMedia.storageKey.replace(/^\/+/, '')
-      : row.travel?.cover ?? null,
+      ? storageKeyToUrl(row.travel.coverMedia.storageKey)
+      : absoluteMediaUrl(row.travel?.cover ?? null),
     publishedAt: toIso(row.publishedAt),
     likeCount: row.likeCount,
     commentCount: row.commentCount,

@@ -24,3 +24,20 @@ export function absoluteMediaUrl(url: string | null | undefined): string | null 
   }
   return url
 }
+
+/**
+ * 由「存储键」（Media.storageKey，如 `media/abc.jpg`）计算公开访问 URL。
+ * 对象存储配置下返回 {STORAGE_PUBLIC_BASE_URL|STORAGE_ENDPOINT}/{key}，否则返回 /uploads/{key}；
+ * 二者都经 absoluteMediaUrl 绝对化（移动端本地壳需绝对地址，Web 同源无副作用）。
+ *
+ * 与各服务里散落的 storageKey→URL 逻辑保持一致，统一收敛到此处，避免漏加 /uploads/ 前缀或漏绝对化。
+ */
+export function storageKeyToUrl(storageKey: string | null | undefined): string | null {
+  if (!storageKey) return null
+  const key = storageKey.replace(/^\/+/, '')
+  if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) {
+    const base = (process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')
+    return absoluteMediaUrl(`${base}/${key}`) ?? `${base}/${key}`
+  }
+  return absoluteMediaUrl(`/uploads/${key}`) ?? `/uploads/${key}`
+}
