@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import NextImage from 'next/image'
 import { MapPin, Heart, ImageOff } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 const DISPLAY_DURATION = 6000
 const CROSSFADE_DURATION = 800
@@ -163,7 +164,7 @@ export default function TravelImageCarousel({
         </div>
         <div className="flex flex-col items-center gap-3 text-center px-6 relative z-10">
           <div className="w-20 h-20 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center shadow-lg">
-            <ImageOff className="w-10 h-10 text-travel-ink" />
+            <Icon icon={ImageOff} size="lg" className="text-travel-ink" />
           </div>
           <p className="text-travel-ink text-base font-medium">暂无旅行照片</p>
           <p className="text-travel-ink/70 text-sm">上传照片开启美好的旅行回忆</p>
@@ -226,7 +227,7 @@ export default function TravelImageCarousel({
           {/* 底层：当前图片（始终可见，作为基底） */}
           {currentHasError ? (
             <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-3 bg-travel-cream">
-              <ImageOff className="w-12 h-12 text-travel-ink/50" />
+              <Icon icon={ImageOff} size="lg" className="text-travel-ink/50" />
               <p className="text-sm text-travel-ink/70">图片加载失败</p>
             </div>
           ) : (

@@ -354,7 +354,7 @@ export default function AlbumPage() {
           <div className="pixel-corner-gold-br" />
 
           <div className="book-cover-3d w-28 h-36 mx-auto mb-6 flex flex-col items-center justify-center gap-2 rounded-sm">
-            <Lock className="w-8 h-8 text-album-accent" />
+            <Icon icon={Lock} size="lg" className="text-album-accent" />
             <span className="text-xs text-album-warm font-bold">相册已上锁</span>
           </div>
           <h2 className="font-zpix text-2xl font-bold text-album-accent tracking-wider drop-shadow-[0_4px_0_rgba(0,0,0,0.7)]">

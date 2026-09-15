@@ -32,8 +32,9 @@ interface VersionManifest {
   changelog?: string
 }
 
+/** 安装步骤。体积由运行时探测，故在组件内组装 desc（见 sizeText）。 */
 const INSTALL_STEPS = [
-  { title: '下载 APK', desc: '点击上方按钮（或扫码）下载安装包。' },
+  { title: '下载 APK', desc: '点击上方按钮（或扫码）下载安装包' },
   { title: '允许安装未知应用', desc: 'Android 会提示「未知来源」：进入设置 → 允许此来源安装应用。' },
   { title: '打开甜途，开始记录', desc: '登录后即可离线记录旅行、照片自动同步到云端。' },
 ]
@@ -123,7 +124,7 @@ export default function DownloadPage() {
         {/* Hero */}
         <section className="text-center">
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-travel-accent to-travel-bloom shadow-lg shadow-travel-accent/25">
-            <Smartphone className="h-8 w-8 text-white" />
+            <Icon icon={Smartphone} size="lg" className="text-white" />
           </div>
           <h1 className="mt-4 text-3xl font-bold text-travel-inkStrong dark:text-shell-text md:text-4xl">
             甜途 App
@@ -132,7 +133,7 @@ export default function DownloadPage() {
             把每一次出发与归来，都装进口袋。
           </p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-travel-bloom/40 bg-white/70 px-4 py-1.5 text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface dark:text-travel-bloom">
-            <Package className="h-4 w-4" />
+            <Icon icon={Package} size="sm" />
             版本 v{version}
             <span className="text-travel-ink/40 dark:text-shell-muted">build {buildNumber}</span>
           </div>
@@ -141,7 +142,7 @@ export default function DownloadPage() {
         {native ? (
           /* 已在 App 内 */
           <section className="mt-8 rounded-3xl border border-travel-line bg-white/80 p-6 text-center dark:border-shell-line dark:bg-shell-surface md:p-8">
-            <CheckCircle2 className="mx-auto h-10 w-10 text-travel-success" />
+            <Icon icon={CheckCircle2} size="lg" className="mx-auto text-travel-success" />
             <h2 className="mt-3 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">
               你正在使用甜途 App
             </h2>
@@ -158,7 +159,7 @@ export default function DownloadPage() {
                 onClick={() => setModalOpen(true)}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-travel-accent py-4 text-base font-semibold text-white shadow-lg shadow-travel-accent/25 transition active:scale-[0.98] hover:bg-travel-accentStrong"
               >
-                <Download className="h-5 w-5" />
+                <Icon icon={Download} size="md" />
                 下载 Android 安装包（{version}）
               </button>
               <button
@@ -171,7 +172,7 @@ export default function DownloadPage() {
 
               {/* iOS 提示 */}
               <p className="mt-4 rounded-2xl border border-travel-sky/40 bg-travel-mist/40 px-4 py-3 text-center text-xs leading-relaxed text-travel-ink/70 dark:border-shell-line dark:bg-shell-surface/60 dark:text-shell-muted">
-                <Info className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
+                <Icon icon={Info} size="sm" className="mr-1 inline align-[-2px]" />
                 iOS 暂不支持安装 APK，可直接使用网页版
                 <Link href="/" className="mx-1 font-medium text-travel-accent underline-offset-2 hover:underline dark:text-travel-bloom">
                   行迹网页版
@@ -205,7 +206,7 @@ export default function DownloadPage() {
             {/* 更新日志 */}
             <section className="mt-8 rounded-3xl border border-travel-line bg-white/80 p-6 dark:border-shell-line dark:bg-shell-surface md:p-8">
               <h2 className="flex items-center gap-2 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">
-                <Package className="h-5 w-5 text-travel-accent dark:text-travel-bloom" />
+                <Icon icon={Package} size="md" className="text-travel-accent dark:text-travel-bloom" />
                 更新日志 · v{version}
               </h2>
               <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
@@ -243,7 +244,7 @@ export default function DownloadPage() {
               </div>
 
               <div className="mt-1 flex items-center gap-2 text-sm text-travel-accent dark:text-travel-bloom">
-                <Package className="h-4 w-4" />
+                <Icon icon={Package} size="sm" />
                 版本 v{version} · build {buildNumber}
               </div>
 
@@ -280,7 +281,7 @@ export default function DownloadPage() {
                 onClick={startDownload}
                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-travel-accent py-3.5 text-base font-semibold text-white shadow-lg shadow-travel-accent/25 transition active:scale-[0.98] hover:bg-travel-accentStrong"
               >
-                <Download className="h-5 w-5" />
+                <Icon icon={Download} size="md" />
                 立即下载 APK
               </button>
               <p className="mt-2 text-center text-xs text-travel-ink/40 dark:text-shell-faint">
@@ -293,7 +294,7 @@ export default function DownloadPage() {
         {/* 安装说明 */}
         <section className="mt-8">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">
-            <ShieldCheck className="h-5 w-5 text-travel-accent dark:text-travel-bloom" />
+            <Icon icon={ShieldCheck} size="md" className="text-travel-accent dark:text-travel-bloom" />
             安装说明
           </h2>
           <ol className="mt-4 space-y-3">
@@ -304,7 +305,9 @@ export default function DownloadPage() {
                 </span>
                 <div>
                   <p className="text-sm font-medium text-travel-inkStrong dark:text-shell-text">{s.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/70 dark:text-shell-muted">{s.desc}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+                    {i === 0 ? `${s.desc}，${sizeText}。` : s.desc}
+                  </p>
                 </div>
               </li>
             ))}

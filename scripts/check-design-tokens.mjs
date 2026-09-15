@@ -181,6 +181,23 @@ for (const file of files) {
   const lines = src.split('\n')
   const allowed = isAllowed(rel)
 
+  // 本文件从 lucide-react 实际导入的组件名（含 `X as Y` 别名）。
+  // 用真实导入集而非硬编码名单：早先的固定列表漏掉了 Download / Package 等，
+  // 导致「图标尺寸违规」被低报（口径不完整）。
+  const lucideNames = []
+  for (const m of src.matchAll(/import\s+(?:type\s+)?\{([^}]+)\}\s+from\s+['"]lucide-react['"]/g)) {
+    for (const part of m[1].split(',')) {
+      const t = part.trim()
+      if (!t) continue
+      const alias = t.match(/^\S+\s+as\s+(\S+)$/)
+      const name = alias ? alias[1] : t
+      if (/^[A-Z][A-Za-z0-9]*$/.test(name)) lucideNames.push(name)
+    }
+  }
+  const iconJsxRe = lucideNames.length
+    ? new RegExp(`<(${lucideNames.join('|')})\\b[^>]*className="[^"]*\\b[hw]-\\d`)
+    : null
+
   lines.forEach((line, i) => {
     const at = `${rel}:${i + 1}`
 
@@ -220,10 +237,9 @@ for (const file of files) {
       const px = Number(m[1])
       if (![20, 14, 12, 24, 10, 16].includes(px)) push('magicRadius', m[0])
     }
-    // 图标尺寸自由取值：仅当同行出现 lucide 图标组件名时提示
-    if (LUCIDE_JSX_SIZE_RE.test(line) && /className=/.test(line) && !/m-icon/.test(line)) {
-      const isKnownIcon = /<(MapPin|ArrowRight|ArrowLeft|Calendar|CalendarDays|Heart|Sparkles|BookOpen|Camera|X|ChevronRight|ChevronLeft|ChevronDown|ChevronUp|Search|Settings|User|Users|Loader2|Image|Images|MessageCircle|Compass|Home|Plus|Bell|Route|Map)\b/.test(line)
-      if (isKnownIcon) push('iconSize')
+    // 图标尺寸自由取值：本文件 lucide 导入项的 JSX 用法上出现 h-N / w-N 尺寸类
+    if (iconJsxRe && !/m-icon/.test(line) && iconJsxRe.test(line)) {
+      push('iconSize', trimmed.slice(0, 100))
     }
   })
 }

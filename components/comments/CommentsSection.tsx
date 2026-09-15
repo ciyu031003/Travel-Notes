@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { MessageSquare } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 /**
  * Giscus 评论组件
@@ -61,7 +62,7 @@ export default function CommentsSection({ term }: { term?: string }) {
   return (
     <section className="mt-10 border-t border-travel-line dark:border-shell-line pt-8">
       <h2 className="flex items-center gap-2 text-lg font-semibold text-travel-inkStrong dark:text-shell-text mb-4">
-        <MessageSquare className="w-5 h-5 text-travel-accent" />
+        <Icon icon={MessageSquare} size="md" className="text-travel-accent" />
         评论
       </h2>
       <div ref={ref} className="giscus" />
