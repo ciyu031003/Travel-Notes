@@ -33,7 +33,7 @@ interface VersionManifest {
 }
 
 const INSTALL_STEPS = [
-  { title: '下载 APK', desc: '点击上方按钮（或扫码）下载安装包，约 91MB。' },
+  { title: '下载 APK', desc: '点击上方按钮（或扫码）下载安装包。' },
   { title: '允许安装未知应用', desc: 'Android 会提示「未知来源」：进入设置 → 允许此来源安装应用。' },
   { title: '打开甜途，开始记录', desc: '登录后即可离线记录旅行、照片自动同步到云端。' },
 ]
@@ -43,6 +43,9 @@ export default function DownloadPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  /** APK 实际体积（MB 整数）。原先页面写死「约 91MB」，实际包已降到 ~25MB，
+      写死值会随每次发版失真；改为 HEAD 请求同源 APK 取 content-length。 */
+  const [apkSizeMb, setApkSizeMb] = useState<number | null>(null)
 
   const downloadUrl = manifest?.downloadUrl || APP_DOWNLOAD_URL
   const version = manifest?.version || '1.0.0'
@@ -50,6 +53,8 @@ export default function DownloadPage() {
   const changelog =
     manifest?.changelog || '移动端正式上线：离线浏览与自动同步、旅行记录、相册、旅行圈。'
   const native = isNativePlatform()
+  // 探测失败时回退到保守文案（不显示具体数字以外的错误信息）
+  const sizeText = apkSizeMb ? `约 ${apkSizeMb}MB` : '约 25MB'
 
   // 二维码
   useEffect(() => {
@@ -61,6 +66,23 @@ export default function DownloadPage() {
     })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(null))
+  }, [downloadUrl])
+
+  // 探测 APK 体积（同源 HEAD；失败静默保留回退文案）
+  useEffect(() => {
+    if (!downloadUrl) return
+    let cancelled = false
+    fetch(downloadUrl, { method: 'HEAD' })
+      .then((r) => {
+        const len = Number(r.headers.get('content-length'))
+        if (!cancelled && Number.isFinite(len) && len > 0) {
+          setApkSizeMb(Math.round(len / 1048576))
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
   }, [downloadUrl])
 
   const copyLink = async () => {
@@ -262,7 +284,7 @@ export default function DownloadPage() {
                 立即下载 APK
               </button>
               <p className="mt-2 text-center text-xs text-travel-ink/40 dark:text-shell-faint">
-                约 91MB · 下载后请允许安装未知来源应用
+                {sizeText} · 下载后请允许安装未知来源应用
               </p>
             </div>
           </div>
