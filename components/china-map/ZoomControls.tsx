@@ -1,6 +1,7 @@
 'use client'
 
 import { Plus, LocateFixed } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 interface ZoomControlsProps {
   scale: number
@@ -29,7 +30,7 @@ export default function ZoomControls({
           title="放大"
           aria-label="放大"
         >
-          <Plus className="w-4 h-4 text-travel-ink" />
+          <Icon icon={Plus} size="sm" className="text-travel-ink" />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onZoomOut() }}
@@ -62,7 +63,7 @@ export default function ZoomControls({
           title={located ? '回到全国视图' : '回到旅行位置'}
           aria-label={located ? '回到全国视图' : '回到旅行位置'}
         >
-          <LocateFixed className="w-4 h-4" />
+          <Icon icon={LocateFixed} size="sm" />
         </button>
       </div>
 

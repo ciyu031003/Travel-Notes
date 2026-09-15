@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useState, type CSSProperties } from 'react'
 import { Pause, Play, Send, X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { Modal } from '@/components/ui/Modal'
 
 export interface Danmaku {
@@ -131,7 +132,7 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
           aria-pressed={danmakuPaused}
           className="fixed bottom-[76px] right-4 z-40 flex items-center gap-1.5 rounded-full border border-travel-line/70 dark:border-shell-line bg-white/95 dark:bg-shell-surface/95 px-3.5 py-2 text-xs font-medium text-travel-ink dark:text-shell-muted shadow-lg transition-colors hover:border-travel-bloom/70 hover:text-travel-accent md:bottom-6 md:right-6"
         >
-          {danmakuPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+          {danmakuPaused ? <Icon icon={Play} size="sm" /> : <Icon icon={Pause} size="sm" />}
           <span>{danmakuPaused ? '开启弹幕' : '暂停弹幕'}</span>
         </button>
       )}
@@ -157,7 +158,7 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
           disabled={!danmakuText.trim()}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-travel-accent py-3 font-semibold text-white transition-colors hover:bg-travel-accentStrong disabled:opacity-40"
         >
-          <Send className="h-4 w-4" />
+          <Icon icon={Send} size="sm" />
           <span>发送留言</span>
         </button>
 
@@ -177,7 +178,7 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
                       aria-label="删除这条留言"
                       className="ml-2 text-travel-sand/50 transition-colors hover:text-[#C44A5A]"
                     >
-                      <X className="h-3 w-3" />
+                      <Icon icon={X} size="sm" />
                     </button>
                   )}
                 </div>

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 interface StackedImageSliderProps {
   images: string[]
@@ -142,7 +143,7 @@ export default function StackedImageSlider({
             style={{ opacity: isAnimating ? 0.7 : 1 }}
             aria-label="上一张"
           >
-            <ChevronLeft className="w-5 h-5 text-travel-inkStrong dark:text-shell-text" />
+            <Icon icon={ChevronLeft} size="md" className="text-travel-inkStrong dark:text-shell-text" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); next() }}
@@ -150,7 +151,7 @@ export default function StackedImageSlider({
             style={{ opacity: isAnimating ? 0.7 : 1 }}
             aria-label="下一张"
           >
-            <ChevronRight className="w-5 h-5 text-travel-inkStrong dark:text-shell-text" />
+            <Icon icon={ChevronRight} size="md" className="text-travel-inkStrong dark:text-shell-text" />
           </button>
 
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2">

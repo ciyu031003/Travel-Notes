@@ -126,7 +126,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
                       key={`${name}-${i}`}
                       className="inline-flex items-center gap-1 rounded-full border border-travel-bloom/40 bg-travel-sakura/30 px-3 py-1 text-xs text-travel-ink"
                     >
-                      <Users className="h-3 w-3 text-travel-accentSoft" />
+                      <Icon icon={Users} size="sm" className="text-travel-accentSoft" />
                       {name}
                       {relation ? <span className="text-travel-ink/50">· {relation}</span> : null}
                     </span>
@@ -137,13 +137,13 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
             <div className="flex items-center justify-center gap-4 text-travel-ink/60 text-sm mt-2">
               {detailDate && (
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
+                  <Icon icon={Calendar} size="sm" />
                   {formatDate(detailDate)}
                 </span>
               )}
               {detailLocation && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
+                  <Icon icon={MapPin} size="sm" />
                   {detailLocation}
                 </span>
               )}

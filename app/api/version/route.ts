@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '移动端界面全面重构：更清爽的视觉、统一图标，新增足迹地图首页与首次引导',
+    changelog: process.env.APP_CHANGELOG || '全站图标尺寸与描边统一、画册顶栏一致化，修正跨主题配色偏差',
     forceUpdate,
   })
 }

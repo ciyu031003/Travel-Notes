@@ -7,6 +7,7 @@ import {
   Lock, Mail, ArrowLeft, Eye, EyeOff, Loader2, 
   CheckCircle2, XCircle, KeyRound
 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 type StepType = 'request' | 'verify' | 'reset'
 
@@ -179,9 +180,9 @@ export default function ForgotPasswordPage() {
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-travel-dim/60">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-travel-sakura to-travel-bloom rounded-2xl flex items-center justify-center mx-auto mb-4">
-              {step === 'request' && <KeyRound className="w-8 h-8 text-travel-ink" />}
-              {step === 'verify' && <Mail className="w-8 h-8 text-travel-ink" />}
-              {step === 'reset' && <Lock className="w-8 h-8 text-travel-ink" />}
+              {step === 'request' && <Icon icon={KeyRound} size="lg" className="text-travel-ink" />}
+              {step === 'verify' && <Icon icon={Mail} size="lg" className="text-travel-ink" />}
+              {step === 'reset' && <Icon icon={Lock} size="lg" className="text-travel-ink" />}
             </div>
             <h1 className="text-2xl font-bold text-travel-ink">找回密码</h1>
             <p className="text-travel-ink/70 text-sm mt-2">
@@ -200,9 +201,9 @@ export default function ForgotPasswordPage() {
               }`}
             >
               {message.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4" />
+                <Icon icon={CheckCircle2} size="sm" />
               ) : (
-                <XCircle className="w-4 h-4" />
+                <Icon icon={XCircle} size="sm" />
               )}
               <span>{message.text}</span>
             </div>
@@ -213,7 +214,7 @@ export default function ForgotPasswordPage() {
               <div>
                 <label className="block text-sm font-medium text-travel-ink mb-2">邮箱地址</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-travel-ink/40" />
+                  <Icon icon={Mail} size="md" className="absolute left-3 top-1/2 -translate-y-1/2 text-travel-ink/40" />
                   <input
                     type="email"
                     value={email}
@@ -233,7 +234,7 @@ export default function ForgotPasswordPage() {
                 disabled={sendingCode || countdown > 0}
                 className="w-full py-3 bg-gradient-to-r from-travel-accent to-travel-accent/90 text-travel-cream font-semibold rounded-xl hover:from-travel-accent/90 hover:to-travel-accent/80 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {sendingCode && <Loader2 className="w-4 h-4 animate-spin" />}
+                {sendingCode && <Icon icon={Loader2} size="sm" className="animate-spin" />}
                 {countdown > 0 ? `${countdown} 秒后重试` : '发送验证码'}
               </button>
             </form>
@@ -267,7 +268,7 @@ export default function ForgotPasswordPage() {
                   disabled={loading}
                   className="flex-1 py-3 bg-gradient-to-r from-travel-accent to-travel-accent/90 text-travel-cream font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {loading && <Icon icon={Loader2} size="sm" className="animate-spin" />}
                   验证并继续
                 </button>
               </div>
@@ -279,7 +280,7 @@ export default function ForgotPasswordPage() {
               <div>
                 <label className="block text-sm font-medium text-travel-ink mb-2">新密码</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-travel-ink/40" />
+                  <Icon icon={Lock} size="md" className="absolute left-3 top-1/2 -translate-y-1/2 text-travel-ink/40" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={newPassword}
@@ -296,7 +297,7 @@ export default function ForgotPasswordPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-ink/40 hover:text-travel-ink transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <Icon icon={EyeOff} size="md" /> : <Icon icon={Eye} size="md" />}
                   </button>
                 </div>
                 {passwordStrength.score > 0 && (
@@ -321,7 +322,7 @@ export default function ForgotPasswordPage() {
               <div>
                 <label className="block text-sm font-medium text-travel-ink mb-2">确认新密码</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-travel-ink/40" />
+                  <Icon icon={Lock} size="md" className="absolute left-3 top-1/2 -translate-y-1/2 text-travel-ink/40" />
                   <input
                     type={showConfirmPwd ? 'text' : 'password'}
                     value={confirmPassword}
@@ -335,7 +336,7 @@ export default function ForgotPasswordPage() {
                     onClick={() => setShowConfirmPwd(!showConfirmPwd)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-ink/40 hover:text-travel-ink transition-colors"
                   >
-                    {showConfirmPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPwd ? <Icon icon={EyeOff} size="md" /> : <Icon icon={Eye} size="md" />}
                   </button>
                 </div>
               </div>
@@ -354,7 +355,7 @@ export default function ForgotPasswordPage() {
                   disabled={loading}
                   className="flex-1 py-3 bg-gradient-to-r from-travel-accent to-travel-accent/90 text-travel-cream font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {loading && <Icon icon={Loader2} size="sm" className="animate-spin" />}
                   重置密码
                 </button>
               </div>
@@ -366,7 +367,7 @@ export default function ForgotPasswordPage() {
               href="/login"
               className="inline-flex items-center gap-1 text-travel-ink/70 hover:text-travel-ink text-sm transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <Icon icon={ArrowLeft} size="sm" />
               返回登录
             </Link>
           </div>

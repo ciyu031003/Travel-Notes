@@ -157,7 +157,7 @@ export default function SyncCenter() {
               </section>
             )}
 
-            {error && <p className="mt-6 text-sm text-[#E06C6C]">{error}</p>}
+            {error && <p className="mt-6 text-sm text-[var(--danger-soft)]">{error}</p>}
 
             {/* v3.1 M4-C3：本地隐私锁（统一移动端 Switch 组件） */}
             <section className="mt-10">

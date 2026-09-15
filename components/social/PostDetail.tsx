@@ -384,7 +384,7 @@ export default function PostDetail({ postId }: { postId: number }) {
               <p className="mt-4 rounded-xl bg-[var(--social-bg)] px-4 py-4 text-xs text-[var(--social-faint)]">图片请在旅行详情中统一管理。</p>
             )}
 
-            {editError && <p className="mt-3 text-sm text-[#E06C6C]">{editError}</p>}
+            {editError && <p className="mt-3 text-sm text-[var(--danger-soft)]">{editError}</p>}
 
             <div className="mt-5 flex justify-end gap-2">
               <button

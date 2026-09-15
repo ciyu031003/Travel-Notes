@@ -6,6 +6,7 @@ import Link from 'next/link'
 import {
   X, MapPin, ArrowRight, Plus, Camera, ChevronLeft, Pencil, Image as ImageIcon,
 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import type { City } from '@/data/cities'
 import type { PostMeta } from './types'
 
@@ -40,20 +41,20 @@ export default function CityModal({
             onClick={onClose}
             className="absolute top-3 right-3 w-10 h-10 bg-white/30 hover:bg-white/40 backdrop-blur rounded-full flex items-center justify-center transition-colors"
           >
-            <X className="w-4 h-4 text-white" />
+            <Icon icon={X} size="sm" tone="inverse" />
           </button>
           {provinceInfo && (
             <button
               onClick={onBack}
               className="absolute top-3 left-3 px-3 py-1.5 bg-white/30 hover:bg-white/40 backdrop-blur rounded-lg flex items-center gap-1 text-sm text-white transition-colors"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <Icon icon={ChevronLeft} size="sm" />
               {provinceInfo.name}
             </button>
           )}
           <div className="absolute bottom-3 left-4 right-4">
             <div className="flex items-center gap-2 text-white/80 text-xs mb-1">
-              <MapPin className="w-3.5 h-3.5" />
+              <Icon icon={MapPin} size="sm" />
               <span>{city.nameEn}</span>
             </div>
             <h2 className="text-xl font-bold text-white">{city.name}</h2>
@@ -79,7 +80,7 @@ export default function CityModal({
                 : 'text-travel-ink/60 hover:text-travel-ink'
             }`}
           >
-            <Plus className="w-4 h-4 inline mr-1" />
+            <Icon icon={Plus} size="sm" className="inline mr-1" />
             添加新记录
           </button>
         </div>
@@ -124,14 +125,14 @@ export default function CityModal({
             ) : (
               <div className="text-center py-12">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-travel-sakura/30 flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-travel-bloom/60" />
+                  <Icon icon={ImageIcon} size="lg" className="text-travel-bloom/60" />
                 </div>
                 <p className="text-travel-ink/50 text-sm mb-4">该城市暂无旅行记录</p>
                 <button
                   onClick={() => setActiveTab('add')}
                   className="px-4 py-2 bg-travel-bloom text-white rounded-lg text-sm font-medium hover:bg-travel-bloom/90 transition-colors"
                 >
-                  <Plus className="w-4 h-4 inline mr-1" />
+                  <Icon icon={Plus} size="sm" className="inline mr-1" />
                   添加第一条记录
                 </button>
               </div>
@@ -143,7 +144,7 @@ export default function CityModal({
           <div className="p-4">
             <div className="rounded-xl border border-dashed border-travel-dim p-6 text-center">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom flex items-center justify-center">
-                <Camera className="w-8 h-8 text-white" />
+                <Icon icon={Camera} size="lg" tone="inverse" />
               </div>
               <h3 className="font-semibold text-travel-ink mb-2">在 {city.name} 添加旅行记录</h3>
               <p className="text-sm text-travel-ink/60 mb-4">
@@ -154,9 +155,9 @@ export default function CityModal({
                 onClick={onClose}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-travel-bloom text-white rounded-lg font-medium hover:bg-travel-bloom/90 transition-colors"
               >
-                <Pencil className="w-4 h-4" />
+                <Icon icon={Pencil} size="sm" />
                 前往创建文章
-                <ArrowRight className="w-4 h-4" />
+                <Icon icon={ArrowRight} size="sm" />
               </Link>
             </div>
           </div>

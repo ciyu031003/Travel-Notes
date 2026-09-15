@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { Download, Sparkles } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { useAppUpdate } from '@/hooks/use-app-update'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 
@@ -31,7 +32,7 @@ export default function AppUpdatePrompt() {
     return (
       <div className="fixed inset-0 z-[140] flex flex-col items-center justify-center bg-[var(--m-bg)] px-8 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
-          <Sparkles className="h-8 w-8" />
+          <Icon icon={Sparkles} size="lg" />
         </span>
         <h2 className="mt-6 text-[22px] font-bold tracking-tight text-[var(--m-text)]">
           需要更新至新版本
@@ -48,7 +49,7 @@ export default function AppUpdatePrompt() {
           onClick={download}
           className="m-press mt-8 flex h-12 w-full max-w-[280px] items-center justify-center gap-2 rounded-full bg-[var(--m-accent)] text-[15px] font-semibold text-[var(--m-on-accent)] shadow-[0_10px_28px_-12px_var(--m-accent)]"
         >
-          <Download className="h-5 w-5" />
+          <Icon icon={Download} size="md" />
           下载并安装
         </button>
       </div>
@@ -73,7 +74,7 @@ export default function AppUpdatePrompt() {
           onClick={download}
           className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[var(--m-accent)] py-3 text-[15px] font-semibold text-[var(--m-on-accent)] transition active:scale-[0.97]"
         >
-          <Download className="h-4 w-4" />
+          <Icon icon={Download} size="sm" />
           立即更新
         </button>
       </div>

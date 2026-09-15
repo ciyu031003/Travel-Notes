@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { ChevronDown, ArrowLeft, MapPin, Calendar, Play, Pause, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Icon } from '@/components/mobile/Icon'
 
 interface VideoInfo {
   url: string
@@ -242,24 +243,24 @@ export default function TravelDetailClient({
             href="/travel"
             className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <Icon icon={ArrowLeft} size="sm" />
             <span>返回旅行记录</span>
           </Link>
           <div className="flex items-center gap-4 text-white/60 text-sm">
             {location && (
               <span className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
+                <Icon icon={MapPin} size="sm" />
                 {location}
               </span>
             )}
             {date && (
               <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
+                <Icon icon={Calendar} size="sm" />
                 {new Date(date).toLocaleDateString('zh-CN')}
               </span>
             )}
             <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/80 backdrop-blur-md">
-              <ImageIcon className="w-3.5 h-3.5" />
+              <Icon icon={ImageIcon} size="sm" />
               旅行相册
             </span>
           </div>
@@ -335,13 +336,13 @@ export default function TravelDetailClient({
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-white/90 text-sm animate-fade-down" style={{ animationDelay: '0.05s' }}>
                     {location && (
                       <span className="inline-flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4" />
+                        <Icon icon={MapPin} size="sm" />
                         {location}
                       </span>
                     )}
                     {date && (
                       <span className="inline-flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4" />
+                        <Icon icon={Calendar} size="sm" />
                         {new Date(date).toLocaleDateString('zh-CN')}
                       </span>
                     )}
@@ -394,7 +395,7 @@ export default function TravelDetailClient({
                   onClick={() => toggleVideoPlay(index)}
                   className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-white hover:bg-white/25 transition-all hover:scale-110"
                 >
-                  {playingVideos.has(index) ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                  {playingVideos.has(index) ? <Icon icon={Pause} size="md" /> : <Icon icon={Play} size="md" />}
                 </button>
                 <button
                   onClick={() => toggleMute(index)}
@@ -411,14 +412,14 @@ export default function TravelDetailClient({
                 className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50 hover:text-white transition-colors pointer-events-auto"
               >
                 <span className="text-xs tracking-wide">向下滚动</span>
-                <ChevronDown className="w-5 h-5 animate-[chevron-float_1.8s_ease-in-out_infinite]" />
+                <Icon icon={ChevronDown} size="md" className="animate-[chevron-float_1.8s_ease-in-out_infinite]" />
               </button>
             )}
 
             {index === visibleIndex && index === mediaItems.length - 1 && (
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50">
                 <span className="text-xs tracking-wide">继续阅读文章</span>
-                <ChevronDown className="w-5 h-5 animate-[chevron-float_1.8s_ease-in-out_infinite]" />
+                <Icon icon={ChevronDown} size="md" className="animate-[chevron-float_1.8s_ease-in-out_infinite]" />
               </div>
             )}
           </section>

@@ -1,6 +1,7 @@
 'use client'
 
 import { MapPin, RefreshCw, Thermometer, Waves } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import WeatherIcon from './WeatherIcon'
 import { pad2, TravelInfoColors, type WeatherInfo } from './types'
 
@@ -34,7 +35,7 @@ export default function WeatherSection({
             className="inline-flex items-center justify-center w-7 h-7 rounded-full"
             style={{ background: `${TravelInfoColors.sky}33` }}
           >
-            <Waves className="w-4 h-4" style={{ color: TravelInfoColors.sky }} />
+            <Icon icon={Waves} size="sm" className="text-travel-sky" />
           </span>
           <h3
             className="text-sm font-semibold tracking-wide"
@@ -50,7 +51,7 @@ export default function WeatherSection({
           style={{ color: TravelInfoColors.ink, opacity: 0.6 }}
           aria-label="刷新天气"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
+          <Icon icon={RefreshCw} size="sm" />
           <span>{updateTimeStr} 更新</span>
         </button>
       </div>
@@ -75,15 +76,12 @@ export default function WeatherSection({
                 className="flex items-center gap-1 text-xs font-medium"
                 style={{ color: TravelInfoColors.ink }}
               >
-                <MapPin className="w-3 h-3" style={{ color: TravelInfoColors.bloom }} />
+                <Icon icon={MapPin} size="sm" className="text-travel-bloom" />
                 <span className="truncate max-w-[3.5rem]">{city}</span>
               </div>
-              <WeatherIcon kind={w.kind} className="w-7 h-7" />
+              <WeatherIcon kind={w.kind} size="lg" />
               <div className="flex items-center gap-0.5">
-                <Thermometer
-                  className="w-3 h-3"
-                  style={{ color: TravelInfoColors.ink, opacity: 0.55 }}
-                />
+                <Icon icon={Thermometer} size="sm" className="text-travel-ink opacity-[0.55]" />
                 <span
                   className="text-sm font-semibold tabular-nums"
                   style={{ color: TravelInfoColors.ink }}

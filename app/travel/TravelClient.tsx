@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 import { MapPin, Calendar, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Image as ImageIcon, Info, Settings2 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import dynamicImport from 'next/dynamic'
 import ManageEntry from '@/components/layout/ManageEntry'
 import TravelImageCarousel from '@/components/TravelImageCarousel'
@@ -152,14 +153,14 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                 onClick={() => setLeftOpen(true)}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-travel-cream/90 border border-travel-dim/80 shadow-md text-xs text-travel-ink backdrop-blur transition-colors hover:bg-travel-sakura/30"
               >
-                <ImageIcon className="w-3.5 h-3.5 text-travel-bloom" />
+                <Icon icon={ImageIcon} size="sm" className="text-travel-bloom" />
                 照片
               </button>
               <button
                 onClick={() => setRightOpen(true)}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-travel-cream/90 border border-travel-dim/80 shadow-md text-xs text-travel-ink backdrop-blur transition-colors hover:bg-travel-mist/30"
               >
-                <Info className="w-3.5 h-3.5 text-travel-bloom" />
+                <Icon icon={Info} size="sm" className="text-travel-bloom" />
                 足迹
               </button>
             </div>
@@ -185,7 +186,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                   className="w-9 h-9 md:w-10 md:h-10 bg-travel-cream/95 border border-travel-dim rounded-full flex items-center justify-center hover:bg-travel-sakura/40 transition-colors shadow-lg"
                   aria-label="收起左侧照片面板"
                 >
-                  <ChevronLeft className="w-4 h-4 text-travel-ink" />
+                  <Icon icon={ChevronLeft} size="sm" className="text-travel-ink" />
                 </button>
               </div>
             </div>
@@ -198,7 +199,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
               className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-10 md:h-10 bg-travel-cream/95 border border-travel-dim rounded-full flex items-center justify-center hover:bg-travel-sakura/40 transition-colors shadow-lg z-30"
               aria-label="展开左侧照片面板"
             >
-              <ChevronRight className="w-4 h-4 text-travel-ink" />
+              <Icon icon={ChevronRight} size="sm" className="text-travel-ink" />
             </button>
           )}
 
@@ -226,7 +227,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                   className="w-9 h-9 md:w-10 md:h-10 bg-travel-cream/95 border border-travel-dim rounded-full flex items-center justify-center hover:bg-travel-mist/40 transition-colors shadow-lg"
                   aria-label="收起右侧足迹面板"
                 >
-                  <ChevronRight className="w-4 h-4 text-travel-ink" />
+                  <Icon icon={ChevronRight} size="sm" className="text-travel-ink" />
                 </button>
               </div>
             </div>
@@ -239,7 +240,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
               className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-10 md:h-10 bg-travel-cream/95 border border-travel-dim rounded-full flex items-center justify-center hover:bg-travel-mist/40 transition-colors shadow-lg z-30"
               aria-label="展开右侧足迹面板"
             >
-              <ChevronLeft className="w-4 h-4 text-travel-ink" />
+              <Icon icon={ChevronLeft} size="sm" className="text-travel-ink" />
             </button>
           )}
         </section>
@@ -259,7 +260,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                 <ManageEntry
                   href="/admin/travels"
                   label="管理旅行"
-                  icon={<Settings2 className="w-4 h-4" />}
+                  icon={<Icon icon={Settings2} size="sm" />}
                   className="text-sm text-travel-ink/70 hover:text-travel-accent transition-colors inline-flex items-center gap-1.5"
                 />
               </div>
@@ -287,12 +288,15 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <MapPin className="w-12 h-12 text-white/40" />
+                        {/* 原为 48px 裸图标；规范限定图标最大 24px，改为容器承载视觉重量 */}
+                        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
+                          <Icon icon={MapPin} size="lg" className="text-white/40" />
+                        </span>
                       </div>
                     )}
                     {post.location && (
                       <div className="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 bg-travel-cream/85 backdrop-blur rounded-full text-xs text-travel-ink">
-                        <MapPin className="w-3 h-3 text-travel-bloom" />
+                        <Icon icon={MapPin} size="sm" className="text-travel-bloom" />
                         {post.location}
                       </div>
                     )}
@@ -305,7 +309,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                     </h3>
                     <div className="flex items-center gap-3 text-xs text-travel-ink/50 mb-2">
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
+                        <Icon icon={Calendar} size="sm" />
                         {formatDate(post.date)}
                       </span>
                     </div>
@@ -316,7 +320,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                     )}
                     <div className="flex items-center gap-1 mt-3 text-travel-bloom text-sm font-medium">
                       <span>阅读游记</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      <Icon icon={ArrowRight} size="sm" className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </Link>
@@ -330,8 +334,10 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                   className="inline-flex items-center gap-2 px-6 py-2.5 bg-travel-cream border border-travel-dim/80 rounded-full text-sm text-travel-ink hover:border-travel-bloom/60 hover:bg-travel-sakura/10 transition-all"
                 >
                   {showAll ? '收起' : `查看全部 ${posts.length} 篇`}
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
+                  <Icon
+                    icon={ChevronDown}
+                    size="sm"
+                    className={`transition-transform ${
                       showAll ? 'rotate-180' : ''
                     }`}
                   />

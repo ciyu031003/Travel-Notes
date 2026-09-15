@@ -8,7 +8,9 @@ import {
   Sparkles,
   Camera,
   ArrowRight,
+  type LucideIcon,
 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import ChinaMap from '@/components/ChinaMap'
 import { formatDate } from '@/lib/utils'
 
@@ -31,18 +33,18 @@ export interface DashboardData {
 function BigStat({
   value,
   label,
-  icon: Icon,
+  icon,
   href,
 }: {
   value: number | string
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: LucideIcon
   href?: string
 }) {
   const inner = (
     <div className="group flex flex-col items-center text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/40 text-travel-accent dark:border-shell-line dark:bg-travel-accent/15 dark:text-travel-bloom">
-        <Icon className="h-5 w-5" />
+        <Icon icon={icon} size="md" />
       </div>
       <div className="mt-3 text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text tabular-nums">
         {value}
@@ -62,7 +64,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
   const recent = data.travelPosts[0] as { date: string } | undefined
 
   return (
-    <div className="bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C]">
+    <div className="bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream dark:from-shell-bg dark:via-shell-surface2 dark:to-shell-bg">
       <div className="container-custom py-10 md:py-14">
         <header className="mb-10 text-center md:mb-12">
           <p className="text-xs font-medium uppercase tracking-[0.28em] text-travel-accent dark:text-travel-bloom">
@@ -87,14 +89,14 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         <section className="mb-14">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-travel-inkStrong dark:text-shell-text">
-              <MapPin className="h-5 w-5 text-travel-accent" />
+              <Icon icon={MapPin} size="md" className="text-travel-accent" />
               我的旅行足迹
             </h2>
             <Link href="/travel" className="inline-flex items-center gap-1 py-2 pl-2 -my-2 text-xs text-travel-accent hover:text-travel-accentStrong">
-              去旅行记录 <ArrowRight className="h-3 w-3" />
+              去旅行记录 <Icon icon={ArrowRight} size="sm" />
             </Link>
           </div>
-          <div className="overflow-hidden rounded-[1.6rem] border border-travel-line/60 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/30 p-2 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.3)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128]">
+          <div className="overflow-hidden rounded-[1.6rem] border border-travel-line/60 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/30 p-2 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.3)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-shell-surface">
             <div className="h-[340px] sm:h-[440px] lg:h-[520px]">
               <ChinaMap posts={data.travelPosts as never} />
             </div>
@@ -105,7 +107,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         <section className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-shell-line dark:bg-shell-surface/80">
             <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-shell-text">
-              <MapPin className="h-4 w-4 text-travel-accent" />
+              <Icon icon={MapPin} size="sm" className="text-travel-accent" />
               省份打卡
             </h2>
             {data.provinceStats.length === 0 ? (
@@ -134,7 +136,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
           <div className="rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-shell-line dark:bg-shell-surface/80">
             <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-shell-text">
-              <Sparkles className="h-4 w-4 text-travel-accent" />
+              <Icon icon={Sparkles} size="sm" className="text-travel-accent" />
               内容构成
             </h2>
             <div className="space-y-4">

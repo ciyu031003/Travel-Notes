@@ -111,7 +111,7 @@ export default function TimelinePage() {
               <section key={year} className="relative mb-12 pl-8 md:pl-12">
                 <div className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-travel-bloom via-travel-sakura to-transparent dark:from-travel-bloom/60 dark:via-travel-sakura/25" />
                 <h2 className="relative mb-6 flex items-center gap-3">
-                  <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-travel-accentSoft shadow ring-4 ring-white dark:ring-[#12161C] md:-left-12" />
+                  <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-travel-accentSoft shadow ring-4 ring-white dark:ring-shell-bg md:-left-12" />
                   <span className="text-2xl font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-3xl">{year}</span>
                   <span className="h-px flex-1 bg-gradient-to-r from-travel-sakura/70 to-transparent" />
                 </h2>
@@ -119,7 +119,7 @@ export default function TimelinePage() {
                 <Stagger className="space-y-5" delayBase={60} step={30}>
                   {entries.map((entry) => (
                     <div key={entry.type + '-' + entry.id} className="group relative">
-                      <span className="absolute -left-8 top-7 h-3 w-3 -translate-x-1/2 rounded-full bg-[var(--surface,white)] ring-2 ring-travel-bloom/70 dark:bg-[#161B22] md:-left-12" />
+                      <span className="absolute -left-8 top-7 h-3 w-3 -translate-x-1/2 rounded-full bg-[var(--surface,white)] ring-2 ring-travel-bloom/70 dark:bg-shell-surface2 md:-left-12" />
                       {entry.type === 'travel' && entry.slug ? (
                         <Link
                           href={travelDetailHref(entry.slug)}

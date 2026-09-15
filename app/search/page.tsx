@@ -7,6 +7,7 @@ import { Search, X, MapPin, Tag, Loader2, ArrowRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
+import { Icon } from '@/components/mobile/Icon'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { SkeletonCard } from '@/components/mobile/Skeleton'
 import { EmptyState } from '@/components/mobile/EmptyState'
@@ -50,7 +51,7 @@ export default function SearchPage() {
     <Suspense fallback={
       <div className="container-custom">
         <div className="max-w-2xl mx-auto text-center py-16 text-travel-sand">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-travel-accentSoft" />
+          <Icon icon={Loader2} size="lg" className="animate-spin mx-auto mb-3 text-travel-accentSoft" />
           <p className="text-sm">加载中...</p>
         </div>
       </div>
@@ -153,7 +154,7 @@ function SearchContent() {
 
         {/* 搜索框 */}
         <div className="relative mb-8">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-travel-sand/70" />
+          <Icon icon={Search} size="md" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/70" />
           <input
             ref={inputRef}
             type="text"
@@ -171,7 +172,7 @@ function SearchContent() {
               onClick={handleClear}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-travel-sand/70 hover:text-travel-ink dark:hover:text-shell-text hover:bg-travel-sakura/40 dark:hover:bg-white/10"
             >
-              <X className="w-4 h-4" />
+              <Icon icon={X} size="sm" />
             </button>
           )}
         </div>
@@ -179,7 +180,7 @@ function SearchContent() {
         {/* 加载中 */}
         {loading && (
           <div className="card p-8 text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-travel-accentSoft" />
+            <Icon icon={Loader2} size="lg" className="animate-spin mx-auto mb-3 text-travel-accentSoft" />
             <p className="text-sm text-travel-sand">搜索中...</p>
           </div>
         )}
@@ -187,7 +188,10 @@ function SearchContent() {
         {/* 未搜索状态 */}
         {!loading && !hasSearched && (
           <div className="card p-8 text-center">
-            <MapPin className="w-12 h-12 mx-auto mb-4 text-travel-sakura" />
+            {/* 原为 48px 裸图标；规范限定图标最大 24px，需要更大视觉重量时放大容器 */}
+            <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] bg-travel-sakura/40 dark:bg-white/5">
+              <Icon icon={MapPin} size="lg" className="text-travel-sakura" />
+            </span>
             <p className="text-sm text-travel-sand dark:text-shell-muted mb-4">
               输入关键词开始搜索，或试试以下热门标签：
             </p>
@@ -199,7 +203,7 @@ function SearchContent() {
                   onClick={() => setQuery(tag)}
                   className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-travel-sakura/50 dark:bg-travel-accent/15 text-travel-accentStrong dark:text-travel-accentSoft text-sm hover:bg-travel-sakura dark:hover:bg-travel-accentStrong/40 transition-colors"
                 >
-                  <Tag className="w-3 h-3" />
+                  <Icon icon={Tag} size="sm" />
                   {tag}
                 </button>
               ))}
@@ -229,7 +233,7 @@ function SearchContent() {
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-travel-accent">
-                      <MapPin className="w-3.5 h-3.5" />
+                      <Icon icon={MapPin} size="sm" />
                       旅行记录
                     </span>
                     <span className="text-xs text-travel-sand/70 dark:text-shell-faint">
@@ -260,7 +264,7 @@ function SearchContent() {
                   )}
                   <div className="mt-3 flex items-center gap-1 text-xs text-travel-accentSoft opacity-0 group-hover:opacity-100 transition-opacity">
                     查看详情
-                    <ArrowRight className="w-3 h-3" />
+                    <Icon icon={ArrowRight} size="sm" />
                   </div>
                 </Link>
               )
@@ -277,7 +281,7 @@ function SearchContent() {
         <div className="px-4 pt-1">
           {/* iOS 搜索栏 */}
           <div className="flex items-center gap-2.5 rounded-2xl bg-[var(--m-surface-2)] px-3.5 transition-all focus-within:ring-2 focus-within:ring-[var(--m-accent)]">
-            <Search className="h-[18px] w-[18px] shrink-0 text-[var(--m-faint)]" />
+            <Icon icon={Search} size="md" tone="faint" className="shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -297,7 +301,7 @@ function SearchContent() {
                 aria-label="清空搜索"
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgb(255,255,255,0.55)] text-[var(--m-muted)] transition-transform active:scale-90 dark:bg-[rgb(255,255,255,0.14)]"
               >
-                <X className="h-4 w-4" />
+                <Icon icon={X} size="sm" />
               </button>
             )}
           </div>
@@ -322,7 +326,7 @@ function SearchContent() {
                       onClick={() => setQuery(tag)}
                       className="m-press m-chip inline-flex items-center gap-1.5"
                     >
-                      <Tag className="h-3.5 w-3.5" />
+                      <Icon icon={Tag} size="sm" />
                       {tag}
                     </button>
                   ))}
@@ -350,7 +354,7 @@ function SearchContent() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--m-accent-strong)]">
-                        <MapPin className="h-3.5 w-3.5" />
+                        <Icon icon={MapPin} size="sm" />
                         旅行记录
                       </span>
                       <span className="text-xs text-[var(--m-faint)]">{formatDate(post.date)}</span>

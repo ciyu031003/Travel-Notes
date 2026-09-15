@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Users, Loader2, X, Plus, KeyRound, Sparkles, RefreshCw, Copy, Trash2, UserMinus, ChevronDown, ChevronUp, LogOut } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 
 /**
@@ -251,18 +252,18 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
       <div className="absolute left-1/2 top-1/2 flex max-h-[86vh] w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[1.6rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
         <div className="flex items-center justify-between border-b border-[var(--social-line)] px-5 py-4">
           <h3 className="flex items-center gap-2 text-base font-semibold">
-            <Users className="h-4 w-4 text-[var(--social-accent)]" />
+            <Icon icon={Users} size="sm" className="text-[var(--social-accent)]" />
             旅行空间
           </h3>
           <button onClick={onClose} aria-label="关闭" className="rounded-full p-1 text-[var(--social-muted)] hover:text-[var(--social-text)]">
-            <X className="h-4 w-4" />
+            <Icon icon={X} size="sm" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {loading ? (
             <div className="flex flex-col items-center py-12 text-[var(--social-muted)]">
-              <Loader2 className="h-6 w-6 animate-spin" />
+              <Icon icon={Loader2} size="md" className="animate-spin" />
               <p className="mt-3 text-sm">加载中...</p>
             </div>
           ) : spaces.length > 0 ? (
@@ -295,15 +296,15 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                       onClick={() => toggleExpand(s.id)}
                       className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
                     >
-                      {expandedId === s.id ? <><ChevronUp className="h-3.5 w-3.5" />收起成员与邀请</> : <><ChevronDown className="h-3.5 w-3.5" />成员与邀请（{s.memberCount} 人）</>}
+                      {expandedId === s.id ? <><Icon icon={ChevronUp} size="sm" />收起成员与邀请</> : <><Icon icon={ChevronDown} size="sm" />成员与邀请（{s.memberCount} 人）</>}
                     </button>
                     {s.myRole !== 'OWNER' && (
                       <button
                         type="button"
                         onClick={() => leaveSpace(s.id)}
-                        className="mt-1 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs text-[var(--social-faint)] transition hover:text-[#E06C6C]"
+                        className="mt-1 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
                       >
-                        <LogOut className="h-3.5 w-3.5" />
+                        <Icon icon={LogOut} size="sm" />
                         退出空间
                       </button>
                     )}
@@ -312,7 +313,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                   {expandedId === s.id && (
                     <div className="border-t border-[var(--social-line)] px-4 py-3">
                       {loadingDetail[s.id] ? (
-                        <div className="flex justify-center py-6 text-[var(--social-faint)]"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                        <div className="flex justify-center py-6 text-[var(--social-faint)]"><Icon icon={Loader2} size="md" className="animate-spin" /></div>
                       ) : (
                         <div className="space-y-4">
                           {/* 成员列表 */}
@@ -333,9 +334,9 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                                       type="button"
                                       onClick={() => removeMember(s.id, m.username)}
                                       aria-label={`移除 ${m.username}`}
-                                      className="rounded-full p-1 text-[var(--social-faint)] transition hover:text-[#E06C6C]"
+                                      className="rounded-full p-1 text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
                                     >
-                                      <UserMinus className="h-3.5 w-3.5" />
+                                      <Icon icon={UserMinus} size="sm" />
                                     </button>
                                   )}
                                 </div>
@@ -354,7 +355,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                                   onClick={() => generateInvite(s.id)}
                                   className="inline-flex items-center gap-1 rounded-full bg-[var(--social-accent)] px-3 py-1 text-xs font-medium text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)]"
                                 >
-                                  <Plus className="h-3 w-3" />生成邀请码
+                                  <Icon icon={Plus} size="sm" />生成邀请码
                                 </button>
                               </div>
                               <div className="space-y-1.5">
@@ -369,16 +370,16 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                                           aria-label="复制邀请码"
                                           className="rounded-full p-1.5 text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
                                         >
-                                          {copied[s.id] ? <Sparkles className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                                          {copied[s.id] ? <Icon icon={Sparkles} size="sm" className="text-emerald-500" /> : <Icon icon={Copy} size="sm" />}
                                         </button>
                                       )}
                                       <button
                                         type="button"
                                         onClick={() => revokeInvite(s.id, inv.id)}
                                         aria-label="撤销邀请码"
-                                        className="rounded-full p-1.5 text-[var(--social-faint)] transition hover:text-[#E06C6C]"
+                                        className="rounded-full p-1.5 text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
                                       >
-                                        <Trash2 className="h-3.5 w-3.5" />
+                                        <Icon icon={Trash2} size="sm" />
                                       </button>
                                     </div>
                                   </div>
@@ -410,7 +411,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                   onClick={() => setCreateMode(!createMode)}
                   className="flex w-full items-center justify-between text-sm font-medium"
                 >
-                  <span className="flex items-center gap-2"><Plus className="h-4 w-4 text-[var(--social-accent)]" />创建空间</span>
+                  <span className="flex items-center gap-2"><Icon icon={Plus} size="sm" className="text-[var(--social-accent)]" />创建空间</span>
                   <span className="text-[var(--social-faint)]">{createMode ? '收起' : '展开'}</span>
                 </button>
                 {createMode && (
@@ -442,7 +443,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
               {/* 邀请码加入 */}
               <div className="rounded-2xl bg-[var(--social-bg)] p-4 ring-1 ring-[var(--social-line)]">
                 <form onSubmit={join} className="space-y-3">
-                  <p className="flex items-center gap-2 text-sm font-medium"><KeyRound className="h-4 w-4 text-[var(--social-accent)]" />输入邀请码加入</p>
+                  <p className="flex items-center gap-2 text-sm font-medium"><Icon icon={KeyRound} size="sm" className="text-[var(--social-accent)]" />输入邀请码加入</p>
                   <input
                     value={joinCode}
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
@@ -461,10 +462,10 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
             </div>
           )}
 
-          {error && <p className="mt-4 text-center text-sm text-[#E06C6C]">{error}</p>}
+          {error && <p className="mt-4 text-center text-sm text-[var(--danger-soft)]">{error}</p>}
           {message && (
-            <p className={`mt-4 flex items-center justify-center gap-1.5 text-center text-xs ${message.type === 'ok' ? 'text-emerald-500' : 'text-[#E06C6C]'}`}>
-              <Sparkles className="h-3 w-3" />
+            <p className={`mt-4 flex items-center justify-center gap-1.5 text-center text-xs ${message.type === 'ok' ? 'text-emerald-500' : 'text-[var(--danger-soft)]'}`}>
+              <Icon icon={Sparkles} size="sm" />
               {message.text}
             </p>
           )}
@@ -476,7 +477,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
             onClick={() => { setError(''); load() }}
             className="flex w-full items-center justify-center gap-1.5 rounded-full py-2 text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <Icon icon={RefreshCw} size="sm" />
             刷新
           </button>
         </div>

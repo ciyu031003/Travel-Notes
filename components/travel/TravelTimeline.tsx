@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { CalendarDays, Camera, Sparkles, Loader2 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 import { ItineraryChip } from '@/components/mobile/Pills'
 import MemoryPhotoPicker from './MemoryPhotoPicker'
@@ -61,7 +62,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
   if (days === null) {
     return (
       <div className="flex items-center justify-center gap-2 py-10 text-travel-ink/40">
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Icon icon={Loader2} size="sm" className="animate-spin" />
         <span className="text-sm">时间线加载中...</span>
       </div>
     )
@@ -72,7 +73,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
     <section className="mt-14">
       <div className="flex items-center gap-3 mb-6">
         <h2 className="text-xl font-bold text-travel-ink flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-travel-bloom" />
+          <Icon icon={CalendarDays} size="md" className="text-travel-bloom" />
           按天回顾
         </h2>
         <span className="text-xs text-travel-ink/50">{days.length} 天</span>
@@ -131,7 +132,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                   <div className="mt-3 space-y-2">
                     {day.memories.map((mem) => (
                       <div key={mem.id} className="flex items-start gap-2 rounded-xl bg-travel-sakura/30 px-3 py-2.5">
-                        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-travel-bloom" />
+                        <Icon icon={Sparkles} size="sm" className="mt-0.5 shrink-0 text-travel-bloom" />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-travel-ink">
                             {mem.title}
@@ -155,7 +156,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
 
                 {day.itinerary.length === 0 && day.photos.length === 0 && day.memories.length === 0 && (
                   <p className="mt-2 flex items-center gap-1.5 text-xs text-travel-ink/40">
-                    <Camera className="h-3 w-3" /> 这一天还没有记录
+                    <Icon icon={Camera} size="sm" /> 这一天还没有记录
                   </p>
                 )}
               </div>

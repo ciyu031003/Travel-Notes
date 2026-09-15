@@ -1,6 +1,7 @@
 'use client'
 
 import { Loader2, MapPin, Compass, AlertCircle, RefreshCw } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 type AsyncStateProps = {
   /** 状态类型 */
@@ -42,7 +43,7 @@ export default function AsyncState({
         role="status"
         aria-live="polite"
       >
-        <Loader2 className="h-9 w-9 animate-spin text-travel-accent dark:text-travel-bloom" />
+        <Icon icon={Loader2} size="lg" className="animate-spin text-travel-accent dark:text-travel-bloom" />
         <p className="text-sm text-travel-ink dark:text-shell-muted">{message || '正在加载…'}</p>
       </div>
     )
@@ -56,7 +57,7 @@ export default function AsyncState({
         role="alert"
       >
         <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/20 dark:border-shell-line dark:bg-white/5">
-          <AlertCircle className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
+          <Icon icon={AlertCircle} size="lg" className="text-travel-accent dark:text-travel-bloom" />
         </span>
         <div className="space-y-1.5">
           <p className="text-base font-semibold text-travel-ink dark:text-shell-text">
@@ -75,7 +76,7 @@ export default function AsyncState({
             onClick={onAction}
             className="inline-flex items-center gap-2 rounded-xl bg-travel-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-travel-accentStrong"
           >
-            <RefreshCw className="h-4 w-4" />
+            <Icon icon={RefreshCw} size="sm" />
             {actionLabel}
           </button>
         )}
@@ -90,7 +91,7 @@ export default function AsyncState({
       style={{ minHeight }}
     >
       <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft/70 dark:border-travel-bloom/40 bg-travel-sakura/20 dark:bg-shell-surface">
-        <Compass className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
+        <Icon icon={Compass} size="lg" className="text-travel-accent dark:text-travel-bloom" />
       </span>
       <div className="space-y-1.5">
         <p className="text-base font-semibold text-travel-ink dark:text-shell-text">
@@ -109,7 +110,7 @@ export default function AsyncState({
           onClick={onAction}
           className="inline-flex items-center gap-2 rounded-xl bg-travel-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-travel-accentStrong"
         >
-          <MapPin className="h-4 w-4" />
+          <Icon icon={MapPin} size="sm" />
           {actionLabel}
         </button>
       )}

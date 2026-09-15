@@ -244,7 +244,8 @@ export default function TravelBook({
             <span className="hidden sm:inline">返回</span>
           </Link>
           <div className="flex items-center gap-2 font-semibold text-travel-ink dark:text-shell-text">
-            <Icon icon={BookOpen} size="sm" tone="accent" />
+            {/* travel-* 主题：保留主题色类，不套 --m-* 的 tone（规范 §5.3 跨主题边界） */}
+            <Icon icon={BookOpen} size="sm" className="text-travel-bloom" />
             <span className="truncate text-sm sm:text-base">我的旅行画册</span>
           </div>
         </div>
@@ -276,12 +277,12 @@ export default function TravelBook({
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {books === null && !loadError ? (
           <div className="flex items-center justify-center gap-2 py-24 text-travel-ink/45 dark:text-shell-faint">
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Icon icon={Loader2} size="md" className="animate-spin" />
             <span className="text-sm">正在翻阅旅行画册，把走过的城市一本本摊开...</span>
           </div>
         ) : loadError ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-            <AlertCircle className="h-10 w-10 text-red-400/70" />
+            <Icon icon={AlertCircle} size="lg" className="text-red-400/70" />
             <p className="text-sm text-travel-ink/60 dark:text-shell-muted">{loadError}</p>
             <button
               type="button"
@@ -293,7 +294,7 @@ export default function TravelBook({
           </div>
         ) : books && books.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-            <Camera className="h-10 w-10 text-travel-bloom/40" />
+            <Icon icon={Camera} size="lg" className="text-travel-bloom/40" />
             <p className="text-sm text-travel-ink/60 dark:text-shell-muted">还没有旅行故事，去记录一次旅行吧。</p>
             <p className="text-xs text-travel-ink/40 dark:text-shell-faint">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
           </div>
@@ -318,7 +319,7 @@ export default function TravelBook({
                         : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                     }`}
                   >
-                    <LayoutGrid className="h-3.5 w-3.5" />卡片墙
+                    <Icon icon={LayoutGrid} size="sm" />卡片墙
                   </button>
                   <button
                     type="button"
@@ -330,7 +331,7 @@ export default function TravelBook({
                         : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                     }`}
                   >
-                    <List className="h-3.5 w-3.5" />目录
+                    <Icon icon={List} size="sm" />目录
                   </button>
                 </div>
                 <p className="text-xs text-travel-ink/55 dark:text-shell-muted">
@@ -345,7 +346,7 @@ export default function TravelBook({
                 className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-red-200/70 bg-red-50/80 px-3.5 py-2.5 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
               >
                 <span className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <Icon icon={AlertCircle} size="sm" className="shrink-0" />
                   {openError}
                 </span>
                 <button
@@ -354,7 +355,7 @@ export default function TravelBook({
                   aria-label="收起提示"
                   className="rounded-full p-1 transition-colors hover:bg-red-100 dark:hover:bg-red-500/20"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <Icon icon={X} size="sm" />
                 </button>
               </div>
             )}
@@ -408,9 +409,9 @@ export default function TravelBook({
                         </span>
                       </span>
                       <span className="hidden shrink-0 items-center gap-1.5 text-xs text-travel-ink/50 sm:flex dark:text-shell-muted">
-                        <BookOpen className="h-3.5 w-3.5" />
+                        <Icon icon={BookOpen} size="sm" />
                         {book.dayCount} 章
-                        <Camera className="ml-2 h-3.5 w-3.5" />
+                        <Icon icon={Camera} size="sm" className="ml-2" />
                         {book.photoCount} 图
                       </span>
                       {book.travelType && (
@@ -418,7 +419,11 @@ export default function TravelBook({
                           {TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}
                         </span>
                       )}
-                      <ChevronRight className="h-4 w-4 shrink-0 text-travel-ink/35 transition-transform group-hover:translate-x-0.5 group-hover:text-travel-ink/70 dark:text-shell-faint dark:group-hover:text-shell-muted" />
+                      <Icon
+                        icon={ChevronRight}
+                        size="sm"
+                        className="shrink-0 text-travel-ink/35 transition-transform group-hover:translate-x-0.5 group-hover:text-travel-ink/70 dark:text-shell-faint dark:group-hover:text-shell-muted"
+                      />
                     </button>
                   )
                 })}
@@ -428,7 +433,7 @@ export default function TravelBook({
             {opening && (
               <div className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-travel-cream/40 dark:bg-shell-bg/40 backdrop-blur-[2px]">
                 <div className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm text-travel-ink/70 dark:bg-shell-surface/90 dark:text-shell-text shadow-[0_10px_30px_-10px_rgba(41,39,35,0.35)]">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Icon icon={Loader2} size="sm" className="animate-spin" />
                   正在翻开《{openingTitle}》...
                 </div>
               </div>

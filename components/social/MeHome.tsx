@@ -253,12 +253,12 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 aria-label="旅行空间"
                 className="hidden h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"
               >
-                <Users className="h-4 w-4" />
+                <Icon icon={Users} size="sm" />
               </button>
             )}
-            <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="hidden h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><RefreshCw className="h-4 w-4" /></Link>
+            <Link href="/sync" title="数据与同步" aria-label="数据与同步" className="hidden h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><Icon icon={RefreshCw} size="sm" /></Link>
             <Link href="/me/notifications" aria-label="通知" className="relative flex h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={Bell} size="md" />{unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />}</Link>
-            <Link href="/" className="hidden items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><Home className="h-4 w-4" />返回首页</Link>
+            <Link href="/" className="hidden items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] sm:inline-flex"><Icon icon={Home} size="sm" />返回首页</Link>
           </div>
         </header>
 
@@ -270,13 +270,13 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                 <SocialAvatar name={displayName} avatarUrl={profile.avatarUrl} size={92} className="text-[26px]" />
                 <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} aria-label="上传头像"
                   className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)] ring-2 ring-[var(--social-bg)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-60">
-                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                  {uploading ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Camera} size="sm" />}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
               </div>
               <button type="button" onClick={() => { setNickname(profile.nickname || ''); setBio(profile.bio || ''); setError(''); setShowEdit(true) }} aria-label="编辑资料"
                 className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3.5 py-2.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]">
-                <Pencil className="h-3.5 w-3.5" />编辑资料
+                <Icon icon={Pencil} size="sm" />编辑资料
               </button>
             </div>
 
@@ -294,7 +294,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                   {recent.coverUrl ? (
                     <img src={recent.coverUrl} alt={recent.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   ) : (
-                    <div className="flex h-full items-center justify-center bg-[var(--social-surface2)] text-[var(--social-faint)]"><MapPin className="h-8 w-8" /></div>
+                    <div className="flex h-full items-center justify-center bg-[var(--social-surface2)] text-[var(--social-faint)]"><Icon icon={MapPin} size="lg" /></div>
                   )}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/20 to-transparent" />
@@ -360,7 +360,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                   </>
                 ) : (
                   <div className="flex h-full min-h-[120px] flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-[var(--social-surface2)] to-[var(--social-surface)] p-4">
-                    <m.icon className="h-6 w-6 text-[var(--social-accent)]" />
+                    <Icon icon={m.icon} size="md" className="text-[var(--social-accent)]" />
                     <div className="text-2xl font-semibold tracking-tight tabular-nums text-[var(--social-text)]">{m.value}</div>
                     <div className="text-xs text-[var(--social-muted)]">{m.suffix} · {m.label}</div>
                   </div>
@@ -416,7 +416,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           )}
         </section>
 
-        {error && <p className="mt-6 text-sm text-[#E06C6C]">{error}</p>}
+        {error && <p className="mt-6 text-sm text-[var(--danger-soft)]">{error}</p>}
 
         {/* 账号操作弱化（管理入口按能力显隐） */}
         <div className="mt-12 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--social-faint)]">
@@ -426,21 +426,21 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)] disabled:opacity-50"
             title="导出旅行/回忆/碎碎念/照片的完整档案包"
           >
-            <Download className="h-3.5 w-3.5" />
+            <Icon icon={Download} size="sm" />
             {exporting ? '导出中...' : '导出记忆档案'}
           </button>
           {profile.capabilities.canManageSettings && (
             <Link href="/admin/settings" className="hidden items-center gap-1.5 transition hover:text-[var(--social-accent)] md:inline-flex">
-              <Settings className="h-3.5 w-3.5" />账号设置
+              <Icon icon={Settings} size="sm" />账号设置
             </Link>
           )}
           {profile.capabilities.isOwner && (
             <Link href="/admin" className="hidden items-center gap-1.5 transition hover:text-[var(--social-accent)] md:inline-flex">
-              <ShieldCheck className="h-3.5 w-3.5" />管理后台
+              <Icon icon={ShieldCheck} size="sm" />管理后台
             </Link>
           )}
           <button onClick={logout} className="inline-flex items-center gap-1.5 transition hover:text-[var(--social-accent)]">
-            <LogOut className="h-3.5 w-3.5" />退出登录
+            <Icon icon={LogOut} size="sm" />退出登录
           </button>
         </div>
         </PullToRefresh>

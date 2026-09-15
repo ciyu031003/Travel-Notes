@@ -19,6 +19,7 @@ import {
   Info,
   X,
 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
@@ -90,7 +91,7 @@ export default function DownloadPage() {
           href="/"
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-travel-ink transition hover:bg-travel-sakura/50 dark:text-shell-text dark:hover:bg-white/10"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <Icon icon={ArrowLeft} size="sm" />
           返回
         </Link>
         <span className="text-sm text-travel-ink/70 dark:text-shell-muted">甜途 · 移动端</span>
@@ -215,7 +216,7 @@ export default function DownloadPage() {
                   aria-label="关闭"
                   className="rounded-full p-2 text-travel-ink/50 transition hover:bg-travel-sakura dark:text-shell-muted dark:hover:bg-white/10"
                 >
-                  <X className="h-5 w-5" />
+                  <Icon icon={X} size="md" />
                 </button>
               </div>
 

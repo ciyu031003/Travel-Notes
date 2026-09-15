@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Lock, X, Sparkles } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 interface SpaceUnlockModalProps {
   isOpen: boolean
@@ -59,11 +60,11 @@ export default function SpaceUnlockModal({ isOpen, onClose, onSuccess }: SpaceUn
           className="absolute top-3 right-3 space-glass-btn w-8 h-8 rounded-full flex items-center justify-center text-album-text1"
           aria-label="关闭"
         >
-          <X className="w-4 h-4" />
+          <Icon icon={X} size="sm" />
         </button>
 
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-album-bg0/70 border border-white/15 flex items-center justify-center shadow-[0_0_30px_var(--album-accent-dim)]">
-          <Lock className="w-7 h-7 text-album-accent" />
+          <Icon icon={Lock} size="lg" className="text-album-accent" />
         </div>
         <h3 className="text-album-text1 text-lg font-semibold tracking-widest">相册已上锁</h3>
         <p className="text-album-text2 text-xs mt-1.5">输入纪念日，唤醒旅行中的回忆</p>
@@ -94,7 +95,7 @@ export default function SpaceUnlockModal({ isOpen, onClose, onSuccess }: SpaceUn
             {verifying ? '正在唤醒银河...' : '解锁相册'}
           </button>
           <p className="flex items-center justify-center gap-1 text-xs text-album-text2">
-            <Sparkles className="w-3 h-3 text-album-accent" />
+            <Icon icon={Sparkles} size="sm" className="text-album-accent" />
             解锁后即可进入 360° 银河唱片空间
           </p>
         </form>

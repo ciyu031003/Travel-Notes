@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { cn } from '@/lib/utils'
 import { dismissToast, subscribeToasts, type ToastItem } from '@/lib/mobile/toast-store'
 
@@ -26,10 +27,10 @@ export function ToastHost() {
       className="pointer-events-none fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[120] flex flex-col items-center gap-2 px-4"
     >
       {items.map((item) => {
-        const Icon = ICONS[item.kind]
+        const ToastIcon = ICONS[item.kind]
         return (
           <div key={item.id} className={cn('m-toast m-enter')} data-kind={item.kind}>
-            <Icon className="h-4 w-4 shrink-0" />
+            <Icon icon={ToastIcon} size="sm" className="shrink-0" />
             <span className="min-w-0 flex-1 text-[13px] leading-snug">{item.message}</span>
             <button
               type="button"
@@ -37,7 +38,7 @@ export function ToastHost() {
               aria-label="关闭提示"
               className="shrink-0 opacity-60 transition-opacity hover:opacity-100"
             >
-              <X className="h-3.5 w-3.5" />
+              <Icon icon={X} size="sm" />
             </button>
           </div>
         )

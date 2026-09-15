@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import BrandLogo from "@/components/brand/BrandLogo"
 import { MapPin } from "lucide-react"
+import { Icon } from '@/components/mobile/Icon'
 import dynamicImport from 'next/dynamic'
 
 // 门面地图按需加载：把 china-geo 全量地理数据 + d3-geo 拆出登录页首屏 chunk
@@ -177,7 +178,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
             {/* 邮戳章 */}
             <div className="absolute bottom-8 right-8 flex h-24 w-24 rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-white/40 dark:border-travel-bloom/70 dark:bg-shell-surface/60">
               <div className="text-center text-travel-accent dark:text-travel-bloom">
-                <MapPin className="mx-auto h-4 w-4" />
+                <Icon icon={MapPin} size="sm" className="mx-auto" />
                 <p className="mt-0.5 text-[10px] tracking-widest">地图门</p>
               </div>
             </div>

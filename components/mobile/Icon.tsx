@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ICON_SIZE, ICON_STROKE, type IconSize, type IconTone } from '@/lib/mobile/icon-system'
@@ -34,11 +35,16 @@ export interface IconProps {
   size?: IconSize
   tone?: IconTone
   className?: string
+  /**
+   * 逃生舱：仅在「颜色来自 JS 常量/调色板声明（无法用 className 表达）」时使用。
+   * 常规场景请用 tone 或 className 的颜色类，不要用 style。
+   */
+  style?: CSSProperties
   /** 有语义时传文案（无障碍）；不传则视为装饰性图标并对读屏隐藏 */
   label?: string
 }
 
-export function Icon({ icon: IconComponent, size = 'md', tone = 'inherit', className, label }: IconProps) {
+export function Icon({ icon: IconComponent, size = 'md', tone = 'inherit', className, style, label }: IconProps) {
   const px = ICON_SIZE[size]
   return (
     <IconComponent
@@ -46,6 +52,7 @@ export function Icon({ icon: IconComponent, size = 'md', tone = 'inherit', class
       height={px}
       strokeWidth={ICON_STROKE[size]}
       className={cn('m-icon', `m-icon-${size}`, TONE_CLASS[tone], className)}
+      style={style}
       aria-hidden={label ? undefined : true}
       aria-label={label}
       role={label ? 'img' : undefined}

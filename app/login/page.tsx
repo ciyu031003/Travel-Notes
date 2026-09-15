@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Lock, Eye, EyeOff, ArrowRight, X, Heart } from 'lucide-react'
 import LoginDoor from '@/components/login/LoginDoor'
 import BrandLogo from '@/components/brand/BrandLogo'
+import { Icon } from '@/components/mobile/Icon'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
@@ -169,7 +170,7 @@ function LoginPageContent() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-[#3D4852] transition-all placeholder-travel-sand/50 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
+    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-[#3D4852] transition-all placeholder-travel-sand/50 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-shell-faint'
 
   return (
     <>
@@ -204,11 +205,11 @@ function LoginPageContent() {
               <form onSubmit={handleSubmit} className="mt-6 space-y-4 md:mt-8">
                 <div>
                   <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
-                    <Lock className="h-4 w-4" />
+                    <Icon icon={Lock} size="sm" />
                     登录账号
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
+                    <Icon icon={Lock} size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/50" />
                     <input
                       type="text"
                       value={username}
@@ -222,11 +223,11 @@ function LoginPageContent() {
 
                 <div>
                   <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
-                    <Lock className="h-4 w-4" />
+                    <Icon icon={Lock} size="sm" />
                     登录密码
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
+                    <Icon icon={Lock} size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/50" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
@@ -241,7 +242,7 @@ function LoginPageContent() {
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-travel-sand/50 transition-colors hover:text-travel-accent"
                       aria-label={showPassword ? '隐藏密码' : '显示密码'}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
                     </button>
                   </div>
                 </div>
@@ -249,11 +250,11 @@ function LoginPageContent() {
                 {mode === 'register' && (
                   <div>
                     <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
-                      <Lock className="h-4 w-4" />
+                      <Icon icon={Lock} size="sm" />
                       确认密码
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
+                      <Icon icon={Lock} size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/50" />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={confirmPassword}
@@ -291,11 +292,11 @@ function LoginPageContent() {
                   {mode === 'login'
                     ? (loading ? '解锁中...' : (<>
                         解锁
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        <Icon icon={ArrowRight} size="sm" className="transition-transform group-hover:translate-x-0.5" />
                       </>))
                     : (isRegistering ? '注册中...' : (<>
                         注册并进入
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        <Icon icon={ArrowRight} size="sm" className="transition-transform group-hover:translate-x-0.5" />
                       </>))}
                 </button>
               </form>
@@ -312,7 +313,7 @@ function LoginPageContent() {
                   </>
                 ) : (
                   <>
-                    <Lock className="h-4 w-4" />
+                    <Icon icon={Lock} size="sm" />
                     已有账号？返回登录
                   </>
                 )}
@@ -323,7 +324,7 @@ function LoginPageContent() {
                 onClick={() => setShowAlbumLock(true)}
                 className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-travel-line/70 bg-white/60 px-4 py-2.5 text-sm text-travel-ink transition-colors hover:border-travel-bloom/60 hover:text-travel-accent dark:border-shell-line dark:bg-shell-surface2/60 dark:text-shell-muted dark:hover:text-travel-bloom"
               >
-                <Lock className="h-4 w-4" />
+                <Icon icon={Lock} size="sm" />
                 相册解锁
               </button>
 
@@ -364,15 +365,15 @@ function LoginPageContent() {
                   setAlbumPassword('')
                   setAlbumError('')
                 }}
-                className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-travel-sand/50 transition-colors hover:bg-white/60 hover:text-travel-sand dark:text-travel-sandSoft/60 dark:hover:bg-white/10 dark:hover:text-[#E4D6C4]"
+                className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-travel-sand/50 transition-colors hover:bg-white/60 hover:text-travel-sand dark:text-travel-sandSoft/60 dark:hover:bg-white/10 dark:hover:text-travel-sandLight"
                 aria-label="关闭"
               >
-                <X className="h-4 w-4" />
+                <Icon icon={X} size="sm" />
               </button>
 
               <div className="flex flex-col items-center text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom shadow-lg">
-                  <Heart className="h-8 w-8 fill-white text-white" />
+                  <Icon icon={Heart} size="lg" className="fill-white text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-travel-inkStrong dark:text-shell-text">
                   相册已上锁
@@ -384,7 +385,7 @@ function LoginPageContent() {
 
               <form onSubmit={handleAlbumUnlock} className="mt-6 space-y-4">
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/40" />
+                  <Icon icon={Lock} size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/40" />
                   <input
                     type="text"
                     value={albumPassword}
@@ -428,7 +429,7 @@ function LoginPageContent() {
           }}>
             <div className="flex flex-col items-center px-1 pt-6 text-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
-                <Heart className="h-7 w-7 fill-current" />
+                <Icon icon={Heart} size="lg" className="fill-current" />
               </span>
               <h3 className="mt-4 text-[22px] font-bold tracking-[-0.02em] text-[var(--m-text)]">
                 相册已上锁
@@ -439,7 +440,7 @@ function LoginPageContent() {
 
               <form onSubmit={handleAlbumUnlock} className="mt-6 w-full space-y-3">
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--m-faint)]" />
+                  <Icon icon={Lock} size="sm" tone="faint" className="absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={albumPassword}
@@ -455,7 +456,7 @@ function LoginPageContent() {
                 </p>
 
                 {albumError && (
-                  <div className="rounded-xl border border-[rgba(224,108,108,0.35)] bg-[rgba(224,108,108,0.12)] px-4 py-2.5 text-center text-sm text-[#E06C6C]">
+                  <div className="rounded-xl border border-[rgba(224,108,108,0.35)] bg-[rgba(224,108,108,0.12)] px-4 py-2.5 text-center text-sm text-[var(--danger-soft)]">
                     {albumError}
                   </div>
                 )}

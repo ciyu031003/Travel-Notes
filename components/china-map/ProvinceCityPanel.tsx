@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { X, MapPin, Sparkles, Plus } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import type { City } from '@/data/cities'
 import type { PostMeta } from './types'
 
@@ -46,7 +47,7 @@ export default function ProvinceCityPanel({
         <div className="flex items-center justify-between p-4 pt-2 md:pt-4 border-b border-travel-dim/60 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-travel-sakura to-travel-bloom flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-white" />
+              <Icon icon={MapPin} size="md" tone="inverse" />
             </div>
             <div>
               <h3 className="font-semibold text-travel-ink">{provinceInfo.name}</h3>
@@ -58,14 +59,14 @@ export default function ProvinceCityPanel({
             className="w-10 h-10 rounded-lg hover:bg-travel-dim/40 flex items-center justify-center transition-colors"
             aria-label="关闭"
           >
-            <X className="w-4 h-4 text-travel-ink/60" />
+            <Icon icon={X} size="sm" className="text-travel-ink/60" />
           </button>
         </div>
 
         {posts.length > 0 && (
           <div className="p-4 bg-gradient-to-br from-travel-sakura/30 to-travel-mist/30 border-b border-travel-dim/60 shrink-0">
             <div className="flex items-center gap-2 text-xs text-travel-ink/60 mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-travel-bloom" />
+              <Icon icon={Sparkles} size="sm" className="text-travel-bloom" />
               <span>该省旅行记录</span>
               <span className="ml-auto font-medium text-travel-bloom">{posts.length}</span>
             </div>
@@ -90,7 +91,7 @@ export default function ProvinceCityPanel({
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <MapPin className="w-4 h-4 text-white/50" />
+                        <Icon icon={MapPin} size="sm" className="text-white/50" />
                       </div>
                     )}
                   </div>
@@ -126,7 +127,7 @@ export default function ProvinceCityPanel({
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                     hasPosts ? 'bg-travel-bloom text-white' : 'bg-travel-dim/50 text-travel-ink/40'
                   }`}>
-                    <MapPin className="w-4 h-4" />
+                    <Icon icon={MapPin} size="sm" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium ${hasPosts ? 'text-travel-ink' : 'text-travel-ink/70'}`}>
@@ -139,7 +140,7 @@ export default function ProvinceCityPanel({
                       {cityPostCount}
                     </span>
                   ) : (
-                    <Plus className="w-4 h-4 text-travel-ink/30" />
+                    <Icon icon={Plus} size="sm" className="text-travel-ink/30" />
                   )}
                 </button>
               )

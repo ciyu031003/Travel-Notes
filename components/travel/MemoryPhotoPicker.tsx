@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Plus, Loader2, X, Check } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 
 interface CandidatePhoto {
@@ -90,7 +91,7 @@ export default function MemoryPhotoPicker({
         onClick={openPicker}
         className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-travel-bloom/30 px-2.5 py-1 text-xs text-travel-ink/80 transition hover:bg-travel-bloom/50"
       >
-        <Plus className="h-3 w-3" />
+        <Icon icon={Plus} size="sm" />
         关联照片
       </button>
 
@@ -100,13 +101,13 @@ export default function MemoryPhotoPicker({
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold text-travel-ink">选择照片关联到回忆</h3>
               <button type="button" onClick={() => setOpen(false)} className="rounded-full p-1 text-travel-ink/50 hover:bg-travel-sakura/40" aria-label="关闭">
-                <X className="h-4 w-4" />
+                <Icon icon={X} size="sm" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="flex justify-center py-10 text-travel-ink/50"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                <div className="flex justify-center py-10 text-travel-ink/50"><Icon icon={Loader2} size="md" className="animate-spin" /></div>
               ) : photos.length === 0 ? (
                 <p className="py-10 text-center text-sm text-travel-ink/50">还没有可关联的照片，先去相册上传吧</p>
               ) : (
@@ -122,7 +123,7 @@ export default function MemoryPhotoPicker({
                       <img src={p.url} alt="" className="h-full w-full object-cover" loading="lazy" />
                       {selected.has(p.id) && (
                         <span className="absolute inset-0 flex items-center justify-center bg-travel-bloom/40">
-                          <Check className="h-5 w-5 text-white" />
+                          <Icon icon={Check} size="md" tone="inverse" />
                         </span>
                       )}
                     </button>

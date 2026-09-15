@@ -144,6 +144,10 @@
     --social-on-accent: #FFFFFF;
     --social-line: rgba(90, 74, 58, 0.12);
     --social-line-strong: rgba(90, 74, 58, 0.22);
+    /* 通用「错误红」：#E06C6C 原先散落在 social / offline / login 等 6 个组件里。
+       此值同时等于 album 体系的 --album-error，两者并存但归属不同体系，暂不强行合并。
+       注：该值在浅底上对比度约 3.0:1，低于 AA 正文标准 —— 属既有问题，本次保持原值不改观感。 */
+    --danger-soft: #E06C6C;
   }
 
   html.dark {
@@ -165,6 +169,7 @@
     --social-on-accent: #1A120A;
     --social-line: rgba(245, 241, 234, 0.09);
     --social-line-strong: rgba(245, 241, 234, 0.16);
+    --danger-soft: #E06C6C;
   }
 
   body {

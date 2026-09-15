@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipForward, Loader2 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 interface VideoInfo {
   url: string
@@ -216,7 +217,7 @@ export default function VideoPlayer({
 
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-          <Loader2 className="w-10 h-10 text-white animate-spin" />
+          <Icon icon={Loader2} size="lg" tone="inverse" className="animate-spin" />
         </div>
       )}
 
@@ -226,7 +227,7 @@ export default function VideoPlayer({
           onClick={togglePlay}
         >
           <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Play className="w-8 h-8 text-white ml-1" fill="white" />
+            <Icon icon={Play} size="lg" tone="inverse" className="ml-1 fill-current" />
           </div>
         </div>
       )}
@@ -258,9 +259,9 @@ export default function VideoPlayer({
                 className="text-white hover:text-white/80 transition-colors"
               >
                 {isPlaying ? (
-                  <Pause className="w-5 h-5" />
+                  <Icon icon={Pause} size="md" />
                 ) : (
-                  <Play className="w-5 h-5" />
+                  <Icon icon={Play} size="md" />
                 )}
               </button>
 
@@ -269,7 +270,7 @@ export default function VideoPlayer({
                 className="text-white hover:text-white/80 transition-colors"
                 title="快进10秒"
               >
-                <SkipForward className="w-5 h-5" />
+                <Icon icon={SkipForward} size="md" />
               </button>
 
               <div className="flex items-center gap-2">
@@ -278,9 +279,9 @@ export default function VideoPlayer({
                   className="text-white hover:text-white/80 transition-colors"
                 >
                   {isMuted || volume === 0 ? (
-                    <VolumeX className="w-5 h-5" />
+                    <Icon icon={VolumeX} size="md" />
                   ) : (
-                    <Volume2 className="w-5 h-5" />
+                    <Icon icon={Volume2} size="md" />
                   )}
                 </button>
                 <input
@@ -313,7 +314,7 @@ export default function VideoPlayer({
                 onClick={toggleFullscreen}
                 className="text-white hover:text-white/80 transition-colors"
               >
-                <Maximize className="w-5 h-5" />
+                <Icon icon={Maximize} size="md" />
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, type ComponentType } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -14,7 +14,9 @@ import {
   Image as ImageIcon,
   Smartphone,
   BookOpen,
+  type LucideIcon,
 } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import HeroFootprintMap from '@/components/home/HeroFootprintMap'
 import MomentsStrip from '@/components/moments/MomentsStrip'
 import { DanmakuSection, type DanmakuSectionHandle } from '@/components/home/DanmakuSection'
@@ -104,18 +106,18 @@ function getDailyQuote(): string {
 }
 
 function SectionTitle({
-  icon: Icon,
+  icon,
   children,
   action,
 }: {
-  icon: ComponentType<{ className?: string }>
+  icon: LucideIcon
   children: React.ReactNode
   action?: React.ReactNode
 }) {
   return (
     <div className="mb-5 flex items-center justify-between">
       <h2 className="flex items-center gap-2.5 text-lg font-semibold text-travel-ink dark:text-shell-text">
-        <Icon className="h-[18px] w-[18px] text-travel-accent dark:text-travel-bloom" />
+        <Icon icon={icon} size="md" className="text-travel-accent dark:text-travel-bloom" />
         {children}
       </h2>
       {action}
@@ -124,14 +126,14 @@ function SectionTitle({
 }
 
 function FeatureCard({
-  icon: Icon,
+  icon,
   title,
   desc,
   action,
   href,
   onClick,
 }: {
-  icon: ComponentType<{ className?: string }>
+  icon: LucideIcon
   title: string
   desc: string
   action: string
@@ -157,7 +159,7 @@ function FeatureCard({
         }}
       />
       <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-travel-sakura dark:bg-shell-surface text-travel-accent dark:text-travel-bloom transition-transform group-hover:scale-105">
-        <Icon className="h-7 w-7" />
+        <Icon icon={icon} size="lg" />
       </span>
       <span>
         <span className="block text-base font-semibold text-travel-ink dark:text-shell-text">{title}</span>
@@ -165,7 +167,7 @@ function FeatureCard({
       </span>
       <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-travel-accent dark:text-travel-bloom">
         {action}
-        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        <Icon icon={ArrowRight} size="sm" className="transition-transform group-hover:translate-x-1" />
       </span>
     </>
   )
@@ -214,7 +216,7 @@ function HomeBooks() {
                 className="inline-flex items-center gap-1 text-xs text-travel-accent dark:text-travel-bloom transition-colors hover:text-travel-accentStrong"
               >
                 全部画册
-                <ArrowRight className="h-3 w-3" />
+                <Icon icon={ArrowRight} size="sm" />
               </Link>
             }
           >
@@ -241,7 +243,7 @@ function HomeBooks() {
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
-                      <BookOpen className="h-8 w-8 text-travel-accentSoft dark:text-travel-bloom/60" />
+                      <Icon icon={BookOpen} size="lg" className="text-travel-accentSoft dark:text-travel-bloom/60" />
                     </div>
                   )}
                 </div>
@@ -315,20 +317,20 @@ export default function HomeClient({
                   href="/travel"
                   className="group inline-flex items-center gap-2 rounded-xl bg-travel-accent px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:bg-travel-accentStrong hover:shadow-xl md:text-base"
                 >
-                  <MapPin className="h-4 w-4" />
+                  <Icon icon={MapPin} size="sm" />
                   打开旅行地图
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <Icon icon={ArrowRight} size="sm" className="transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link
                   href="/album"
                   className="group inline-flex items-center gap-2 rounded-xl border border-travel-line/70 bg-white/85 px-6 py-3.5 text-sm font-semibold text-travel-ink transition-all hover:bg-travel-sakura/30 dark:border-shell-line dark:bg-shell-surface/90 dark:text-shell-text md:text-base"
                 >
-                  <ImageIcon className="h-4 w-4 text-travel-accent dark:text-travel-bloom" />
+                  <Icon icon={ImageIcon} size="sm" className="text-travel-accent dark:text-travel-bloom" />
                   旅行画册
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <Icon icon={ArrowRight} size="sm" className="transition-transform group-hover:translate-x-1" />
                 </Link>
                 <span className="inline-flex items-center gap-2 rounded-xl border border-travel-line/70 bg-white/85 px-4 py-3 text-sm text-travel-ink dark:border-shell-line dark:bg-shell-surface/90 dark:text-shell-muted">
-                  <Globe2 className="h-4 w-4 text-travel-accent dark:text-travel-bloom" />
+                  <Icon icon={Globe2} size="sm" className="text-travel-accent dark:text-travel-bloom" />
                   <span className="font-medium text-travel-ink dark:text-shell-text">{provincesVisitedCount}</span>
                   个省份
                   <span className="mx-1 h-4 w-px bg-travel-line dark:bg-shell-line" />
@@ -354,9 +356,9 @@ export default function HomeClient({
           <div className="mx-auto max-w-3xl">
             <div className="rounded-2xl border border-travel-bloom/40 dark:border-shell-line bg-white/90 dark:bg-shell-surface/95 px-6 py-8 text-center shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:py-10">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-travel-accent dark:text-travel-bloom">
-                <Quote className="h-4 w-4" />
+                <Icon icon={Quote} size="sm" />
                 <span>每日一言</span>
-                <Quote className="h-4 w-4" />
+                <Icon icon={Quote} size="sm" />
               </div>
               <p className="mt-4 text-lg font-medium leading-relaxed text-travel-ink dark:text-shell-text md:text-2xl">
                 「{quote}」
@@ -385,7 +387,7 @@ export default function HomeClient({
                     className="inline-flex items-center gap-1 text-xs text-travel-accent dark:text-travel-bloom transition-colors hover:text-travel-accentStrong"
                   >
                     查看全部
-                    <ArrowRight className="h-3 w-3" />
+                    <Icon icon={ArrowRight} size="sm" />
                   </Link>
                 }
               >
@@ -411,7 +413,7 @@ export default function HomeClient({
                       </div>
                     ) : (
                       <div className="flex h-40 items-center justify-center bg-gradient-to-br from-[#FBF0E6] to-travel-sakura/70 dark:from-[#241C15] dark:to-[#292119]">
-                        <MapPin className="h-7 w-7 text-travel-accentSoft" />
+                        <Icon icon={MapPin} size="lg" className="text-travel-accentSoft" />
                       </div>
                     )}
                     <div className="p-4">
@@ -433,7 +435,7 @@ export default function HomeClient({
                       className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-travel-accent dark:text-travel-bloom hover:text-travel-accentStrong"
                     >
                       去旅行地图看看
-                      <ArrowRight className="h-4 w-4" />
+                      <Icon icon={ArrowRight} size="sm" />
                     </Link>
                   </div>
                 )}
@@ -520,7 +522,7 @@ export default function HomeClient({
         <footer className="border-t border-travel-line/60 dark:border-shell-line px-3 py-10 md:px-5">
           <div className="mx-auto max-w-7xl text-center">
             <p className="flex items-center justify-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
-              Made with <Heart className="h-4 w-4 fill-travel-accentSoft text-travel-accentSoft" /> by 行迹
+              Made with <Icon icon={Heart} size="sm" className="fill-travel-accentSoft text-travel-accentSoft" /> by 行迹
             </p>
             <p className="mt-2 text-xs text-travel-ink dark:text-shell-muted">
               © {new Date().getFullYear()} All rights reserved.
@@ -529,7 +531,7 @@ export default function HomeClient({
               href="/download"
               className="mt-4 hidden md:inline-flex items-center gap-1.5 rounded-full border border-travel-line bg-white/70 px-4 py-2 text-xs font-medium text-travel-accent transition hover:bg-white dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom dark:hover:bg-shell-surface"
             >
-              <Smartphone className="h-3.5 w-3.5" />
+              <Icon icon={Smartphone} size="sm" />
               下载甜途 App
             </Link>
           </div>

@@ -2,6 +2,7 @@
 
 import { Camera, MessageCircle } from 'lucide-react'
 import Image from 'next/image'
+import { Icon } from '@/components/mobile/Icon'
 
 interface PolaroidWallProps {
   images: string[]
@@ -22,7 +23,7 @@ export default function PolaroidWall({ images, cityName, date, onPhotoClick }: P
     return (
       <div className="flex flex-col items-center justify-center h-full text-album-warm gap-3 p-8">
         <div className="item-frame w-20 h-20 flex items-center justify-center">
-          <Camera className="w-8 h-8 text-album-accent opacity-60" />
+          <Icon icon={Camera} size="lg" className="text-album-accent opacity-60" />
         </div>
         <p className="text-sm font-bold tracking-wider">这本相册还是空白的</p>
         <p className="text-xs text-album-warm">等待新的旅行记忆被装订进来...</p>
@@ -59,7 +60,7 @@ export default function PolaroidWall({ images, cityName, date, onPhotoClick }: P
                 <span className="photo-negative-tag">记忆底片</span>
                 {/* 悬停提示 */}
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                  <MessageCircle className="w-6 h-6 text-album-accentStrong" />
+                  <Icon icon={MessageCircle} size="md" className="text-album-accentStrong" />
                   <span className="text-album-accentStrong text-xs font-bold tracking-wider">点击开启留言</span>
                 </div>
               </div>

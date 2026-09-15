@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 export interface PhotoViewerItem {
   src: string
@@ -79,7 +80,7 @@ export default function PhotoViewer({ images, index, onClose, onIndexChange }: P
           className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-album-text1 border border-white/15 hover:bg-white/20 transition-colors"
           aria-label={scale === 1 ? '放大' : '缩小'}
         >
-          {scale === 1 ? <ZoomIn className="w-4 h-4" /> : <ZoomOut className="w-4 h-4" />}
+          {scale === 1 ? <Icon icon={ZoomIn} size="sm" /> : <Icon icon={ZoomOut} size="sm" />}
         </button>
         <button
           type="button"
@@ -87,7 +88,7 @@ export default function PhotoViewer({ images, index, onClose, onIndexChange }: P
           className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-album-text1 border border-white/15 hover:bg-white/20 transition-colors"
           aria-label="关闭"
         >
-          <X className="w-4 h-4" />
+          <Icon icon={X} size="sm" />
         </button>
       </div>
 
@@ -102,7 +103,7 @@ export default function PhotoViewer({ images, index, onClose, onIndexChange }: P
             className="absolute left-3 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-album-text1 border border-white/15 hover:bg-white/20 transition-colors"
             aria-label="上一张"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <Icon icon={ChevronLeft} size="md" />
           </button>
           <button
             type="button"
@@ -113,7 +114,7 @@ export default function PhotoViewer({ images, index, onClose, onIndexChange }: P
             className="absolute right-3 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-album-text1 border border-white/15 hover:bg-white/20 transition-colors"
             aria-label="下一张"
           >
-            <ChevronRight className="w-5 h-5" />
+            <Icon icon={ChevronRight} size="md" />
           </button>
         </>
       )}

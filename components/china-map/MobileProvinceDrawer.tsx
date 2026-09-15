@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { X, MapPin, Sparkles, ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { getProvince } from '@/data/provinces'
 import { getCitiesByProvince, type City } from '@/data/cities'
 import { travelDetailHref } from '@/lib/routes'
@@ -60,7 +61,7 @@ export default function MobileProvinceDrawer({
           >
             <span className="h-1.5 w-12 rounded-full bg-[var(--m-faint)] transition group-active:scale-90" />
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
-              {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              {expanded ? <Icon icon={ChevronDown} size="sm" /> : <Icon icon={ChevronUp} size="sm" />}
             </span>
           </button>
         </div>
@@ -76,7 +77,7 @@ export default function MobileProvinceDrawer({
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]"
                   aria-label="返回省份"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <Icon icon={ChevronLeft} size="md" />
                 </button>
                 <div className="min-w-0">
                   <h3 className="truncate text-[18px] font-bold text-[var(--m-text)]">{city.name}</h3>
@@ -85,8 +86,8 @@ export default function MobileProvinceDrawer({
               </>
             ) : (
               <>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#F6DFC4,#E4B478)] text-white">
-                  <MapPin className="h-5 w-5" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#F6DFC4,var(--m-sun))] text-white">
+                  <Icon icon={MapPin} size="md" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="truncate text-[18px] font-bold text-[var(--m-text)]">{provinceInfo.name}</h3>
@@ -101,7 +102,7 @@ export default function MobileProvinceDrawer({
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-2)] text-[var(--m-muted)]"
             aria-label="关闭"
           >
-            <X className="h-5 w-5" />
+            <Icon icon={X} size="md" />
           </button>
         </div>
 
@@ -114,7 +115,7 @@ export default function MobileProvinceDrawer({
               {provincePosts.length > 0 && (
                 <section className="pt-4">
                   <div className="mb-3 flex items-center gap-2 text-xs text-[var(--m-muted)]">
-                    <Sparkles className="h-4 w-4 text-[var(--m-accent)]" />
+                    <Icon icon={Sparkles} size="sm" tone="accent" />
                     <span>该省旅行记录</span>
                     <span className="ml-auto rounded-full bg-[var(--m-accent-soft)] px-2.5 py-0.5 font-semibold text-[var(--m-accent-strong)]">
                       {provincePosts.length}
@@ -126,7 +127,7 @@ export default function MobileProvinceDrawer({
 
               <section className="pt-4">
                 <div className="mb-3 flex items-center gap-2 text-xs text-[var(--m-muted)]">
-                  <MapPin className="h-4 w-4 text-[var(--m-accent)]" />
+                  <Icon icon={MapPin} size="sm" tone="accent" />
                   <span>城市足迹</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5">
@@ -145,9 +146,9 @@ export default function MobileProvinceDrawer({
                         }`}
                       >
                         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                          count > 0 ? 'bg-[linear-gradient(135deg,#E4B478,#C67A4E)] text-white' : 'bg-[var(--m-surface-2)] text-[var(--m-faint)]'
+                          count > 0 ? 'bg-[linear-gradient(135deg,var(--m-sun),var(--m-accent))] text-white' : 'bg-[var(--m-surface-2)] text-[var(--m-faint)]'
                         }`}>
-                          <MapPin className="h-4 w-4" />
+                          <Icon icon={MapPin} size="sm" />
                         </span>
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-semibold text-[var(--m-text)]">{c.name}</span>
@@ -185,7 +186,7 @@ function PostList({ posts }: { posts: PostMeta[] }) {
                 <Image src={cover} alt={post.title} fill sizes="56px" className="object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <MapPin className="h-5 w-5 text-[var(--m-faint)]" />
+                  <Icon icon={MapPin} size="md" tone="faint" />
                 </div>
               )}
             </div>
@@ -193,7 +194,7 @@ function PostList({ posts }: { posts: PostMeta[] }) {
               <p className="truncate text-[15px] font-semibold text-[var(--m-text)]">{post.title}</p>
               <p className="mt-0.5 truncate text-xs text-[var(--m-muted)]">{post.location || post.date}</p>
             </div>
-            <ChevronUp className="h-4 w-4 shrink-0 rotate-90 text-[var(--m-faint)]" />
+            <Icon icon={ChevronUp} size="sm" tone="faint" className="shrink-0 rotate-90" />
           </Link>
         )
       })}
@@ -205,7 +206,7 @@ function CityPosts({ cityName, posts }: { cityName: string; posts: PostMeta[] })
   return (
     <section className="pt-4">
       <div className="mb-3 flex items-center gap-2 text-xs text-[var(--m-muted)]">
-        <MapPin className="h-4 w-4 text-[var(--m-accent)]" />
+        <Icon icon={MapPin} size="sm" tone="accent" />
         <span>{cityName} 的旅行记录</span>
       </div>
       <PostList posts={posts} />

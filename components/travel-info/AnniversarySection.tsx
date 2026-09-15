@@ -1,4 +1,5 @@
 import { Calendar, Heart, Sparkles } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { formatAnniversaryDate, TravelInfoColors } from './types'
 
 export default function AnniversarySection({
@@ -25,7 +26,7 @@ export default function AnniversarySection({
             className="inline-flex items-center justify-center w-7 h-7 rounded-full"
             style={{ background: TravelInfoColors.bloom, opacity: 0.2 }}
           >
-            <Calendar className="w-4 h-4" style={{ color: TravelInfoColors.bloom }} />
+            <Icon icon={Calendar} size="sm" className="text-travel-bloom" />
           </span>
           <h3
             className="text-sm font-semibold tracking-wide"
@@ -34,10 +35,7 @@ export default function AnniversarySection({
             纪念日
           </h3>
         </div>
-        <Heart
-          className="w-4 h-4 animate-pulse"
-          style={{ color: TravelInfoColors.bloom, fill: TravelInfoColors.bloom }}
-        />
+        <Icon icon={Heart} size="sm" className="animate-pulse fill-travel-bloom text-travel-bloom" />
       </div>
       {hasAnniversary ? (
         <>
@@ -59,7 +57,7 @@ export default function AnniversarySection({
             className="mt-2 text-xs flex items-center gap-1.5"
             style={{ color: TravelInfoColors.ink, opacity: 0.6 }}
           >
-            <Sparkles className="w-3.5 h-3.5" style={{ color: TravelInfoColors.bloom }} />
+            <Icon icon={Sparkles} size="sm" className="text-travel-bloom" />
             从 {formatAnniversaryDate(anniversaryStart!)} 开始
           </div>
         </>

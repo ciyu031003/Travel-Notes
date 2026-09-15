@@ -26,7 +26,7 @@ import { Icon } from './Icon'
 
 const SIZE_CLASS = {
   sm: 'h-6 gap-1 px-2 text-[11px]',
-  md: 'h-7 gap-1.5 px-2.5 text-[12px]',
+  md: 'h-7 gap-1.5 px-2.5 text-[13px]',
 } as const
 
 export function Pill({

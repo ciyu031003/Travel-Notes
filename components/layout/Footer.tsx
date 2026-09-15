@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Heart, Mail, MapPin } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 function GithubIcon({ className }: { className?: string }) {
   return (
@@ -16,7 +17,7 @@ export default function Footer() {
         <div className="grid md:grid-cols-3 gap-8">
           <div>
             <h3 className="font-bold text-lg mb-4 text-travel-inkStrong flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-travel-accent" />
+              <Icon icon={MapPin} size="md" className="text-travel-accent" />
               行迹
             </h3>
             <p className="text-travel-ink text-sm">
@@ -37,7 +38,7 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">联系方式</h4>
             <div className="flex gap-4">
               <a href="mailto:your@email.com" className="p-2 rounded-lg bg-travel-sakura/30 hover:bg-travel-sakura/60 transition-colors">
-                <Mail className="w-5 h-5 text-travel-ink" />
+                <Icon icon={Mail} size="md" className="text-travel-ink" />
               </a>
               <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-travel-sakura/30 hover:bg-travel-sakura/60 transition-colors">
                 <GithubIcon className="w-5 h-5 text-travel-ink" />
@@ -47,7 +48,7 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-6 border-t border-travel-line/60 dark:border-shell-line text-center text-sm text-travel-ink/60 dark:text-shell-muted">
           <p className="flex items-center justify-center gap-1">
-            Made with <Heart className="w-4 h-4 text-travel-accent fill-travel-accent" /> by 行迹
+            Made with <Icon icon={Heart} size="sm" className="text-travel-accent fill-travel-accent" /> by 行迹
           </p>
           <p className="mt-1">© {new Date().getFullYear()} All rights reserved.</p>
         </div>

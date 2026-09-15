@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Send, Loader2, Clock, MessageCircle, ImageIcon, X, BookOpen } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import PixelDeskBackground from './PixelDeskBackground'
 
 interface Message {
@@ -177,7 +178,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                   aria-label="关闭留言"
                   title="合上书本"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <Icon icon={X} size="sm" />
                 </button>
               </div>
 
@@ -204,11 +205,11 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
               >
                 {loading ? (
                   <div className="flex items-center justify-center h-full py-10">
-                    <Loader2 className="w-5 h-5 text-pixel-muted animate-spin" />
+                    <Icon icon={Loader2} size="md" className="text-pixel-muted animate-spin" />
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full gap-2 text-center py-10">
-                    <BookOpen className="w-10 h-8 text-pixel-muted opacity-60" />
+                    <Icon icon={BookOpen} size="lg" className="text-pixel-muted opacity-60" />
                     <p className="text-xs text-album-warm font-bold leading-relaxed">
                       还没有留言，
                       <br />
@@ -257,7 +258,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                     className="pixel-btn pixel-border-green px-3 text-xs font-bold rounded-sm"
                     style={{ flexShrink: 0 }}
                   >
-                    {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    {sending ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Send} size="sm" />}
                     发送
                   </button>
                 </div>
@@ -280,7 +281,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
               {/* 日期 */}
               <div className="flex justify-end items-center pb-2 border-b border-album-warm/35 text-pixel-muted text-xs font-bold select-none">
                 <span className="flex items-center gap-1 text-pixel-ink">
-                  <Clock className="w-3.5 h-3.5" /> {todayText()}
+                  <Icon icon={Clock} size="sm" /> {todayText()}
                 </span>
               </div>
 
@@ -319,7 +320,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                   onClick={() => setPreviewOpen(true)}
                   className="flex-1 mc-button mc-button-gold !py-1.5 text-xs font-bold flex items-center justify-center gap-1"
                 >
-                  <ImageIcon size={11} className="shrink-0" />
+                  <Icon icon={ImageIcon} size="sm" className="shrink-0" />
                   预览大图
                 </button>
                 <button
@@ -327,7 +328,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                   onClick={onBack}
                   className="flex-1 mc-button mc-button-parchment !py-1.5 text-xs font-bold flex items-center justify-center gap-1"
                 >
-                  <MessageCircle size={11} className="shrink-0" />
+                  <Icon icon={MessageCircle} size="sm" className="shrink-0" />
                   返回相册
                 </button>
               </div>
@@ -354,7 +355,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
             className="pixel-close-btn absolute top-4 right-4 z-10"
             aria-label="关闭预览"
           >
-            <X className="w-4 h-4" />
+            <Icon icon={X} size="sm" />
           </button>
           <div className="max-w-4xl w-full max-h-full" onClick={(e) => e.stopPropagation()}>
             <img

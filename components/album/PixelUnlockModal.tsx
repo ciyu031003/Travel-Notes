@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Lock, X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 interface PixelUnlockModalProps {
   isOpen: boolean
@@ -65,12 +66,12 @@ export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUn
           className="pixel-close-btn absolute top-3 right-3"
           aria-label="关闭"
         >
-          <X className="w-3.5 h-3.5" />
+          <Icon icon={X} size="sm" />
         </button>
 
         <div className="text-center mb-5 select-none">
           <div className="book-cover-3d w-20 h-24 mx-auto flex items-center justify-center mb-4 rounded-sm">
-            <Lock className="w-7 h-7 text-album-accent" />
+            <Icon icon={Lock} size="lg" className="text-album-accent" />
           </div>
           <h3 className="font-zpix text-xl font-bold text-pixel-ink tracking-wider">相册已上锁</h3>
           <p className="text-xs text-album-warm mt-1.5">请输入纪念日作为密码</p>

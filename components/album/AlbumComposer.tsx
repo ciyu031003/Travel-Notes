@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Loader2, Sparkles, X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { createAlbum } from '@/lib/modules/offline/album-write'
 
 /**
@@ -49,7 +50,7 @@ export default function AlbumComposer({ onCreated }: { onCreated?: () => void })
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-full bg-album-accent/90 px-3.5 py-1.5 text-sm font-bold text-white transition hover:bg-album-accent"
       >
-        <Plus className="h-4 w-4" />
+        <Icon icon={Plus} size="sm" />
         新建相册
       </button>
     )
@@ -66,7 +67,7 @@ export default function AlbumComposer({ onCreated }: { onCreated?: () => void })
         className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full p-2 text-album-warm/60 hover:bg-white/10"
         aria-label="关闭"
       >
-        <X className="h-4 w-4" />
+        <Icon icon={X} size="sm" />
       </button>
       <h3 className="mb-3 font-zpix font-bold text-album-accent">新建相册</h3>
       <div className="space-y-3">
@@ -96,7 +97,7 @@ export default function AlbumComposer({ onCreated }: { onCreated?: () => void })
       <div className="mt-4 flex items-center justify-between gap-3">
         {message && (
           <p className={`flex items-center gap-1.5 text-xs ${message.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
-            <Sparkles className="h-3 w-3" />
+            <Icon icon={Sparkles} size="sm" />
             {message.text}
           </p>
         )}
@@ -105,7 +106,7 @@ export default function AlbumComposer({ onCreated }: { onCreated?: () => void })
           disabled={submitting || !title.trim()}
           className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-album-accent px-4 py-1.5 text-sm font-bold text-white transition hover:bg-album-accentStrong disabled:opacity-50"
         >
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          {submitting ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />}
           保存
         </button>
       </div>

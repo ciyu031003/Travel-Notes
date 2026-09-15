@@ -129,7 +129,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
               <button type="button" onClick={() => setReplyTo(null)} className="text-[var(--social-faint)] hover:text-[var(--social-text)]">取消</button>
             </div>
           )}
-          {error && <p className="mb-2 text-xs text-[#E06C6C]">{error}</p>}
+          {error && <p className="mb-2 text-xs text-[var(--danger-soft)]">{error}</p>}
           <div className="flex items-center gap-2">
             <input value={content} onChange={(e) => setContent(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}

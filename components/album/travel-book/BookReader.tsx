@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, List, X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import type { Book, BookChapter, BookPhoto } from './TravelBook'
 import ArtFlipBook, { type ArtFlipBookHandle } from '../reader/ArtFlipBook'
 import {
@@ -178,11 +179,11 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           onClick={onBack}
           className="inline-flex items-center gap-1.5 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20"
         >
-          <ChevronLeft className="h-3.5 w-3.5" />
+          <Icon icon={ChevronLeft} size="sm" />
           返回画册墙
         </button>
         <div className="flex min-w-0 items-center gap-1.5 font-display text-sm font-semibold text-travel-ink dark:text-shell-text">
-          <BookOpen className="h-4 w-4 shrink-0 text-travel-bloom" />
+          <Icon icon={BookOpen} size="sm" className="shrink-0 text-travel-bloom" />
           <span className="truncate">{book.title}</span>
         </div>
         <button
@@ -191,7 +192,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           aria-label="关闭"
           className="rounded-full p-2 text-travel-ink/60 transition-colors hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
         >
-          <X className="h-4 w-4" />
+          <Icon icon={X} size="sm" />
         </button>
       </header>
 
@@ -212,7 +213,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
               aria-label="章节直达"
               className="pointer-events-auto flex max-w-[min(92%,720px)] items-center gap-1 overflow-x-auto rounded-full border border-travel-dim/50 bg-travel-cream/90 px-2 py-1.5 shadow-[0_8px_24px_-12px_rgba(90,60,40,0.35)] backdrop-blur dark:border-shell-line dark:bg-shell-surface/90 dark:shadow-black/40"
             >
-              <List className="mx-1 h-3.5 w-3.5 shrink-0 text-travel-bloom dark:text-travel-bloom" />
+              <Icon icon={List} size="sm" className="mx-1 shrink-0 text-travel-bloom dark:text-travel-bloom" />
               {chapterStarts.map(({ chapter, pageIndex }) => (
                 <button
                   key={chapter.index}
@@ -230,7 +231,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
 
       <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-3 py-2.5 sm:justify-center sm:px-4 dark:border-shell-line">
         <button type="button" onClick={() => artFlipRef.current?.flipPrev()} className={navBtn}>
-          <ChevronLeft className="h-3.5 w-3.5" />上一页
+          <Icon icon={ChevronLeft} size="sm" />上一页
         </button>
         <div className="flex min-w-0 flex-1 items-center justify-center sm:flex-none sm:px-5">
           <span
@@ -242,7 +243,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           </span>
         </div>
         <button type="button" onClick={() => artFlipRef.current?.flipNext()} className={navBtn}>
-          下一页<ChevronRight className="h-3.5 w-3.5" />
+          下一页<Icon icon={ChevronRight} size="sm" />
         </button>
       </footer>
     </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { MapPin } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import PixelBadge from './PixelBadge'
 
 interface TravelLocationBadgeProps {
@@ -16,7 +17,7 @@ export default function TravelLocationBadge({ location, className }: TravelLocat
   if (!location) return null
   return (
     <PixelBadge className={className}>
-      <MapPin className="h-3 w-3" />
+      <Icon icon={MapPin} size="sm" />
       {location}
     </PixelBadge>
   )

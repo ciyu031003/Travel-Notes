@@ -1,4 +1,5 @@
 import { Sparkles } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import ProgressRow from './ProgressRow'
 import { TravelInfoColors } from './types'
 
@@ -32,7 +33,7 @@ export default function StatsSection({
           className="inline-flex items-center justify-center w-7 h-7 rounded-full"
           style={{ background: `${TravelInfoColors.bloom}33` }}
         >
-          <Sparkles className="w-4 h-4" style={{ color: TravelInfoColors.bloom }} />
+          <Icon icon={Sparkles} size="sm" className="text-travel-bloom" />
         </span>
         <h3
           className="text-sm font-semibold tracking-wide"

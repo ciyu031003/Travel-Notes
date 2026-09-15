@@ -137,7 +137,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
             onClick={onBack}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-album-text1 text-xs border border-white/10 transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <Icon icon={ArrowLeft} size="sm" />
             返回
           </button>
           <div className="relative w-9 h-9 rounded-full overflow-hidden border border-white/15 flex-shrink-0 shadow-md">
@@ -148,7 +148,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
               {cityName ? `${cityName} · 星河留言` : '星河留言'}
             </h2>
             <p className="text-album-text2 text-xs mt-0.5 flex items-center gap-1 truncate">
-              <Sparkles className="w-3 h-3 text-album-accent shrink-0" />
+              <Icon icon={Sparkles} size="sm" className="text-album-accent shrink-0" />
               留言仅绑定当前照片
             </p>
           </div>
@@ -168,11 +168,11 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
 
           {loading ? (
             <div className="flex justify-center pt-10">
-              <Loader2 className="w-5 h-5 text-album-text2 animate-spin" />
+              <Icon icon={Loader2} size="md" className="text-album-text2 animate-spin" />
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center pt-12 text-album-text2 gap-2">
-              <MessageCircle className="w-9 h-9 opacity-40" />
+              <Icon icon={MessageCircle} size="lg" className="opacity-40" />
               <p className="text-xs">还没有留言，发送第一条吧</p>
             </div>
           ) : (
@@ -187,7 +187,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
                   </div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-album-accentStrong to-album-accent flex items-center justify-center flex-shrink-0 shadow-lg mt-4">
-                  <Moon className="w-4 h-4 text-white" />
+                  <Icon icon={Moon} size="sm" tone="inverse" />
                 </div>
               </div>
             ))
@@ -218,7 +218,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
               disabled={sending || !input.trim()}
               className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-album-ok text-album-bg0 text-sm font-medium hover:brightness-105 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
             >
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sending ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Send} size="sm" />}
               发送
             </button>
           </div>

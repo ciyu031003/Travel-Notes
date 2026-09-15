@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight, Calendar, MapPin, Tag, ArrowLeft, Play } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { remark } from 'remark'
 import remarkGfm from 'remark-gfm'
 import remarkHtml from 'remark-html'
@@ -113,7 +114,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
         <div className="flex items-center justify-between px-6 py-4 border-b border-travel-line dark:border-shell-line">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-travel-sand dark:text-shell-muted text-sm">
-              <ArrowLeft className="w-4 h-4" />
+              <Icon icon={ArrowLeft} size="sm" />
               预览模式
             </div>
           </div>
@@ -121,7 +122,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
             onClick={onClose}
             className="w-9 h-9 rounded-lg flex items-center justify-center text-travel-sand hover:text-travel-inkStrong dark:text-shell-muted dark:hover:text-shell-text hover:bg-travel-sakura/40 dark:hover:bg-white/10 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <Icon icon={X} size="md" />
           </button>
         </div>
 
@@ -203,13 +204,13 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                             onClick={prev}
                             className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-black/70 transition-colors"
                           >
-                            <ChevronLeft className="w-5 h-5 text-travel-inkStrong dark:text-shell-text" />
+                            <Icon icon={ChevronLeft} size="md" className="text-travel-inkStrong dark:text-shell-text" />
                           </button>
                           <button
                             onClick={next}
                             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-black/70 transition-colors"
                           >
-                            <ChevronRight className="w-5 h-5 text-travel-inkStrong dark:text-shell-text" />
+                            <Icon icon={ChevronRight} size="md" className="text-travel-inkStrong dark:text-shell-text" />
                           </button>
 
                           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
@@ -230,7 +231,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                             <span>{currentIndex + 1} / {mediaItems.length}</span>
                             {mediaItems[currentIndex]?.type === 'video' && (
                               <span className="flex items-center gap-1 text-sky-300">
-                                <Play className="w-3 h-3" />
+                                <Icon icon={Play} size="sm" />
                                 视频
                               </span>
                             )}
@@ -265,7 +266,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                               )
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-shell-surface2 to-shell-bg flex items-center justify-center">
-                                <Play className="w-5 h-5 text-white/70" />
+                                <Icon icon={Play} size="md" className="text-white/70" />
                               </div>
                             )}
                           </button>
@@ -282,17 +283,17 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
                 </h1>
                 <div className="flex items-center gap-4 text-travel-sand dark:text-shell-muted text-sm flex-wrap">
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
+                    <Icon icon={Calendar} size="sm" />
                     {formData.date || new Date().toISOString().split('T')[0]}
                   </span>
                   {formData.location && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
+                      <Icon icon={MapPin} size="sm" />
                       {formData.location}
                     </span>
                   )}
                   <span className="flex items-center gap-1">
-                    <Tag className="w-4 h-4" />
+                    <Icon icon={Tag} size="sm" />
                     &apos;旅行记录&apos;
                   </span>
                 </div>

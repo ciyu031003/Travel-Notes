@@ -308,13 +308,13 @@ export const WEATHER_ICON: Record<WeatherKind, LucideIcon> = {
   snowy: CloudSnow,
 }
 
-export const WEATHER_TONE: Record<WeatherKind, IconTone> = {
-  sunny: 'warning',
-  cloudy: 'muted',
-  rainy: 'muted',
-  overcast: 'faint',
-  snowy: 'muted',
-}
+/*
+ * 天气「不」提供 tone 映射，这是有意为之：
+ * 天气图标沿用 travel-info 模块的调色板（TravelInfoColors：sunny #E4B478 /
+ * cloudy·rainy #A8C8DC / overcast #5A6670），若改套本文件的 tone（指向 --m-*），
+ * 云雨会由蓝变棕 —— 属规范 §5.3 的跨主题静默变色。
+ * 因此 WeatherIcon 只从这里取「图标」，颜色由使用方按自己体系决定。
+ */
 
 /* ══════════════════════════════════════════════════════════════════════════
    8. 导航语义（去重：MapPin 不再同时表示地点/省份/旅行/足迹四种含义）

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Send, Sparkles } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
@@ -96,7 +97,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
   }
 
   if (loading) {
-    return <div className="container-custom py-20 text-center text-travel-sand"><Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />加载中...</div>
+    return <div className="container-custom py-20 text-center text-travel-sand"><Icon icon={Loader2} size="lg" className="animate-spin mx-auto mb-3" />加载中...</div>
   }
 
   if (!travel) {
@@ -108,7 +109,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
       <header className="sticky top-0 z-10 bg-travel-cream/90 backdrop-blur border-b border-[#E8E8E4]">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link href={travelDetailHref(slug)} className="p-2 -ml-2 text-travel-ink">
-            <ArrowLeft className="w-5 h-5" />
+            <Icon icon={ArrowLeft} size="md" />
           </Link>
           <h1 className="font-semibold text-travel-ink">记录此刻 · {travel.title}</h1>
         </div>
@@ -122,7 +123,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
         )}
         {success ? (
           <div className="card p-8 text-center text-green-600 flex flex-col items-center gap-2">
-            <Sparkles className="w-5 h-5" />
+            <Icon icon={Sparkles} size="md" />
             {isNativePlatform() && !navigator.onLine ? '已保存到本地，联网后自动上传' : '已保存，即将返回…'}
           </div>
         ) : travel.spaceId ? (
@@ -169,7 +170,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
               disabled={submitting}
               className="w-full py-3 bg-gradient-to-r from-travel-bloom to-[#D4A5B0] text-white font-semibold rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {submitting ? '保存中...' : <><Send className="w-4 h-4" />保存回忆</>}
+              {submitting ? '保存中...' : <><Icon icon={Send} size="sm" />保存回忆</>}
             </button>
           </form>
         ) : (

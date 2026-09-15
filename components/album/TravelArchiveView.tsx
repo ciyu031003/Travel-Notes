@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ArrowLeft, MapPin } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import AlbumPhoto from './AlbumPhoto'
 import AlbumDayDivider from './AlbumDayDivider'
 import PhotoViewer from './PhotoViewer'
@@ -54,7 +55,7 @@ export default function TravelArchiveView({ city, onClose }: TravelArchiveViewPr
           onClick={onClose}
           className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs text-album-text1 transition-colors hover:bg-white/20"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <Icon icon={ArrowLeft} size="sm" />
           返回相册
         </button>
         <span className="font-zpix text-sm font-bold tracking-widest text-album-accent">
@@ -75,7 +76,7 @@ export default function TravelArchiveView({ city, onClose }: TravelArchiveViewPr
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <TravelLocationBadge location={city.province ? `${city.province} · ${city.name}` : city.name} />
           <PixelBadge className="gap-1.5">
-            <MapPin className="h-3 w-3" />
+            <Icon icon={MapPin} size="sm" />
             {city.date}
           </PixelBadge>
           <PixelBadge>{city.images.length} 张</PixelBadge>

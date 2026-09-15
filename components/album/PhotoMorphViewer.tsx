@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { X, MessageCircle, MapPin } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import MorphSlider from './morphslider/MorphSlider'
 
 interface PhotoMorphViewerProps {
@@ -58,7 +59,7 @@ export default function PhotoMorphViewer({
           className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-album-text1 border border-white/15 hover:bg-white/20 transition-colors"
           aria-label="关闭"
         >
-          <X className="w-4 h-4" />
+          <Icon icon={X} size="sm" />
         </button>
       </div>
 
@@ -69,7 +70,7 @@ export default function PhotoMorphViewer({
       >
         {cityName && (
           <p className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-bold tracking-wider text-album-text1 border border-white/15">
-            <MapPin className="h-3 w-3" />
+            <Icon icon={MapPin} size="sm" />
             {cityName}
           </p>
         )}
@@ -81,7 +82,7 @@ export default function PhotoMorphViewer({
           onClick={goChat}
           className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-bold text-album-text1 hover:bg-white/20 transition-colors"
         >
-          <MessageCircle className="h-3.5 w-3.5" />
+          <Icon icon={MessageCircle} size="sm" />
           给这张照片留言
         </button>
       </div>

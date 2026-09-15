@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, X, Heart, ArrowLeft } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 
 interface AlbumUnlockModalProps {
   isOpen: boolean
@@ -97,12 +98,12 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
             onClick={handleClose}
             className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-travel-sand/50 hover:text-travel-sand hover:bg-white/60 dark:text-travel-sandSoft/60 dark:hover:text-travel-sandLight dark:hover:bg-white/10 rounded-full transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon icon={X} size="sm" />
           </button>
 
           <div className="flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-gradient-to-br from-travel-sakura to-travel-bloom rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-              <Heart className="w-8 h-8 text-white fill-white" />
+              <Icon icon={Heart} size="lg" tone="inverse" className="fill-white" />
             </div>
 
             <h3 className="text-xl font-bold text-travel-inkStrong dark:text-shell-text">
@@ -116,7 +117,11 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
           <form onSubmit={handleAlbumUnlock} className="mt-6 space-y-4">
             <div>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-travel-sand/40" />
+                <Icon
+                  icon={Lock}
+                  size="sm"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/40"
+                />
                 <input
                   type="text"
                   value={albumPassword}

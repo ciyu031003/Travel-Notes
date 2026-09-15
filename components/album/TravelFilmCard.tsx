@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { Bookmark, Heart, ImageIcon, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Icon } from '@/components/mobile/Icon'
 
 export interface TravelFilmStats {
   likes?: number
@@ -91,19 +92,19 @@ export default function TravelFilmCard({
     <div className="flex items-center gap-3 text-album-text2">
       {stats?.likes !== undefined && (
         <span className="inline-flex items-center gap-1 text-xs tabular-nums">
-          <Heart className="h-3.5 w-3.5" />
+          <Icon icon={Heart} size="sm" />
           {stats.likes}
         </span>
       )}
       {stats?.comments !== undefined && (
         <span className="inline-flex items-center gap-1 text-xs tabular-nums">
-          <MessageCircle className="h-3.5 w-3.5" />
+          <Icon icon={MessageCircle} size="sm" />
           {stats.comments}
         </span>
       )}
       {stats?.bookmarks !== undefined && (
         <span className="inline-flex items-center gap-1 text-xs tabular-nums">
-          <Bookmark className="h-3.5 w-3.5" />
+          <Icon icon={Bookmark} size="sm" />
           {stats.bookmarks}
         </span>
       )}
@@ -127,7 +128,7 @@ export default function TravelFilmCard({
         />
       ) : (
         <div className={cn('absolute inset-0 flex items-center justify-center', t.placeholder)}>
-          <ImageIcon className={cn('h-8 w-8', t.placeholderIcon)} />
+          <Icon icon={ImageIcon} size="lg" className={cn(t.placeholderIcon)} />
         </div>
       )}
     </div>
@@ -160,7 +161,7 @@ export default function TravelFilmCard({
             <Image src={coverUrl} alt={title || cityName || '旅行封面'} fill sizes="112px" className="object-cover" />
           ) : (
             <div className={cn('absolute inset-0 flex items-center justify-center', t.placeholder)}>
-              <ImageIcon className={cn('h-5 w-5', t.placeholderIcon)} />
+              <Icon icon={ImageIcon} size="md" className={cn(t.placeholderIcon)} />
             </div>
           )}
         </div>

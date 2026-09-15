@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BookOpen, BookMarked, Camera, MapPin } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import type { BookSummary } from '@/components/album/travel-book/TravelBook'
 import './postcard.css'
@@ -104,7 +105,7 @@ export default function PostcardCard({
     >
       {/* 桌面 hover：翻开引导（指示点不做交互）*/}
       <span className="pcard-open-hint" aria-hidden="true">
-        <BookMarked className="mr-1.5 h-3.5 w-3.5" />
+        <Icon icon={BookMarked} size="sm" className="mr-1.5" />
         翻开
       </span>
 
@@ -146,12 +147,12 @@ export default function PostcardCard({
         <span className="pcard-body">
           <span className="pcard-title">{book.title}</span>
           <span className="pcard-meta">
-            {book.location && <span><MapPin className="h-3 w-3" />{book.location}</span>}
+            {book.location && <span><Icon icon={MapPin} size="sm" />{book.location}</span>}
             {date && <span>{date}</span>}
           </span>
           <span className="pcard-thin">
-            <span><BookOpen className="h-3 w-3" />{book.dayCount} 章</span>
-            <span><Camera className="h-3 w-3" />{book.photoCount} 图</span>
+            <span><Icon icon={BookOpen} size="sm" />{book.dayCount} 章</span>
+            <span><Icon icon={Camera} size="sm" />{book.photoCount} 图</span>
             {book.travelType && <span className="pcard-pill">{TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}</span>}
           </span>
         </span>

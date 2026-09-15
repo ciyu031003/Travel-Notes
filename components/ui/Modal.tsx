@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { cn } from '@/lib/utils'
 
 interface ModalProps {
@@ -97,7 +98,7 @@ export function Modal({
                 aria-label="关闭"
                 className="ml-auto rounded-full p-1 text-semantic-muted transition hover:bg-semantic-accentWeak hover:text-semantic-text"
               >
-                <X className="h-4 w-4" />
+                <Icon icon={X} size="sm" />
               </button>
             )}
           </div>

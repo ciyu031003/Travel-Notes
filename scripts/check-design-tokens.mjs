@@ -55,6 +55,64 @@ const ALLOWED_FONT_SIZES = new Set([
   32, 24, 18, 15, 13, 11,
 ])
 
+/**
+ * 调色板声明文件：这些文件的职责就是「把颜色集中声明成常量/调色板」，
+ * 其中的 hex 属于合法声明（但若与既有 token 重复，仍会被标为可收敛）。
+ *
+ * 渲染值文件：WebGL / Canvas / 粒子引擎里的颜色是渲染参数，
+ * 不是 UI 语义色，收敛价值低，单独归类避免淹没真正的问题。
+ */
+const PALETTE_FILES = [
+  'components/china-map/types.ts',
+  'components/travel-info/types.ts',
+]
+const RENDER_VALUE_FILES = [
+  'components/album/StarfieldBackground.tsx',
+  'components/album/space/',
+  'components/album/driftwall/',
+  'components/album/morphslider/',
+  'components/home/HeroFootprintMap.tsx',
+  'components/china-map/ChinaMap',
+]
+
+/**
+ * 构建 token 索引：解析 CSS 里的 `--name: #hex` → value → [names]
+ * 用于区分两类 hex：
+ *   · duplicatesToken —— 值与既有 token 完全相同 ⇒ 应改用该 token（高价值、低风险）
+ *   · unmatched       —— 未匹配任何 token ⇒ 多为渲染参数或缺失的新色，需人工判断
+ */
+function buildTokenIndex() {
+  const cssFiles = ['app/globals.css', 'app/mobile.css']
+  const byValue = new Map()
+  for (const rel of cssFiles) {
+    let css
+    try {
+      css = readFileSync(join(ROOT, rel), 'utf8')
+    } catch {
+      continue
+    }
+    for (const m of css.matchAll(/(--[a-zA-Z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\b/g)) {
+      const name = m[1]
+      const value = m[2].toLowerCase()
+      const key = value.length === 4
+        ? '#' + [...value.slice(1)].map((c) => c + c).join('')
+        : value
+      if (!byValue.has(key)) byValue.set(key, [])
+      if (!byValue.get(key).includes(name)) byValue.get(key).push(name)
+    }
+  }
+  return byValue
+}
+
+const TOKEN_BY_VALUE = buildTokenIndex()
+
+function classifyHex(raw) {
+  const v = raw.toLowerCase()
+  const key = v.length === 4 ? '#' + [...v.slice(1)].map((c) => c + c).join('') : v
+  const names = TOKEN_BY_VALUE.get(key)
+  return names ? { kind: 'duplicatesToken', token: names[0] } : { kind: 'unmatched' }
+}
+
 const CHAR_ICON_RE = /[✦✨✍★☆♡❤️🔥⭐️]/u
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/g
 const RGBA_RE = /\brgba?\(/g
@@ -62,6 +120,18 @@ const LUCIDE_IMPORT_RE = /from\s+['"]lucide-react['"]/
 const LUCIDE_JSX_SIZE_RE = /<(?:[A-Z][A-Za-z0-9]*)\s+className="[^"]*\b([hw])-(\d+(?:\.\d+)?)\b/g
 const FONT_SIZE_RE = /text-\[(\d+(?:\.\d+)?)px\]/g
 const MAGIC_RADIUS_RE = /rounded-\[(\d+(?:\.\d+)?)px\]/g
+
+/**
+ * 合法的字面量场景（不计入违规）：
+ *  · `<meta name="theme-color" content="#xxx">` —— HTML meta 无法引用 CSS 变量
+ *  · `manifest.json` / `og:image` 等元数据
+ *  · 集中调色板声明文件（PALETTE_FILES）—— 它们就是「声明处」
+ */
+function isLegitLiteral(rel, line) {
+  if (/content=["']#[0-9a-fA-F]{3,8}["']/.test(line)) return 'meta'
+  if (PALETTE_FILES.includes(rel)) return 'palette'
+  return null
+}
 
 function walk(dir, out = []) {
   let entries
@@ -118,13 +188,27 @@ for (const file of files) {
     const trimmed = line.trim()
     if (trimmed.startsWith('*') || trimmed.startsWith('//') || trimmed.startsWith('/*')) return
 
-    const push = (bucket, detail) => {
-      const rec = { at, detail: detail ?? trimmed.slice(0, 120) }
+    const push = (bucket, detail, extra) => {
+      const rec = { at, detail: detail ?? trimmed.slice(0, 120), ...(extra || {}) }
       if (allowed) infoFindings.push({ bucket, ...rec })
       else findings[bucket].push(rec)
     }
 
-    for (const m of line.matchAll(HEX_RE)) push('hexColor', m[0])
+    for (const m of line.matchAll(HEX_RE)) {
+      const legit = isLegitLiteral(rel, line)
+      if (legit) {
+        infoFindings.push({ bucket: 'hexColor', at, detail: `${m[0]} (${legit === 'meta' ? 'meta 标签' : '调色板声明'}，合法)` })
+        continue
+      }
+      const cls = classifyHex(m[0])
+      push('hexColor', m[0], {
+        hex: m[0],
+        hexKind: cls.kind,
+        token: cls.token,
+        renderValue: RENDER_VALUE_FILES.some((r) => rel.includes(r)),
+        paletteFile: false,
+      })
+    }
     for (const m of line.matchAll(RGBA_RE)) push('rgbaColor', m[0])
     if (LUCIDE_IMPORT_RE.test(line) && !isIconSystem(rel)) push('lucideImport')
     if (CHAR_ICON_RE.test(line)) push('charIcon')
@@ -193,6 +277,37 @@ console.log(`主题豁免（相册三模式 / 后台，刻意保留自有视觉�
 for (const [key, label] of Object.entries(LABELS)) {
   const n = infoSummary[key] ?? 0
   if (n > 0) console.log(`   · ${label}: ${n} 个文件`)
+}
+console.log('-'.repeat(56))
+console.log('硬编码色分类（决定收敛优先级）:')
+{
+  const hexAll = findings.hexColor
+  const dup = hexAll.filter((r) => r.hexKind === 'duplicatesToken')
+  const unmatched = hexAll.filter((r) => r.hexKind === 'unmatched')
+  const renderish = unmatched.filter((r) => r.renderValue || r.paletteFile)
+  const realGap = unmatched.filter((r) => !r.renderValue && !r.paletteFile)
+
+  const dupFiles = new Set(dup.map((r) => r.at.split(':')[0]))
+  const gapFiles = new Set(realGap.map((r) => r.at.split(':')[0]))
+
+  console.log(`   ① 与既有 token 同值（应直接改用该 token）`)
+  console.log(`      ${dup.length} 处 / ${dupFiles.size} 文件`)
+  const topDup = new Map()
+  for (const r of dup) {
+    const k = `${r.hex} → ${r.token}`
+    topDup.set(k, (topDup.get(k) || 0) + 1)
+  }
+  ;[...topDup.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .forEach(([k, n]) => console.log(`        · ${k}  ×${n}`))
+
+  console.log(`   ② 渲染参数/调色板声明（WebGL·Canvas·集中声明，收敛价值低）`)
+  console.log(`      ${renderish.length} 处 / ${new Set(renderish.map((r) => r.at.split(':')[0])).size} 文件`)
+
+  console.log(`   ③ 未匹配 token 的散落色（需人工判断是否补 token）`)
+  console.log(`      ${realGap.length} 处 / ${gapFiles.size} 文件`)
+  ;[...new Set(realGap.map((r) => r.at.split(':')[0]))].slice(0, 6).forEach((f) => console.log(`        · ${f}`))
 }
 console.log('-'.repeat(56))
 console.log(`\n待处理合计: ${total} 个文件\n`)

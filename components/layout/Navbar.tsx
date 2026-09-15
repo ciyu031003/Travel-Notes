@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, MapPin, CalendarDays, Menu, X, Moon, Sun, Settings, LogOut, Search, Compass, BookOpen } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import BrandLogo from '@/components/brand/BrandLogo'
@@ -138,7 +139,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                     : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
               )}
             >
-              <item.icon className="w-4 h-4" />
+              <Icon icon={item.icon} size="sm" />
               {item.label}
             </Link>
           ))}
@@ -153,7 +154,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             title="搜索"
             aria-label="搜索"
           >
-            <Search className="w-5 h-5" />
+            <Icon icon={Search} size="md" />
           </Link>
           <button
             onClick={toggleTheme}
@@ -165,7 +166,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             )}
             aria-label={isDark ? '切换到亮色模式' : '切换到暗色模式'}
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {isDark ? <Icon icon={Sun} size="md" /> : <Icon icon={Moon} size="md" />}
           </button>
           <Link
             href="/admin"
@@ -178,7 +179,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             title="管理后台"
             aria-label="管理后台"
           >
-            <Settings className="w-5 h-5" />
+            <Icon icon={Settings} size="md" />
           </Link>
           {username && (
             <div className="flex items-center gap-2 ml-2 pl-3 border-l border-travel-line/60 dark:border-shell-line">
@@ -198,7 +199,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 )}
                 title="退出登录"
               >
-                <LogOut className="w-5 h-5" />
+                <Icon icon={LogOut} size="md" />
               </button>
             </div>
           )}
@@ -216,7 +217,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             title="搜索"
             aria-label="搜索"
           >
-            <Search className="w-5 h-5" />
+            <Icon icon={Search} size="md" />
           </Link>
           <button
             onClick={toggleTheme}
@@ -228,7 +229,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             )}
             aria-label={isDark ? '切换到亮色模式' : '切换到暗色模式'}
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {isDark ? <Icon icon={Sun} size="md" /> : <Icon icon={Moon} size="md" />}
           </button>
           <Link
             href="/admin"
@@ -241,7 +242,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             title="管理后台"
             aria-label="管理后台"
           >
-            <Settings className="w-5 h-5" />
+            <Icon icon={Settings} size="md" />
           </Link>
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -253,7 +254,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             )}
             aria-label={isMenuOpen ? '关闭导航菜单' : '打开导航菜单'}
           >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMenuOpen ? <Icon icon={X} size="md" /> : <Icon icon={Menu} size="md" />}
           </button>
         </div>
       </nav>
@@ -284,7 +285,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                       : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
                   )}
                 >
-                  <item.icon className="w-5 h-5" />
+                  <Icon icon={item.icon} size="md" />
                   {item.label}
                 </Link>
               ))}
@@ -299,7 +300,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                     : 'text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
                 )}
               >
-                <Search className="w-5 h-5" />
+                <Icon icon={Search} size="md" />
                 搜索
               </Link>
               <Link
@@ -307,7 +308,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 onClick={() => setIsMenuOpen(false)}
                 className="px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-ink hover:bg-travel-sakura/30 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white border-t border-travel-line/60 dark:border-shell-line mt-2 pt-3"
               >
-                <Settings className="w-5 h-5" />
+                <Icon icon={Settings} size="md" />
                 管理后台
               </Link>
               {username && (
@@ -318,7 +319,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                   }}
                   className="w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-travel-danger dark:text-travel-danger hover:bg-travel-danger/10 dark:hover:bg-travel-danger/10"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <Icon icon={LogOut} size="md" />
                   退出登录 ({username})
                 </button>
               )}

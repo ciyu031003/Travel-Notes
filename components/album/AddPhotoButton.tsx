@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Camera, Images, Loader2, Plus, Sparkles, X } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import { pickPhotoFromCamera, addPhotoToAlbum } from '@/lib/modules/offline/media-upload'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 
@@ -59,7 +60,7 @@ export default function AddPhotoButton({
         className="absolute right-1.5 top-1.5 z-10 flex h-9 min-w-9 items-center justify-center rounded-full bg-black/50 p-2 text-album-warm backdrop-blur transition hover:bg-black/70 disabled:opacity-40"
         aria-label="添加照片"
       >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+        {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />}
       </button>
 
       {open && (
@@ -68,7 +69,7 @@ export default function AddPhotoButton({
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-zpix font-bold text-album-accent">添加照片</h3>
               <button type="button" onClick={() => setOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-full p-2 text-album-warm/60 hover:bg-white/10" aria-label="关闭">
-                <X className="h-4 w-4" />
+                <Icon icon={X} size="sm" />
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -77,7 +78,7 @@ export default function AddPhotoButton({
                 onClick={() => handlePick('camera')}
                 className="flex flex-col items-center gap-2 rounded-xl border border-white/15 bg-black/30 px-3 py-4 text-album-text hover:border-album-accent"
               >
-                <Camera className="h-6 w-6 text-album-accent" />
+                <Icon icon={Camera} size="md" className="text-album-accent" />
                 <span className="text-sm">拍照</span>
               </button>
               <button
@@ -85,7 +86,7 @@ export default function AddPhotoButton({
                 onClick={() => handlePick('photos')}
                 className="flex flex-col items-center gap-2 rounded-xl border border-white/15 bg-black/30 px-3 py-4 text-album-text hover:border-album-accent"
               >
-                <Images className="h-6 w-6 text-album-accent" />
+                <Icon icon={Images} size="md" className="text-album-accent" />
                 <span className="text-sm">相册选择</span>
               </button>
             </div>
@@ -100,7 +101,7 @@ export default function AddPhotoButton({
               message.type === 'ok' ? 'bg-emerald-900/80 text-emerald-200' : 'bg-red-900/80 text-red-200'
             }`}
           >
-            <Sparkles className="h-3 w-3" />
+            <Icon icon={Sparkles} size="sm" />
             {message.text}
           </p>
         </div>

@@ -607,7 +607,7 @@ export default function AlbumPage() {
               <div className="p-4 border-b-4 border-black/70 bg-pixel-panel3">
                 <div className="flex items-center justify-between">
                   <h2 className="font-zpix text-sm font-bold text-album-accent tracking-wider flex items-center gap-2">
-                    <BookOpen className="w-4 h-4" />
+                    <Icon icon={BookOpen} size="sm" />
                     旅行书架
                   </h2>
                   <span className="text-xs text-album-warm font-bold">{cities.length} 册</span>

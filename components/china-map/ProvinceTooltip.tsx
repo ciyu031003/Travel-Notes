@@ -1,6 +1,7 @@
 'use client'
 
 import { Calendar, MapPin } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
 import Image from 'next/image'
 import { getCitiesByProvince } from '@/data/cities'
 import type { PostMeta, ProvincePath } from './types'
@@ -62,12 +63,12 @@ export default function ProvinceTooltip({
               <p className="text-sm text-travel-ink font-medium truncate mb-1">{firstPost.title}</p>
               <div className="flex items-center gap-3 text-xs text-travel-ink/60">
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
+                  <Icon icon={Calendar} size="sm" />
                   {new Date(firstPost.date).toLocaleDateString('zh-CN')}
                 </span>
                 {firstPost.location && (
                   <span className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
+                    <Icon icon={MapPin} size="sm" />
                     {firstPost.location}
                   </span>
                 )}
