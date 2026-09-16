@@ -37,6 +37,8 @@ export default async function globalTeardown() {
   }
   await conn.end()
 
-  const stateFile = path.join(__dirname, '.auth', 'state.json')
-  if (fs.existsSync(stateFile)) fs.rmSync(stateFile)
+  // 刻意**保留** tests/e2e/.auth/state.json：
+  // globalSetup 每次运行都会重新登录并覆写它，而删除它会让「不使用 globalSetup 的场景」
+  // （例如只跑单个 spec 且沿用已有 storageState）在 newContext 阶段直接失败。
+  // 该目录已在 .gitignore（tests/e2e/.auth/），保留不产生仓库污染。
 }

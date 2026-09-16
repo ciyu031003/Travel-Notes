@@ -41,7 +41,20 @@ export default async function globalSetup(_config: FullConfig) {
     path.join(authDir, 'state.json'),
     JSON.stringify({
       cookies: [
-        { name: 'admin_session', value, domain: 'localhost', path: '/', httpOnly: true, secure: false, sameSite: 'Lax' },
+        {
+          name: 'admin_session',
+          value,
+          domain: 'localhost',
+          path: '/',
+          // 必须是显式数值：Playwright 1.6x 对 storageState 里的 cookie
+          // 做严格校验，缺 expires 会直接抛
+          // `apiRequest.newContext: storageState.cookies[0].expires: expected float, got undefined`，
+          // 表现为「一个用例都没跑就失败」。会话 cookie 用 -1（不过期）。
+          expires: -1,
+          httpOnly: true,
+          secure: false,
+          sameSite: 'Lax',
+        },
       ],
       origins: [],
     }),
