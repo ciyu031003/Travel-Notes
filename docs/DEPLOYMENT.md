@@ -192,21 +192,56 @@ rclone sync public/uploads remote:trip-media --checksum   # 异地增量同步�
 
 ## 九、更新部署（当前流程）
 
+> ⚠️ **构建前必须先清盘（强制）**：2026-09-15 磁盘被 containerd 泄漏快照打满（100%），
+> 构建在导出镜像阶段失败（`no space left on device`），并波及同机另一项目容器被终止重启。
+> 因此重建流程已脚本化为 `scripts/server-rebuild.sh`，**清盘是它的第一步**，不要再手工裸跑 `docker compose build`。
+
 ```bash
-# 1) 本地打包源码（排除构建/数据目录）
-tar -czf /tmp/tn-deploy.tar.gz --exclude=node_modules --exclude=.next --exclude=data \
-  --exclude=content --exclude=.env --exclude=docs --exclude=android --exclude=www \
-  --exclude=mysql-data --exclude=.git --exclude=tsconfig.tsbuildinfo .
+# 1) 本地打包源码（git archive 只含已提交内容，最干净）
+git archive --format=tar.gz -o /tmp/tn-deploy.tar.gz HEAD
 
-# 2) 上传 + 解包（保留 .env/data/content）
+# 2) 上传
 scp /tmp/tn-deploy.tar.gz ubuntu@106.55.2.197:/tmp/
-ssh ubuntu@106.55.2.197 "cd /home/ubuntu/travel-notes && tar -xzf /tmp/tn-deploy.tar.gz -C ."
 
-# 3) 重建应用容器（数据库不动）
-ssh ubuntu@106.55.2.197 "cd /home/ubuntu/travel-notes && docker compose up -d --build app"
+# 3) 一键：清盘 → 空间校验 → 解包 → 重建 → 健康检查
+ssh ubuntu@106.55.2.197 "bash /home/ubuntu/travel-notes/scripts/server-rebuild.sh"
 ```
 
-> 服务器源码目录非 git 仓库，用「打包 → scp → 解包覆盖」方式同步，**务必排除 `.env`/`data`/`content` 以免覆盖生产数据**。
+`server-rebuild.sh` 的关键保障：
+- **① 先清盘**：调用 `scripts/disk-clean.sh`（只清 docker 构建缓存、dangling 镜像、
+  `/tmp` 本项目历史部署包、containerd 泄漏挂载点、apt/journal），
+  **不含 `docker volume prune`**，不使用 `docker image prune -a` —— 绝不触碰数据卷与其他项目的镜像。
+- **② 空间闸门**：可用空间 < `MIN_FREE_MB`（默认 8000MB）直接中止，避免重现「磁盘打满 → 构建失败 → 波及同机项目」。
+- **③④⑤**：解包 → 只重建 `app` 容器（`db` 与其他项目不动）→ 健康检查并打印所有容器状态。
+
+> 服务器源码目录非 git 仓库，用「打包 → scp → 解包覆盖」方式同步。
+> 若手工打包，**务必排除 `.env`/`data`/`content` 以免覆盖生产数据**；用 `git archive` 则自动只含已提交内容。
+
+### 磁盘排障速查（磁盘异常时）
+
+```bash
+df -h /                                   # 看还剩多少
+docker system df                          # docker 视角（Images / Build Cache / Volumes）
+du -sh /var/lib/containerd /var/lib/docker /tmp
+mount | grep containerd-mount             # ★ 失败构建泄漏的只读 overlay 挂载点
+```
+
+- 泄漏挂载点**不能直接 `rm`**（会报 `Read-only file system`），必须先 `umount`：
+  ```bash
+  sudo umount <mountpoint> || sudo umount -l <mountpoint>
+  sudo rm -rf <mountpoint>
+  ```
+  卸载后空间由 containerd GC 回收（实测 98% → 68%，回收约 17G）。
+- **失败构建会持续吞磁盘**：每失败一次都会新增 build cache 并再留泄漏点 —— 磁盘紧张时**不要反复重试构建**，先清空间。
+- 常规清理：`bash scripts/disk-clean.sh`（支持 `DRY_RUN=1` 只报告不删除）。
+
+---
+
+## 十、主站（www.yuanabd.cn）增量资产
+
+主站源码不在本仓库（实际在服务器 `/var/www/yuanabd/`，单文件 `index.html`）。
+其新增资产已纳入版本控制，见 **`site/yuanabd/`**（含部署目标、`index.html` 需配合的 5 处改动、
+nginx `/api/version` 同源代理配置、以及行为契约）。改主站请从该目录同步，不要直接手改服务器文件。
 
 ---
 
