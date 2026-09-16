@@ -1,6 +1,6 @@
-apply plugin: 'com.android.application'
+﻿apply plugin: 'com.android.application'
 
-// Release 签名（本地 keystore.properties 提供，不入库；缺失时 release 构建使用默认调试签名）
+// Release 绛惧悕锛堟湰鍦?keystore.properties 鎻愪緵锛屼笉鍏ュ簱锛涚己澶辨椂 release 鏋勫缓浣跨敤榛樿璋冭瘯绛惧悕锛?
 def keystorePropertiesFile = rootProject.file('keystore.properties')
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
@@ -14,8 +14,8 @@ android {
         applicationId "com.tiantu.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 9
-        versionName "1.8.0"
+        versionCode 10
+        versionName "1.9.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

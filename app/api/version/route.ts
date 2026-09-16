@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '旅行画册 2.0：翻页不再整本重建（性能大幅提升）、新增画报/胶片/手记三套主题、图片按需加载与邻页预解码、新增附录页保证照片一张不丢',
+    changelog: process.env.APP_CHANGELOG || '新建旅行重做：目的地与日期区间一处填完、自动算天数并生成标题、建完直接进入该旅行；修复未登录打开「我的」一直转圈的问题',
     forceUpdate,
   })
 }

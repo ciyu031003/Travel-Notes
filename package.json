@@ -1,6 +1,6 @@
-{
+﻿{
   "name": "travel-notes",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -86,5 +86,5 @@
     "playwright": "^1.62.1",
     "vitest": "^4.1.10"
   },
-  "description": "情侣共同旅行与记忆系统"
+  "description": "鎯呬荆鍏卞悓鏃呰涓庤蹇嗙郴缁?
 }
