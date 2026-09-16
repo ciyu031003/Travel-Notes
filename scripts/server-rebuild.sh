@@ -49,6 +49,31 @@ if [ ! -f "$TARBALL" ]; then
   echo "❌ 找不到部署包: $TARBALL" >&2
   exit 1
 fi
+# 解包前先记录归档内的路径清单：tar -x 是"覆盖"而不是"同步"，
+# 上一次部署过、这一次被删除的文件会**留在服务器上**（曾出现已删除组件残留在
+# 服务器源码目录，虽然不进构建产物，但会误导排障与后续增量对比）。
+MANIFEST=$(mktemp)
+PRESENT=$(mktemp)
+STALE=$(mktemp)
+tar -tzf "$TARBALL" | sed 's#^\./##' | grep -v '/$' | sort > "$MANIFEST"
+
+# 只清理"归档里已不存在"的源码文件；不碰 .env / data / logs / node_modules 等运行期文件
+# （它们不在归档里，也不在下面的扫描白名单内）。
+for dir in app components lib hooks scripts prisma data types docs; do
+  [ -d "$PROJECT_DIR/$dir" ] || continue
+  ( cd "$PROJECT_DIR" && find "$dir" -type f \
+      \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.cjs' -o -name '*.mjs' \
+         -o -name '*.css' -o -name '*.json' -o -name '*.prisma' -o -name '*.md' \) \
+      | sort ) > "$PRESENT"
+  comm -23 "$PRESENT" "$MANIFEST" > "$STALE"
+  while IFS= read -r stale; do
+    [ -z "$stale" ] && continue
+    echo "  移除归档中已不存在的文件: $stale"
+    rm -f "$PROJECT_DIR/$stale"
+  done < "$STALE"
+done
+rm -f "$MANIFEST" "$PRESENT" "$STALE"
+
 tar -xzf "$TARBALL" -C "$PROJECT_DIR"
 echo "解包完成: $TARBALL"
 
