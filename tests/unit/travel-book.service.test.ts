@@ -32,6 +32,10 @@ vi.mock('@/lib/infrastructure/media-variants', () => ({
       ? { thumbnailUrl: url + '?t', previewUrl: url + '?p', blurUrl: url + '?b' }
       : null
   ),
+  // Album 2.0：画册排版需要宽高比，服务端读原图尺寸
+  resolveLocalImageDimensions: vi.fn(async (url: string) =>
+    url.startsWith('/uploads/') ? { width: 1600, height: 1067 } : null
+  ),
 }))
 
 import { prisma } from '@/lib/db'
@@ -179,18 +183,48 @@ describe('travel-book.service 聚合', () => {
     expect(summaries[0].dayCount).toBe(0)
   })
 
-  it('getTravelBookByKey 按 bookKey 取单本全书', async () => {
-    // getTravelBookByKey 每次调用都会重跑一次聚合；无 Post 时城市聚合提前返回（仅 1 次 findMany）。
-    // 用持久 mock 而非 Once，避免多次调用间的队列错位。
-    findMany.mockResolvedValue([travelRow()])
+  it('getTravelBookByKey 按 bookKey 直接命中单本（不跑全量聚合）', async () => {
+    // Album 2.0 P0：单本查询改为按 bookKey 直接查（travel 册只查那一本；城市册只查该城市文章），
+    // 不再「取全库再 find」。这里用持久 mock 并按 where.id 过滤，模拟数据库的真实行为。
+    findMany.mockImplementation(async (args: any) => {
+      const idFilter = args?.where?.AND?.find((c: any) => c && 'id' in c)
+      if (idFilter && idFilter.id !== 1) return []
+      return [travelRow()]
+    })
     getPostsHybrid.mockResolvedValue([])
 
     const book = await getTravelBookByKey('travel:1', 1)
     expect(book).toBeTruthy()
     expect(book!.title).toBe('南京行')
     expect(book!.chapters).toEqual([])
+    // 只查了一次 travel（没有再去 Post 城市册那条全量聚合路径）
+    expect(findMany).toHaveBeenCalledTimes(1)
 
     expect(await getTravelBookByKey('travel:404', 1)).toBeNull()
     expect(await getTravelBookByKey('', 1)).toBeNull()
+    // 非法 key 形态：不查库
+    expect(await getTravelBookByKey('nonsense', 1)).toBeNull()
+    expect(await getTravelBookByKey('travel:abc', 1)).toBeNull()
+  })
+
+  it('城市册：同城已有「有内容的 Travel 画册」时深链返回 null（与列表口径一致）', async () => {
+    const posts = [
+      { slug: 'a', title: '南京记', date: '2026-06-01', location: '南京', cover: '/uploads/n.jpg', images: [] },
+      { slug: 'b', title: '苏州记', date: '2026-06-02', location: '苏州', cover: '/uploads/s.jpg', images: [] },
+    ]
+    // isCityBookCovered 走 travel.findMany（select location + _count.memories）
+    findMany.mockImplementation(async (args: any) => {
+      if (args?.select?._count) return [{ location: '南京', _count: { memories: 2 } }]
+      return []
+    })
+    getPostsHybrid.mockResolvedValue(posts)
+
+    // 南京：已被有内容的 Travel 覆盖 → 列表里不存在这本册子，深链也必须 404
+    expect(await getTravelBookByKey('city:南京', 1)).toBeNull()
+    // 苏州：未被覆盖 → 正常返回该城市册
+    const suzhou = await getTravelBookByKey('city:苏州', 1)
+    expect(suzhou).toBeTruthy()
+    expect(suzhou!.bookKey).toBe('city:苏州')
+    expect(suzhou!.photoCount).toBe(1)
   })
 })

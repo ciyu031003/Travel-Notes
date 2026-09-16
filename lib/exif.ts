@@ -13,6 +13,27 @@ export interface ExifData {
   height?: number
 }
 
+/**
+ * 只读图片像素尺寸（不做 EXIF 解析）。
+ *
+ * 用途：画册排版需要宽高比来决定单页 / 跨页出血。存量旅行文章的图片存在
+ * `PostImage.data` BLOB 里（不是文件），没有 Media 行也没有变体链，
+ * 而 `parseExif()` 对无 EXIF 段的 JPEG 也会返回尺寸——代价是要走完整个段循环。
+ * 本函数只扫到 SOF 标记即返回，明显更省。
+ *
+ * 支持 JPEG / WebP；其他格式返回 null（调用方回退"未知尺寸"的安全缺省）。
+ */
+export function readImageDimensions(buffer: Buffer): { width: number; height: number } | null {
+  if (!buffer || buffer.length < 12) return null
+  if (buffer[0] === 0xff && buffer[1] === 0xd8) return readJpegDimensions(buffer)
+  // WebP: RIFF....WEBP → VP8X / VP8 / VP8L
+  if (buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP') {
+    return readWebpDimensions(buffer)
+  }
+  return null
+}
+
+
 
 const EXIF_TAG_NAMES: Record<number, string> = {
   0x829a: 'exposureTime',
@@ -129,8 +150,7 @@ function formatDateTaken(value: string): string {
 }
 
 /** 从 JPEG 二进制解析 EXIF；非 JPEG 或无 EXIF 返回 null */
-export function parseExif(buffer: Buffer): ExifData | null {
-  if (!buffer || buffer.length < 4) return null
+export function parseExif(buffer: Buffer): ExifData | null {  if (!buffer || buffer.length < 4) return null
   // JPEG SOI 检查
   if (!(buffer[0] === 0xff && buffer[1] === 0xd8)) {
     // WebP: RIFF....WEBP
@@ -268,8 +288,35 @@ function parseWebpExif(buffer: Buffer): ExifData | null {
   return null
 }
 
-function readJpegDimensions(buffer: Buffer): { width: number; height: number } | null {
-  let offset = 2
+/** WebP 尺寸：优先 VP8X（含 canvas 宽高），否则 VP8 / VP8L 帧头 */
+function readWebpDimensions(buffer: Buffer): { width: number; height: number } | null {
+  if (buffer.length < 30) return null
+  const fourcc = buffer.toString('ascii', 12, 16)
+  if (fourcc === 'VP8X') {
+    // 24 位小端（值 = 实际宽高 - 1），偏移 24 / 27
+    const w = 1 + (buffer[24] | (buffer[25] << 8) | (buffer[26] << 16))
+    const h = 1 + (buffer[27] | (buffer[28] << 8) | (buffer[29] << 16))
+    if (w > 0 && h > 0) return { width: w, height: h }
+    return null
+  }
+  if (fourcc === 'VP8 ') {
+    // 关键帧头：偏移 26..29 为 14 位宽高（低 14 位）
+    const w = (buffer[26] | (buffer[27] << 8)) & 0x3fff
+    const h = (buffer[28] | (buffer[29] << 8)) & 0x3fff
+    if (w > 0 && h > 0) return { width: w, height: h }
+    return null
+  }
+  if (fourcc === 'VP8L') {
+    // 无损：1 字节签名 0x2f + 14 位宽、14 位高，从偏移 21 开始
+    const b = buffer.readUInt32LE(21)
+    const w = (b & 0x3fff) + 1
+    const h = ((b >> 14) & 0x3fff) + 1
+    if (w > 0 && h > 0) return { width: w, height: h }
+  }
+  return null
+}
+
+function readJpegDimensions(buffer: Buffer): { width: number; height: number } | null {  let offset = 2
   while (offset + 4 <= buffer.length) {
     if (buffer[offset] !== 0xff) {
       offset++

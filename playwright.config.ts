@@ -23,6 +23,10 @@ export default defineConfig({
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
     locale: 'zh-CN',
+    // Service Worker 会拦截 fetch，导致 page.route() 注入的响应被绕过
+    // （且 SW 缓存会让用例跨次运行互相污染）。测试里一律屏蔽 SW：
+    // 每次都是真实网络行为，断言才可信。
+    serviceWorkers: 'block',
   },
   globalSetup: './tests/e2e/global-setup.ts',
   globalTeardown: './tests/e2e/global-teardown.ts',

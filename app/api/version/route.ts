@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '全站图标尺寸与描边统一、画册顶栏一致化，修正跨主题配色偏差',
+    changelog: process.env.APP_CHANGELOG || '旅行画册 2.0：翻页不再整本重建（性能大幅提升）、新增画报/胶片/手记三套主题、图片按需加载与邻页预解码、新增附录页保证照片一张不丢',
     forceUpdate,
   })
 }

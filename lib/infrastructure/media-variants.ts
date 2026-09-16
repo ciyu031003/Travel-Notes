@@ -5,6 +5,7 @@
 import sharp from 'sharp'
 import fs from 'fs'
 import path from 'path'
+import { readImageDimensions } from '../exif'
 
 export type MediaVariantKind = 'THUMBNAIL' | 'PREVIEW' | 'BLUR'
 
@@ -66,6 +67,88 @@ export interface UrlPhotoVariants {
 
 const LOCAL_URL_CACHE = new Map<string, UrlPhotoVariants>()
 const IN_FLIGHT = new Map<string, Promise<UrlPhotoVariants | null>>()
+
+// ------------------------------------------------------------
+// 原图尺寸读取（Album 2.0：画册排版需要宽高比）
+// 画册页面模板必须知道「横图还是竖图」才能决定单页 / 跨页出血。若留到客户端图片
+// onLoad 后回填，版式会在翻页过程中改变——而翻页运行时每换一次页面集合就要重建整本书。
+// 因此尺寸必须在服务端就有。存量 Post 图没有 Media 行，只能读文件。
+// ------------------------------------------------------------
+
+const DIMENSION_CACHE = new Map<string, { width: number; height: number } | null>()
+
+/**
+ * 读取本地 /uploads 原图的像素尺寸。
+ * - 对象存储模式返回 null（调用方回退为"未知尺寸"的安全缺省）；
+ * - 非本站相对路径 / 文件不存在 / 解析失败 → null；
+ * - 结果进缓存（键为 URL，数量级等于画册图片总数），失败也缓存以避免反复重试。
+ */
+export async function resolveLocalImageDimensions(
+  url: string,
+): Promise<{ width: number; height: number } | null> {
+  if (!url) return null
+  if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) return null
+
+  const cached = DIMENSION_CACHE.get(url)
+  if (cached !== undefined) return cached
+
+  // 存量旅行文章的图片是 `PostImage.data` BLOB（不是文件），走 /api/images/<id>
+  const blobId = parsePostImageUrl(url)
+  if (blobId !== null) {
+    const dim = await readPostImageDimensions(blobId)
+    DIMENSION_CACHE.set(url, dim)
+    return dim
+  }
+
+  const parsed = parseLocalUploadUrl(url)
+  if (!parsed) {
+    DIMENSION_CACHE.set(url, null)
+    return null
+  }
+
+  let result: { width: number; height: number } | null = null
+  try {
+    const meta = await sharp(path.join(uploadDir(), parsed.key), { failOn: 'error' }).metadata()
+    if (meta.width && meta.height) result = { width: meta.width, height: meta.height }
+  } catch {
+    result = null
+  }
+  DIMENSION_CACHE.set(url, result)
+  return result
+}
+
+/** `/api/images/<id>`（同源或绝对 URL）→ PostImage id；非该形态返回 null */
+export function parsePostImageUrl(url: string): number | null {
+  if (!url) return null
+  let pathname = url
+  try {
+    pathname = new URL(url).pathname
+  } catch {
+    // 相对路径保留原样
+  }
+  const m = pathname.match(/^\/api\/images\/(\d+)\/?$/)
+  if (!m) return null
+  const id = Number(m[1])
+  return Number.isFinite(id) ? id : null
+}
+
+/**
+ * 读 PostImage BLOB 的像素尺寸。
+ * 只取 data 一列并只扫到 SOF 标记，不整段解析 EXIF；
+ * 结果与失败都进缓存（同一张图在封面上出现两次时不会重复读库）。
+ */
+async function readPostImageDimensions(
+  id: number,
+): Promise<{ width: number; height: number } | null> {
+  try {
+    const { prisma } = await import('../db')
+    const row = await prisma.postImage.findUnique({ where: { id }, select: { data: true } })
+    if (!row?.data) return null
+    return readImageDimensions(Buffer.from(row.data as unknown as Uint8Array))
+  } catch {
+    return null
+  }
+}
 
 // 并发上限：避免首访一次性对几十张原图做 sharp 处理、占满 CPU。
 const CONCURRENCY = 3

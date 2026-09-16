@@ -1547,6 +1547,132 @@ html.dark {
   background: linear-gradient(to right, rgba(28,30,24,0.12), rgba(28,30,24,0.03) 40%, transparent);
 }
 
+/* ===== Book Sheet（Album 2.0 M1/M2：对开容器 + 页型扩展） =====
+   page-flip 的每个 .art-flip-page 承载一张 sheet。双页模式下 sheet 内左右并排；
+   单页模式下只剩右页（sheet--single），宽度自然铺满。 */
+
+/* 阅读器根：锁住纵向滚动手势，避免翻页拖拽触发移动端下拉刷新 */
+.book-reader {
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+/* 画册图片宿主：绝对铺满父级，保证 blur 占位与 <img> 精确重合、零布局位移 */
+.art-img-host {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.art-img-host > img {
+  width: 100%;
+  height: 100%;
+}
+.book-sheet {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+}
+.book-sheet--single {
+  grid-template-columns: 1fr;
+}
+.book-sheet-side {
+  position: relative;
+  overflow: hidden;
+}
+.book-sheet-side > * {
+  width: 100%;
+  height: 100%;
+}
+/* 书脊：左页右缘 / 右页左缘的内阴影，营造装订感 */
+.book-sheet-side--left::after,
+.book-sheet:not(.book-sheet--single) .book-sheet-side--right::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6%;
+  pointer-events: none;
+  z-index: 4;
+}
+.book-sheet-side--left::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(28, 30, 24, 0.16), rgba(28, 30, 24, 0));
+}
+.book-sheet:not(.book-sheet--single) .book-sheet-side--right::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(28, 30, 24, 0.16), rgba(28, 30, 24, 0));
+}
+
+/* 单页满幅照片 + 说明（caption / 地点 / 时间） */
+.art-page.with-caption .plate.full {
+  height: 62%;
+  top: 40%;
+}
+.art-page .plate-caption {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 8%;
+  margin: 0;
+  color: var(--art-ink);
+  font-family: var(--art-serif);
+}
+.art-page .plate-caption-text {
+  display: block;
+  font-size: calc(var(--cq) * 2.1);
+  line-height: 1.45;
+}
+.art-page .plate-caption-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--cq) * 1.6);
+  margin-top: calc(var(--cq) * 1.2);
+  font-size: calc(var(--cq) * 1.5);
+  color: color-mix(in srgb, var(--art-ink) 60%, transparent);
+  letter-spacing: 0.04em;
+}
+
+/* 附录网格（未编入正册的照片，一张不丢） */
+.art-page.index-grid-page {
+  padding: calc(var(--cq) * 4.5) calc(var(--cq) * 5);
+}
+.art-page .index-grid-inner {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cq) * 1.6);
+  height: 100%;
+}
+.art-page .index-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+  gap: calc(var(--cq) * 1.4);
+  min-height: 0;
+}
+.art-page .index-cell {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--art-ink) 6%, var(--art-paper));
+}
+.art-page .index-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.art-page .index-cell img.is-img-loaded {
+  opacity: 1;
+}
+.art-page .index-cell-failed {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, transparent 46%, color-mix(in srgb, var(--art-ink) 18%, transparent) 50%, transparent 54%);
+}
+
 /* ===== ArtFlipBook 容器（page-flip 库） ===== */
 .art-flip-rig {
   display: grid;
@@ -1587,4 +1713,555 @@ html.dark {
     left: 0;
     object-fit: contain;
   }
+}
+
+/* ===== ArtFlipBook 运行时失败兜底（页翻转库加载失败） ===== */
+.art-flip-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--art-paper-gap, 12px));
+  background: var(--art-paper);
+  color: var(--art-ink);
+  font-family: var(--art-serif);
+  text-align: center;
+  padding: 8%;
+}
+.art-flip-fallback p {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  opacity: 0.78;
+}
+.art-flip-fallback button {
+  border: 1px solid color-mix(in srgb, var(--art-ink) 28%, transparent);
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+.art-flip-fallback button:hover {
+  background: color-mix(in srgb, var(--art-ink) 8%, transparent);
+}
+
+/* ===== 照片加载失败占位（可见，不再静默留白） ===== */
+.photo-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--cq, 5.12px) * 1.6);
+  background: color-mix(in srgb, var(--art-ink) 5%, var(--art-paper));
+  color: color-mix(in srgb, var(--art-ink) 62%, transparent);
+  font-family: var(--art-serif);
+}
+.photo-fallback-mark {
+  width: calc(var(--cq, 5.12px) * 9);
+  height: calc(var(--cq, 5.12px) * 9);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  position: relative;
+  opacity: 0.7;
+}
+.photo-fallback-mark::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 22%;
+  height: 1px;
+  background: currentColor;
+  box-shadow: 0 calc(var(--cq, 5.12px) * -2) 0 currentColor;
+}
+.photo-fallback-text {
+  font-size: calc(var(--cq, 5.12px) * 1.7);
+  letter-spacing: 0.06em;
+}
+
+/* ==========================================================================
+   画册主题（Album 2.0 M3）
+   --------------------------------------------------------------------------
+   约定：
+     · 主题 token 由 components/album/book/themes/*.tsx 注入为内联 CSS 变量
+       （--book-*），**不写死在这里**；
+     · 本文件只放「主题作用域下的版式规则」，用 [data-book-theme="x"] 限定；
+     · .art-page 的基础变量 --art-paper/--art-ink/--art-cloth/--art-serif
+       在这里被 --book-* 反向覆盖，于是三套主题共用同一批 .art-page 规则，
+       只有材质与排版差异需要单独写。
+   ========================================================================== */
+
+/* 主题 token → 基础画册变量（默认值即画报，保证无 token 时也不崩） */
+.book-reader {
+  --art-paper: var(--book-paper, #f7f6f0);
+  --art-ink: var(--book-ink, #292c26);
+  --art-cloth: var(--book-cloth, #7d8572);
+  --art-serif: var(--book-serif, 'Source Serif 4', Georgia, serif);
+}
+/* 照片调性由主题决定（替代原先硬编码在 .art-flipbook-container 里的 sepia 滤镜） */
+.book-reader .art-page img {
+  filter: var(--book-photo-filter, none);
+}
+/* 主题颗粒层：画报为 0（不生成），胶片/手记给很轻的一层 */
+.book-reader[data-book-theme] .art-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  opacity: var(--book-grain-opacity, 0);
+  background-image: url(/textures/paper-grain.svg);
+  background-size: 180px 180px;
+  mix-blend-mode: multiply;
+}
+.book-reader[data-book-theme='film'] .art-page::after {
+  mix-blend-mode: overlay;
+}
+/* 单页模式（窄屏）下书页本来就该铺满，不显示书脊阴影 */
+.book-sheet--single .book-sheet-side--left::after,
+.book-sheet--single::before {
+  content: none;
+}
+
+/* ---------- 视觉档（与主题正交） ---------- */
+/* lite：降阴影、降模糊、去掉贵的效果 */
+.book-reader[data-book-tier='lite'] .art-flipbook-container {
+  filter: drop-shadow(0 10px 16px rgba(29, 37, 21, 0.14));
+}
+.book-reader[data-book-tier='lite'] .art-page .oil-edge {
+  display: none;
+}
+.book-reader[data-book-tier='lite'] .book-sheet-side--left::after,
+.book-reader[data-book-tier='lite'] .book-sheet-side--right::before {
+  width: 3%;
+}
+/* reduced：无翻页动效（直切），并停掉一切装饰性过渡 */
+.book-reader[data-book-tier='reduced'] .art-flipbook-container {
+  filter: none;
+}
+.book-reader[data-book-tier='reduced'] .art-page .oil-edge {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .book-reader .art-flip-page,
+  .book-reader .book-sheet,
+  .book-reader .photo-blur {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   胶片主题（film）
+   ========================================================================== */
+.book-reader[data-book-theme='film'] .art-page,
+.book-reader[data-book-theme='film'] .film-page,
+.book-reader[data-book-theme='film'] .film-negative,
+.book-reader[data-book-theme='film'] .film-cover,
+.book-reader[data-book-theme='film'] .film-contact-sheet {
+  background-color: var(--book-paper);
+  background-image: none;
+  color: var(--book-ink);
+  font-family: var(--book-serif);
+}
+
+/* 封面：负片卷首 */
+.film-cover {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--cq) * 3);
+  padding: calc(var(--cq) * 3) calc(var(--cq) * 2.5);
+}
+.film-cover-plate {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(239, 231, 216, 0.18);
+}
+.film-cover-meta { text-align: center; }
+.film-cover-roll {
+  margin: 0;
+  font-family: var(--book-sans);
+  font-size: calc(var(--cq) * 1.4);
+  letter-spacing: 0.22em;
+  color: var(--book-accent);
+}
+.film-cover-title {
+  margin: calc(var(--cq) * 1.8) 0 0;
+  font-size: calc(var(--cq) * 6);
+  line-height: 1.14;
+  font-weight: 400;
+}
+
+/* 齿孔条 */
+.film-sprocket {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--cq) * 1.2);
+  padding: calc(var(--cq) * 0.9) 0;
+}
+.film-sprocket i {
+  flex: 1;
+  height: calc(var(--cq) * 1.5);
+  border-radius: 2px;
+  background: rgba(239, 231, 216, 0.14);
+}
+
+/* 日期戳（橙红，低饱和） */
+.film-datestamp {
+  font-family: var(--book-sans);
+  font-size: calc(var(--cq) * 1.4);
+  letter-spacing: 0.14em;
+  color: var(--book-accent);
+  opacity: 0.9;
+}
+
+/* 单页胶片帧 */
+.film-page { padding: calc(var(--cq) * 3); }
+.film-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: calc(var(--cq) * 2);
+  border: 1px solid rgba(239, 231, 216, 0.14);
+  padding: calc(var(--cq) * 2.4);
+}
+.film-frame--empty { border-style: dashed; }
+.film-frame-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--book-sans);
+  font-size: calc(var(--cq) * 1.4);
+  letter-spacing: 0.14em;
+  color: rgba(239, 231, 216, 0.6);
+}
+.film-frame-title {
+  margin: 0;
+  font-size: calc(var(--cq) * 4.2);
+  font-weight: 400;
+  line-height: 1.2;
+}
+.film-frame-note,
+.film-frame-itinerary {
+  margin: 0;
+  font-size: calc(var(--cq) * 1.8);
+  line-height: 1.6;
+  color: rgba(239, 231, 216, 0.78);
+}
+.film-frame-plate {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+}
+.film-frame-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--cq) * 1.6);
+  font-size: calc(var(--cq) * 1.5);
+  color: rgba(239, 231, 216, 0.7);
+}
+.film-frame-caption { flex: 1 1 100%; }
+
+/* 跨页出血：负片半边 */
+.film-negative {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cq) * 1.2);
+  padding: calc(var(--cq) * 1.6) 0;
+}
+.film-negative-plate {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+}
+.film-failed {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--cq) * 2);
+  text-align: center;
+  font-size: calc(var(--cq) * 1.5);
+  color: var(--book-accent);
+}
+
+/* 接触印相（附录） */
+.film-contact-sheet {
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--cq) * 2.5);
+}
+.film-cs-inner { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: calc(var(--cq) * 1.4); }
+.film-cs-title { margin: 0; font-size: calc(var(--cq) * 2.4); }
+.film-cs-sub {
+  margin: 0;
+  font-family: var(--book-sans);
+  font-size: calc(var(--cq) * 1.4);
+  letter-spacing: 0.1em;
+  color: rgba(239, 231, 216, 0.55);
+}
+.film-cs-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+  gap: calc(var(--cq) * 1.2);
+}
+.film-cs-cell {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.32);
+}
+.film-cs-cell figcaption {
+  position: absolute;
+  right: 3%;
+  bottom: 2%;
+  font-family: var(--book-sans);
+  font-size: calc(var(--cq) * 1.1);
+  color: rgba(239, 231, 216, 0.6);
+}
+.film-cs-cell img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ==========================================================================
+   手记主题（memory）
+   ========================================================================== */
+.book-reader[data-book-theme='memory'] .art-page,
+.book-reader[data-book-theme='memory'] .mem-cover,
+.book-reader[data-book-theme='memory'] .mem-note,
+.book-reader[data-book-theme='memory'] .mem-photo,
+.book-reader[data-book-theme='memory'] .mem-board,
+.book-reader[data-book-theme='memory'] .mem-receipt {
+  background-color: var(--book-paper);
+  background-image: none;
+  color: var(--book-ink);
+  font-family: var(--book-sans);
+}
+
+/* 纸胶带（全主题共用样式，仅手记主题使用；克制：封面 2 处、不给内页加） */
+.mem-tape {
+  position: absolute;
+  width: calc(var(--cq) * 14);
+  height: calc(var(--cq) * 4);
+  background: color-mix(in srgb, var(--book-accent) 26%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--book-ink) 8%, transparent);
+  z-index: 5;
+}
+.mem-tape--tl { top: calc(var(--cq) * 2); left: calc(var(--cq) * -3); transform: rotate(-24deg); }
+.mem-tape--tr { top: calc(var(--cq) * 2); right: calc(var(--cq) * -3); transform: rotate(24deg); }
+
+/* 封面 */
+.mem-cover { display: flex; align-items: center; justify-content: center; padding: calc(var(--cq) * 6) calc(var(--cq) * 5); }
+.mem-cover-inner { position: relative; width: 100%; text-align: center; }
+.mem-cover-kicker {
+  margin: 0;
+  font-size: calc(var(--cq) * 1.3);
+  letter-spacing: 0.3em;
+  color: color-mix(in srgb, var(--book-ink) 55%, transparent);
+}
+.mem-cover-title {
+  margin: calc(var(--cq) * 2) 0 0;
+  font-family: var(--book-serif);
+  font-size: calc(var(--cq) * 6.4);
+  font-weight: 400;
+  line-height: 1.16;
+}
+.mem-cover-sub {
+  margin: calc(var(--cq) * 1.4) 0 0;
+  font-size: calc(var(--cq) * 1.7);
+  color: color-mix(in srgb, var(--book-ink) 62%, transparent);
+}
+.mem-cover-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  margin: calc(var(--cq) * 3) 0 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--book-ink) 6%, var(--book-paper));
+  box-shadow: 0 calc(var(--cq) * 0.6) calc(var(--cq) * 2) color-mix(in srgb, var(--book-ink) 14%, transparent);
+}
+.mem-cover-date {
+  margin: calc(var(--cq) * 2) 0 0;
+  font-size: calc(var(--cq) * 1.4);
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--book-ink) 48%, transparent);
+}
+/* 印章（唯一一处圆形印章，收在封面右下） */
+.mem-stamp {
+  position: absolute;
+  right: calc(var(--cq) * 6);
+  bottom: calc(var(--cq) * 6);
+  width: calc(var(--cq) * 13);
+  height: calc(var(--cq) * 13);
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--book-accent) 55%, transparent);
+  border-radius: 50%;
+  transform: rotate(-12deg);
+  color: color-mix(in srgb, var(--book-accent) 70%, transparent);
+}
+.mem-stamp span { font-size: calc(var(--cq) * 2); letter-spacing: 0.1em; }
+
+/* 手记页 */
+.mem-note { padding: calc(var(--cq) * 5) calc(var(--cq) * 5.5); }
+.mem-note-inner { height: 100%; }
+.mem-note-kicker {
+  margin: 0;
+  font-size: calc(var(--cq) * 1.4);
+  letter-spacing: 0.24em;
+  color: color-mix(in srgb, var(--book-accent) 80%, transparent);
+}
+.mem-note-title {
+  margin: calc(var(--cq) * 1.6) 0 0;
+  font-family: var(--book-serif);
+  font-size: calc(var(--cq) * 4.4);
+  font-weight: 400;
+  line-height: 1.22;
+}
+.mem-note-date {
+  margin: calc(var(--cq) * 1.2) 0 0;
+  font-size: calc(var(--cq) * 1.4);
+  color: color-mix(in srgb, var(--book-ink) 52%, transparent);
+}
+.mem-note-body {
+  margin: calc(var(--cq) * 2.6) 0 0;
+  font-size: calc(var(--cq) * 1.9);
+  line-height: 1.75;
+  color: color-mix(in srgb, var(--book-ink) 82%, transparent);
+}
+.mem-note-list {
+  margin: calc(var(--cq) * 2.4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cq) * 1.1);
+}
+.mem-note-list li {
+  position: relative;
+  padding-left: calc(var(--cq) * 2.6);
+  font-size: calc(var(--cq) * 1.7);
+  color: color-mix(in srgb, var(--book-ink) 72%, transparent);
+}
+.mem-note-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: calc(var(--cq) * 1.2);
+  height: 1px;
+  background: color-mix(in srgb, var(--book-accent) 60%, transparent);
+}
+
+/* 照片页：小幅留白 + 下方手写式说明 */
+.mem-photo { display: flex; flex-direction: column; padding: calc(var(--cq) * 3.2); }
+.mem-photo-frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--book-ink) 6%, var(--book-paper));
+}
+.mem-photo--with-note .mem-photo-frame { flex: 0 0 68%; }
+.mem-photo-note { padding-top: calc(var(--cq) * 2.2); }
+.mem-photo-caption {
+  margin: 0;
+  font-family: var(--book-serif);
+  font-size: calc(var(--cq) * 2);
+  line-height: 1.5;
+}
+.mem-photo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--cq) * 1.6);
+  margin: calc(var(--cq) * 1.2) 0 0;
+  font-size: calc(var(--cq) * 1.4);
+  color: color-mix(in srgb, var(--book-ink) 50%, transparent);
+}
+.mem-photo--half { padding: calc(var(--cq) * 2.4); }
+
+/* 附录：便签拼贴（轻微旋转，克制在 ±3°） */
+.mem-board { padding: calc(var(--cq) * 4) calc(var(--cq) * 4.5); }
+.mem-board-inner { height: 100%; display: flex; flex-direction: column; gap: calc(var(--cq) * 1.4); }
+.mem-board-title { margin: 0; font-family: var(--book-serif); font-size: calc(var(--cq) * 2.4); }
+.mem-board-sub {
+  margin: 0;
+  font-size: calc(var(--cq) * 1.4);
+  color: color-mix(in srgb, var(--book-ink) 52%, transparent);
+}
+.mem-board-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+  gap: calc(var(--cq) * 2.4) calc(var(--cq) * 2);
+}
+.mem-board-cell {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  background: #fff;
+  padding: calc(var(--cq) * 0.9);
+  transform: rotate(var(--mem-rot, 0deg));
+  box-shadow: 0 calc(var(--cq) * 0.5) calc(var(--cq) * 1.4) color-mix(in srgb, var(--book-ink) 16%, transparent);
+}
+.mem-board-cell img { width: 100%; height: 100%; object-fit: cover; }
+.mem-board-cell > .art-img-host { position: relative; inset: auto; height: calc(100% - 0px); }
+
+/* 结尾：票据 */
+.mem-receipt { display: flex; align-items: center; justify-content: center; padding: calc(var(--cq) * 6); }
+.mem-receipt-inner {
+  width: 100%;
+  border: 1px dashed color-mix(in srgb, var(--book-ink) 22%, transparent);
+  padding: calc(var(--cq) * 4) calc(var(--cq) * 3.5);
+  text-align: center;
+}
+.mem-receipt-head {
+  margin: 0;
+  font-size: calc(var(--cq) * 1.3);
+  letter-spacing: 0.3em;
+  color: color-mix(in srgb, var(--book-ink) 50%, transparent);
+}
+.mem-receipt-title {
+  margin: calc(var(--cq) * 2.4) 0 0;
+  font-family: var(--book-serif);
+  font-size: calc(var(--cq) * 3.6);
+  font-weight: 400;
+}
+.mem-receipt-sub {
+  margin: calc(var(--cq) * 1.2) 0 0;
+  font-size: calc(var(--cq) * 1.6);
+  color: color-mix(in srgb, var(--book-ink) 58%, transparent);
+}
+.mem-receipt-line {
+  height: 1px;
+  margin: calc(var(--cq) * 3) 0;
+  background: color-mix(in srgb, var(--book-ink) 16%, transparent);
+}
+.mem-receipt-body { margin: 0; font-size: calc(var(--cq) * 1.7); }
+.mem-receipt-foot {
+  margin: calc(var(--cq) * 2.4) 0 0;
+  font-size: calc(var(--cq) * 1.5);
+  color: color-mix(in srgb, var(--book-ink) 55%, transparent);
 }

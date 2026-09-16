@@ -11,7 +11,7 @@ import { scopedWhere } from '../../visibility'
 import { skipDbOnBuild } from '../../db-guard'
 import { getPostService } from '../../container'
 import { findCityByName } from '../../../data/cities'
-import { resolveLocalUrlVariants } from '../../infrastructure/media-variants'
+import { resolveLocalUrlVariants, resolveLocalImageDimensions } from '../../infrastructure/media-variants'
 import { absoluteMediaUrl } from '../../media-url'
 
 export interface TravelBookChapterPhoto {
@@ -92,11 +92,12 @@ function toPhoto(m: any): TravelBookChapterPhoto {
   }
 }
 
-async function listTravelModelBooks(userId?: number | null): Promise<TravelBookData[]> {
+async function listTravelModelBooks(userId?: number | null, travelId?: number): Promise<TravelBookData[]> {
   if (skipDbOnBuild()) return []
 
+  const where = scopedWhere(userId, 'ownerId') as any
   const travels = await prisma.travel.findMany({
-    where: scopedWhere(userId, 'ownerId') as any,
+    where: travelId === undefined ? where : { AND: [where, { id: travelId }] },
     orderBy: { startDate: 'desc' },
     include: {
       coverMedia: { include: { variants: true } },
@@ -184,8 +185,11 @@ async function listTravelModelBooks(userId?: number | null): Promise<TravelBookD
 /**
  * 从存量旅行文章（Post）按城市自动生成画册：无需手动创建 Travel 记录。
  * 每个城市 = 一本画册；按日期聚合为章节；照片 = 文章封面+图片。
+ *
+ * @param onlyCity 只生成指定城市（规范化后的城市名）的画册——单本深链查询用，
+ *                 避免为一个城市把全部文章都聚合一遍。
  */
-async function listPostCityBooks(userId?: number | null): Promise<TravelBookData[]> {
+async function listPostCityBooks(userId?: number | null, onlyCity?: string): Promise<TravelBookData[]> {
   if (skipDbOnBuild()) return []
   const postService = getPostService()
   const posts = await postService.getPostsHybrid('travel', userId)
@@ -233,16 +237,21 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
     let existing = urlPhoto.get(url)
     if (!existing) {
       existing = (async () => {
-        const v = await resolveLocalUrlVariants(url)
         const abs = (u: string | null | undefined) => absoluteMediaUrl(u)
+        // 变体 URL 与像素尺寸都要：前者决定带宽，后者决定画册版式（单页 / 跨页出血）。
+        // 两者都进缓存，重复 URL（封面 == images[0]）不会重复读盘。
+        const [v, dim] = await Promise.all([
+          resolveLocalUrlVariants(url),
+          resolveLocalImageDimensions(url),
+        ])
         return {
           id: photoSeq++,
           thumbnailUrl: abs(v?.thumbnailUrl ?? url),
           previewUrl: abs(v?.previewUrl ?? url),
           blurUrl: abs(v?.blurUrl),
           fullUrl: abs(url),
-          width: null,
-          height: null,
+          width: dim?.width ?? null,
+          height: dim?.height ?? null,
         }
       })()
       urlPhoto.set(url, existing)
@@ -254,6 +263,8 @@ async function listPostCityBooks(userId?: number | null): Promise<TravelBookData
     if (!post.location) continue
     const city = findCityByName(post.location)
     const name = city?.name ?? post.location
+    // 单本查询：先按城市过滤，避免为打开一本册子把所有文章的图片变体都算一遍
+    if (onlyCity !== undefined && name !== onlyCity) continue
     const raw = [...(post.cover ? [post.cover] : []), ...((post.images as string[]) || [])]
     if (raw.length === 0) continue
     const imgs = await Promise.all(raw.filter((u) => !(!u)).map(toUrlPhoto))
@@ -340,9 +351,11 @@ export async function listTravelBooks(userId?: number | null): Promise<TravelBoo
     listTravelModelBooks(userId),
     listPostCityBooks(userId),
   ])
-  if (travelBooks.length === 0) return cityBooks
-  if (cityBooks.length === 0) return travelBooks
+  return mergeTravelAndCityBooks(travelBooks, cityBooks)
+}
 
+/** 「同城已有有内容的 Travel 画册」判定所需的城市 → 最大照片数 映射 */
+function cityCoverageOf(travelBooks: TravelBookData[]): Map<string, number> {
   const travelCityPhotos = new Map<string, number>()
   for (const b of travelBooks) {
     const loc = b.location || ''
@@ -350,6 +363,22 @@ export async function listTravelBooks(userId?: number | null): Promise<TravelBoo
     const key = findCityByName(loc)?.name ?? loc
     travelCityPhotos.set(key, Math.max(travelCityPhotos.get(key) ?? 0, b.photoCount))
   }
+  return travelCityPhotos
+}
+
+/**
+ * 跨源合并 + 去重（Travel 覆盖同城 Post 城市册）。
+ * 抽成纯函数：列表接口与单本接口必须用同一份判定，否则会出现
+ * 「书架上没有这本，深链却能打开」或反之的口径漂移。
+ */
+function mergeTravelAndCityBooks(
+  travelBooks: TravelBookData[],
+  cityBooks: TravelBookData[],
+): TravelBookData[] {
+  if (travelBooks.length === 0) return cityBooks
+  if (cityBooks.length === 0) return travelBooks
+
+  const travelCityPhotos = cityCoverageOf(travelBooks)
   const isCityCovered = (b: TravelBookData): boolean => {
     if ((travelCityPhotos.get(b.title) ?? 0) > 0) return true
     const loc = b.location || ''
@@ -357,6 +386,28 @@ export async function listTravelBooks(userId?: number | null): Promise<TravelBoo
     return (travelCityPhotos.get(findCityByName(loc)?.name ?? loc) ?? 0) > 0
   }
   return [...travelBooks, ...cityBooks.filter((b) => !isCityCovered(b))]
+}
+
+/** 该城市是否已被「有内容的 Travel 画册」覆盖（单本查询用，只查 count 不拉明细） */
+async function isCityBookCovered(cityName: string, userId?: number | null): Promise<boolean> {
+  if (skipDbOnBuild()) return false
+  if (!cityName) return false
+  // 与 cityCoverageOf 同口径：只看「该城市是否有照片数 > 0 的 Travel」，不拉章节/照片明细
+  const rows = await prisma.travel
+    .findMany({
+      where: scopedWhere(userId, 'ownerId') as any,
+      select: { location: true, _count: { select: { memories: true } } },
+    })
+    .catch(() => null)
+  // 查询失败时不阻断（与 listPostCityBooks 里 try/catch 的策略一致）
+  if (!rows) return false
+  for (const row of rows as { location: string | null; _count: { memories: number } }[]) {
+    const loc = row.location
+    if (!loc) continue
+    if ((findCityByName(loc)?.name ?? loc) !== cityName) continue
+    if ((row._count?.memories ?? 0) > 0) return true
+  }
+  return false
 }
 
 /** 列表摘要：不含章节/照片明细（封面 + 统计），供画册墙渲染；打开某本再拉全书。 */
@@ -368,9 +419,32 @@ export async function listTravelBookSummaries(userId?: number | null) {
   }))
 }
 
-/** 按 bookKey 取单本完整画册（travel:{id} / city:{城市名}）。 */
+/**
+ * 按 bookKey 取单本完整画册（travel:{id} / city:{城市名}）。
+ *
+ * 【Album 2.0 P0】不再「取全库再 find」——那会让单本查询随画册数量/照片总数线性变慢
+ * （旧实现是 listTravelBooks() 全量聚合后再 Array.find）。
+ * 现在按 bookKey 直接命中：travel 册只拉那一本；城市册只拉该城市的文章。
+ * 去重口径仍复用 mergeTravelAndCityBooks / isCityBookCovered，避免与列表接口漂移。
+ */
 export async function getTravelBookByKey(key: string, userId?: number | null): Promise<TravelBookData | null> {
   if (!key) return null
-  const books = await listTravelBooks(userId)
-  return books.find((b) => b.bookKey === key) ?? null
+
+  if (key.startsWith('travel:')) {
+    const id = Number(key.slice('travel:'.length))
+    if (!Number.isFinite(id)) return null
+    const books = await listTravelModelBooks(userId, id)
+    return books[0] ?? null
+  }
+
+  if (key.startsWith('city:')) {
+    const cityName = key.slice('city:'.length)
+    if (!cityName) return null
+    // 同城已有「有内容的 Travel 画册」时，这本城市册在列表里就是不存在的 → 深链也应 404
+    if (await isCityBookCovered(cityName, userId)) return null
+    const books = await listPostCityBooks(userId, cityName)
+    return books.find((b) => b.bookKey === key) ?? null
+  }
+
+  return null
 }
