@@ -1,16 +1,16 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /**
- * 绉诲姩绔潤鎬佸鍑猴紙Stage 3.0b 路 A 鎷嗗垎鏋舵瀯锛夈€?
+ * 移动端静态导出（Stage 3.0b · A 拆分架构）。
  *
- * 鍘熺悊锛歚next build` 鐨?output:'export' 涓?API 璺敱/鍚庡彴/feed/middleware 涓嶅吋瀹癸紝
- * 鍥犳鏋勫缓鍓嶆妸銆屾湇鍔＄涓撳睘銆嶅唴瀹逛复鏃剁Щ鍑?app/锛堝埌 .mobile-excluded/锛夛紝鍦ㄥ師鍦板仛绾鎴风闈欐€佸鍑猴紝
- * 浜х墿鎷峰埌 www/锛屾瀯寤哄悗鍐嶇Щ鍥烇紙try/finally 淇濊瘉涓嶆畫鐣欙級銆?
+ * 原理：`next build` 的 output:'export' 与 API 路由/后台/feed/middleware 不兼容，
+ * 因此构建前把「服务端专属」内容临时移出 app/（到 .mobile-excluded/），在原地做纯客户端静态导出，
+ * 产物拷到 www/，构建后再移回（try/finally 保证不残留）。
  *
- * 绉诲姩绔３涓嶈 /admin锛圖-3锛夛紝API 鍏ㄩ儴璧?NEXT_PUBLIC_API_BASE 鎸囧悜鐨勬湇鍔″櫒銆?
+ * 移动端壳不设 /admin（D-3），API 全部走 NEXT_PUBLIC_API_BASE 指向的服务器。
  *
- * 鐢ㄦ硶锛?
+ * 用法：
  *   NEXT_PUBLIC_API_BASE=https://travel-notes.yuanabd.cn node scripts/build-mobile.cjs
- *   锛堥殢鍚庡彲 npx cap sync android 鏇存柊鍘熺敓宸ョ▼锛?
+ *   （随后可 npx cap sync android 更新原生工程）
  */
 const { execSync } = require('child_process')
 const fs = require('fs')
@@ -20,19 +20,19 @@ const root = path.join(__dirname, '..')
 const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://travel-notes.yuanabd.cn'
 const EXCLUDE_DIR = path.join(root, '.mobile-excluded')
 
-// [鍘熷鐩稿璺緞, 绉诲嚭鍚庣殑鍚嶅瓧] 鈥斺€?鏈嶅姟绔笓灞烇紝涓嶈繘闈欐€佸３
+// [原始相对路径, 移出后的名字] —— 服务端专属，不进静态壳
 const EXCLUDES = [
   ['app/api', 'api'],
   ['app/feed.xml', 'feed.xml'],
   ['app/admin', 'admin'],
   ['app/albums', 'albums'],
-  // 寮€鍙戠敤缁勪欢棰勮鍙帮紙/dev/ui锛夛細鐢熶骇鏋勫缓鏈凡 404锛屼絾浠嶄細鐢熸垚涓€涓啑浣欓〉闈紝
-  // 涓斿紑鍙戝伐鍏蜂笉搴旇繘鍏ュ彂缁欑敤鎴风殑瀹夎鍖?鈥斺€?涓?/admin 鍚岀悊绉诲嚭銆?
+  // 开发用组件预览台（/dev/ui）：生产构建本已 404，但仍会生成一个冗余页面，
+  // 且开发工具不应进入发给用户的安装包 —— 与 /admin 同理移出。
   ['app/dev', 'dev'],
   ['middleware.ts', 'middleware.ts'],
 ]
 
-// 澶嶅埗 + 鍒犻櫎锛堣€岄潪 rename锛夛細鍏煎 Docker overlayfs 鐨?EXDEV 璺ㄥ眰闄愬埗锛屾湰鍦?NTFS 浜﹀彲
+// 复制 + 删除（而非 rename）：兼容 Docker overlayfs 的 EXDEV 跨层限制，本地 NTFS 亦可
 function relocate(src, dst) {
   if (!fs.existsSync(src)) return
   fs.cpSync(src, dst, { recursive: true })
@@ -54,7 +54,7 @@ function moveBack() {
   if (fs.existsSync(EXCLUDE_DIR)) fs.rmSync(EXCLUDE_DIR, { recursive: true, force: true })
 }
 
-console.log('[build-mobile] 闈欐€佸鍑猴紙NEXT_PUBLIC_API_BASE=' + apiBase + '锛?..')
+console.log('[build-mobile] 静态导出（NEXT_PUBLIC_API_BASE=' + apiBase + '）...')
 moveOut()
 try {
   execSync('npx next build', {
@@ -78,26 +78,26 @@ try {
 const outDir = path.join(root, 'out')
 const wwwDir = path.join(root, 'www')
 if (fs.existsSync(outDir)) {
-  console.log('[build-mobile] 鎷疯礉 out/ -> www/ ...')
+  console.log('[build-mobile] 拷贝 out/ -> www/ ...')
   if (fs.existsSync(wwwDir)) fs.rmSync(wwwDir, { recursive: true, force: true })
   fs.cpSync(outDir, wwwDir, { recursive: true })
   fs.rmSync(outDir, { recursive: true, force: true })
 
-  // 绉诲姩绔収鐗?瑙嗛鐢辨湇鍔＄鎸夐渶鎻愪緵锛?uploads銆丆OS/CDN锛夛紝涓嶅湪澹冲唴鍐椾綑鎵撳寘锛?
-  // 绉婚櫎 public/uploads/media 鐨勯潤鎬佸鍑哄壇鏈悗锛宺elease APK 鍙噺灏戠害 64MB銆?
+  // 移动端照片/视频由服务端按需提供（/uploads、COS/CDN），不在壳内冗余打包；
+  // 移除 public/uploads/media 的静态导出副本后，release APK 可减少约 64MB。
   const bundledMediaDir = path.join(wwwDir, 'uploads', 'media')
   if (fs.existsSync(bundledMediaDir)) {
     fs.rmSync(bundledMediaDir, { recursive: true, force: true })
-    console.log('[build-mobile] 宸茬Щ闄ゆ墦鍖呭啑浣欙細www/uploads/media锛堢収鐗囨敼涓鸿繍琛屾湡浠庢湇鍔＄鍔犺浇锛?)
+    console.log('[build-mobile] 已移除打包冗余：www/uploads/media（照片改为运行期从服务端加载）')
   }
 
-  // 杩愯鏃跺搧鐗屾爣蹇楃敤 logo-512.png锛?58KB锛夛紱2048脳2048 鐨?logo.png 浠呬綔涓?
-  // gen-splash/gen-icons 鐨勭敓鎴愭簮锛屽墧闄ゅ叾闈欐€佸鍑哄壇鏈伩鍏?~2MB 鍐椾綑鎵撹繘 APK銆?
+  // 运行时品牌标志用 logo-512.png（258KB）；2048×2048 的 logo.png 仅作为
+  // gen-splash/gen-icons 的生成源，剔除其静态导出副本避免 ~2MB 冗余打进 APK。
   const bundledLogo = path.join(wwwDir, 'brand', 'logo.png')
   if (fs.existsSync(bundledLogo)) {
     fs.rmSync(bundledLogo, { force: true })
-    console.log('[build-mobile] 宸茬Щ闄ゆ墦鍖呭啑浣欙細www/brand/logo.png锛堣繍琛屾椂鍝佺墝鐢?logo-512.png锛屾簮鍥句粎鐢熸垚鐢級')
+    console.log('[build-mobile] 已移除打包冗余：www/brand/logo.png（运行时品牌用 logo-512.png，源图仅生成用）')
   }
 
-  console.log('[build-mobile] 瀹屾垚锛歸ww/ 宸茬敓鎴愶紝鍙?npx cap sync android')
+  console.log('[build-mobile] 完成：www/ 已生成，可 npx cap sync android')
 }

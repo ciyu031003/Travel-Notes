@@ -49,26 +49,29 @@ if [ ! -f "$TARBALL" ]; then
   echo "❌ 找不到部署包: $TARBALL" >&2
   exit 1
 fi
-# 解包前先记录归档内的路径清单：tar -x 是"覆盖"而不是"同步"，
-# 上一次部署过、这一次被删除的文件会**留在服务器上**（曾出现已删除组件残留在
-# 服务器源码目录，虽然不进构建产物，但会误导排障与后续增量对比）。
+# 解包前清理「本轮确实删掉的源码」：tar -x 是"覆盖"而不是"同步"，
+# 已删除的组件会留在服务器源码目录（曾观察到 components/album/reader/ArtPage.tsx 残留）。
+#
+# ⚠️ 范围必须严格限定：只同步**会进构建产物**的目录，且只删**源码扩展名**。
+# 2026-09-16 教训：早先版本把 `docs` 也纳入了扫描，导致服务器上一批只存在于服务器、
+# 并不在归档里的历史文档被当成"已删除文件"删掉（zsh 的 `find docs` 列出了它们，
+# 而归档里没有 → comm 判为 stale）。文档不进构建产物，不该被部署流程删除。
+# 因此白名单刻意**不含 docs**；markdown 也从扩展名里去掉。
 MANIFEST=$(mktemp)
 PRESENT=$(mktemp)
 STALE=$(mktemp)
 tar -tzf "$TARBALL" | sed 's#^\./##' | grep -v '/$' | sort > "$MANIFEST"
 
-# 只清理"归档里已不存在"的源码文件；不碰 .env / data / logs / node_modules 等运行期文件
-# （它们不在归档里，也不在下面的扫描白名单内）。
-for dir in app components lib hooks scripts prisma data types docs; do
+for dir in app components lib hooks prisma types; do
   [ -d "$PROJECT_DIR/$dir" ] || continue
   ( cd "$PROJECT_DIR" && find "$dir" -type f \
       \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.cjs' -o -name '*.mjs' \
-         -o -name '*.css' -o -name '*.json' -o -name '*.prisma' -o -name '*.md' \) \
+         -o -name '*.css' -o -name '*.prisma' \) \
       | sort ) > "$PRESENT"
   comm -23 "$PRESENT" "$MANIFEST" > "$STALE"
   while IFS= read -r stale; do
     [ -z "$stale" ] && continue
-    echo "  移除归档中已不存在的文件: $stale"
+    echo "  移除归档中已不存在的源码文件: $stale"
     rm -f "$PROJECT_DIR/$stale"
   done < "$STALE"
 done
