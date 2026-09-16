@@ -1,21 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import UserList from '@/components/social/UserList'
-import { apiUrl } from '@/lib/api-base'
+import MeUserRelationPage from '@/components/social/MeUserRelationPage'
 
 export default function FollowingPage() {
-  const [id, setId] = useState<number | null>(null)
-
-  useEffect(() => {
-    fetch(apiUrl('/api/me'), { credentials: 'include' })
-      .then((r) => r.json())
-      .then((j) => { if (j?.data?.id) setId(j.data.id) })
-      .catch(() => {})
-  }, [])
-
-  if (!id) {
-    return <div className="container-custom flex min-h-[60vh] items-center justify-center text-travel-sand">加载中…</div>
-  }
-  return <UserList endpoint={'/api/social/users/' + id + '/following'} title="我的关注" />
+  return <MeUserRelationPage endpoint="following" title="我的关注" />
 }

@@ -6,6 +6,13 @@ import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 
 const TRAVEL_TYPES = ['ALONE', 'COUPLE', 'FAMILY', 'FRIENDS', 'BFF', 'GROUP', 'OTHER']
 
+/** 校验并归一化目的地：可选，最长 120 字（DB 列 255），去掉首尾空白 */
+function normalizeLocation(raw: unknown): string | undefined {
+  if (raw === undefined || raw === null) return undefined
+  const v = String(raw).trim().slice(0, 120)
+  return v || undefined
+}
+
 /** 校验并归一化同行者列表：[{ name, relation? }]，最多 10 人 */
 function normalizeCompanions(raw: unknown): unknown[] | undefined {
   if (raw === undefined || raw === null) return undefined
@@ -61,13 +68,15 @@ export async function POST(request: NextRequest) {
       description: body?.description ? String(body.description) : undefined,
       startDate: body?.startDate || undefined,
       endDate: body?.endDate || undefined,
+      location: normalizeLocation(body?.location),
       ownerId: auth.payload?.userId,
       isPublic: Boolean(body?.isPublic),
       travelType: (body?.travelType as any) || undefined,
       companions,
     })
-    writeAuditLog({ username: auth.username, action: 'CREATE', resourceType: 'Travel', resourceId: String(result.id), metadata: { title } }).catch(() => {})
-    return NextResponse.json({ success: true, id: result.id }, { status: 201 })
+    writeAuditLog({ username: auth.username, action: 'CREATE', resourceType: 'Travel', resourceId: String(result.id), metadata: { title, location: normalizeLocation(body?.location) ?? null } }).catch(() => {})
+    // 回传 slug：前台新建后直接跳 /travel/<slug>
+    return NextResponse.json({ success: true, id: result.id, slug: result.slug }, { status: 201 })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || '创建失败' }, { status: 400 })
   }

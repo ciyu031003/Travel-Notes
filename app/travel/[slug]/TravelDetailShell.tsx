@@ -170,6 +170,27 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
 
+          {/*
+            新建旅行的落地页：刚建好的旅行没有正文、没有照片，此前的页面只剩标题与日期，
+            看起来像"没建成"。这里给一个最小引导 —— 一行说明 + 一个主动作，
+            不做插画、不堆按钮（对齐 docs/design/新建旅行重构方案-参考圆周旅迹.md 的 M6 空态原则）。
+          */}
+          {!contentHtml && images.length === 0 && videos.length === 0 && (
+            <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-travel-line/70 py-10 text-center">
+              <p className="text-sm text-travel-ink/55">
+                {detailLocation ? `「${detailLocation}」这段旅程还没有记录` : '这段旅程还没有记录'}
+              </p>
+              <Link
+                href={travelRecordHref(slug)}
+                className="inline-flex items-center gap-2 rounded-2xl bg-travel-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-travel-accentStrong active:scale-[0.98]"
+              >
+                <Icon icon={PenLine} size="sm" />
+                记录今天
+              </Link>
+              <p className="text-xs text-travel-ink/40">也可以往下按天添加行程与照片</p>
+            </div>
+          )}
+
           {/* v3.1 M1-A4：按天叙事时间线（仅新 Travel 模型有按天数据） */}
           {travel?.id && (
             <div className="mt-10">

@@ -49,8 +49,9 @@ test.describe('首次启动引导', () => {
 
     // 引导不得出现
     await expect(dialog(page)).toBeHidden()
-    // 目标内容可直接交互（此前正是被引导遮罩拦截）
-    await expect(page.getByPlaceholder('旅行名称（必填）')).toBeVisible({ timeout: 20_000 })
+    // 目标内容可直接交互（此前正是被引导遮罩拦截）。
+    // 用「目的地」字段作为锚点：它是改版后新建表单的首个焦点项。
+    await expect(page.getByLabel('去哪？')).toBeVisible({ timeout: 20_000 })
   })
 
   test('跳过按钮同样写入标记', async ({ page }) => {

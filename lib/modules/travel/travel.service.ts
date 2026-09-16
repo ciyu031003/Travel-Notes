@@ -377,17 +377,26 @@ export async function createTravel(input: {
   description?: string
   startDate?: string
   endDate?: string
+  /**
+   * 目的地。落 `Travel.location`。
+   * 为什么重要：旅行画册按城市成册时用 `findCityByName(Travel.location)` 匹配
+   * （lib/modules/album/travel-book.service.ts）；此字段为空时画册只能退化用标题当城市，
+   * 容易出现"串册 / 归错城市"。所以新建表单必须能写入它。
+   */
+  location?: string
   ownerId?: number | null
   isPublic?: boolean
   travelType?: 'ALONE' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BFF' | 'GROUP' | 'OTHER'
   companions?: unknown
-}): Promise<{ id: number }> {
+}): Promise<{ id: number; slug: string }> {
   const slugBase = input.title.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
+  const slug = slugBase || `travel-${Date.now()}`
   const row = await prisma.travel.create({
     data: {
       title: input.title.trim(),
-      slug: slugBase || `travel-${Date.now()}`,
+      slug,
       description: input.description || null,
+      location: input.location?.trim() || null,
       startDate: input.startDate ? new Date(input.startDate) : null,
       endDate: input.endDate ? new Date(input.endDate) : null,
       status: 'PLANNED',
@@ -400,7 +409,8 @@ export async function createTravel(input: {
     select: { id: true },
   })
   await syncTravelPost(row.id).catch(() => {})
-  return { id: row.id }
+  // 回传 slug：前台「新建旅行 → 直接进该旅行详情页」需要它（详情路由是 /travel/[slug]）
+  return { id: row.id, slug }
 }
 
 export async function updateTravel(id: number, input: any): Promise<void> {

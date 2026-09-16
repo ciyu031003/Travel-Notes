@@ -25,6 +25,14 @@ export class ApiError extends Error {
   }
 }
 
+/** 会话失效的判定（apiFetch 把 307→/login 与真实 401 都归一成 401） */
+export function isSessionExpiredError(error: unknown): boolean {
+  if (error instanceof ApiError) return error.status === 401
+  if (typeof error === 'string') return error.includes('登录')
+  if (error instanceof Error) return error.message.includes('登录')
+  return false
+}
+
 const memoryCache = new Map<string, { value: unknown; expireAt: number }>()
 const inflight = new Map<string, Promise<unknown>>()
 
@@ -61,7 +69,21 @@ export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions 
   }
 
   const p = (async () => {
-    const res = await fetch(path, { credentials: 'include', signal: opts.signal })
+    // redirect: 'manual' 是关键，不能省。
+    // 中间件对受保护接口返回 307 → /login?redirect=…（而不是 401）。若让 fetch 跟随重定向，
+    // 会拿到登录页 HTML：res.ok === true（登录页 200）、JSON.parse 失败 → json = null →
+    // 既不抛错也没有数据，resolve(null)。消费方（useApi）因此得到
+    // data=null / error='' / loading=false，页面条件 `loading || !profile` 恒真，
+    // 表现为「一直转圈，只有登录后才显示」——真机上复现过的 bug。
+    const res = await fetch(path, { credentials: 'include', signal: opts.signal, redirect: 'manual' })
+
+    // 被重定向（同源 3xx，或跨源 opaqueredirect：type='opaqueredirect' 且 status=0）
+    // 一律视为「未登录/会话失效」，交给消费方走登录引导。
+    const redirected = res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)
+    if (redirected) {
+      throw new ApiError('登录状态已失效，请重新登录', 401)
+    }
+
     const text = await res.text()
     let json: unknown = null
     try {

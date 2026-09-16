@@ -14,6 +14,8 @@ export interface CreateTravelInput {
   description?: string
   startDate?: string
   endDate?: string
+  /** 目的地 → `Travel.location`（画册按城市成册依赖它，见 travel.service.createTravel 注释） */
+  location?: string
   isPublic?: boolean
   travelType?: 'ALONE' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BFF' | 'GROUP' | 'OTHER'
   companions?: unknown
@@ -24,6 +26,10 @@ export interface CreateTravelResult {
   error?: string
   /** 是否本地写入（离线，待同步） */
   local?: boolean
+  /** 云端创建后的 slug；用于「建完直接进该旅行详情页」。离线写入时为 null */
+  slug?: string | null
+  /** 本地实体 id（离线写入时为 SQLite 行 id，供本地详情页使用） */
+  localId?: string | null
 }
 
 export async function createTravel(input: CreateTravelInput): Promise<CreateTravelResult> {
@@ -32,10 +38,11 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
 
   if (isNativePlatform()) {
     const queue = new SyncQueue(getSyncQueueStorage())
+    const localId = crypto.randomUUID()
     await writeLocalEntity(
       {
         table: 'travel',
-        id: crypto.randomUUID(),
+        id: localId,
         entityType: 'TRAVEL',
         remoteId: null,
         operation: 'CREATE',
@@ -43,7 +50,8 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
           title,
           slug: '',
           description: input.description || null,
-          location: null,
+          // 原先硬写 null，导致原生壳建的旅行在画册里只能靠标题猜城市；现在跟随表单
+          location: input.location?.trim() || null,
           cover: null,
           startDate: input.startDate ? new Date(input.startDate).getTime() : null,
           endDate: input.endDate ? new Date(input.endDate).getTime() : null,
@@ -59,7 +67,8 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
       },
       queue,
     )
-    return { ok: true, local: true }
+    // 离线：还没有云端 slug，调用方应留在本地列表/详情，不能跳 /travel/<slug>
+    return { ok: true, local: true, slug: null, localId }
   }
 
   try {
@@ -71,7 +80,8 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
     })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) return { ok: false, error: json?.error || '创建失败' }
-    return { ok: true }
+    const slug = typeof json?.slug === 'string' && json.slug ? json.slug : null
+    return { ok: true, slug }
   } catch {
     return { ok: false, error: '网络错误，请重试' }
   }
