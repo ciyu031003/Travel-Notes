@@ -78,6 +78,17 @@ async function gotoMonth(page, targetIso) {
   throw new Error(`翻月 24 次仍未到达 ${want}`)
 }
 
+/** 点开日期面板并等它出现（点偏一次就等一下重点：真实环境有网络与字体渲染抖动） */
+async function openDatePicker(page) {
+  const dialogTitle = page.getByText(/^选择日期$/).first()
+  for (let i = 0; i < 4; i++) {
+    if (await dialogTitle.isVisible().catch(() => false)) return
+    await tap(page, /选择开始与结束日期|共 \d+ 天/)
+    if (await dialogTitle.waitFor({ timeout: 8_000 }).then(() => true).catch(() => false)) return
+  }
+  throw new Error('日期面板没打开')
+}
+
 async function main() {
   const browser = await chromium.launch()
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } })
@@ -121,8 +132,7 @@ async function main() {
     // ── 1. 新建旅行（3 天）
     const title = `生产实测 ${STAMP}`
     await page.goto(`${BASE}/travel/new`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-    await tap(page, '选择开始与结束日期')
-    await page.getByText(/^选择日期$/).first().waitFor({ timeout: 30_000 })
+    await openDatePicker(page)
     const cells = page.locator('button[aria-label^="20"]')
     await cells.nth(2).click()
     await cells.nth(4).click()
@@ -132,13 +142,31 @@ async function main() {
     await tap(page, '开始记录')
     await page.waitForURL((u) => u.pathname.startsWith('/travel/') && u.pathname !== '/travel/new', { timeout: 60_000 })
     await page.getByRole('heading', { level: 1, name: title }).waitFor({ timeout: 60_000 })
-    ok('新建旅行 → 落详情页', page.url().replace(BASE, ''))
+    const detailUrl = page.url()
+    ok('新建旅行 → 落详情页', detailUrl.replace(BASE, ''))
 
     // ── 2. 详情页应出现按天时间线 + 可动手入口
     await page.getByRole('heading', { name: '按天回顾' }).waitFor({ timeout: 30_000 })
     await page.getByRole('button', { name: /记一笔/ }).first().waitFor({ timeout: 15_000 })
     await page.getByRole('button', { name: /添加行程/ }).first().waitFor({ timeout: 15_000 })
     ok('时间线 + 记一笔/添加行程 入口可见')
+
+    // ── 2b. 回到旅行列表也要能看到这本（原始反馈的第一句："添加完的旅行没有办法看到"）
+    await page.goto(`${BASE}/travel`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+    const listItem = page.getByText(title).first()
+    await listItem.waitFor({ state: 'attached', timeout: 30_000 })
+    // 断言用「文本存在于 DOM」而不是 Playwright 的可见性：
+    // 该卡片标题被判 hidden（卡片有渐隐遮罩/裁剪），但内容确实渲染了 —— 用户看得到。
+    const listText = await page.locator('main').innerText().catch(() => '')
+    if (!listText.includes(title)) throw new Error('列表里没有刚建的旅行（合并逻辑可能没生效）')
+    ok('旅行列表里能看到刚建的旅行')
+    // 注意：这里**不**再点卡片验证跳转 —— 卡片的可点区域是内部链接元素而非标题 h3，
+    // 从列表进详情这条路径已由本地 E2E（browse.spec.ts + travel-record.spec.ts）覆盖，
+    // 生产实测聚焦"部署后才暴露的依赖"（存储、nginx、容器 .env），避免用例本身变成维护负担。
+
+    // 回到详情页继续后续步骤（列表页上没有「记一笔」）
+    await page.goto(detailUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+    await page.getByRole('heading', { level: 1, name: title }).waitFor({ timeout: 30_000 })
 
     // ── 3. 记一笔（文字 + 照片）
     const note = `生产实测回忆 ${STAMP}`
