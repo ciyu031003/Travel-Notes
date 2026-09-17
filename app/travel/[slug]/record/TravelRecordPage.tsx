@@ -17,6 +17,8 @@ interface TravelInfo {
   title: string
   slug: string
   spaceId: number | null
+  /** 本地尚未同步到云端时不能提交（服务端不知道这本书） */
+  pendingSync?: boolean
 }
 
 const MOODS = ['开心', '幸福', '想念', '期待', '平静', '累']
@@ -126,7 +128,14 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
             <Icon icon={Sparkles} size="md" />
             {isNativePlatform() && !navigator.onLine ? '已保存到本地，联网后自动上传' : '已保存，即将返回…'}
           </div>
-        ) : travel.spaceId ? (
+        ) : travel.pendingSync ? (
+          // 本地新书还没同步上云：服务端不认识它，写不进去。如实说明而不是假装失败。
+          // （旧代码判的是 `travel.spaceId`，而个人旅行本来就没有空间 —— 于是所有
+          //   个人旅行在这页都被拦成"请先在后台关联空间"，等于整页不可用。）
+          <div className="card p-8 text-center text-travel-ink/70">
+            这本旅行还在本地待同步，联网后会自动上传。同步完成即可在这里记录。
+          </div>
+        ) : (
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label className="block text-sm text-travel-ink/70 mb-1">此刻标题</label>
@@ -173,10 +182,6 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
               {submitting ? '保存中...' : <><Icon icon={Send} size="sm" />保存回忆</>}
             </button>
           </form>
-        ) : (
-          <div className="card p-8 text-center text-travel-ink/70">
-            该旅行尚未关联旅行空间，请先在后台为其关联空间后再记录。
-          </div>
         )}
       </main>
     </div>

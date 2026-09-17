@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUserId } from '@/lib/current-user'
-import { getTravelTimeline } from '@/lib/modules/travel/travel.service'
+import { prisma } from '@/lib/db'
+import { ensureTravelDays, getTravelTimeline } from '@/lib/modules/travel/travel.service'
 import { canViewResourceById } from '@/lib/modules/access'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +25,24 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     const timeline = await getTravelTimeline(travelId, userId)
     if (!timeline) {
       return NextResponse.json({ error: '旅行不存在' }, { status: 404 })
+    }
+    // 存量旅行的惰性补齐：早先新建的旅行没有「天」，按天时间线在 0 天时不渲染，
+    // 于是用户在详情页既看不到分天结构、也点不到「记一笔 / 添加行程」。
+    // 这里按旅行日期区间补一次（已有天则不动）。
+    if (timeline.days.length === 0) {
+      const t = await prisma.travel.findUnique({
+        where: { id: travelId },
+        select: { startDate: true, endDate: true },
+      })
+      const created = await ensureTravelDays(
+        travelId,
+        t?.startDate ? t.startDate.toISOString() : null,
+        t?.endDate ? t.endDate.toISOString() : null,
+      ).catch(() => ({ created: 0 }))
+      if (created.created > 0) {
+        const again = await getTravelTimeline(travelId, userId)
+        if (again) return NextResponse.json({ timeline: again })
+      }
     }
     return NextResponse.json({ timeline })
   } catch (error) {

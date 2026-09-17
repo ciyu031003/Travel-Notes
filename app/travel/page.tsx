@@ -6,7 +6,11 @@ import TravelMobileClient, { TravelMobileLoading } from './TravelMobileClient'
 import AsyncState from '@/components/AsyncState'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
-import { readLocalTravels } from '@/lib/modules/offline/travel-read'
+import {
+  mergeLocalTravelsIntoRemote,
+  readAllLocalTravels,
+  readLocalTravels,
+} from '@/lib/modules/offline/travel-read'
 
 export default function TravelPage() {
   const [posts, setPosts] = useState<unknown[] | null>(null)
@@ -21,7 +25,12 @@ export default function TravelPage() {
           if (!res.ok) throw new Error('http ' + res.status)
           const j = await res.json()
           if (j && j.error) throw new Error(String(j.error))
-          return j?.posts || []
+          const remote = (j?.posts || []) as unknown[]
+          // 【关键】在线时也要把「本地待同步」的旅行合并进来。
+          // 原先只返回远端，刚在 App 里新建、还在同步队列里的那一本不会出现，
+          // 用户建完回列表看不到它（真机反馈的 bug）。合并逻辑见 mergeLocalTravelsIntoRemote。
+          const local = await readAllLocalTravels()
+          return mergeLocalTravelsIntoRemote(remote as Record<string, unknown>[], local) as unknown[]
         },
         async () => {
           const local = await readLocalTravels()

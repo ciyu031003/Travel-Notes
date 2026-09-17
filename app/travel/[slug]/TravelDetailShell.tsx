@@ -4,14 +4,15 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
-import { Calendar, MapPin, Users, PenLine } from 'lucide-react'
+import { Calendar, MapPin, Users, PenLine, Pencil } from 'lucide-react'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelDetailClient from './TravelDetailClient'
 import TravelTimeline from '@/components/travel/TravelTimeline'
+import TravelInfoEditor from '@/components/travel/TravelInfoEditor'
 import AsyncState from '@/components/AsyncState'
 import dynamicImport from 'next/dynamic'
 import { apiUrl } from '@/lib/api-base'
-import { travelRecordHref } from '@/lib/routes'
+import { travelDetailHref, travelRecordHref } from '@/lib/routes'
 import { TravelTypePill } from '@/components/mobile/Pills'
 import { Icon } from '@/components/mobile/Icon'
 
@@ -28,6 +29,8 @@ interface DetailData {
     slug: string
     description: string | null
     startDate: string | null
+    /** 编辑表单要回填完整区间 */
+    endDate?: string | null
     status: string
     contentHtml: string
     tags: string[] | null
@@ -35,6 +38,8 @@ interface DetailData {
     cover: string | null
     travelType?: string | null
     companions?: unknown
+    /** 服务端判定的可编辑性（owner 或空间成员） */
+    canEdit?: boolean
   } | null
   legacy: {
     id: number
@@ -55,6 +60,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   const slug = slugProp ? decodeURIComponent(slugProp) : decodeURIComponent(params?.slug || '')
   const [data, setData] = useState<DetailData | null>(null)
   const [error, setError] = useState('')
+  const [editing, setEditing] = useState(false)
 
   useEffect(() => {
     if (!slug) return
@@ -66,6 +72,18 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       })
       .catch(() => setError('网络错误，请稍后重试'))
   }, [slug])
+
+  /**
+   * 保存后：标题变化会连带 slug 变化（服务端重算），此时必须换地址再整页重载，
+   * 否则用户刷新就 404。没变 slug 也重载一次 —— 时间线的「天」可能被区间调整过。
+   */
+  const handleSaved = (info: { slug: string; local: boolean }) => {
+    if (info.slug && info.slug !== slug) {
+      window.location.replace(travelDetailHref(info.slug))
+      return
+    }
+    window.location.reload()
+  }
 
   if (error) {
     return <AsyncState variant="error" message={error} title="旅行加载失败" />
@@ -99,7 +117,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
     <div className="bg-travel-cream min-h-screen">
       {(images.length > 0 || videos.length > 0) && <TravelDetailClient {...imageProps} />}
 
-      <div className="container-custom pt-6">
+      <div className="container-custom flex flex-wrap items-center gap-2 pt-6">
         <Link
           href={travelRecordHref(slug)}
           className="inline-flex items-center gap-2 rounded-full border border-travel-bloom/50 bg-travel-sakura px-4 py-3 text-sm font-medium text-travel-ink transition-all hover:bg-travel-bloom/25 active:scale-[0.98]"
@@ -107,6 +125,20 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
           <Icon icon={PenLine} size="sm" />
           记录今日
         </Link>
+        {/*
+          编辑入口：此前前台完全没有修改旅行信息的路径（目的地写错 / 日期漏填只能删了重建，
+          而删除会连回忆与照片一起丢）。可编辑性由服务端 `canEdit` 判定，前台不做权限猜测。
+        */}
+        {travel?.canEdit && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-travel-line/70 bg-white/70 px-4 py-3 text-sm font-medium text-travel-ink transition-all hover:bg-travel-sakura/40 active:scale-[0.98]"
+          >
+            <Icon icon={Pencil} size="sm" />
+            编辑信息
+          </button>
+        )}
       </div>
       <div id={`detail-${slug}`} className="container-custom">
         <article className="mx-auto max-w-3xl pb-[calc(96px+env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] md:pb-16 md:pt-24">
@@ -201,6 +233,22 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
           <MermaidRenderer />
         </article>
       </div>
+
+      {editing && travel && (
+        <TravelInfoEditor
+          travelId={travel.id}
+          slug={travel.slug || slug}
+          initial={{
+            title: travel.title,
+            location: travel.location,
+            description: travel.description,
+            startDate: travel.startDate,
+            endDate: travel.endDate,
+          }}
+          onClose={() => setEditing(false)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   )
 }

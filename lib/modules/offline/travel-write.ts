@@ -8,6 +8,7 @@ import { SyncQueue } from './sync-queue'
 import { getSyncQueueStorage } from './storage'
 import { isNativePlatform } from './platform'
 import { apiUrl } from '@/lib/api-base'
+import { makeTravelSlug } from '@/lib/modules/travel/slug'
 
 export interface CreateTravelInput {
   title: string
@@ -39,6 +40,10 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
   if (isNativePlatform()) {
     const queue = new SyncQueue(getSyncQueueStorage())
     const localId = crypto.randomUUID()
+    // 本地也要有确定的 slug：早先写空串，而读取时回退成 `travel-<localId>`，
+    // 两侧不一致 → `/travel/<slug>` 打不开（"建完看不到也进不去"的根因之一）。
+    // 与服务端共用 makeTravelSlug，保证同步后 slug 一致、链接不失效。
+    const slug = makeTravelSlug(title, localId.slice(0, 8))
     await writeLocalEntity(
       {
         table: 'travel',
@@ -48,7 +53,7 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
         operation: 'CREATE',
         data: {
           title,
-          slug: '',
+          slug,
           description: input.description || null,
           // 原先硬写 null，导致原生壳建的旅行在画册里只能靠标题猜城市；现在跟随表单
           location: input.location?.trim() || null,
@@ -67,8 +72,8 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
       },
       queue,
     )
-    // 离线：还没有云端 slug，调用方应留在本地列表/详情，不能跳 /travel/<slug>
-    return { ok: true, local: true, slug: null, localId }
+    // 离线：返回本地 slug（列表与详情都能按它定位）
+    return { ok: true, local: true, slug, localId }
   }
 
   try {
@@ -82,6 +87,78 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
     if (!res.ok) return { ok: false, error: json?.error || '创建失败' }
     const slug = typeof json?.slug === 'string' && json.slug ? json.slug : null
     return { ok: true, slug }
+  } catch {
+    return { ok: false, error: '网络错误，请重试' }
+  }
+}
+
+export interface AddTravelDayInput {
+  /** 云端的旅行 id（离线新建尚未同步时为 null） */
+  travelId: number | null
+  /** 本地旅行行 id：离线时给「天」建立本地父子引用，上传时再解析成云端 id */
+  localTravelId?: string | null
+  date?: string | null
+  title?: string
+  summary?: string
+}
+
+export interface AddTravelDayResult {
+  ok: boolean
+  error?: string
+  local?: boolean
+  /** 云端天数行的 id（离线时为 null） */
+  id?: number | null
+  /** 本地天数行 id（离线时用于本地时间线） */
+  localId?: string | null
+}
+
+/**
+ * 给旅行加一天（离线优先）。
+ *
+ * 离线分支刻意把「天」写进本地 SQLite 并入队：`TRAVEL_DAY` 的两条上行路径
+ * （云端 id 已在 / 只有本地 UUID）都由 sync-dispatcher 的 resolveRemoteId 处理，
+ * 于是"离线建旅行 → 离线加天 → 联网全量上传"整条链路才闭合。
+ */
+export async function addTravelDay(input: AddTravelDayInput): Promise<AddTravelDayResult> {
+  if (isNativePlatform()) {
+    const queue = new SyncQueue(getSyncQueueStorage())
+    const localId = crypto.randomUUID()
+    const parent = input.travelId != null ? String(input.travelId) : input.localTravelId
+    if (!parent) return { ok: false, error: '找不到这本旅行的本地记录，请先同步' }
+    await writeLocalEntity(
+      {
+        table: 'travel_day',
+        id: localId,
+        entityType: 'TRAVEL_DAY',
+        remoteId: null,
+        operation: 'CREATE',
+        data: {
+          travelId: parent,
+          date: input.date ? new Date(input.date).getTime() : null,
+          title: input.title || null,
+          summary: input.summary || null,
+          sortOrder: Date.now(),
+        },
+      },
+      queue,
+    )
+    return { ok: true, local: true, id: null, localId }
+  }
+
+  if (input.travelId == null) {
+    return { ok: false, error: '该旅行尚未同步到云端，请联网后重试' }
+  }
+
+  try {
+    const res = await fetch(apiUrl(`/api/travels/${input.travelId}/days`), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: input.date || undefined, title: input.title, summary: input.summary }),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: json?.error || '添加失败' }
+    return { ok: true, id: typeof json?.id === 'number' ? json.id : null }
   } catch {
     return { ok: false, error: '网络错误，请重试' }
   }

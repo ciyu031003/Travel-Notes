@@ -47,6 +47,8 @@ export interface CreateSpaceInput {
   slug: string
   description?: string
   ownerUsername: string
+  /** 空间 OWNER 的 userId（可选；个人空间自动创建时带上，便于按 userId 查询） */
+  ownerUserId?: number | null
 }
 
 function toInviteStatus(invite: { usedAt: Date | null; expiresAt: Date }): SpaceInviteRecord['status'] {
@@ -76,6 +78,7 @@ export class PrismaSpaceRepository {
           username: input.ownerUsername,
           role: 'OWNER',
           status: 'ACTIVE',
+          userId: input.ownerUserId ?? null,
         },
       })
       return created

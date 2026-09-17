@@ -230,6 +230,62 @@ export class SpaceService {
       spaceId,
     }).catch(() => {})
   }
+
+  /**
+   * 取（或创建）该用户的「个人空间」。
+   *
+   * 为什么需要：`Memory.spaceId` 是必填列，`createMemory` 还要求空间成员角色。
+   * 但前台「新建旅行」建出的 Travel `spaceId` 为空（注册流程也不创建任何 Space），
+   * 于是 `POST /api/travels/:id/memories` 会直接 400「该旅行尚未关联空间」——
+   * 个人旅行**根本无法添加回忆与照片**，这正是真机反馈"没法进一步设置"的根因之一。
+   *
+   * 语义：个人空间 = 该用户作为 OWNER 的第一个空间；没有就建一个 SOLO 空间。
+   * 选择"复用已有 OWNER 空间"而不是每次新建，是为了不产生一堆空空间；
+   * 也刻意不新建后回写 Travel.spaceId（避免改动既有旅行归属）。
+   */
+  async ensurePersonalSpace(username: string, userId?: number | null): Promise<number> {
+    const mine = await prisma.spaceMember.findFirst({
+      where: { username, status: 'ACTIVE', role: 'OWNER' },
+      orderBy: { joinedAt: 'asc' },
+      select: { spaceId: true },
+    })
+    if (mine) return mine.spaceId
+
+    // slug 需全局唯一：用 userId/username 派生，冲突时附加随机后缀重试
+    const base = `personal-${userId ?? username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 60)
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const slug = attempt === 0 ? base : `${base}-${randomBytes(3).toString('hex')}`
+      try {
+        const id = await this.repo.create({
+          name: '我的旅行空间',
+          slug,
+          description: '个人旅行记忆空间（自动创建）',
+          ownerUsername: username,
+          ownerUserId: userId ?? null,
+        })
+        await prisma.space.update({ where: { id }, data: { spaceType: 'SOLO' } }).catch(() => {})
+        await writeAuditLog({
+          username,
+          action: 'CREATE',
+          resourceType: 'Space',
+          resourceId: String(id),
+          spaceId: id,
+          metadata: { name: '我的旅行空间', slug, auto: 'ensurePersonalSpace' },
+        }).catch(() => {})
+        return id
+      } catch {
+        // slug 冲突或并发创建：重试
+      }
+    }
+    // 兜底：并发下可能已被别的请求建好，再查一次
+    const again = await prisma.spaceMember.findFirst({
+      where: { username, status: 'ACTIVE', role: 'OWNER' },
+      orderBy: { joinedAt: 'asc' },
+      select: { spaceId: true },
+    })
+    if (again) return again.spaceId
+    throw new Error('无法创建个人空间')
+  }
 }
 
 export const spaceService = new SpaceService(new PrismaSpaceRepository())

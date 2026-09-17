@@ -5,6 +5,7 @@
  */
 import type { SyncQueueItem } from './types'
 import { readLocalPhotoBase64 } from './media-upload'
+import { findRemoteIdByLocalId } from './dao'
 import { apiUrl } from '@/lib/api-base'
 
 export interface UploadResult {
@@ -22,15 +23,36 @@ const ENDPOINT: Partial<Record<SyncQueueItem['entityType'], string>> = {
   ALBUM: '/api/admin/albums',
 }
 
-/** MEMORY 写接口依赖 travelId（/api/travels/{travelId}/memories），从 payload 取云端 travelId */
-function resolveEndpoint(item: SyncQueueItem): string {
+/**
+ * 写接口需要「父实体云端主键」时，把 payload 里的本地引用解析成远程 id。
+ *
+ * 离线创建的父子关系（旅行 → 天 → 回忆）在本地存的是 UUID；队列按写入顺序回放，
+ * 上传到子项时父项已回填过 remoteId，所以此刻回查本地行即可。
+ * 解析不到时抛错（而不是硬塞 UUID），失败项会退避重试，父项同步成功后自然通过。
+ */
+async function resolveRemoteId(localRef: unknown, table: string, label: string): Promise<number> {
+  const raw = typeof localRef === 'number' ? localRef : Number(localRef)
+  if (Number.isFinite(raw) && raw > 0) return raw
+  const resolved = await findRemoteIdByLocalId(table, String(localRef ?? ''))
+  if (resolved == null) throw new Error(`${label} 尚未同步到云端，稍后重试`)
+  return resolved
+}
+
+/** MEMORY / TRAVEL_DAY 写接口依赖父旅行的云端 id，从 payload 取（本地引用则回查本地行） */
+async function resolveEndpoint(item: SyncQueueItem): Promise<string> {
   const fixed = ENDPOINT[item.entityType]
   if (fixed) return fixed
   if (item.entityType === 'MEMORY') {
     const payload = item.payload ? JSON.parse(item.payload) : {}
-    const travelId = payload.travelId
-    if (travelId == null) throw new Error('MEMORY 缺少 travelId')
+    if (payload.travelId == null) throw new Error('MEMORY 缺少 travelId')
+    const travelId = await resolveRemoteId(payload.travelId, 'travel', '旅行')
     return '/api/travels/' + travelId + '/memories'
+  }
+  if (item.entityType === 'TRAVEL_DAY') {
+    const payload = item.payload ? JSON.parse(item.payload) : {}
+    if (payload.travelId == null) throw new Error('TRAVEL_DAY 缺少 travelId')
+    const travelId = await resolveRemoteId(payload.travelId, 'travel', '旅行')
+    return '/api/travels/' + travelId + '/days'
   }
   if (item.entityType === 'LIKE' || item.entityType === 'FAVORITE' || item.entityType === 'COMMENT') {
     const payload = item.payload ? JSON.parse(item.payload) : {}
@@ -49,7 +71,7 @@ export class HttpSyncDispatcher implements SyncDispatcher {
     if (item.operation === 'UPLOAD_MEDIA') {
       return this.uploadMedia(item)
     }
-    const base = resolveEndpoint(item)
+    const base = await resolveEndpoint(item)
     let url = base
     let method = 'POST'
     if (item.operation === 'DELETE') {

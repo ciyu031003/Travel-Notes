@@ -5,6 +5,7 @@
 import { prisma } from '../../db'
 import { scopedWhere } from '../../visibility'
 import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
+import { makeTravelSlug } from './slug'
 import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
 import { absoluteMediaUrl, storageKeyToUrl } from '../../media-url'
@@ -345,8 +346,57 @@ export interface TravelPublicDetail {
   companions: unknown
 }
 
-export async function getTravelBySlug(slug: string, userId?: number | null): Promise<TravelPublicDetail | null> {
-  if (skipDbOnBuild()) return null
+/**
+ * 某本旅行下「回忆照片」的预览图 URL 列表（按时间升序）。
+ *
+ * 为什么需要：详情页的相册原先只取旅行封面与旧文章图片，**不含回忆里上传的照片**，
+ * 于是用户传完照片在最显眼的位置看不到，像是"没传进去"。
+ * 这里同时覆盖两种挂载方式：Media.memoryId（主照片）与 MemoryMedia（多对多关联）。
+ */
+export async function getTravelMemoryPhotos(travelId: number, limit = 60): Promise<string[]> {
+  const memories = await prisma.memory.findMany({
+    where: { travelId },
+    orderBy: [{ happenedAt: 'asc' }, { id: 'asc' }],
+    select: {
+      media: {
+        select: { storageKey: true, variants: { where: { variant: 'PREVIEW' }, select: { storageKey: true } } },
+      },
+      mediaLinks: {
+        orderBy: { sortOrder: 'asc' },
+        select: {
+          media: {
+            select: { storageKey: true, variants: { where: { variant: 'PREVIEW' }, select: { storageKey: true } } },
+          },
+        },
+      },
+    },
+  })
+
+  const urlOf = (m: { storageKey: string; variants: { storageKey: string }[] }) => {
+    const key = m.variants?.[0]?.storageKey || m.storageKey
+    if (!key) return ''
+    if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) {
+      const base = (process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')
+      return `${base}/${key}`
+    }
+    return `/uploads/${key}`
+  }
+
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const mem of memories) {
+    for (const m of [...mem.media, ...mem.mediaLinks.map((l) => l.media)]) {
+      const url = urlOf(m)
+      if (!url || seen.has(url)) continue
+      seen.add(url)
+      out.push(url)
+      if (out.length >= limit) return out
+    }
+  }
+  return out
+}
+
+export async function getTravelBySlug(slug: string, userId?: number | null): Promise<TravelPublicDetail | null> {  if (skipDbOnBuild()) return null
   const t = await prisma.travel.findFirst({ where: { ...scopedWhere(userId, 'ownerId'), slug } as any })
   if (!t) return null
 
@@ -389,8 +439,10 @@ export async function createTravel(input: {
   travelType?: 'ALONE' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BFF' | 'GROUP' | 'OTHER'
   companions?: unknown
 }): Promise<{ id: number; slug: string }> {
-  const slugBase = input.title.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
-  const slug = slugBase || `travel-${Date.now()}`
+  // slug 走共享生成器，并做唯一化重试：
+  // 早先直接拿 makeTravelSlug 的结果写库，同一标题建两次就撞 Travel.slug 唯一约束（P2002），
+  // 前台表现为"点了开始记录没反应"。同名旅行是常态（"南京之行"人人都可能建），必须能共存。
+  const slug = await makeUniqueTravelSlug(makeTravelSlug(input.title))
   const row = await prisma.travel.create({
     data: {
       title: input.title.trim(),
@@ -409,14 +461,198 @@ export async function createTravel(input: {
     select: { id: true },
   })
   await syncTravelPost(row.id).catch(() => {})
+  // 按日期区间自动生成「天」。
+  // 为什么必须做：详情页的按天时间线（TravelTimeline）在 0 天时 `return null`，
+  // 于是新旅行既看不到分天结构、也点不到「添加行程」——用户建完旅行无处可动手。
+  await ensureTravelDays(row.id, input.startDate, input.endDate).catch(() => {})
   // 回传 slug：前台「新建旅行 → 直接进该旅行详情页」需要它（详情路由是 /travel/[slug]）
   return { id: row.id, slug }
+}
+
+/**
+ * slug 唯一化：`南京之行` 第二次创建时追加 `-2`、`-3`…（最多试 50 次）。
+ *
+ * 为什么必须做：`Travel.slug` 有唯一约束，而标题是用户自由输入的天然重复项。
+ * 早先重复标题会让 prisma.create 抛 P2002，接口 500，前台只看到"创建失败"。
+ * @param excludeId 编辑场景下排除自己，避免"只改了日期也被判为重复"
+ */
+export async function makeUniqueTravelSlug(base: string, excludeId?: number): Promise<string> {
+  const taken = async (slug: string) => {
+    const found = await prisma.travel.findFirst({
+      where: excludeId ? { slug, id: { not: excludeId } } : { slug },
+      select: { id: true },
+    })
+    return !!found
+  }
+  if (!(await taken(base))) return base
+  for (let i = 2; i <= 50; i++) {
+    const candidate = `${base}-${i}`
+    if (!(await taken(candidate))) return candidate
+  }
+  // 极端情况兜底：加时间戳，几乎不可能再撞
+  return `${base}-${Date.now()}`
+}
+
+/**
+ * 编辑旅行基本信息（标题 / 目的地 / 日期区间 / 描述）。
+ *
+ * 与 `createTravel` 对称：改标题时同步重算 slug，并返回新 slug —— 前台据此决定是否
+ * 需要把地址从旧 slug 跳到新 slug（否则用户改完名字，刷新就 404）。
+ * 日期区间变化时同步 TravelDay（见 syncTravelDayDates）。
+ */
+export async function updateTravelInfo(
+  id: number,
+  input: { title?: string; location?: string; startDate?: string | null; endDate?: string | null; description?: string | null },
+): Promise<{ slug: string; daysChanged: number }> {
+  const current = await prisma.travel.findUnique({
+    where: { id },
+    select: { title: true, slug: true, startDate: true, endDate: true },
+  })
+  if (!current) throw new Error('旅行不存在')
+
+  const title = input.title !== undefined ? input.title.trim() : undefined
+  if (title !== undefined && !title) throw new Error('旅行名称不能为空')
+  if (title !== undefined && title.length > 120) throw new Error('旅行名称过长（最多 120 字）')
+
+  const data: Record<string, unknown> = {}
+  if (title !== undefined) data.title = title
+  if (input.location !== undefined) data.location = input.location.trim() || null
+  if (input.description !== undefined) data.description = input.description?.trim() || null
+  if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate) : null
+  if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
+
+  // 日期倒置会让「按天」生成负天数；在服务层挡掉，而不是让前台各自判一遍
+  const s = (data.startDate as Date | null | undefined) ?? current.startDate
+  const e = (data.endDate as Date | null | undefined) ?? current.endDate
+  if (s && e && e.getTime() < s.getTime()) throw new Error('结束日期不能早于开始日期')
+
+  // 改标题 → 重算 slug（保持"地址跟着名字走"），旧链接由前台 replace 掉
+  let slug = current.slug
+  if (title !== undefined && title !== current.title) {
+    slug = await makeUniqueTravelSlug(makeTravelSlug(title), id)
+    data.slug = slug
+  }
+
+  await prisma.travel.update({ where: { id }, data, select: { id: true } })
+  await syncTravelPost(id).catch(() => {})
+
+  // 日期变了 → 已存在的「天」要跟着对齐，否则时间线还停在旧日期上
+  const daysChanged =
+    input.startDate !== undefined || input.endDate !== undefined
+      ? await syncTravelDayDates(id, s, e).catch(() => 0)
+      : 0
+
+  return { slug, daysChanged }
+}
+
+/**
+ * 把 `TravelDay` 的日期对齐到旅行区间。
+ *
+ * 语义（有意选择"就地对齐"而不是"删了重建"）：
+ *  · 第 i 天的日期 = 开始日 + i 天；
+ *  · 区间变长 → 补出缺失的天；变短 → **保留**多出来的天（里面可能已有回忆/照片，删掉等于毁数据），
+ *    只是不再改动它们的日期；
+ *  · 原来没有天的旅行（未填日期就建了）→ 至少补出 1 天，保证详情页有可下手的地方。
+ * 返回实际被改动的天数。
+ */
+export async function syncTravelDayDates(travelId: number, startDate: Date | null, endDate: Date | null): Promise<number> {
+  const days = await prisma.travelDay.findMany({
+    where: { travelId },
+    orderBy: { sortOrder: 'asc' },
+    select: { id: true, date: true, sortOrder: true },
+  })
+
+  // 没有开始日 → 无法对齐，但至少要保证有 1 天可写
+  if (!startDate || Number.isNaN(startDate.getTime())) {
+    if (days.length > 0) return 0
+    return (await ensureTravelDays(travelId, null, null)).created
+  }
+
+  const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+  const end =
+    endDate && !Number.isNaN(endDate.getTime())
+      ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+      : start
+  const span = Math.max(0, Math.min(Math.round((end.getTime() - start.getTime()) / 86_400_000), 59)) + 1
+
+  let changed = 0
+  for (let i = 0; i < Math.min(days.length, span); i++) {
+    const target = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
+    const day = days[i]
+    const same = day.date && new Date(day.date).toDateString() === target.toDateString()
+    if (same) continue
+    await prisma.travelDay.update({ where: { id: day.id }, data: { date: target } })
+    changed++
+  }
+
+  // 区间比现有天数长 → 补齐（沿用 ensureTravelDays 的天数上限语义）
+  if (span > days.length) {
+    const maxOrder = await prisma.travelDay.aggregate({ where: { travelId }, _max: { sortOrder: true } })
+    const base = (maxOrder._max.sortOrder ?? days.length - 1) + 1
+    const extra: { travelId: number; date: Date; title: string; sortOrder: number }[] = []
+    for (let i = days.length; i < span; i++) {
+      extra.push({
+        travelId,
+        date: new Date(start.getFullYear(), start.getMonth(), start.getDate() + i),
+        title: `DAY ${String(i + 1).padStart(2, '0')}`,
+        sortOrder: base + (i - days.length),
+      })
+    }
+    if (extra.length > 0) {
+      await prisma.travelDay.createMany({ data: extra })
+      changed += extra.length
+    }
+  }
+
+  return changed
+}
+
+/**
+ * 确保旅行有对应的「天」：已有天则不重复创建。
+ * 日期区间解析失败（未填日期/区间倒置）时按 1 天处理，保证详情页仍有可编辑的一天。
+ */
+export async function ensureTravelDays(
+  travelId: number,
+  startDate?: string | null,
+  endDate?: string | null,
+): Promise<{ created: number }> {
+  const existing = await prisma.travelDay.count({ where: { travelId } })
+  if (existing > 0) return { created: 0 }
+
+  const dates: Date[] = []
+  const s = startDate ? new Date(startDate) : null
+  const e = endDate ? new Date(endDate) : null
+  if (s && !Number.isNaN(s.getTime())) {
+    const start = new Date(s.getFullYear(), s.getMonth(), s.getDate())
+    const end = e && !Number.isNaN(e.getTime()) ? new Date(e.getFullYear(), e.getMonth(), e.getDate()) : start
+    const days = Math.round((end.getTime() - start.getTime()) / 86_400_000)
+    if (days >= 0) {
+      // 上限 60 天：避免误填超长区间产生海量空天
+      for (let i = 0; i <= Math.min(days, 59); i++) {
+        dates.push(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i))
+      }
+    }
+  }
+  if (dates.length === 0) dates.push(new Date())
+
+  await prisma.travelDay.createMany({
+    data: dates.map((d, i) => ({
+      travelId,
+      date: d,
+      title: `DAY ${String(i + 1).padStart(2, '0')}`,
+      sortOrder: i,
+    })),
+  })
+  return { created: dates.length }
 }
 
 export async function updateTravel(id: number, input: any): Promise<void> {
   const data: any = {}
   if (input.title !== undefined) data.title = input.title
   if (input.description !== undefined) data.description = input.description || null
+  // 目的地：后台表单此前不支持改它，而画册按城市成册依赖 `location`，
+  // 导致"目的地填错了只能删了重建"。补上。
+  if (input.location !== undefined) data.location = input.location?.trim() || null
   if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate) : null
   if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
   if (input.status !== undefined) data.status = input.status

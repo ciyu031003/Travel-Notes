@@ -35,3 +35,22 @@ export async function hasLocalData(table: string): Promise<boolean> {
     return false
   }
 }
+
+/**
+ * 本地行 id → 云端主键（同步时解析依赖关系用）。
+ *
+ * 为什么需要：离线创建的实体之间是**本地引用**（如 `travel_day.travelId` 存的是
+ * travel 行的 UUID），而上行接口要的是云端主键。队列在旅行上传成功后才处理到"天"，
+ * 所以那一刻回查本地行就能拿到刚回填的 remoteId。
+ * 非原生端、行不存在、或尚未回填时返回 null（调用方据此给出明确错误）。
+ */
+export async function findRemoteIdByLocalId(table: string, localId: string): Promise<number | null> {
+  if (!isNativePlatform() || !localId) return null
+  try {
+    const rows = await queryRows('SELECT remoteId FROM ' + table + ' WHERE id = ? LIMIT 1', [localId])
+    const value = rows[0]?.[0]
+    return value == null ? null : Number(value)
+  } catch {
+    return null
+  }
+}

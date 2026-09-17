@@ -86,8 +86,13 @@ test('新建旅行（日期+目的地+名称）→ 直接进入该旅行详情�
   // ⑤ 详情页应显示目的地 —— 证明 location 真写进去了（画册按城市成册依赖它）
   await expect(page.getByText('南京').first()).toBeVisible({ timeout: 15_000 })
 
-  // ⑥ 新建旅行没有内容 → 应有"还没有记录"引导，而不是空白页
-  await expect(page.getByText(/还没有记录/)).toBeVisible({ timeout: 15_000 })
+  // ⑥ 落地页应同时给出「按天时间线」与「最小空态引导」——
+  //    日期区间会在建旅行时自动补出 TravelDay，所以时间线一定渲染；正文/照片为空时还叠一个引导块。
+  //    注意 /还没有记录/ 会同时命中引导块的「这段旅程还没有记录」和某天的「这一天还没有记录」，
+  //    因此用 .first()，并分别锚定到各自的容器文案上。
+  await expect(page.getByText('按天回顾').first()).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText(/^DAY 01$/).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText(/这段旅程还没有记录/).first()).toBeVisible({ timeout: 15_000 })
 })
 
 test('新建旅行：只选一天 → 共 1 天 0 晚，可提交', async ({ page }) => {

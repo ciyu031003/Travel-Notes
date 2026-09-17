@@ -4,8 +4,8 @@ import { test, expect } from '@playwright/test'
  * OTA 真机链路验证（不打桩 /api/version）
  *
  * 与 tests/e2e/album-reader.spec.ts 不同：那组用例为稳定性注入了 fixture；
- * 这组**故意不注入任何数据**，直接打生产接口，验证「真机装 1.7.0/build 8 时，
- * 打开 App 会看到 1.8.0 的更新提示，且下载地址就是新版 APK」。
+ * 这组**故意不注入任何数据**，直接打生产接口，验证「真机装旧版本壳时，
+ * 打开 App 会看到线上版本的更新提示，且下载地址就是那个固定 APK 路径」。
  *
  * 原生壳用 addInitScript 模拟：isNativePlatform() 只看 window.Capacitor，
  * 因此注入 isNativePlatform: () => true 即可让 OTA 检查逻辑真实执行。
@@ -13,6 +13,13 @@ import { test, expect } from '@playwright/test'
 
 const PROD_API = 'https://travel-notes.yuanabd.cn'
 const EXPECTED_APK = 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk'
+
+/**
+ * 线上版本号**不写死**：曾把 1.8.0/build 9 硬编码进断言，发到 1.9.0 后立刻误报失败。
+ * 这里只断言「形态正确」（x.y.z + 正整数构建号）+「下载地址是那个固定 APK」，
+ * 具体版本是否为最新由发版流程保证，不由这条用例保证。
+ */
+const VERSION_RE = /^\d+\.\d+\.\d+$/
 
 /**
  * 「模拟旧版本壳」那条用例要求本地构建的 NEXT_PUBLIC_APP_VERSION 低于线上版本，
@@ -23,13 +30,14 @@ const EXPECTED_APK = 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk'
  */
 const LOWER_SHELL = process.env.OTA_LIVE === '1'
 
-test('生产 /api/version 返回 1.8.0/build 9，且下载地址可用', async ({ request }) => {
+test('生产 /api/version 返回可用的版本信息，且下载地址可用', async ({ request }) => {
   const res = await request.get(`${PROD_API}/api/version`)
   expect(res.ok()).toBeTruthy()
   const m = await res.json()
 
-  expect(m.version).toBe('1.8.0')
-  expect(m.buildNumber).toBe(9)
+  expect(m.version, `版本号应为 x.y.z，实际 ${m.version}`).toMatch(VERSION_RE)
+  expect(Number.isInteger(m.buildNumber), `构建号应为整数，实际 ${m.buildNumber}`).toBe(true)
+  expect(m.buildNumber).toBeGreaterThan(0)
   expect(m.downloadUrl).toBe(EXPECTED_APK)
   expect(m.changelog).toBeTruthy()
 
@@ -60,9 +68,14 @@ test('模拟原生壳旧版本：App 内出现 OTA 更新提示，下载地址�
 
   await page.goto('/')
 
-  // OTA 提示：BottomSheet 标题「发现新版本 v1.8.0」
+  // 远端版本从线上接口现取，避免把版本号写进用例
+  const remote = await (await page.request.get(`${PROD_API}/api/version`)).json()
+
+  // OTA 提示：BottomSheet 标题「发现新版本 v<remote.version>」
   await expect(page.getByText(/发现新版本/).first()).toBeVisible({ timeout: 30_000 })
-  await expect(page.getByText(/v1\.8\.0/).first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText(new RegExp(`v${remote.version.replace(/\./g, '\\.')}`)).first()).toBeVisible({
+    timeout: 20_000,
+  })
   // changelog 来自线上 /api/version
   await expect(page.getByText(/旅行画册 2\.0/).first()).toBeVisible({ timeout: 20_000 })
 

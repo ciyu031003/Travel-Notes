@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '新建旅行重做：目的地与日期区间一处填完、自动算天数并生成标题、建完直接进入该旅行；修复未登录打开「我的」一直转圈的问题',
+    changelog: process.env.APP_CHANGELOG || '旅行记录闭环：建完的旅行可编辑标题/目的地/日期，并按天记一笔（可传照片）与添加景点行程；新增「加一天」；旅行画册同步收录回忆照片',
     forceUpdate,
   })
 }
