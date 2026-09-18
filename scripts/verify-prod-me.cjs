@@ -57,6 +57,12 @@ async function tap(page, text) {
   if (!hit) throw new Error(`未找到可点击元素：${text}`)
 }
 
+/** 等「我的」页真正渲染出档案（有用户名 @xxx 才算数据到位，否则只是 AsyncState 骨架） */
+async function waitMeLoaded(page) {
+  await page.locator('text=/^@/').first().waitFor({ timeout: 40_000 })
+}
+
+/** 读页面上的三统计 */
 async function readStats(page) {
   return page.evaluate(() => {
     const text = document.body.innerText
@@ -66,6 +72,12 @@ async function readStats(page) {
     }
     return { travels: pick('次旅行'), places: pick('个地方'), photos: pick('张照片') }
   })
+}
+
+/** 直接读接口口径（用于和页面显示对账） */
+async function apiStats(ctx) {
+  const me = (await (await ctx.request.get(`${BASE}/api/me`)).json()).data
+  return { travels: me.summary.travelCount, places: me.summary.placeCount, photos: me.summary.photoCount }
 }
 
 async function main() {
@@ -114,9 +126,14 @@ async function main() {
 
     // ── 2. 打开「我的」页，读基准统计
     await page.goto(`${BASE}/me`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
-    await page.getByRole('heading', { name: '我的' }).first().waitFor({ timeout: 30_000 })
+    await waitMeLoaded(page)
     const before = await readStats(page)
-    ok('打开「我的」页', `旅行=${before.travels} 地方=${before.places} 照片=${before.photos}`)
+    // 页面显示必须与接口口径一致（否则说明前端渲染或取数有一处不对）
+    const beforeApi = await apiStats(ctx)
+    if (before.travels !== beforeApi.travels || before.places !== beforeApi.places || before.photos !== beforeApi.photos) {
+      throw new Error(`页面统计与 /api/me 不一致：页面=${JSON.stringify(before)} 接口=${JSON.stringify(beforeApi)}`)
+    }
+    ok('打开「我的」页（页面与接口口径一致）', `旅行=${before.travels} 地方=${before.places} 照片=${before.photos}`)
 
     // 页面结构：不再有旅行故事；记录/设置入口在位
     const body = await page.locator('body').innerText()
@@ -136,20 +153,32 @@ async function main() {
     travelId = created.id
     ok('建一本旅行（Hangzhou 3 天）', `id=${travelId}`)
 
+    // ① 接口口径（这是修复的核心：Travel 表而不是 Post 表）
+    let afterApi = beforeApi
+    for (let i = 0; i < 10; i++) {
+      afterApi = await apiStats(ctx)
+      if (afterApi.travels === beforeApi.travels + 1) break
+      await page.waitForTimeout(500)
+    }
+    if (afterApi.travels !== beforeApi.travels + 1) {
+      throw new Error(`/api/me 统计未 +1：before=${beforeApi.travels} after=${afterApi.travels}（口径修复是否部署？）`)
+    }
+    if (afterApi.places < beforeApi.places) throw new Error(`地方数不应减少：${beforeApi.places} → ${afterApi.places}`)
+    ok('接口统计立刻 +1（口径修复生效）', `旅行 ${beforeApi.travels}→${afterApi.travels}，地方 ${beforeApi.places}→${afterApi.places}`)
+
+    // ② 页面也要跟着变（刷新一次，等档案渲染完成再读）
     await page.reload({ waitUntil: 'domcontentloaded' })
-    await page.getByRole('heading', { name: '我的' }).first().waitFor({ timeout: 30_000 })
+    await waitMeLoaded(page)
     let after = before
     for (let i = 0; i < 20; i++) {
       after = await readStats(page)
       if (after.travels === before.travels + 1) break
-      await page.waitForTimeout(700)
-      await page.reload({ waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(600)
     }
     if (after.travels !== before.travels + 1) {
-      throw new Error(`统计未 +1：before=${before.travels} after=${after.travels}（口径修复是否部署？）`)
+      throw new Error(`页面统计未 +1：before=${before.travels} after=${after.travels}（前端渲染是否用了新字段？）`)
     }
-    if (after.places < before.places) throw new Error(`地方数不应减少：${before.places} → ${after.places}`)
-    ok('统计立刻 +1（口径修复生效）', `旅行 ${before.travels}→${after.travels}，地方 ${before.places}→${after.places}`)
+    ok('页面统计跟着 +1', `旅行 ${before.travels}→${after.travels}`)
 
     // ── 4. 上传头图 → 立即可见（含 sharp 变体与磁盘写入）
     await page.getByLabel('选择头图图片').setInputFiles({
@@ -185,7 +214,7 @@ async function main() {
     ok('焦点写入 object-position', style)
 
     await page.reload({ waitUntil: 'domcontentloaded' })
-    await page.getByRole('heading', { name: '我的' }).first().waitFor({ timeout: 30_000 })
+    await waitMeLoaded(page)
     const styleAfter = (await page.getByTestId('profile-cover').getAttribute('style')) || ''
     if (!styleAfter.includes('41.67%')) throw new Error(`刷新后焦点丢失或不是所选格：${styleAfter}`)
     ok('刷新后焦点保持（已落库）', styleAfter)
