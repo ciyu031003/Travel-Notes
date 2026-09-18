@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, X, WifiOff, Pencil, Trash2 } from 'lucide-react'
@@ -37,6 +37,36 @@ interface PostDetailData {
   slug: string | null
   photos: string[]
   canEdit: boolean
+  /** 按天游记（R2）：没有绑定 Travel 的历史帖为空数组 */
+  days?: TripDay[]
+  canSuggest?: boolean
+}
+
+interface TripDay {
+  date: string | null
+  title: string | null
+  summary: string | null
+  itinerary: { id: number; title: string; type: string; startTime: string | null; locationName: string | null }[]
+  memories: { id: number; title: string; content: string | null; mood: string | null; photos: { id: number; url: string }[] }[]
+  photos: { id: number; url: string }[]
+}
+
+/** 行程类型 → 中文（与 ItineraryEditor 的选项一致） */
+const ITINERARY_TYPE_LABEL: Record<string, string> = {
+  SPOT: '景点',
+  RESTAURANT: '餐厅',
+  HOTEL: '住宿',
+  TRANSPORT: '交通',
+  ACTIVITY: '活动',
+  OTHER: '其他',
+}
+
+/** `2026-09-02` → `9月2日`（按天章节的日期副标题） */
+function formatDayDate(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getMonth() + 1}月${d.getDate()}日`
 }
 
 export default function PostDetail({ postId }: { postId: number }) {
@@ -58,30 +88,38 @@ export default function PostDetail({ postId }: { postId: number }) {
   const [uploading, setUploading] = useState(false)
   const photoInputRef = useRef<HTMLInputElement | null>(null)
 
-  useEffect(() => {
-    let alive = true
-    readWithFallback<PostDetailData>(
-      async () => {
-        const res = await fetch(apiUrl('/api/social/posts/' + postId), { credentials: 'include' })
-        if (!res.ok) throw new Error('http ' + res.status)
-        const json = await res.json()
-        if (!json.data) throw new Error(json.error || '帖子不存在')
-        return json.data as PostDetailData
-      },
-      async () => {
-        const local = await readLocalSocialPostById(postId)
-        return local as PostDetailData | null
-      },
-    )
-      .then((result) => {
-        if (!alive) return
-        setPost(result.data)
-        setOffline(result.source === 'local')
-      })
-      .catch((e) => { if (alive) setError(e instanceof Error ? e.message : '帖子不存在') })
-      .finally(() => { if (alive) setLoading(false) })
-    return () => { alive = false }
+  /** 拉取/重拉详情（失败态的重试按钮也用它，失败时把错误文案带出来） */
+  const reload = useCallback(async () => {
+    setError('')
+    setLoading(true)
+    try {
+      const result = await readWithFallback<PostDetailData>(
+        async () => {
+          const res = await fetch(apiUrl('/api/social/posts/' + postId), { credentials: 'include' })
+          if (!res.ok) throw new Error('http ' + res.status)
+          const json = await res.json()
+          if (!json.data) throw new Error(json.error || '帖子不存在')
+          return json.data as PostDetailData
+        },
+        async () => {
+          const local = await readLocalSocialPostById(postId)
+          return local as PostDetailData | null
+        },
+      )
+      setPost(result.data)
+      setOffline(result.source === 'local')
+    } catch (e) {
+      setPost(null)
+      setError(e instanceof Error ? e.message : '帖子不存在')
+    } finally {
+      setLoading(false)
+    }
   }, [postId])
+
+  useEffect(() => {
+    void reload()
+  }, [reload])
+
 
   const submitReport = async () => {
     if (!reportReason.trim() || reporting) return
@@ -197,14 +235,44 @@ export default function PostDetail({ postId }: { postId: number }) {
   }
 
   if (loading) {
-    return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]"><Icon icon={Loader2} size="lg" className="animate-spin" />加载中…</div>
+    return <PostDetailSkeleton />
   }
   if (error || !post) {
-    return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]">{error || '帖子不存在'}<Link href="/circle" className="text-[var(--social-accent)]">返回旅行圈</Link></div>
+    // 失败时**保留 URL**（不 redirect），并把两条出路摆在眼前。
+    // 旧实现只留一句文字 + 返回旅行圈，用户以为"点开没内容"（真机反馈的现象之一）。
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--social-bg)] px-6 text-center">
+        <Icon icon={WifiOff} size="lg" tone="faint" />
+        <p className="text-sm text-[var(--social-text)]">{error || '这条旅行故事暂时打不开'}</p>
+        <p className="max-w-xs text-xs text-[var(--social-faint)]">
+          可能是网络不稳，或作者已取消公开。链接还在这里，稍后可以再试。
+        </p>
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setError('')
+              setLoading(true)
+              void reload()
+            }}
+            className="rounded-full bg-[var(--social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--social-on-accent)]"
+          >
+            重试
+          </button>
+          <Link
+            href="/circle"
+            className="rounded-full px-5 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)]"
+          >
+            返回旅行圈
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   const dateText = (post.startDate ? post.startDate.slice(0, 10) : '') + (post.endDate && post.endDate !== post.startDate ? ' ~ ' + post.endDate.slice(0, 10) : '')
   const authorName = post.author ? post.author.nickname || post.author.username : '旅行者'
+  const days = post.days ?? []
 
   return (
     <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
@@ -295,6 +363,13 @@ export default function PostDetail({ postId }: { postId: number }) {
         {post.slug && (
           <Link href={travelDetailHref(post.slug)} className="mt-10 inline-flex items-center gap-2 text-sm text-[var(--social-accent)] transition hover:text-[var(--social-accent-strong)]">查看完整旅行记录</Link>
         )}
+
+        {/*
+          按天游记（R2）：这是「点开别人的旅行」的主体内容。
+          此前详情页只有封面 + 一段摘要 + 照片墙，别人根本看不到「旅行」本身。
+          数据只包含公开回忆（服务端按 Memory.visibility 过滤），私密内容不下发。
+        */}
+        {days.length > 0 && <TripDayList days={days} />}
       </div>
 
       {showReport && (
@@ -412,5 +487,141 @@ export default function PostDetail({ postId }: { postId: number }) {
         <PhotoViewer images={post.photos.map((src) => ({ src, alt: post.title }))} index={viewerIndex} onClose={() => setViewerIndex(null)} onIndexChange={setViewerIndex} />
       )}
     </div>
+  )
+}
+
+/**
+ * 详情首帧骨架屏（R2）。
+ *
+ * 旧实现是整页居中的「加载中…」+ 转圈 —— 在真机弱网下这一帧会停留可见，
+ * 用户体感就是"点了没反应 / 跳到别处了"。骨架屏与真实布局同构（封面 / 标题 / 作者 / 动作条），
+ * 数据到达时不会跳版。
+ * 做法参考 usememos/memos 的 `ProfileHeader` / `ProfileHeaderSkeleton` 共用外壳思路（MIT）。
+ */
+function PostDetailSkeleton() {
+  return (
+    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] md:pb-28">
+      <div className="relative mx-auto max-w-3xl px-4 py-6">
+        <div className="mb-7 flex items-center gap-3">
+          <div className="h-9 w-9 animate-pulse rounded-full bg-[var(--social-surface2)]" />
+          <div className="h-3 w-16 animate-pulse rounded bg-[var(--social-surface2)]" />
+        </div>
+        <div className="aspect-[16/10] w-full animate-pulse rounded-[1.6rem] bg-[var(--social-surface2)]" />
+        <div className="mt-8 space-y-3">
+          <div className="h-3 w-20 animate-pulse rounded bg-[var(--social-surface2)]" />
+          <div className="h-7 w-3/4 animate-pulse rounded bg-[var(--social-surface2)]" />
+          <div className="h-3 w-1/2 animate-pulse rounded bg-[var(--social-surface2)]" />
+        </div>
+        <div className="mt-6 flex items-center gap-2">
+          <div className="h-8 w-8 animate-pulse rounded-full bg-[var(--social-surface2)]" />
+          <div className="h-3 w-24 animate-pulse rounded bg-[var(--social-surface2)]" />
+        </div>
+        <div className="mt-8 flex gap-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-10 w-20 animate-pulse rounded-full bg-[var(--social-surface2)]" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 按天游记（只读）。
+ *
+ * 与 `components/travel/TravelTimeline.tsx` 是"同构不同权"的一对：
+ * 那边是作者编辑态（有「记一笔 / 添加行程」），这里是**读者视角**，不能有任何写入口。
+ * 数据由服务端按 `Memory.visibility = PUBLIC` 过滤，前端只管渲染。
+ */
+function TripDayList({ days }: { days: TripDay[] }) {
+  return (
+    <section className="mt-14" aria-label="按天回顾">
+      <div className="mb-6 flex items-center gap-3">
+        <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">按天回顾</h2>
+        <div className="h-px flex-1 bg-[var(--social-line)]" />
+        <span className="text-xs text-[var(--social-faint)]">{days.length} 天</span>
+      </div>
+
+      <div className="relative">
+        <span
+          className="absolute left-[9px] top-2 bottom-2 w-px bg-gradient-to-b from-[var(--social-accent)]/40 via-[var(--social-line)] to-transparent"
+          aria-hidden="true"
+        />
+        <div className="space-y-6">
+          {days.map((day, idx) => (
+            <article key={`${day.date ?? 'day'}-${idx}`} className="relative pl-8">
+              <span className="absolute left-0 top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-[var(--social-accent)]/40 bg-[var(--social-bg)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--social-accent)]" />
+              </span>
+
+              <div className="rounded-2xl bg-[var(--social-surface-60)] p-5 ring-1 ring-[var(--social-line)]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-sm font-semibold tabular-nums">DAY {String(idx + 1).padStart(2, '0')}</span>
+                  {day.date && <span className="font-mono text-xs text-[var(--social-muted)]">{formatDayDate(day.date)}</span>}
+                  {day.title && <span className="text-sm font-medium">· {day.title}</span>}
+                </div>
+                {day.summary && <p className="mt-1.5 text-sm leading-relaxed text-[var(--social-muted)]">{day.summary}</p>}
+
+                {day.itinerary.length > 0 && (
+                  <ul className="mt-3 flex flex-wrap gap-1.5">
+                    {day.itinerary.map((it) => (
+                      <li
+                        key={it.id}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs ring-1 ring-[var(--social-line)]"
+                      >
+                        <span className="text-[var(--social-accent)]">{ITINERARY_TYPE_LABEL[it.type] || '行程'}</span>
+                        <span className="max-w-[12rem] truncate">{it.title}</span>
+                        {it.startTime && (
+                          <span className="tabular-nums text-[var(--social-faint)]">
+                            {new Date(it.startTime).toTimeString().slice(0, 5)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {day.photos.length > 0 && (
+                  <div className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-4">
+                    {day.photos.slice(0, 8).map((p) => (
+                      // eslint-disable-next-line @next/next/no-img-element -- 服务端已给缩略图变体，无需 next/image 再处理
+                      <img key={p.id} src={p.url} alt="" loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
+                    ))}
+                  </div>
+                )}
+
+                {day.memories.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {day.memories.map((mem) => (
+                      <div key={mem.id} className="rounded-xl bg-[var(--social-surface-50)] px-3 py-2.5">
+                        <p className="text-sm font-medium">
+                          {mem.title}
+                          {mem.mood && <span className="ml-1.5 text-xs font-normal text-[var(--social-muted)]">· {mem.mood}</span>}
+                        </p>
+                        {mem.content && (
+                          <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--social-muted)]">{mem.content}</p>
+                        )}
+                        {mem.photos.length > 0 && (
+                          <div className="mt-1.5 flex gap-1">
+                            {mem.photos.slice(0, 3).map((p) => (
+                              // eslint-disable-next-line @next/next/no-img-element -- 同上
+                              <img key={p.id} src={p.url} alt="" loading="lazy" className="h-12 w-12 rounded-md object-cover" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {day.itinerary.length === 0 && day.photos.length === 0 && day.memories.length === 0 && (
+                  <p className="mt-2 text-xs text-[var(--social-faint)]">这一天还没有公开的记录</p>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }

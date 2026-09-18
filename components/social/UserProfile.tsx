@@ -10,6 +10,7 @@ import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
+import { circlePostHref } from '@/lib/routes'
 
 interface Profile {
   id: number
@@ -93,7 +94,10 @@ export default function UserProfile({ userId }: { userId: number }) {
     author: { name: displayName(profile), avatar: profile.avatarUrl },
     stats: { likes: p.likeCount, comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
-    onOpen: () => router.push('/circle/' + p.id),
+    onOpen: () => {
+      const href = circlePostHref(p.id)
+      if (href) router.push(href)
+    },
   })
 
   return (

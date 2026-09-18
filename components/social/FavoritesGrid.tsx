@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { circlePostHref } from '@/lib/routes'
 
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const
 
@@ -30,7 +31,10 @@ export default function FavoritesGrid() {
     author: p.author ? { name: p.author.nickname || p.author.username, avatar: p.author.avatarUrl } : null,
     stats: { likes: p.likeCount, comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
-    onOpen: () => router.push('/circle/' + p.id),
+    onOpen: () => {
+      const href = circlePostHref(p.id)
+      if (href) router.push(href)
+    },
   })
 
   return (

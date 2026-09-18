@@ -119,6 +119,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     content: body?.content ?? null,
     mood: body?.mood ?? null,
     happenedAt: body?.happenedAt ?? new Date().toISOString(),
+    // 可见性（R2）：公开旅行里的单条回忆默认仍是 SPACE（仅自己与同行者）。
+    // 旅行圈详情只下发 `visibility = PUBLIC` 的回忆，所以"想被别人看到"必须显式打开。
+    visibility: body?.isPublic === true ? 'PUBLIC' : 'SPACE',
   })
 
   return NextResponse.json({ success: true, memoryId: memory.id }, { status: 201 })

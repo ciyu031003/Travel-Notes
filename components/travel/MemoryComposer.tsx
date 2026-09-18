@@ -42,6 +42,8 @@ export default function MemoryComposer({
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [mood, setMood] = useState('')
+  /** 是否公开到旅行圈（决定别人能否在公开旅行里看到这条回忆） */
+  const [isPublic, setIsPublic] = useState(false)
   const [photos, setPhotos] = useState<PickedImage[]>([])
   const [saving, setSaving] = useState(false)
   const [progress, setProgress] = useState('')
@@ -71,6 +73,8 @@ export default function MemoryComposer({
           title: title.trim(),
           content: content.trim() || null,
           mood: mood || null,
+          // 公开性：默认 false（仅自己与同行者），打开后别人能在公开旅行里看到
+          isPublic,
           // 关键：挂到「那一天」本身，否则时间线按天分组时不会出现在该天
           travelDayId: dayId ?? undefined,
           // 落到该天：没有 dayDate 时才交给服务端用"现在"
@@ -167,6 +171,39 @@ export default function MemoryComposer({
                   {m}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/*
+            可见性（R2）：**这一条决定了别人能不能在旅行圈看到这条回忆**。
+            `getPublicTripDays` 只下发 `visibility = PUBLIC` 的回忆 —— 默认 SPACE（仅自己/同行者），
+            所以想公开分享某条回忆时必须能在这里显式打开，否则用户公开了旅行却只看到空荡荡的章节。
+          */}
+          <div>
+            <span className="text-[13px] font-semibold text-[var(--m-muted)]">谁能看到这条</span>
+            <div className="mt-2 flex gap-2">
+              {[
+                { v: false, label: '仅自己和同行者', hint: '默认' },
+                { v: true, label: '公开到旅行圈', hint: '旅行公开时可见' },
+              ].map((o) => {
+                const active = isPublic === o.v
+                return (
+                  <button
+                    key={String(o.v)}
+                    type="button"
+                    onClick={() => setIsPublic(o.v)}
+                    aria-pressed={active}
+                    className={`flex-1 rounded-2xl border px-3 py-2.5 text-left transition active:scale-[0.98] ${
+                      active ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)]' : 'border-[var(--m-line)]'
+                    }`}
+                  >
+                    <span className={`block text-[13px] font-medium ${active ? 'text-[var(--m-accent-strong)]' : 'text-[var(--m-text)]'}`}>
+                      {o.label}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] text-[var(--m-faint)]">{o.hint}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 

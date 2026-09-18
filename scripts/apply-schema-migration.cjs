@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 /**
- * 幂等多用户 schema 增量迁移：
- *  - 检查每个目标列是否存在，不存在才添加（含外键/索引，按 Prisma 约定 ON UPDATE CASCADE）
- *  - 随后回填存量内容归属到第一个用户
+ * 幂等 schema 增量迁移（**只做 DDL，不改数据**）。
+ *
+ *  - 检查每个目标列/索引/外键是否存在，不存在才添加（按 Prisma 约定 ON UPDATE CASCADE）
+ *  - 可以安全地放进容器启动路径（`scripts/docker-entrypoint.sh` 每次启动都会跑）
+ *
+ * ⚠️ 会改数据的「归属回填」已移出本文件，见 `scripts/backfill-ownership-once.cjs`
+ * （需要显式 `--yes-i-backed-up` 才执行）。原因见该文件头部注释。
+ *
  * 用法：node scripts/apply-schema-migration.cjs
  */
 const mysql = require('mysql2/promise')
 const fs = require('fs')
-const crypto = require('crypto')
 const path = require('path')
 
 async function getConn() {
@@ -405,87 +409,17 @@ async function main() {
   await addUniqueIndex(conn, 'TravelPost', 'TravelPost_postId_key', 'postId')
   await addFk(conn, 'TravelPost', 'TravelPost_postId_fkey', 'FOREIGN KEY (postId) REFERENCES Post(id) ON DELETE CASCADE ON UPDATE CASCADE')
 
-  // 账号 ID 回填（admin 固定 01230821；纪念日用户 = 2 位随机前缀 + YYYYMMDD；其余随机 8 位）
-  async function backfillUserAccountIds() {
-    const [allUsers] = await conn.query('SELECT id, username, anniversaryStart, accountId FROM User')
-    const used = new Set((allUsers || []).filter((u) => u.accountId).map((u) => String(u.accountId)))
-    for (const u of allUsers || []) {
-      if (u.accountId) continue
-      let accountId = ''
-      if (u.username === 'admin') {
-        accountId = '01230821'
-      } else {
-        const date = String(u.anniversaryStart || '').replace(/\D/g, '')
-        for (let attempt = 0; attempt < 100; attempt++) {
-          if (date.length === 8) {
-            const prefix = String(crypto.randomInt(0, 100)).padStart(2, '0')
-            accountId = prefix + date
-          } else {
-            accountId = String(crypto.randomInt(10000000, 100000000))
-          }
-          if (!used.has(accountId)) break
-        }
-      }
-      used.add(accountId)
-      await conn.query('UPDATE User SET accountId = ? WHERE id = ?', [accountId, u.id])
-      console.log(`  [accountId] #${u.id} ${u.username} -> ${accountId}`)
-    }
-  }
-  await backfillUserAccountIds()
-
-  // 存量公开文章回填到旅行圈（Post -> TravelPost，postId 唯一幂等）
-  try {
-    const [userCheck] = await conn.query('SELECT id FROM User ORDER BY id ASC LIMIT 1')
-    if (userCheck.length > 0) {
-      const fallbackUserId = userCheck[0].id
-      const [res] = await conn.query(
-        `INSERT INTO TravelPost (postId, authorId, visibility, title, summary, publishedAt, createdAt, updatedAt)
-         SELECT p.id, COALESCE(p.userId, ?), 'PUBLIC', p.title, p.summary, p.date, NOW(3), NOW(3)
-         FROM Post p
-         WHERE p.type = 'travel' AND p.published = 1 AND p.isPublic = 1
-         ON DUPLICATE KEY UPDATE title = VALUES(title), summary = VALUES(summary), publishedAt = VALUES(publishedAt)`,
-        [fallbackUserId]
-      )
-      console.log(`  [publicPosts] 回填公开文章 ${res.affectedRows} 行`)
-    } else {
-      console.log('  [publicPosts] 用户表为空，跳过公开文章回填')
-    }
-  } catch (e) {
-    console.log('  [publicPosts] 回填跳过（' + (e.code || e.message) + '）')
-  }
-
-  console.log('== 2/2 归属回填 ==')
-  const [users] = await conn.query('SELECT id, username FROM User ORDER BY id ASC LIMIT 1')
-  if (users.length === 0) {
-    console.log('用户表为空，跳过回填（请先创建管理员账号）')
-  } else {
-    const admin = users[0]
-    console.log(`归属目标用户: #${admin.id} ${admin.username}`)
-    const tables = [
-      ['Post', 'userId'],
-      ['Travel', 'ownerId'],
-      ['Album', 'userId'],
-      ['Media', 'userId'],
-      ['Moment', 'userId'],
-      ['PhotoMessage', 'userId'],
-      ['Anniversary', 'userId'],
-      ['TimelineItem', 'userId'],
-    ]
-    for (const [table, col] of tables) {
-      try {
-        const [res] = await conn.query(
-          `UPDATE \`${table}\` SET \`${col}\` = ? WHERE \`${col}\` IS NULL`,
-          [admin.id]
-        )
-        console.log(`  ${table}.${col} 回填 ${res.affectedRows} 行`)
-      } catch (e) {
-        console.log(`  ${table}.${col} 跳过（${e.code || e.message}）`)
-      }
-    }
-  }
+  // ⚠️ 这里**只有 DDL**（建表 / 加列 / 加索引 / 加外键），全部幂等，可以安全地放进启动路径。
+  //
+  // 原先本文件末尾还有两段**会改数据**的回填（把 userId IS NULL 的行划给第一个用户、
+  // 把存量公开文章灌进 TravelPost）。它们已经被移到
+  // `scripts/backfill-ownership-once.cjs`（需要显式 --yes-i-backed-up 才执行）。
+  //
+  // 原因：本脚本在 `docker-entrypoint.sh` 里每次容器启动都会跑。只要重启一次容器，
+  // 那些回填就会静默改数据；等到库里有了第二个真实用户，这就是错误归属。
 
   await conn.end()
-  console.log('完成 ✅')
+  console.log('完成 ✅（仅 DDL，未改动任何数据行）')
 }
 
 main().catch((e) => {

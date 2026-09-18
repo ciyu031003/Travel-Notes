@@ -87,6 +87,33 @@ describe('isPublicRequest（公开内容读路径 · 游客可浏览公开内容
   })
 })
 
+describe('旅行圈页面对游客开放（R2 路由加固）', () => {
+  it('feed 与「某条旅行故事」详情对游客可读', () => {
+    expect(isPublicRequest('/circle', 'GET')).toBe(true)
+    expect(isPublicRequest('/circle/12', 'GET')).toBe(true)
+    expect(isPublicRequest('/circle/abc-slug', 'GET')).toBe(true)
+    expect(isPublicRequest('/circle/12', 'HEAD')).toBe(true)
+  })
+
+  it('别人的资料页仍要登录（不因前缀匹配被一起放行）', () => {
+    expect(isPublicRequest('/circle/user/3', 'GET')).toBe(false)
+    expect(isPublicRequest('/circle/user', 'GET')).toBe(false)
+    // 关键回归：'/circle/' 前缀若写进 PUBLIC_PATHS，/circle/user/3 会被误放
+    expect(isPublicPath('/circle/user/3')).toBe(false)
+  })
+
+  it('交互（写请求）仍需登录：游客点赞/评论会被门禁拦下', () => {
+    expect(isPublicRequest('/circle/12', 'POST')).toBe(false)
+    expect(isPublicRequest('/api/social/posts/12/like', 'POST')).toBe(false)
+    expect(isPublicRequest('/api/social/posts/12/comments', 'POST')).toBe(false)
+  })
+
+  it('圈子里的其它路径不放行', () => {
+    expect(isPublicRequest('/circle/12/edit', 'GET')).toBe(false)
+    expect(isPublicRequest('/circle/', 'GET')).toBe(false)
+  })
+})
+
 describe('isStaticAssetPath（含点动态段不再绕过登录门禁）', () => {
   it('已知静态扩展名豁免', () => {
     expect(isStaticAssetPath('/icon.png')).toBe(true)

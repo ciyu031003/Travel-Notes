@@ -9,6 +9,7 @@ import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
+import { circlePostHref } from '@/lib/routes'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialFeed } from '@/lib/modules/offline/social-read'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
@@ -133,7 +134,11 @@ export default function TravelCircleFeed() {
     author: p.author ? { name: displayName(p.author), avatar: p.author.avatarUrl || null } : null,
     stats: { likes: p.likeCount, comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
-    onOpen: () => router.push('/circle/' + p.id),
+    // 统一入口：id 缺失时不跳 `/circle/undefined`（R2 路由加固）
+    onOpen: () => {
+      const href = circlePostHref(p.id)
+      if (href) router.push(href)
+    },
   })
 
   return (

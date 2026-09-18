@@ -28,3 +28,28 @@ export function travelRecordHref(slug: string): string {
 export function isNativeRuntime(): boolean {
   return typeof window !== 'undefined' && isNativePlatform()
 }
+
+/**
+ * 旅行圈「某条旅行故事」的地址。
+ *
+ * 为什么要有这个助手：多个入口原先各自写 `'/circle/' + p.id`。
+ * 一旦 `id` 缺失（接口少字段、离线缓存的旧结构、后台表格里关联对象为空），
+ * 就会得到 `/circle/undefined` —— 用户看到的是"点进去没有内容"，
+ * 而我们连日志都拿不到（URL 看起来是合法的）。
+ *
+ * `postId` 不可用时**退回到旅行详情**（有 slug 的话），没有 slug 才返回 null 让调用方不跳转。
+ */
+export function circlePostHref(postId: number | string | null | undefined): string | null {
+  const n = Number(postId)
+  // 必须是正整数主键：0.5 / '12abc' 这类脏值一律不算（否则会拼出 /circle/0.5）
+  if (!Number.isInteger(n) || n <= 0) return null
+  return `/circle/${n}`
+}
+
+/** 卡片/通知点开旅行圈的统一入口：宁可退到旅行详情，也不跳到一个空页面 */
+export function resolveTravelStoryHref(input: {
+  postId?: number | string | null
+  slug?: string | null
+}): string | null {
+  return circlePostHref(input.postId) ?? (input.slug ? travelDetailHref(input.slug) : null)
+}

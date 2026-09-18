@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, CheckCheck } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { circlePostHref } from '@/lib/routes'
 
 export default function NotificationsList() {
   const [data, setData] = useState<any[]>([])
@@ -31,7 +32,8 @@ export default function NotificationsList() {
 
   const targetHref = (n: any) => {
     if (n.refType === 'User') return '/circle/user/' + n.refId
-    if (n.refType === 'TravelPost') return '/circle/' + n.refId
+    // 通知里的 TravelPost 关联可能为空（帖子已删/被下架）→ 退回旅行圈首页，不跳 /circle/undefined
+    if (n.refType === 'TravelPost') return circlePostHref(n.refId) ?? '/circle'
     return '/circle'
   }
 

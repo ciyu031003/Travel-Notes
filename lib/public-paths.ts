@@ -60,6 +60,20 @@ export const PUBLIC_READ_PATHS = [
   '/feed.xml',
 ]
 
+/**
+ * 旅行圈页面（R2 路由加固）：**公开内容本来就是给游客看的**，页面不该再挡一道登录。
+ * 只放行 feed 与「某条旅行故事」详情 `/circle/<id>`；
+ * `/circle/user/<id>`（别人的资料页）与写操作一律仍需登录。
+ *
+ * 单独写一个函数而不是往 PUBLIC_PATHS 里加前缀：后者会把 `/circle/user/1`
+ * 也一起放行（`/circle/` 前缀匹配），那是对游客泄露用户资料页。
+ */
+export function isPublicCirclePage(pathname: string): boolean {
+  if (pathname === '/circle') return true
+  if (pathname.startsWith('/circle/user')) return false
+  return /^\/circle\/[^/]+$/.test(pathname)
+}
+
 /** 段边界匹配：/api/login 命中 /api/login 与 /api/login/x，但不误放 /api/login-xyz */
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p.endsWith('/') ? p : p + '/'))
@@ -91,5 +105,8 @@ function isPublicReadPath(pathname: string): boolean {
 export function isPublicRequest(pathname: string, method: string): boolean {
   if (isPublicPath(pathname)) return true
   const isRead = method === 'GET' || method === 'HEAD' || method === 'OPTIONS'
-  return isRead && isPublicReadPath(pathname)
+  if (!isRead) return false
+  // 旅行圈页面：游客可读，交互（点赞/评论/收藏）仍需登录
+  if (isPublicCirclePage(pathname)) return true
+  return isPublicReadPath(pathname)
 }

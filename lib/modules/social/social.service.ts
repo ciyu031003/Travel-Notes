@@ -196,6 +196,31 @@ export async function listSocialFeed(params: {
   return { data, total, page, pageSize, hasMore: page * pageSize < total }
 }
 
+/**
+ * 回忆照片的 include 形状（只在两处复用：公开帖照片收集、详情按天数据）。
+ *
+ * ⚠️ 这里**不能**在两层嵌套的 relation 上再加 `where`
+ * （`mediaLinks: { include: { media: { where: ... } } }`）——
+ * Prisma 会抛 `Unknown argument 'where'`，而调用方如果 catch 成空数组，
+ * 表现就是"详情页看不到任何按天内容"，日志里却什么都没有。
+ * 类型过滤（`type: 'IMAGE'`）改在 JS 侧做，反正一个回忆的照片数量很小。
+ */
+const memoryPhotosInclude: any = {
+  media: { orderBy: { id: 'asc' } },
+  mediaLinks: { include: { media: true } },
+}
+
+/** 只保留图片类型（原先把 `type: 'IMAGE'` 写在 where 里，见上面的说明） */
+function imagesOf(rows: any[] | undefined): any[] {
+  return (rows || []).filter((m: any) => m && m.type === 'IMAGE' && m.storageKey)
+}
+
+/**
+ * 收集某本旅行下的**公开**照片（封面 + 公开回忆的主图与关联图，去重）。
+ *
+ * `Memory.visibility` 由创建流程决定（**私密回忆不该出现在公开帖里**），
+ * 这里显式只取 `PUBLIC` —— 不依赖"旅行公开所以里面全公开"的隐含假设。
+ */
 async function collectTravelPhotos(travelId: number): Promise<string[]> {
   const urls: string[] = []
   try {
@@ -208,15 +233,18 @@ async function collectTravelPhotos(travelId: number): Promise<string[]> {
 
     const memories = await prisma.memory.findMany({
       where: { travelId, visibility: 'PUBLIC' },
-      orderBy: { happenedAt: 'asc' },
-      include: { media: { where: { type: 'IMAGE' }, orderBy: { id: 'asc' } } },
+      orderBy: [{ happenedAt: 'asc' }, { id: 'asc' }],
+      include: memoryPhotosInclude,
     })
     for (const m of memories) {
-      for (const media of m.media) {
-        if (media.storageKey) {
-          const u = mediaUrl(media.storageKey)
-          if (!urls.includes(u)) urls.push(u)
-        }
+      const keys = [
+        ...imagesOf((m as any).media).map((x: any) => x.storageKey),
+        ...imagesOf(((m as any).mediaLinks || []).map((l: any) => l?.media)).map((x: any) => x.storageKey),
+      ]
+      for (const key of keys) {
+        if (!key) continue
+        const u = mediaUrl(key)
+        if (!urls.includes(u)) urls.push(u)
       }
     }
   } catch {
@@ -225,17 +253,108 @@ async function collectTravelPhotos(travelId: number): Promise<string[]> {
   return urls
 }
 
+/**
+ * 详情页的**按天**游记数据（R2）。
+ *
+ * 为什么需要：`/circle/<id>` 原先只有封面 + 一段摘要 + 照片墙，别人点进来
+ * **看不到「旅行」本身** —— 没有每天的行程与回忆，这正是"点开别人的旅行却看不到内容"的实质。
+ *
+ * 与 `travel.service.getTravelTimeline` 口径一致（天 → 行程 → 回忆 → 照片），
+ * 但这里是**发布态**，照片只取公开回忆（`Memory.visibility = PUBLIC`）与旅行封面，
+ * 私密回忆一律不下发 —— 不依赖"旅行公开所以里面全公开"这种隐含假设。
+ */
+export interface PublicTripDay {
+  date: string | null
+  title: string | null
+  summary: string | null
+  itinerary: { id: number; title: string; type: string; startTime: string | null; locationName: string | null }[]
+  memories: { id: number; title: string; content: string | null; mood: string | null; photos: { id: number; url: string }[] }[]
+  photos: { id: number; url: string }[]
+}
+
+export async function getPublicTripDays(travelId: number): Promise<PublicTripDay[]> {
+  const days = await prisma.travelDay.findMany({
+    where: { travelId },
+    orderBy: { sortOrder: 'asc' },
+    include: {
+      itineraryItems: {
+        orderBy: { sortOrder: 'asc' },
+        include: { location: { select: { name: true } } },
+      },
+      memories: {
+        where: { visibility: 'PUBLIC' },
+        orderBy: [{ happenedAt: 'asc' }, { id: 'asc' }],
+        include: memoryPhotosInclude,
+      },
+    } as any,
+  })
+
+  return days.map((d: any) => {
+    const memories = (d.memories || []).map((mem: any) => {
+      const primary = imagesOf(mem.media).map((m: any) => ({ id: m.id, url: mediaUrl(m.storageKey) }))
+      const linked = imagesOf((mem.mediaLinks || []).map((l: any) => l?.media)).map((m: any) => ({
+        id: m.id,
+        url: mediaUrl(m.storageKey),
+      }))
+      const seen = new Set<number>()
+      const photos = [...primary, ...linked].filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
+      return {
+        id: mem.id,
+        title: mem.title,
+        content: mem.content ?? null,
+        mood: mem.mood ?? null,
+        photos,
+      }
+    })
+    // 当天的照片 = 当天公开回忆的照片去重（与时间线口径一致）
+    const seen = new Set<number>()
+    const photos = memories
+      .flatMap((m: any) => m.photos)
+      .filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
+
+    return {
+      date: iso(d.date),
+      title: d.title ?? null,
+      summary: d.summary ?? null,
+      itinerary: (d.itineraryItems || []).map((it: any) => ({
+        id: it.id,
+        title: it.title,
+        type: it.type,
+        startTime: iso(it.startTime),
+        locationName: it.location?.name ?? null,
+      })),
+      memories,
+      photos,
+    }
+  })
+}
+
 export async function getSocialPost(id: number, userId?: number | null) {
   const row: any = await prisma.travelPost.findUnique({ where: { id }, include: POST_INCLUDE })
   if (!row) return null
   if (row.visibility !== 'PUBLIC' && row.authorId !== userId) return null
   const [post] = await attachViewerState([row], userId)
+
+  // 按天游记：只有绑定 Travel 的帖子才有（历史 Post 来源没有天数据）。
+  // 查询失败时降级为空数组（详情页其余部分照常可读），但**必须留日志** ——
+  // 先前这里静默 catch，把一个 `Unknown argument 'where'` 变成了"页面没内容、日志也干净"，
+  // 排查花了好几轮。降级可以，静默不可以。
+  const days = row.travelId
+    ? await getPublicTripDays(row.travelId).catch((e) => {
+        console.error('[social] 按天游记加载失败（详情页将只显示封面与摘要）:', (e as Error)?.message || e)
+        return []
+      })
+    : []
+
   return {
     ...post,
     postId: row.postId ?? null,
     canEdit: row.authorId != null && userId != null && row.authorId === userId,
     slug: row.travel?.slug ?? row.post?.slug ?? null,
     photos: row.post ? postImages(row.post) : row.travelId ? await collectTravelPhotos(row.travelId) : [],
+    days,
+    /** 是否可给建议（R4 用）：公开帖登录后可评论；空间帖需成员 —— 这里先给出登录态判断 */
+    canSuggest: !!userId,
   }
 }
 

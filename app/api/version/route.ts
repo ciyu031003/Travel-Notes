@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '「我的」页重做：档案头图可自定义并自选画面重点，统计口径修正为真实旅行数据（多少次旅行/多少地方/多少张照片）；首页「更多玩法」整体搬到「我的」',
+    changelog: process.env.APP_CHANGELOG || '旅行圈可以用：未登录也能浏览公开旅行，点开任意一条即可看到按天回顾的完整行程与照片；新增分享（原生分享面板 / 复制链接）；「记一笔」可设置是否公开到旅行圈',
     forceUpdate,
   })
 }
