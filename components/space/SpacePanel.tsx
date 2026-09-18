@@ -17,12 +17,44 @@ interface SpaceInfo {
   name: string
   slug: string
   description: string | null
+  /** 空间类型（COUPLE/FAMILY/FRIENDS/SOLO/OTHER） */
+  spaceType?: string | null
   memberCount: number
   myRole: 'OWNER' | 'MEMBER' | 'VIEWER'
   albumCount?: number
   travelCount?: number
   memoryCount?: number
   mediaCount?: number
+}
+
+/**
+ * 空间类型选项。
+ *
+ * 为什么需要：`Space.spaceType` 在 schema 里默认是 `COUPLE`，而创建入口从不传这个字段 ——
+ * 于是**「家人空间 / 闺蜜空间」根本建不出来**，用户看到的每一个空间都是情侣空间。
+ */
+const SPACE_TYPES: { value: string; label: string; hint: string }[] = [
+  { value: 'COUPLE', label: '情侣空间', hint: '两个人的旅行' },
+  { value: 'FAMILY', label: '家庭空间', hint: '带上家人一起' },
+  { value: 'FRIENDS', label: '朋友空间', hint: '和朋友结伴' },
+  { value: 'SOLO', label: '个人空间', hint: '只有自己' },
+  { value: 'OTHER', label: '其他', hint: '还没想好' },
+]
+
+const SPACE_TYPE_LABEL: Record<string, string> = {
+  COUPLE: '情侣空间',
+  FAMILY: '家庭空间',
+  FRIENDS: '朋友空间',
+  SOLO: '个人空间',
+  OTHER: '空间',
+}
+
+const SPACE_TYPE_EMOJI: Record<string, string> = {
+  COUPLE: '💞',
+  FAMILY: '🏡',
+  FRIENDS: '🤝',
+  SOLO: '🎒',
+  OTHER: '✨',
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -58,6 +90,7 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
   const [createMode, setCreateMode] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [spaceType, setSpaceType] = useState('COUPLE')
   const [submitting, setSubmitting] = useState(false)
 
   // 加入表单
@@ -204,11 +237,11 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), slug, description: description.trim() || undefined }),
+        body: JSON.stringify({ name: name.trim(), slug, description: description.trim() || undefined, spaceType }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(j.error || '创建失败')
-      setMessage({ type: 'ok', text: '空间创建成功，可以邀请你的另一半了' })
+      setMessage({ type: 'ok', text: `空间创建成功，可以邀请 TA 一起记录了` })
       setName('')
       setDescription('')
       setCreateMode(false)
@@ -272,12 +305,18 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                 <div key={s.id} className="overflow-hidden rounded-2xl bg-[var(--social-bg)] ring-1 ring-[var(--social-line)]">
                   <div className="p-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-semibold">{s.name}</h4>
+                      <h4 className="font-semibold">
+                        <span className="mr-1">{SPACE_TYPE_EMOJI[String(s.spaceType || 'OTHER')] || '✨'}</span>
+                        {s.name}
+                      </h4>
                       <span className="rounded-full bg-[var(--social-accent-soft)] px-2.5 py-0.5 text-xs text-[var(--social-accent)]">
                         {ROLE_LABEL[s.myRole] || s.myRole}
                       </span>
                     </div>
-                    {s.description && <p className="mt-1 text-xs text-[var(--social-muted)]">{s.description}</p>}
+                    <p className="mt-1 text-[11px] text-[var(--social-faint)]">
+                      {SPACE_TYPE_LABEL[String(s.spaceType || 'OTHER')] || '空间'}
+                      {s.description ? ` · ${s.description}` : ''}
+                    </p>
                     <div className="mt-3 grid grid-cols-4 gap-2 text-center">
                       {[
                         ['成员', s.memberCount],
@@ -416,10 +455,37 @@ export default function SpacePanel({ open, onClose }: { open: boolean; onClose: 
                 </button>
                 {createMode && (
                   <form onSubmit={create} className="mt-3 space-y-3">
+                    {/* 类型：原先没有这一项，所有空间都落默认的 COUPLE */}
+                    <div>
+                      <p className="mb-2 text-xs text-[var(--social-muted)]">这是什么空间？</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {SPACE_TYPES.map((t) => {
+                          const active = spaceType === t.value
+                          return (
+                            <button
+                              key={t.value}
+                              type="button"
+                              onClick={() => setSpaceType(t.value)}
+                              aria-pressed={active}
+                              className={`rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.98] ${
+                                active
+                                  ? 'border-[var(--social-accent)] bg-[var(--social-accent-soft)]'
+                                  : 'border-[var(--social-line)]'
+                              }`}
+                            >
+                              <span className={`block text-[13px] font-medium ${active ? 'text-[var(--social-accent)]' : 'text-[var(--social-text)]'}`}>
+                                {SPACE_TYPE_EMOJI[t.value]} {t.label}
+                              </span>
+                              <span className="mt-0.5 block text-[10px] text-[var(--social-faint)]">{t.hint}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="空间名称（如：旅行空间）"
+                      placeholder="空间名称（如：我们的小家）"
                       className="w-full rounded-xl bg-[var(--social-surface)] px-3.5 py-2.5 text-sm outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--social-accent)]"
                     />
                     <textarea

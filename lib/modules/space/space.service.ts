@@ -29,7 +29,11 @@ export interface CreateSpaceInput {
   name: string
   slug: string
   description?: string
+  /** 空间类型（COUPLE/FAMILY/FRIENDS/SOLO/OTHER）；缺省 OTHER */
+  spaceType?: string
 }
+
+const SPACE_TYPES = ['COUPLE', 'FAMILY', 'FRIENDS', 'SOLO', 'OTHER'] as const
 
 export class SpaceService {
   constructor(private readonly repo: PrismaSpaceRepository) {}
@@ -47,14 +51,20 @@ export class SpaceService {
       throw new Error('空间标识已存在')
     }
 
-    const id = await this.repo.create({ name, slug, description: input.description, ownerUsername: username })
+    const id = await this.repo.create({
+      name,
+      slug,
+      description: input.description,
+      ownerUsername: username,
+      spaceType: SPACE_TYPES.includes((input.spaceType || '') as never) ? input.spaceType : 'OTHER',
+    })
     await writeAuditLog({
       username,
       action: 'CREATE',
       resourceType: 'Space',
       resourceId: String(id),
       spaceId: id,
-      metadata: { name, slug },
+      metadata: { name, slug, spaceType: input.spaceType || 'OTHER' },
     }).catch(() => {})
     return { id }
   }

@@ -10,6 +10,8 @@ export interface SpaceRecord {
   slug: string
   description: string | null
   coverMediaId: number | null
+  /** 空间类型（情侣/家人/朋友/个人/其他）—— 创建时可指定 */
+  spaceType: string
   createdAt: string
   updatedAt: string
   memberCount: number
@@ -46,6 +48,8 @@ export interface CreateSpaceInput {
   name: string
   slug: string
   description?: string
+  /** 空间类型；缺省 OTHER（避免一律落 COUPLE） */
+  spaceType?: string
   ownerUsername: string
   /** 空间 OWNER 的 userId（可选；个人空间自动创建时带上，便于按 userId 查询） */
   ownerUserId?: number | null
@@ -70,6 +74,10 @@ export class PrismaSpaceRepository {
           name: input.name,
           slug: input.slug,
           description: input.description || null,
+          // 类型：创建时显式指定，缺省 OTHER。
+          // **不再沿用 schema 默认的 COUPLE** —— 原先创建入口不给这个字段，
+          // 于是"家人空间 / 闺蜜空间"根本建不出来，界面上全是情侣空间。
+          spaceType: (input.spaceType as never) || ('OTHER' as never),
         },
       })
       await tx.spaceMember.create({
@@ -108,6 +116,7 @@ export class PrismaSpaceRepository {
       slug: space.slug,
       description: space.description,
       coverMediaId: space.coverMediaId,
+      spaceType: String(space.spaceType),
       createdAt: space.createdAt.toISOString(),
       updatedAt: space.updatedAt.toISOString(),
       memberCount: space._count.members,
@@ -128,6 +137,7 @@ export class PrismaSpaceRepository {
       slug: space.slug,
       description: space.description,
       coverMediaId: space.coverMediaId,
+      spaceType: String(space.spaceType),
       createdAt: space.createdAt.toISOString(),
       updatedAt: space.updatedAt.toISOString(),
       memberCount: 0,
@@ -161,6 +171,7 @@ export class PrismaSpaceRepository {
       slug: row.space.slug,
       description: row.space.description,
       coverMediaId: row.space.coverMediaId,
+      spaceType: String(row.space.spaceType),
       createdAt: row.space.createdAt.toISOString(),
       updatedAt: row.space.updatedAt.toISOString(),
       memberCount: row.space._count.members,

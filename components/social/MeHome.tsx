@@ -28,7 +28,7 @@ import SpacePanel from '@/components/space/SpacePanel'
 import ProfileHero from '@/components/social/ProfileHero'
 import { Modal } from '@/components/ui/Modal'
 import { apiUrl } from '@/lib/api-base'
-import { travelDetailHref } from '@/lib/routes'
+import { isMobileShell, travelDetailHref } from '@/lib/routes'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { ListSection, ListRow } from '@/components/mobile/ListRow'
@@ -70,6 +70,8 @@ interface MeProfile {
     favoriteCount: number
     likeCount: number
     provinceCount: number
+    /** 统计来源：travel（我名下的旅行）/ legacy（旧文章兜底） */
+    source?: { travelRows: number; legacyPosts: number; used: 'travel' | 'legacy' }
   }
   companionStats?: Array<{ name: string; relation: string | null; count: number }>
   recentTravel: { id: number; title: string; slug: string; location: string | null; date: string | null; coverUrl: string | null; photoCount: number } | null
@@ -110,6 +112,12 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
   const displayName = profile.nickname || profile.username
   const bioText = profile.bio || DEFAULT_BIO
+  /**
+   * 是否运行在「本地壳」（Capacitor 静态导出）。
+   * 用途：隐藏只存在于 Web 构建里的入口（`/admin/**` 没有打进移动端包）。
+   * 该值是构建期内联的常量，不会在客户端 hydration 时变化。
+   */
+  const native = isMobileShell()
 
   useEffect(() => {
     fetch(apiUrl('/api/social/notifications?page=1&pageSize=1'), { credentials: 'include' })
@@ -453,10 +461,18 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               description="旅行 / 回忆 / 碎碎念 / 照片打包下载"
               onClick={exportArchive}
             />
-            {profile.capabilities.canManageSettings && (
-              <ListRow icon={Settings} tone="blush" title="账号设置" description="密码、邮箱与账号信息" href="/admin/settings" />
-            )}
-            {profile.capabilities.isOwner && (
+            {/*
+              账号设置：走**移动端也有**的 `/me/settings`。
+              原先直接链到 `/admin/settings` —— 而 `/admin` 在原生壳里根本没有打包
+              （`build-mobile.cjs` 把它移出了 app/），点进去是一片空白/兜底页，
+              用户反馈的"点账号设置直接回到首页、而且底部 tab 也没了"就是这个。
+            */}
+            <ListRow icon={Settings} tone="blush" title="账号设置" description="密码、邮箱与账号信息" href="/me/settings" />
+            {/*
+              管理后台只在 Web 显示：它是重度桌面界面（左侧栏 + 表格），
+              移动端既没打包也不适合操作。原生壳里点它必然出错。
+            */}
+            {profile.capabilities.isOwner && !native && (
               <ListRow icon={ShieldCheck} tone="accent" title="管理后台" description="内容、成员与审计日志" href="/admin" />
             )}
           </ListSection>

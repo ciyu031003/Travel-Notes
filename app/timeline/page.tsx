@@ -76,6 +76,7 @@ export default function TimelinePage() {
           <LargeTitle
             title="走过的时光"
             subtitle={loading ? '正在翻阅…' : `${travelCount} 段旅程 · ${memoryCount} 段回忆`}
+            back="/me"
           />
         </div>
 

@@ -22,7 +22,17 @@ export default function LayoutContent({
   const isSyncPage = pathname.startsWith('/sync')
   const isAdminPage = pathname.startsWith('/admin')
   const isForgotPasswordPage = pathname.startsWith('/forgot-password')
-  if (isLoginPage || isAdminPage || isForgotPasswordPage || isAlbumPage) {
+
+  /**
+   * 这些页面是"沉浸式全屏流"，**自带返回/关闭**，因此不挂底部 tab：
+   *  · 登录 / 忘记密码：本来就不该有 tab
+   *  · 画册阅读：全屏翻页，有自己的返回
+   *
+   * 注意 `/admin` **不再**在此列。原先它被一起排除，导致从「我的 → 账号设置 / 管理后台」
+   * 进去后底部导航栏直接消失，用户在移动端没有任何退路（真机反馈"返回到首页以后，
+   * 下方的 tab 栏直接没了"）。现在后台在移动端也挂底部导航，至少保证"能出去"。
+   */
+  if (isLoginPage || isForgotPasswordPage || isAlbumPage) {
     return <>{children}</>
   }
 
@@ -64,7 +74,7 @@ export default function LayoutContent({
     )
   }
 
-  if (isCirclePage || isMePage || isSyncPage) {
+  if (isCirclePage || isMePage || isSyncPage || isAdminPage) {
     return (
       <MobilePageTransition>
         <>
@@ -80,8 +90,15 @@ export default function LayoutContent({
   return (
     <MobilePageTransition>
       <>
-        <Navbar />
-        <main id="main-content" className="flex-1 pt-20 pb-24 md:pb-12">
+        <div className="hidden md:block">
+          <Navbar />
+        </div>
+        {/*
+          移动端**不再渲染桌面 Navbar**：它没有返回键、和移动端的设计语言也不一致，
+          用户反馈的「设置了子页却回不去」就是它造成的（页面自己的返回键多半是 `hidden md:flex`）。
+          现在移动端靠两层保障：页面内的 LargeTitle 返回键 + 底部 tab。
+        */}
+        <main id="main-content" className="flex-1 pt-0 md:pt-20 md:pb-12">
           {children}
         </main>
         <div className="hidden md:block">

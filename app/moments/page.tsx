@@ -53,6 +53,7 @@ export default function MomentsPage() {
             <LargeTitle
               title="碎碎念"
               subtitle="生活里的灵光、随想与小确幸"
+              back="/me"
               trailing={
                 <ManageEntry
                   href="/admin/moments"

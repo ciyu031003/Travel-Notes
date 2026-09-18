@@ -85,6 +85,25 @@ export default function TravelCircleFeed() {
   const [total, setTotal] = useState(0)
   const [offline, setOffline] = useState(false)
   const [activeTheme, setActiveTheme] = useState<string | null>(null)
+  /** 访客态：只读浏览。`authChecked` 之前不渲染提示，避免登录用户看到一闪而过的横幅 */
+  const [loggedIn, setLoggedIn] = useState(true)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (alive && j) setLoggedIn(!!j.authenticated)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (alive) setAuthChecked(true)
+      })
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const load = useCallback(async (t: string, p: number, append: boolean) => {
     if (append) setLoadingMore(true); else setLoading(true)
@@ -194,26 +213,50 @@ export default function TravelCircleFeed() {
           ))}
         </div>
 
-        <div className="mb-8 md:mb-10">
-          <div className="mb-3 flex items-center gap-3">
-            <span className="text-sm font-semibold tracking-wide text-[var(--social-text)]">探索旅途</span>
-            <span className="h-px flex-1 bg-[var(--social-line)]" />
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {THEMES.map((theme) => {
-              const active = activeTheme === theme
-              return (
-                <button key={theme} type="button" onClick={() => setActiveTheme(active ? null : theme)}
-                  className={cn('shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-xs transition active:scale-95',
-                    active
-                      ? 'bg-[var(--social-accent)] text-[var(--social-on-accent)]'
-                      : 'text-[var(--social-muted)] hover:bg-[var(--social-accent-soft)] hover:text-[var(--social-accent)]')}>
-                  # {theme}
-                </button>
-              )
-            })}
-          </div>
+        {/*
+          UI 精修（R3）：
+          · 「探索旅途」原先是独立一段（标题 + 分隔线 + 话题 chips），占掉手机首屏近 1/4，
+            而它其实是**次级筛选**。现在收进一条横向滚动条，与分段控制器连成一组筛选区，
+            首屏能直接看到第一张卡片。
+          · 未选话题时不显示任何 chip 的高亮，避免"看起来已经筛过了"的误导。
+        */}
+        <div className="mb-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {THEMES.map((theme) => {
+            const active = activeTheme === theme
+            return (
+              <button
+                key={theme}
+                type="button"
+                onClick={() => setActiveTheme(active ? null : theme)}
+                aria-pressed={active}
+                className={cn(
+                  'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition active:scale-95',
+                  active
+                    ? 'border-[var(--social-accent)] bg-[var(--social-accent)] text-[var(--social-on-accent)]'
+                    : 'border-[var(--social-line)] text-[var(--social-muted)] hover:text-[var(--social-text)]',
+                )}
+              >
+                # {theme}
+              </button>
+            )
+          })}
         </div>
+
+        {/* 访客提示：能看，但互动要登录 —— 先说清楚，而不是让用户点了才发现 */}
+        {!authChecked ? null : !loggedIn ? (
+          <div className="mb-5 flex items-center gap-2.5 rounded-2xl bg-[var(--social-accent-soft)] px-4 py-3">
+            <Icon icon={Compass} size="sm" className="shrink-0 text-[var(--social-accent)]" />
+            <p className="min-w-0 flex-1 text-xs leading-relaxed text-[var(--social-accent)]">
+              你现在是访客，可以随意翻看公开的旅行。登录后能点赞、评论，也能分享自己的旅途。
+            </p>
+            <Link
+              href="/login?redirect=%2Fcircle"
+              className="shrink-0 rounded-full bg-[var(--social-accent)] px-3.5 py-1.5 text-xs font-medium text-[var(--social-on-accent)]"
+            >
+              去登录
+            </Link>
+          </div>
+        ) : null}
 
         {loading ? (
           <>
@@ -253,17 +296,40 @@ export default function TravelCircleFeed() {
             <EmptyState
               icon={Compass}
               title="这里还没有故事"
-              description="去看看自己的旅途，也许下一段故事就从那里开始。"
+              description={
+                loggedIn
+                  ? '把你的旅行公开出来，它就是这里的第一篇。'
+                  : '登录后可以翻看大家公开的旅行记录。'
+              }
               action={
-                <button type="button" onClick={() => router.push('/travel')} className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm">去我的旅行</button>
+                <button
+                  type="button"
+                  onClick={() => router.push(loggedIn ? '/travel' : '/login?redirect=%2Fcircle')}
+                  className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm"
+                >
+                  {loggedIn ? '去我的旅行' : '去登录'}
+                </button>
               }
             />
           </div>
           </>
         ) : (
           <>
+            {/*
+              UI 精修（R3）：加一条「共 N 篇」的段落头 —— 首屏现在能一眼看出
+              这是列表而不是一屏孤零零的卡；同时把 hero 与瀑布流之间的间距收紧
+              （mb-8 → mb-5），手机上一屏能看到 hero + 半张卡，滚动意图更明确。
+            */}
+            <div className="mb-4 flex items-center gap-3">
+              <span className="text-sm font-semibold tracking-wide text-[var(--social-text)]">
+                {tab === 'following' ? '关注的旅途' : '最新旅途'}
+              </span>
+              <span className="h-px flex-1 bg-[var(--social-line)]" />
+              {total > 0 && <span className="text-xs tabular-nums text-[var(--social-faint)]">共 {total} 篇</span>}
+            </div>
+
             {/* 移动端：保留紧凑 hero 大图叙事（桌面端走瀑布流，避免全宽巨卡） */}
-            {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="m-enter mb-8 md:hidden" />}
+            {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="m-enter mb-5 md:hidden" />}
             <Stagger className="m-enter columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]" delayBase={60} step={36}>
               {posts.map((p, i) => (
                 <SocialFilmCard
@@ -280,7 +346,9 @@ export default function TravelCircleFeed() {
                   {loadingMore ? '加载中…' : '加载更多'}
                 </button>
               ) : (
-                posts.length > 0 && <span className="text-xs text-[var(--social-faint)]">已经到底啦</span>
+                posts.length > 0 && (
+                  <span className="text-xs text-[var(--social-faint)]">看到这里就是全部了 · 共 {posts.length} 篇</span>
+                )
               )}
             </div>
           </>

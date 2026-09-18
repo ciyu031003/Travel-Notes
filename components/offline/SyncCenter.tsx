@@ -95,11 +95,12 @@ export default function SyncCenter() {
           </div>
         </header>
 
-        {/* 移动端：iOS 大标题 */}
+        {/* 移动端：iOS 大标题（带返回键 —— 桌面那个 `hidden md:flex` 的返回箭头在手机上不可见） */}
         <div className="md:hidden">
           <LargeTitle
             title="数据与同步"
             subtitle="离线队列、隐私锁与同步状态"
+            back="/me"
             trailing={<SocialThemeToggle />}
           />
         </div>

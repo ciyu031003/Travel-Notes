@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '旅行圈可以用：未登录也能浏览公开旅行，点开任意一条即可看到按天回顾的完整行程与照片；新增分享（原生分享面板 / 复制链接）；「记一笔」可设置是否公开到旅行圈',
+    changelog: process.env.APP_CHANGELOG || '统计口径统一：「我的」与数据看板现在读同一份数据（App 里建的旅行不再漏算）；设置页与次级页面补上返回键、底部导航不再消失；旅行空间可选情侣/家人/朋友类型；旅行圈界面精修',
     forceUpdate,
   })
 }

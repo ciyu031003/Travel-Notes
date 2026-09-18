@@ -13,6 +13,8 @@ export async function GET(_request: NextRequest) {
       provinceStats: stats.provinceStats,
       provincesVisitedCount: stats.provincesVisitedCount,
       travelCount: stats.travelCount,
+      /** 城市去重口径（与「我的」页统计同源，避免两页数字不一致） */
+      placeCount: stats.placeCount,
       totalPhotos: stats.totalPhotos,
       momentCount: stats.momentCount,
       totalLikes: stats.totalLikes,

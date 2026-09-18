@@ -103,10 +103,12 @@ describe('getMyProfile · 统计口径', () => {
 
     const p = await getMyProfile(7)
     expect(p!.summary.travelCount).toBe(1)
-    // 关键：查的是 Travel 表（ownerId = 我），不是 Post
+    // 关键：统计查的是 Travel 表（ownerId = 我）
     const where = (prismaMock.travel.findMany.mock.calls[0][0] as { where: unknown }).where
     expect(where).toEqual({ ownerId: 7 })
-    expect(prismaMock.post.findMany).not.toHaveBeenCalled()
+    // 数字必须来自 Travel：R3 之后旧文章仍会被查询（用于"兜底是否可用"的诊断字段），
+    // 但只要 Travel 有数据，就**不许**用它的结果。
+    expect(p!.summary.source.used).toBe('travel')
   })
 
   it('只统计我名下的旅行（不按空间展开）', async () => {

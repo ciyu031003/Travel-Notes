@@ -94,10 +94,40 @@ function iso(v: Date | null | undefined): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString()
 }
 
+/** 我的活跃空间 id 列表（用于列表可见性） */
+async function myActiveSpaceIds(userId?: number | null): Promise<number[]> {
+  if (!userId) return []
+  try {
+    const rows = await prisma.spaceMember.findMany({
+      where: { userId, status: 'ACTIVE' },
+      select: { spaceId: true },
+    })
+    return rows.map((r) => r.spaceId)
+  } catch {
+    return []
+  }
+}
+
 export async function listTravels(userId?: number | null): Promise<TravelSummary[]> {
   if (skipDbOnBuild()) return []
+  /**
+   * 可见性（R3 修复）：
+   *  · 未登录 → 只公开（scopedWhere 的既有语义）
+   *  · 登录 → 我名下的 或 公开的 或 **我所在活跃空间里的**
+   *
+   * 最后一条是缺口：详情页走 `canViewResourceById`（支持 `visibility='SPACE'` + 活跃成员），
+   * 而列表原先只认 `ownerId`，于是**同空间成员的旅行在 /travel 里看不到、直接开链接又能看**。
+   * 两处口径不一致，用户会以为"同步丢了"。
+   */
+  const spaceIds = await myActiveSpaceIds(userId)
+  const where = userId
+    ? spaceIds.length > 0
+      ? { OR: [{ ownerId: userId }, { isPublic: true }, { spaceId: { in: spaceIds } }] }
+      : scopedWhere(userId, 'ownerId')
+    : scopedWhere(userId, 'ownerId')
+
   const rows = await prisma.travel.findMany({
-    where: scopedWhere(userId, 'ownerId') as any,
+    where: where as any,
     orderBy: { startDate: 'desc' },
     include: {
       _count: { select: { days: true } },

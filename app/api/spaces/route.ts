@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
       name: body?.name,
       slug: body?.slug,
       description: body?.description,
+      // 空间类型（情侣/家人/朋友/个人/其他）：原先这个字段传不进来，
+      // 所有空间都落 schema 默认的 COUPLE，界面上全是"情侣空间"
+      spaceType: body?.spaceType,
     })
     return NextResponse.json({ success: true, spaceId: result.id }, { status: 201 })
   } catch (error: any) {

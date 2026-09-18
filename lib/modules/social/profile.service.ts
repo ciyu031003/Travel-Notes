@@ -1,17 +1,22 @@
 import { prisma } from '../../db'
-import { findProvinceByLocation } from '../../province-map'
 import { getUserCapabilities, type UserCapabilities } from '../space/permissions'
 import { invalidateCurrentUserCache } from '../../current-user'
 import { absoluteMediaUrl, storageKeyToUrl } from '../../media-url'
+import {
+  diffInDays,
+  getTravelArchiveStats,
+  loadMyTravels,
+  travelPhotoUrls,
+  type TravelStatSource,
+} from '../travel/travel-stats'
 
 /**
- * 个人旅行档案统一数据源（R1 重构）。
+ * 个人旅行档案统一数据源（R1 重构 / R3 统一口径）。
  *
- * ⚠️ 口径修复（这是本次重构的核心，不是样式问题）：
- * 早先 `travelCount / placeCount / photoCount` 来自 `Post(type='travel')` —— 那是**旧的文章模型**，
- * 而 App 里「+ 新建旅行」写的是 `Travel` 表。结果是**用户在前台建的旅行一个都不计入**
- * 那三个数字（只有历史上从后台发的旧文章才算），「最近的一次旅行」也经常是空的。
- * 现在统一以 `Travel` 为准，与 `/travel` 列表、旅行详情、画册全部同源。
+ * ⚠️ 统计口径（travelCount / placeCount / photoCount）**不再在这里计算**，
+ * 而是走 `lib/modules/travel/travel-stats.ts` —— 那是 `/api/me` 与 `/api/dashboard`
+ * 共用的唯一事实源。原因：两处曾经各写一份、读不同的表（Travel vs Post），
+ * 于是"我的"显示 0、看板显示 4（真机反馈"统计都是 0"的根因之一）。
  */
 
 function iso(v: Date | null | undefined): string | null {
@@ -31,6 +36,8 @@ export interface TravelProfileSummary {
   favoriteCount: number
   likeCount: number
   provinceCount: number
+  /** 统计来自哪张表（Travel 为主、旧文章兜底）——便于排查"数字不对" */
+  source: TravelStatSource
 }
 
 export interface RecentTravelSummary {
@@ -89,10 +96,8 @@ function startOfToday(): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate())
 }
 
-/** 两个日期相差的整天数（b - a） */
-export function diffInDays(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / 86_400_000)
-}
+// diffInDays 从 travel-stats 复用（原先本文件也有一份，两处实现重复）
+export { diffInDays }
 
 /** 单条 media → 缩略图优先、回退原图（与 travel.service 的 thumbOf 同口径） */
 function thumbOf(m: any): string | null {
@@ -100,80 +105,6 @@ function thumbOf(m: any): string | null {
   // 用 find 而不是 [0]：variants 数组的顺序不保证（曾因此拿到原图而非缩略图）
   const thumb = variants.find((v: any) => v.variant === 'THUMBNAIL') ?? variants[0]
   return storageKeyToUrl(thumb?.storageKey ?? m?.storageKey ?? null)
-}
-
-/**
- * 我的旅行（口径：`ownerId = 我`）。
- *
- * 只认 ownerId，**不含空间成员的旅行**——那三个数字是「我的」档案，
- * 把同空间别人的旅行算进「我去了多少地方」是错的。空间旅行在空间页单独展示。
- */
-async function loadMyTravels(userId: number) {
-  return prisma.travel.findMany({
-    where: { ownerId: userId } as any,
-    orderBy: [{ startDate: 'desc' }, { id: 'desc' }],
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      location: true,
-      startDate: true,
-      endDate: true,
-      status: true,
-      cover: true,
-      /** 同行者聚合要用（JSON 列） */
-      companions: true,
-      coverMedia: {
-        select: { storageKey: true, variants: { where: { variant: 'THUMBNAIL' }, select: { storageKey: true } } },
-      },
-      days: {
-        select: {
-          memories: {
-            select: {
-              media: {
-                select: {
-                  id: true,
-                  storageKey: true,
-                  variants: { where: { variant: 'THUMBNAIL' }, select: { storageKey: true } },
-                },
-              },
-              mediaLinks: {
-                select: {
-                  media: {
-                    select: {
-                      id: true,
-                      storageKey: true,
-                      variants: { where: { variant: 'THUMBNAIL' }, select: { storageKey: true } },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  })
-}
-
-/** 一本旅行涉及的照片 URL（封面 + 所有回忆的主图与关联图，去重） */
-function travelPhotoUrls(t: any): string[] {
-  const out = new Set<string>()
-  const cover = thumbOf(t.coverMedia) ?? absoluteMediaUrl(t.cover ?? null)
-  if (cover) out.add(cover)
-  for (const day of t.days || []) {
-    for (const mem of day.memories || []) {
-      for (const m of mem.media || []) {
-        const u = thumbOf(m)
-        if (u) out.add(u)
-      }
-      for (const link of mem.mediaLinks || []) {
-        const u = thumbOf(link?.media)
-        if (u) out.add(u)
-      }
-    }
-  }
-  return Array.from(out)
 }
 
 export async function getMyProfile(userId: number): Promise<MeProfile | null> {
@@ -196,38 +127,8 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
 
   const travels = await loadMyTravels(userId)
 
-  const travelCount = travels.length
-
-  // 城市去重（拍板结论）：只统计有 location 的旅行
-  const placeCount = new Set(
-    travels.map((t) => t.location?.trim()).filter((v): v is string => !!v),
-  ).size
-
-  // 照片：跨旅行去重（同一张图挂多本旅行只算一次）
-  const allPhotoUrls = new Set<string>()
-  for (const t of travels) {
-    for (const u of travelPhotoUrls(t)) allPhotoUrls.add(u)
-  }
-  const photoCount = allPhotoUrls.size
-
-  // 有明确起止日期的旅行才计入天数
-  let travelDays = 0
-  let hasDatedTravel = false
-  for (const t of travels) {
-    if (!t.startDate) continue
-    hasDatedTravel = true
-    const start = t.startDate
-    const end = t.endDate ?? t.startDate
-    travelDays += Math.max(1, diffInDays(start, end) + 1)
-  }
-
-  const provinceIds = new Set<string>()
-  for (const t of travels) {
-    if (!t.location) continue
-    const p = findProvinceByLocation(t.location)
-    if (p) provinceIds.add(p.id)
-  }
-  const provinceCount = provinceIds.size
+  // 统计走唯一事实源（与 /api/dashboard 同源；无 Travel 时用旧文章兜底）
+  const stats = await getTravelArchiveStats(userId)
 
   const [momentCount, favoriteCount, likeAgg] = await Promise.all([
     prisma.moment.count({ where: { userId } }),
@@ -315,14 +216,15 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
     accountId: user.accountId,
     createdAt: iso(user.createdAt),
     summary: {
-      travelCount,
-      placeCount,
-      photoCount,
-      travelDays: hasDatedTravel ? travelDays : null,
+      travelCount: stats.travelCount,
+      placeCount: stats.placeCount,
+      photoCount: stats.photoCount,
+      travelDays: stats.travelDays,
       momentCount,
       favoriteCount,
       likeCount,
-      provinceCount,
+      provinceCount: stats.provinceCount,
+      source: stats.source,
     },
     recentTravel,
     upcomingTravel,
