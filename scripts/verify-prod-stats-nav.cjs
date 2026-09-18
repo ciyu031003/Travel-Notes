@@ -38,10 +38,11 @@ async function main() {
 
     // ── 1. 零数据时：两页统计必须一致（都应为 0，而不是一个 0 一个别的数）
     const me0 = (await (await ctx.request.get(`${BASE}/api/me`)).json()).data
+    // /api/dashboard 返回的是裸对象（未走 ok() 包装），一次请求只读一次 body —
+    // 上版这里对同一个 Response 读了两次 json()，第二次得到 undefined，误报"口径不一致"。
     const dash0 = await (await ctx.request.get(`${BASE}/api/dashboard`)).json()
-    const dash0d = dash0?.data ?? dash0
-    if (me0.summary.travelCount !== dash0d.travelCount) {
-      throw new Error(`零数据时口径就不一致：me=${me0.summary.travelCount} dashboard=${dash0d.travelCount}`)
+    if (me0.summary.travelCount !== dash0.travelCount) {
+      throw new Error(`零数据时口径就不一致：me=${me0.summary.travelCount} dashboard=${dash0.travelCount}`)
     }
     ok('零数据时两页口径一致', `travelCount=${me0.summary.travelCount}`)
 
@@ -73,8 +74,7 @@ async function main() {
     ok('建一本旅行 + 公开回忆 + 照片')
 
     const me1 = (await (await ctx.request.get(`${BASE}/api/me`)).json()).data
-    const dash1d = (await (await ctx.request.get(`${BASE}/api/dashboard`)).json())?.data
-    const dash1 = dash1d ?? {}
+    const dash1 = await (await ctx.request.get(`${BASE}/api/dashboard`)).json()
 
     const expectTravels = me0.summary.travelCount + 1
     for (const [label, got] of [
