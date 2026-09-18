@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '统计口径统一：「我的」与数据看板现在读同一份数据（App 里建的旅行不再漏算）；设置页与次级页面补上返回键、底部导航不再消失；旅行空间可选情侣/家人/朋友类型；旅行圈界面精修',
+    changelog: process.env.APP_CHANGELOG || '修复旅行圈点开后跳到首页的问题（本地壳改用可静态导出的详情路由）；App 图标重做：去掉四周黑边、logo 放大居满；服务器磁盘清理',
     forceUpdate,
   })
 }

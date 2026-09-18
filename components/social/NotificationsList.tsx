@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2, CheckCheck } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
-import { circlePostHref } from '@/lib/routes'
+import { circlePostHref, circleUserHref } from '@/lib/routes'
 
 export default function NotificationsList() {
   const [data, setData] = useState<any[]>([])
@@ -31,10 +31,9 @@ export default function NotificationsList() {
   const typeLabel: Record<string, string> = { LIKE: '赞了你的旅行', COMMENT: '评论了你的旅行', REPLY: '回复了你的评论', FAVORITE: '收藏了你的旅行', FOLLOW: '关注了你' }
 
   const targetHref = (n: any) => {
-    if (n.refType === 'User') return '/circle/user/' + n.refId
-    // 通知里的 TravelPost 关联可能为空（帖子已删/被下架）→ 退回旅行圈首页，不跳 /circle/undefined
-    if (n.refType === 'TravelPost') return circlePostHref(n.refId) ?? '/circle'
-    return '/circle'
+    // 通知里的关联对象可能已删除（refId 为空）→ 退回旅行圈首页，不跳 /circle/undefined
+    if (n.refType === 'User') return circleUserHref(n.refId) ?? '/circle'
+    return n.refType === 'TravelPost' ? circlePostHref(n.refId) ?? '/circle' : '/circle'
   }
 
   return (

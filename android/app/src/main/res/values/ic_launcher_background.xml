@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  App 图标（自适应图标）背景层颜色。
+  取值由 scripts/gen-app-icons.cjs 从 logo 的奶油底色采样而来（#fefefa），
+  与前景卡片同色，因此启动器按圆形裁切时不会在四周露出深色边。
+  旧值 #151A21（近黑）会让图标看起来"四周一圈黑、中间的 logo 很小"。
+-->
 <resources>
-    <color name="ic_launcher_background">#151A21</color>
+    <color name="ic_launcher_background">#fefefa</color>
 </resources>

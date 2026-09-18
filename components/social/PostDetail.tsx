@@ -13,7 +13,7 @@ import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialPostById } from '@/lib/modules/offline/social-read'
-import { travelDetailHref } from '@/lib/routes'
+import { circleUserHref, travelDetailHref } from '@/lib/routes'
 
 interface PostDetailData {
   id: number
@@ -316,7 +316,7 @@ export default function PostDetail({ postId }: { postId: number }) {
           </div>
 
           {post.author && (
-            <Link href={'/circle/user/' + post.author.id} className="mt-6 inline-flex items-center gap-2">
+            <Link href={circleUserHref(post.author.id) ?? '/circle'} className="mt-6 inline-flex items-center gap-2">
               <SocialAvatar name={authorName} avatarUrl={post.author.avatarUrl} size={34} />
               <span className="text-sm text-[var(--social-muted)]">{authorName}</span>
             </Link>

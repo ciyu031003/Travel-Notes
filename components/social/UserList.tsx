@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { circleUserHref } from '@/lib/routes'
 
 export default function UserList({ endpoint, title }: { endpoint: string; title: string }) {
   const [users, setUsers] = useState<any[]>([])
@@ -35,7 +36,7 @@ export default function UserList({ endpoint, title }: { endpoint: string; title:
             {users.map((u) => {
               const name = u.nickname || u.username
               return (
-                <Link key={u.id} href={'/circle/user/' + u.id} className="flex items-center gap-3 border-b border-[var(--social-line)] px-2 py-3.5 transition hover:bg-[var(--social-surface-50)]">
+                <Link key={u.id} href={circleUserHref(u.id) ?? '/circle'} className="flex items-center gap-3 border-b border-[var(--social-line)] px-2 py-3.5 transition hover:bg-[var(--social-surface-50)]">
                   <SocialAvatar name={name} avatarUrl={u.avatarUrl} size={40} />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
                   <span className="text-xs text-[var(--social-faint)]">@{u.username}</span>
