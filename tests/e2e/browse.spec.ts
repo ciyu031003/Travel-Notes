@@ -11,7 +11,8 @@ const PAGES: { path: string; marker?: string }[] = [
   { path: '/timeline', marker: '走过的时光' },
   { path: '/moments', marker: '碎碎念' },
   { path: '/circle' },
-  { path: '/me', marker: '我的旅行档案' },
+  // R1：页面标题从「我的旅行档案」改为「我的」（旅行内容不再在档案页重复铺一遍）
+  { path: '/me', marker: '我的' },
   { path: '/dashboard', marker: '我的旅行足迹' },
   { path: '/sync' },
   { path: '/album' },

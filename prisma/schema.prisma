@@ -107,6 +107,10 @@ model User {
   anniversaryStart      String?  @db.VarChar(50)
   nickname              String?  @db.VarChar(50)
   avatarUrl             String?  @db.VarChar(500)
+  /// 档案头图（用户上传的风景图）；焦点为 0-1 归一化坐标，null 表示居中
+  coverUrl              String?  @db.VarChar(500)
+  coverFocusX           Float?
+  coverFocusY           Float?
   bio                   String?  @db.VarChar(200)
   accountId             String?  @unique @db.VarChar(12)
   createdAt             DateTime @default(now()) @db.Timestamp(3)

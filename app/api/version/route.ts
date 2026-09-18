@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '旅行记录闭环：建完的旅行可编辑标题/目的地/日期，并按天记一笔（可传照片）与添加景点行程；新增「加一天」；旅行画册同步收录回忆照片',
+    changelog: process.env.APP_CHANGELOG || '「我的」页重做：档案头图可自定义并自选画面重点，统计口径修正为真实旅行数据（多少次旅行/多少地方/多少张照片）；首页「更多玩法」整体搬到「我的」',
     forceUpdate,
   })
 }

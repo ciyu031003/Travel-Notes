@@ -10,9 +10,7 @@ import {
   CalendarDays,
   Quote,
   Images,
-  MessageCircle,
   Sparkles,
-  ChartColumn,
   BookOpen,
   PenLine,
   WifiOff,
@@ -20,7 +18,6 @@ import {
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
 import { albumDeepLink } from '@/lib/album-deep-link'
-import { findProvinceByLocation } from '@/lib/province-map'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Skeleton, SkeletonCard, SkeletonLines } from '@/components/mobile/Skeleton'
@@ -28,7 +25,6 @@ import { Stagger } from '@/components/mobile/Stagger'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Icon } from '@/components/mobile/Icon'
 import { IconBadge } from '@/components/mobile/IconBadge'
-import { ListSection, ListRow } from '@/components/mobile/ListRow'
 
 /**
  * 首页 Hero 足迹地图：懒加载。
@@ -122,19 +118,6 @@ function formatAnniversaryDate(date: string): string {
   return d.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
 }
 
-function timeAgo(value: string): string {
-  const diff = Date.now() - new Date(value).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return '刚刚'
-  if (mins < 60) return mins + ' 分钟前'
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return hours + ' 小时前'
-  const days = Math.floor(hours / 24)
-  if (days < 30) return days + ' 天前'
-  const d = new Date(value)
-  return d.toLocaleDateString('zh-CN')
-}
-
 /** 首页画册横滑：摘要接口取前 6 本，点开进 /album 阅读（M3-1：给最重要的内容一个首页入口） */
 function MobileBooks() {
   const [books, setBooks] = useState<BookSummaryMeta[]>([])
@@ -222,7 +205,7 @@ function MobileMoments() {
   }, [])
 
   return (
-    <section className="m-enter px-4 pb-10">
+    <section className="m-enter px-4 pb-6">
       <div className="m-section-title">
         <span className="flex items-center gap-2">
           <Icon icon={Sparkles} size="md" tone="accent" />
@@ -234,38 +217,25 @@ function MobileMoments() {
         </Link>
       </div>
 
-      {loading ? (
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="m-card animate-pulse p-4">
-              <div className="h-3 w-full rounded-full bg-[var(--m-line)]" />
-              <div className="mt-2 h-3 w-3/5 rounded-full bg-[var(--m-line)]" />
-            </div>
-          ))}
-        </div>
-      ) : items.length === 0 ? (
-        <div className="m-card px-4 py-8 text-center">
-          <Icon icon={Sparkles} size="lg" tone="faint" className="mx-auto" />
-          <p className="mt-2 text-sm text-[var(--m-muted)]">还没有碎碎念，来写下此刻心情吧</p>
-          <Link href="/admin/moments" className="m-chip m-chip-active mt-4 !h-10 !px-5 !text-sm">
-            写一条碎碎念
-          </Link>
-        </div>
-      ) : (
-        <Stagger className="space-y-3" delayBase={120}>
-          {items.map((moment) => (
-            <Link key={moment.id} href="/moments" className="m-press m-card block p-4">
-              <p className="whitespace-pre-wrap break-words text-[15px] leading-7 text-[var(--m-text)]">{moment.content}</p>
-              <div className="mt-3 flex items-center gap-2 text-xs text-[var(--m-muted)]">
-                <span>{timeAgo(moment.createdAt)}</span>
-                {moment.tags && moment.tags.length > 0 && (
-                  <span className="m-chip">{moment.tags[0]}</span>
-                )}
-              </div>
-            </Link>
-          ))}
-        </Stagger>
-      )}
+      {/*
+        R1：这里从「列 3 条卡片」压缩成**单行入口**。
+        完整列表与「写一条」都搬到「我的」的记录分组 —— 首页只保留一个内容呼吸口，
+        不再与足迹地图 / 画册 / 最近旅行争首屏。
+      */}
+      <Link href="/moments" className="m-press m-card flex items-center gap-3 p-4">
+        <Icon icon={Sparkles} size="md" tone="accent" />
+        <span className="min-w-0 flex-1">
+          <span className="m-body block font-semibold">碎碎念</span>
+          <span className="m-caption mt-0.5 block truncate text-[var(--m-muted)]">
+            {loading
+              ? '正在加载…'
+              : items.length === 0
+                ? '还没有碎碎念，来写下此刻心情吧'
+                : items[0].content}
+          </span>
+        </span>
+        <Icon icon={ArrowRight} size="sm" tone="faint" />
+      </Link>
     </section>
   )
 }
@@ -469,31 +439,11 @@ export default function HomeMobile({
           </section>
           )}
 
-          {/* 功能入口：统一 ListRow 结构（暖色 IconBadge + 一致字号），
-              替代原先三处硬编码彩色方块（bg-[#F7E6D9] / #E7F1F5 / #EAF0E9） */}
-          <ListSection title="更多玩法" className="pb-4">
-            <ListRow
-              icon={CalendarDays}
-              tone="accent"
-              title="时间线"
-              description="按年份回顾每一段旅程"
-              href="/timeline"
-            />
-            <ListRow
-              icon={MessageCircle}
-              tone="sun"
-              title="碎碎念"
-              description="写下此刻想说的话"
-              href="/moments"
-            />
-            <ListRow
-              icon={ChartColumn}
-              tone="clay"
-              title="数据看板"
-              description="足迹与照片的全部沉淀"
-              href="/dashboard"
-            />
-          </ListSection>
+          {/*
+            R1：「更多玩法」（时间线 / 碎碎念 / 数据看板）已整体搬到「我的」页的记录分组。
+            首页只承担"看"（足迹地图 / 画册 / 最近旅行 / 重要日子），
+            入口类功能统一收进「我的」，避免首页变成功能目录。
+          */}
         </div>
       </PullToRefresh>
     </div>

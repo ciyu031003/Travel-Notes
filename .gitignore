@@ -62,3 +62,7 @@ playwright-report/
 tests/e2e/.auth/
 # Review screenshots
 .review-shots/
+
+# 诊断/实测脚本落地的截图与临时产物（本地排查用，不进仓库）
+.diag*.png
+.prod-*-fail.png

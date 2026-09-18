@@ -376,8 +376,7 @@ async function main() {
   }
 
   // v3.1 M2-A2：回忆-媒体 多对多关联表（一图多回忆）
-  await createTable(conn, 'MemoryMedia', `CREATE TABLE IF NOT EXISTS MemoryMedia (
-    id INT NOT NULL AUTO_INCREMENT,
+  await createTable(conn, 'MemoryMedia', `CREATE TABLE IF NOT EXISTS MemoryMedia (    id INT NOT NULL AUTO_INCREMENT,
     memoryId INT NOT NULL,
     mediaId INT NOT NULL,
     sortOrder INT NOT NULL DEFAULT 0,
@@ -393,6 +392,12 @@ async function main() {
     `INSERT IGNORE INTO MemoryMedia (memoryId, mediaId, sortOrder)
      SELECT memoryId, id, 0 FROM Media WHERE memoryId IS NOT NULL`
   ).catch(() => {})
+
+  // R1（移动端「我的」页重构）：档案头图 + 焦点坐标
+  // 头图是用户上传的风景图；焦点为 0-1 归一化坐标，渲染成 object-position，null = 居中。
+  await addColumn(conn, 'User', 'coverUrl', 'coverUrl VARCHAR(500) NULL AFTER avatarUrl')
+  await addColumn(conn, 'User', 'coverFocusX', 'coverFocusX DOUBLE NULL AFTER coverUrl')
+  await addColumn(conn, 'User', 'coverFocusY', 'coverFocusY DOUBLE NULL AFTER coverFocusX')
 
   // TravelPost：支持 Travel 或 Post 两种来源（表已存在后修改）
   await modifyColumn(conn, 'TravelPost', 'travelId', 'travelId INT NULL')
