@@ -95,7 +95,9 @@ function toPhoto(m: any): TravelBookChapterPhoto {
 async function listTravelModelBooks(userId?: number | null, travelId?: number): Promise<TravelBookData[]> {
   if (skipDbOnBuild()) return []
 
-  const where = scopedWhere(userId, 'ownerId') as any
+  // 只给「已归档」的旅行成册：confirmedAt 为空 = 进行中的草稿，
+  // 用户在首页明确点「完成并归档」之后才进画册（真机需求）
+  const where = { ...(scopedWhere(userId, 'ownerId') as any), confirmedAt: { not: null } }
   const travels = await prisma.travel.findMany({
     where: travelId === undefined ? where : { AND: [where, { id: travelId }] },
     orderBy: { startDate: 'desc' },
@@ -200,7 +202,8 @@ async function listPostCityBooks(userId?: number | null, onlyCity?: string): Pro
   const travelByLocation = new Map<string, { travelType: string | null; companions: unknown }>()
   try {
     const travels = await prisma.travel.findMany({
-      where: scopedWhere(userId, 'ownerId') as any,
+      // 同上：草稿不参与画册的城市徽章
+      where: { ...(scopedWhere(userId, 'ownerId') as any), confirmedAt: { not: null } },
       select: { location: true, travelType: true, companions: true, startDate: true },
       orderBy: { startDate: 'desc' },
     })
@@ -395,7 +398,8 @@ async function isCityBookCovered(cityName: string, userId?: number | null): Prom
   // 与 cityCoverageOf 同口径：只看「该城市是否有照片数 > 0 的 Travel」，不拉章节/照片明细
   const rows = await prisma.travel
     .findMany({
-      where: scopedWhere(userId, 'ownerId') as any,
+      // 草稿不算"有照片的城市"（与成册口径一致）
+      where: { ...(scopedWhere(userId, 'ownerId') as any), confirmedAt: { not: null } },
       select: { location: true, _count: { select: { memories: true } } },
     })
     .catch(() => null)

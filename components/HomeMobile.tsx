@@ -25,6 +25,7 @@ import { Stagger } from '@/components/mobile/Stagger'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Icon } from '@/components/mobile/Icon'
 import { IconBadge } from '@/components/mobile/IconBadge'
+import { toast } from '@/lib/mobile/toast-store'
 
 /**
  * 首页 Hero 足迹地图：懒加载。
@@ -240,32 +241,78 @@ function MobileMoments() {
   )
 }
 
+/** 进行中（未归档）的旅行：首页给大入口继续补内容 */
+export interface DraftTravel {
+  id: number
+  slug: string
+  title: string
+  location: string | null
+  startDate: string | null
+  endDate: string | null
+  dayCount: number
+  photoCount: number
+  cover: string | null
+  createdAt: string | null
+}
+
 export default function HomeMobile({
   travelPosts,
+  draftTravels = [],
   provincesVisitedCount,
   anniversaries = [],
   onRefresh = async () => {},
 }: {
   travelPosts: PostMeta[]
+  draftTravels?: DraftTravel[]
   provincesVisitedCount: number
   anniversaries?: AnniversaryItem[]
   onRefresh?: () => Promise<unknown> | void
 }) {
   const quote = dailyQuote()
   const recent = travelPosts.slice(0, 6)
+  const [confirmingId, setConfirmingId] = useState<number | null>(null)
+
+  /** 「完成并归档」：写入 confirmedAt → 该旅行进入最近旅行与画册，首页大入口消失 */
+  const confirmDraft = async (id: number) => {
+    setConfirmingId(id)
+    try {
+      const res = await fetch(apiUrl(`/api/travels/${id}/confirm`), { method: 'POST', credentials: 'include' })
+      if (!res.ok) throw new Error('confirm failed')
+      toast.success('已归档，已加入旅行画册与最近旅行')
+      await onRefresh()
+    } catch {
+      toast.error('归档失败，请重试')
+    } finally {
+      setConfirmingId(null)
+    }
+  }
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
 
       <PullToRefresh onRefresh={onRefresh}>
         <div className="relative z-10">
-          {/* Hero：以「足迹地图」为唯一视觉最重元素 —— 新用户不看文案也能明白这是什么 App。
-              原营销大标题下移（并入每日一言），装饰光斑与独立统计卡删除（统计并入地图卡）。 */}
-          <section className="m-gutter m-safe-top relative overflow-hidden pb-6">
+          {/*
+            每日一言**置顶**（真机要求）。问候语与品牌行也一并留在最上面，
+            首屏第一眼是"问候 + 一句话"，而不是直接一张地图。
+          */}
+          <section className="m-gutter m-safe-top pb-5 pt-2">
             <div className="m-enter relative">
               <p className="m-caption font-semibold text-[var(--m-accent-strong)]">{greeting()}</p>
               <p className="m-label mt-3 text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
-              <h1 className="m-title-1 mt-2 text-[var(--m-text)]">我的旅行足迹</h1>
+            </div>
+            <div className="m-enter m-card mt-3 overflow-hidden p-5 text-center">
+              <IconBadge icon={Quote} tone="accent" shape="circle" className="mx-auto" />
+              <p className="m-caption mt-4 font-semibold text-[var(--m-accent-strong)]">把走过的路，变成自己的故事</p>
+              <p className="m-title-2 mt-2">「{quote}」</p>
+              <p className="m-label mt-3 text-[var(--m-muted)]">DAILY WORDS</p>
+            </div>
+          </section>
+
+          {/* 旅行足迹：紧随每日一言（真机要求），地图仍是唯一视觉最重元素 */}
+          <section className="m-gutter relative overflow-hidden pb-6">
+            <div className="m-enter relative">
+              <h1 className="m-title-1 mb-3 text-[var(--m-text)]">我的旅行足迹</h1>
 
               {/* 足迹地图：唯一视觉主体。懒加载 —— lib/geo 静态引入 582KB china-geo.json，
                   直接 import 会让首页包体暴涨（登录页同样用 dynamic 规避）。 */}
@@ -315,20 +362,81 @@ export default function HomeMobile({
             </div>
           </section>
 
-        {/* 每日一言（保留）：品牌语 + 每日一句。原 Hero 大标题下移到这里，
-            既保留品牌表达，又不与足迹地图争首屏焦点。 */}
-        <section className="m-gutter pb-8">
-          <div className="m-enter m-card relative overflow-hidden p-5 text-center">
-            <div className="relative">
-              <IconBadge icon={Quote} tone="accent" shape="circle" className="mx-auto" />
-              <p className="m-caption mt-4 font-semibold text-[var(--m-accent-strong)]">
-                把走过的路，变成自己的故事
-              </p>
-              <p className="m-title-2 mt-2">「{quote}」</p>
-              <p className="m-label mt-3 text-[var(--m-muted)]">DAILY WORDS</p>
+        {/*
+          进行中的旅行：新建完就出现在这里（也是首页最大的动作入口）。
+          用户在这里补照片 / 排行程 / 记账，点「完成并归档」后才进画册与最近旅行。
+        */}
+        {draftTravels.length > 0 && (
+          <section className="px-4 pb-9">
+            <div className="m-section-title">
+              <span className="flex items-center gap-2">
+                <Icon icon={Sparkles} size="md" tone="accent" />
+                进行中的旅行
+              </span>
+              <span className="text-xs text-[var(--m-muted)]">{draftTravels.length} 段</span>
             </div>
-          </div>
-        </section>
+
+            <div className="space-y-3">
+              {draftTravels.map((d) => {
+                const href = travelDetailHref(d.slug)
+                return (
+                  <article key={d.id} className="m-enter m-card overflow-hidden">
+                    {d.cover ? (
+                      <div className="relative h-32 w-full bg-[var(--m-surface-2)]">
+                        <Image src={d.cover} alt="" fill sizes="100vw" className="object-cover" />
+                      </div>
+                    ) : (
+                      <div className="flex h-20 w-full items-center justify-center bg-[linear-gradient(135deg,var(--m-bg-soft),var(--m-surface-2))] text-[var(--m-faint)]">
+                        <Icon icon={Images} size="md" />
+                      </div>
+                    )}
+
+                    <div className="p-4">
+                      <div className="flex items-center gap-2">
+                        <Link href={href} className="m-body min-w-0 flex-1 truncate font-semibold text-[var(--m-text)]">
+                          {d.title}
+                        </Link>
+                        <span className="m-chip shrink-0 !h-6 !text-[11px]">进行中</span>
+                      </div>
+                      <p className="m-caption mt-1 text-[var(--m-muted)]">
+                        {d.location || '还没填目的地'} · {d.dayCount} 天 · 已有 {d.photoCount} 张照片
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Link
+                          href={href + '#album'}
+                          className="m-press m-caption inline-flex h-10 items-center gap-1.5 rounded-full bg-[var(--m-accent-soft)] px-3.5 font-semibold text-[var(--m-accent-strong)]"
+                        >
+                          <Icon icon={Images} size="sm" />
+                          添加照片
+                        </Link>
+                        <Link
+                          href={href + '#itinerary'}
+                          className="m-press m-caption inline-flex h-10 items-center gap-1.5 rounded-full bg-[var(--m-accent-soft)] px-3.5 font-semibold text-[var(--m-accent-strong)]"
+                        >
+                          <Icon icon={CalendarDays} size="sm" />
+                          安排行程
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => void confirmDraft(d.id)}
+                          disabled={confirmingId === d.id}
+                          className="m-press m-caption ml-auto inline-flex h-10 items-center gap-1.5 rounded-full bg-[var(--m-accent)] px-4 font-semibold text-[var(--m-on-accent)] disabled:opacity-60"
+                        >
+                          <Icon icon={Sparkles} size="sm" />
+                          {confirmingId === d.id ? '归档中…' : '完成并归档'}
+                        </button>
+                      </div>
+                      <p className="m-caption mt-2 text-[var(--m-faint)]">
+                        归档后会出现在旅行画册与最近旅行里
+                      </p>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
         {/* 旅行画册：横滑入口（最近旅行之前） */}
           <MobileBooks />

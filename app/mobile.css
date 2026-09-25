@@ -351,6 +351,37 @@ html.dark {
   animation-delay: var(--m-delay, 0ms);
 }
 
+/* ── 右半屏抽屉（SideDrawer）─────────────────────────────────────────
+   从右侧滑出、占半屏，露出背景页表达"这是当前页的附属操作"。
+   prefers-reduced-motion 下由文件末尾的统一降级规则关闭动画（只保留位移 0）。 */
+@keyframes m-drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes m-drawer-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.m-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  animation: m-drawer-fade 0.2s ease-out both;
+}
+.m-drawer-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  width: min(82vw, 340px);
+  flex-direction: column;
+  background: var(--m-surface-solid);
+  border-left: 0.5px solid var(--m-line-strong);
+  box-shadow: var(--m-elev-3);
+  animation: m-drawer-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes m-tab-pop {
   0%   { transform: translateY(2px) scale(0.6); opacity: 0; }
   60%  { transform: translateY(-1px) scale(1.08); opacity: 1; }
@@ -1164,7 +1195,7 @@ html.dark .m-toast {
   .m-pressable, .m-seg-thumb, .m-switch, .m-switch-knob, .m-sheet, .m-sheet-backdrop,
   .m-skeleton::after, .m-ptr-spin, .m-action-item, .m-page-fade, .m-pop,
   .m-btn, .m-btn-spinner, .m-check, .m-check-path, .m-choice, .m-card-pressable,
-  .m-seg-item, .m-switch-bare,
+  .m-seg-item, .m-switch-bare, .m-drawer-panel, .m-drawer-backdrop,
   .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after {
     animation: none !important;
     transition: none !important;

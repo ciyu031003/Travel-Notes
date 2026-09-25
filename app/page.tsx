@@ -6,8 +6,23 @@ import AsyncState from '@/components/AsyncState'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 
+interface DraftTravel {
+  id: number
+  slug: string
+  title: string
+  location: string | null
+  startDate: string | null
+  endDate: string | null
+  dayCount: number
+  photoCount: number
+  cover: string | null
+  createdAt: string | null
+}
+
 interface HomeData {
   travelPosts: unknown[]
+  /** 进行中（未归档）的旅行：首页大入口继续补内容 */
+  draftTravels?: DraftTravel[]
   anniversaries: unknown[]
   provincesVisitedCount: number
 }
@@ -52,6 +67,7 @@ export default function HomePage() {
       <div className="md:hidden">
         <HomeMobile
           travelPosts={data.travelPosts as never[]}
+          draftTravels={data.draftTravels ?? []}
           provincesVisitedCount={data.provincesVisitedCount}
           anniversaries={data.anniversaries as never[]}
           onRefresh={reload}

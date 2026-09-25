@@ -79,18 +79,20 @@ test('「我的」页结构：有档案头图与三统计，没有「我的旅�
   expect(stats.places).toBeGreaterThanOrEqual(0)
   expect(stats.photos).toBeGreaterThanOrEqual(0)
 
-  // 原首页「更多玩法」的三个入口已搬到「我的」
-  await expect(page.getByRole('link', { name: /时间线/ })).toBeVisible()
-  await expect(page.getByRole('link', { name: /数据看板/ })).toBeVisible()
-  await expect(page.getByRole('link', { name: /碎碎念/ })).toBeVisible()
-
   // 旅行内容只在 /travel 与画册，不再在「我的」重复铺一遍
   await expect(page.getByText('我的旅行故事')).toHaveCount(0)
   await expect(page.getByText('我的记忆')).toHaveCount(0)
 
-  // 设置组
-  await expect(page.getByRole('link', { name: /数据与同步/ })).toBeVisible()
-  await expect(page.getByRole('button', { name: /退出登录/ })).toBeVisible()
+  // R4：记录与设置类入口全部收进右上角 ≡ 的右侧半屏抽屉，页面主体只留旅行档案
+  await expect(page.getByRole('link', { name: /时间线/ })).toHaveCount(0)
+  await page.getByRole('button', { name: '设置与记录入口' }).click()
+  const drawer = page.getByRole('dialog', { name: '记录与设置' })
+  await expect(drawer).toBeVisible({ timeout: 15_000 })
+  await expect(drawer.getByRole('link', { name: /时间线/ })).toBeVisible()
+  await expect(drawer.getByRole('link', { name: /数据看板/ })).toBeVisible()
+  await expect(drawer.getByRole('link', { name: /碎碎念/ })).toBeVisible()
+  await expect(drawer.getByRole('link', { name: /数据与同步/ })).toBeVisible()
+  await expect(drawer.getByRole('button', { name: /退出登录/ })).toBeVisible()
 })
 
 test('新建旅行后，「我的」页统计立刻反映（口径修复的核心断言）', async ({ page }) => {

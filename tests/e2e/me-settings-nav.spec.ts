@@ -27,11 +27,22 @@ async function tapLink(page: Page, text: string) {
   expect(ok, `应找到链接：${text}`).toBe(true)
 }
 
+/**
+ * 打开「我的」页右上角 ≡ 的右侧半屏抽屉。
+ * R4 重构：记录与设置类入口从页面主体搬进了这个抽屉（页面只留旅行档案），
+ * 所以任何"从我的进入设置页"的用例都必须先开抽屉。
+ */
+async function openDrawer(page: Page) {
+  await page.getByRole('button', { name: '设置与记录入口' }).click()
+  await expect(page.getByRole('dialog', { name: '记录与设置' })).toBeVisible({ timeout: 15_000 })
+}
+
 test.use({ viewport: { width: 390, height: 844 } })
 
 test('「我的」页的设置项都指向存在且有返回键的页面', async ({ page }) => {
   await page.goto('/me')
   await page.getByRole('heading', { name: '我的' }).first().waitFor({ timeout: 25_000 })
+  await openDrawer(page)
 
   // 账号设置必须指向移动端可用页（不再指向 /admin/**）
   const settingsHref = await page
@@ -56,7 +67,8 @@ test('设置子页返回键可用；底部 tab 在次级页面始终在位', asy
   await page.goto('/me')
   await page.getByRole('heading', { name: '我的' }).first().waitFor({ timeout: 25_000 })
 
-  // 从「我的」进「数据与同步」
+  // 从「我的」进「数据与同步」（R4 起入口在右上角抽屉里）
+  await openDrawer(page)
   await tapLink(page, '数据与同步')
   await page.waitForURL('**/sync', { timeout: 20_000 })
   await expect(page.getByRole('heading', { name: '数据与同步' }).first()).toBeVisible({ timeout: 25_000 })

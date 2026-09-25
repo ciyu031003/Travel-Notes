@@ -4,7 +4,7 @@ import { CalendarDays, ImageIcon, Sparkles, Wallet } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
 import { itineraryIconOf } from '@/lib/mobile/icon-system'
-import { dayFullLabel, formatMoney, formatTime } from './format'
+import { dayFullLabel, formatMoney, formatTime, rangeDays } from './format'
 import type { ExpenseItem, TimelineDay, TravelInfoForDetail, ViewerPhotoLike } from './types'
 
 /**
@@ -28,6 +28,7 @@ export default function TravelOverviewTab({
   onOpenViewer: (photos: ViewerPhotoLike[], index: number) => void
   onGoTab: (tab: 'itinerary' | 'album' | 'expense') => void
 }) {
+  const daysCount = rangeDays(travel.startDate, travel.endDate)
   const itineraryCount = days.reduce((s, d) => s + d.itinerary.length, 0)
   const memoryCount = days.reduce((s, d) => s + d.memories.length, 0)
   const total = expenseState?.total ?? 0
@@ -51,6 +52,15 @@ export default function TravelOverviewTab({
       {travel.description && (
         <p className="px-0.5 text-[14px] leading-relaxed text-[var(--m-muted)]">{travel.description}</p>
       )}
+
+      {/* 规划摘要：几天 / 去过哪 / 几个行程 / 花了多少 —— 打开旅行先看到的就是它 */}
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-0.5 text-[13px] text-[var(--m-muted)]">
+        {daysCount != null && <span className="tabular-nums">{daysCount} 天</span>}
+        {travel.location && <span>· {travel.location}</span>}
+        <span>· {itineraryCount} 个行程</span>
+        <span>· {photos.length} 张照片</span>
+        {total > 0 && <span>· 已花 ¥{formatMoney(total)}</span>}
+      </div>
 
       {nothingYet && (
         <div className="m-card px-5 py-8 text-center">

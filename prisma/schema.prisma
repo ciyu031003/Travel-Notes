@@ -438,6 +438,10 @@ model Travel {
   /// 旅行预算（人民币元）。与 `Expense` 流水配合算出「预算 vs 已花」。
   /// 可空：没填预算的旅行不显示进度，只显示已花合计。
   budget       Float?
+  /// 归档时刻。**为空的旅行是"进行中"的草稿**：首页给一个大入口继续补内容，
+  /// 但不进「最近旅行」与画册；用户点「完成并归档」后写入时间戳才正式成册。
+  /// 存量数据由 scripts/backfill-travel-confirmed-once.cjs 回填为 createdAt。
+  confirmedAt  DateTime?
   createdAt    DateTime     @default(now()) @db.Timestamp(3)
   updatedAt    DateTime     @updatedAt @db.Timestamp(3)
 

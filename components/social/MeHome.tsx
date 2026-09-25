@@ -22,6 +22,8 @@ import {
   Compass,
   Plane,
   Clock,
+  Menu,
+  Moon,
 } from 'lucide-react'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import SpacePanel from '@/components/space/SpacePanel'
@@ -31,7 +33,8 @@ import { apiUrl } from '@/lib/api-base'
 import { isMobileShell, travelDetailHref } from '@/lib/routes'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { ListSection, ListRow } from '@/components/mobile/ListRow'
+import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDrawer'
+import { IconBadge } from '@/components/mobile/IconBadge'
 import { Icon } from '@/components/mobile/Icon'
 import { base64ToBytes, extFromMime } from '@/lib/media/pick-image'
 
@@ -100,6 +103,8 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   const router = useRouter()
   const [profile, setProfile] = useState<MeProfile>(initial)
   const [unread, setUnread] = useState(0)
+  /** 右上角 ≡ 打开的右侧半屏抽屉（记录 / 设置 / 外观 / 退出） */
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [nickname, setNickname] = useState(initial.nickname || '')
   const [bio, setBio] = useState(initial.bio || '')
@@ -292,8 +297,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               title="我的"
               subtitle={displayName}
               trailing={
-                <div className="flex items-center gap-2">
-                  <SocialThemeToggle />
+                <div className="flex items-center gap-1.5">
                   <Link
                     href="/me/notifications"
                     aria-label="通知"
@@ -304,6 +308,19 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                       <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />
                     )}
                   </Link>
+                  {/*
+                    右上角 ≡ → 右侧半屏抽屉。
+                    「我的」页只保留旅行档案（头图/统计/最近旅行/同行者），
+                    记录与设置类入口全部收进抽屉 —— 这样页面不再被一长串列表撑长。
+                  */}
+                  <button
+                    type="button"
+                    aria-label="设置与记录入口"
+                    onClick={() => setDrawerOpen(true)}
+                    className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)]"
+                  >
+                    <Icon icon={Menu} size="md" />
+                  </button>
                 </div>
               }
             />
@@ -314,8 +331,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--social-accent)]">My Archive</p>
               <h1 className="mt-1.5 truncate text-[26px] font-semibold leading-none tracking-tight">我的</h1>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <SocialThemeToggle />
+            <div className="flex shrink-0 items-center gap-1.5">
               <Link
                 href="/me/notifications"
                 aria-label="通知"
@@ -326,6 +342,14 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                   <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />
                 )}
               </Link>
+              <button
+                type="button"
+                aria-label="设置与记录入口"
+                onClick={() => setDrawerOpen(true)}
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"
+              >
+                <Icon icon={Menu} size="md" />
+              </button>
             </div>
           </header>
 
@@ -411,17 +435,6 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             </button>
           </section>
 
-          {/* ③ 记录（原首页「更多玩法」搬来） */}
-          <ListSection title="记录" className="m-enter mt-6">
-            <ListRow icon={Route} tone="accent" title="我的旅行" description="地图、列表与全部旅途" href="/travel" />
-            <ListRow icon={Images} tone="sun" title="旅行画册" description="按城市成册，翻页阅读" href="/album" />
-            <ListRow icon={CalendarDays} tone="clay" title="时间线" description="按年份回顾每一段旅程" href="/timeline" />
-            <ListRow icon={NotebookPen} tone="blush" title="碎碎念" description="写下此刻想说的话" href="/moments" />
-            <ListRow icon={ChartColumn} tone="accent" title="数据看板" description="足迹与照片的全部沉淀" href="/dashboard" />
-            <ListRow icon={Bookmark} tone="sun" title="我的收藏" description="收藏过的旅行故事" href="/me/favorites" />
-            <ListRow icon={Compass} tone="clay" title="旅行圈" description="看看别人眼中的世界" href="/circle" />
-          </ListSection>
-
           {/* 同行者聚合（弱化呈现，不抢三统计的位置） */}
           {profile.companionStats && profile.companionStats.length > 0 && (
             <section className="m-enter mt-6">
@@ -444,49 +457,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             </section>
           )}
 
-          {/* ④ 设置 */}
-          <ListSection title="设置" className="m-enter mt-6">
-            <ListRow
-              icon={Bell}
-              tone="accent"
-              title="通知"
-              description={unread > 0 ? `${unread} 条未读` : '评论、点赞与关注'}
-              href="/me/notifications"
-            />
-            <ListRow icon={RefreshCw} tone="sun" title="数据与同步" description="离线内容与同步状态" href="/sync" />
-            <ListRow
-              icon={Download}
-              tone="clay"
-              title={exporting ? '正在导出…' : '导出记忆档案'}
-              description="旅行 / 回忆 / 碎碎念 / 照片打包下载"
-              onClick={exportArchive}
-            />
-            {/*
-              账号设置：走**移动端也有**的 `/me/settings`。
-              原先直接链到 `/admin/settings` —— 而 `/admin` 在原生壳里根本没有打包
-              （`build-mobile.cjs` 把它移出了 app/），点进去是一片空白/兜底页，
-              用户反馈的"点账号设置直接回到首页、而且底部 tab 也没了"就是这个。
-            */}
-            <ListRow icon={Settings} tone="blush" title="账号设置" description="密码、邮箱与账号信息" href="/me/settings" />
-            {/*
-              管理后台只在 Web 显示：它是重度桌面界面（左侧栏 + 表格），
-              移动端既没打包也不适合操作。原生壳里点它必然出错。
-            */}
-            {profile.capabilities.isOwner && !native && (
-              <ListRow icon={ShieldCheck} tone="accent" title="管理后台" description="内容、成员与审计日志" href="/admin" />
-            )}
-          </ListSection>
-
           {error && <p className="mt-4 px-1 text-sm text-[var(--danger-soft)]">{error}</p>}
-
-          <button
-            type="button"
-            onClick={logout}
-            className="m-press mt-6 flex w-full items-center justify-center gap-2 rounded-[1.4rem] bg-[var(--social-surface)] py-3.5 text-sm font-medium text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition active:scale-[0.99]"
-          >
-            <Icon icon={LogOut} size="sm" />
-            退出登录
-          </button>
 
           <p className="mt-4 text-center text-[11px] text-[var(--social-faint)]">
             <Sparkles className="mr-1 inline align-[-2px]" size={11} />
@@ -494,6 +465,92 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           </p>
         </PullToRefresh>
       </div>
+
+      {/*
+        右侧半屏抽屉：记录 + 设置 + 外观 + 退出登录。
+        从页面主体搬进来，页面只留旅行档案（头图/统计/最近旅行/同行者）。
+      */}
+      <SideDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="记录与设置"
+        className="text-[var(--m-text)]"
+        footer={
+          <button
+            type="button"
+            onClick={logout}
+            className="m-press flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--m-surface-2)] py-3 text-[14px] font-medium text-[var(--m-muted)]"
+          >
+            <Icon icon={LogOut} size="sm" />
+            退出登录
+          </button>
+        }
+      >
+        <DrawerSection title="记录">
+          <DrawerRow icon={Route} title="我的旅行" href="/travel" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={Images} title="旅行画册" href="/album" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={CalendarDays} title="时间线" href="/timeline" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={NotebookPen} title="碎碎念" href="/moments" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={ChartColumn} title="数据看板" href="/dashboard" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={Bookmark} title="我的收藏" href="/me/favorites" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={Compass} title="旅行圈" href="/circle" onClick={() => setDrawerOpen(false)} />
+        </DrawerSection>
+
+        <DrawerSection title="设置">
+          <DrawerRow
+            icon={Bell}
+            title="通知"
+            description={unread > 0 ? `${unread} 条未读` : '评论、点赞与关注'}
+            href="/me/notifications"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <DrawerRow
+            icon={RefreshCw}
+            title="数据与同步"
+            description="离线内容与同步状态"
+            href="/sync"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <DrawerRow
+            icon={Download}
+            title={exporting ? '正在导出…' : '导出记忆档案'}
+            description="旅行 / 回忆 / 碎碎念 / 照片打包下载"
+            onClick={exportArchive}
+          />
+          {/*
+            账号设置：走**移动端也有**的 /me/settings。
+            原先直接链到 /admin/settings —— 而 /admin 在原生壳里没有打包，
+            点进去是空白兜底页（真机反馈"点账号设置直接回首页、底部 tab 也没了"）。
+          */}
+          <DrawerRow
+            icon={Settings}
+            title="账号设置"
+            description="密码、邮箱与账号信息"
+            href="/me/settings"
+            onClick={() => setDrawerOpen(false)}
+          />
+          {/*
+            管理后台只在 Web 显示：重度桌面界面（左侧栏 + 表格），原生壳没打包。
+          */}
+          {profile.capabilities.isOwner && !native && (
+            <DrawerRow
+              icon={ShieldCheck}
+              title="管理后台"
+              description="内容、成员与审计日志"
+              href="/admin"
+              onClick={() => setDrawerOpen(false)}
+            />
+          )}
+        </DrawerSection>
+
+        <DrawerSection title="外观">
+          <div className="m-pressable flex min-h-[56px] w-full items-center gap-3 px-4 py-2.5">
+            <IconBadge icon={Moon} tone="sun" />
+            <span className="m-body min-w-0 flex-1 font-medium text-[var(--m-text)]">主题</span>
+            <SocialThemeToggle />
+          </div>
+        </DrawerSection>
+      </SideDrawer>
 
       {showSpace && <SpacePanel open={showSpace} onClose={() => setShowSpace(false)} />}
 

@@ -30,6 +30,8 @@ export interface TravelSummary {
   visibility: string
   spaceId: number | null
   ownerId: number | null
+  /** 归档时刻；null = 进行中草稿（首页大入口继续补内容，不进最近旅行与画册） */
+  confirmedAt: string | null
 }
 
 export interface ItineraryItemRecord {
@@ -196,6 +198,7 @@ export async function listTravels(userId?: number | null): Promise<TravelSummary
       visibility: t.visibility ?? 'SPACE',
       spaceId: t.spaceId ?? null,
       ownerId: t.ownerId ?? null,
+      confirmedAt: iso(t.confirmedAt),
     }
   })
 }
@@ -379,6 +382,8 @@ export interface TravelPublicDetail {
   companions: unknown
   /** 旅行预算（元）；未填为空 → 花销 tab 只显示已花合计 */
   budget: number | null
+  /** 归档时刻；null = 进行中草稿 */
+  confirmedAt: string | null
 }
 
 /**
@@ -464,6 +469,7 @@ export async function getTravelBySlug(slug: string, userId?: number | null): Pro
     travelType: t.travelType ?? 'ALONE',
     companions: t.companions ?? null,
     budget: isoBudget((t as any).budget),
+    confirmedAt: iso((t as any).confirmedAt),
   }
 }
 

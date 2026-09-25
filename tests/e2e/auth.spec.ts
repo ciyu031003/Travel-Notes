@@ -20,8 +20,10 @@ test('登录页 UI 登录 → 进入应用 → 退出登录', async ({ page }) =
   await page.waitForURL(u => !u.pathname.startsWith('/login'), { timeout: 20_000 })
   await expect(page.locator('body')).not.toContainText('Application error')
 
-  // 退出登录（/me 底部账号操作区）
+  // 退出登录：R4 起「我的」页只留旅行档案，退出按钮在右上角 ≡ 的抽屉底部
   await page.goto('/me')
+  await page.getByRole('button', { name: '设置与记录入口' }).click()
+  await expect(page.getByRole('dialog', { name: '记录与设置' })).toBeVisible({ timeout: 15_000 })
   const logout = page.getByRole('button', { name: /退出登录/ })
   await expect(logout).toBeVisible({ timeout: 20_000 })
   await logout.click()

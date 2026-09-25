@@ -3,7 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { CalendarDays, ChevronLeft, CloudOff, Images, LayoutGrid, MoreHorizontal, PenLine, Pencil, Wallet } from 'lucide-react'
+import {
+  CalendarDays,
+  ChevronLeft,
+  CloudOff,
+  Images,
+  LayoutGrid,
+  MoreHorizontal,
+  PenLine,
+  Pencil,
+  Wallet,
+  Maximize2,
+} from 'lucide-react'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
@@ -66,6 +77,18 @@ export default function TravelDetailMobile({
   const serverKnown = travelId > 0 && !pendingSync
 
   const [tab, setTab] = useState<TabKey>('overview')
+
+  /**
+   * 首页「进行中的旅行」卡片用 #album / #itinerary / #expense 直达对应页签
+   * （比 query 参数稳：静态导出下 hash 不参与路由匹配）。
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const hash = window.location.hash.replace('#', '')
+    if (hash === 'overview' || hash === 'itinerary' || hash === 'album' || hash === 'expense') {
+      setTab(hash)
+    }
+  }, [])
   const [days, setDays] = useState<TimelineDay[]>([])
   const [timelineLoading, setTimelineLoading] = useState(true)
   const [expenses, setExpenses] = useState<{ expenses: ExpenseItem[]; total: number; budget: number | null } | null>(null)
@@ -208,6 +231,20 @@ export default function TravelDetailMobile({
       >
         <IconButton icon={ChevronLeft} label="返回旅行记录" variant="plain" onClick={onBack} />
         <span className="m-body min-w-0 flex-1 truncate text-center font-medium">{travel.title}</span>
+        {/*
+          编辑入口重新设计：从"藏在 ⋯ 菜单里"改成顶栏上一个**可见的「编辑」**。
+          真机反馈的"新建完以后能在哪个地方进一步修改，入口也没显示出来"就是这里。
+        */}
+        {travel.canEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="m-pressable flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[14px] font-medium text-[var(--m-accent-strong)]"
+          >
+            <Icon icon={Pencil} size="sm" />
+            编辑
+          </button>
+        )}
         <IconButton icon={MoreHorizontal} label="更多操作" variant="plain" onClick={() => setMoreOpen(true)} />
       </header>
 
@@ -221,15 +258,34 @@ export default function TravelDetailMobile({
       */}
       <section>
         {heroCover ? (
-          <div className="relative h-48 w-full overflow-hidden bg-[var(--m-bg-soft)]">
+          /*
+            打开旅行先看到的是"图片 + 下面的评价与规划"，**不是一上来就整屏滑动图片**。
+            想沉浸看图的用户点这里（或右上角「全屏查看」）进二级查看器，可上下滑动。
+          */
+          <button
+            type="button"
+            aria-label="全屏查看旅行照片"
+            onClick={() => setViewer({ photos: allPhotos as ViewerPhoto[], index: 0 })}
+            className="relative block h-48 w-full overflow-hidden bg-[var(--m-bg-soft)] text-left"
+          >
             <Image src={heroCover} alt="" fill sizes="100vw" className="object-cover" priority />
             <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(26,16,9,0.72),rgba(26,16,9,0)_62%)]" />
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-2.5">
+            {/* 右上角：全屏查看（图片上一个明确的按钮，符合真机要求） */}
+            <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[12px] font-medium text-white backdrop-blur-md">
+              <Icon icon={Maximize2} size="sm" />
+              全屏查看
+            </span>
+            {allPhotos.length > 0 && (
+              <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white backdrop-blur-md">
+                {allPhotos.length} 张
+              </span>
+            )}
+            <span className="absolute inset-x-0 bottom-0 block px-4 pb-2.5">
               <h1 className="text-[24px] font-bold leading-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]">
                 {travel.title}
               </h1>
-            </div>
-          </div>
+            </span>
+          </button>
         ) : (
           <div className="px-4 pt-1">
             <h1 className="text-[24px] font-bold leading-tight text-[var(--m-text)]">{travel.title}</h1>
