@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPostService } from '@/lib/container'
-import { getCurrentUserId } from '@/lib/current-user'
+import { getCurrentUser } from '@/lib/current-user'
 import { applyCacheControl } from '@/lib/http-cache'
 import { listTravels } from '@/lib/modules/travel/travel.service'
 
@@ -20,11 +20,13 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(_request: NextRequest) {
   try {
-    const userId = await getCurrentUserId()
+    const user = await getCurrentUser()
+    const userId = user?.id ?? null
     const postService = getPostService()
     const [posts, travels] = await Promise.all([
       postService.getPostsHybrid('travel', userId),
-      listTravels(userId).catch(() => []),
+      // username 一并传入：空间成员关系按 (spaceId, username) 与 userId 双键查（P0 修复）
+      listTravels(userId, user?.username).catch(() => []),
     ])
 
     const travelPosts = travels.map((t) => ({

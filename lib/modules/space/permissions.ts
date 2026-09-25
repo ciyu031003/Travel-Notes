@@ -119,9 +119,35 @@ export interface UserCapabilities {
   canViewAudit: boolean
 }
 
-export async function getUserCapabilities(userId: number): Promise<UserCapabilities> {
+/**
+ * 取用户能力（3.6 后台能力模块化）。
+ *
+ * **P0 修复**：原先只按 `userId` 查 `SpaceMember`，且用 `memberships.length === 0`
+ * 反推「没有空间 = 单用户 = OWNER」。而「加入空间」的写入路径长期没有写
+ * `SpaceMember.userId`（见 `space.repository.ts#addMember`），于是**被邀请进来的成员
+ * 在这条查询里查不到任何成员身份 → 被判成 OWNER**，拿到 `canManageSettings /
+ * canManageSocial / canViewAudit` 这些主人专属能力。
+ *
+ * 现在同时按两种键查（`SpaceMember` 的规范键是 `(spaceId, username)`），
+ * 并保留「确实毫无空间成员身份 = 单用户模式 = OWNER」这一产品语义。
+ */
+export async function getUserCapabilities(
+  userId: number,
+  username?: string | null,
+): Promise<UserCapabilities> {
+  // username 未显式传入时回查一次（调用方多数只有 userId）
+  const uname =
+    username ??
+    (await prisma.user
+      .findUnique({ where: { id: userId }, select: { username: true } })
+      .then((u) => u?.username ?? null)
+      .catch(() => null))
+
   const memberships = await prisma.spaceMember.findMany({
-    where: { userId, status: 'ACTIVE' },
+    where: {
+      status: 'ACTIVE',
+      OR: [{ userId }, ...(uname ? [{ username: uname }] : [])],
+    },
     select: { role: true },
   })
   const isOwner = memberships.length === 0 || memberships.some((m) => m.role === 'OWNER')

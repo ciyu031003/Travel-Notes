@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：新建旅行后打开报「网络错误」（本地 slug 与云端 slug 不一致时读不到本地旅行）；修：点开旧旅行整页空白（正文只渲染在桌面分支）',
+    changelog: process.env.APP_CHANGELOG || '新增「我的空间」模块：情侣/家庭/朋友/独旅/其他五类空间各有专属清新配色；成员可一起编辑空间内的旅行、相册与回忆；空间详情页含动态记录与成员邀请',
     forceUpdate,
   })
 }

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
   try {
-    const albums = await listAlbums(auth.payload?.userId)
+    const albums = await listAlbums(auth.payload?.userId, auth.username)
     return NextResponse.json({ albums })
   } catch {
     return NextResponse.json({ albums: [] })

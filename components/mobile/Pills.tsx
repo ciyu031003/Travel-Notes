@@ -14,6 +14,11 @@ import {
   type ActivityKind,
   type BadgeTone,
 } from '@/lib/mobile/icon-system'
+import {
+  spaceTypeIconOf,
+  spaceTypeLabelOf,
+  spaceTypeToneOf,
+} from '@/lib/mobile/space-system'
 import { Icon } from './Icon'
 
 /**
@@ -76,8 +81,7 @@ export function TravelTypePill({
 }
 
 /** 活动类型：球类运动 / 徒步 / 散步 / 骑行 / 游泳 / 登山 / 滑雪 / 露营 … */
-export function ActivityPill({
-  kind,
+export function ActivityPill({  kind,
   size = 'md',
   className,
 }: {
@@ -116,6 +120,29 @@ export function ItineraryChip({
       {children}
       {locationName ? `（${locationName}）` : ''}
       <span className="sr-only">{itineraryLabelOf(type)}</span>
+    </Pill>
+  )
+}
+
+/**
+ * 空间类型：情侣 / 家庭 / 朋友 / 独旅 / 其他。
+ *
+ * 与 `TravelTypePill` 的区别：那个描述「这次旅行和谁去的」，这个描述
+ * 「这个长期空间是什么关系」。两者图标刻意不复用（空间用 HeartHandshake 之外的
+ * 一组），避免同一屏里两个 pill 撞图标。
+ */
+export function SpaceTypePill({
+  type,
+  size = 'md',
+  className,
+}: {
+  type?: string | null
+  size?: keyof typeof SIZE_CLASS
+  className?: string
+}) {
+  return (
+    <Pill icon={spaceTypeIconOf(type)} tone={spaceTypeToneOf(type)} size={size} className={className}>
+      {spaceTypeLabelOf(type)}
     </Pill>
   )
 }

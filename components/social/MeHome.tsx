@@ -26,7 +26,6 @@ import {
   Moon,
 } from 'lucide-react'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
-import SpacePanel from '@/components/space/SpacePanel'
 import ProfileHero from '@/components/social/ProfileHero'
 import { Modal } from '@/components/ui/Modal'
 import { apiUrl } from '@/lib/api-base'
@@ -113,7 +112,6 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   const [uploadingCover, setUploadingCover] = useState(false)
   const [error, setError] = useState('')
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
-  const [showSpace, setShowSpace] = useState(false)
 
   const displayName = profile.nickname || profile.username
   const bioText = profile.bio || DEFAULT_BIO
@@ -417,22 +415,21 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">我的空间</h2>
               <div className="h-px flex-1 bg-[var(--social-line)]" />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowSpace(true)}
+            <Link
+              href="/space"
               className="m-press mt-3 flex w-full items-center gap-4 rounded-[1.4rem] bg-[var(--social-surface)] p-4 text-left ring-1 ring-[var(--social-line)]"
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--social-accent-soft)] text-[var(--social-accent)]">
                 <Icon icon={Users} size="md" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">情侣 / 家人 / 朋友空间</span>
+                <span className="block text-sm font-semibold">情侣 / 家庭 / 朋友 / 独旅空间</span>
                 <span className="mt-0.5 block text-xs text-[var(--social-muted)]">
-                  邀请 TA 一起经营旅行记录，还能一起规划下一次
+                  邀请 TA 一起经营旅行记录，每种空间有自己的配色
                 </span>
               </span>
               <Icon icon={ChevronRight} size="sm" tone="faint" />
-            </button>
+            </Link>
           </section>
 
           {/* 同行者聚合（弱化呈现，不抢三统计的位置） */}
@@ -551,8 +548,6 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           </div>
         </DrawerSection>
       </SideDrawer>
-
-      {showSpace && <SpacePanel open={showSpace} onClose={() => setShowSpace(false)} />}
 
       <Modal
         open={showEdit}

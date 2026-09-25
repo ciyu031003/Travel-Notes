@@ -9,6 +9,8 @@ import { makeTravelSlug } from './slug'
 import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
 import { absoluteMediaUrl, storageKeyToUrl } from '../../media-url'
+// P0 收敛：空间成员关系的唯一查询入口（同时按 userId + username 两种键查）
+import { myActiveSpaceIds as sharedMyActiveSpaceIds, spaceScopedWhere } from '../access/space-scope'
 
 export interface TravelSummary {
   id: number
@@ -96,37 +98,29 @@ function iso(v: Date | null | undefined): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-/** 我的活跃空间 id 列表（用于列表可见性） */
-async function myActiveSpaceIds(userId?: number | null): Promise<number[]> {
-  if (!userId) return []
-  try {
-    const rows = await prisma.spaceMember.findMany({
-      where: { userId, status: 'ACTIVE' },
-      select: { spaceId: true },
-    })
-    return rows.map((r) => r.spaceId)
-  } catch {
-    return []
-  }
-}
-
-export async function listTravels(userId?: number | null): Promise<TravelSummary[]> {
+/**
+ * 我的活跃空间 id 列表（用于列表可见性）。
+ *
+ * P0 收敛：原先这里是**本地实现**，而 `lib/modules/access` 与 `album.service`
+ * 各自又抄了一份，三份都只按 `userId` 过滤。现在统一走
+ * `lib/modules/access/space-scope`（同时按 userId + username 两种键查）。
+ */
+export async function listTravels(
+  userId?: number | null,
+  username?: string | null,
+): Promise<TravelSummary[]> {
   if (skipDbOnBuild()) return []
   /**
-   * 可见性（R3 修复）：
-   *  · 未登录 → 只公开（scopedWhere 的既有语义）
+   * 可见性（R3 修复 + P0 收敛）：
+   *  · 未登录 → 只公开
    *  · 登录 → 我名下的 或 公开的 或 **我所在活跃空间里的**
    *
    * 最后一条是缺口：详情页走 `canViewResourceById`（支持 `visibility='SPACE'` + 活跃成员），
    * 而列表原先只认 `ownerId`，于是**同空间成员的旅行在 /travel 里看不到、直接开链接又能看**。
    * 两处口径不一致，用户会以为"同步丢了"。
    */
-  const spaceIds = await myActiveSpaceIds(userId)
-  const where = userId
-    ? spaceIds.length > 0
-      ? { OR: [{ ownerId: userId }, { isPublic: true }, { spaceId: { in: spaceIds } }] }
-      : scopedWhere(userId, 'ownerId')
-    : scopedWhere(userId, 'ownerId')
+  const spaceIds = await sharedMyActiveSpaceIds(userId, username)
+  const where = spaceScopedWhere(userId, 'ownerId', spaceIds)
 
   const rows = await prisma.travel.findMany({
     where: where as any,

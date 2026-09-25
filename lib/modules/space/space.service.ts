@@ -9,6 +9,30 @@ import { writeAuditLog } from '../audit/audit-log.service'
 
 const SLUG_RE = /^[a-z0-9-]{2,80}$/
 
+/**
+ * 由空间名派生 ASCII slug。
+ *
+ * **P0 修复**：原先 slug 由前端生成，且前端的清洗规则**保留中文**
+ * （`SpacePanel.tsx` 里 `/^[^a-z0-9\u4e00-\u9fa5]+/`），而服务端只接受
+ * `^[a-z0-9-]{2,80}$` —— 于是「我们的小家」这类中文名空间 100% 创建失败（400）。
+ * 真库佐证：34 个空间全是自动创建的 `personal-*`，没有一个用户自建空间。
+ *
+ * 现在服务端统一生成：中文名派生为空 → 回退随机 `sp-xxxxxxxx`。
+ * 刻意不支持中文 slug：`/space/[slug]` 要进 URL 与分享链接，ASCII 更稳
+ * （编码、大小写、复制粘贴都少一类问题）。
+ */
+export function slugifySpaceName(name: string): string {
+  return (name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+}
+
+function randomSpaceSlug(): string {
+  return `sp-${randomBytes(4).toString('hex')}`
+}
+
 const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
 /** 生成人类友好的邀请码（8 位，形如 7XK2-M9PQ） */
@@ -35,38 +59,62 @@ export interface CreateSpaceInput {
 
 const SPACE_TYPES = ['COUPLE', 'FAMILY', 'FRIENDS', 'SOLO', 'OTHER'] as const
 
+export function isSpaceType(value: unknown): value is (typeof SPACE_TYPES)[number] {
+  return typeof value === 'string' && (SPACE_TYPES as readonly string[]).includes(value)
+}
+
+export interface UpdateSpaceInput {
+  name?: string
+  description?: string | null
+  spaceType?: string
+  coverMediaId?: number | null
+}
+
 export class SpaceService {
   constructor(private readonly repo: PrismaSpaceRepository) {}
 
-  async createSpace(username: string, input: CreateSpaceInput): Promise<{ id: number }> {
+  async createSpace(username: string, input: CreateSpaceInput): Promise<{ id: number; slug: string }> {
     const name = (input.name || '').trim()
-    const slug = (input.slug || '').trim().toLowerCase()
     if (name.length < 2 || name.length > 200) {
       throw new Error('空间名称需为 2-200 个字符')
     }
-    if (!SLUG_RE.test(slug)) {
-      throw new Error('空间标识需为 2-80 位小写字母、数字或连字符')
-    }
-    if (await this.repo.slugExists(slug)) {
-      throw new Error('空间标识已存在')
-    }
 
-    const id = await this.repo.create({
-      name,
-      slug,
-      description: input.description,
-      ownerUsername: username,
-      spaceType: SPACE_TYPES.includes((input.spaceType || '') as never) ? input.spaceType : 'OTHER',
-    })
-    await writeAuditLog({
-      username,
-      action: 'CREATE',
-      resourceType: 'Space',
-      resourceId: String(id),
-      spaceId: id,
-      metadata: { name, slug, spaceType: input.spaceType || 'OTHER' },
-    }).catch(() => {})
-    return { id }
+    /**
+     * slug 一律由服务端决定（P0 修复，见 slugifySpaceName 注释）。
+     * 传入的 slug 仅在合法时作为首选，非法/缺失时自动派生，**不再抛错** ——
+     * 前端已不再让用户填写这个字段，报错只会变成对用户莫名的「空间标识不合法」。
+     */
+    const explicit = (input.slug || '').trim().toLowerCase()
+    const base = explicit && SLUG_RE.test(explicit) ? explicit : slugifySpaceName(name) || randomSpaceSlug()
+
+    const spaceType = isSpaceType(input.spaceType) ? input.spaceType : 'OTHER'
+
+    // slug 全局唯一：冲突时追加随机后缀重试（与 ensurePersonalSpace 同一套做法）
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const slug = attempt === 0 ? base : `${base.slice(0, 68)}-${randomBytes(2).toString('hex')}`
+      if (await this.repo.slugExists(slug)) continue
+      try {
+        const id = await this.repo.create({
+          name,
+          slug,
+          description: input.description,
+          ownerUsername: username,
+          spaceType,
+        })
+        await writeAuditLog({
+          username,
+          action: 'CREATE',
+          resourceType: 'Space',
+          resourceId: String(id),
+          spaceId: id,
+          metadata: { name, slug, spaceType },
+        }).catch(() => {})
+        return { id, slug }
+      } catch {
+        // 并发下 slug 被占用：换一个再试
+      }
+    }
+    throw new Error('空间标识生成失败，请重试')
   }
 
   async listMySpaces(username: string) {
@@ -74,8 +122,80 @@ export class SpaceService {
   }
 
   async getSpace(username: string, spaceId: number) {
-    await requireSpaceMember(username, spaceId)
-    return this.repo.findById(spaceId)
+    const access = await requireSpaceMember(username, spaceId)
+    return this.repo.findById(spaceId, access.role)
+  }
+
+  /** 按 slug 取空间详情（仅空间成员；非成员抛 SpaceAccessError → 路由返回 403） */
+  async getSpaceBySlug(username: string, slug: string) {
+    const found = await this.repo.findBySlug(slug)
+    if (!found) return null
+    return this.getSpace(username, found.id)
+  }
+
+  /** 更新空间自身（改名 / 改简介 / 改类型 / 换封面）：仅 OWNER */
+  async updateSpace(actor: string, spaceId: number, input: UpdateSpaceInput): Promise<void> {
+    await requireSpaceOwner(actor, spaceId)
+
+    const patch: UpdateSpaceInput = {}
+    if (input.name !== undefined) {
+      const name = String(input.name).trim()
+      if (name.length < 2 || name.length > 200) throw new Error('空间名称需为 2-200 个字符')
+      patch.name = name
+    }
+    if (input.description !== undefined) {
+      const desc = input.description === null ? null : String(input.description).trim()
+      if (desc && desc.length > 500) throw new Error('简介最多 500 个字符')
+      patch.description = desc || null
+    }
+    if (input.spaceType !== undefined) {
+      if (!isSpaceType(input.spaceType)) throw new Error('空间类型不合法')
+      patch.spaceType = input.spaceType
+    }
+    if (input.coverMediaId !== undefined) {
+      patch.coverMediaId = input.coverMediaId === null ? null : Number(input.coverMediaId) || null
+    }
+    if (Object.keys(patch).length === 0) throw new Error('没有需要更新的内容')
+
+    await this.repo.update(spaceId, patch)
+    await writeAuditLog({
+      username: actor,
+      action: 'UPDATE',
+      resourceType: 'Space',
+      resourceId: String(spaceId),
+      spaceId,
+      metadata: patch as Record<string, unknown>,
+    }).catch(() => {})
+  }
+
+  /**
+   * 调整成员角色（仅 OWNER）。
+   * 硬约束：不允许把**最后一个 OWNER** 降级，否则空间会变成没人能管的孤儿。
+   */
+  async updateMemberRole(actor: string, spaceId: number, memberUsername: string, role: SpaceRole) {
+    await requireSpaceOwner(actor, spaceId)
+    const name = (memberUsername || '').trim()
+    if (!name) throw new Error('请输入成员用户名')
+    if (!['OWNER', 'MEMBER', 'VIEWER'].includes(role)) throw new Error('角色不合法')
+
+    const members = await this.repo.listMembers(spaceId)
+    const target = members.find((m) => m.username === name && m.status === 'ACTIVE')
+    if (!target) throw new Error('该成员不在空间中')
+
+    if (target.role === 'OWNER' && role !== 'OWNER') {
+      const owners = await this.repo.countActiveOwners(spaceId)
+      if (owners <= 1) throw new Error('至少需要保留一位空间主人，请先转让主人身份')
+    }
+
+    await this.repo.addMember(spaceId, name, role)
+    await writeAuditLog({
+      username: actor,
+      action: 'UPDATE_PERMISSIONS',
+      resourceType: 'SpaceMember',
+      resourceId: String(spaceId),
+      spaceId,
+      metadata: { member: name, from: target.role, to: role },
+    }).catch(() => {})
   }
 
   async addMember(actor: string, spaceId: number, memberUsername: string, role: SpaceRole) {
@@ -239,6 +359,12 @@ export class SpaceService {
       resourceId: String(spaceId),
       spaceId,
     }).catch(() => {})
+  }
+
+  /** 空间动态（成员可看）：复用 AuditLog，零改库 */
+  async getActivity(actor: string, spaceId: number, limit = 30) {
+    await requireSpaceMember(actor, spaceId)
+    return this.repo.listActivity(spaceId, limit)
   }
 
   /**

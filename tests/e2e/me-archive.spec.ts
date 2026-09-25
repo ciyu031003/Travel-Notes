@@ -52,6 +52,28 @@ async function readStats(page: Page): Promise<{ travels: number; places: number;
   })
 }
 
+/**
+ * 读「三统计」的**稳定值**（等动画停下来再取值）。
+ *
+ * 为什么必须有这个函数：统计数字走 `CountUp` 动画，从 0 递增到真实值。
+ * 直接 `readStats` 有概率取到动画起点 0，于是 `before.travels + 1` 这个断言会
+ * 在「账号已有旅行」时变成 `0 + 1` 而误报失败 —— 实测在整套跑时稳定偶发
+ * （单跑该用例必过、整套跑首次必挂、重试必过）。这里连续两次读数一致才返回，
+ * 断言语义不变，只是不再把动画中间帧当成真实值。
+ */
+async function readStatsSettled(page: Page): Promise<{ travels: number; places: number; photos: number }> {
+  let last = await readStats(page)
+  for (let i = 0; i < 25; i++) {
+    await page.waitForTimeout(200)
+    const next = await readStats(page)
+    if (next.travels === last.travels && next.places === last.places && next.photos === last.photos) {
+      return next
+    }
+    last = next
+  }
+  return last
+}
+
 /** 建一本「南京 3 天」旅行并回到「我的」 */
 async function createTravelThenBackToMe(page: Page, title: string) {
   await page.goto('/travel/new')
@@ -99,18 +121,18 @@ test('新建旅行后，「我的」页统计立刻反映（口径修复的核�
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: '我的' }).first()).toBeVisible({ timeout: 25_000 })
-  const before = await readStats(page)
+  const before = await readStatsSettled(page)
 
   await createTravelThenBackToMe(page, `E2E 档案统计 ${Date.now()}`)
 
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: '我的' }).first()).toBeVisible({ timeout: 25_000 })
-  // 等接口回来（CountUp 有动画，取最终值）
+  // 等接口回来（CountUp 有动画，取稳定值）
   await expect
-    .poll(async () => (await readStats(page)).travels, { timeout: 20_000 })
+    .poll(async () => (await readStatsSettled(page)).travels, { timeout: 20_000 })
     .toBe(before.travels + 1)
 
-  const after = await readStats(page)
+  const after = await readStatsSettled(page)
   // 目的地填了「南京」→ 地方数不应减少；新建旅行没有照片，照片数保持不变
   expect(after.places).toBeGreaterThanOrEqual(before.places)
   expect(after.photos).toBeGreaterThanOrEqual(before.photos)

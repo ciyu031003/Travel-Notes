@@ -172,6 +172,158 @@
     --danger-soft: #E06C6C;
   }
 
+  /* ══════════════════════════════════════════════════════════════════════
+     空间类型主题（P1 · 受控多主题，只作用于空间模块）
+
+     为什么需要：产品要求「情侣 / 家庭 / 朋友 / 独旅 / 其他」各有自己的清新淡雅
+     配色，而《移动端设计规范》§2.6 原本禁止「用彩色表达分类」、§2.2 规定唯一强调色。
+     这里按规范新增的 §2.8 落地：**只放行 7 个低彩度令牌**，中性层（--social-*）、
+     品牌赤陶（--social-accent #A85F3A）、间距 / 圆角 / 字号阶梯**全部保持共享**，
+     并用 [data-space] 作用域把影响面锁在组件树的一层里（见 SpaceThemeScope.tsx）。
+
+     色值来源：Radix Colors（MIT · @radix-ui/colors@3.0.0）12 级语义
+     —— 3/4 组件底、6 分隔线、9 实心、11 文本、12 强文本。
+     对比度逐项自算（WCAG 2.1 相对亮度）：
+       亮色 CTA = step 11 + #FFFFFF → 5.26–6.07 ✅
+       暗色 CTA = step 11 + #080808 → 9.53–11.10 ✅
+     ⚠️ step 9 **不能**当亮色 CTA（mint 9 对白字仅 1.43、sky 9 仅 1.48），只作装饰/大色块。
+     ⚠️ step 6 发丝线仅 1.4–1.6:1，不满足 WCAG 1.4.11 的 3:1 →
+        控件边界（输入框/按钮/tab）一律用共享 --social-line，空间色发丝线只作纯装饰；
+        聚焦环不随空间变色。
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /* 兜底：未套 [data-space] 时用「其他 · 沙色」，组件永不缺变量 */
+  :root {
+    --space-accent: #8D8D86;
+    --space-accent-strong: #63635E;
+    --space-accent-soft: #F1F0EF;
+    --space-accent-text: #21201C;
+    --space-on-accent: #FFFFFF;
+    --space-hairline: #DAD9D6;
+    --space-hero-a: #F9F9F8;
+    --space-hero-b: #E9E8E6;
+  }
+  html.dark {
+    --space-accent: #6F6D66;
+    --space-accent-strong: #B5B3AD;
+    --space-accent-soft: #2A2A28;
+    --space-accent-text: #EEEEEC;
+    --space-on-accent: #080808;
+    --space-hairline: #3B3A37;
+    --space-hero-a: #31312E;
+    --space-hero-b: #222221;
+  }
+
+  /* ── COUPLE 情侣空间 · 薄荷（中文语境：长青 / 和睦，且避开正红与纯白两处文化雷区） ── */
+  [data-space='COUPLE'] {
+    --space-accent: #86EAD4;        /* mint 9  —— 仅装饰 / 大色块 */
+    --space-accent-strong: #027864; /* mint 11 —— CTA 填充 / 激活态 / 关键数字 */
+    --space-accent-soft: #DDF9F2;   /* mint 3  —— 淡染底 */
+    --space-accent-text: #16433C;   /* mint 12 —— 淡染底与渐变上的文字 */
+    --space-on-accent: #FFFFFF;
+    --space-hairline: #9CE0D0;      /* mint 6  —— 纯装饰 */
+    --space-hero-a: #F2FBF9;        /* mint 2 */
+    --space-hero-b: #C8F4E9;        /* mint 4 */
+  }
+  html.dark [data-space='COUPLE'] {
+    --space-accent: #86EAD4;
+    --space-accent-strong: #58D5BA;
+    --space-accent-soft: #003A38;
+    --space-accent-text: #C4F5E1;
+    --space-on-accent: #080808;     /* 暗色下 step 11 是浅色实心 → 标签必须转深字 */
+    --space-hairline: #105650;
+    --space-hero-a: #004744;
+    --space-hero-b: #092C2B;
+  }
+
+  /* ── FAMILY 家庭空间 · 鸢尾（紫气东来；比 plum 更沉稳，贴合家庭相册「可信/归档」） ── */
+  [data-space='FAMILY'] {
+    --space-accent: #5B5BD6;
+    --space-accent-strong: #5753C6;
+    --space-accent-soft: #F0F1FE;
+    --space-accent-text: #272962;
+    --space-on-accent: #FFFFFF;
+    --space-hairline: #CBCDFF;
+    --space-hero-a: #F8F8FF;
+    --space-hero-b: #E6E7FF;
+  }
+  html.dark [data-space='FAMILY'] {
+    --space-accent: #5B5BD6;
+    --space-accent-strong: #B1A9FF;
+    --space-accent-soft: #262A65;
+    --space-accent-text: #E0DFFE;
+    --space-on-accent: #080808;
+    --space-hairline: #3D3E82;
+    --space-hero-a: #303374;
+    --space-hero-b: #202248;
+  }
+
+  /* ── FRIENDS 朋友空间 · 天青（信任 / 开阔 / 旅途天空；社交场景最安全的色相） ── */
+  [data-space='FRIENDS'] {
+    --space-accent: #7CE2FE;
+    --space-accent-strong: #00749E;
+    --space-accent-soft: #E1F6FD;
+    --space-accent-text: #1D3E56;
+    --space-on-accent: #FFFFFF;
+    --space-hairline: #A9DAED;
+    --space-hero-a: #F1FAFD;
+    --space-hero-b: #D1F0FA;
+  }
+  html.dark [data-space='FRIENDS'] {
+    --space-accent: #7CE2FE;
+    --space-accent-strong: #75C7F0;
+    --space-accent-soft: #113555;
+    --space-accent-text: #C2F3FF;
+    --space-on-accent: #080808;
+    --space-hairline: #1B537B;
+    --space-hero-a: #154467;
+    --space-hero-b: #112840;
+  }
+
+  /* ── SOLO 独旅空间 · 梅（向内 / 黄昏 / 自我对话；五个色相里最「低语」的一支） ── */
+  [data-space='SOLO'] {
+    --space-accent: #AB4ABA;
+    --space-accent-strong: #953EA3;
+    --space-accent-soft: #FBEBFB;
+    --space-accent-text: #53195D;
+    --space-on-accent: #FFFFFF;
+    --space-hairline: #E9C2EC;
+    --space-hero-a: #FDF7FD;
+    --space-hero-b: #F7DEF8;
+  }
+  html.dark [data-space='SOLO'] {
+    --space-accent: #AB4ABA;
+    --space-accent-strong: #E796F3;
+    --space-accent-soft: #451D47;
+    --space-accent-text: #F4D4F4;
+    --space-on-accent: #080808;
+    --space-hairline: #5E3061;
+    --space-hero-a: #512454;
+    --space-hero-b: #351A35;
+  }
+
+  /* ── OTHER 其他 · 沙（fallback 的正确姿态：安静、不主张，彩度≈0，绝不与其他主题争抢） ── */
+  [data-space='OTHER'] {
+    --space-accent: #8D8D86;
+    --space-accent-strong: #63635E;
+    --space-accent-soft: #F1F0EF;
+    --space-accent-text: #21201C;
+    --space-on-accent: #FFFFFF;
+    --space-hairline: #DAD9D6;
+    --space-hero-a: #F9F9F8;
+    --space-hero-b: #E9E8E6;
+  }
+  html.dark [data-space='OTHER'] {
+    --space-accent: #6F6D66;
+    --space-accent-strong: #B5B3AD;
+    --space-accent-soft: #2A2A28;
+    --space-accent-text: #EEEEEC;
+    --space-on-accent: #080808;
+    --space-hairline: #3B3A37;
+    --space-hero-a: #31312E;
+    --space-hero-b: #222221;
+  }
+
   body {
     @apply bg-travel-cream text-travel-ink transition-colors duration-200;
     color-scheme: light;
@@ -192,6 +344,23 @@
 
   .card {
     @apply bg-white/75 dark:bg-[#161B22]/75 backdrop-blur-sm rounded-2xl shadow-soft border border-travel-line/70 dark:border-[#2C343E] transition-all duration-200 hover:shadow-card;
+  }
+
+  /* ── 空间主题的渐变（P1） ────────────────────────────────────────────────
+     必须写在这里、而不是组件里：组件内直接写 linear-gradient 是设计规范明令
+     禁止项（`scripts/check-design-tokens.mjs` 第 7 条 rawGradient，受控渐变只能
+     通过 token 使用）。这两个类就是空间主题的"受控渐变 token"。
+     颜色取自 [data-space] 作用域，所以同一个类在五个空间里是五种渐变。 */
+  .space-hero {
+    background-image: linear-gradient(150deg, var(--space-hero-a) 0%, var(--space-hero-b) 100%);
+  }
+  /* 头图上的文字遮罩：亮色底上压一层向下的空间色渐隐，保证标题可读 */
+  .space-hero-scrim {
+    background-image: linear-gradient(to top, var(--space-hero-b) 0%, transparent 72%);
+  }
+  /* 细描边强调（用于激活态卡片的外圈，替代纯彩色填充） */
+  .space-ring {
+    box-shadow: 0 0 0 1.5px var(--space-accent);
   }
 }
 

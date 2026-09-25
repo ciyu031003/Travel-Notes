@@ -3,6 +3,7 @@
  */
 import { prisma } from '../../db'
 import { scopedWhere } from '../../visibility'
+import { myActiveSpaceIds, spaceScopedWhere } from '../access/space-scope'
 import { randomUUID } from 'crypto'
 import { getStorageService } from '../../infrastructure/storage'
 import { absoluteMediaUrl } from '../../media-url'
@@ -95,9 +96,51 @@ function mapAlbum(a: any): AlbumItem {
   }
 }
 
-export async function listAlbums(userId?: number | null): Promise<AlbumItem[]> {
+/**
+ * 某空间下的相册（空间详情页用）。
+ * 需调用方自行保证空间成员身份（路由层用 `requireSpaceRole`），
+ * 这里只做「空间内的相册」这一个维度的过滤。
+ */
+export async function listAlbumsForSpace(spaceId: number, limit = 60): Promise<AlbumItem[]> {
   const rows = await prisma.album.findMany({
-    where: scopedWhere(userId) as any,
+    where: { spaceId },
+    orderBy: { createdAt: 'desc' },
+    take: Math.min(Math.max(limit, 1), 200),
+    include: {
+      coverMedia: { include: { variants: true } },
+      _count: { select: { items: true } },
+      travel: { select: { travelType: true, companions: true } },
+    },
+  })
+  return rows.map(mapAlbum)
+}
+
+/**
+ * 相册可见性 where 片段。
+ *
+ * **P0 修复**：原先 `listAlbums` / `getAlbum` 直接用 `scopedWhere(userId)`，
+ * 只认「我名下的 ∪ 公开的」，**不含 `spaceId ∈ 我的活跃空间`** —— 而写入侧
+ * `canManageAlbum` 又明确允许空间 OWNER/MEMBER 管理。于是出现
+ * 「同空间成员的相册在列表里看不到、直接开链接又能看、还能改」的读写口径不一致。
+ * 这和第三轮已经修掉的 `listTravels` 是同一个 bug，相册漏修了。
+ *
+ * 现在与 `travel.service.listTravels` 共用 `lib/modules/access/space-scope`。
+ */
+async function albumVisibilityWhere(
+  userId?: number | null,
+  username?: string | null,
+): Promise<Record<string, unknown>> {
+  const spaceIds = await myActiveSpaceIds(userId, username)
+  // 空间内的相册仍需尊重自身可见性：PRIVATE 的相册即使同空间也不对成员开放。
+  return spaceScopedWhere(userId, 'userId', spaceIds, ['SPACE', 'PUBLIC'])
+}
+
+export async function listAlbums(
+  userId?: number | null,
+  username?: string | null,
+): Promise<AlbumItem[]> {
+  const rows = await prisma.album.findMany({
+    where: (await albumVisibilityWhere(userId, username)) as any,
     orderBy: { createdAt: 'desc' },
     include: {
       coverMedia: { include: { variants: true } },
@@ -109,9 +152,13 @@ export async function listAlbums(userId?: number | null): Promise<AlbumItem[]> {
   return rows.map(mapAlbum)
 }
 
-export async function getAlbum(albumId: number, userId?: number | null): Promise<AlbumItem & { media: AlbumMediaItem[] } | null> {
+export async function getAlbum(
+  albumId: number,
+  userId?: number | null,
+  username?: string | null,
+): Promise<(AlbumItem & { media: AlbumMediaItem[] }) | null> {
   const album = await prisma.album.findFirst({
-    where: { ...scopedWhere(userId), id: albumId } as any,
+    where: { ...(await albumVisibilityWhere(userId, username)), id: albumId } as any,
     include: {
       coverMedia: { include: { variants: true } },
       _count: { select: { items: true } },

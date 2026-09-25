@@ -63,6 +63,24 @@ const ICON_SYSTEM_ALLOWLIST = [
   'components/mobile/',
 ]
 
+/**
+ * 空间主题令牌（`--space-*`）的合法使用范围（第 11 条规则）。
+ *
+ * 背景：产品要求「情侣 / 家庭 / 朋友 / 独旅 / 其他」各有配色，这与规范原本的
+ * 「单一强调色 + 禁止用彩色表达分类」冲突。方案的做法是**受控多主题**：
+ * 只放行 7 个低彩度令牌（见 app/globals.css 的 [data-space] 块），并且
+ * **只允许在空间模块内使用** —— 一旦泄漏到别的模块，全站就会出现第二套强调色。
+ * 这条规则把这个口头约定变成机制约束。
+ */
+const SPACE_THEME_ALLOWLIST = [
+  'components/space/',
+  'app/space/',
+  'app/dev/ui/space/',
+  'lib/mobile/space-system.ts',
+  // 设计系统层：Pill 系列在此统一提供 SpaceTypePill（唯一入口）
+  'components/mobile/Pills.tsx',
+]
+
 /** 允许的字号（对应 .m-display / title-1 / title-2 / body / caption / label / stat / tab-label） */
 const ALLOWED_FONT_SIZES = new Set([
   32, 24, 18, 15, 13, 11,
@@ -209,6 +227,11 @@ function isIconSystem(rel) {
   return ICON_SYSTEM_ALLOWLIST.some((a) => rel.startsWith(a))
 }
 
+/** 空间主题令牌的合法文件范围（第 11 条） */
+function isSpaceThemeAllowed(rel) {
+  return SPACE_THEME_ALLOWLIST.some((a) => rel.startsWith(a))
+}
+
 const findings = {
   hexColor: [],
   rgbaColor: [],
@@ -222,6 +245,8 @@ const findings = {
   undefinedToken: [],
   scatteredColor: [],
   importantOverride: [],
+  // P1 新增（空间模块受控多主题）
+  spaceTokenLeak: [],
 }
 
 /** 原有 7 条规则（用于与历史基线对比，避免新增规则的欠债混入 KPI） */
@@ -235,7 +260,7 @@ const LEGACY_BUCKETS = [
   'magicRadius',
 ]
 /** M5 新增 4 条规则 */
-const NEW_BUCKETS = ['rawGradient', 'undefinedToken', 'scatteredColor', 'importantOverride']
+const NEW_BUCKETS = ['rawGradient', 'undefinedToken', 'scatteredColor', 'importantOverride', 'spaceTokenLeak']
 const infoFindings = []
 
 const files = SCAN_DIRS.flatMap((d) => walk(join(ROOT, d)))
@@ -323,6 +348,13 @@ for (const file of files) {
       const close = rest.indexOf(')')
       if (close >= 0 && rest.slice(0, close).includes(',')) continue
       if (!DEFINED_TOKENS.has(name)) push('undefinedToken', name)
+
+      /* ── P1 新增规则（第 11 条）：空间主题令牌不得泄漏到空间模块之外 ──
+         受控多主题的前提是「影响面锁死」。一旦别的模块引用 --space-*，
+         全站就会出现第二套强调色，与「单一强调色」纪律冲突。 */
+      if (name.startsWith('--space-') && !isSpaceThemeAllowed(rel)) {
+        push('spaceTokenLeak', name)
+      }
     }
 
     const scattered = line.match(SCATTERED_COLOR_RE)
@@ -350,6 +382,8 @@ const LABELS = {
   undefinedToken: '引用未定义的 CSS 变量（样式会静默失效）',
   scatteredColor: '散落的 iOS 冷色 / 历史危险红字面量（应统一走 --m-*）',
   importantOverride: 'Tailwind !important 覆盖（「缺组件」的症状）',
+  // P1 新增
+  spaceTokenLeak: '空间主题令牌泄漏到空间模块之外（受控多主题只允许在 components/space 等范围内使用）',
 }
 
 const summary = Object.fromEntries(
@@ -429,7 +463,7 @@ console.log('硬编码色分类（决定收敛优先级）:')
 }
 console.log('-'.repeat(56))
 console.log(`\n原有 7 条规则合计: ${legacyTotal} 处   ← 与历史基线（308）对比用这个`)
-console.log(`M5 新增 4 条规则:  ${newTotal} 处   ← 新增规则首次暴露的既有欠债`)
+console.log(`M5/P1 新增规则:    ${newTotal} 处   ← 新增规则首次暴露的既有欠债`)
 console.log(`待处理合计:        ${total} 处\n`)
 
 if (STRICT && total > 0) {

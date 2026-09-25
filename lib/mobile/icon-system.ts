@@ -62,6 +62,26 @@ import {
   CloudRain,
   Cloudy,
   CloudSnow,
+  // 空间模块（P1）用到的通用界面图标。
+  // 由本文件统一转出，组件从 '@/lib/mobile/icon-system' 取，避免各自
+  // `import ... from 'lucide-react'`（规范：图标唯一入口，checker 第 4 条会拦）。
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+  Check,
+  Plus,
+  Clock,
+  Copy,
+  Gift,
+  Ban,
+  Link2,
+  KeyRound,
+  UserPlus,
+  UserMinus,
+  Settings2,
+  ShieldCheck,
+  ShieldAlert,
+  LogOut,
   // 类型
   type LucideIcon,
 } from 'lucide-react'
@@ -336,4 +356,42 @@ export const NAV_ICON: Record<string, LucideIcon> = {
   stats: ChartColumn, // 替代已废弃的 BarChart3
   sparkle: Sparkles,
   bell: Bell,
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9. 通用界面图标转出（供空间模块等新组件使用）
+
+   规范原文：「全部定义在 lib/mobile/icon-system.ts，**不要在页面里另选图标**」。
+   组件若各自 `import { MapPin } from 'lucide-react'`，既绕过了唯一入口，
+   也会被 `scripts/check-design-tokens.mjs` 第 4 条记为违规。这里统一转出，
+   空间模块一律从 '@/lib/mobile/icon-system' 取图标。
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export {
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+  Check,
+  Plus,
+  Clock,
+  Copy,
+  Gift,
+  Ban,
+  Link2,
+  KeyRound,
+  UserPlus,
+  UserMinus,
+  Settings2,
+  ShieldCheck,
+  ShieldAlert,
+  LogOut,
+  Heart,
+  Users,
+  UsersRound,
+  MapPin,
+  Images,
+  Camera,
+  Sparkles,
+  CalendarDays,
+  MountainSnow,
 }

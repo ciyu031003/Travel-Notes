@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (isNaN(albumId)) {
     return NextResponse.json({ error: '无效 ID' }, { status: 400 })
   }
-  const album = await getAlbum(albumId, auth.payload?.userId)
+  const album = await getAlbum(albumId, auth.payload?.userId, auth.username)
   if (!album) {
     return NextResponse.json({ error: '相册不存在' }, { status: 404 })
   }
@@ -67,8 +67,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: '无效 ID' }, { status: 400 })
   }
   try {
-    // 仅允许删除自己名下的相册
-    const owned = await getAlbum(albumId, auth.payload?.userId)
+    // 仅允许操作「我可见且我是成员」的相册（空间 OWNER/MEMBER 也算；见 albumVisibilityWhere）
+    const owned = await getAlbum(albumId, auth.payload?.userId, auth.username)
     if (!owned) {
       return NextResponse.json({ error: '相册不存在或无权操作' }, { status: 404 })
     }

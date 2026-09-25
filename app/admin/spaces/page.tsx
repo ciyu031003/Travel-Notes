@@ -1,19 +1,25 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
 import {
   Plus, Users, Loader2, AlertCircle, Copy, Check, Link2, X,
   Heart, Images, MapPin, Sparkles, Camera, Trash2, UserPlus, Gift, Shield,
   Clock, Ban, ChevronRight, Eye,
 } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
+import {
+  SPACE_TYPES,
+  spaceTypeIconOf,
+  spaceTypeLabelOf,
+} from '@/lib/mobile/space-system'
 
 interface Space {
   id: number
   name: string
   slug: string
   description: string | null
+  /** 空间类型（情侣/家庭/朋友/独旅/其他）—— 同时决定移动端空间页的配色主题 */
+  spaceType: string
   memberCount: number
   myRole: string
   albumCount?: number
@@ -78,6 +84,9 @@ export default function AdminSpacesPage() {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
+  // 空间类型：此前创建表单不收这个字段，服务端归一为 OTHER ——
+  // 于是后台建的家庭/朋友空间在移动端全都显示成「其他空间」且配色无从区分。
+  const [spaceType, setSpaceType] = useState('COUPLE')
 
   // 加入空间
   const [showJoin, setShowJoin] = useState(false)
@@ -169,7 +178,7 @@ export default function AdminSpacesPage() {
       const res = await fetch('/api/spaces', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug, description }),
+        body: JSON.stringify({ name, slug, description, spaceType }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -355,6 +364,7 @@ export default function AdminSpacesPage() {
                 const gradient = SPACE_GRADIENTS[idx % SPACE_GRADIENTS.length]
                 const isOwner = space.myRole === 'OWNER'
                 const spaceMembers = members[space.id] || []
+                const TypeIcon = spaceTypeIconOf(space.spaceType)
                 return (
                   <div
                     key={space.id}
@@ -377,8 +387,13 @@ export default function AdminSpacesPage() {
                     </div>
 
                     <div className="p-5">
+                      {/* 类型徽标：与移动端空间页显示的同一套标签，避免两处口径不一致 */}
+                      <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                        <TypeIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                        {spaceTypeLabelOf(space.spaceType)}
+                      </span>
                       <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 min-h-[2.5rem]">
-                        {space.description || '还没有简介，写一句话介绍你的旅行空间吧'}
+                        {space.description || '还没有简介，写一句话介绍这个空间吧'}
                       </p>
 
                       {/* 共享内容统计 */}
@@ -482,16 +497,39 @@ export default function AdminSpacesPage() {
           <form onSubmit={handleCreate} className="space-y-4">
             {error && <ErrorBox message={error} />}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间名称</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="例如：我的旅行空间" required />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间类型</label>
+              <select
+                value={spaceType}
+                onChange={(e) => setSpaceType(e.target.value)}
+                className={inputCls}
+              >
+                {SPACE_TYPES.map((t) => (
+                  <option key={t} value={t}>{spaceTypeLabelOf(t)}</option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-xs text-gray-400">
+                类型决定移动端空间页的配色（五种清新淡雅主题），创建后也可在空间设置里改。
+              </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间标识</label>
-              <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} className={inputCls} placeholder="例如：our-love (小写字母/数字/连字符)" required />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间名称</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="例如：我们的小家" required />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间标识（可选）</label>
+              <input
+                value={slug}
+                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                className={inputCls}
+                placeholder="留空自动生成（小写字母/数字/连字符）"
+              />
+              <p className="mt-1.5 text-xs text-gray-400">
+                用于空间页地址 /space/&lt;标识&gt;。留空时服务端按名称派生，中文名会自动生成随机标识。
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">简介（可选）</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={inputCls} placeholder="一句话介绍你们的空间" />
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={inputCls} placeholder="一句话介绍这个空间" />
             </div>
             <button
               type="submit"

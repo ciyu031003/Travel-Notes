@@ -4,7 +4,7 @@ import { listAlbums } from '@/lib/modules/album/album.service'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
 import { verifyAlbumToken, ALBUM_COOKIE } from '@/lib/album-auth'
-import { getCurrentUserId } from '@/lib/current-user'
+import { getCurrentUser } from '@/lib/current-user'
 import { applyCacheControl } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
@@ -41,7 +41,8 @@ export async function GET(request: Request) {
 
   try {
     const postService = getPostService()
-    const userId = await getCurrentUserId()
+    const currentUser = await getCurrentUser()
+    const userId = currentUser?.id ?? null
     const posts = await postService.getPostsHybrid('travel', userId)
 
     const cityMap = new Map<string, CityAlbumPayload>()
@@ -127,7 +128,7 @@ export async function GET(request: Request) {
       }))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-    const albums = await listAlbums(userId)
+    const albums = await listAlbums(userId, currentUser?.username)
 
     const res = NextResponse.json({
       cities,
