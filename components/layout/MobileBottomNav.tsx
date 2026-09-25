@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Route, Compass, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { apiUrl } from '@/lib/api-base'
 import { hapticLight } from '@/lib/mobile/haptics'
+import { openNewTravel } from '@/lib/mobile/new-travel'
 import { Icon } from '@/components/mobile/Icon'
 
 /**
@@ -34,21 +34,9 @@ export default function MobileBottomNav() {
     return pathname.startsWith(href)
   }
 
-  // 游客可浏览公开内容，但记录旅行需先登录（M0 产品规则）
-  const handleRecord = async () => {
-    void hapticLight()
-    try {
-      const res = await fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
-      const data = await res.json().catch(() => null)
-      if (data && data.authenticated) {
-        router.push('/travel/new')
-      } else {
-        router.push('/login?redirect=' + encodeURIComponent('/travel/new'))
-      }
-    } catch {
-      router.push('/login?redirect=' + encodeURIComponent('/travel/new'))
-    }
-  }
+  // 游客可浏览公开内容，但记录旅行需先登录（M0 产品规则）。
+  // 与列表页头部的「＋ 新建旅行」共用同一份逻辑，避免两个入口行为漂移。
+  const handleRecord = () => openNewTravel(router)
 
   return (
     <nav
@@ -61,15 +49,23 @@ export default function MobileBottomNav() {
           <TabItem key={item.href} item={item} active={isActive(item.href)} />
         ))}
 
-        <div className="relative h-[52px]" aria-hidden="true">
+        {/*
+          中央＋：**必须带可见文字**。
+          真机反馈「找不到新建旅行在哪个地方」——此前这里只有一个孤零零的加号，
+          用户无法从图标推断它就是"新建旅行"。现在与其它 tab 同构：
+          强调色圆钮 + 一行「新建旅行」标签。
+          （顺带修掉外层 aria-hidden：里面是可点按钮，隐藏它会让读屏用户完全点不到。）
+        */}
+        <div className="relative flex h-[52px] flex-col items-center justify-center gap-0.5">
           <button
             type="button"
             onClick={handleRecord}
-            aria-label="记录旅行"
-            className="m-fab m-press absolute bottom-1 left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-[var(--m-accent)] text-white"
+            aria-label="新建旅行"
+            className="m-press flex h-10 w-10 items-center justify-center rounded-full bg-[var(--m-accent)] text-[var(--m-on-accent)] shadow-[var(--m-elev-1)]"
           >
-            <Icon icon={Plus} size="lg" />
+            <Icon icon={Plus} size="md" />
           </button>
+          <span className="m-tab-label text-[var(--m-accent-strong)]">新建旅行</span>
         </div>
 
         {TABS.slice(2).map((item) => (

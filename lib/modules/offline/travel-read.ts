@@ -140,6 +140,10 @@ export interface LocalTravelInfo {
   endDate?: string | null
   travelType?: string | null
   companions?: unknown
+  /** 预算（元）；离线详情页据此显示进度 */
+  budget?: number | null
+  /** 本地存的封面 URL（可能为空 —— 离线新建还没有照片） */
+  cover?: string | null
 }
 
 /**
@@ -150,7 +154,7 @@ export async function readLocalTravelBySlug(slug: string): Promise<LocalTravelIn
   if (!isNativePlatform() || !slug) return null
   try {
     const rows = await queryRows(
-      "SELECT id, remoteId, title, slug, spaceId, description, location, startDate, endDate, travelType, companions, syncStatus FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1",
+      "SELECT id, remoteId, title, slug, spaceId, description, location, startDate, endDate, travelType, companions, syncStatus, budget, cover FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1",
       [slug],
     )
     const r = rows[0]
@@ -179,6 +183,8 @@ export async function readLocalTravelBySlug(slug: string): Promise<LocalTravelIn
       endDate: endMs ? new Date(endMs).toISOString() : null,
       travelType: r[9] == null ? null : String(r[9]),
       companions,
+      budget: r[12] == null ? null : Number(r[12]),
+      cover: r[13] == null ? null : String(r[13]),
     }
   } catch {
     return null

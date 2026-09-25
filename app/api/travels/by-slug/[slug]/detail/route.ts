@@ -63,8 +63,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
           tags: travel.tags,
           location: travel.location,
           cover: travel.cover,
+          // 封面规范化 URL（coverMedia 缩略图优先）：相册「设为封面」后即时可见
+          coverUrl: travel.coverUrl,
+          coverMediaId: travel.coverMediaId,
           travelType: travel.travelType,
           companions: travel.companions,
+          // 花销 tab 需要预算；与 expenses 接口的 total 一起算「预算 vs 已花」
+          budget: travel.budget,
           ownerId,
           canEdit,
         }

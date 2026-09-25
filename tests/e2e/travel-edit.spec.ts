@@ -109,10 +109,11 @@ test('改目的地与日期区间 → 保存后详情页按新数据渲染，章
 
   // 保存后整页重载：新目的地要在详情页出现（证明真写进去了）
   await expect(page.getByText('苏州').first()).toBeVisible({ timeout: 25_000 })
-  // 「按天回顾」的章节数应跟着区间长到 5 天（服务端 syncTravelDayDates 补齐缺失的天）
-  await expect(page.getByRole('heading', { name: '按天回顾' })).toBeVisible({ timeout: 25_000 })
-  await expect(page.getByText(/^5 天$/)).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByText(/^DAY 05$/).first()).toBeVisible({ timeout: 15_000 })
+  // 天数跟着区间长到 5 天（服务端 syncTravelDayDates 补齐缺失的天）
+  await expect(page.getByText(/5 天/).first()).toBeVisible({ timeout: 25_000 })
+  // 「行程」页签里应出现第 5 天（DAY 05 · MM.DD 周X）
+  await page.getByRole('tab', { name: '行程' }).click()
+  await expect(page.getByText(/DAY 05/).first()).toBeVisible({ timeout: 20_000 })
 })
 
 test('改标题 → 地址跟着换 slug，详情页仍可访问', async ({ page }) => {

@@ -48,6 +48,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       description: body?.description !== undefined ? String(body.description ?? '') : undefined,
       startDate: body?.startDate !== undefined ? (body.startDate ? String(body.startDate) : null) : undefined,
       endDate: body?.endDate !== undefined ? (body.endDate ? String(body.endDate) : null) : undefined,
+      // 花销 tab 的预算：null 表示清空；缺省表示不改
+      budget: body?.budget !== undefined ? (body.budget === null || body.budget === '' ? null : Number(body.budget)) : undefined,
+      // 相册 tab 的「设为封面」：null 表示恢复默认（第一张）
+      coverMediaId:
+        body?.coverMediaId !== undefined
+          ? body.coverMediaId === null || body.coverMediaId === ''
+            ? null
+            : Number(body.coverMediaId)
+          : undefined,
     })
 
     return NextResponse.json({ success: true, slug: result.slug, daysChanged: result.daysChanged })

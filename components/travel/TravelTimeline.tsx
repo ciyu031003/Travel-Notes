@@ -18,7 +18,7 @@ import MemoryComposer from './MemoryComposer'
  * 建旅行时没填日期、或路上想多记一天（出发前一夜 / 多待的一天）都无从下手，
  * 0 天时整块时间线还会直接消失。日期可选：留空即"还没定哪天"。
  */
-function AddDaySheet({
+export function AddDaySheet({
   travelId,
   onClose,
   onDone,

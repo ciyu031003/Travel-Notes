@@ -22,7 +22,7 @@ export const CREATE_TABLES_SQL: string[] = [
   "CREATE TABLE IF NOT EXISTS travel (" +
     "id TEXT PRIMARY KEY, remoteId INTEGER, title TEXT, slug TEXT, description TEXT, " +
     "location TEXT, cover TEXT, startDate INTEGER, endDate INTEGER, coverMediaId INTEGER, " +
-    "status TEXT, visibility TEXT, travelType TEXT, companions TEXT, isPublic INTEGER, " +
+    "status TEXT, visibility TEXT, travelType TEXT, companions TEXT, isPublic INTEGER, budget REAL, " +
     "spaceId INTEGER, ownerId INTEGER, " +
     "updatedAt INTEGER NOT NULL, syncStatus TEXT NOT NULL DEFAULT 'SYNCED', deleted INTEGER NOT NULL DEFAULT 0)",
 

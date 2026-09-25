@@ -5,8 +5,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import dynamicImport from 'next/dynamic'
-import { MapPin, Calendar, ArrowRight, Image as ImageIcon, WifiOff } from 'lucide-react'
+import { MapPin, Calendar, ArrowRight, Image as ImageIcon, WifiOff, CloudOff, Plus } from 'lucide-react'
 import { formatDate, cn } from '@/lib/utils'
+import { Button } from '@/components/mobile/Button'
+import { openNewTravel } from '@/lib/mobile/new-travel'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName, type City } from '@/data/cities'
 import { travelDetailHref } from '@/lib/routes'
@@ -30,6 +32,11 @@ interface PostMeta {
   images?: string[]
   tags?: string[]
   location?: string
+  /**
+   * 只在本地 SQLite 里、还没同步上云（合并逻辑见 lib/modules/offline/travel-read.ts）。
+   * 此前这个字段被合并进来却没人渲染，用户看不出"刚建的那本还在队列里"。
+   */
+  localOnly?: boolean
 }
 
 export default function TravelMobileClient({
@@ -91,9 +98,7 @@ export default function TravelMobileClient({
     return set.size
   }, [posts])
 
-  const handleRecord = async () => {
-    router.push('/travel/new')
-  }
+  const handleRecord = () => openNewTravel(router)
 
   const handleProvinceSelect = (provinceId: string) => {
     setSelectedProvinceId(provinceId)
@@ -116,9 +121,14 @@ export default function TravelMobileClient({
           </div>
         )}
 
-        {/* 顶部移动标题（新建旅行统一走底部 Dock 栏「+」入口） */}
-        <header className="m-gutter m-safe-top flex items-end justify-between pb-5">
-          <div>
+        {/*
+          顶部移动标题。
+          ⚠️ 「＋ 新建旅行」按钮是**必须的**：此前新建入口只有底部 Dock 中央那个
+          无文字加号（且列表页原有的右上角按钮在 96ed895 被删除），真机反馈
+          「找不到新建旅行在哪个地方」。这里给出与"旅行记录"标题同屏的可见入口。
+        */}
+        <header className="m-gutter m-safe-top flex items-start justify-between gap-3 pb-5">
+          <div className="min-w-0">
             <p className="m-label text-[var(--m-accent-strong)]">MY JOURNEYS</p>
             <h1 className="m-title-1 mt-2 text-[var(--m-text)]">旅行记录</h1>
             <StatRow
@@ -130,6 +140,14 @@ export default function TravelMobileClient({
               ]}
             />
           </div>
+          <Button
+            icon={Plus}
+            onClick={handleRecord}
+            className="mt-1 shrink-0"
+            aria-label="新建旅行"
+          >
+            新建旅行
+          </Button>
         </header>
 
         {/* 移动地图：独立迷你卡片，不携带侧栏 */}
@@ -203,6 +221,12 @@ export default function TravelMobileClient({
                         </div>
                       )}
                       <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(26,16,9,0.62),rgba(26,16,9,0)_65%)]" />
+                      {post.localOnly && (
+                        <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">
+                          <Icon icon={CloudOff} size="sm" />
+                          待同步
+                        </span>
+                      )}
                       <div className="absolute inset-x-0 bottom-0 p-4">
                         {post.location && (
                           <span className="m-chip !border-white/18 !bg-white/16 !text-white">

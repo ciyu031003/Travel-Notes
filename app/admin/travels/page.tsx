@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Plus, Trash2, Loader2, MapPin, Wallet, CalendarDays, X } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
 import { AdminInput, AdminButton, AdminCard } from '@/components/admin/ui'
+import { EXPENSE_CATEGORIES, EXPENSE_LABELS } from '@/lib/modules/travel/expense-categories'
 
 interface TravelSummary {
   id: number
@@ -64,10 +65,8 @@ const ITINERARY_TYPES = ['SPOT', 'RESTAURANT', 'HOTEL', 'TRANSPORT', 'ACTIVITY',
 const ITINERARY_LABELS: Record<string, string> = {
   SPOT: '景点', RESTAURANT: '餐厅', HOTEL: '住宿', TRANSPORT: '交通', ACTIVITY: '活动', OTHER: '其他',
 }
-const EXPENSE_CATEGORIES = ['TRANSPORT', 'HOTEL', 'FOOD', 'TICKET', 'SHOPPING', 'OTHER']
-const EXPENSE_LABELS: Record<string, string> = {
-  TRANSPORT: '交通', HOTEL: '住宿', FOOD: '餐饮', TICKET: '门票', SHOPPING: '购物', OTHER: '其他',
-}
+// 分类与文案走共享常量（前台花销 tab 用同一份，避免两处漂移）
+// EXPENSE_CATEGORIES / EXPENSE_LABELS 见下方 import
 const TRAVEL_TYPES: { value: string; label: string }[] = [
   { value: 'ALONE', label: '独旅' },
   { value: 'COUPLE', label: '情侣' },

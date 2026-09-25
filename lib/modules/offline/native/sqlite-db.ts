@@ -18,6 +18,8 @@ const COLUMN_UPGRADES_SQL: string[] = [
   // v5（同行者录入）：travel.travelType / travel.companions（多元旅行场景，兼容旧库）
   "ALTER TABLE travel ADD COLUMN travelType TEXT",
   "ALTER TABLE travel ADD COLUMN companions TEXT",
+  // v6（花销预算）：travel.budget（前台花销 tab 的「预算 vs 已花」）
+  "ALTER TABLE travel ADD COLUMN budget REAL",
 ]
 
 let db: SQLiteDBConnection | null = null

@@ -372,8 +372,13 @@ export interface TravelPublicDetail {
   tags: string[] | null
   location: string | null
   cover: string | null
+  /** 由 coverMedia 规范化出来的封面 URL（缩略图优先）；前台「设为封面」后据此即时可见 */
+  coverUrl: string | null
+  coverMediaId: number | null
   travelType: string | null
   companions: unknown
+  /** 旅行预算（元）；未填为空 → 花销 tab 只显示已花合计 */
+  budget: number | null
 }
 
 /**
@@ -427,13 +432,20 @@ export async function getTravelMemoryPhotos(travelId: number, limit = 60): Promi
 }
 
 export async function getTravelBySlug(slug: string, userId?: number | null): Promise<TravelPublicDetail | null> {  if (skipDbOnBuild()) return null
-  const t = await prisma.travel.findFirst({ where: { ...scopedWhere(userId, 'ownerId'), slug } as any })
+  const t = await prisma.travel.findFirst({
+    where: { ...scopedWhere(userId, 'ownerId'), slug } as any,
+    include: { coverMedia: { include: { variants: true } } },
+  })
   if (!t) return null
 
   const contentHtml = await unifiedMarkdownRenderer
     .render(t.content || '')
     .then((r) => r.html)
     .catch(() => '')
+
+  const coverThumb = (t as any).coverMedia?.variants?.find((v: any) => v.variant === 'THUMBNAIL')?.storageKey
+  const coverKey = (t as any).coverMedia?.storageKey
+  const coverUrl = storageKeyToUrl(coverThumb ?? coverKey ?? null) ?? absoluteMediaUrl(t.cover ?? null)
 
   return {
     id: t.id,
@@ -447,9 +459,19 @@ export async function getTravelBySlug(slug: string, userId?: number | null): Pro
     tags: t.tags ? safeParseTags(t.tags) : null,
     location: t.location,
     cover: t.cover,
+    coverUrl: coverUrl ?? null,
+    coverMediaId: (t as any).coverMediaId ?? null,
     travelType: t.travelType ?? 'ALONE',
     companions: t.companions ?? null,
+    budget: isoBudget((t as any).budget),
   }
+}
+
+/** 预算归一：非有限数或负数一律视为"未设置" */
+function isoBudget(v: unknown): number | null {
+  const n = Number(v)
+  if (!Number.isFinite(n) || n < 0) return null
+  return n
 }
 
 export async function createTravel(input: {
@@ -532,7 +554,17 @@ export async function makeUniqueTravelSlug(base: string, excludeId?: number): Pr
  */
 export async function updateTravelInfo(
   id: number,
-  input: { title?: string; location?: string; startDate?: string | null; endDate?: string | null; description?: string | null },
+  input: {
+    title?: string
+    location?: string
+    startDate?: string | null
+    endDate?: string | null
+    description?: string | null
+    /** 预算（元）。传 null 表示清空；缺省表示不改 */
+    budget?: number | null
+    /** 封面媒体 id（前台相册「设为封面」）。必须属于这本旅行，见 assertCoverMediaBelongs */
+    coverMediaId?: number | null
+  },
 ): Promise<{ slug: string; daysChanged: number }> {
   const current = await prisma.travel.findUnique({
     where: { id },
@@ -550,6 +582,26 @@ export async function updateTravelInfo(
   if (input.description !== undefined) data.description = input.description?.trim() || null
   if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate) : null
   if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
+  if (input.budget !== undefined) {
+    if (input.budget === null) {
+      data.budget = null
+    } else {
+      const n = Number(input.budget)
+      // 负预算/NaN 直接拒绝：进度条会算出负百分比，比"没填"更糟
+      if (!Number.isFinite(n) || n < 0) throw new Error('预算需为不小于 0 的数字')
+      if (n > 100_000_000) throw new Error('预算数值过大')
+      data.budget = n
+    }
+  }
+  if (input.coverMediaId !== undefined) {
+    if (input.coverMediaId === null) {
+      data.coverMediaId = null
+    } else {
+      // 封面必须属于这本旅行，否则可以把别人的照片设成自己的封面
+      await assertCoverMediaBelongs(id, input.coverMediaId)
+      data.coverMediaId = input.coverMediaId
+    }
+  }
 
   // 日期倒置会让「按天」生成负天数；在服务层挡掉，而不是让前台各自判一遍
   const s = (data.startDate as Date | null | undefined) ?? current.startDate
@@ -687,6 +739,14 @@ export async function updateTravel(id: number, input: any): Promise<void> {
   if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
   if (input.status !== undefined) data.status = input.status
   if (input.isPublic !== undefined) data.isPublic = input.isPublic
+  // 预算：同步队列（原生壳）与后台都可能带上来；非法值静默丢弃而不是把脏值写进库
+  if (input.budget !== undefined) {
+    if (input.budget === null) data.budget = null
+    else {
+      const n = Number(input.budget)
+      if (Number.isFinite(n) && n >= 0 && n <= 100_000_000) data.budget = n
+    }
+  }
   if (input.travelType !== undefined) data.travelType = input.travelType
   if (input.companions !== undefined) data.companions = input.companions
   await prisma.travel.update({ where: { id }, data, select: { id: true } })
@@ -790,6 +850,69 @@ export async function addExpense(travelId: number, input: {
 
 export async function deleteExpense(id: number): Promise<void> {
   await prisma.expense.delete({ where: { id } })
+}
+
+/** 前台花销 tab：流水 + 合计（预算在 Travel.budget，随 getTravelBySlug 下发） */
+export async function getTravelExpenses(travelId: number): Promise<{
+  expenses: ExpenseRecord[]
+  total: number
+}> {
+  const travel = await prisma.travel.findUnique({ where: { id: travelId }, select: { id: true } })
+  if (!travel) throw new Error('旅行不存在')
+  const rows = await prisma.expense.findMany({
+    where: { travelId },
+    orderBy: [{ happenedAt: 'asc' }, { id: 'asc' }],
+  })
+  const expenses = rows.map((e: any) => ({
+    id: e.id,
+    amount: e.amount,
+    currency: e.currency,
+    category: e.category,
+    payer: e.payer,
+    note: e.note,
+    happenedAt: iso(e.happenedAt),
+  }))
+  return { expenses, total: expenses.reduce((s: number, e: ExpenseRecord) => s + (e.amount || 0), 0) }
+}
+
+/**
+ * 封面媒体必须属于这本旅行。
+ * Media 表本身没有 travelId，只能顺着「回忆 → 旅行」反查（主照片与多对多关联两条路径）。
+ */
+export async function assertCoverMediaBelongs(travelId: number, mediaId: number): Promise<void> {
+  const media: any = await prisma.media.findUnique({
+    where: { id: mediaId },
+    select: {
+      memory: { select: { travelId: true } },
+      memoryLinks: { select: { memory: { select: { travelId: true } } } },
+    },
+  })
+  if (!media) throw new Error('照片不存在')
+  const owners: (number | null)[] = [
+    media.memory?.travelId ?? null,
+    ...(media.memoryLinks || []).map((l: any) => l.memory?.travelId ?? null),
+  ]
+  if (!owners.includes(travelId)) throw new Error('这张照片不属于该旅行')
+}
+
+/** 修改一个行程项（此前前台只能加、不能改：加错了只能删掉整段旅行重建） */
+export async function updateItineraryItem(
+  id: number,
+  input: { title?: string; startTime?: string | null; endTime?: string | null; type?: string; notes?: string | null },
+): Promise<void> {
+  const data: Record<string, unknown> = {}
+  if (input.title !== undefined) {
+    const t = input.title.trim()
+    if (!t) throw new Error('行程名称不能为空')
+    if (t.length > 120) throw new Error('名称过长（最多 120 字）')
+    data.title = t
+  }
+  if (input.startTime !== undefined) data.startTime = parseTimeOrDate(input.startTime)
+  if (input.endTime !== undefined) data.endTime = parseTimeOrDate(input.endTime)
+  if (input.type !== undefined) data.type = ITINERARY_TYPES.includes(input.type) ? input.type : 'SPOT'
+  if (input.notes !== undefined) data.notes = input.notes ? String(input.notes).slice(0, 500) : null
+  if (Object.keys(data).length === 0) return
+  await prisma.itineraryItem.update({ where: { id }, data })
 }
 
 // ============================================================

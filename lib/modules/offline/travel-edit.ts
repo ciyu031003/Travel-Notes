@@ -28,6 +28,8 @@ export interface UpdateTravelInfoInput {
   description?: string
   startDate?: string | null
   endDate?: string | null
+  /** 预算（元）；null 表示清空 */
+  budget?: number | null
 }
 
 export interface UpdateTravelInfoResult {
@@ -63,6 +65,7 @@ export async function updateTravelInfo(input: UpdateTravelInfoInput): Promise<Up
     if (input.description !== undefined) data.description = input.description || null
     if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate).getTime() : null
     if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate).getTime() : null
+    if (input.budget !== undefined) data.budget = input.budget
 
     // 本地表主键是 UUID，不是 slug：直接拿 slug 当 id 落库会插出一个"影子行"，
     // 列表里于是出现两本同名旅行。必须先反查真实本地行；查不到就放弃本地写（走在线分支）。
@@ -105,6 +108,7 @@ export async function updateTravelInfo(input: UpdateTravelInfoInput): Promise<Up
         description: input.description,
         startDate: input.startDate,
         endDate: input.endDate,
+        budget: input.budget,
       }),
     })
     const json = await res.json().catch(() => ({}))

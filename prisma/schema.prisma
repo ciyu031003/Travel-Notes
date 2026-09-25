@@ -430,6 +430,9 @@ model Travel {
   companions   Json?
   /// 是否公开（公开后所有登录用户可见）
   isPublic     Boolean      @default(false)
+  /// 旅行预算（人民币元）。与 `Expense` 流水配合算出「预算 vs 已花」。
+  /// 可空：没填预算的旅行不显示进度，只显示已花合计。
+  budget       Float?
   createdAt    DateTime     @default(now()) @db.Timestamp(3)
   updatedAt    DateTime     @updatedAt @db.Timestamp(3)
 

@@ -24,6 +24,12 @@ export interface CreateMemoryResult {
   error?: string
   /** 是否本地写入（离线，待同步） */
   local?: boolean
+  /**
+   * 云端新建的回忆 id（离线本地写入时为 undefined）。
+   * 回传它是为了让「记录今日」旧页也能在保存后**顺带上传照片**
+   * （照片必须挂在回忆上，没有 id 就没法关联）。
+   */
+  id?: number
 }
 
 export async function createMemory(input: CreateMemoryInput): Promise<CreateMemoryResult> {
@@ -66,7 +72,8 @@ export async function createMemory(input: CreateMemoryInput): Promise<CreateMemo
     })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) return { ok: false, error: json?.error || '保存失败' }
-    return { ok: true }
+    const id = Number(json?.memoryId)
+    return { ok: true, id: Number.isFinite(id) ? id : undefined }
   } catch {
     return { ok: false, error: '网络错误，请重试' }
   }

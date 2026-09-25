@@ -180,6 +180,8 @@ async function main() {
   // 多元场景：旅行类型 + 同行者
   await addColumn(conn, 'Travel', 'travelType', "travelType ENUM('ALONE','COUPLE','FAMILY','FRIENDS','BFF','GROUP','OTHER') NOT NULL DEFAULT 'ALONE' AFTER isPublic")
   await addColumn(conn, 'Travel', 'companions', 'companions JSON NULL AFTER travelType')
+  // 旅行预算：与 Expense 流水配合算「预算 vs 已花」（前台花销 tab）
+  await addColumn(conn, 'Travel', 'budget', 'budget DOUBLE NULL AFTER isPublic')
   await addFk(conn, 'Travel', 'Travel_ownerId_fkey', 'FOREIGN KEY (ownerId) REFERENCES User(id) ON DELETE SET NULL ON UPDATE CASCADE')
 
   // 多元场景：Space 空间类型（情侣/家庭/朋友/个人/其他）

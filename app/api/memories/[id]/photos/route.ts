@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/db'
 import { canActOnContent } from '@/lib/modules/access'
-import { validateAndSanitizeImage } from '@/lib/infrastructure/media-validation'
-import { generateMediaVariants } from '@/lib/infrastructure/media-variants'
-import { getStorageService } from '@/lib/infrastructure/storage'
-import { randomUUID } from 'crypto'
+import { uploadPhotosToMemory } from '@/lib/modules/media/photo-upload'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +14,7 @@ export const dynamic = 'force-dynamic'
  * `/api/admin/albums/:id/media`（需要 album 且属于后台语义）。
  * 于是「新建旅行 → 传照片」这条最核心的路径在 App 里根本走不通。
  *
- * 行为与相册上传一致：校验图片 → 落存储 → 建 Media + 三种变体 → 关联到回忆。
+ * 落库管线见 `lib/modules/media/photo-upload.ts`（与旅行「相册」tab 共用一份）。
  */
 
 const MAX_FILES = 9
@@ -68,70 +65,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (files.length === 0) return NextResponse.json({ error: '没有收到图片' }, { status: 400 })
   if (files.length > MAX_FILES) return NextResponse.json({ error: `单次最多 ${MAX_FILES} 张` }, { status: 400 })
 
-  const storage = getStorageService()
-  const createdIds: number[] = []
-  const errors: string[] = []
+  const { mediaIds, errors } = await uploadPhotosToMemory(memoryId, files, {
+    userId: auth.payload?.userId,
+    spaceId: memory.spaceId,
+  })
 
-  for (const file of files) {
-    try {
-      const buffer = Buffer.from(await file.arrayBuffer())
-      const safe = await validateAndSanitizeImage(buffer, file.type || 'image/jpeg')
-      const ext = safe.mimeType.includes('png') ? 'png' : safe.mimeType.includes('webp') ? 'webp' : 'jpg'
-      const key = `memories/${memoryId}/${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`
-      const stored = await storage.upload(safe.buffer, key, safe.mimeType)
-
-      const media = await prisma.media.create({
-        data: {
-          type: 'IMAGE',
-          storageKey: key,
-          mimeType: safe.mimeType,
-          size: stored.size,
-          width: safe.width,
-          height: safe.height,
-          visibility: 'SPACE',
-          userId: auth.payload?.userId ?? null,
-          spaceId: memory.spaceId,
-        },
-        select: { id: true },
-      })
-
-      // 变体：列表/画册用 THUMBNAIL/PREVIEW/BLUR；失败不阻断（下次访问按需生成）
-      try {
-        const variants = await generateMediaVariants(safe.buffer)
-        for (const v of variants) {
-          const variantKey = key.replace(/\.[a-z0-9]+$/i, '-' + v.variant.toLowerCase() + '.jpg')
-          await storage.upload(v.buffer, variantKey, v.mimeType)
-          await prisma.mediaVariant.create({
-            data: {
-              mediaId: media.id,
-              variant: v.variant as never,
-              storageKey: variantKey,
-              width: v.width,
-              height: v.height,
-              size: v.size,
-              mimeType: v.mimeType,
-            },
-          })
-        }
-      } catch (e) {
-        console.error('[POST /api/memories/:id/photos] 变体生成失败:', (e as Error)?.message || e)
-      }
-
-      // 关联到回忆（多对多；一张照片可属于多个回忆）
-      await prisma.memoryMedia
-        .create({ data: { memoryId, mediaId: media.id, sortOrder: createdIds.length } })
-        .catch(async () => {
-          // 已关联过则忽略（唯一约束）
-        })
-
-      createdIds.push(media.id)
-    } catch (e) {
-      errors.push((e as Error)?.message || '上传失败')
-    }
-  }
-
-  if (createdIds.length === 0) {
+  if (mediaIds.length === 0) {
     return NextResponse.json({ error: errors[0] || '上传失败' }, { status: 400 })
   }
-  return NextResponse.json({ success: true, mediaIds: createdIds, failed: errors.length }, { status: 201 })
+  return NextResponse.json({ success: true, mediaIds, failed: errors.length }, { status: 201 })
 }
