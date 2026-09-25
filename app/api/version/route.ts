@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '旅行模块重构：新建旅行入口更好找、旅行详情改为总览/行程/相册/花销四页签，支持安排行程、上传照片与记录花销预算；新增新用户偏好问卷；本次起更新在应用内下载并直接安装，不再跳浏览器',
+    changelog: process.env.APP_CHANGELOG || '我的页改为旅行档案 + 右上角半屏抽屉；首页每日一言置顶、旅行足迹紧随其后；新建旅行先在首页大入口补照片与行程，确认归档后进入画册与最近旅行；旅行详情打开即是图片与规划，右上角可直接编辑；应用内下载并直接安装更新',
     forceUpdate,
   })
 }
