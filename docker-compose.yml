@@ -58,6 +58,9 @@ services:
       APP_VERSION: ${APP_VERSION:-1.0.0}
       APP_BUILD_NUMBER: ${APP_BUILD_NUMBER:-1}
       APP_DOWNLOAD_URL: ${APP_DOWNLOAD_URL:-https://travel-notes.yuanabd.cn/downloads/tiantu.apk}
+      # 更新弹窗文案（app/api/version/route.ts 支持 APP_CHANGELOG 覆盖）。
+      # 此前 compose 没转发这个变量 → 每次改文案都被迫改代码、重新构建镜像。
+      APP_CHANGELOG: ${APP_CHANGELOG:-}
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
