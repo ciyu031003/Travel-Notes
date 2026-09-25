@@ -2,4 +2,7 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-path name="my_images" path="." />
     <cache-path name="my_cache_images" path="." />
+    <!-- 应用内更新：APK 下载到 getExternalFilesDir(DOWNLOADS)/updates。
+         Android 10+ 不允许写外部存储根目录，必须用 external-files-path 暴露给 FileProvider。 -->
+    <external-files-path name="app_updates" path="." />
 </paths>

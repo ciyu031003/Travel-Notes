@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复旅行圈点开后跳到首页的问题（本地壳改用可静态导出的详情路由）；App 图标重做：去掉四周黑边、logo 放大居满；服务器磁盘清理',
+    changelog: process.env.APP_CHANGELOG || '旅行模块重构：新建旅行入口更好找、旅行详情改为总览/行程/相册/花销四页签，支持安排行程、上传照片与记录花销预算；新增新用户偏好问卷；本次起更新在应用内下载并直接安装，不再跳浏览器',
     forceUpdate,
   })
 }
