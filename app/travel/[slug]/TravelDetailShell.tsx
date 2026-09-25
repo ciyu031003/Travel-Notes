@@ -169,7 +169,15 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   }
 
   if (error) {
-    return <AsyncState variant="error" message={error} title="旅行加载失败" />
+    return (
+      <AsyncState
+        variant="error"
+        message={error}
+        title="旅行加载失败"
+        actionLabel="重试"
+        onAction={reload}
+      />
+    )
   }
   if (!data) {
     return <AsyncState variant="loading" message="正在翻开这本旅行相册…" />
@@ -204,12 +212,64 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
         />
       )}
 
-      {/* 移动端纯旧文章（legacy Post，没有 Travel 行）：保持原样，不做 tab 化 */}
+      {/*
+        移动端旧文章（legacy Post，没有 Travel 行）：**必须有内容**。
+        上一轮把正文只放在 !isMobile 的桌面分支里，导致这类旅行在手机上只剩一条返回栏、
+        正文全空白 —— 真机反馈的"点开旅途整个页面空白"就是它。
+      */}
       {isMobile && !travel && legacy && (
-        <div className="m-glass sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <div className="flex h-14 items-center gap-1 px-2">
-            <IconButton icon={ChevronLeft} label="返回旅行记录" variant="plain" onClick={handleBack} />
-            <span className="m-body min-w-0 flex-1 truncate font-medium text-[var(--m-text)]">{detailTitle}</span>
+        <div className="bg-travel-cream">
+          <div className="m-glass sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+            <div className="flex h-14 items-center gap-1 px-2">
+              <IconButton icon={ChevronLeft} label="返回旅行记录" variant="plain" onClick={handleBack} />
+              <span className="m-body min-w-0 flex-1 truncate font-medium text-[var(--m-text)]">{detailTitle}</span>
+            </div>
+          </div>
+
+          <div className="px-4 pb-[calc(120px+env(safe-area-inset-bottom))] pt-3">
+            {images.length > 0 && (
+              <div className="grid grid-cols-2 gap-1.5">
+                {images.slice(0, 4).map((url, i) => (
+                  <button
+                    key={url + i}
+                    type="button"
+                    aria-label="全屏查看照片"
+                    onClick={() => setViewer({ photos: gridPhotos, index: i })}
+                    className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-travel-mist/40"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <h1 className="mt-4 text-[24px] font-bold leading-tight text-travel-ink">{detailTitle}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-travel-ink/60">
+              {detailDate && (
+                <span className="flex items-center gap-1">
+                  <Icon icon={Calendar} size="sm" />
+                  {formatDate(detailDate)}
+                </span>
+              )}
+              {detailLocation && (
+                <span className="flex items-center gap-1">
+                  <Icon icon={MapPin} size="sm" />
+                  {detailLocation}
+                </span>
+              )}
+            </div>
+
+            {videos.length > 0 && (
+              <div className="mt-4">
+                <VideoPlayer videos={videos as never[]} className="aspect-video" />
+              </div>
+            )}
+
+            <div
+              className="prose prose-sm mt-4 max-w-none prose-headings:text-travel-ink prose-p:text-travel-ink/80 prose-a:text-travel-bloom"
+              dangerouslySetInnerHTML={{ __html: contentHtml }}
+            />
           </div>
         </div>
       )}

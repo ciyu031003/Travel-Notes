@@ -124,6 +124,15 @@ test('行程页签：记一笔（文字 + 照片）→ 当天出现该回忆与�
   await expect(page.getByText(note).first()).toBeVisible({ timeout: 25_000 })
 })
 
+test('打开不存在的旅行：显示可重试的错误态，而不是整页空白', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/travel/detail?slug=definitely-not-a-travel-' + Date.now(), { waitUntil: 'domcontentloaded' })
+
+  // 真机反馈过「点开旅途整个页面空白」：这里锁住「一定有可见内容 + 可重试」
+  await expect(page.getByText('旅行加载失败').first()).toBeVisible({ timeout: 25_000 })
+  await expect(page.getByRole('button', { name: '重试' }).first()).toBeVisible()
+})
+
 test('相册页签：上传照片 → 相册里出现（此前完全没有上传入口）', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await createTravel(page)

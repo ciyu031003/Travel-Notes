@@ -4,6 +4,7 @@
  */
 import { queryRows } from './dao'
 import { isNativePlatform } from './platform'
+import { makeTravelSlug } from '@/lib/modules/travel/slug'
 
 export interface LocalTravelPost {
   id: number | string
@@ -150,13 +151,43 @@ export interface LocalTravelInfo {
  * 按 slug 读本地旅行（详情页 / record 页离线回退用）。
  * 返回云端 id（remoteId）或本地 id，并显式告知是否仍未同步。
  */
+const LOCAL_TRAVEL_DETAIL_COLUMNS =
+  'id, remoteId, title, slug, spaceId, description, location, startDate, endDate, travelType, companions, syncStatus, budget, cover'
+/** 旧库兜底：不含 later-added 的 budget / cover（见下方注释） */
+const LOCAL_TRAVEL_DETAIL_COLUMNS_COMPAT =
+  'id, remoteId, title, slug, spaceId, description, location, startDate, endDate, travelType, companions, syncStatus'
+
 export async function readLocalTravelBySlug(slug: string): Promise<LocalTravelInfo | null> {
   if (!isNativePlatform() || !slug) return null
   try {
-    const rows = await queryRows(
-      "SELECT id, remoteId, title, slug, spaceId, description, location, startDate, endDate, travelType, companions, syncStatus, budget, cover FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1",
+    /**
+     * 三级兜底（真机反馈「新建旅行后点进去报"网络错误"」的根因就在这里）：
+     *
+     *  ① 全列查询（含 budget / cover）。
+     *  ② 旧库兼容查询：设备上的 SQLite 若是**升级前**建的，"ALTER TABLE travel ADD COLUMN budget"
+     *     没跑成功/未跑到时，全列 SELECT 会整条抛错 —— 详情页于是退化成"网络错误"。
+     *     退一档用不含新列的 SELECT，至少能把旅行打开。
+     *  ③ slug 漂移兜底：云端 slug 与本地 slug 不同（App 本地按标题生成、同步后云端会重算），
+     *     旧链接/localSlug 直接查不到时，按"由标题推出的 slug"再匹配一次。
+     */
+    let rows = await queryRows(
+      `SELECT ${LOCAL_TRAVEL_DETAIL_COLUMNS} FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1`,
       [slug],
-    )
+    ).catch(() => [] as unknown[][])
+    if (rows.length === 0) {
+      rows = await queryRows(
+        `SELECT ${LOCAL_TRAVEL_DETAIL_COLUMNS_COMPAT} FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1`,
+        [slug],
+      ).catch(() => [] as unknown[][])
+    }
+    if (rows.length === 0) {
+      const all = await queryRows(
+        `SELECT ${LOCAL_TRAVEL_DETAIL_COLUMNS_COMPAT} FROM travel WHERE deleted = 0`,
+        [],
+      ).catch(() => [] as unknown[][])
+      const hit = all.find((row) => makeTravelSlug(String(row[2] ?? '')) === slug)
+      if (hit) rows = [hit]
+    }
     const r = rows[0]
     if (!r) return null
     const remoteId = r[1] == null ? null : Number(r[1])

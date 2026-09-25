@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '我的页改为旅行档案 + 右上角半屏抽屉；首页每日一言置顶、旅行足迹紧随其后；新建旅行先在首页大入口补照片与行程，确认归档后进入画册与最近旅行；旅行详情打开即是图片与规划，右上角可直接编辑；应用内下载并直接安装更新',
+    changelog: process.env.APP_CHANGELOG || '修：新建旅行后打开报「网络错误」（本地 slug 与云端 slug 不一致时读不到本地旅行）；修：点开旧旅行整页空白（正文只渲染在桌面分支）',
     forceUpdate,
   })
 }
