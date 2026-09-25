@@ -52,12 +52,54 @@
   --m-line-strong: rgba(168, 95, 58, 0.22);
   --m-hairline: 0.5px solid var(--m-line-strong);
 
-  /* ── 阴影分级（L1 卡片 / L2 悬浮）────────────────────── */
-  --m-shadow-l1: 0 1px 2px rgba(61, 43, 32, 0.04), 0 8px 24px -16px rgba(61, 43, 32, 0.18);
-  --m-shadow-l2: 0 8px 32px -12px rgba(61, 43, 32, 0.28);
-  /* 旧名保留（历史组件在用），指向新分级 */
-  --m-shadow-sm: var(--m-shadow-l1);
-  --m-shadow-md: var(--m-shadow-l2);
+  /* ── 抬升分级（唯一事实源：L1 卡片 / L2 悬浮 / L3 面板）────── */
+  --m-elev-1: 0 1px 2px rgba(61, 43, 32, 0.04), 0 8px 24px -16px rgba(61, 43, 32, 0.18);
+  --m-elev-2: 0 8px 32px -12px rgba(61, 43, 32, 0.28);
+  --m-elev-3: 0 -12px 40px -12px rgba(40, 24, 14, 0.35);
+  /* 内阴影：顶部高光 / 底部压暗 —— 按钮"实体压印感"的来源 */
+  --m-inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  --m-inset-lo: inset 0 -1px 0 rgba(61, 43, 32, 0.06);
+
+  /* 旧名保留（历史组件在用），指向新分级。
+     ⚠️ --m-shadow-lg 曾被 7 个文件引用但**从未定义**（阴影静默失效），此处补上。 */
+  --m-shadow-l1: var(--m-elev-1);
+  --m-shadow-l2: var(--m-elev-2);
+  --m-shadow-lg: var(--m-elev-3);
+  --m-shadow-sm: var(--m-elev-1);
+  --m-shadow-md: var(--m-elev-2);
+
+  /* ── 强调色上的文字 ────────────────────────────────────
+     ⚠️ 修复：--m-on-accent 此前**从未定义**，9 处「强调底 + 此变量」的按钮
+     文字退化为继承父色（--m-text #3D2B20 on --m-accent #C67A4E ≈ 1.9:1），
+     几乎不可见。亮色下强调色偏深，用白字；暗色下强调色是浅金，必须用深字。 */
+  --m-on-accent: #FFFFFF;
+
+  /* CTA 填充：浅色下必须比 --m-accent 深一档白字才能过 AA
+     （白字 on #C67A4E = 3.33:1 ✗ → on #A85F3A = 4.85:1 ✓）。暗色反转，见 html.dark。 */
+  --m-cta-bg: var(--m-accent-strong);
+  --m-on-danger: #FFFFFF;
+
+  /* ── 焦点环（可访问性：焦点可见的统一表达）────────────── */
+  --m-ring: 0 0 0 3px var(--m-accent-soft);
+  --m-ring-danger: 0 0 0 3px rgba(192, 69, 63, 0.18);
+
+  /* ── 动效 token（时长/缓动不再各写各的）──────────────── */
+  --m-dur-press: 120ms;
+  --m-dur-enter: 320ms;
+  --m-dur-page: 240ms;
+  --m-ease-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
+
+  /* ── 受控渐变 ──────────────────────────────────────────
+     全项目**仅此 3 条**允许使用；组件内再写 linear-gradient() 即违规
+     （见 scripts/check-design-tokens.mjs 的渐变规则）。 */
+  --m-grad-hero: linear-gradient(165deg, var(--m-bg-soft), var(--m-surface-2));
+  --m-grad-scrim: linear-gradient(to top, rgba(24, 15, 9, 0.68), rgba(24, 15, 9, 0) 62%);
+  --m-grad-cta: linear-gradient(180deg, var(--m-accent), var(--m-accent-strong));
+
+  /* ── 纹理（纯 CSS 图案，0 图片请求）────────────────────── */
+  --m-pattern-dot: radial-gradient(circle at 1px 1px, var(--m-line-strong) 1px, transparent 0);
+  --m-pattern-grid: linear-gradient(var(--m-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--m-line) 1px, transparent 1px);
 
   /* ── 圆角（收敛为 3 档 + 胶囊 + 面板）────────────────── */
   --m-radius-card: 20px;
@@ -121,10 +163,29 @@ html.dark {
 
   --m-line: rgba(245, 241, 234, 0.10);
   --m-line-strong: rgba(245, 241, 234, 0.18);
-  --m-shadow-l1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 8px 24px -16px rgba(0, 0, 0, 0.50);
-  --m-shadow-l2: 0 8px 32px -12px rgba(0, 0, 0, 0.55);
-  --m-shadow-sm: var(--m-shadow-l1);
-  --m-shadow-md: var(--m-shadow-l2);
+
+  /* 暗色抬升（黑底需要更重的投影才看得出层次） */
+  --m-elev-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 8px 24px -16px rgba(0, 0, 0, 0.50);
+  --m-elev-2: 0 8px 32px -12px rgba(0, 0, 0, 0.55);
+  --m-elev-3: 0 -12px 40px -12px rgba(0, 0, 0, 0.60);
+  --m-inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --m-inset-lo: inset 0 -1px 0 rgba(0, 0, 0, 0.24);
+
+  --m-shadow-l1: var(--m-elev-1);
+  --m-shadow-l2: var(--m-elev-2);
+  --m-shadow-lg: var(--m-elev-3);
+  --m-shadow-sm: var(--m-elev-1);
+  --m-shadow-md: var(--m-elev-2);
+
+  /* 暗色强调色是浅金（#E8B36A），白字对比度仅 2.1:1 —— 必须用深字（9.8:1 ✅） */
+  --m-on-accent: #1A120A;
+  --m-cta-bg: var(--m-accent);
+  --m-on-danger: #1A120A;
+  --m-ring: 0 0 0 3px var(--m-accent-soft);
+  --m-ring-danger: 0 0 0 3px rgba(226, 112, 106, 0.22);
+
+  /* 暗色遮罩需要更重，否则图片上的白字发灰 */
+  --m-grad-scrim: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0) 62%);
 }
 
 @media (max-width: 767px) {
@@ -250,8 +311,8 @@ html.dark {
   transform: scale(0.96);
 }
 .m-chip-active {
-  color: #FFFFFF;
-  background: var(--m-accent);
+  color: var(--m-on-accent);
+  background: var(--m-cta-bg);
   border-color: transparent;
 }
 
@@ -415,8 +476,13 @@ html.dark .m-skeleton::after {
 .m-seg-item {
   position: relative;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex: 1;
-  min-height: 36px;
+  /* 44px 触达下限（原 36px 低于规范 §8 要求） */
+  min-height: 44px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
@@ -437,15 +503,17 @@ html.dark .m-skeleton::after {
   width: calc((100% - 6px) / var(--m-seg-count, 2));
   border-radius: 999px;
   background: var(--m-surface-solid);
-  box-shadow: var(--m-shadow-sm);
-  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: var(--m-elev-1);
+  transition: transform 0.32s var(--m-ease-spring);
 }
 
 .m-switch {
-  transition: background-color 0.25s ease;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  /* 轨道内阴影：开关"有厚度"的关键，替代纯平色块 */
+  box-shadow: var(--m-inset-lo);
 }
 .m-switch.is-on {
-  background-color: var(--m-accent);
+  background-color: var(--m-cta-bg);
 }
 .m-switch.is-off {
   background-color: var(--m-line-strong);
@@ -453,10 +521,22 @@ html.dark .m-skeleton::after {
 .m-switch-knob {
   background: #FFFFFF;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22), 0 0 1px rgba(0, 0, 0, 0.12);
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Jelly：过冲缓动让滑块到位时轻微回弹（一次性，非无限动画） */
+  transition: transform 0.3s var(--m-ease-spring);
 }
 .m-switch.is-on .m-switch-knob {
   transform: translateX(16px);
+}
+/* 裸开关：不带行容器，供 ListRow / 自定义排版内联使用 */
+.m-switch-bare {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
 }
 
 .m-sheet-backdrop {
@@ -538,28 +618,93 @@ html.dark .m-skeleton::after {
   transform: scale(0.97);
 }
 .m-action-item.is-danger {
-  color: #E5484D;
+  color: var(--m-danger);
 }
 .m-action-item.is-cancel {
   color: var(--m-muted);
 }
 
+/* M5：Toast 2.0 —— 色板从 iOS 冷色系统色（#34C759/#FF453A/#64D2FF）
+   收敛到 --m-* 语义 token，并支持顶/底进度条。 */
 .m-toast {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   max-width: min(92vw, 420px);
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(42, 30, 22, 0.92);
-  color: #FFFFFF;
-  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 10px 8px 10px 14px;
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-solid);
+  border: 1px solid var(--m-line-strong);
+  color: var(--m-text);
+  box-shadow: var(--m-elev-2);
+  overflow: hidden;
 }
-.m-toast[data-kind='success'] svg { color: #34C759; }
-.m-toast[data-kind='error'] svg { color: #FF453A; }
-.m-toast[data-kind='info'] svg { color: #64D2FF; }
+html.dark .m-toast {
+  background: var(--m-surface-2);
+}
+.m-toast-icon {
+  display: flex;
+  flex: none;
+}
+.m-toast[data-kind='success'] .m-toast-icon {
+  color: var(--m-success);
+}
+.m-toast[data-kind='error'] .m-toast-icon {
+  color: var(--m-danger);
+}
+.m-toast[data-kind='info'] .m-toast-icon {
+  color: var(--m-accent);
+}
+.m-toast-track {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--m-line);
+}
+.m-toast-bar {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: var(--m-accent);
+  animation: m-toast-countdown linear forwards;
+}
+.m-toast[data-kind='success'] .m-toast-bar {
+  background: var(--m-success);
+}
+.m-toast[data-kind='error'] .m-toast-bar {
+  background: var(--m-danger);
+}
+@keyframes m-toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.m-toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--m-muted);
+}
+.m-toast-close:active {
+  background: var(--m-surface-2);
+}
+.m-toast-action {
+  flex: none;
+  padding: 0 10px;
+  min-height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--m-accent-strong);
+}
 
 .m-empty {
   display: flex;
@@ -603,10 +748,424 @@ html.dark .m-skeleton::after {
   to { transform: rotate(360deg); }
 }
 
+/* ==========================================================================
+   M5 组件层（Uiverse 模式移植）—— 全部走 --m-* token，双主题自动生效
+   纪律：组件内不得写 linear-gradient()；不得写裸 hex/rgba；
+        除 loading 外不得用无限动画。
+   ========================================================================== */
+
+/* ── 工具类 ─────────────────────────────────────────────── */
+.m-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.m-hero-surface {
+  background: var(--m-grad-hero);
+}
+.m-scrim {
+  background: var(--m-grad-scrim);
+}
+.m-pattern-dot {
+  background-image: var(--m-pattern-dot);
+  background-size: 16px 16px;
+}
+.m-pattern-grid {
+  background-image: var(--m-pattern-grid);
+  background-size: 24px 24px;
+}
+
+/* ── 按钮 ──────────────────────────────────────────────────
+   此前移动端**没有** Button 组件，CTA 被内联复制 5 次、甚至拿 m-chip
+   加 !important 硬顶。此处补上唯一入口。
+   触达 ≥44（默认）/ ≥52（lg），按压 0.97，焦点环可见。 */
+.m-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: var(--m-radius-control);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--m-dur-press) ease, opacity 0.15s ease,
+    background-color 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+.m-btn:active:not(:disabled):not([aria-disabled='true']) {
+  transform: scale(0.97);
+}
+.m-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.m-btn:disabled,
+.m-btn[aria-disabled='true'] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.m-btn-lg {
+  min-height: 52px;
+  padding: 0 24px;
+  font-size: 16px;
+  line-height: 24px;
+}
+/* sm：视觉 36px（密集工具条），但用伪元素把**触达**扩到 44px，
+   不牺牲规范 §8 的 44×44 下限 */
+.m-btn-sm {
+  position: relative;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 18px;
+  border-radius: var(--m-radius-sm);
+}
+.m-btn-sm::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.m-btn-block {
+  width: 100%;
+}
+.m-btn-round {
+  border-radius: var(--m-radius-pill);
+}
+
+/* primary：实心 + 顶部高光 + 底部压暗 = "实体压印感" */
+.m-btn-primary {
+  background: var(--m-cta-bg);
+  color: var(--m-on-accent);
+  box-shadow: var(--m-inset-hi), var(--m-inset-lo);
+}
+.m-btn-primary:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* secondary：可见描边 + 极轻抬升 */
+.m-btn-secondary {
+  background: var(--m-surface-solid);
+  color: var(--m-text);
+  border-color: var(--m-line-strong);
+  box-shadow: var(--m-elev-1);
+}
+.m-btn-secondary:active:not(:disabled) {
+  background: var(--m-surface-2);
+}
+
+/* ghost：无底，仅按压时浅底 */
+.m-btn-ghost {
+  background: transparent;
+  color: var(--m-accent-strong);
+}
+.m-btn-ghost:active:not(:disabled) {
+  background: var(--m-accent-soft);
+}
+
+/* danger */
+.m-btn-danger {
+  background: var(--m-danger);
+  color: var(--m-on-danger);
+  box-shadow: var(--m-inset-hi), var(--m-inset-lo);
+}
+.m-btn-danger:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+.m-btn-danger:focus-visible {
+  box-shadow: var(--m-ring-danger);
+}
+
+/* 按钮内 loading：唯一允许的循环动画场景 */
+.m-btn-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: m-spin 0.7s linear infinite;
+}
+
+/* ── 表单字段 ──────────────────────────────────────────────
+   登录页此前并存 3 套输入框实现（桌面 travel + shell 体系、弹窗、移动 --m-*），
+   此处收敛为唯一入口。label 与控件强关联；聚焦时描边 + 3px 光晕。 */
+.m-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.m-field-label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--m-muted);
+}
+.m-field-required {
+  margin-left: 2px;
+  color: var(--m-danger);
+}
+.m-field-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-solid);
+  border: 1px solid var(--m-line-strong);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.m-field-control:focus-within {
+  border-color: var(--m-accent);
+  box-shadow: var(--m-ring);
+}
+.m-field-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 16px;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--m-text);
+}
+.m-field-input::placeholder {
+  color: var(--m-faint);
+}
+.m-field-input:disabled {
+  color: var(--m-faint);
+}
+.m-field-control.has-leading .m-field-input {
+  padding-left: 44px;
+}
+.m-field-control.has-trailing .m-field-input {
+  padding-right: 48px;
+}
+.m-field-leading {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  display: flex;
+  transform: translateY(-50%);
+  color: var(--m-faint);
+  pointer-events: none;
+}
+.m-field-trailing {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  display: flex;
+  transform: translateY(-50%);
+}
+.m-field-textarea {
+  min-height: 96px;
+  padding: 12px 16px;
+  line-height: 22px;
+  resize: none;
+}
+.m-field-hint {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--m-faint);
+}
+.m-field-error {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--m-danger);
+}
+.m-field.is-error .m-field-control {
+  border-color: var(--m-danger);
+}
+.m-field.is-error .m-field-control:focus-within {
+  box-shadow: var(--m-ring-danger);
+}
+
+/* ── 加载指示（loading 是规范唯一允许无限动画的场景）──────── */
+.m-loader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--m-accent);
+}
+.m-loader-dots {
+  gap: 5px;
+}
+.m-loader-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: m-loader-pulse 1.1s ease-in-out infinite;
+}
+.m-loader-dot:nth-child(2) {
+  animation-delay: 0.16s;
+}
+.m-loader-dot:nth-child(3) {
+  animation-delay: 0.32s;
+}
+@keyframes m-loader-pulse {
+  0%, 80%, 100% {
+    opacity: 0.28;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.m-loader-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--m-accent-soft);
+  border-top-color: var(--m-accent);
+  animation: m-spin 0.8s linear infinite;
+}
+.m-loader-ripple {
+  position: relative;
+}
+.m-loader-ripple::before,
+.m-loader-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--m-accent);
+  animation: m-loader-ripple 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.m-loader-ripple::after {
+  animation-delay: 0.8s;
+}
+@keyframes m-loader-ripple {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ── 勾选框（勾线绘制动画，一次性）────────────────────────── */
+.m-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1.5px solid var(--m-line-strong);
+  background: var(--m-surface-solid);
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    transform var(--m-dur-press) ease;
+}
+.m-check.is-on {
+  background: var(--m-cta-bg);
+  border-color: var(--m-cta-bg);
+}
+.m-check-path {
+  stroke: var(--m-on-accent);
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+}
+.m-check.is-on .m-check-path {
+  animation: m-check-draw 0.28s var(--m-ease-spring) forwards;
+}
+@keyframes m-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.m-check.is-disabled {
+  opacity: 0.4;
+}
+
+/* ── 卡片式单选（radio-card）────────────────────────────── */
+.m-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 14px;
+  border-radius: var(--m-radius-card);
+  border: 1.5px solid var(--m-line);
+  background: var(--m-surface-solid);
+  text-align: left;
+  transition: border-color 0.18s ease, background-color 0.18s ease,
+    transform var(--m-dur-press) ease;
+}
+.m-choice:active {
+  transform: scale(0.985);
+}
+.m-choice:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.m-choice.is-on {
+  border-color: var(--m-accent);
+  background: var(--m-accent-soft);
+}
+.m-choice-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--m-line-strong);
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+/* 未选中时必须是**空圈**（勾标默认隐藏，否则会读成"已选中"） */
+.m-choice-mark > svg {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.m-choice.is-on .m-choice-mark > svg {
+  opacity: 1;
+}
+.m-choice.is-on .m-choice-mark {
+  border-color: var(--m-cta-bg);
+  background: var(--m-cta-bg);
+  color: var(--m-on-accent);
+}
+.m-choice:disabled {
+  opacity: 0.45;
+}
+
+/* ── 卡片分级（L1 平面 / L2 卡片 / L3 悬浮）──────────────── */
+.m-card-raised {
+  background: var(--m-surface-solid);
+  border: 1px solid var(--m-line);
+  border-radius: var(--m-radius-card);
+  box-shadow: var(--m-elev-2);
+}
+.m-card-pressable {
+  transition: transform var(--m-dur-press) ease, box-shadow 0.18s ease;
+}
+.m-card-pressable:active {
+  transform: scale(0.985);
+  box-shadow: var(--m-elev-1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .m-spring, .m-press, .m-enter, .m-fab, .m-shimmer, .m-list-item, .m-soft-pulse,
   .m-pressable, .m-seg-thumb, .m-switch, .m-switch-knob, .m-sheet, .m-sheet-backdrop,
-  .m-skeleton::after, .m-ptr-spin, .m-action-item, .m-page-fade, .m-pop {
+  .m-skeleton::after, .m-ptr-spin, .m-action-item, .m-page-fade, .m-pop,
+  .m-btn, .m-btn-spinner, .m-check, .m-check-path, .m-choice, .m-card-pressable,
+  .m-seg-item, .m-switch-bare,
+  .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after {
     animation: none !important;
     transition: none !important;
   }

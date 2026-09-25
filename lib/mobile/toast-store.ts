@@ -2,15 +2,36 @@
  * 轻提示命令式 store（与组件解耦，任意页面可调用）：
  * toast.success('已保存') / toast.error('网络异常') / toast.info('...')。
  * ToastHost 订阅渲染，自动消失。
+ *
+ * M5 扩展（向后兼容：原有一个参数调用完全不变）：
+ *  · options.duration 自定义时长
+ *  · options.progress 显示倒计时进度条
+ *  · options.action  附一个操作按钮（如「撤销」）
+ *  · options.dismissible false 时不给关闭按钮（用于"必须看到"的提示）
  */
 
 export type ToastKind = 'info' | 'success' | 'error'
+
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
 
 export interface ToastItem {
   id: number
   kind: ToastKind
   message: string
   duration: number
+  progress?: boolean
+  action?: ToastAction
+  dismissible?: boolean
+}
+
+export interface ToastOptions {
+  duration?: number
+  progress?: boolean
+  action?: ToastAction
+  dismissible?: boolean
 }
 
 type Listener = (items: ToastItem[]) => void
@@ -38,16 +59,32 @@ export function dismissToast(id: number): void {
   emit()
 }
 
-function push(kind: ToastKind, message: string, duration = 2600): void {
-  if (typeof window === 'undefined') return
+function push(kind: ToastKind, message: string, options: ToastOptions = {}): number {
+  if (typeof window === 'undefined') return 0
   const id = nextId++
-  items = [...items, { id, kind, message, duration }]
+  const duration = options.duration ?? 2600
+  items = [
+    ...items,
+    {
+      id,
+      kind,
+      message,
+      duration,
+      progress: options.progress,
+      action: options.action,
+      dismissible: options.dismissible,
+    },
+  ]
   emit()
   window.setTimeout(() => dismissToast(id), duration)
+  return id
 }
 
 export const toast = {
-  success: (message: string): void => push('success', message),
-  error: (message: string): void => push('error', message, 3400),
-  info: (message: string): void => push('info', message),
+  success: (message: string, options?: ToastOptions): number =>
+    push('success', message, options),
+  error: (message: string, options?: ToastOptions): number =>
+    push('error', message, { duration: 3400, ...options }),
+  info: (message: string, options?: ToastOptions): number => push('info', message, options),
+  dismiss: dismissToast,
 }

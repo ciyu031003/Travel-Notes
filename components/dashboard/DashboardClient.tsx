@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
 import ChinaMap from '@/components/ChinaMap'
 import { formatDate } from '@/lib/utils'
 
@@ -46,7 +47,7 @@ function BigStat({
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/40 text-travel-accent dark:border-shell-line dark:bg-travel-accent/15 dark:text-travel-bloom">
         <Icon icon={icon} size="md" />
       </div>
-      <div className="mt-3 text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text tabular-nums">
+      <div className="mt-2 text-2xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text tabular-nums md:mt-3 md:text-3xl">
         {value}
       </div>
       <div className="mt-1 text-xs text-travel-ink/70 dark:text-shell-muted">{label}</div>
@@ -65,8 +66,17 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
   return (
     <div className="bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream dark:from-shell-bg dark:via-shell-surface2 dark:to-shell-bg">
-      <div className="container-custom py-10 md:py-14">
-        <header className="mb-10 text-center md:mb-12">
+      {/*
+        D2 修复：本页此前是**纯桌面树**（无任何 md: 分支）——移动端既没有安全区
+        顶部内边距（内容顶到状态栏、与刘海重叠），也没有返回入口，底部导航还会
+        盖住最后一段内容。这里补移动端骨架，桌面端保持不变。
+      */}
+      <div className="container-custom pb-[calc(96px+env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))] md:py-14">
+        <div className="md:hidden">
+          <LargeTitle title="数据看板" subtitle="足迹与照片的全部沉淀" back="/me" />
+        </div>
+
+        <header className="mb-10 hidden text-center md:mb-12 md:block">
           <p className="text-xs font-medium uppercase tracking-[0.28em] text-travel-accent dark:text-travel-bloom">
             My Travel Space
           </p>
@@ -79,14 +89,14 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         </header>
 
         {/* 核心大数（护照式，弱化后台报表感） */}
-        <section className="mx-auto mb-12 grid max-w-3xl grid-cols-3 gap-6 rounded-[1.6rem] border border-travel-line/60 bg-white/60 py-8 backdrop-blur-sm dark:border-shell-line dark:bg-shell-surface/70 md:py-10">
+        <section className="mx-auto mb-8 grid max-w-3xl grid-cols-3 gap-3 rounded-[1.6rem] border border-travel-line/60 bg-white/60 py-6 backdrop-blur-sm dark:border-shell-line dark:bg-shell-surface/70 md:mb-12 md:gap-6 md:py-10">
           <BigStat icon={MapPin} label="点亮省份" value={data.provincesVisitedCount} href="/travel" />
           <BigStat icon={Camera} label="旅行记录" value={data.travelCount} href="/travel" />
           <BigStat icon={ImageIcon} label="照片" value={data.totalPhotos} href="/album" />
         </section>
 
         {/* 足迹地图（视觉主体前置） */}
-        <section className="mb-14">
+        <section className="mb-8 md:mb-14">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-travel-inkStrong dark:text-shell-text">
               <Icon icon={MapPin} size="md" className="text-travel-accent" />

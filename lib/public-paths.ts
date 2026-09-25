@@ -101,9 +101,25 @@ function isPublicReadPath(pathname: string): boolean {
   return PUBLIC_READ_PATHS.some((p) => pathname === p || pathname.startsWith(p.endsWith('/') ? p : p + '/'))
 }
 
-/** 中间件最终判定：完全公开 或 公开内容读请求 */
+/**
+ * 开发工具页（`/dev/ui` 组件预览台）——**只在非生产环境**公开。
+ *
+ * 为什么需要：预览台本身已有 `page.tsx` 的 `notFound()` 守卫（生产构建下 404，
+ * 除非显式 `DEV_UI=1`），但它不在登录白名单里，于是本地/CI 只要没有数据库
+ * （登录接口 500），开发者**连自己的预览台都打不开**。
+ *
+ * 为什么不写进 `PUBLIC_PATHS`：那是无条件白名单。若有人用 `DEV_UI=1` 构建生产包，
+ * 预览台就变成公开页面了。这里按 `NODE_ENV` 收口，生产一律返回 false，保持原有门禁。
+ */
+export function isDevToolPath(pathname: string): boolean {
+  if (process.env.NODE_ENV === 'production') return false
+  return pathname === '/dev/ui' || pathname.startsWith('/dev/ui/')
+}
+
+/** 中间件最终判定：完全公开 或 公开内容读请求 或 开发工具页（仅非生产） */
 export function isPublicRequest(pathname: string, method: string): boolean {
   if (isPublicPath(pathname)) return true
+  if (isDevToolPath(pathname)) return true
   const isRead = method === 'GET' || method === 'HEAD' || method === 'OPTIONS'
   if (!isRead) return false
   // 旅行圈页面：游客可读，交互（点赞/评论/收藏）仍需登录

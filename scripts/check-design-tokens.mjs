@@ -17,6 +17,12 @@
  *   4. 字符冒充图标（✦ ✨ ✍ ★ 等）
  *   5. 图标尺寸自由取值（lucide 上的 h-N w-N）
  *   6. 非标圆角（rounded-[Npx] 魔术数字）
+ *
+ * M5 新增检查项（对应《移动端UI精修方案-Uiverse模式移植.md》§3）：
+ *   7. 组件内直接写渐变（只允许 --m-grad-hero / --m-grad-scrim / --m-grad-cta）
+ *   8. 引用未定义的 CSS 变量（历史上 --m-shadow-lg / --m-on-accent 就因此静默失效）
+ *   9. 散落的 iOS 冷色系统色与历史"危险红"字面量
+ *  10. Tailwind !important 前缀覆盖（"缺组件"的症状）
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative, extname } from 'node:path'
@@ -48,6 +54,13 @@ const ICON_SYSTEM_ALLOWLIST = [
   'components/mobile/Icon.tsx',
   'lib/mobile/icon-system.ts',
   'app/dev/ui/',
+  /**
+   * M5 补充：整个 components/mobile/ 是设计系统层，其职责就是「引入 lucide 图标
+   * 并交给 <Icon> 渲染」。本规则无法区分 `import type { LucideIcon }` 与值导入，
+   * 早先会把这类合法用法一并计为违规（虚高）。真正绕过 Icon 直接给尺寸的写法
+   * 仍由第 5 条 `iconSize` 规则拦截。
+   */
+  'components/mobile/',
 ]
 
 /** 允许的字号（对应 .m-display / title-1 / title-2 / body / caption / label / stat / tab-label） */
@@ -104,7 +117,29 @@ function buildTokenIndex() {
   return byValue
 }
 
+/**
+ * 已定义的 CSS 自定义属性名集合（不限取值类型）。
+ * 用于第 8 条规则：`var(--x)` 里的 --x 若从未定义，样式会静默失效。
+ * 历史事故：`--m-shadow-lg` / `--m-on-accent` 被 7 个文件引用却从未定义 ——
+ * 前者让面板阴影消失，后者让 9 处强调底按钮的文字退化为继承色（约 1.9:1，几乎不可见）。
+ */
+function buildDefinedTokenNames() {
+  const cssFiles = ['app/globals.css', 'app/mobile.css']
+  const names = new Set()
+  for (const rel of cssFiles) {
+    let css
+    try {
+      css = readFileSync(join(ROOT, rel), 'utf8')
+    } catch {
+      continue
+    }
+    for (const m of css.matchAll(/(--[a-zA-Z0-9-]+)\s*:/g)) names.add(m[1])
+  }
+  return names
+}
+
 const TOKEN_BY_VALUE = buildTokenIndex()
+const DEFINED_TOKENS = buildDefinedTokenNames()
 
 function classifyHex(raw) {
   const v = raw.toLowerCase()
@@ -120,6 +155,18 @@ const LUCIDE_IMPORT_RE = /from\s+['"]lucide-react['"]/
 const LUCIDE_JSX_SIZE_RE = /<(?:[A-Z][A-Za-z0-9]*)\s+className="[^"]*\b([hw])-(\d+(?:\.\d+)?)\b/g
 const FONT_SIZE_RE = /text-\[(\d+(?:\.\d+)?)px\]/g
 const MAGIC_RADIUS_RE = /rounded-\[(\d+(?:\.\d+)?)px\]/g
+
+/* ── M5 新增规则 ────────────────────────────────────────────────────────── */
+
+/** 组件内直接写渐变。受控渐变只能通过 --m-grad-hero / -scrim / -cta 使用。 */
+const RAW_GRADIENT_RE = /linear-gradient\(|bg-gradient-to-/
+/** 引用 CSS 变量：`var(--x)` */
+const CSS_VAR_USE_RE = /var\((--[a-zA-Z0-9-]+)/g
+/** iOS 冷色系统色 + 历史"危险红"字面量（应统一走 --m-danger） */
+const SCATTERED_COLOR_RE = /#34C759|#FF453A|#64D2FF|#E5484D|#E06C6C|#EF4444|#ef4444/i
+/** Tailwind `!` 前缀覆盖：通常是「缺组件」的症状，不是样式技巧 */
+const IMPORTANT_OVERRIDE_RE =
+  /!(?:h|w|min-h|min-w|max-h|max-w|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|bg|text|border|rounded|shadow|ring|gap|leading|tracking|opacity)-/
 
 /**
  * 合法的字面量场景（不计入违规）：
@@ -170,7 +217,25 @@ const findings = {
   charIcon: [],
   iconSize: [],
   magicRadius: [],
+  // M5 新增
+  rawGradient: [],
+  undefinedToken: [],
+  scatteredColor: [],
+  importantOverride: [],
 }
+
+/** 原有 7 条规则（用于与历史基线对比，避免新增规则的欠债混入 KPI） */
+const LEGACY_BUCKETS = [
+  'hexColor',
+  'rgbaColor',
+  'lucideImport',
+  'fontSize',
+  'charIcon',
+  'iconSize',
+  'magicRadius',
+]
+/** M5 新增 4 条规则 */
+const NEW_BUCKETS = ['rawGradient', 'undefinedToken', 'scatteredColor', 'importantOverride']
 const infoFindings = []
 
 const files = SCAN_DIRS.flatMap((d) => walk(join(ROOT, d)))
@@ -227,7 +292,14 @@ for (const file of files) {
       })
     }
     for (const m of line.matchAll(RGBA_RE)) push('rgbaColor', m[0])
-    if (LUCIDE_IMPORT_RE.test(line) && !isIconSystem(rel)) push('lucideImport')
+    // `import type { LucideIcon }` 只是类型导入，不产生任何图标用法，不计违规
+    if (
+      LUCIDE_IMPORT_RE.test(line) &&
+      !/^\s*import\s+type\s/.test(line) &&
+      !isIconSystem(rel)
+    ) {
+      push('lucideImport')
+    }
     if (CHAR_ICON_RE.test(line)) push('charIcon')
     for (const m of line.matchAll(FONT_SIZE_RE)) {
       const px = Number(m[1])
@@ -237,6 +309,27 @@ for (const file of files) {
       const px = Number(m[1])
       if (![20, 14, 12, 24, 10, 16].includes(px)) push('magicRadius', m[0])
     }
+
+    /* ── M5 新增规则 ─────────────────────────────────────────────── */
+    const grad = line.match(RAW_GRADIENT_RE)
+    if (grad) push('rawGradient', grad[0])
+
+    for (const m of line.matchAll(CSS_VAR_USE_RE)) {
+      const name = m[1]
+      // 模板拼接（var(--m-tone-${tone}-fg)）无法静态判定，跳过
+      if (line[m.index + m[0].length] === '$') continue
+      // `var(--x, fallback)` 带兜底值 → 未定义也不会失效，不算违规
+      const rest = line.slice(m.index + m[0].length)
+      const close = rest.indexOf(')')
+      if (close >= 0 && rest.slice(0, close).includes(',')) continue
+      if (!DEFINED_TOKENS.has(name)) push('undefinedToken', name)
+    }
+
+    const scattered = line.match(SCATTERED_COLOR_RE)
+    if (scattered) push('scatteredColor', scattered[0])
+
+    const bang = line.match(IMPORTANT_OVERRIDE_RE)
+    if (bang) push('importantOverride', bang[0])
     // 图标尺寸自由取值：本文件 lucide 导入项的 JSX 用法上出现 h-N / w-N 尺寸类
     if (iconJsxRe && !/m-icon/.test(line) && iconJsxRe.test(line)) {
       push('iconSize', trimmed.slice(0, 100))
@@ -252,6 +345,11 @@ const LABELS = {
   charIcon: '字符冒充图标（✦ ✨ ✍ ★ 等）',
   iconSize: '图标尺寸自由取值（应用 Icon 组件的 sm/md/lg）',
   magicRadius: '非标圆角（魔术数字）',
+  // M5 新增
+  rawGradient: '组件内直接写渐变（应改用 --m-grad-hero/-scrim/-cta）',
+  undefinedToken: '引用未定义的 CSS 变量（样式会静默失效）',
+  scatteredColor: '散落的 iOS 冷色 / 历史危险红字面量（应统一走 --m-*）',
+  importantOverride: 'Tailwind !important 覆盖（「缺组件」的症状）',
 }
 
 const summary = Object.fromEntries(
@@ -274,9 +372,13 @@ console.log('='.repeat(56))
 console.log(`扫描 ${files.length} 个文件（components/ + app/）\n`)
 
 let total = 0
+let legacyTotal = 0
+let newTotal = 0
 for (const [key, label] of Object.entries(LABELS)) {
   const n = summary[key] ?? 0
   total += n
+  if (LEGACY_BUCKETS.includes(key)) legacyTotal += n
+  else newTotal += n
   const mark = n === 0 ? '✅' : '⚠️ '
   console.log(`${mark} ${label}`)
   console.log(`     待处理文件数: ${n}`)
@@ -326,7 +428,9 @@ console.log('硬编码色分类（决定收敛优先级）:')
   ;[...new Set(realGap.map((r) => r.at.split(':')[0]))].slice(0, 6).forEach((f) => console.log(`        · ${f}`))
 }
 console.log('-'.repeat(56))
-console.log(`\n待处理合计: ${total} 个文件\n`)
+console.log(`\n原有 7 条规则合计: ${legacyTotal} 处   ← 与历史基线（308）对比用这个`)
+console.log(`M5 新增 4 条规则:  ${newTotal} 处   ← 新增规则首次暴露的既有欠债`)
+console.log(`待处理合计:        ${total} 处\n`)
 
 if (STRICT && total > 0) {
   console.error('❌ 存在设计规范违规（--strict 模式）')

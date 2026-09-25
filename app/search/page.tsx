@@ -69,8 +69,20 @@ function SearchContent() {
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  // 桌面与移动是两棵独立 DOM（`hidden md:block` / `md:hidden`），
+  // 各自必须持有自己的 ref —— 共用一个 ref 时 React 会把 ref 指向后挂载的
+  // 移动端输入框，导致桌面端 focus() 打到 display:none 的元素上。
+  const desktopInputRef = useRef<HTMLInputElement>(null)
+  const mobileInputRef = useRef<HTMLInputElement>(null)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /** 按当前断点聚焦可见的那一棵树的输入框（断点约定同 TravelClient/CountUp） */
+  const focusSearchInput = useCallback(() => {
+    const isMobile =
+      typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+    const target = isMobile ? mobileInputRef : desktopInputRef
+    target.current?.focus()
+  }, [])
 
   const performSearch = useCallback(async (q: string) => {
     const trimmed = q.trim()
@@ -124,7 +136,7 @@ function SearchContent() {
     if (initialQuery) {
       performSearch(initialQuery)
     } else {
-      inputRef.current?.focus()
+      focusSearchInput()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -135,7 +147,7 @@ function SearchContent() {
     setQuery('')
     setResults([])
     setHasSearched(false)
-    inputRef.current?.focus()
+    focusSearchInput()
   }
 
   const hasResults = useMemo(() => results.length > 0, [results])
@@ -156,7 +168,7 @@ function SearchContent() {
         <div className="relative mb-8">
           <Icon icon={Search} size="md" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/70" />
           <input
-            ref={inputRef}
+            ref={desktopInputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -283,7 +295,7 @@ function SearchContent() {
           <div className="flex items-center gap-2.5 rounded-2xl bg-[var(--m-surface-2)] px-3.5 transition-all focus-within:ring-2 focus-within:ring-[var(--m-accent)]">
             <Icon icon={Search} size="md" tone="faint" className="shrink-0" />
             <input
-              ref={inputRef}
+              ref={mobileInputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}

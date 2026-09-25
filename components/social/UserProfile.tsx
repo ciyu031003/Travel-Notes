@@ -92,7 +92,11 @@ export default function UserProfile({ userId }: { userId: number }) {
     photoCount: p.photoCount,
     location: p.location || undefined,
     author: { name: displayName(profile), avatar: profile.avatarUrl },
-    stats: { likes: p.likeCount, comments: p.commentCount, bookmarks: p.favoriteCount },
+    // 快捷点赞：在别人的主页浏览其旅行时也能直接点赞（/circle/user/* 需登录才能进）
+    postId: p.id,
+    liked: p.isLiked,
+    likeCount: p.likeCount,
+    stats: { comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
     onOpen: () => {
       const href = circlePostHref(p.id)

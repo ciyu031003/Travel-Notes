@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { isPublicPath, isPublicRequest, isStaticAssetPath, PUBLIC_PATHS, PUBLIC_READ_PATHS } from '@/lib/public-paths'
 
 describe('middleware 公开白名单（段边界匹配）', () => {
@@ -111,6 +111,34 @@ describe('旅行圈页面对游客开放（R2 路由加固）', () => {
   it('圈子里的其它路径不放行', () => {
     expect(isPublicRequest('/circle/12/edit', 'GET')).toBe(false)
     expect(isPublicRequest('/circle/', 'GET')).toBe(false)
+  })
+})
+
+describe('开发工具页只在非生产环境公开（M5）', () => {
+  // process.env.NODE_ENV 在 @types/node 里是只读的，用 vitest 的 stubEnv 改写
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('非生产环境放行 /dev/ui 及其子路由（本地无数据库也能看预览台）', () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    expect(isPublicRequest('/dev/ui', 'GET')).toBe(true)
+    expect(isPublicRequest('/dev/ui/v4', 'GET')).toBe(true)
+    // 放行是为了打开页面，不改动写请求语义
+    expect(isPublicRequest('/dev/ui', 'POST')).toBe(true)
+  })
+
+  it('生产环境一律不放行（即使构建时带了 DEV_UI=1）', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    expect(isPublicRequest('/dev/ui', 'GET')).toBe(false)
+    expect(isPublicRequest('/dev/ui/v4', 'GET')).toBe(false)
+  })
+
+  it('不误伤 /dev 下的其它路径与 /devices 之类前缀', () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    expect(isPublicRequest('/devices', 'GET')).toBe(false)
+    expect(isPublicRequest('/dev', 'GET')).toBe(false)
+    expect(isPublicRequest('/dev/other', 'GET')).toBe(false)
   })
 })
 

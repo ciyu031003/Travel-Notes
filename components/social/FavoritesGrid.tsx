@@ -29,7 +29,11 @@ export default function FavoritesGrid() {
     dayCount: p.dayCount,
     photoCount: p.photoCount,
     author: p.author ? { name: p.author.nickname || p.author.username, avatar: p.author.avatarUrl } : null,
-    stats: { likes: p.likeCount, comments: p.commentCount, bookmarks: p.favoriteCount },
+    // 快捷点赞：收藏列表里也能直接点赞（/api/social/me/favorites 已回填 isLiked）
+    postId: p.id,
+    liked: p.isLiked,
+    likeCount: p.likeCount,
+    stats: { comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
     onOpen: () => {
       const href = circlePostHref(p.id)

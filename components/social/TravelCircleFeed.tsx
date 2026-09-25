@@ -56,6 +56,8 @@ interface Post {
   likeCount: number
   commentCount: number
   favoriteCount: number
+  /** 服务端已按当前登录用户回填（social.service attachViewerState）—— 快捷点赞据此显示已赞态 */
+  isLiked: boolean
 }
 
 function dateRange(p: Post): string {
@@ -151,7 +153,13 @@ export default function TravelCircleFeed() {
     location: p.location || undefined,
     travelRelation: relationLabel(p),
     author: p.author ? { name: displayName(p.author), avatar: p.author.avatarUrl || null } : null,
-    stats: { likes: p.likeCount, comments: p.commentCount, bookmarks: p.favoriteCount },
+    // 点赞不再是只读数字：卡片上直接可点（不必进详情页）
+    postId: p.id,
+    liked: p.isLiked,
+    likeCount: p.likeCount,
+    // 访客点击快捷点赞 → 引导登录，不发无效请求（与上方访客横幅同一规则）
+    likeLoginHref: authChecked && !loggedIn ? '/login?redirect=%2Fcircle' : undefined,
+    stats: { comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
     // 统一入口：id 缺失时不跳 `/circle/undefined`（R2 路由加固）
     onOpen: () => {

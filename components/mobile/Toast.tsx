@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
-import { cn } from '@/lib/utils'
+import { hapticLight } from '@/lib/mobile/haptics'
 import { dismissToast, subscribeToasts, type ToastItem } from '@/lib/mobile/toast-store'
 
 const ICONS = {
@@ -12,7 +12,14 @@ const ICONS = {
   info: Info,
 }
 
-/** 轻提示宿主：全局挂载一次（root layout），订阅 toast store 渲染顶部提示 */
+/**
+ * 轻提示宿主：全局挂载一次（root layout），订阅 toast store 渲染顶部提示。
+ *
+ * M5 升级：
+ *  · 关闭按钮从 16px 图标（无内边距）提到 40px 圆形命中区
+ *  · 可选倒计时进度条（progress）与操作按钮（action，如「撤销」）
+ *  · 文案从硬编码 text-[13px] 收敛到 m-caption 字阶
+ */
 export function ToastHost() {
   const [items, setItems] = useState<ToastItem[]>([])
 
@@ -28,18 +35,47 @@ export function ToastHost() {
     >
       {items.map((item) => {
         const ToastIcon = ICONS[item.kind]
+        const dismissible = item.dismissible !== false
         return (
-          <div key={item.id} className={cn('m-toast m-enter')} data-kind={item.kind}>
-            <Icon icon={ToastIcon} size="sm" className="shrink-0" />
-            <span className="min-w-0 flex-1 text-[13px] leading-snug">{item.message}</span>
-            <button
-              type="button"
-              onClick={() => dismissToast(item.id)}
-              aria-label="关闭提示"
-              className="shrink-0 opacity-60 transition-opacity hover:opacity-100"
-            >
-              <Icon icon={X} size="sm" />
-            </button>
+          <div key={item.id} className="m-toast m-enter pointer-events-auto" data-kind={item.kind}>
+            <span className="m-toast-icon">
+              <Icon icon={ToastIcon} size="sm" />
+            </span>
+            <span className="m-caption min-w-0 flex-1">{item.message}</span>
+
+            {item.action && (
+              <button
+                type="button"
+                className="m-toast-action m-pressable"
+                onClick={() => {
+                  void hapticLight()
+                  item.action?.onClick()
+                  dismissToast(item.id)
+                }}
+              >
+                {item.action.label}
+              </button>
+            )}
+
+            {dismissible && (
+              <button
+                type="button"
+                onClick={() => dismissToast(item.id)}
+                aria-label="关闭提示"
+                className="m-toast-close m-pressable"
+              >
+                <Icon icon={X} size="sm" />
+              </button>
+            )}
+
+            {item.progress && (
+              <span className="m-toast-track" aria-hidden="true">
+                <span
+                  className="m-toast-bar"
+                  style={{ animationDuration: `${item.duration}ms` }}
+                />
+              </span>
+            )}
           </div>
         )
       })}

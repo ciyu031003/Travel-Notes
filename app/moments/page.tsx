@@ -25,7 +25,9 @@ export default function MomentsPage() {
 
       <div className="container-custom">
         <div className="mx-auto max-w-2xl px-1 pb-16">
-          <div className="mb-5 flex justify-end">
+          {/* 桌面端管理入口。移动端的管理入口在下方 LargeTitle 的 trailing 槽里，
+              此处若不加 md: 限制会导致移动端出现**两个「管理」入口**。 */}
+          <div className="mb-5 hidden justify-end md:flex">
             <ManageEntry
               href="/admin/moments"
               label="管理碎碎念"
