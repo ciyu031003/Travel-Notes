@@ -23,6 +23,15 @@ export default async function globalTeardown() {
   const run = async (sql: string, params: any[] = []) => {
     try { await conn.execute(sql, params) } catch (e) { console.warn('[e2e-teardown] skip:', (e as Error).message) }
   }
+  // 偏好问卷用例按时间戳建号（e2e_survey_*）——按前缀清理，避免残留
+  const [surveyRows] = await conn.execute("SELECT id FROM User WHERE username LIKE 'e2e_survey_%'")
+  for (const row of surveyRows as { id: number }[]) {
+    await run('DELETE FROM Session WHERE userId = ?', [row.id])
+    await run('DELETE FROM SpaceMember WHERE userId = ?', [row.id])
+    await run('UPDATE Travel SET ownerId = NULL WHERE ownerId = ?', [row.id])
+    await run('DELETE FROM User WHERE id = ?', [row.id])
+  }
+
   const uidSql = 'SELECT id FROM User WHERE username = ?'
   const [rows] = await conn.execute(uidSql, ['e2e_runner'])
   const uid = (rows as { id: number }[])[0]?.id

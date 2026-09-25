@@ -6,6 +6,7 @@ import AppUpdatePrompt from '@/components/offline/AppUpdatePrompt'
 import OfflineBootstrap from '@/components/offline/OfflineBootstrap'
 import { ToastHost } from '@/components/mobile/Toast'
 import { Onboarding } from '@/components/mobile/Onboarding'
+import { PreferenceSurvey } from '@/components/mobile/PreferenceSurvey'
 
 export const metadata: Metadata = {
   title: '行迹 | 旅行记忆空间',
@@ -34,6 +35,8 @@ export default function RootLayout({
         </a>
         <LayoutContent>{children}</LayoutContent>
         <Onboarding />
+        {/* 新用户偏好问卷：与首启引导互斥（等它退场后才上场），完成或跳过后不再弹 */}
+        <PreferenceSurvey />
         <CommandPalette />
         <AppUpdatePrompt />
         <OfflineBootstrap />

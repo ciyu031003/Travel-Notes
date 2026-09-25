@@ -24,7 +24,9 @@ import type { BadgeTone } from '@/lib/mobile/icon-system'
  *   · 无装饰光斑、无无限动画
  */
 
-const STORAGE_KEY = 'tiantu-onboard-seen-v1'
+export const ONBOARD_STORAGE_KEY = 'tiantu-onboard-seen-v1'
+export const ONBOARD_DONE_EVENT = 'tiantu:onboarding-done'
+const STORAGE_KEY = ONBOARD_STORAGE_KEY
 
 interface Slide {
   icon: LucideIcon
@@ -86,6 +88,10 @@ export function Onboarding() {
     } catch {}
     if (done) void hapticSuccess()
     setVisible(false)
+    // 通知"下一个一次性弹层"（偏好问卷）可以上场了 —— 两个全屏模态不该叠加
+    try {
+      window.dispatchEvent(new CustomEvent(ONBOARD_DONE_EVENT))
+    } catch {}
   }
 
   const nextSlide = () => {

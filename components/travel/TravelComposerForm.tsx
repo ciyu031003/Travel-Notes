@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, CalendarDays, Check, ChevronDown, Loader2, MapPin, Plus, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import DateRangePicker from './DateRangePicker'
+import { apiUrl } from '@/lib/api-base'
 import { useTravelDraft } from '@/hooks/use-travel-draft'
 import {
   COMMON_RELATIONS,
@@ -38,7 +39,7 @@ export default function TravelComposerForm({
   onCreated?: (info: { slug: string | null; local: boolean }) => void
 }) {
   const {
-    draft, patch, suggestions, submitting, error,
+    draft, patch, patchSystem, suggestions, submitting, error,
     validation, addCompanion, removeCompanion, submit,
   } = useTravelDraft(true)
 
@@ -51,6 +52,32 @@ export default function TravelComposerForm({
 
   const locationRef = useRef<HTMLDivElement>(null)
   const locInputRef = useRef<HTMLInputElement>(null)
+  /** 用户是否亲手改过旅行类型：改过就不再被偏好问卷的默认值覆盖 */
+  const typeTouchedRef = useRef(false)
+
+  /**
+   * 用偏好问卷里的「同行者风格」预选旅行类型。
+   * 走 patchSystem（不算"用户改过"），并且只在用户还没动过类型时生效 ——
+   * 否则会把他刚点的选择覆盖回去。
+   */
+  useEffect(() => {
+    let alive = true
+    fetch(apiUrl('/api/me'), { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive || !j) return
+        // /api/me 返回 { success, data }
+        const profile = j?.data ?? j
+        const style = profile?.preferences?.companionStyle
+        if (typeof style === 'string' && style && !typeTouchedRef.current) {
+          patchSystem({ travelType: style })
+        }
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [patchSystem])
 
   // 进页面即聚焦目的地：键盘弹起就能打字（参考产品那种"打开就开始"的轻盈感）
   useEffect(() => {
@@ -253,7 +280,10 @@ export default function TravelComposerForm({
                         <button
                           key={t.value}
                           type="button"
-                          onClick={() => patch({ travelType: t.value })}
+                          onClick={() => {
+                            typeTouchedRef.current = true
+                            patch({ travelType: t.value })
+                          }}
                           aria-pressed={active}
                           className={`flex min-h-[56px] flex-col items-start justify-center rounded-2xl border px-3 py-2 text-left transition active:scale-[0.98] ${
                             active

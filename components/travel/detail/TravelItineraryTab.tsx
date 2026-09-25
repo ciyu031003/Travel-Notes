@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CalendarDays, MapPin, Plus, Clock, Sparkles } from 'lucide-react'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { Button } from '@/components/mobile/Button'
@@ -11,6 +11,7 @@ import { AddDaySheet } from '@/components/travel/TravelTimeline'
 import { itineraryIconOf } from '@/lib/mobile/icon-system'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
+import { cautionHint } from '@/lib/modules/user/preferences'
 import { dayDateLabel, dayFullLabel, formatTime } from './format'
 import AddItinerarySheet from './AddItinerarySheet'
 import type { TimelineDay, TimelineItineraryItem } from './types'
@@ -45,6 +46,26 @@ export default function TravelItineraryTab({
   const [actionItem, setActionItem] = useState<{ dayId: number; item: TimelineItineraryItem } | null>(null)
   /** 在某一天「记一笔」（复用详情页同一个 MemoryComposer） */
   const [recordDay, setRecordDay] = useState<{ id: number; label: string; date: string | null } | null>(null)
+  /** 偏好问卷里"需要特别留意"的条目 → 顶部一行提示（懒加载，进本 tab 才请求） */
+  const [cautions, setCautions] = useState<string[]>([])
+
+  useEffect(() => {
+    let alive = true
+    fetch(apiUrl('/api/me'), { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return
+        // /api/me 返回 { success, data }
+        const list = (j?.data ?? j)?.preferences?.cautions
+        if (Array.isArray(list)) setCautions(list.filter((v: unknown): v is string => typeof v === 'string'))
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const hint = cautionHint(cautions)
 
   if (loading) {
     return (
@@ -71,6 +92,14 @@ export default function TravelItineraryTab({
 
   return (
     <div className="pb-4">
+      {/* 偏好提示：来自注册后的偏好问卷，只在有命中时出现 */}
+      {hint && (
+        <p className="mb-3 flex items-start gap-2 rounded-2xl bg-[var(--m-accent-soft)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--m-accent-strong)]">
+          <Icon icon={Sparkles} size="sm" className="mt-0.5 shrink-0" />
+          {hint}
+        </p>
+      )}
+
       {/* 日期胶囊：总览 + 每天 */}
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 pt-1">
         <button

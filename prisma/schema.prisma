@@ -113,6 +113,11 @@ model User {
   coverFocusY           Float?
   bio                   String?  @db.VarChar(200)
   accountId             String?  @unique @db.VarChar(12)
+  /// 偏好问卷答案（注册后一次性收集，可跳过）：
+  /// { companionStyle: 'ALONE'|'COUPLE'|'FRIENDS'|'FAMILY', delights: string[], vetoes: string[], cautions: string[], skipped?: boolean }
+  preferences           Json?
+  /// 问卷完成或跳过的时刻；**非空即表示不再弹出**（幂等锚点）
+  preferencesCompletedAt DateTime? @db.Timestamp(3)
   createdAt             DateTime @default(now()) @db.Timestamp(3)
   updatedAt             DateTime @updatedAt @db.Timestamp(3)
 

@@ -88,6 +88,10 @@ export interface MeProfile {
   /** 同行者聚合（从 Travel.companions 汇总，按姓名去重计数，最多 8 人） */
   companionStats: CompanionStat[]
   capabilities: UserCapabilities
+  /** 新用户偏好问卷答案（未做过为 null） */
+  preferences: unknown
+  /** 问卷完成或跳过的时刻；null 表示还没做过 → 客户端弹问卷 */
+  preferencesCompletedAt: string | null
 }
 
 /** 一天中的零点（本地时区），用于「距离出发还有几天」 */
@@ -120,6 +124,9 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
       coverFocusX: true,
       coverFocusY: true,
       accountId: true,
+      // 新用户偏好问卷：客户端据此决定是否弹（见 lib/modules/user/preferences.ts）
+      preferences: true,
+      preferencesCompletedAt: true,
       createdAt: true,
     },
   })
@@ -230,6 +237,8 @@ export async function getMyProfile(userId: number): Promise<MeProfile | null> {
     upcomingTravel,
     companionStats,
     capabilities,
+    preferences: user.preferences ?? null,
+    preferencesCompletedAt: iso(user.preferencesCompletedAt),
   }
 }
 

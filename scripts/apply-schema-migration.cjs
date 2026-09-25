@@ -168,6 +168,9 @@ async function main() {
   await addColumn(conn, 'User', 'accountId', 'accountId VARCHAR(12) NULL AFTER avatarUrl')
   await addColumn(conn, 'User', 'bio', 'bio VARCHAR(200) NULL AFTER accountId')
   await addUniqueIndex(conn, 'User', 'User_accountId_key', 'accountId')
+  // 偏好问卷（注册后弹一次；完成/跳过写 preferencesCompletedAt，此后不再弹）
+  await addColumn(conn, 'User', 'preferences', 'preferences JSON NULL AFTER accountId')
+  await addColumn(conn, 'User', 'preferencesCompletedAt', 'preferencesCompletedAt DATETIME(3) NULL AFTER preferences')
 
   // Post
   await addColumn(conn, 'Post', 'userId', 'userId INT NULL AFTER published')
