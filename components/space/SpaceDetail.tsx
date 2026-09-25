@@ -15,39 +15,13 @@ import { Pill } from '@/components/mobile/Pills'
 import { apiUrl } from '@/lib/api-base'
 import { SPACE_TYPES, spaceThemeOf, spaceTypeIconOf, spaceTypeLabelOf, spaceRoleLabelOf } from '@/lib/mobile/space-system'
 import { travelTypeIconOf, travelTypeLabelOf } from '@/lib/mobile/icon-system'
-import { SpaceAvatarStack, type SpaceMemberPreview } from './SpaceAvatarStack'
-import { SpaceActivityFeed, type SpaceActivityItem } from './SpaceActivityFeed'
+import { SpaceAvatarStack } from './SpaceAvatarStack'
+import { SpaceActivityFeed } from './SpaceActivityFeed'
 import { SpaceInvitePanel } from './SpaceInvitePanel'
-import { SpaceMemberList, type SpaceMemberRow } from './SpaceMemberList'
+import { SpaceMemberList } from './SpaceMemberList'
+import type { SpaceOverview } from '@/lib/modules/space/space-overview.types'
 
-export interface SpaceDetailData {
-  space: {
-    id: number
-    name: string
-    slug: string
-    description: string | null
-    spaceType: string
-    myRole: string
-    memberCount: number
-    members?: SpaceMemberPreview[]
-    createdAt: string
-  }
-  stats: { travelCount: number; albumCount: number; memoryCount: number; mediaCount: number }
-  travels: Array<{
-    id: number
-    title: string
-    slug: string
-    status: string
-    startDate: string | null
-    travelType: string
-    visibility: string
-  }>
-  albums: Array<{ id: number; title: string; coverUrl: string | null; mediaCount: number }>
-  memories: Array<{ id: number; content: string | null; createdBy: string | null; happenedAt: string | null }>
-  upcoming: Array<{ id: number; title: string; slug: string; startDate: string | null }>
-  activity: SpaceActivityItem[]
-  members: SpaceMemberRow[]
-}
+export type SpaceDetailData = SpaceOverview
 
 function fmtDate(iso?: string | null): string {
   if (!iso) return ''
@@ -74,7 +48,14 @@ function SectionHeader({ title, action }: { title: string; action?: React.ReactN
  * 权限：OWNER 看得到邀请与设置；MEMBER 只能编辑内容；VIEWER 全页只读
  * （服务端仍会各自校验，前端显隐只是体验）。
  */
-export default function SpaceDetail({ data }: { data: SpaceDetailData }) {
+export default function SpaceDetail({
+  data,
+  onChanged,
+}: {
+  data: SpaceDetailData
+  /** 数据变更后的刷新回调：客户端壳重新取数（服务端渲染场景不传也不影响） */
+  onChanged?: () => void
+}) {
   const router = useRouter()
   const { space, stats } = data
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -103,7 +84,9 @@ export default function SpaceDetail({ data }: { data: SpaceDetailData }) {
       const j = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(j.error || '保存失败')
       setSettingsOpen(false)
-      router.refresh()
+      // 客户端壳下 router.refresh() 无效（页面是客户端取数），走回调重新拉一次
+      if (onChanged) onChanged()
+      else router.refresh()
     } catch (e: any) {
       setError(e.message || '保存失败')
     } finally {
@@ -384,7 +367,7 @@ export default function SpaceDetail({ data }: { data: SpaceDetailData }) {
               spaceId={space.id}
               myRole={space.myRole}
               members={data.members}
-              onChanged={() => router.refresh()}
+              onChanged={() => (onChanged ? onChanged() : router.refresh())}
             />
           </div>
         </section>

@@ -133,6 +133,16 @@ export class SpaceService {
     return this.getSpace(username, found.id)
   }
 
+  /**
+   * 仅解析 slug → id（**不做权限校验**）。
+   * 用途：概览装配需要先拿到 id，权限统一在 `getSpace` 里校验一次，
+   * 避免同一请求里查两遍成员表。调用方必须随后走带权限的读取。
+   */
+  async getSpaceIdBySlug(slug: string): Promise<number | null> {
+    const found = await this.repo.findBySlug(slug)
+    return found?.id ?? null
+  }
+
   /** 更新空间自身（改名 / 改简介 / 改类型 / 换封面）：仅 OWNER */
   async updateSpace(actor: string, spaceId: number, input: UpdateSpaceInput): Promise<void> {
     await requireSpaceOwner(actor, spaceId)
