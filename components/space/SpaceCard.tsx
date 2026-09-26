@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { ChevronRight, Images, MapPin, Camera, Sparkles, Clock } from '@/lib/mobile/icon-system'
@@ -6,6 +6,7 @@ import { Icon } from '@/components/mobile/Icon'
 import { Pill } from '@/components/mobile/Pills'
 import { cn } from '@/lib/utils'
 import { spaceTypeIconOf, spaceTypeLabelOf, spaceRoleLabelOf } from '@/lib/mobile/space-system'
+import { spaceDetailHref } from '@/lib/routes'
 import { SpaceAvatarStack, type SpaceMemberPreview } from './SpaceAvatarStack'
 
 export interface SpaceCardData {
@@ -61,7 +62,7 @@ export function SpaceCard({ space, className }: { space: SpaceCardData; classNam
 
   return (
     <Link
-      href={`/space/${space.slug}`}
+      href={spaceDetailHref(space.slug)}
       className={cn(
         'block overflow-hidden rounded-[var(--m-radius-card)] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)] transition active:scale-[0.995]',
         className,

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   CalendarDays,
+  Check,
+  ChevronDown,
   ChevronLeft,
   CloudOff,
   Images,
@@ -12,10 +14,14 @@ import {
   MoreHorizontal,
   PenLine,
   Pencil,
+  RefreshCw,
+  User,
+  Users,
   Wallet,
   Maximize2,
 } from 'lucide-react'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
 import { IconButton } from '@/components/mobile/IconButton'
@@ -54,6 +60,7 @@ export default function TravelDetailMobile({
   onEdit,
   onBack,
   onEditReload,
+  onSyncNow,
   dataVersion = 0,
 }: {
   slug: string
@@ -65,6 +72,8 @@ export default function TravelDetailMobile({
   onBack: () => void
   /** 旅行级字段（封面/预算）变了：让外壳重新拉一次详情 */
   onEditReload: () => void
+  /** 「立即同步」：手动触发一轮上传，成功后外壳会重载详情（待同步态 → 可编辑） */
+  onSyncNow?: () => Promise<void> | void
   /**
    * 外壳的详情重载版本号。编辑信息（尤其是日期区间）后，服务端会补齐/调整「天」，
    * 本地这份 timeline 必须跟着重取 —— 否则头部已经显示「共 5 天」，
@@ -75,6 +84,62 @@ export default function TravelDetailMobile({
   const router = useRouter()
   const travelId = travel.id
   const serverKnown = travelId > 0 && !pendingSync
+  const [syncing, setSyncing] = useState(false)
+  // 归属空间选择器（仅旅行创建者可见）：把自己的旅行放进某个空间，或收回为「仅自己」
+  const [spacePickerOpen, setSpacePickerOpen] = useState(false)
+  const [mySpaces, setMySpaces] = useState<Array<{ id: number; name: string; spaceType: string; myRole: string }>>([])
+  const [spacesLoading, setSpacesLoading] = useState(false)
+  const [movingSpace, setMovingSpace] = useState(false)
+
+  const openSpacePicker = useCallback(async () => {
+    setSpacePickerOpen(true)
+    if (mySpaces.length > 0) return
+    setSpacesLoading(true)
+    try {
+      const res = await fetch(apiUrl('/api/spaces'), { credentials: 'include' })
+      const j = await res.json().catch(() => ({}))
+      if (res.ok) setMySpaces(j.spaces || [])
+    } catch {
+      // 静默：选择器里显示空态即可
+    } finally {
+      setSpacesLoading(false)
+    }
+  }, [mySpaces.length])
+
+  const moveToSpace = useCallback(
+    async (spaceId: number | null) => {
+      if (!travelId) return
+      setMovingSpace(true)
+      try {
+        const res = await fetch(apiUrl(`/api/travels/${travelId}/space`), {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spaceId }),
+        })
+        const j = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(j.error || '操作失败')
+        setSpacePickerOpen(false)
+        toast.success(spaceId ? '已移入空间，成员都能看到并一起编辑' : '已收回为仅自己可见')
+        onEditReload()
+      } catch (e: any) {
+        toast.error(e.message || '操作失败')
+      } finally {
+        setMovingSpace(false)
+      }
+    },
+    [travelId, onEditReload],
+  )
+
+  const syncNow = useCallback(async () => {
+    if (!onSyncNow) return
+    setSyncing(true)
+    try {
+      await onSyncNow()
+    } finally {
+      setSyncing(false)
+    }
+  }, [onSyncNow])
 
   const [tab, setTab] = useState<TabKey>('overview')
 
@@ -325,13 +390,55 @@ export default function TravelDetailMobile({
               </button>
             )}
           </div>
+
+          {/*
+            「这本旅行属于谁」必须一眼可见 —— 真机反馈「点开情侣空间/家人空间后
+            怎么和自己的做区分」。这里显式标注：仅自己 / 某个空间（+ 我在该空间的角色）。
+          */}
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void openSpacePicker()}
+              className={
+                travel.canMoveSpace
+                  ? 'inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-[var(--m-surface-2)] px-3 text-[12px] font-medium text-[var(--m-text)] active:scale-95'
+                  : 'inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-[var(--m-surface-2)] px-3 text-[12px] font-medium text-[var(--m-muted)]'
+              }
+            >
+              <Icon icon={travel.spaceId ? Users : User} size="sm" />
+              {travel.spaceId ? travel.spaceName || '共享空间' : '仅自己'}
+              {travel.mySpaceRole && (
+                <span className="text-[var(--m-faint)]">
+                  · {travel.mySpaceRole === 'OWNER' ? '主人' : travel.mySpaceRole === 'MEMBER' ? '成员' : '只读'}
+                </span>
+              )}
+              {travel.canMoveSpace && <Icon icon={ChevronDown} size="sm" />}
+            </button>
+            {travel.spaceId && !travel.canEdit && (
+              <span className="text-[12px] text-[var(--m-muted)]">你在该空间是只读成员，只能查看</span>
+            )}
+          </div>
         </div>
       </section>
 
       {pendingSync && (
-        <div className="mx-4 mt-3 flex items-start gap-2 rounded-2xl bg-[var(--m-accent-soft)] px-3.5 py-3 text-[12px] text-[var(--m-accent-strong)]">
-          <Icon icon={CloudOff} size="sm" className="mt-0.5 shrink-0" />
-          <span>这本旅行还在本地待同步：联网后会自动上传，届时即可添加行程、照片与花销。</span>
+        <div className="mx-4 mt-3 rounded-2xl bg-[var(--m-accent-soft)] px-3.5 py-3 text-[12px] text-[var(--m-accent-strong)]">
+          <div className="flex items-start gap-2">
+            <Icon icon={CloudOff} size="sm" className="mt-0.5 shrink-0" />
+            <span>
+              这本旅行还在本地待同步，所以暂时不能添加行程、照片与花销。
+              联网后会自动上传；也可点右侧按钮立即重试。
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void syncNow()}
+            disabled={syncing}
+            className="m-pressable mt-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--m-accent-strong)] px-3 py-1.5 text-[12px] font-medium text-[var(--m-on-accent)] disabled:opacity-60"
+          >
+            <Icon icon={RefreshCw} size="sm" />
+            {syncing ? '同步中…' : '立即同步'}
+          </button>
         </div>
       )}
 
@@ -471,6 +578,15 @@ export default function TravelDetailMobile({
               onEdit()
             },
           },
+          // 归属空间：把自己的旅行放进情侣/家庭/朋友空间，或收回为「仅自己」
+          ...(travel.canMoveSpace
+            ? [
+                {
+                  label: travel.spaceId ? '更改所属空间' : '放到共享空间',
+                  onClick: () => void openSpacePicker(),
+                },
+              ]
+            : []),
           {
             label: '复制分享链接',
             onClick: async () => {
@@ -506,6 +622,72 @@ export default function TravelDetailMobile({
           },
         ]}
       />
+
+      {/*
+        归属空间选择器。
+        产品诉求：「怎么把我原先建立的行程放到情侣空间，让空间主人/成员一起阅览、修改」。
+        这里列出「仅自己」+ 我有写权限的空间，选一个即可移入/移出。
+        移入后空间成员可见并可编辑；只读（VIEWER）的空间不会出现在列表里（服务端也会拒）。
+      */}
+      <BottomSheet open={spacePickerOpen} onClose={() => setSpacePickerOpen(false)} title="放到哪里？">
+        <div className="space-y-2">
+          <button
+            type="button"
+            disabled={movingSpace}
+            onClick={() => void moveToSpace(null)}
+            className={
+              'flex w-full items-center gap-3 rounded-[var(--m-radius-control)] px-3.5 py-3 text-left disabled:opacity-60 ' +
+              (!travel.spaceId ? 'bg-[var(--m-accent-soft)]' : 'bg-[var(--m-surface-2)]')
+            }
+          >
+            <Icon icon={User} size="md" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-medium text-[var(--m-text)]">仅自己</span>
+              <span className="block text-[12px] text-[var(--m-muted)]">不放进任何空间，只有你能看到</span>
+            </span>
+            {!travel.spaceId && <Icon icon={Check} size="sm" tone="accent" />}
+          </button>
+
+          {spacesLoading && (
+            <p className="py-3 text-center text-[13px] text-[var(--m-muted)]">正在加载你的空间…</p>
+          )}
+
+          {!spacesLoading &&
+            mySpaces.map((s) => {
+              const current = travel.spaceId === s.id
+              const readOnly = s.myRole === 'VIEWER'
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  disabled={movingSpace || readOnly}
+                  onClick={() => void moveToSpace(s.id)}
+                  className={
+                    'flex w-full items-center gap-3 rounded-[var(--m-radius-control)] px-3.5 py-3 text-left disabled:opacity-60 ' +
+                    (current ? 'bg-[var(--m-accent-soft)]' : 'bg-[var(--m-surface-2)]')
+                  }
+                >
+                  <Icon icon={Users} size="md" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-medium text-[var(--m-text)]">{s.name}</span>
+                    <span className="block text-[12px] text-[var(--m-muted)]">
+                      {readOnly
+                        ? '你是只读成员，不能往里添加内容'
+                        : `你是${s.myRole === 'OWNER' ? '主人' : '成员'}，空间成员都能看到并一起编辑`}
+                    </span>
+                  </span>
+                  {current && <Icon icon={Check} size="sm" tone="accent" />}
+                </button>
+              )
+            })}
+
+          {!spacesLoading && mySpaces.length === 0 && (
+            <p className="rounded-[var(--m-radius-control)] bg-[var(--m-surface-2)] px-3.5 py-3 text-[13px] text-[var(--m-muted)]">
+              你还没有共享空间。可以先到「我的 → 我的空间」创建一个情侣 / 家庭 / 朋友空间，再把旅行放进去。
+            </p>
+          )}
+        </div>
+      </BottomSheet>
     </div>
   )
 }

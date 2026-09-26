@@ -61,6 +61,14 @@ export interface TravelInfoForDetail {
   budget?: number | null
   ownerId?: number | null
   canEdit?: boolean
+  /** 归属空间：null = 仅自己（个人旅行） */
+  spaceId?: number | null
+  spaceName?: string | null
+  /** 我在该空间的角色（OWNER/MEMBER/VIEWER）；决定是否可编辑空间内内容 */
+  mySpaceRole?: string | null
+  /** 我是不是这本旅行的创建者 —— 决定能否变更归属空间 */
+  canMoveSpace?: boolean
+  visibility?: string
   /** 仅在本地 SQLite 里、还没同步上云（离线兜底渲染时为 true） */
   pendingSync?: boolean
 }

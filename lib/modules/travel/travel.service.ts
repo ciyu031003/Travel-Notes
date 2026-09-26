@@ -10,7 +10,8 @@ import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
 import { absoluteMediaUrl, storageKeyToUrl } from '../../media-url'
 // P0 收敛：空间成员关系的唯一查询入口（同时按 userId + username 两种键查）
-import { myActiveSpaceIds as sharedMyActiveSpaceIds, spaceScopedWhere } from '../access/space-scope'
+import { myActiveSpaceIds as sharedMyActiveSpaceIds, spaceScopedWhere, isSpaceContentEditor } from '../access/space-scope'
+import { writeAuditLog } from '../audit/audit-log.service'
 
 export interface TravelSummary {
   id: number
@@ -119,8 +120,9 @@ export async function listTravels(
    * 而列表原先只认 `ownerId`，于是**同空间成员的旅行在 /travel 里看不到、直接开链接又能看**。
    * 两处口径不一致，用户会以为"同步丢了"。
    */
+  // 空间分支增加 visibility 限制：PRIVATE 的旅行即使同空间也不对成员开放
   const spaceIds = await sharedMyActiveSpaceIds(userId, username)
-  const where = spaceScopedWhere(userId, 'ownerId', spaceIds)
+  const where = spaceScopedWhere(userId, 'ownerId', spaceIds, ['SPACE', 'PUBLIC'])
 
   const rows = await prisma.travel.findMany({
     where: where as any,
@@ -197,9 +199,15 @@ export async function listTravels(
   })
 }
 
-export async function getTravelDetail(id: number, userId?: number | null): Promise<TravelDetail | null> {
+export async function getTravelDetail(
+  id: number,
+  userId?: number | null,
+  username?: string | null,
+): Promise<TravelDetail | null> {
+  // 与 getTravelBySlug / listTravels 同口径：空间成员也能读到空间内的旅行
+  const spaceIds = await sharedMyActiveSpaceIds(userId, username)
   const travel = await prisma.travel.findFirst({
-    where: { ...scopedWhere(userId, 'ownerId'), id } as any,
+    where: { ...(spaceScopedWhere(userId, 'ownerId', spaceIds, ['SPACE', 'PUBLIC']) as object), id } as any,
     include: {
       days: {
         orderBy: { sortOrder: 'asc' },
@@ -430,9 +438,23 @@ export async function getTravelMemoryPhotos(travelId: number, limit = 60): Promi
   return out
 }
 
-export async function getTravelBySlug(slug: string, userId?: number | null): Promise<TravelPublicDetail | null> {  if (skipDbOnBuild()) return null
+export async function getTravelBySlug(
+  slug: string,
+  userId?: number | null,
+  username?: string | null,
+): Promise<TravelPublicDetail | null> {
+  if (skipDbOnBuild()) return null
+  /**
+   * 读路径必须与 `listTravels` / `canActOnContent` 同口径。
+   *
+   * 历史缺陷：这里用 `scopedWhere(userId,'ownerId')`（只认 "我名下的 ∪ 公开的"），
+   * 于是**空间成员点开共享旅行得到 404**，而同一个人的写请求却被放行 ——
+   * 真机表现就是「空间里的旅行大家一起改不了，连看都看不到」。
+   * 空间分支再叠一层 visibility 限制：PRIVATE 的旅行即使在同一空间也不对成员开放。
+   */
+  const spaceIds = await sharedMyActiveSpaceIds(userId, username)
   const t = await prisma.travel.findFirst({
-    where: { ...scopedWhere(userId, 'ownerId'), slug } as any,
+    where: { ...(spaceScopedWhere(userId, 'ownerId', spaceIds, ['SPACE', 'PUBLIC']) as object), slug } as any,
     include: { coverMedia: { include: { variants: true } } },
   })
   if (!t) return null
@@ -960,3 +982,88 @@ export async function findTravelIdByExpenseId(expenseId: number): Promise<number
 }
 
 export { ITINERARY_TYPES }
+
+// ============================================================
+// 旅行归属空间（个人 ↔ 空间）
+// ============================================================
+
+export interface TravelSpaceInfo {
+  spaceId: number | null
+  spaceName: string | null
+  /** 我在该空间的角色；null 表示旅行不属于空间或我不是成员 */
+  mySpaceRole: string | null
+  visibility: string
+}
+
+/** 旅行当前的归属空间信息（详情页展示「仅自己 / 某个空间」用） */
+export async function getTravelSpaceInfo(travelId: number, userId?: number | null): Promise<TravelSpaceInfo> {
+  const travel = await prisma.travel.findUnique({
+    where: { id: travelId },
+    select: { spaceId: true, visibility: true, space: { select: { name: true } } },
+  })
+  if (!travel) return { spaceId: null, spaceName: null, mySpaceRole: null, visibility: 'SPACE' }
+  let mySpaceRole: string | null = null
+  if (travel.spaceId && userId) {
+    const member = await prisma.spaceMember.findFirst({
+      where: { spaceId: travel.spaceId, userId, status: 'ACTIVE' },
+      select: { role: true },
+    })
+    mySpaceRole = member?.role ?? null
+  }
+  return {
+    spaceId: travel.spaceId ?? null,
+    spaceName: travel.space?.name ?? null,
+    mySpaceRole,
+    visibility: String(travel.visibility ?? 'SPACE'),
+  }
+}
+
+/**
+ * 变更旅行归属空间（`spaceId = null` 表示收回为「仅自己」）。
+ *
+ * 权限规则（与产品口径一致）：
+ *  · **只有旅行的创建者**能改归属 —— 否则任何人都能把别人的旅行拉进自己的空间；
+ *  · 移入某个空间时，我还必须是该空间的 **OWNER/MEMBER**（只读成员不能往空间里塞内容）；
+ *  · PRIVATE 的旅行移入空间时同步改为 SPACE：否则空间成员「看得见卡片、点开却没内容」，很困惑。
+ *
+ * 空间成员对空间内旅行的**编辑**权限不在这里判 —— 那由 `canActOnContent`（OWNER/MEMBER）负责。
+ */
+export async function setTravelSpace(
+  travelId: number,
+  spaceId: number | null,
+  userId: number | null | undefined,
+  username?: string | null,
+): Promise<{ spaceId: number | null; visibility: string }> {
+  if (!userId) throw new Error('未授权')
+
+  const travel = await prisma.travel.findUnique({
+    where: { id: travelId },
+    select: { id: true, ownerId: true, spaceId: true, visibility: true, title: true },
+  })
+  if (!travel) throw new Error('旅行不存在')
+  if (travel.ownerId !== userId) throw new Error('只有这本旅行的创建者可以变更所属空间')
+
+  if (spaceId != null) {
+    const canPut = await isSpaceContentEditor(spaceId, userId, username)
+    if (!canPut) throw new Error('你在这个空间里是只读成员，不能往里添加内容')
+  }
+
+  // PRIVATE 移入空间后升级为 SPACE（空间成员可见）；PUBLIC 保持不动
+  const nextVisibility = spaceId != null && travel.visibility === 'PRIVATE' ? 'SPACE' : String(travel.visibility)
+
+  await prisma.travel.update({
+    where: { id: travelId },
+    data: { spaceId, visibility: nextVisibility as never },
+  })
+
+  await writeAuditLog({
+    username: username || String(userId),
+    action: 'UPDATE',
+    resourceType: 'Travel',
+    resourceId: String(travelId),
+    spaceId,
+    metadata: { title: travel.title, from: travel.spaceId ?? null, to: spaceId },
+  }).catch(() => {})
+
+  return { spaceId, visibility: nextVisibility }
+}

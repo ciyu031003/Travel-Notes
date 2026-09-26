@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUserId } from '@/lib/current-user'
+import { getCurrentUser } from '@/lib/current-user'
 import { prisma } from '@/lib/db'
-import { getTravelBySlug, getTravelMemoryPhotos } from '@/lib/modules/travel/travel.service'
+import { getTravelBySlug, getTravelMemoryPhotos, getTravelSpaceInfo } from '@/lib/modules/travel/travel.service'
+import { canActOnContent, canViewResource } from '@/lib/modules/access'
 import { getPostService } from '@/lib/container'
 export const dynamic = 'force-dynamic'
 
@@ -16,9 +17,10 @@ export const dynamic = 'force-dynamic'
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params
   const slug = decodeURIComponent(rawSlug)
-  const userId = await getCurrentUserId()
+  const user = await getCurrentUser()
+  const userId = user?.id ?? null
 
-  const travel = await getTravelBySlug(slug, userId)
+  const travel = await getTravelBySlug(slug, userId, user?.username)
   let legacy: any = null
   if (!travel) {
     legacy = await getPostService().getPostBySlugHybrid('travel', slug, userId).catch(() => null)
@@ -29,16 +31,27 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 
   const memoryPhotos = travel ? await getTravelMemoryPhotos(travel.id).catch(() => []) : []
 
-  // 「能不能编辑」由服务端判：详情页据此决定是否显示「编辑信息」入口。
-  // ownerId 一并下发（不是敏感信息——它只用于判断"这是我自己的旅行吗"）。
-  const ownerId = travel
-    ? (
-        await prisma.travel
-          .findUnique({ where: { id: travel.id }, select: { ownerId: true } })
-          .catch(() => null)
-      )?.ownerId ?? null
+  /**
+   * 「能不能编辑」必须走**统一的写权限判读**，而不是只比 ownerId。
+   *
+   * 历史缺陷：这里原先写的是 `canEdit = userId === ownerId` —— 于是**空间成员看不到编辑入口**，
+   * 而服务端 `canActOnContent`（OWNER/MEMBER 可写）其实是放行的。
+   * 两端口径不一致的后果就是产品诉求「空间里大家一起改」落不了地：
+   * 成员点开只读、找不到任何编辑/添加行程/删除按钮。
+   */
+  const snapshot = travel
+    ? await prisma.travel
+        .findUnique({
+          where: { id: travel.id },
+          select: { ownerId: true, spaceId: true, visibility: true, isPublic: true },
+        })
+        .catch(() => null)
     : null
-  const canEdit = !!(userId && ownerId && userId === ownerId)
+  const ownerId = snapshot?.ownerId ?? null
+  const canEdit = snapshot ? await canActOnContent('Travel', snapshot, userId).catch(() => false) : false
+  const canView = snapshot ? await canViewResource('Travel', snapshot, userId).catch(() => false) : true
+  // 归属空间：详情页据此展示「仅自己 / 某个空间」，并决定是否给出「移入空间」入口
+  const spaceInfo = travel ? await getTravelSpaceInfo(travel.id, userId).catch(() => null) : null
 
   const images = travel
     ? dedupeUrls([
@@ -72,6 +85,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
           budget: travel.budget,
           ownerId,
           canEdit,
+          canView,
+          // 归属空间（个人 ↔ 空间）：可移动性由「我是不是创建者」决定
+          spaceId: spaceInfo?.spaceId ?? null,
+          spaceName: spaceInfo?.spaceName ?? null,
+          mySpaceRole: spaceInfo?.mySpaceRole ?? null,
+          canMoveSpace: !!userId && ownerId === userId,
+          visibility: spaceInfo?.visibility ?? (snapshot?.visibility ? String(snapshot.visibility) : 'SPACE'),
         }
       : null,
     legacy: legacy

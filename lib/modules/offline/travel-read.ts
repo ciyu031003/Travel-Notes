@@ -2,7 +2,7 @@
  * 旅行离线读（Stage 3.0a 接线）：从本地 SQLite 读 travel 表，映射为与 /api/travels 一致的 posts 形状。
  * 供 /travel 页面用 readWithFallback 在离线/失败时回退本地。
  */
-import { queryRows } from './dao'
+import { queryRows, tableColumnNames } from './dao'
 import { isNativePlatform } from './platform'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
 
@@ -150,72 +150,93 @@ export interface LocalTravelInfo {
 /**
  * 按 slug 读本地旅行（详情页 / record 页离线回退用）。
  * 返回云端 id（remoteId）或本地 id，并显式告知是否仍未同步。
+ *
+ * 列名不再硬编码见下方注释：按「期望列 ∩ 表真实列」拼 SELECT 并按下标取值。
  */
-const LOCAL_TRAVEL_DETAIL_COLUMNS =
-  'id, remoteId, title, slug, spaceId, description, location, startDate, endDate, travelType, companions, syncStatus, budget, cover'
-/** 旧库兜底：不含 later-added 的 budget / cover（见下方注释） */
-const LOCAL_TRAVEL_DETAIL_COLUMNS_COMPAT =
-  'id, remoteId, title, slug, spaceId, description, location, startDate, endDate, travelType, companions, syncStatus'
-
 export async function readLocalTravelBySlug(slug: string): Promise<LocalTravelInfo | null> {
   if (!isNativePlatform() || !slug) return null
   try {
     /**
-     * 三级兜底（真机反馈「新建旅行后点进去报"网络错误"」的根因就在这里）：
+     * 按「期望列 ∩ 表真实列」拼 SELECT。
      *
-     *  ① 全列查询（含 budget / cover）。
-     *  ② 旧库兼容查询：设备上的 SQLite 若是**升级前**建的，"ALTER TABLE travel ADD COLUMN budget"
-     *     没跑成功/未跑到时，全列 SELECT 会整条抛错 —— 详情页于是退化成"网络错误"。
-     *     退一档用不含新列的 SELECT，至少能把旅行打开。
-     *  ③ slug 漂移兜底：云端 slug 与本地 slug 不同（App 本地按标题生成、同步后云端会重算），
-     *     旧链接/localSlug 直接查不到时，按"由标题推出的 slug"再匹配一次。
+     * 为什么不再硬编码列名（历史教训）：老设备上的 `travel` 表可能是很早的版本建的，
+     * 缺少后加的列（`slug` / `cover` / `budget` …）。硬编码 `SELECT ... slug ...` 会整条抛错，
+     * 被 `.catch(() => [])` 静默吞掉 → 本地兜底返回 null → 详情页退化成「网络错误」。
+     * 之前的修法是再加一层「兼容列」清单 —— 但那只是把同一个坑往后挪一格（清单仍包含 slug）。
+     * 现在按真实结构取列，并按列名下标取值，**从此不再因列漂移而整条失败**。
      */
+    const wanted = [
+      'id', 'remoteId', 'title', 'slug', 'spaceId', 'description', 'location',
+      'startDate', 'endDate', 'travelType', 'companions', 'syncStatus', 'budget', 'cover',
+    ]
+    const available = await tableColumnNames('travel')
+    const cols = available ? wanted.filter((c) => available.includes(c)) : wanted
+    if (!cols.includes('id') || !cols.includes('slug')) {
+      // 表结构异常到连 id/slug 都没有：交给上层按"本地无数据"处理
+      return null
+    }
+    const select = cols.join(', ')
+    const at = (row: unknown[], name: string): unknown => {
+      const i = cols.indexOf(name)
+      return i >= 0 ? row[i] : undefined
+    }
+
     let rows = await queryRows(
-      `SELECT ${LOCAL_TRAVEL_DETAIL_COLUMNS} FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1`,
+      `SELECT ${select} FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1`,
       [slug],
     ).catch(() => [] as unknown[][])
-    if (rows.length === 0) {
-      rows = await queryRows(
-        `SELECT ${LOCAL_TRAVEL_DETAIL_COLUMNS_COMPAT} FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1`,
-        [slug],
-      ).catch(() => [] as unknown[][])
-    }
-    if (rows.length === 0) {
+
+    // slug 漂移兜底：云端重算过 slug（唯一性冲突加后缀）、或旧链接拿着旧 slug 时，
+    // 按"由标题推出的 slug"再匹配一次。
+    if (rows.length === 0 && cols.includes('title')) {
       const all = await queryRows(
-        `SELECT ${LOCAL_TRAVEL_DETAIL_COLUMNS_COMPAT} FROM travel WHERE deleted = 0`,
+        `SELECT ${select} FROM travel WHERE deleted = 0`,
         [],
       ).catch(() => [] as unknown[][])
-      const hit = all.find((row) => makeTravelSlug(String(row[2] ?? '')) === slug)
+      const hit = all.find((row) => makeTravelSlug(String(at(row, 'title') ?? '')) === slug)
       if (hit) rows = [hit]
     }
+
     const r = rows[0]
     if (!r) return null
-    const remoteId = r[1] == null ? null : Number(r[1])
-    const localId = String(r[0])
-    const startMs = Number(r[7]) || 0
-    const endMs = Number(r[8]) || 0
+
+    const remoteIdRaw = at(r, 'remoteId')
+    const remoteId = remoteIdRaw == null ? null : Number(remoteIdRaw)
+    const localId = String(at(r, 'id'))
+    const startMs = Number(at(r, 'startDate')) || 0
+    const endMs = Number(at(r, 'endDate')) || 0
+    const companionsRaw = at(r, 'companions')
     let companions: unknown = null
     try {
-      companions = r[10] ? JSON.parse(String(r[10])) : null
+      companions = companionsRaw ? JSON.parse(String(companionsRaw)) : null
     } catch {
       companions = null
     }
+    const spaceIdRaw = at(r, 'spaceId')
+    const budgetRaw = at(r, 'budget')
+    const coverRaw = at(r, 'cover')
+    const travelTypeRaw = at(r, 'travelType')
+    const descriptionRaw = at(r, 'description')
+    const locationRaw = at(r, 'location')
+    const slugRaw = at(r, 'slug')
+    const titleRaw = at(r, 'title')
+
     return {
       id: remoteId ?? localId,
       localId,
       remoteId,
-      pendingSync: remoteId == null || String(r[11] || '') !== 'SYNCED',
-      title: String(r[2] ?? ''),
-      slug: String(r[3] ?? slug),
-      spaceId: r[4] == null ? null : Number(r[4]),
-      description: r[5] == null ? undefined : String(r[5]),
-      location: r[6] == null ? undefined : String(r[6]),
+      pendingSync: remoteId == null || String(at(r, 'syncStatus') || '') !== 'SYNCED',
+      title: String(titleRaw ?? ''),
+      slug: String(slugRaw ?? slug),
+      spaceId: spaceIdRaw == null ? null : Number(spaceIdRaw),
+      description: descriptionRaw == null ? undefined : String(descriptionRaw),
+      location: locationRaw == null ? undefined : String(locationRaw),
       startDate: startMs ? new Date(startMs).toISOString() : null,
       endDate: endMs ? new Date(endMs).toISOString() : null,
-      travelType: r[9] == null ? null : String(r[9]),
+      travelType: travelTypeRaw == null ? null : String(travelTypeRaw),
       companions,
-      budget: r[12] == null ? null : Number(r[12]),
-      cover: r[13] == null ? null : String(r[13]),
+      budget: budgetRaw == null ? null : Number(budgetRaw),
+      cover: coverRaw == null ? null : String(coverRaw),
     }
   } catch {
     return null

@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '新增「我的空间」模块：情侣/家庭/朋友/独旅/其他五类空间各有专属清新配色；成员可一起编辑空间内的旅行、相册与回忆；空间详情页含动态记录与成员邀请',
+    changelog: process.env.APP_CHANGELOG || '修：新建旅行后报错进不去、旅行里没有编辑/添加行程/删除按钮（同步未即时上传且云端ID未回填）；新增：把已有旅行放进情侣/家庭/朋友空间，主人与成员可一起编辑，只读成员只能查看',
     forceUpdate,
   })
 }

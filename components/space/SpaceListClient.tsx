@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/mobile/EmptyState'
 import { Field, FieldTextarea } from '@/components/mobile/Field'
 import { LoaderBlock } from '@/components/mobile/Loader'
 import { apiUrl } from '@/lib/api-base'
+import { spaceDetailHref } from '@/lib/routes'
 import { SPACE_TYPE_NAME_HINTS, SPACE_ROLE_LABELS } from '@/lib/mobile/space-system'
 import { SpaceCard, SpaceSectionHeader, type SpaceCardData } from './SpaceCard'
 import { SpaceThemeScope } from './SpaceThemeScope'
@@ -99,7 +100,7 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
       setCreateOpen(false)
       showToast('空间已创建，去邀请伙伴一起记录吧')
       await load()
-      if (j.slug) router.push(`/space/${j.slug}`)
+      if (j.slug) router.push(spaceDetailHref(j.slug))
     } catch (err: any) {
       setError(err.message || '创建失败')
     } finally {

@@ -10,10 +10,48 @@ import { apiUrl } from '@/lib/api-base'
 
 export interface UploadResult {
   remoteId?: number
+  /** 服务器回传的规范 slug（旅行/相册等有 slug 的实体会回填到本地行） */
+  slug?: string
 }
 
 export interface SyncDispatcher {
   upload(item: SyncQueueItem): Promise<UploadResult>
+}
+
+/**
+ * 从写接口响应里取云端主键。
+ *
+ * ⚠️ 这里曾是一个**静默失效**的严重缺陷：起初只认 `{ data: { id } }` 一种形状，
+ * 而项目里的写接口实际返回的是 `{ success, id, slug }`（见 `app/api/admin/travels/route.ts`）。
+ * 于是 `remoteId` 永远是 undefined →
+ *   · `queue.setRemoteId` 不执行、`markEntitySynced` 拿到 null；
+ *   · 本地行 `remoteId` 永远为 NULL，而 `pendingSync = remoteId == null || syncStatus !== 'SYNCED'`
+ *     **恒为 true**；
+ *   · `TravelDetailMobile` 的 `canWrite = travelId > 0 && !pendingSync` **恒为 false**。
+ * 真机表现就是：新建的旅行永远显示「还在本地待同步」，没有编辑/添加行程/删除按钮，
+ * 而它其实**早就上传成功了**（队列已 markDone，不会重试）。
+ * 现在两种形状都认，并顺带把 slug 带回去（服务器可能重算 slug）。
+ */
+function pickRemoteId(json: unknown): number | undefined {
+  if (!json || typeof json !== 'object') return undefined
+  const j = json as Record<string, unknown>
+  const data = (j.data && typeof j.data === 'object' ? j.data : undefined) as Record<string, unknown> | undefined
+  const candidates: unknown[] = [data?.id, j.id, data?.travelId, j.travelId, data?.albumId, j.albumId]
+  for (const c of candidates) {
+    const n = Number(c)
+    if (Number.isFinite(n) && n > 0) return n
+  }
+  return undefined
+}
+
+function pickSlug(json: unknown): string | undefined {
+  if (!json || typeof json !== 'object') return undefined
+  const j = json as Record<string, unknown>
+  const data = (j.data && typeof j.data === 'object' ? j.data : undefined) as Record<string, unknown> | undefined
+  for (const c of [data?.slug, j.slug]) {
+    if (typeof c === 'string' && c.trim()) return c.trim()
+  }
+  return undefined
 }
 
 // 实体类型 → 服务器写接口（3.6 后台能力模块化后逐步收敛到模块化写接口）
@@ -101,9 +139,7 @@ export class HttpSyncDispatcher implements SyncDispatcher {
     })
     if (!res.ok) throw new Error('HTTP ' + res.status)
     const json = await res.json().catch(() => ({}))
-    const data = json && typeof json === 'object' ? (json as { data?: { id?: unknown } }).data : undefined
-    const remoteId = data && typeof data === 'object' && data.id != null ? Number(data.id) : undefined
-    return { remoteId }
+    return { remoteId: pickRemoteId(json), slug: pickSlug(json) }
   }
 
   /** 媒体上传：读本地照片 → multipart → POST /api/admin/albums/{albumId}/media */
@@ -132,7 +168,7 @@ export class HttpSyncDispatcher implements SyncDispatcher {
     const json = await res.json().catch(() => ({}))
     const media = json && typeof json === 'object' ? (json as { media?: Array<{ id?: unknown }> }).media : undefined
     const remoteId = Array.isArray(media) && media[0] && media[0].id != null ? Number(media[0].id) : undefined
-    return { remoteId }
+    return { remoteId: Number.isFinite(remoteId as number) ? (remoteId as number) : pickRemoteId(json) }
   }
 }
 

@@ -2,10 +2,29 @@
  * 本地 SQLite 读 DAO（Stage 3.0a）。
  * 提供离线读的通用查询助手；3.4 同步引擎会先填充本地表，页面接线时按需加实体映射。
  */
-import { getOfflineDb, toRows } from './native/sqlite-db'
+import { getOfflineDb, toRows, tableColumns } from './native/sqlite-db'
 import { isNativePlatform } from './platform'
 
 export type Row = unknown[]
+
+/**
+ * 某表真实存在的列名（原生端）。
+ *
+ * 用途：读取 SQL 不应硬编码列名 —— 老设备上的表可能缺少后加的列
+ * （`CREATE TABLE IF NOT EXISTS` 不会补列），硬编码 `SELECT ... slug ...`
+ * 会整条抛错并被静默吞掉，最终表现为「本地兜底拿不到数据 → 页面报网络错误」。
+ * 调用方据此把 SELECT 收敛为「期望列 ∩ 真实列」，并对结果按下标取值。
+ */
+export async function tableColumnNames(table: string): Promise<string[] | null> {
+  if (!isNativePlatform()) return null
+  try {
+    const db = await getOfflineDb()
+    const cols = await tableColumns(db, table)
+    return cols ? Array.from(cols) : null
+  } catch {
+    return null
+  }
+}
 
 /** 通用查询（仅原生端可用，Web 不调用） */
 export async function queryRows(sql: string, values?: unknown[]): Promise<Row[]> {

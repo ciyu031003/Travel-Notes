@@ -99,7 +99,8 @@ export class SyncEngine {
         }
         await this.queue.markDone(item.id)
         // 上传成功：回写本地实体 syncStatus=SYNCED + 回填 remoteId（否则拉取会一直跳过该行）
-        await markEntitySynced(item.entityType, item.entityId, result.remoteId ?? item.remoteId)
+        // 注意：remoteId 必须真的解析出来，否则本地行会永远停在 pendingSync —— 见 sync-dispatcher 的 pickRemoteId
+        await markEntitySynced(item.entityType, item.entityId, result.remoteId ?? item.remoteId, result.slug)
       } catch (e) {
         await this.queue.markFailed(item.id, e instanceof Error ? e.message : '同步失败')
       }

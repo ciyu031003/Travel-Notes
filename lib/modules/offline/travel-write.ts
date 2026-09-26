@@ -9,6 +9,8 @@ import { getSyncQueueStorage } from './storage'
 import { isNativePlatform } from './platform'
 import { apiUrl } from '@/lib/api-base'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
+import { readLocalTravelBySlug } from './travel-read'
+import { getSyncEngine, startSyncEngine } from './bootstrap'
 
 export interface CreateTravelInput {
   title: string
@@ -31,6 +33,8 @@ export interface CreateTravelResult {
   slug?: string | null
   /** 本地实体 id（离线写入时为 SQLite 行 id，供本地详情页使用） */
   localId?: string | null
+  /** 上传成功后的云端主键（有它才说明这本旅行在云端可编辑） */
+  remoteId?: number | null
 }
 
 export async function createTravel(input: CreateTravelInput): Promise<CreateTravelResult> {
@@ -72,6 +76,28 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
       },
       queue,
     )
+    /**
+     * 写完本地**立即尝试上传一轮**。
+     *
+     * 为什么必须做：`SyncEngine.start()` 只在「App 启动」与「网络状态变化」时跑一轮。
+     * App 本来就在线时新建旅行不会触发任何同步 → 这本旅行一直停在本地待同步态，
+     * 详情页的 `canWrite = travelId > 0 && !pendingSync` 于是恒为 false：
+     * **编辑/添加行程/记录一笔/删除全部不可用**（真机反馈正是这个）。
+     * 上传失败不影响离线可用 —— 仍返回本地 slug，详情页按「待同步」渲染，联网后由引擎补传。
+     */
+    try {
+      await startSyncEngine() // 幂等；非原生内部 no-op
+      const engine = getSyncEngine()
+      if (engine) await engine.sync()
+    } catch {
+      // 忽略：离线/服务端异常时保持本地可用
+    }
+
+    // 上传成功的话，本地行已回填 remoteId + 服务器 slug —— 回读一次拿到它们
+    const after = await readLocalTravelBySlug(slug).catch(() => null)
+    if (after?.remoteId) {
+      return { ok: true, local: false, slug: after.slug || slug, localId, remoteId: after.remoteId }
+    }
     // 离线：返回本地 slug（列表与详情都能按它定位）
     return { ok: true, local: true, slug, localId }
   }

@@ -8,6 +8,7 @@ import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { Button } from '@/components/mobile/Button'
 import { LoaderBlock } from '@/components/mobile/Loader'
 import { apiUrl } from '@/lib/api-base'
+import { spaceDetailHref } from '@/lib/routes'
 import type { SpaceOverview } from '@/lib/modules/space/space-overview.types'
 import { SpaceThemeScope } from './SpaceThemeScope'
 import SpaceDetail, { type SpaceDetailData } from './SpaceDetail'
@@ -24,9 +25,14 @@ type LoadState = 'loading' | 'ready' | 'denied' | 'notfound' | 'unauthenticated'
  *
  * 权限仍由服务端裁决 —— 403 是服务端给的，不是前端藏按钮。
  */
-export default function SpaceDetailClient() {
+export default function SpaceDetailClient({ slugProp }: { slugProp?: string }) {
   const params = useParams<{ slug: string }>()
-  const slug = typeof params?.slug === 'string' ? decodeURIComponent(params.slug) : ''
+  // 移动端壳走 /space/detail?slug=（slugProp 由页面从 query 读出）；Web 走 /space/[slug]
+  const slug = slugProp
+    ? decodeURIComponent(slugProp)
+    : typeof params?.slug === 'string'
+      ? decodeURIComponent(params.slug)
+      : ''
 
   const [state, setState] = useState<LoadState>('loading')
   const [data, setData] = useState<SpaceDetailData | null>(null)
@@ -96,7 +102,7 @@ export default function SpaceDetailClient() {
       <MessageState
         title="需要登录"
         description="空间内容只对登录用户开放。"
-        action={<Button href={`/login?redirect=${encodeURIComponent(`/space/${slug}`)}`}>去登录</Button>}
+        action={<Button href={`/login?redirect=${encodeURIComponent(spaceDetailHref(slug))}`}>去登录</Button>}
       />
     )
   }

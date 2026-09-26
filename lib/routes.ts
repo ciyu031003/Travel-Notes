@@ -24,6 +24,21 @@ export function travelRecordHref(slug: string): string {
   return isMobileShell() ? `/travel/record?slug=${s}` : `/travel/${s}/record`
 }
 
+/**
+ * 空间详情地址。
+ *
+ * ⚠️ 与旅行同理，本地壳必须走查询参数版 `/space/detail?slug=…`：
+ * `output: 'export'` 只为 `generateStaticParams` 声明的路径产出 HTML，
+ * 而空间 slug 是**每个用户自己的数据**，构建期无法枚举 ——
+ * 直接拼 `/space/<slug>` 在静态站里取不到文件，WebView 会 404/回落首页。
+ * （这一条是我在 1.16.0 里踩过的坑：只加了 layout 的占位参数，
+ *   却把 href 拼成了动态路径，导致真机点空间卡片进不去。）
+ */
+export function spaceDetailHref(slug: string): string {
+  const s = encodeURIComponent(slug)
+  return isMobileShell() ? `/space/detail?slug=${s}` : `/space/${s}`
+}
+
 /** 运行时平台探测（浏览器环境，供需要在非静态导出场景判断的平台逻辑使用）。 */
 export function isNativeRuntime(): boolean {
   return typeof window !== 'undefined' && isNativePlatform()

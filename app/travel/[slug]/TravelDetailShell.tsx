@@ -18,6 +18,7 @@ import { IconButton } from '@/components/mobile/IconButton'
 import { hapticLight } from '@/lib/mobile/haptics'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
+import { getSyncEngine, startSyncEngine } from '@/lib/modules/offline/bootstrap'
 import TravelDetailMobile from './TravelDetailMobile'
 import TravelPhotoViewer, { type ViewerPhoto } from './TravelPhotoViewer'
 import type { TravelInfoForDetail } from '@/components/travel/detail/types'
@@ -91,11 +92,22 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
     if (!slug) return
     let alive = true
     setError('')
+    // 记录远端失败原因：本地兜底也拿不到数据时，要给出**真实原因**而不是笼统的「网络错误」
+    let remoteStatus = 0
+    let remoteThrew = false
     readWithFallback<DetailData>(
       async () => {
-        const res = await fetch(apiUrl('/api/travels/by-slug/' + encodeURIComponent(slug) + '/detail'), {
-          credentials: 'include',
-        })
+        let res: Response
+        try {
+          res = await fetch(apiUrl('/api/travels/by-slug/' + encodeURIComponent(slug) + '/detail'), {
+            credentials: 'include',
+          })
+        } catch (e) {
+          // fetch 本身抛错 = 网络不可达（与 HTTP 错误区分开）
+          remoteThrew = true
+          throw e
+        }
+        remoteStatus = res.status
         if (!res.ok) throw new Error('http ' + res.status)
         const j = (await res.json()) as DetailData & { error?: string }
         if (!(j?.travel || j?.legacy)) throw new Error(String(j?.error || '旅行不存在'))
@@ -137,7 +149,28 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       })
       .catch((e: unknown) => {
         if (!alive) return
-        setError(e instanceof Error && e.message === '旅行不存在' ? '旅行不存在' : '网络错误，请稍后重试')
+        /**
+         * 这里曾经把所有失败都写成「网络错误，请稍后重试」—— 于是真机上
+         * 「本地表缺列导致兜底读不到」被误报成网络问题，用户和我都被这句话带偏。
+         * 现在按真实原因分派文案，并在副标题里带上状态码，便于排查。
+         */
+        if (e instanceof Error && e.message === '旅行不存在') {
+          setError('旅行不存在')
+          return
+        }
+        if (remoteStatus === 404) {
+          setError('这本旅行在服务器上不存在，本机也没有它的离线副本')
+          return
+        }
+        if (remoteStatus === 401 || remoteStatus === 403) {
+          setError(`没有权限查看这本旅行（HTTP ${remoteStatus}）`)
+          return
+        }
+        if (remoteStatus >= 500) {
+          setError(`服务器出错（HTTP ${remoteStatus}），请稍后重试`)
+          return
+        }
+        setError(remoteThrew || remoteStatus === 0 ? '网络不可用，请检查连接后重试' : '加载失败，请重试')
       })
     return () => {
       alive = false
@@ -145,6 +178,19 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   }, [slug, reloadToken])
 
   const reload = useCallback(() => setReloadToken((t) => t + 1), [])
+
+  /** 「立即同步」：手动跑一轮上传（离线创建的旅行卡在待同步时用），成功后重载详情 */
+  const syncNow = useCallback(async () => {
+    try {
+      await startSyncEngine()
+      const engine = getSyncEngine()
+      if (!engine) return
+      await engine.sync()
+      reload()
+    } catch {
+      // 同步失败保持原状态；横幅上的说明已经足够
+    }
+  }, [reload])
 
   /**
    * 移动 / 桌面只渲染一支。
@@ -208,6 +254,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
           onEdit={() => setEditing(true)}
           onBack={handleBack}
           onEditReload={reload}
+          onSyncNow={syncNow}
           dataVersion={reloadToken}
         />
       )}
