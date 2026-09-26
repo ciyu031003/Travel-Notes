@@ -83,7 +83,8 @@ export async function tableColumns(db: SQLiteDBConnection, table: string): Promi
     const cols = new Set<string>()
     for (const row of rows) {
       // PRAGMA table_info 列序：cid, name, type, notnull, dflt_value, pk
-      const name = row[1]
+      // 按列名取值优先（Android 返回列名对象，键序不能假定）
+      const name = rowGet(row, 'name', 1)
       if (typeof name === 'string' && name) cols.add(name)
     }
     if (cols.size > 0) {
@@ -166,11 +167,85 @@ export async function closeOfflineDb(): Promise<void> {
   clearColumnCache()
 }
 
-/** 查询结果 → 行数组（每行是 any[]）；防御性剔除 iOS 可能返回的列名首行 */
-export function toRows(res: { values?: unknown[] }): unknown[][] {
+/**
+ * 一行查询结果。
+ *
+ * **为什么要带 `__byName`**：`@capacitor-community/sqlite` 在不同平台返回的
+ * 行结构**不一样**，这是本项目历史上最严重的一个坑：
+ *   · Android（native 实现）：`Database.selectSQL` 用 `row.put(colName, value)`
+ *     构造 `JSObject` —— 每行是**按列名索引的对象**；
+ *     插件 JS 层的 `reorderRows()` 只处理 iOS（`ios_columns`），Android 原样返回；
+ *   · Web（jeep-sqlite）：每行是**值数组**。
+ *
+ * 而 `toRows()` 原先写的是 `v.filter(r => Array.isArray(r))` —— 在 Android 上
+ * 每一行都被过滤掉，于是**所有本地读都返回空数组**（不是抛错，是静默为空）：
+ *   · 本地兜底读不到 → 详情页报「本机也没有它的离线副本」
+ *   · 列表本地缓存为空 → 「没有用户自己建立的旅行记录」
+ *   · **同步队列 list() 永远为空 → SyncEngine 认为无待上传项 → 用户创作永远上不了云**
+ *     （线上库 Travel=0 的最终原因）
+ *   · 列自省永远返回 null → 自愈逻辑形同虚设
+ * 换句话说：这个离线层在 Android 上从来就没工作过，而 Web 端开发/测试完全看不到。
+ *
+ * 现在统一归一化成「值数组 + 列名映射」：既兼容历史的按下标取值，
+ * 也让新代码能**按列名**取值（不依赖对象键序，org.json 的实现细节不再影响正确性）。
+ */
+export type Row = unknown[] & { __byName?: Record<string, unknown> }
+
+function normalizeRow(raw: unknown, header?: string[]): Row {
+  if (Array.isArray(raw)) {
+    const arr = raw as Row
+    if (header) {
+      const byName: Record<string, unknown> = {}
+      for (let i = 0; i < header.length; i++) byName[header[i]] = arr[i]
+      arr.__byName = byName
+    }
+    return arr
+  }
+  if (raw && typeof raw === 'object') {
+    const obj = raw as Record<string, unknown>
+    const arr = Object.values(obj) as unknown as Row
+    arr.__byName = obj
+    return arr
+  }
+  return [raw] as unknown as Row
+}
+
+/**
+ * 查询结果 → 行数组。**同时兼容 Android 的「对象行」与 Web 的「数组行」。**
+ * 数组行的首行若形如列名表（首格为 `id` 且全为字符串）仍按历史约定剔除。
+ */
+export function toRows(res: { values?: unknown[] }): Row[] {
   const v = res?.values
-  if (!Array.isArray(v)) return []
-  const rows = v.filter((r): r is unknown[] => Array.isArray(r))
-  if (rows.length > 0 && rows[0][0] === 'id') return rows.slice(1)
-  return rows
+  if (!Array.isArray(v) || v.length === 0) return []
+
+  // 对象行（Android）—— 这是真机上的实际形态
+  if (v.every((r) => r !== null && typeof r === 'object' && !Array.isArray(r))) {
+    return v.map((r) => normalizeRow(r))
+  }
+  // 数组行（Web / 测试）
+  if (v.every((r) => Array.isArray(r))) {
+    const rows = v as unknown[][]
+    const first = rows[0]
+    const hasHeader =
+      rows.length > 1 && first.length > 0 && first.every((c) => typeof c === 'string') && first[0] === 'id'
+    if (hasHeader) {
+      const header = first.map(String)
+      return rows.slice(1).map((r) => normalizeRow(r, header))
+    }
+    return rows.map((r) => normalizeRow(r))
+  }
+  // 混合形态：逐行尽力归一化
+  return v.map((r) => normalizeRow(r))
+}
+
+/**
+ * 按列名取值（**优先列名，回退下标**）。
+ *
+ * 新代码一律用它，避免依赖「对象键序 == SELECT 列序」这种未定义行为。
+ */
+export function rowGet(row: Row | null | undefined, name: string, index = 0): unknown {
+  if (!row) return undefined
+  const byName = row.__byName
+  if (byName && Object.prototype.hasOwnProperty.call(byName, name)) return byName[name]
+  return row[index]
 }

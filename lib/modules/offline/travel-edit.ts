@@ -8,6 +8,7 @@ import { writeLocalEntity, markEntitySynced } from './local-write'
 import { SyncQueue } from './sync-queue'
 import { getSyncQueueStorage } from './storage'
 import { queryById, queryRows } from './dao'
+import { rowGet } from './native/sqlite-db'
 import { apiUrl } from '@/lib/api-base'
 import { writeThrough } from './write-through'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
@@ -39,16 +40,20 @@ export interface UpdateTravelInfoResult {
 
 /** 本地行定位：先按云端 remoteId，再按 slug，最后按本地行 id */
 export async function findLocalTravelRowId(slug: string, remoteId: number | null): Promise<string | null> {
+  // 一律按列名取值（rowGet）：Android 返回列名对象，键序不等于 SELECT 列序
   if (remoteId != null) {
     const rows = await queryRows('SELECT id FROM travel WHERE remoteId = ? AND deleted = 0 LIMIT 1', [remoteId]).catch(
       () => [],
     )
-    if (rows[0]) return String(rows[0][0])
+    const id = rowGet(rows[0], 'id')
+    if (id != null) return String(id)
   }
   const bySlug = await queryRows('SELECT id FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1', [slug]).catch(() => [])
-  if (bySlug[0]) return String(bySlug[0][0])
+  const idBySlug = rowGet(bySlug[0], 'id')
+  if (idBySlug != null) return String(idBySlug)
   const byId = await queryById('travel', slug).catch(() => null)
-  return byId ? String(byId[0]) : null
+  const localId = rowGet(byId, 'id')
+  return localId != null ? String(localId) : null
 }
 
 export async function updateTravelInfo(input: UpdateTravelInfoInput): Promise<UpdateTravelInfoResult> {

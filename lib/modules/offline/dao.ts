@@ -2,10 +2,10 @@
  * 本地 SQLite 读 DAO（Stage 3.0a）。
  * 提供离线读的通用查询助手；3.4 同步引擎会先填充本地表，页面接线时按需加实体映射。
  */
-import { getOfflineDb, toRows, tableColumns } from './native/sqlite-db'
+import { getOfflineDb, toRows, tableColumns, rowGet, type Row } from './native/sqlite-db'
 import { isNativePlatform } from './platform'
 
-export type Row = unknown[]
+export type { Row }
 
 /**
  * 某表真实存在的列名（原生端）。
@@ -48,8 +48,9 @@ export async function hasLocalData(table: string): Promise<boolean> {
   if (!isNativePlatform()) return false
   try {
     const db = await getOfflineDb()
-    const rows = toRows(await db.query('SELECT COUNT(*) FROM ' + table))
-    return rows[0] ? Number(rows[0][0]) > 0 : false
+    // 聚合列显式起别名：Android 返回列名对象，`COUNT(*)` 这种键名不可靠
+    const rows = toRows(await db.query('SELECT COUNT(*) AS c FROM ' + table))
+    return rows[0] ? Number(rowGet(rows[0], 'c', 0)) > 0 : false
   } catch {
     return false
   }
@@ -67,7 +68,7 @@ export async function findRemoteIdByLocalId(table: string, localId: string): Pro
   if (!isNativePlatform() || !localId) return null
   try {
     const rows = await queryRows('SELECT remoteId FROM ' + table + ' WHERE id = ? LIMIT 1', [localId])
-    const value = rows[0]?.[0]
+    const value = rowGet(rows[0], 'remoteId', 0)
     return value == null ? null : Number(value)
   } catch {
     return null

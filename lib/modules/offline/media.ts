@@ -4,7 +4,7 @@
  * - 下载远端媒体 → 本地文件（Capacitor Filesystem）+ SQLite 元数据
  * - resolveMediaUrl：离线优先返回本地 URI，否则远端 URL
  */
-import { getOfflineDb, toRows } from './native/sqlite-db'
+import { getOfflineDb, toRows, rowGet } from './native/sqlite-db'
 import { writeLocalFile, getLocalUri, ensureLocalDir } from './native/filesystem'
 import { isNativePlatform } from './platform'
 
@@ -63,7 +63,8 @@ export async function cacheRemoteMedia(input: {
     const db = await getOfflineDb()
     const mimeType = input.mimeType || 'image/jpeg'
     const existing = toRows(await db.query('SELECT id, localPath FROM media WHERE sha256 = ? LIMIT 1', [hash]))
-    const localPath = existing[0] ? String(existing[0][1]) : 'media/' + hash + '.' + extFromMime(mimeType)
+    const existingPath = existing[0] ? rowGet(existing[0], 'localPath', 1) : null
+    const localPath = existingPath ? String(existingPath) : 'media/' + hash + '.' + extFromMime(mimeType)
 
     if (!existing[0]) {
       await ensureLocalDir('media')
@@ -90,7 +91,8 @@ export async function resolveMediaUrl(mediaId: number | string, remoteUrl: strin
   try {
     const db = await getOfflineDb()
     const rows = toRows(await db.query('SELECT localPath FROM media WHERE id = ? LIMIT 1', [String(mediaId)]))
-    if (rows[0] && rows[0][0]) return await getLocalUri(String(rows[0][0]))
+    const localPath = rowGet(rows[0], 'localPath')
+    if (localPath) return await getLocalUri(String(localPath))
   } catch {
     // 本地无缓存则回退远端
   }
@@ -103,7 +105,8 @@ export async function resolveMediaUrlByRemote(remoteUrl: string): Promise<string
   try {
     const db = await getOfflineDb()
     const rows = toRows(await db.query('SELECT localPath FROM media WHERE remoteUrl = ? LIMIT 1', [remoteUrl]))
-    if (rows[0] && rows[0][0]) return await getLocalUri(String(rows[0][0]))
+    const localPath = rowGet(rows[0], 'localPath')
+    if (localPath) return await getLocalUri(String(localPath))
   } catch {
     // 本地无缓存则回退远端
   }
@@ -118,7 +121,8 @@ export async function resolveMediaUrlsByRemote(urls: string[]): Promise<Record<s
     const db = await getOfflineDb()
     for (const url of urls) {
       const rows = toRows(await db.query('SELECT localPath FROM media WHERE remoteUrl = ? LIMIT 1', [url]))
-      if (rows[0] && rows[0][0]) out[url] = await getLocalUri(String(rows[0][0]))
+      const localPath = rowGet(rows[0], 'localPath')
+      if (localPath) out[url] = await getLocalUri(String(localPath))
     }
   } catch {
     // 忽略

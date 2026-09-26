@@ -4,24 +4,28 @@
  */
 import type { SyncQueueItem, QueueStatus } from '../types'
 import type { SyncQueueStorage } from '../sync-queue'
-import { getOfflineDb, toRows } from './sqlite-db'
+import { getOfflineDb, toRows, rowGet, type Row } from './sqlite-db'
 
 const COLS = 'id, entityType, entityId, remoteId, operation, payload, retryCount, status, lastError, createdAt, updatedAt'
 
-function mapRow(row: unknown[]): SyncQueueItem {
-  const [id, entityType, entityId, remoteId, operation, payload, retryCount, status, lastError, createdAt, updatedAt] = row
+/**
+ * 行 → 队列项。
+ * **按列名取值**（`rowGet`）而不是按位置解构：Android 返回的是列名对象，
+ * 键序不能假定（org.json 实现细节），按位置取会读到错列甚至 undefined。
+ */
+function mapRow(row: Row): SyncQueueItem {
   return {
-    id: Number(id),
-    entityType: String(entityType) as SyncQueueItem['entityType'],
-    entityId: entityId == null ? null : String(entityId),
-    remoteId: remoteId == null ? null : Number(remoteId),
-    operation: String(operation) as SyncQueueItem['operation'],
-    payload: String(payload),
-    retryCount: Number(retryCount),
-    status: String(status) as QueueStatus,
-    lastError: lastError == null ? null : String(lastError),
-    createdAt: Number(createdAt),
-    updatedAt: Number(updatedAt),
+    id: Number(rowGet(row, 'id')),
+    entityType: String(rowGet(row, 'entityType')) as SyncQueueItem['entityType'],
+    entityId: rowGet(row, 'entityId') == null ? null : String(rowGet(row, 'entityId')),
+    remoteId: rowGet(row, 'remoteId') == null ? null : Number(rowGet(row, 'remoteId')),
+    operation: String(rowGet(row, 'operation')) as SyncQueueItem['operation'],
+    payload: String(rowGet(row, 'payload')),
+    retryCount: Number(rowGet(row, 'retryCount')),
+    status: String(rowGet(row, 'status')) as QueueStatus,
+    lastError: rowGet(row, 'lastError') == null ? null : String(rowGet(row, 'lastError')),
+    createdAt: Number(rowGet(row, 'createdAt')),
+    updatedAt: Number(rowGet(row, 'updatedAt')),
   }
 }
 
@@ -34,7 +38,7 @@ export class SqliteSyncQueueStorage implements SyncQueueStorage {
     )
     const res = await db.query('SELECT last_insert_rowid() AS id')
     const rows = toRows(res)
-    return rows[0] ? Number(rows[0][0]) : 0
+    return rows[0] ? Number(rowGet(rows[0], 'id')) : 0
   }
 
   async list(status?: QueueStatus): Promise<SyncQueueItem[]> {

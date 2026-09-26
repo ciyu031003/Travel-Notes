@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：本地存储异常时会中断整轮同步，导致历史遗留的待上传内容永远不会上云；上传成功后不再重复上传',
+    changelog: process.env.APP_CHANGELOG || '根因修复：Android 上本地数据库查询结果行结构是「列名对象」，而客户端按「值数组」解析，导致所有本地读静默为空、同步队列永远为空、用户创作从未上传到云端',
     forceUpdate,
   })
 }

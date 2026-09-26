@@ -2,7 +2,7 @@
  * 旅行离线读（Stage 3.0a 接线）：从本地 SQLite 读 travel 表，映射为与 /api/travels 一致的 posts 形状。
  * 供 /travel 页面用 readWithFallback 在离线/失败时回退本地。
  */
-import { queryRows, tableColumnNames } from './dao'
+import { queryRows, tableColumnNames, type Row } from './dao'
 import { isNativePlatform } from './platform'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
 
@@ -176,15 +176,23 @@ export async function readLocalTravelBySlug(slug: string): Promise<LocalTravelIn
       return null
     }
     const select = cols.join(', ')
-    const at = (row: unknown[], name: string): unknown => {
+    /**
+     * 取值：**优先按列名**（`rowGet` 会读 Android 对象行的列名映射），
+     * 再回退到「SELECT 列序下标」。Android 返回的行是列名对象，
+     * 键序不能假定等于 SELECT 列序，因此列名优先是必须的。
+     */
+    const at = (row: unknown, name: string): unknown => {
+      const r = row as Row
+      const byName = r?.__byName
+      if (byName && Object.prototype.hasOwnProperty.call(byName, name)) return byName[name]
       const i = cols.indexOf(name)
-      return i >= 0 ? row[i] : undefined
+      return i >= 0 ? (r as unknown[])[i] : undefined
     }
 
     let rows = await queryRows(
       `SELECT ${select} FROM travel WHERE slug = ? AND deleted = 0 LIMIT 1`,
       [slug],
-    ).catch(() => [] as unknown[][])
+    ).catch(() => [] as Row[])
 
     // slug 漂移兜底：云端重算过 slug（唯一性冲突加后缀）、或旧链接拿着旧 slug 时，
     // 按"由标题推出的 slug"再匹配一次。

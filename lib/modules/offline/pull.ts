@@ -7,7 +7,7 @@
  *   - 其余情况 → 远端覆盖本地（syncStatus = SYNCED）
  * 仅原生端生效；Web 不启用离线，直接 return。
  */
-import { getOfflineDb, toRows } from './native/sqlite-db'
+import { getOfflineDb, toRows, rowGet } from './native/sqlite-db'
 import { isNativePlatform } from './platform'
 import type { PullDispatcher, PullEntity } from './pull-dispatcher'
 import type { EntityType } from './types'
@@ -25,11 +25,14 @@ export async function applyPullEntity(entity: PullEntity): Promise<boolean> {
     ]),
   )
   if (existing[0]) {
-    const [localId, localUpdatedAt, localSyncStatus, localDeleted] = existing[0]
-    const syncStatus = String(localSyncStatus)
+    const row = existing[0]
+    // 按列名取值：Android 返回的是列名对象，位置解构会读到错列
+    const localDeletion = Number(rowGet(row, 'deleted'))
+    const localUpdatedAt = rowGet(row, 'updatedAt')
+    const syncStatus = String(rowGet(row, 'syncStatus'))
     if (syncStatus === 'PENDING_UPLOAD') return false // 本地有待上传改动，跳过
     // v3.1 M4-C1：墓碑防复活——本地已删（deleted=1）不覆盖，保持墓碑（即使远端行仍在/更新）
-    if (Number(localDeleted) === 1) return false
+    if (localDeletion === 1) return false
     if (Number(localUpdatedAt) > entity.updatedAt) return false // 本地更新（LWW）
 
     const fields: Record<string, unknown> = {
@@ -41,7 +44,10 @@ export async function applyPullEntity(entity: PullEntity): Promise<boolean> {
     }
     const keys = Object.keys(fields)
     const sets = keys.map((c) => c + ' = ?').join(', ')
-    await db.run('UPDATE ' + entity.table + ' SET ' + sets + ' WHERE id = ?', [...keys.map((c) => fields[c]), String(localId)])
+    await db.run(
+      'UPDATE ' + entity.table + ' SET ' + sets + ' WHERE id = ?',
+      [...keys.map((c) => fields[c]), String(rowGet(row, 'id'))],
+    )
     return true
   }
 
