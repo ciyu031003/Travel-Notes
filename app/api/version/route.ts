@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '根因修复三：老设备缺列时建索引会抛错且发生在列自愈之前，导致整个离线层初始化失败；改为先自愈再逐条容错建索引，并把 sync_queue 等缺失的表纳入自愈',
+    changelog: process.env.APP_CHANGELOG || '修：拉取落地遇到服务端新增字段或单条脏数据会整批失败，导致离线缓存再也更新不了；改为按真实列过滤并逐条隔离',
     forceUpdate,
   })
 }

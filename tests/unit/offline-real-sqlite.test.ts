@@ -73,7 +73,7 @@ import { SqliteSyncQueueStorage } from '@/lib/modules/offline/native/sqlite-sync
 import { SyncQueue } from '@/lib/modules/offline/sync-queue'
 import { writeLocalEntity, markEntitySynced } from '@/lib/modules/offline/local-write'
 import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
-import { applyPullEntity } from '@/lib/modules/offline/pull'
+import { applyPullEntity, pullEntityTypes } from '@/lib/modules/offline/pull'
 
 function freshRaw() {
   box.raw = new DatabaseSync(':memory:')
@@ -375,5 +375,66 @@ describe('真实 SQLite · 拉取落地（LWW 与墓碑）', () => {
     expect(Number(row.deleted)).toBe(1)
     expect(row.title).toBe('已删除')
     expect(await readLocalTravelBySlug('tomb')).toBeNull()
+  })
+})
+
+/**
+ * 拉取的**健壮性**：服务端新增字段、以及单条脏数据，都不该破坏离线缓存。
+ * 真实场景：服务端后来给旅行加了 spaceId / budget，旧版 App 的本地表没有那一列。
+ */
+describe('真实 SQLite · 拉取健壮性', () => {
+  it('服务端多出一个本地表没有的字段 → 跳过该字段，其余照常落地（不整条失败）', async () => {
+    await initOffline()
+    const ok = await applyPullEntity({
+      table: 'travel',
+      id: 'remote-new-1',
+      remoteId: 990,
+      updatedAt: 7000,
+      data: {
+        title: '未来字段',
+        slug: 'wei-lai',
+        // 服务端新加的字段，本地表还不存在
+        brandNewServerField: 'x',
+        anotherOne: 42,
+      },
+    } as never)
+
+    expect(ok).toBe(true)
+    const t = await readLocalTravelBySlug('wei-lai')
+    expect(t).not.toBeNull()
+    expect(t!.title).toBe('未来字段')
+    expect(t!.remoteId).toBe(990)
+  })
+
+  it('一条脏数据（表不存在）不中断整轮拉取，其余实体照常写入', async () => {
+    await initOffline()
+    const dispatcher = {
+      pull: async (type: string) =>
+        type === 'TRAVEL'
+          ? [
+              { table: 'travel', id: 'ok-1', remoteId: 991, updatedAt: 8000, data: { title: '好的', slug: 'hao-de' } },
+              { table: 'not_a_real_table', id: 'bad-1', remoteId: 992, updatedAt: 8000, data: { title: '坏的' } },
+            ]
+          : [],
+    }
+    const written = await pullEntityTypes(dispatcher as never, ['TRAVEL'] as never)
+    expect(written).toBe(1) // 好的一条写入成功
+    expect(await readLocalTravelBySlug('hao-de')).not.toBeNull()
+  })
+
+  it('某个类型拉取抛错（网络）不影响其他类型', async () => {
+    await initOffline()
+    const dispatcher = {
+      pull: async (type: string) => {
+        if (type === 'MOMENT') throw new Error('network down')
+        if (type === 'TRAVEL') {
+          return [{ table: 'travel', id: 'ok-2', remoteId: 993, updatedAt: 9000, data: { title: '仍可写', slug: 'reng-ke' } }]
+        }
+        return []
+      },
+    }
+    const written = await pullEntityTypes(dispatcher as never, ['MOMENT', 'TRAVEL'] as never)
+    expect(written).toBe(1)
+    expect(await readLocalTravelBySlug('reng-ke')).not.toBeNull()
   })
 })
