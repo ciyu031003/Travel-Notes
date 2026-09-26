@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：加行程/记一笔（含照片）/编辑旅行信息在手机上只写本地导致保存后看不到，改为在线直写云端、本地兜底',
+    changelog: process.env.APP_CHANGELOG || '修：1.16.2/1.16.3 里新建或写入的内容会被同步队列再上传一次，导致旅行/回忆/相册出现重复；修：相册与碎碎念同样',
     forceUpdate,
   })
 }

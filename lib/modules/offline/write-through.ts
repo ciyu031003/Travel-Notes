@@ -15,6 +15,8 @@
  *   ④ 两边都失败 → 明确报错，不许假装成功。
  */
 import { isNativePlatform } from './platform'
+import { SyncQueue } from './sync-queue'
+import { getSyncQueueStorage } from './storage'
 
 export interface ServerWriteOutcome<T> {
   ok: boolean
@@ -37,11 +39,14 @@ function msgOf(e: unknown): string {
 }
 
 /**
- * @param localWrite  本地乐观写（仅原生端传入；Web 端不传即跳过）
+ * @param entityId    本地实体 id（`writeLocalEntity` 用的同一个）。**在线成功后据此清队列**，
+ *                    否则队列里的同一项会被 SyncEngine 再上传一次 → 重复数据。
+ * @param localWrite  本地乐观写（仅原生端执行；Web 端跳过）
  * @param serverWrite 服务端写（在线时执行；不传表示该实体没有在线写路径）
  * @param onServerOk  服务端成功后回调（用于把本地行标记为已同步）
  */
 export async function writeThrough<T>(args: {
+  entityId?: string | null
   localWrite?: () => Promise<void>
   serverWrite?: () => Promise<ServerWriteOutcome<T>>
   onServerOk?: (data: T | undefined) => Promise<void> | void
@@ -64,6 +69,21 @@ export async function writeThrough<T>(args: {
   if (args.serverWrite) {
     const r = await args.serverWrite()
     if (r.ok) {
+      /**
+       * ③ 已经在服务端写成功了 → **必须把这次本地写产生的队列项清掉**，
+       * 否则 SyncEngine 会再上传一遍，用户会看到两份（旅行为"标题/标题-2"两本）。
+       *
+       * 注意条件故意**不看 localOk**：`writeLocalEntity` 是"先入队、再写行"，
+       * 完全可能入队成功而写行失败（部分失败）。此时队列里已经躺着一条待上传项，
+       * 若因 localOk=false 就跳过清理，照样会重复创建。
+       */
+      if (args.entityId) {
+        try {
+          await new SyncQueue(getSyncQueueStorage()).markDoneByEntityId(args.entityId)
+        } catch {
+          // 清队列失败不影响写入结果；同步侧仍有 remoteId 兜底
+        }
+      }
       try {
         await args.onServerOk?.(r.data)
       } catch {
@@ -71,7 +91,7 @@ export async function writeThrough<T>(args: {
       }
       return { mode: 'server', data: r.data }
     }
-    // ③ 服务端失败：本地已存就降级为待同步
+    // ④ 服务端失败：本地已存就降级为待同步
     if (localOk) return { mode: 'local' }
     return { mode: 'failed', error: r.error || localErr || '保存失败' }
   }

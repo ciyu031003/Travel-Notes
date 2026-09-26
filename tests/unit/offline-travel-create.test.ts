@@ -27,6 +27,8 @@ vi.mock('@/lib/modules/offline/local-write', () => ({
 vi.mock('@/lib/modules/offline/sync-queue', () => ({
   SyncQueue: class {
     enqueue = vi.fn(async () => 1)
+    /** 在线成功后调用：清掉本地写产生的队列项，避免被再上传一次（重复创建） */
+    markDoneByEntityId = vi.fn(async () => {})
   },
 }))
 vi.mock('@/lib/modules/offline/storage', () => ({ getSyncQueueStorage: () => ({}) }))

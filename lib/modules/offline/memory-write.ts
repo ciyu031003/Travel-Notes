@@ -40,6 +40,7 @@ export async function createMemory(input: CreateMemoryInput): Promise<CreateMemo
   let wroteLocal = false
 
   const r = await writeThrough<{ id: number | undefined }>({
+    entityId: localId,
     localWrite: async () => {
       const queue = new SyncQueue(getSyncQueueStorage())
       await writeLocalEntity(

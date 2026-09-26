@@ -68,6 +68,7 @@ export async function updateTravelInfo(input: UpdateTravelInfoInput): Promise<Up
 
   let wroteLocal = false
   const r = await writeThrough<{ slug?: string; daysChanged?: number }>({
+    entityId: localRowId,
     localWrite: async () => {
       if (!localRowId) throw new Error('本地没有这本旅行的缓存')
       const data: Record<string, unknown> = {}

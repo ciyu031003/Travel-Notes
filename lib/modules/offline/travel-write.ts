@@ -106,9 +106,22 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
     // ② 在线优先：直接创建到服务端（与 Web 同一条路径）
     const online = await createTravelOnline(input)
     if (online.ok) {
-      // 本地行若存在，回填云端 id + 服务端 slug；这样离线读也能拿到正确链接
+      /**
+       * 本地行若存在：回填云端 id + 服务端 slug，**并清掉队列项**。
+       *
+       * 清队列是必须的：`writeLocalEntity` 已经把这本旅行排进了待上传队列，
+       * 如果不清，SyncEngine 稍后会再 POST 一次 → 同一本旅行出现两份
+       * （服务端 slug 唯一化会把它变成"标题"和"标题-2"两本）。
+       */
       if (localWritten) {
         await markEntitySynced('TRAVEL', localId, online.remoteId ?? null, online.slug ?? null).catch(() => {})
+      }
+      // 清队列（无论本地写是否成功，理由见 write-through.ts）。
+      // 用 try/catch 而不是 .catch()：`new SyncQueue` 在存储不可用时是**同步抛错**。
+      try {
+        await new SyncQueue(getSyncQueueStorage()).markDoneByEntityId(localId)
+      } catch {
+        // 清不掉也不影响创建结果
       }
       return { ok: true, local: false, slug: online.slug ?? localSlug, localId, remoteId: online.remoteId ?? null }
     }
@@ -184,6 +197,7 @@ export async function addTravelDay(input: AddTravelDayInput): Promise<AddTravelD
 
   let wroteLocal = false
   const r = await writeThrough<{ id: number | null }>({
+    entityId: localId,
     // ① 本地乐观写（离线可用）。注意 parent 缺失时要报错，不能静默写出一行无父的"天"
     localWrite: async () => {
       if (!parent) throw new Error('找不到这本旅行的本地记录，请先同步')

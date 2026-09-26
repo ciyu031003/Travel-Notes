@@ -60,6 +60,22 @@ export class SyncQueue {
     await this.storage.remove(id)
   }
 
+  /**
+   * 按本地实体 id 清掉队列项（**在线直写成功后必须调用**）。
+   *
+   * 为什么关键：`writeLocalEntity` 会同时「写本地 + 入队」。如果这次写已经直接
+   * 落到服务端成功，而队列项还留着，`SyncEngine` 稍后会**再上传一次** →
+   * 同一本旅行/同一条回忆出现两份（旅行会表现为"标题"与"标题-2"两本）。
+   * 这个二次上传在 1.16.2/1.16.3 的"在线优先"改造里被引入过，属高危。
+   */
+  async markDoneByEntityId(entityId: string | null | undefined): Promise<void> {
+    if (!entityId) return
+    const items = await this.storage.list()
+    for (const it of items) {
+      if (it.entityId === entityId) await this.storage.remove(it.id)
+    }
+  }
+
   /** 同步失败：累加重试次数 + 记录错误 */
   async markFailed(id: number, error: string): Promise<void> {
     const items = await this.storage.list()
