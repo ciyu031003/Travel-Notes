@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, RefreshCw, Loader2, CheckCheck } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Loader2, CheckCheck, AlertCircle } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { SyncQueue } from '@/lib/modules/offline/sync-queue'
 import { getSyncQueueStorage } from '@/lib/modules/offline/storage'
@@ -28,11 +28,14 @@ export default function SyncCenter() {
   const [lockEnabled, setLockEnabled] = useState(false)
   // v3.1 M4-C1：最近同步统计（冲突保护/写入量）
   const [lastSync, setLastSync] = useState<{ at: number; written: number } | null>(null)
+  // 引擎内部被隔离的阶段错误（例如"本地队列读失败但上传照常"）：不阻断同步，但必须能看见
+  const [engineError, setEngineError] = useState<string | null>(null)
 
   useEffect(() => {
     setLockEnabled(getPrivacyLockEnabled())
     const engine = getSyncEngine()
     if (engine?.lastSyncStats) setLastSync(engine.lastSyncStats)
+    if (engine?.lastError) setEngineError(engine.lastError)
   }, [])
 
   const load = useCallback(async () => {
@@ -122,11 +125,24 @@ export default function SyncCenter() {
               ))}
             </div>
 
+            {/*
+              引擎内部被隔离的阶段错误。
+              价值：本地存储坏掉时「上传阶段照常」是刻意设计，但用户与我都需要看得见
+              到底是哪一步坏了 —— 否则又只能靠截图猜（这正是前几版的教训）。
+            */}
+            {engineError && (
+              <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--social-surface-50)] px-4 py-3 text-[12px] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]">
+                <Icon icon={AlertCircle} size="sm" className="mt-0.5 shrink-0 text-[var(--social-accent)]" />
+                <span>
+                  部分同步步骤失败（已自动隔离，不影响上传）：<code className="break-all">{engineError}</code>
+                </span>
+              </div>
+            )}
+
             {total === 0 && (
               <div className="mt-6 rounded-[2rem] bg-[var(--social-surface-50)] px-6 py-14 text-center ring-1 ring-[var(--social-line)]">
                 <Icon icon={CheckCheck} size="lg" className="mx-auto text-[var(--social-accent)]" />
-                <p className="mt-4 text-sm text-[var(--social-muted)]">所有改动都已同步。</p>
-                <p className="mt-1 text-xs leading-relaxed text-[var(--social-faint)]">离线写的照片、留言、碎碎念会进入队列，联网后自动上传。</p>
+                <p className="mt-4 text-sm text-[var(--social-muted)]">所有改动都已同步。</p>                <p className="mt-1 text-xs leading-relaxed text-[var(--social-faint)]">离线写的照片、留言、碎碎念会进入队列，联网后自动上传。</p>
                 {lastSync && (
                   <p className="mt-3 text-xs text-[var(--social-faint)]">
                     最近同步：{new Date(lastSync.at).toLocaleTimeString('zh-CN')} · 更新 {lastSync.written} 条本地缓存

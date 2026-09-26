@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：1.16.2/1.16.3 里新建或写入的内容会被同步队列再上传一次，导致旅行/回忆/相册出现重复；修：相册与碎碎念同样',
+    changelog: process.env.APP_CHANGELOG || '修：本地存储异常时会中断整轮同步，导致历史遗留的待上传内容永远不会上云；上传成功后不再重复上传',
     forceUpdate,
   })
 }

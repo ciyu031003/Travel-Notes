@@ -25,6 +25,9 @@ export class SyncEngine {
   /** v3.1 M4-C1：最近一次同步统计（供同步中心展示） */
   lastSyncStats: { at: number; written: number } | null = null
 
+  /** 最近一次同步里被隔离的阶段错误（供同步中心/诊断展示；不阻断同步） */
+  lastError: string | null = null
+
   constructor(
     private queue: SyncQueue,
     private dispatcher: SyncDispatcher,
@@ -54,17 +57,43 @@ export class SyncEngine {
     this.unsubscribers = []
   }
 
-  /** 执行一轮同步（重试到期失败项 → 回放待上传 → 下载拉取远端） */
+  /**
+   * 执行一轮同步（**先上传，再退避，再拉取**，各阶段互相隔离）。
+   *
+   * 顺序与隔离都是刻意的，源自一个真实故障：
+   * 原先的顺序是 `requeueDue() → uploadPending() → pullRemote()`，
+   * 而 `requeueDue` 第一步就读本地队列（`queue.all()`）。设备上本地 SQLite 一旦异常，
+   * 这一步就抛错 → 整个 `sync()` 中断 → **`uploadPending()` 永远执行不到**
+   *   → 用户创作的内容永远到不了云端（线上库 `Travel=0` 就是这个后果），
+   *   而 `void this.sync()` 把 rejection 吞掉，界面上完全无声。
+   *
+   * 因此：① 用户内容优先上传，本地存储坏了也不能挡住它；
+   *       ② 每个阶段独立 try/catch，任一阶段失败不影响其他阶段；
+   *       ③ 错误记录到 lastError，便于线上定位。
+   */
   async sync(): Promise<void> {
     if (this.syncing) return
     this.syncing = true
+    this.lastError = null
     try {
-      await this.requeueDue()
-      await this.uploadPending()
-      const written = await this.pullRemote()
+      await this.guard('uploadPending', () => this.uploadPending())
+      await this.guard('requeueDue', () => this.requeueDue())
+      const written = (await this.guard('pullRemote', () => this.pullRemote())) ?? 0
       this.lastSyncStats = { at: Date.now(), written }
     } finally {
       this.syncing = false
+    }
+  }
+
+  /** 阶段隔离：单个阶段失败只记录，不中断整轮同步 */
+  private async guard<T>(phase: string, fn: () => Promise<T>): Promise<T | undefined> {
+    try {
+      return await fn()
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      this.lastError = `${phase}: ${msg}`
+      console.warn(`[sync] 阶段 ${phase} 失败（已隔离，不影响其他阶段）:`, msg)
+      return undefined
     }
   }
 
@@ -91,18 +120,31 @@ export class SyncEngine {
   private async uploadPending(): Promise<void> {
     const pending = await this.queue.pending()
     for (const item of pending) {
-      await this.queue.markSyncing(item.id)
+      let uploaded: { remoteId?: number | null; slug?: string } | null = null
       try {
-        const result = await this.dispatcher.upload(item)
-        if (result.remoteId != null && item.remoteId == null) {
-          await this.queue.setRemoteId(item.id, result.remoteId)
+        await this.queue.markSyncing(item.id)
+        uploaded = await this.dispatcher.upload(item)
+      } catch (e) {
+        await this.queue.markFailed(item.id, e instanceof Error ? e.message : '同步失败').catch(() => {})
+        continue
+      }
+      /**
+       * 上传**已经成功**了：之后的本地回写（回填 remoteId / 出队 / 标记 SYNCED）
+       * 即便失败，也绝不能让它退化成"留在队列里" —— 否则下一轮会**重复上传**，
+       * 用户就会看到两本同名旅行（"标题"与"标题-2"）。
+       * 所以这段单独 try/catch：失败只记日志，不改变"已上传"的事实。
+       */
+      try {
+        if (uploaded.remoteId != null && item.remoteId == null) {
+          await this.queue.setRemoteId(item.id, uploaded.remoteId)
         }
         await this.queue.markDone(item.id)
-        // 上传成功：回写本地实体 syncStatus=SYNCED + 回填 remoteId（否则拉取会一直跳过该行）
-        // 注意：remoteId 必须真的解析出来，否则本地行会永远停在 pendingSync —— 见 sync-dispatcher 的 pickRemoteId
-        await markEntitySynced(item.entityType, item.entityId, result.remoteId ?? item.remoteId, result.slug)
+        // 回写本地实体 syncStatus=SYNCED + remoteId（否则拉取会一直跳过该行）
+        await markEntitySynced(item.entityType, item.entityId, uploaded.remoteId ?? item.remoteId, uploaded.slug)
       } catch (e) {
-        await this.queue.markFailed(item.id, e instanceof Error ? e.message : '同步失败')
+        const msg = e instanceof Error ? e.message : String(e)
+        this.lastError = `bookkeep: ${msg}`
+        console.warn('[sync] 上传已成功，但本地回写失败（不会重传，仅本地状态可能滞后）:', msg)
       }
     }
   }
