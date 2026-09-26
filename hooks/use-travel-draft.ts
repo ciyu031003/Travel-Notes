@@ -144,7 +144,9 @@ export function useTravelDraft(enabled: boolean) {
       endDate: draft.endDate || undefined,
       travelType: draft.travelType as never,
       companions: draft.companions.length > 0 ? draft.companions : undefined,
-      isPublic: draft.isPublic,
+      isPublic: draft.visibility === 'PUBLIC',
+      visibility: draft.visibility,
+      spaceId: draft.spaceId,
     })
     setSubmitting(false)
 

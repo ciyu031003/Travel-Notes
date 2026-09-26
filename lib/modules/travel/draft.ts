@@ -21,7 +21,15 @@ export interface TravelDraft {
   description: string
   travelType: string
   companions: { name: string; relation: string }[]
-  isPublic: boolean
+  /**
+   * 可见性三档。
+   * 为什么不再用 `isPublic` 布尔：那个字段只影响「公开」，而 `visibility` 一直在吃
+   * schema 默认的 `SPACE` —— 用户勾「仅自己」，旅行其实是「空间成员可见」。
+   * 三档显式表达，落库时也写 visibility（见 travel.service.createTravel）。
+   */
+  visibility: 'PRIVATE' | 'SPACE' | 'PUBLIC'
+  /** 直接建在某个空间下（可选，「一键加入空间」） */
+  spaceId: number | null
 }
 
 export const EMPTY_TRAVEL_DRAFT: TravelDraft = {
@@ -32,7 +40,8 @@ export const EMPTY_TRAVEL_DRAFT: TravelDraft = {
   description: '',
   travelType: 'ALONE',
   companions: [],
-  isPublic: false,
+  visibility: 'PRIVATE',
+  spaceId: null,
 }
 
 export const TRAVEL_TYPE_OPTIONS: {
@@ -243,6 +252,7 @@ export function moreSectionSummary(draft: TravelDraft): string {
   if (type && type.value !== 'ALONE') parts.push(type.label)
   if (draft.companions.length > 0) parts.push(`${draft.companions.length} 位同行`)
   if (draft.description.trim()) parts.push('有描述')
-  if (draft.isPublic) parts.push('公开')
+  if (draft.visibility === 'PUBLIC') parts.push('公开')
+  else if (draft.spaceId) parts.push('空间内分享')
   return parts.join(' · ')
 }

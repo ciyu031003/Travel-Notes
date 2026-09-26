@@ -510,6 +510,15 @@ export async function createTravel(input: {
   location?: string
   ownerId?: number | null
   isPublic?: boolean
+  /**
+   * 可见性三档。**必须显式落库**：
+   * 表单原先只有「仅自己 / 公开」两个选项、且只写 `isPublic`，而 `visibility`
+   * 一直吃 schema 默认的 `SPACE` —— 也就是说用户勾了「仅自己」，旅行其实是
+   * 「空间成员可见」。空间一多就会真的泄露。现在由表单决定。
+   */
+  visibility?: 'PRIVATE' | 'SPACE' | 'PUBLIC'
+  /** 直接建在某个空间下（可选）；调用方需先校验我在该空间是 OWNER/MEMBER */
+  spaceId?: number | null
   travelType?: 'ALONE' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BFF' | 'GROUP' | 'OTHER'
   companions?: unknown
 }): Promise<{ id: number; slug: string }> {
@@ -517,6 +526,7 @@ export async function createTravel(input: {
   // 早先直接拿 makeTravelSlug 的结果写库，同一标题建两次就撞 Travel.slug 唯一约束（P2002），
   // 前台表现为"点了开始记录没反应"。同名旅行是常态（"南京之行"人人都可能建），必须能共存。
   const slug = await makeUniqueTravelSlug(makeTravelSlug(input.title))
+  const visibility = input.visibility ?? 'SPACE'
   const row = await prisma.travel.create({
     data: {
       title: input.title.trim(),
@@ -527,7 +537,10 @@ export async function createTravel(input: {
       endDate: input.endDate ? new Date(input.endDate) : null,
       status: 'PLANNED',
       ownerId: input.ownerId ?? null,
-      isPublic: input.isPublic ?? false,
+      // isPublic 与 visibility 保持一致，避免两个字段各说各话
+      isPublic: input.isPublic ?? visibility === 'PUBLIC',
+      visibility: visibility as never,
+      spaceId: input.spaceId ?? null,
       travelType: (input.travelType ?? 'ALONE') as any,
       companions: input.companions ?? undefined,
     },
@@ -761,6 +774,18 @@ export async function updateTravel(id: number, input: any): Promise<void> {
   if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
   if (input.status !== undefined) data.status = input.status
   if (input.isPublic !== undefined) data.isPublic = input.isPublic
+  /**
+   * 可见性三档（「公开」按钮的落点）。
+   * 与 `isPublic` 保持同步：PUBLIC ⇔ isPublic=true，其余一律 false。
+   * 两者不同步过一次就会出「看起来公开了、实际只有自己可见」这类幽灵问题。
+   */
+  if (input.visibility !== undefined) {
+    const v = String(input.visibility).toUpperCase()
+    if (v === 'PRIVATE' || v === 'SPACE' || v === 'PUBLIC') {
+      data.visibility = v
+      data.isPublic = v === 'PUBLIC'
+    }
+  }
   // 预算：同步队列（原生壳）与后台都可能带上来；非法值静默丢弃而不是把脏值写进库
   if (input.budget !== undefined) {
     if (input.budget === null) data.budget = null

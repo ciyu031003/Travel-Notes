@@ -1,10 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 import { Calendar, MapPin, Users, PenLine, Pencil, ChevronLeft } from 'lucide-react'
+import { AlertCircle, RefreshCw } from '@/lib/mobile/icon-system'
+import { Button } from '@/components/mobile/Button'
+import { toast } from '@/lib/mobile/toast-store'
 import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 import TravelTimeline from '@/components/travel/TravelTimeline'
 import TravelInfoEditor from '@/components/travel/TravelInfoEditor'
@@ -81,6 +84,9 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   const [editing, setEditing] = useState(false)
   const [reloadToken, setReloadToken] = useState(0)
   const [viewer, setViewer] = useState<{ photos: ViewerPhoto[]; index: number } | null>(null)
+  // 失败诊断：把判定依据留给用户一键复制（真机问题不再只能靠截图定位）
+  const remoteStatusRef = useRef<number>(0)
+  const remoteThrewRef = useRef<boolean>(false)
 
   const handleBack = useCallback(() => {
     void hapticLight()
@@ -105,9 +111,11 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
         } catch (e) {
           // fetch 本身抛错 = 网络不可达（与 HTTP 错误区分开）
           remoteThrew = true
+          remoteThrewRef.current = true
           throw e
         }
         remoteStatus = res.status
+        remoteStatusRef.current = res.status
         if (!res.ok) throw new Error('http ' + res.status)
         const j = (await res.json()) as DetailData & { error?: string }
         if (!(j?.travel || j?.legacy)) throw new Error(String(j?.error || '旅行不存在'))
@@ -215,14 +223,56 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   }
 
   if (error) {
+    /**
+     * 失败态：给出**真实原因**、可复制的诊断信息，以及明确的出路。
+     *
+     * 为什么专门做这个：连续几个版本里，真机问题只能靠一张截图来定位
+     * （"网络错误"这种笼统文案毫无信息量）。现在把判定依据一并暴露出来 ——
+     * 远端状态码、是否原生壳、本地是否读到、slug 是什么 —— 一次就能定位。
+     */
+    const diag = [
+      `slug: ${slug}`,
+      `native: ${typeof window !== 'undefined' ? String(Boolean((window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.())) : 'ssr'}`,
+      `remoteStatus: ${remoteStatusRef.current ?? 0}`,
+      `remoteThrew: ${String(remoteThrewRef.current)}`,
+      `offlineLocal: ${String(offlineLocal)}`,
+      `apiBase: ${typeof window !== 'undefined' ? window.location.origin : ''}`,
+      `ua: ${typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 120) : ''}`,
+    ].join('\n')
+
     return (
-      <AsyncState
-        variant="error"
-        message={error}
-        title="旅行加载失败"
-        actionLabel="重试"
-        onAction={reload}
-      />
+      <div className="m-gutter pb-24 pt-6">
+        <div className="m-card px-5 py-8 text-center">
+          <Icon icon={AlertCircle} size="lg" tone="faint" className="mx-auto" />
+          <h1 className="m-title-2 mt-3 text-[var(--m-text)]">旅行加载失败</h1>
+          <p className="m-caption mt-1.5 text-[var(--m-muted)]">{error}</p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <Button icon={RefreshCw} onClick={reload}>
+              重试
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(diag)
+                  toast.success('诊断信息已复制，可发给开发者')
+                } catch {
+                  toast.error('复制失败')
+                }
+              }}
+            >
+              复制诊断信息
+            </Button>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push('/travel')}
+            className="mt-4 text-[13px] text-[var(--m-muted)] underline"
+          >
+            回旅行列表
+          </button>
+        </div>
+      </div>
     )
   }
   if (!data) {

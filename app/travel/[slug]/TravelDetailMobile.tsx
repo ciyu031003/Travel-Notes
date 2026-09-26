@@ -131,6 +131,34 @@ export default function TravelDetailMobile({
     [travelId, onEditReload],
   )
 
+  /**
+   * 可见性切换（「公开」按钮）。
+   * 与「放不放进空间」正交：公开 = 旅行圈所有登录用户可见；空间可见 = 仅该空间成员。
+   * 服务端 `updateTravel` 会同时写 visibility 与 isPublic，避免两个字段各说各话。
+   */
+  const setVisibility = useCallback(
+    async (next: 'PRIVATE' | 'SPACE' | 'PUBLIC') => {
+      if (!travelId) return
+      try {
+        const res = await fetch(apiUrl(`/api/admin/travels/${travelId}`), {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ visibility: next }),
+        })
+        const j = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(j.error || '设置失败')
+        toast.success(
+          next === 'PUBLIC' ? '已公开，所有登录用户都能看到' : next === 'SPACE' ? '空间成员可见' : '已设为仅自己可见',
+        )
+        onEditReload()
+      } catch (e: any) {
+        toast.error(e.message || '设置失败')
+      }
+    },
+    [travelId, onEditReload],
+  )
+
   const syncNow = useCallback(async () => {
     if (!onSyncNow) return
     setSyncing(true)
@@ -585,6 +613,14 @@ export default function TravelDetailMobile({
                   label: travel.spaceId ? '更改所属空间' : '放到共享空间',
                   onClick: () => void openSpacePicker(),
                 },
+              ]
+            : []),
+          // 可见性（「公开」按钮）：在空间里时中间态是「空间成员可见」
+          ...(travel.canEdit
+            ? [
+                travel.visibility === 'PUBLIC'
+                  ? { label: '取消公开（不再所有人可见）', onClick: () => void setVisibility(travel.spaceId ? 'SPACE' : 'PRIVATE') }
+                  : { label: '设为公开（所有登录用户可见）', onClick: () => void setVisibility('PUBLIC') },
               ]
             : []),
           {

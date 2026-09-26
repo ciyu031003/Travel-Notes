@@ -3,14 +3,12 @@
  * - 原生壳：本地乐观写 SQLite（travel 表）+ 入 SyncQueue，联网后 SyncEngine 自动上传云端（服务端复检权限）。
  * - Web：直接走在线 /api/admin/travels。
  */
-import { writeLocalEntity } from './local-write'
+import { writeLocalEntity, markEntitySynced } from './local-write'
 import { SyncQueue } from './sync-queue'
 import { getSyncQueueStorage } from './storage'
 import { isNativePlatform } from './platform'
 import { apiUrl } from '@/lib/api-base'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
-import { readLocalTravelBySlug } from './travel-read'
-import { getSyncEngine, startSyncEngine } from './bootstrap'
 
 export interface CreateTravelInput {
   title: string
@@ -20,6 +18,10 @@ export interface CreateTravelInput {
   /** 目的地 → `Travel.location`（画册按城市成册依赖它，见 travel.service.createTravel 注释） */
   location?: string
   isPublic?: boolean
+  /** 可见性三档（PRIVATE/SPACE/PUBLIC）；服务端据此写 visibility */
+  visibility?: 'PRIVATE' | 'SPACE' | 'PUBLIC'
+  /** 直接建在某个空间下（可选） */
+  spaceId?: number | null
   travelType?: 'ALONE' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BFF' | 'GROUP' | 'OTHER'
   companions?: unknown
 }
@@ -37,71 +39,101 @@ export interface CreateTravelResult {
   remoteId?: number | null
 }
 
+/**
+ * 新建旅行。
+ *
+ * **在线优先，本地兜底** —— 这是 1.16.2 的结构性修正。
+ *
+ * 上一版的致命问题：原生壳里把「本地 SQLite 写入」当作**关键路径**，
+ * 而设备上的本地库存在列漂移/插件异常等不可控因素。一旦本地写入或本地读取失败，
+ * 用户既不落云端、也读不到本地 → 得到「服务器不存在、本机也没有离线副本」，
+ * 旅行等于凭空消失（真机截图就是这个）。
+ *
+ * 现在的顺序：
+ *   ① 先尽力写本地（离线可用 + 详情页能立刻渲染），**失败不阻断**；
+ *   ② **在线就直接 POST 服务端**（与 Web 完全同一条已验证路径），成功即以服务端 slug 为准；
+ *   ③ 服务端也失败（真离线）→ 才依赖本地行；本地行也没有 → 明确报错，不再假装成功。
+ *
+ * 用户的心智模型是对的：能联网就先落云端；不能联网就本地暂存、联网后补传。
+ */
 export async function createTravel(input: CreateTravelInput): Promise<CreateTravelResult> {
   const title = input.title.trim()
   if (!title) return { ok: false, error: '请输入旅行名称' }
 
   if (isNativePlatform()) {
-    const queue = new SyncQueue(getSyncQueueStorage())
     const localId = crypto.randomUUID()
-    // 本地也要有确定的 slug：早先写空串，而读取时回退成 `travel-<localId>`，
-    // 两侧不一致 → `/travel/<slug>` 打不开（"建完看不到也进不去"的根因之一）。
-    // 与服务端共用 makeTravelSlug，保证同步后 slug 一致、链接不失效。
-    const slug = makeTravelSlug(title, localId.slice(0, 8))
-    await writeLocalEntity(
-      {
-        table: 'travel',
-        id: localId,
-        entityType: 'TRAVEL',
-        remoteId: null,
-        operation: 'CREATE',
-        data: {
-          title,
-          slug,
-          description: input.description || null,
-          // 原先硬写 null，导致原生壳建的旅行在画册里只能靠标题猜城市；现在跟随表单
-          location: input.location?.trim() || null,
-          cover: null,
-          startDate: input.startDate ? new Date(input.startDate).getTime() : null,
-          endDate: input.endDate ? new Date(input.endDate).getTime() : null,
-          status: 'PLANNED',
-          visibility: 'SPACE',
-          travelType: input.travelType || 'ALONE',
-          // 本地 companions 为 TEXT 列：对象需序列化为 JSON 字符串，避免 SQLite 绑定对象失败
-          companions: input.companions ? JSON.stringify(input.companions) : null,
-          isPublic: input.isPublic ? 1 : 0,
-          spaceId: null,
-          ownerId: null,
-        },
-      },
-      queue,
-    )
-    /**
-     * 写完本地**立即尝试上传一轮**。
-     *
-     * 为什么必须做：`SyncEngine.start()` 只在「App 启动」与「网络状态变化」时跑一轮。
-     * App 本来就在线时新建旅行不会触发任何同步 → 这本旅行一直停在本地待同步态，
-     * 详情页的 `canWrite = travelId > 0 && !pendingSync` 于是恒为 false：
-     * **编辑/添加行程/记录一笔/删除全部不可用**（真机反馈正是这个）。
-     * 上传失败不影响离线可用 —— 仍返回本地 slug，详情页按「待同步」渲染，联网后由引擎补传。
-     */
+    const localSlug = makeTravelSlug(title, localId.slice(0, 8))
+
+    // ① 尽力写本地（失败只记录，不影响后续在线创建）
+    let localWritten = false
+    let localWriteError = ''
     try {
-      await startSyncEngine() // 幂等；非原生内部 no-op
-      const engine = getSyncEngine()
-      if (engine) await engine.sync()
-    } catch {
-      // 忽略：离线/服务端异常时保持本地可用
+      const queue = new SyncQueue(getSyncQueueStorage())
+      await writeLocalEntity(
+        {
+          table: 'travel',
+          id: localId,
+          entityType: 'TRAVEL',
+          remoteId: null,
+          operation: 'CREATE',
+          data: {
+            title,
+            slug: localSlug,
+            description: input.description || null,
+            location: input.location?.trim() || null,
+            cover: null,
+            startDate: input.startDate ? new Date(input.startDate).getTime() : null,
+            endDate: input.endDate ? new Date(input.endDate).getTime() : null,
+            status: 'PLANNED',
+            // 本地行也跟随表单的可见性与归属，避免"本地待同步态"与云端语义不一致
+            visibility: input.visibility || 'PRIVATE',
+            travelType: input.travelType || 'ALONE',
+            companions: input.companions ? JSON.stringify(input.companions) : null,
+            isPublic: input.visibility === 'PUBLIC' || input.isPublic ? 1 : 0,
+            spaceId: input.spaceId ?? null,
+            ownerId: null,
+          },
+        },
+        queue,
+      )
+      localWritten = true
+    } catch (e) {
+      localWriteError = e instanceof Error ? e.message : '本地写入失败'
+      console.warn('[travel-write] 本地写入失败，改为直接走服务端:', localWriteError)
     }
 
-    // 上传成功的话，本地行已回填 remoteId + 服务器 slug —— 回读一次拿到它们
-    const after = await readLocalTravelBySlug(slug).catch(() => null)
-    if (after?.remoteId) {
-      return { ok: true, local: false, slug: after.slug || slug, localId, remoteId: after.remoteId }
+    // ② 在线优先：直接创建到服务端（与 Web 同一条路径）
+    const online = await createTravelOnline(input)
+    if (online.ok) {
+      // 本地行若存在，回填云端 id + 服务端 slug；这样离线读也能拿到正确链接
+      if (localWritten) {
+        await markEntitySynced('TRAVEL', localId, online.remoteId ?? null, online.slug ?? null).catch(() => {})
+      }
+      return { ok: true, local: false, slug: online.slug ?? localSlug, localId, remoteId: online.remoteId ?? null }
     }
-    // 离线：返回本地 slug（列表与详情都能按它定位）
-    return { ok: true, local: true, slug, localId }
+
+    // ③ 服务端不可用：只能靠本地暂存
+    if (localWritten) {
+      return { ok: true, local: true, slug: localSlug, localId }
+    }
+    return {
+      ok: false,
+      error: localWriteError
+        ? `保存失败（本地：${localWriteError}；网络：${online.error || '不可用'}）`
+        : online.error || '创建失败，请检查网络后重试',
+    }
   }
 
+  // Web（非原生）：直接在线
+  const online = await createTravelOnline(input)
+  if (!online.ok) return { ok: false, error: online.error }
+  return { ok: true, slug: online.slug ?? null, remoteId: online.remoteId ?? null }
+}
+
+/** 在线创建（原生与 Web 共用；返回服务端 slug 与 id） */
+async function createTravelOnline(
+  input: CreateTravelInput,
+): Promise<{ ok: boolean; error?: string; slug?: string | null; remoteId?: number | null }> {
   try {
     const res = await fetch(apiUrl('/api/admin/travels'), {
       method: 'POST',
@@ -110,14 +142,14 @@ export async function createTravel(input: CreateTravelInput): Promise<CreateTrav
       body: JSON.stringify(input),
     })
     const json = await res.json().catch(() => ({}))
-    if (!res.ok) return { ok: false, error: json?.error || '创建失败' }
+    if (!res.ok) return { ok: false, error: json?.error || `创建失败（HTTP ${res.status}）` }
     const slug = typeof json?.slug === 'string' && json.slug ? json.slug : null
-    return { ok: true, slug }
+    const remoteId = Number.isFinite(Number(json?.id)) && Number(json?.id) > 0 ? Number(json.id) : null
+    return { ok: true, slug, remoteId }
   } catch {
-    return { ok: false, error: '网络错误，请重试' }
+    return { ok: false, error: '网络不可用' }
   }
 }
-
 export interface AddTravelDayInput {
   /** 云端的旅行 id（离线新建尚未同步时为 null） */
   travelId: number | null

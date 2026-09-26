@@ -203,7 +203,7 @@ describe('validateDraft / moreSectionSummary', () => {
       travelType: 'COUPLE',
       companions: [{ name: '阿元', relation: '伴侣' }],
       description: '走城墙',
-      isPublic: true,
+      visibility: 'PUBLIC',
     }))
     expect(s).toContain('情侣')
     expect(s).toContain('1 位同行')

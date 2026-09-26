@@ -50,6 +50,36 @@ export default function TravelComposerForm({
   const [companionRelation, setCompanionRelation] = useState('')
   const [succeeded, setSucceeded] = useState(false)
 
+  /**
+   * 可在其中创建内容的共享空间（OWNER/MEMBER）。
+   * 只读（VIEWER）空间不列出来：点了也会被服务端 403，不如一开始就不给。
+   */
+  const [mySpaces, setMySpaces] = useState<Array<{ id: number; name: string; myRole: string }>>([])
+  const [spacesLoading, setSpacesLoading] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    setSpacesLoading(true)
+    fetch(apiUrl('/api/spaces'), { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive || !j) return
+        const list = (j.spaces || []) as Array<{ id: number; name: string; myRole?: string }>
+        setMySpaces(
+          list
+            .filter((s) => s.myRole === 'OWNER' || s.myRole === 'MEMBER')
+            .map((s) => ({ id: s.id, name: s.name, myRole: String(s.myRole) })),
+        )
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (alive) setSpacesLoading(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [])
+
   const locationRef = useRef<HTMLDivElement>(null)
   const locInputRef = useRef<HTMLInputElement>(null)
   /** 用户是否亲手改过旅行类型：改过就不再被偏好问卷的默认值覆盖 */
@@ -389,20 +419,23 @@ export default function TravelComposerForm({
                   />
                 </div>
 
-                {/* 可见性：默认仅自己，且明确告知（原先表单完全没有这一项，用户不知道是私密的） */}
+                {/* 可见性与归属：三档 + 空间选择。
+                    原先只有「仅自己 / 公开」两个选项、且只写 isPublic —— 而 visibility
+                    一直吃 schema 默认的 SPACE，用户勾「仅自己」实际是"空间成员可见"。 */}
                 <div>
                   <p className="text-[13px] font-semibold text-[var(--m-muted)]">谁能看到</p>
                   <div className="mt-2.5 flex gap-2">
                     {[
-                      { v: false, label: '仅自己', hint: '默认' },
-                      { v: true, label: '公开', hint: '所有人可见' },
+                      { v: 'PRIVATE' as const, label: '仅自己', hint: '默认' },
+                      { v: 'SPACE' as const, label: '空间可见', hint: '空间成员' },
+                      { v: 'PUBLIC' as const, label: '公开', hint: '所有人' },
                     ].map((o) => {
-                      const active = draft.isPublic === o.v
+                      const active = draft.visibility === o.v
                       return (
                         <button
-                          key={String(o.v)}
+                          key={o.v}
                           type="button"
-                          onClick={() => patch({ isPublic: o.v })}
+                          onClick={() => patch({ visibility: o.v })}
                           aria-pressed={active}
                           className={`flex-1 rounded-2xl border px-3 py-2.5 text-left transition active:scale-[0.98] ${
                             active ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)]' : 'border-[var(--m-line)]'
@@ -415,6 +448,48 @@ export default function TravelComposerForm({
                         </button>
                       )
                     })}
+                  </div>
+
+                  {/* 一键加入某个空间（可选）：建好就在空间里，成员直接能看能改 */}
+                  <div className="mt-3">
+                    <p className="text-[13px] font-semibold text-[var(--m-muted)]">放到哪个空间</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => patch({ spaceId: null })}
+                        aria-pressed={draft.spaceId === null}
+                        className={`rounded-full border px-3.5 py-2 text-[13px] transition active:scale-[0.97] ${
+                          draft.spaceId === null
+                            ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]'
+                            : 'border-[var(--m-line)] text-[var(--m-muted)]'
+                        }`}
+                      >
+                        不放进空间
+                      </button>
+                      {mySpaces.map((s) => {
+                        const active = draft.spaceId === s.id
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => patch({ spaceId: s.id, visibility: 'SPACE' })}
+                            aria-pressed={active}
+                            className={`max-w-[12rem] truncate rounded-full border px-3.5 py-2 text-[13px] transition active:scale-[0.97] ${
+                              active
+                                ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]'
+                                : 'border-[var(--m-line)] text-[var(--m-muted)]'
+                            }`}
+                          >
+                            {s.name}
+                          </button>
+                        )
+                      })}
+                      {mySpaces.length === 0 && !spacesLoading && (
+                        <span className="py-2 text-[12px] text-[var(--m-faint)]">
+                          还没有共享空间（「我的 → 我的空间」可创建）
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
