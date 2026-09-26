@@ -41,7 +41,7 @@ vi.mock('@capacitor-community/sqlite', () => {
     async query(sql: string, values: unknown[] = []) {
       const st = this.raw().prepare(sql)
       const rows = values.length > 0 ? st.all(...(values as never[])) : st.all()
-      return { values: rows }
+      return { values: (rows as Array<Record<string, unknown>>).map(shuffleKeys) }
     }
     async run(sql: string, values: unknown[] = []) {
       const st = this.raw().prepare(sql)
@@ -73,10 +73,25 @@ import { SqliteSyncQueueStorage } from '@/lib/modules/offline/native/sqlite-sync
 import { SyncQueue } from '@/lib/modules/offline/sync-queue'
 import { writeLocalEntity, markEntitySynced } from '@/lib/modules/offline/local-write'
 import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
+import { applyPullEntity } from '@/lib/modules/offline/pull'
 
 function freshRaw() {
   box.raw = new DatabaseSync(':memory:')
   return box.raw as DatabaseSync
+}
+
+/**
+ * **把返回行的键序打乱**。
+ *
+ * 关键：Android 的 JSObject 基于 org.json，**键序没有任何保证**；
+ * 若不打乱，「按位置取值（row[0]）」的错误实现会因为"恰好等于 SELECT 列序"而侥幸通过。
+ * 打乱之后，只有**按列名取值**的实现才能通过 —— 这组用例才真正覆盖真机语义。
+ */
+function shuffleKeys(row: Record<string, unknown>): Record<string, unknown> {
+  const keys = Object.keys(row)
+  const out: Record<string, unknown> = {}
+  for (const k of [...keys].reverse()) out[k] = row[k]
+  return out
 }
 
 async function initOffline() {
@@ -231,5 +246,89 @@ describe('真实 SQLite · 老设备缺列（CREATE TABLE IF NOT EXISTS 不补�
     const first = (res as { values: unknown[] }).values[0]
     expect(Array.isArray(first)).toBe(false)
     expect(first).toHaveProperty('name')
+  })
+})
+
+/**
+ * 下载拉取落地（pull.ts）：每次同步都会跑，而且我刚把它的取值方式
+ * 从「按位置解构」改成「按列名」（rowGet）—— 必须验证它在真 SQL + Android 行语义下成立。
+ */
+describe('真实 SQLite · 拉取落地（LWW 与墓碑）', () => {
+  function entity(over: Partial<Record<string, unknown>> = {}) {
+    return {
+      table: 'travel',
+      id: 'remote-uuid-1',
+      remoteId: 900,
+      updatedAt: 5000,
+      data: { title: '云端标题', slug: 'yun-duan', location: '丽江' },
+      ...over,
+    } as never
+  }
+
+  it('远端新行 → 落地成功且标记 SYNCED', async () => {
+    await initOffline()
+    const ok = await applyPullEntity(entity())
+    expect(ok).toBe(true)
+    const t = await readLocalTravelBySlug('yun-duan')
+    expect(t).not.toBeNull()
+    expect(t!.title).toBe('云端标题')
+    expect(t!.remoteId).toBe(900)
+    expect(t!.pendingSync).toBe(false) // SYNCED → 不是待同步
+  })
+
+  it('本地有待上传改动（PENDING_UPLOAD）→ 跳过，不覆盖本地', async () => {
+    await initOffline()
+    const queue = new SyncQueue(new SqliteSyncQueueStorage())
+    await writeLocalEntity(
+      { table: 'travel', id: 'local-9', entityType: 'TRAVEL', remoteId: 900, operation: 'UPDATE', data: { ...TRAVEL_DATA, slug: 'ben-di', title: '本地标题' } },
+      queue,
+    )
+    const ok = await applyPullEntity(entity({ id: 'local-9', data: { title: '云端标题', slug: 'ben-di' } }))
+    expect(ok).toBe(false)
+    const t = await readLocalTravelBySlug('ben-di')
+    expect(t!.title).toBe('本地标题') // 本地改动被保住
+  })
+
+  it('远端更旧（updatedAt 更小）→ 跳过（LWW）', async () => {
+    await initOffline()
+    const queue = new SyncQueue(new SqliteSyncQueueStorage())
+    await writeLocalEntity(
+      { table: 'travel', id: 'local-lww', entityType: 'TRAVEL', remoteId: 901, operation: 'UPDATE', data: { ...TRAVEL_DATA, slug: 'lww', title: '较新的本地' } },
+      queue,
+    )
+    // 先把它标成 SYNCED，否则会被 PENDING_UPLOAD 规则先拦下（那样测不到 LWW）
+    await markEntitySynced('TRAVEL', 'local-lww', 901)
+    const ok = await applyPullEntity(entity({ id: 'local-lww', remoteId: 901, updatedAt: 1, data: { title: '很旧的云端', slug: 'lww' } }))
+    expect(ok).toBe(false)
+    const t = await readLocalTravelBySlug('lww')
+    expect(t!.title).toBe('较新的本地')
+  })
+
+  it('本地墓碑（deleted=1 且已同步）不被远端复活', async () => {
+    const db = await initOffline()
+    const queue = new SyncQueue(new SqliteSyncQueueStorage())
+    // 先真实建行，再把它变成「已删除且已同步」的墓碑
+    // （直接置状态的原因：走 DELETE 操作会把 syncStatus 置为 PENDING_UPLOAD，
+    //   那样会被"待上传则跳过"规则先拦下，就测不到墓碑规则本身了）
+    await writeLocalEntity(
+      { table: 'travel', id: 'local-del', entityType: 'TRAVEL', remoteId: 902, operation: 'CREATE', data: { ...TRAVEL_DATA, slug: 'tomb', title: '已删除' } },
+      queue,
+    )
+    await db.run("UPDATE travel SET deleted = 1, syncStatus = 'SYNCED' WHERE id = ?", ['local-del'])
+
+    const ok = await applyPullEntity(
+      entity({ id: 'local-del', remoteId: 902, updatedAt: 99999, data: { title: '想复活我', slug: 'tomb' } }),
+    )
+    expect(ok, '墓碑必须拒绝来自远端的复活').toBe(false)
+
+    // 墓碑行仍留在库里（供后续对账），但不参与正常读取
+    const raw = box.raw as DatabaseSync
+    const row = raw.prepare('SELECT deleted, title FROM travel WHERE id = ?').get('local-del') as {
+      deleted: number
+      title: string
+    }
+    expect(Number(row.deleted)).toBe(1)
+    expect(row.title).toBe('已删除')
+    expect(await readLocalTravelBySlug('tomb')).toBeNull()
   })
 })
