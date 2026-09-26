@@ -133,8 +133,34 @@ export async function getOfflineDb(): Promise<SQLiteDBConnection> {
     initing = (async () => {
       const { CapacitorSQLite, SQLiteConnection } = await import('@capacitor-community/sqlite')
       const sqlite = new SQLiteConnection(CapacitorSQLite)
-      const conn = await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false)
-      await conn.open()
+      /**
+       * 取连接：**必须先核对一致性，已经存在就复用**。
+       *
+       * 为什么这是必需的（由 Android 原生实现决定，不是猜测）：
+       * `CapacitorSQLite.createConnection` 在连接已存在时**直接抛异常**
+       * （Java 侧 `String msg = "Connection " + dbName + " already exists"`）。
+       * 而 WebView 每次重载都会重建 JS 上下文 —— 本模块的 `db` 缓存随之清空，
+       * 但**原生侧的连接仍然活着**（`closeOfflineDb` 没有任何调用方）。
+       * 于是「第二次进入 App / 页面重载」之后 createConnection 必然抛错 →
+       * `getOfflineDb()` 拒绝 → **整个离线层当场失效**：
+       * 本地读恒空、同步队列读不出来、离线写全部失败，而且 fail 得毫无提示。
+       *
+       * 官方推荐写法：`checkConnectionsConsistency()` → `isConnection()` → 复用或创建。
+       */
+      await sqlite.checkConnectionsConsistency().catch(() => {})
+      const reuse = await sqlite
+        .isConnection(DB_NAME, false)
+        .then((r) => !!r?.result)
+        .catch(() => false)
+      const conn = reuse
+        ? await sqlite.retrieveConnection(DB_NAME, false)
+        : await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false)
+      // 已打开的连接再 open 是幂等的（Android 侧 Database.open 会先判断 isOpen）；
+      // 仅对"已打开"这类错误容忍，其他错误照旧抛出
+      await conn.open().catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : String(e)
+        if (!/already open/i.test(msg)) throw e
+      })
       await conn.execute(CREATE_TABLES_SQL.join(';\n') + ';')
       await conn.execute(CREATE_INDEXES_SQL.join(';\n') + ';')
       // 老清单先跑（对老库是主要路径），再跑自省自愈（补齐清单漏掉的列，如 travel.slug / travel.cover）

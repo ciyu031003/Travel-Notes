@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '根因修复：Android 上本地数据库查询结果行结构是「列名对象」，而客户端按「值数组」解析，导致所有本地读静默为空、同步队列永远为空、用户创作从未上传到云端',
+    changelog: process.env.APP_CHANGELOG || '根因修复二：WebView 重载后原生数据库连接仍存在，再次 createConnection 会抛 already exists，导致整个离线层静默失效；改为先核对一致性、复用已有连接',
     forceUpdate,
   })
 }
