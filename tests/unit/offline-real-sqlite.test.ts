@@ -247,6 +247,51 @@ describe('真实 SQLite · 老设备缺列（CREATE TABLE IF NOT EXISTS 不补�
     expect(Array.isArray(first)).toBe(false)
     expect(first).toHaveProperty('name')
   })
+
+  it('老设备的 sync_queue 缺列（lastError/status）→ 自愈补齐，队列仍可读写', async () => {
+    const raw = freshRaw()
+    /**
+     * 老版本的 sync_queue：缺 status / lastError / retryCount。
+     * 这张表特别关键 —— 它的 INSERT/SELECT 是**显式列举全部列**的
+     * （不像 local-write 会按真实列过滤），缺列就整条抛错：
+     * 本地写入进不了队列、待上传项读不出来 → 用户创作永远上不了云。
+     */
+    raw.exec(`
+      CREATE TABLE sync_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entityType TEXT NOT NULL,
+        entityId TEXT,
+        remoteId INTEGER,
+        operation TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL
+      );
+    `)
+
+    await initOffline()
+
+    const storage = new SqliteSyncQueueStorage()
+    const id = await storage.add({
+      entityType: 'TRAVEL',
+      entityId: 'local-old',
+      remoteId: null,
+      operation: 'CREATE',
+      payload: '{"title":"老设备"}',
+      retryCount: 0,
+      status: 'PENDING',
+      lastError: null,
+      createdAt: 1,
+      updatedAt: 1,
+    })
+    expect(id).toBeGreaterThan(0)
+
+    const queue = new SyncQueue(storage)
+    const pending = await queue.pending()
+    expect(pending).toHaveLength(1)
+    expect(pending[0].status).toBe('PENDING')
+    expect(pending[0].entityId).toBe('local-old')
+  })
 })
 
 /**

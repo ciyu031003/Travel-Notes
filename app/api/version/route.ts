@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '根因修复二：WebView 重载后原生数据库连接仍存在，再次 createConnection 会抛 already exists，导致整个离线层静默失效；改为先核对一致性、复用已有连接',
+    changelog: process.env.APP_CHANGELOG || '根因修复三：老设备缺列时建索引会抛错且发生在列自愈之前，导致整个离线层初始化失败；改为先自愈再逐条容错建索引，并把 sync_queue 等缺失的表纳入自愈',
     forceUpdate,
   })
 }

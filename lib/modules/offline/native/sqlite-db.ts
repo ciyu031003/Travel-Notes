@@ -32,7 +32,22 @@ const COLUMN_UPGRADES_SQL: string[] = [
  * → 详情页退化成「网络错误」。手写清单永远追不上 DDL 的演进。
  * 现在改为**自省 + 自愈**：读 `PRAGMA table_info` 拿到真实列，差集补 `ALTER TABLE ADD COLUMN`。
  */
-const DESIRED_COLUMNS: Record<string, Array<[string, string]>> = {
+export const DESIRED_COLUMNS: Record<string, Array<[string, string]>> = {
+  meta: [['value', 'TEXT']],
+  /**
+   * 同步队列**必须**在自愈清单里。
+   *
+   * 为什么：`SqliteSyncQueueStorage` 的 INSERT / SELECT 都是显式列全量列举的
+   * （不像 local-write 那样会按真实列过滤）。老设备上这张表若缺列
+   * （例如后来加的 `lastError`），add/list 会**整条抛错** →
+   * 本地写入进不了队列、待上传项读不出来 → **用户创作永远上不了云**。
+   * 之前这张表不在清单里，等于自愈对它完全失效。
+   */
+  sync_queue: [
+    ['entityType', 'TEXT'], ['entityId', 'TEXT'], ['remoteId', 'INTEGER'], ['operation', 'TEXT'],
+    ['payload', 'TEXT'], ['retryCount', 'INTEGER'], ['status', 'TEXT'], ['lastError', 'TEXT'],
+    ['createdAt', 'INTEGER'], ['updatedAt', 'INTEGER'],
+  ],
   travel: [
     ['remoteId', 'INTEGER'], ['title', 'TEXT'], ['slug', 'TEXT'], ['description', 'TEXT'],
     ['location', 'TEXT'], ['cover', 'TEXT'], ['startDate', 'INTEGER'], ['endDate', 'INTEGER'],
@@ -57,6 +72,8 @@ const DESIRED_COLUMNS: Record<string, Array<[string, string]>> = {
     ['travelId', 'INTEGER'], ['visibility', 'TEXT'], ['isPublic', 'INTEGER'], ['updatedAt', 'INTEGER'],
     ['syncStatus', 'TEXT'], ['deleted', 'INTEGER'],
   ],
+  album_media: [['mediaId', 'TEXT'], ['sortOrder', 'INTEGER']],
+  memory_media: [['mediaId', 'TEXT'], ['sortOrder', 'INTEGER'], ['updatedAt', 'INTEGER']],
   media: [
     ['remoteId', 'INTEGER'], ['spaceId', 'INTEGER'], ['memoryId', 'TEXT'], ['travelId', 'TEXT'],
     ['userId', 'INTEGER'], ['type', 'TEXT'], ['mimeType', 'TEXT'], ['size', 'INTEGER'],
@@ -67,6 +84,14 @@ const DESIRED_COLUMNS: Record<string, Array<[string, string]>> = {
   moment: [
     ['remoteId', 'INTEGER'], ['content', 'TEXT'], ['tags', 'TEXT'], ['userId', 'INTEGER'],
     ['isPublic', 'INTEGER'], ['updatedAt', 'INTEGER'], ['syncStatus', 'TEXT'], ['deleted', 'INTEGER'],
+  ],
+  social_post: [
+    ['remoteId', 'INTEGER'], ['title', 'TEXT'], ['summary', 'TEXT'], ['coverUrl', 'TEXT'],
+    ['location', 'TEXT'], ['startDate', 'INTEGER'], ['endDate', 'INTEGER'], ['dayCount', 'INTEGER'],
+    ['photoCount', 'INTEGER'], ['authorId', 'INTEGER'], ['authorName', 'TEXT'], ['authorNickname', 'TEXT'],
+    ['authorAvatar', 'TEXT'], ['likeCount', 'INTEGER'], ['commentCount', 'INTEGER'],
+    ['favoriteCount', 'INTEGER'], ['isLiked', 'INTEGER'], ['isFavorited', 'INTEGER'],
+    ['publishedAt', 'INTEGER'], ['updatedAt', 'INTEGER'], ['syncStatus', 'TEXT'], ['deleted', 'INTEGER'],
   ],
 }
 
@@ -162,12 +187,25 @@ export async function getOfflineDb(): Promise<SQLiteDBConnection> {
         if (!/already open/i.test(msg)) throw e
       })
       await conn.execute(CREATE_TABLES_SQL.join(';\n') + ';')
-      await conn.execute(CREATE_INDEXES_SQL.join(';\n') + ';')
       // 老清单先跑（对老库是主要路径），再跑自省自愈（补齐清单漏掉的列，如 travel.slug / travel.cover）
       for (const sql of COLUMN_UPGRADES_SQL) {
         await conn.execute(sql).catch(() => {}) // 列已存在时忽略
       }
+      /**
+       * **顺序很重要：索引必须放在自愈之后，且逐条容错。**
+       *
+       * 为什么（真实缺陷）：索引会引用后加的列，例如
+       *   `CREATE INDEX idx_sync_queue_status ON sync_queue(status, createdAt)`
+       * 老设备的 `sync_queue` 若缺 `status`，这条 CREATE INDEX 会抛
+       * `no such column: status`；而它原先排在自愈**之前**且**不吞错** ——
+       * 于是 `getOfflineDb()` 直接 reject，**整个离线层失效**
+       * （本地读为空、队列读写失败、离线写全废），且没有任何提示。
+       * 索引只是查询优化，任何一条建不起来都不该影响离线可用性。
+       */
       await healColumns(conn)
+      for (const sql of CREATE_INDEXES_SQL) {
+        await conn.execute(sql).catch(() => {}) // 老库缺列/重复索引等：忽略
+      }
       db = conn
       sqliteConn = sqlite
       return conn
