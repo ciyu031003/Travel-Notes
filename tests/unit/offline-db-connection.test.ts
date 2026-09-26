@@ -61,7 +61,7 @@ vi.mock('@capacitor-community/sqlite', () => {
   return { SQLiteConnection, CapacitorSQLite: {} }
 })
 
-import { getOfflineDb, closeOfflineDb } from '@/lib/modules/offline/native/sqlite-db'
+import { getOfflineDb, closeOfflineDb, getOfflineInitError } from '@/lib/modules/offline/native/sqlite-db'
 
 beforeEach(async () => {
   await closeOfflineDb().catch(() => {})
@@ -111,5 +111,24 @@ describe('getOfflineDb · 连接获取', () => {
     state.existing = true
     await getOfflineDb()
     expect(state.retrieveCalls).toBe(1)
+  })
+})
+
+/**
+ * 初始化失败必须**留下痕迹**：离线层坏掉时表现是"本地读全空、离线写失败"，
+ * 若不留痕，用户和我都会把它误判成"网络问题/没数据"（前几版就是这么走偏的）。
+ */
+describe('getOfflineDb · 初始化失败可诊断', () => {
+  it('创建连接失败 → getOfflineInitError() 返回原因，且再次调用会重试', async () => {
+    state.createThrows = true
+    state.existing = false
+    await expect(getOfflineDb()).rejects.toThrow('already exists')
+    expect(getOfflineInitError()).toContain('already exists')
+
+    // 修好之后再取：应能成功，并清掉错误标记
+    state.createThrows = false
+    const conn = await getOfflineDb()
+    expect(conn).toBeTruthy()
+    expect(getOfflineInitError()).toBeNull()
   })
 })

@@ -22,6 +22,7 @@ import { hapticLight } from '@/lib/mobile/haptics'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
 import { getSyncEngine, startSyncEngine } from '@/lib/modules/offline/bootstrap'
+import { getOfflineInitError } from '@/lib/modules/offline/native/sqlite-db'
 import TravelDetailMobile from './TravelDetailMobile'
 import TravelPhotoViewer, { type ViewerPhoto } from './TravelPhotoViewer'
 import type { TravelInfoForDetail } from '@/components/travel/detail/types'
@@ -87,6 +88,13 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   // 失败诊断：把判定依据留给用户一键复制（真机问题不再只能靠截图定位）
   const remoteStatusRef = useRef<number>(0)
   const remoteThrewRef = useRef<boolean>(false)
+  /**
+   * 本地兜底读的结果状态。
+   * 这是下一次反馈里最关键的一条：**「离线层坏了」和「离线层正常但没数据」
+   * 的修法完全不同**（前者是插件/连接/表结构问题，后者只是确实没缓存）。
+   * 之前这两者在界面上都表现为一句"加载失败"，无法区分。
+   */
+  const localReadRef = useRef<string>('not-tried')
 
   const handleBack = useCallback(() => {
     void hapticLight()
@@ -123,8 +131,19 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       },
       async () => {
         // 本地 SQLite 兜底：离线新建、或云端还没有这本旅行时，页面仍然可看、可理解状态
-        const local = await readLocalTravelBySlug(slug)
-        if (!local) return null
+        let local
+        try {
+          local = await readLocalTravelBySlug(slug)
+        } catch (e) {
+          // 离线层本身坏了（连接/表结构/插件）—— 必须记下来，别和"本地没数据"混为一谈
+          localReadRef.current = 'error: ' + (e instanceof Error ? e.message : String(e))
+          throw e
+        }
+        if (!local) {
+          localReadRef.current = 'empty(本地库可读，但没有这本旅行)'
+          return null
+        }
+        localReadRef.current = 'ok'
         return {
           travel: {
             // 0 表示"云端还不存在"：所有写操作按此禁用（见 TravelDetailMobile 的 canWrite）
@@ -236,6 +255,9 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       `remoteStatus: ${remoteStatusRef.current ?? 0}`,
       `remoteThrew: ${String(remoteThrewRef.current)}`,
       `offlineLocal: ${String(offlineLocal)}`,
+      // 离线层自身的状态：这是区分「离线层坏了」与「离线层正常但没数据」的关键
+      `localRead: ${localReadRef.current}`,
+      `offlineInitError: ${getOfflineInitError() ?? 'none'}`,
       `apiBase: ${typeof window !== 'undefined' ? window.location.origin : ''}`,
       `ua: ${typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 120) : ''}`,
     ].join('\n')

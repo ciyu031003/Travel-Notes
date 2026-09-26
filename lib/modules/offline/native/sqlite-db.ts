@@ -148,6 +148,21 @@ let db: SQLiteDBConnection | null = null
 let sqliteConn: { closeConnection: (database: string, readonly: boolean) => Promise<void> } | null = null
 let initing: Promise<SQLiteDBConnection> | null = null
 
+/**
+ * 最近一次离线库初始化失败的原因（成功则清空）。
+ *
+ * 为什么必须留着：离线层一旦初始化失败（连接 exists、建表/自愈抛错…），
+ * 表现是**所有本地读为空、离线写失败**，但界面上完全看不出来 ——
+ * 过去只能靠用户截图猜。现在把它暴露到「复制诊断信息」与「数据与同步」里，
+ * 下次反馈就能一眼区分「离线层坏了」和「离线层正常但没数据」。
+ */
+let lastInitError: string | null = null
+
+/** 离线库初始化错误（null = 正常） */
+export function getOfflineInitError(): string | null {
+  return lastInitError
+}
+
 /** 初始化（幂等）：建连接 → open → 建表/索引 → 列升级（忽略重复列错误） */
 export async function getOfflineDb(): Promise<SQLiteDBConnection> {
   if (!isNativePlatform()) {
@@ -208,9 +223,13 @@ export async function getOfflineDb(): Promise<SQLiteDBConnection> {
       }
       db = conn
       sqliteConn = sqlite
+      lastInitError = null
       return conn
     })().catch((err) => {
       initing = null
+      // 记住失败原因：离线层坏掉时界面必须能看出来（见 getOfflineInitError 的注释）
+      lastInitError = err instanceof Error ? err.message : String(err)
+      console.warn('[offline] 离线库初始化失败:', lastInitError)
       throw err
     })
   }

@@ -10,6 +10,7 @@ import type { SyncQueueItem } from '@/lib/modules/offline/types'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { getPrivacyLockEnabled, setPrivacyLockEnabled } from '@/lib/modules/offline/privacy-lock'
 import { getSyncEngine } from '@/lib/modules/offline/bootstrap'
+import { getOfflineInitError } from '@/lib/modules/offline/native/sqlite-db'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Switch } from '@/components/mobile/Switch'
@@ -30,12 +31,15 @@ export default function SyncCenter() {
   const [lastSync, setLastSync] = useState<{ at: number; written: number } | null>(null)
   // 引擎内部被隔离的阶段错误（例如"本地队列读失败但上传照常"）：不阻断同步，但必须能看见
   const [engineError, setEngineError] = useState<string | null>(null)
+  // 离线库初始化失败（连接/表结构/插件）：表现为"本地读全空、离线写失败"，必须能看见
+  const [offlineInitError, setOfflineInitError] = useState<string | null>(null)
 
   useEffect(() => {
     setLockEnabled(getPrivacyLockEnabled())
     const engine = getSyncEngine()
     if (engine?.lastSyncStats) setLastSync(engine.lastSyncStats)
     if (engine?.lastError) setEngineError(engine.lastError)
+    setOfflineInitError(getOfflineInitError())
   }, [])
 
   const load = useCallback(async () => {
@@ -130,6 +134,20 @@ export default function SyncCenter() {
               价值：本地存储坏掉时「上传阶段照常」是刻意设计，但用户与我都需要看得见
               到底是哪一步坏了 —— 否则又只能靠截图猜（这正是前几版的教训）。
             */}
+            {/*
+              离线库初始化失败：这时"本地读为空、离线写失败"都不是数据问题，而是存储没起来。
+              把它显式说出来，用户与我都不会再把它误判成"网络问题"。
+            */}
+            {offlineInitError && (
+              <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--social-surface-50)] px-4 py-3 text-[12px] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]">
+                <Icon icon={AlertCircle} size="sm" className="mt-0.5 shrink-0 text-[var(--social-accent)]" />
+                <span>
+                  离线存储不可用（离线查看与离线记录会失效，联网时不受影响）：
+                  <code className="break-all">{offlineInitError}</code>
+                </span>
+              </div>
+            )}
+
             {engineError && (
               <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--social-surface-50)] px-4 py-3 text-[12px] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]">
                 <Icon icon={AlertCircle} size="sm" className="mt-0.5 shrink-0 text-[var(--social-accent)]" />

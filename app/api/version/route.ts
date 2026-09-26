@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：拉取落地遇到服务端新增字段或单条脏数据会整批失败，导致离线缓存再也更新不了；改为按真实列过滤并逐条隔离',
+    changelog: process.env.APP_CHANGELOG || '新增：失败页诊断信息与「数据与同步」页会显示离线存储是否可用（区分「离线层坏了」与「离线层正常但没数据」）',
     forceUpdate,
   })
 }
