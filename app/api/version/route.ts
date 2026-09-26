@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：新建旅行不再依赖本地暂存（在线直接落云端，本地失败也能建成）；修：「仅自己」此前实际是空间成员可见；新增：新建时可直接放进空间、行程/费用/感受/照片与公开按钮',
+    changelog: process.env.APP_CHANGELOG || '修：加行程/记一笔（含照片）/编辑旅行信息在手机上只写本地导致保存后看不到，改为在线直写云端、本地兜底',
     forceUpdate,
   })
 }

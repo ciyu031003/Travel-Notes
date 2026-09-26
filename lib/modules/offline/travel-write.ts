@@ -9,6 +9,7 @@ import { getSyncQueueStorage } from './storage'
 import { isNativePlatform } from './platform'
 import { apiUrl } from '@/lib/api-base'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
+import { writeThrough } from './write-through'
 
 export interface CreateTravelInput {
   title: string
@@ -178,46 +179,60 @@ export interface AddTravelDayResult {
  * 于是"离线建旅行 → 离线加天 → 联网全量上传"整条链路才闭合。
  */
 export async function addTravelDay(input: AddTravelDayInput): Promise<AddTravelDayResult> {
-  if (isNativePlatform()) {
-    const queue = new SyncQueue(getSyncQueueStorage())
-    const localId = crypto.randomUUID()
-    const parent = input.travelId != null ? String(input.travelId) : input.localTravelId
-    if (!parent) return { ok: false, error: '找不到这本旅行的本地记录，请先同步' }
-    await writeLocalEntity(
-      {
-        table: 'travel_day',
-        id: localId,
-        entityType: 'TRAVEL_DAY',
-        remoteId: null,
-        operation: 'CREATE',
-        data: {
-          travelId: parent,
-          date: input.date ? new Date(input.date).getTime() : null,
-          title: input.title || null,
-          summary: input.summary || null,
-          sortOrder: Date.now(),
+  const localId = crypto.randomUUID()
+  const parent = input.travelId != null ? String(input.travelId) : input.localTravelId
+
+  let wroteLocal = false
+  const r = await writeThrough<{ id: number | null }>({
+    // ① 本地乐观写（离线可用）。注意 parent 缺失时要报错，不能静默写出一行无父的"天"
+    localWrite: async () => {
+      if (!parent) throw new Error('找不到这本旅行的本地记录，请先同步')
+      const queue = new SyncQueue(getSyncQueueStorage())
+      await writeLocalEntity(
+        {
+          table: 'travel_day',
+          id: localId,
+          entityType: 'TRAVEL_DAY',
+          remoteId: null,
+          operation: 'CREATE',
+          data: {
+            travelId: parent,
+            date: input.date ? new Date(input.date).getTime() : null,
+            title: input.title || null,
+            summary: input.summary || null,
+            sortOrder: Date.now(),
+          },
         },
-      },
-      queue,
-    )
-    return { ok: true, local: true, id: null, localId }
-  }
+        queue,
+      )
+      wroteLocal = true
+    },
+    // ② 在线直写服务端。
+    // 为什么必须做：行程 tab 读的是**服务端** timeline，只写本地的话
+    // 「加完一天返回详情就没了」—— 真机必然报这个。
+    serverWrite: async () => {
+      if (input.travelId == null) return { ok: false, error: '该旅行尚未同步到云端，请联网后重试' }
+      try {
+        const res = await fetch(apiUrl(`/api/travels/${input.travelId}/days`), {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: input.date || undefined, title: input.title, summary: input.summary }),
+        })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) return { ok: false, error: json?.error || `添加失败（HTTP ${res.status}）` }
+        const id = Number(json?.id)
+        return { ok: true, data: { id: Number.isFinite(id) ? id : null } }
+      } catch {
+        return { ok: false, error: '网络不可用' }
+      }
+    },
+    onServerOk: async (data) => {
+      if (wroteLocal) await markEntitySynced('TRAVEL_DAY', localId, data?.id ?? null)
+    },
+  })
 
-  if (input.travelId == null) {
-    return { ok: false, error: '该旅行尚未同步到云端，请联网后重试' }
-  }
-
-  try {
-    const res = await fetch(apiUrl(`/api/travels/${input.travelId}/days`), {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: input.date || undefined, title: input.title, summary: input.summary }),
-    })
-    const json = await res.json().catch(() => ({}))
-    if (!res.ok) return { ok: false, error: json?.error || '添加失败' }
-    return { ok: true, id: typeof json?.id === 'number' ? json.id : null }
-  } catch {
-    return { ok: false, error: '网络错误，请重试' }
-  }
+  if (r.mode === 'server') return { ok: true, id: r.data?.id ?? null }
+  if (r.mode === 'local') return { ok: true, local: true, id: null, localId }
+  return { ok: false, error: r.error }
 }

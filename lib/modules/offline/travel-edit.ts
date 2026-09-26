@@ -1,21 +1,15 @@
 /**
  * 旅行信息编辑 · 离线写（原生壳）。
  *
- * 需求背景：用户反馈"建完的旅行看不到、也没法进一步设置"——前台此前**完全没有**
- * 修改入口，目的地写错 / 日期漏填都无法补救。本文件把"已存在的旅行"做成可编辑，
- * 且沿用既有离线策略：原生壳先乐观写本地 SQLite + 入 SyncQueue，联网后 SyncEngine 上传。
- *
- * 与新建（travel-write.ts）的差别：
- *  · 目标行已存在 → 用 UPDATE 而不是 CREATE，队列项带 remoteId（能取到的话）；
- *  · 本地表主键是 UUID（`id`），而页面只拿得到 slug / 云端 id → 先反查本地行；
- *  · 本地未同步（remoteId == null）时，队列项 remoteId 为 null，由同步侧按本地行补全。
+ * 策略与新建一致：**在线优先、本地兜底**（writeThrough）。
+ * 详见文件末尾 updateTravelInfo 的注释。
  */
-import { writeLocalEntity } from './local-write'
+import { writeLocalEntity, markEntitySynced } from './local-write'
 import { SyncQueue } from './sync-queue'
 import { getSyncQueueStorage } from './storage'
-import { isNativePlatform } from './platform'
 import { queryById, queryRows } from './dao'
 import { apiUrl } from '@/lib/api-base'
+import { writeThrough } from './write-through'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
 
 export interface UpdateTravelInfoInput {
@@ -58,67 +52,88 @@ export async function findLocalTravelRowId(slug: string, remoteId: number | null
 }
 
 export async function updateTravelInfo(input: UpdateTravelInfoInput): Promise<UpdateTravelInfoResult> {
-  if (isNativePlatform()) {
-    const data: Record<string, unknown> = {}
-    if (input.title !== undefined) data.title = input.title
-    if (input.location !== undefined) data.location = input.location || null
-    if (input.description !== undefined) data.description = input.description || null
-    if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate).getTime() : null
-    if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate).getTime() : null
-    if (input.budget !== undefined) data.budget = input.budget
+  /**
+   * 与新建旅行同一套策略：**在线优先、本地兜底**。
+   *
+   * 历史缺陷：原生端只要本地缓存里找不到这一行就**直接失败**
+   * （返回"本地没有这本书的缓存，请联网后重试"），可设备明明是在线的 ——
+   * 本地缓存不全时「编辑旅行信息」永远保存不了。现在在线写不再依赖本地行，
+   * 本地写只是"顺手也存一份"，供离线查看。
+   */
+  const localRowId = await findLocalTravelRowId(input.slug, input.travelId).catch(() => null)
+  const nextSlug =
+    input.title !== undefined && input.title.trim()
+      ? makeTravelSlug(input.title, (localRowId ?? input.slug).slice(0, 8))
+      : input.slug
 
-    // 本地表主键是 UUID，不是 slug：直接拿 slug 当 id 落库会插出一个"影子行"，
-    // 列表里于是出现两本同名旅行。必须先反查真实本地行；查不到就放弃本地写（走在线分支）。
-    const localRowId = await findLocalTravelRowId(input.slug, input.travelId)
-    if (!localRowId) {
-      return { ok: false, error: '本地没有这本书的缓存，请联网后重试' }
-    }
+  let wroteLocal = false
+  const r = await writeThrough<{ slug?: string; daysChanged?: number }>({
+    localWrite: async () => {
+      if (!localRowId) throw new Error('本地没有这本旅行的缓存')
+      const data: Record<string, unknown> = {}
+      if (input.title !== undefined) data.title = input.title
+      if (input.location !== undefined) data.location = input.location || null
+      if (input.description !== undefined) data.description = input.description || null
+      if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate).getTime() : null
+      if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate).getTime() : null
+      if (input.budget !== undefined) data.budget = input.budget
+      // 改标题 → 本地 slug 也跟着改，保证下次进详情页地址可用
+      if (nextSlug !== input.slug) data.slug = nextSlug
 
-    // 改标题 → 本地 slug 也跟着改，保证下次进详情页地址可用（与服务端 makeUniqueTravelSlug 同源策略）
-    const nextSlug = input.title !== undefined && input.title.trim() ? makeTravelSlug(input.title, localRowId.slice(0, 8)) : input.slug
-    if (nextSlug !== input.slug) data.slug = nextSlug
+      const queue = new SyncQueue(getSyncQueueStorage())
+      await writeLocalEntity(
+        {
+          table: 'travel',
+          id: localRowId,
+          entityType: 'TRAVEL',
+          // remoteId 已在云端时一并带上，避免队列里的 UPDATE 缺 remoteId 被丢弃
+          remoteId: input.travelId ?? null,
+          operation: 'UPDATE',
+          data,
+        },
+        queue,
+      )
+      wroteLocal = true
+    },
+    serverWrite: async () => {
+      if (input.travelId == null) return { ok: false, error: '该旅行尚未同步到云端，请联网后重试' }
+      try {
+        const res = await fetch(apiUrl(`/api/travels/by-slug/${encodeURIComponent(input.slug)}`), {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: input.title,
+            location: input.location,
+            description: input.description,
+            startDate: input.startDate,
+            endDate: input.endDate,
+            budget: input.budget,
+          }),
+        })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) return { ok: false, error: json?.error || `保存失败（HTTP ${res.status}）` }
+        return {
+          ok: true,
+          data: {
+            slug: typeof json?.slug === 'string' && json.slug ? json.slug : input.slug,
+            daysChanged: typeof json?.daysChanged === 'number' ? json.daysChanged : undefined,
+          },
+        }
+      } catch {
+        return { ok: false, error: '网络不可用' }
+      }
+    },
+    onServerOk: async (data) => {
+      if (wroteLocal && localRowId) {
+        await markEntitySynced('TRAVEL', localRowId, input.travelId ?? null, data?.slug ?? null)
+      }
+    },
+  })
 
-    const queue = new SyncQueue(getSyncQueueStorage())
-    await writeLocalEntity(
-      {
-        table: 'travel',
-        id: localRowId,
-        entityType: 'TRAVEL',
-        remoteId: input.travelId,
-        operation: 'UPDATE',
-        data,
-      },
-      queue,
-    )
-    return { ok: true, local: true, slug: nextSlug }
+  if (r.mode === 'server') {
+    return { ok: true, slug: r.data?.slug ?? input.slug, daysChanged: r.data?.daysChanged }
   }
-
-  if (input.travelId == null) {
-    return { ok: false, error: '该旅行尚未同步到云端，请联网后重试' }
-  }
-
-  try {
-    const res = await fetch(apiUrl(`/api/travels/by-slug/${encodeURIComponent(input.slug)}`), {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: input.title,
-        location: input.location,
-        description: input.description,
-        startDate: input.startDate,
-        endDate: input.endDate,
-        budget: input.budget,
-      }),
-    })
-    const json = await res.json().catch(() => ({}))
-    if (!res.ok) return { ok: false, error: json?.error || '保存失败' }
-    return {
-      ok: true,
-      slug: typeof json?.slug === 'string' && json.slug ? json.slug : input.slug,
-      daysChanged: typeof json?.daysChanged === 'number' ? json.daysChanged : undefined,
-    }
-  } catch {
-    return { ok: false, error: '网络错误，请重试' }
-  }
+  if (r.mode === 'local') return { ok: true, local: true, slug: nextSlug }
+  return { ok: false, error: r.error }
 }
