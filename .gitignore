@@ -24,6 +24,12 @@ npm-debug.log
 # 部署脚本产生的日志和备份
 logs/
 .deploy-backup/
+# 部署打包产物（git archive 出来的 tarball，几十 MB，禁止提交）
+tn-deploy.tar.gz
+*.tar.gz
+# 本地导出的 APK / AAB（发布产物走 nginx 分发目录，不入库）
+*.apk
+*.aab
 
 # 本地数据库部署文件（含数据、密码、本地路径，禁止提交）
 # 注：prisma/schema.prisma 和 migrate-db.cjs 属于建表脚本，允许上传
