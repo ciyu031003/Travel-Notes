@@ -355,20 +355,12 @@ html.dark {
 
 /* ── 右半屏抽屉（SideDrawer）─────────────────────────────────────────
    从右侧滑出、占半屏，露出背景页表达"这是当前页的附属操作"。
-   prefers-reduced-motion 下由文件末尾的统一降级规则关闭动画（只保留位移 0）。 */
-@keyframes m-drawer-in {
-  from { transform: translateX(100%); }
-  to   { transform: translateX(0); }
-}
-@keyframes m-drawer-fade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+   进出场与拖拽由组件内 motion（AnimatePresence + drag="x"）接管，
+   prefers-reduced-motion 下由 MotionConfig reducedMotion="user" 降级。 */
 .m-drawer-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  animation: m-drawer-fade 0.2s ease-out both;
 }
 .m-drawer-panel {
   position: absolute;
@@ -381,7 +373,6 @@ html.dark {
   background: var(--m-surface-solid);
   border-left: 0.5px solid var(--m-line-strong);
   box-shadow: var(--m-elev-3);
-  animation: m-drawer-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes m-tab-pop {
@@ -581,11 +572,6 @@ html.dark .m-skeleton::after {
   position: absolute;
   inset: 0;
   background: rgba(24, 14, 8, 0.44);
-  animation: m-fade-in 0.25s ease both;
-}
-@keyframes m-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 .m-sheet {
   position: absolute;
@@ -602,16 +588,23 @@ html.dark .m-skeleton::after {
   border-top: 1px solid var(--m-line);
   box-shadow: 0 -12px 40px -12px rgba(40, 24, 14, 0.35);
   padding-bottom: env(safe-area-inset-bottom);
-  animation: m-sheet-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-@keyframes m-sheet-up {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+/* 把手拖拽热区：视觉 5px 条，触达扩到整行 24px 高；
+   touch-action:none 保证 motion dragControls 在这里能接管手势 */
+.m-sheet-grabber-zone {
+  display: flex;
+  justify-content: center;
+  padding: 9px 0 4px;
+  flex: none;
+  touch-action: none;
+  cursor: grab;
+}
+.m-sheet-grabber-zone:active {
+  cursor: grabbing;
 }
 .m-sheet-grabber {
   width: 36px;
   height: 5px;
-  margin: 8px auto 4px;
   border-radius: 999px;
   background: var(--m-faint);
   flex: none;

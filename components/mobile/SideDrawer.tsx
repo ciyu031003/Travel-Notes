@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
+import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Icon } from './Icon'
@@ -15,8 +16,9 @@ import { IconButton } from './IconButton'
  *  ② 里面的内容是「入口列表」，需要可滚动 + 顶部标题 + 关闭；
  *  ③ 后续「旅行详情」的编辑入口也要用同一种形态，抽出来避免两处各写一遍。
  *
- * 行为：遮罩点击关闭、Esc 关闭、锁定背景滚动、安全区适配、尊重 prefers-reduced-motion
- * （动效定义在 app/mobile.css 的 .m-drawer-panel / .m-drawer-backdrop）。
+ * 行为：遮罩点击关闭、Esc 关闭、锁定背景滚动、安全区适配；
+ * 进出场与右滑跟手关闭由 motion 接管（往右甩 >90px 或速度 >500px/s 即关闭），
+ * 内容区纵向滚动不受横向拖拽影响（motion 对 drag="x" 自动放行 pan-y）。
  */
 export function SideDrawer({
   open,
@@ -48,44 +50,62 @@ export function SideDrawer({
     }
   }, [open, onClose])
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-[115]">
-      {/* 遮罩：点一下关闭（用 button 保证键盘可达） */}
-      <button
-        type="button"
-        aria-label="关闭侧边面板"
-        tabIndex={-1}
-        onClick={onClose}
-        className="m-drawer-backdrop"
-      />
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={cn('m-drawer-panel', className)}
-      >
-        <header
-          className="flex items-center gap-2 px-4 pb-2"
-          style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
-        >
-          <h2 className="m-title-2 min-w-0 flex-1 truncate text-[var(--m-text)]">{title}</h2>
-          <IconButton icon={X} label="关闭" variant="plain" onClick={onClose} />
-        </header>
+    <MotionConfig reducedMotion="user">
+      <AnimatePresence>
+        {open && (
+          <div className="fixed inset-0 z-[115]">
+            {/* 遮罩：点一下关闭（用 button 保证键盘可达） */}
+            <motion.button
+              type="button"
+              aria-label="关闭侧边面板"
+              tabIndex={-1}
+              onClick={onClose}
+              className="m-drawer-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            />
+            <motion.aside
+              role="dialog"
+              aria-modal="true"
+              aria-label={title}
+              className={cn('m-drawer-panel', className)}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 420, damping: 44 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{ left: 0, right: 0.55 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.x > 90 || info.velocity.x > 500) onClose()
+              }}
+            >
+              <header
+                className="flex items-center gap-2 px-4 pb-2"
+                style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
+              >
+                <h2 className="m-title-2 min-w-0 flex-1 truncate text-[var(--m-text)]">{title}</h2>
+                <IconButton icon={X} label="关闭" variant="plain" onClick={onClose} />
+              </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">{children}</div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">{children}</div>
 
-        {footer && (
-          <div
-            className="border-t border-[var(--m-line)] px-4 pt-3"
-            style={{ paddingBottom: 'max(14px, env(safe-area-inset-bottom))' }}
-          >
-            {footer}
+              {footer && (
+                <div
+                  className="border-t border-[var(--m-line)] px-4 pt-3"
+                  style={{ paddingBottom: 'max(14px, env(safe-area-inset-bottom))' }}
+                >
+                  {footer}
+                </div>
+              )}
+            </motion.aside>
           </div>
         )}
-      </aside>
-    </div>
+      </AnimatePresence>
+    </MotionConfig>
   )
 }
 
