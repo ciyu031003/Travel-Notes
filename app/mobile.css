@@ -394,6 +394,58 @@ html.dark {
   justify-self: center;
 }
 
+/* ── 空间详情折叠栏（SpaceDetail 的 compact 态）──────────────────
+   与全局 .m-collapser 同构，但配色走空间 token —— 必须渲染在
+   SpaceThemeScope 作用域内（data-space 子树），否则落到沙色兜底。 */
+.m-space-collapser {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  padding: 4px 10px 6px;
+  padding-top: calc(var(--m-safe-top) + 2px);
+  background: var(--space-hero-a);
+  border-bottom: 0.5px solid var(--space-hairline);
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.3s var(--m-ease-spring);
+}
+/* 支持色混则用半透明底 + 毛玻璃（iOS 质感），不支持保持实色兜底 */
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  .m-space-collapser {
+    background: color-mix(in srgb, var(--space-hero-a) 86%, transparent);
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  }
+}
+.m-space-collapser.is-collapsed {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.m-space-collapser-title {
+  text-align: center;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  color: var(--space-accent-text);
+}
+
+/* ── 图片加载淡入 ─────────────────────────────────────────
+   占位底色 → 实图硬切是"廉价感"来源之一；onLoad 时加 .is-loaded 淡入。
+   reduce-motion 直接显示（transition none + opacity 1，不依赖 onLoad）。 */
+.m-img-fade {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.m-img-fade.is-loaded {
+  opacity: 1;
+}
+
 .m-spring {
   transition-property: transform, opacity;
   transition-duration: 0.3s;
@@ -1296,7 +1348,7 @@ html.dark .m-toast {
   .m-btn, .m-btn-spinner, .m-check, .m-check-path, .m-choice, .m-card-pressable,
   .m-seg-item, .m-switch-bare, .m-drawer-panel, .m-drawer-backdrop,
   .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after,
-  .m-collapser {
+  .m-collapser, .m-space-collapser, .m-img-fade {
     animation: none !important;
     transition: none !important;
   }

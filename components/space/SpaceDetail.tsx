@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
 import {
   Images, Sparkles, MapPin, Camera, UserPlus, Settings2, LogOut, ChevronRight,
   ChevronLeft, CalendarDays, Plus,
@@ -119,8 +120,48 @@ export default function SpaceDetail({
     ['照片', stats.mediaCount, Camera],
   ]
 
+  // ── 滚动折叠栏（iOS Large Title 心智，配色走空间 token）────────────
+  // hero 滚出视口顶部时浮出：返回 + 空间名 + 设置；IO 哨兵，零 scroll 监听。
+  const [barCollapsed, setBarCollapsed] = useState(false)
+  const heroSentinelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = heroSentinelRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      ([entry]) => setBarCollapsed(!entry.isIntersecting),
+      { rootMargin: '-1px 0px 0px 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   return (
     <div className="pb-24">
+      {/* 哨兵：与 hero 同位置滚出视口顶部 → 折叠 */}
+      <div ref={heroSentinelRef} aria-hidden="true" className="h-px w-full" />
+      <div className={cn('m-space-collapser', barCollapsed && 'is-collapsed')} aria-hidden={!barCollapsed}>
+        <Link
+          href="/space"
+          aria-label="返回空间列表"
+          className="m-pressable flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-[var(--space-accent-text)]"
+        >
+          <Icon icon={ChevronLeft} size="md" />
+        </Link>
+        <span className="m-space-collapser-title truncate">{space.name}</span>
+        {isOwner ? (
+          <button
+            type="button"
+            onClick={() => { setError(''); setSettingsOpen(true) }}
+            aria-label="空间设置"
+            className="m-pressable flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-[var(--space-accent-text)]"
+          >
+            <Icon icon={Settings2} size="md" />
+          </button>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+      </div>
+
       {/* ── 头图：空间主题渐变的唯一大面积用武之地（≤ 屏 35%） ── */}
       <div className="space-hero relative px-5 pb-5 pt-[max(16px,env(safe-area-inset-top))]">
         <div className="flex items-start justify-between">
@@ -274,8 +315,18 @@ export default function SpaceDetail({
                   <span className="block aspect-square w-full bg-[var(--space-accent-soft)]">
                     {a.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.coverUrl} alt={a.title} className="h-full w-full object-cover" />
-                    ) : null}
+                      <img
+                        src={a.coverUrl}
+                        alt={a.title}
+                        loading="lazy"
+                        className="m-img-fade h-full w-full object-cover"
+                        onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
+                      />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-[var(--space-accent-strong)] opacity-60">
+                        <Icon icon={Images} size="md" />
+                      </span>
+                    )}
                   </span>
                   <span className="block truncate px-2 py-1.5 text-[11px] text-[var(--social-text)]">
                     {a.title}
