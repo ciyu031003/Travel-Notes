@@ -1,21 +1,27 @@
 'use client'
 
 import { useEffect } from 'react'
-
-/** 与 --m-bg 双主题值保持一致（app/mobile.css） */
-const LIGHT = '#FFFBF7'
-const DARK = '#100C0A'
+import {
+  syncNativeStatusBar,
+  THEME_BG_DARK,
+  THEME_BG_LIGHT,
+} from '@/lib/mobile/status-bar'
 
 function apply() {
   const dark = document.documentElement.classList.contains('dark')
+  // Web：浏览器地址栏/任务切换器底色
   const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-  if (meta) meta.content = dark ? DARK : LIGHT
+  if (meta) meta.content = dark ? THEME_BG_DARK : THEME_BG_LIGHT
+  // 原生壳：状态栏图标与底色随主题联动（Web 端 no-op）
+  void syncNativeStatusBar(dark)
 }
 
 /**
- * theme-color 随暗色类切换实时同步（浏览器地址栏 / 任务切换器底色）。
+ * 主题色同步：
+ * - meta theme-color 随暗色类切换实时同步；
+ * - Capacitor 原生状态栏随暗色类切换实时同步。
  * 走 MutationObserver 监听 <html> 的 class，任何切换入口（Navbar / SocialThemeToggle /
- * 系统初始化脚本）都无需各自埋点；原生壳内的状态栏颜色由 StatusBar 插件另行接管。
+ * 系统初始化脚本）都无需各自埋点。
  */
 export default function ThemeColorSync() {
   useEffect(() => {

@@ -20,6 +20,10 @@ const config: CapacitorConfig = {
       iosIsEncryption: false,
       androidIsEncryption: false,
     },
+    Keyboard: {
+      // 键盘弹出时原生 resize WebView（adjustResize），sheet/底部输入条不被键盘遮挡
+      resize: 'native',
+    },
   },
 };
 
