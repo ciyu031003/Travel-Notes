@@ -409,3 +409,15 @@ P2（I/J/K，穿插）
 2. `env(safe-area-inset-*)` 在 targetSdk 36 + Capacitor 8 下的真实取值（决定是否做 edge-to-edge 深度改造）；
 3. 键盘弹出时 sheet 内输入可见性（Keyboard 插件已装，config 已设 resize=native）；
 4. 边缘右滑返回与横向轮播的实际冲突面（已留 `data-no-swipeback` 白名单）。
+
+### 9.1 发布与生产验证（2026-09-27）
+
+- **git**：9 个实现/发布提交已推送 master（`e61c6fd` → `8c7ad9d`）。
+- **服务器**：`pack-deploy` 归档（32.2MB，自检通过）→ 上传 → 解压 `/home/ubuntu/travel-notes` → `.env` 更新 `APP_VERSION=1.17.0 / APP_BUILD_NUMBER=34 / APP_CHANGELOG` → `docker compose up -d --build app` 重建成功。
+- **生产验证**：
+  - `/api/health` = `ok`，`version 1.17.0 / buildNumber 34 / db ok`；
+  - `/api/version` 返回新 changelog，旧 APK（build 33）启动即会收到 OTA 更新提示；
+  - APK 已发布：`/downloads/tiantu.apk`（26.2MB，versionCode 34 / versionName 1.17.0），带版本号副本 `tiantu-20260927-v1.17.0-b34.apk` 留档，sha256 校验一致；
+  - 生产 CSS bundle 含全部新类（`m-collapser` / `m-sheet-grabber-zone` / `m-page-push` / `m-swipeback-commit` / `overscroll-behavior-y`）；HTML meta 已带 `viewport-fit=cover` 与正确的 `theme-color`；
+  - Web 回归：`/login` `/download` `/circle` 200、`/travel` 307（游客登录门，符合预期）。
+- **杂项**：服务器部署包临时文件已清理，磁盘 44G→38G（78%→67%）。
