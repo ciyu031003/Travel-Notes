@@ -305,10 +305,11 @@ html.dark {
   color: var(--m-muted);
   background: var(--m-surface);
   border: 1px solid var(--m-line);
-  transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.4s var(--m-ease-spring);
 }
 .m-chip:active {
-  transform: scale(0.96);
+  transform: scale(0.94);
+  transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.1s ease-out;
 }
 .m-chip-active {
   color: var(--m-on-accent);
@@ -335,10 +336,11 @@ html.dark {
 }
 
 .m-press {
-  transition: transform 0.12s ease;
+  transition: transform 0.4s var(--m-ease-spring);
 }
 .m-press:active {
-  transform: scale(0.96);
+  transform: scale(0.94);
+  transition: transform 0.1s ease-out;
 }
 
 @keyframes m-enter {
@@ -461,13 +463,17 @@ html.dark {
    M1 设计系统组件（components/mobile/）—— 统一放在 mobile.css，避免组件内散落硬编码
    ========================================================================== */
 
+/* 按压两相位（iOS 手感）：按下快进无弹跳，松手走弹簧曲线——
+   --m-ease-spring 的 y 值 >1，回落到 1 时自然产生一次轻微过冲（果冻感）。
+   档位约定：控件/行 .m-pressable 0.96；大卡片 .m-card-pressable 0.985；小按钮 .m-press 0.94。 */
 .m-pressable {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.12s ease, opacity 0.15s ease;
+  transition: transform 0.4s var(--m-ease-spring), opacity 0.15s ease;
 }
 .m-pressable:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
 }
 
 .m-skeleton {
@@ -518,13 +524,14 @@ html.dark .m-skeleton::after {
   font-size: 13px;
   font-weight: 600;
   color: var(--m-muted);
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, transform 0.4s var(--m-ease-spring);
 }
 .m-seg-item.is-active {
   color: var(--m-text);
 }
 .m-seg-item:not(.is-active):active {
   transform: scale(0.95);
+  transition: color 0.2s ease, transform 0.1s ease-out;
 }
 .m-seg-thumb {
   position: absolute;
@@ -643,10 +650,11 @@ html.dark .m-skeleton::after {
   font-size: 16px;
   font-weight: 500;
   color: var(--m-text);
-  transition: transform 0.12s ease, opacity 0.2s ease;
+  transition: transform 0.4s var(--m-ease-spring), opacity 0.2s ease;
 }
 .m-action-item:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition: transform 0.1s ease-out, opacity 0.2s ease;
 }
 .m-action-item.is-danger {
   color: var(--m-danger);
@@ -825,11 +833,13 @@ html.dark .m-toast {
   text-decoration: none;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--m-dur-press) ease, opacity 0.15s ease,
+  transition: transform 0.4s var(--m-ease-spring), opacity 0.15s ease,
     background-color 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 .m-btn:active:not(:disabled):not([aria-disabled='true']) {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition: transform 0.1s ease-out, opacity 0.15s ease,
+    background-color 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 .m-btn:focus-visible {
   outline: none;
@@ -1134,10 +1144,11 @@ html.dark .m-toast {
   background: var(--m-surface-solid);
   text-align: left;
   transition: border-color 0.18s ease, background-color 0.18s ease,
-    transform var(--m-dur-press) ease;
+    transform 0.4s var(--m-ease-spring);
 }
 .m-choice:active {
   transform: scale(0.985);
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.12s ease-out;
 }
 .m-choice:focus-visible {
   outline: none;
@@ -1183,11 +1194,12 @@ html.dark .m-toast {
   box-shadow: var(--m-elev-2);
 }
 .m-card-pressable {
-  transition: transform var(--m-dur-press) ease, box-shadow 0.18s ease;
+  transition: transform 0.4s var(--m-ease-spring), box-shadow 0.18s ease;
 }
 .m-card-pressable:active {
   transform: scale(0.985);
   box-shadow: var(--m-elev-1);
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
