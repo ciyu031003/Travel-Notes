@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, Compass, Home, WifiOff } from 'lucide-react'
@@ -18,6 +18,7 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 import { Stagger } from '@/components/mobile/Stagger'
+import { Button } from '@/components/mobile/Button'
 
 const TABS = [
   { key: 'recommended', label: '推荐' },
@@ -26,7 +27,21 @@ const TABS = [
   { key: 'following', label: '关注' },
 ]
 
-const THEMES = ['海边', '周末旅行', '结伴旅行', '城市漫游', '星空', '摄影']
+/**
+ * 同行关系筛选 —— **真实筛选**（travelType 透传到 /api/social/posts）。
+ * 此前这里是「海边/周末旅行/摄影」等话题 chips，但 `activeTheme` 从未接入任何
+ * 取数逻辑，点了没有任何效果（误导用户的假 UI，违反规范「Clear」原则）。
+ * 现改为按 Travel.travelType 筛选，空 key = 全部。
+ */
+const TYPE_FILTERS: Array<{ key: string; label: string }> = [
+  { key: '', label: '全部' },
+  { key: 'ALONE', label: '独旅' },
+  { key: 'COUPLE', label: '与TA' },
+  { key: 'FAMILY', label: '与家人' },
+  { key: 'FRIENDS', label: '与朋友' },
+  { key: 'BFF', label: '与闺蜜' },
+  { key: 'GROUP', label: '结伴' },
+]
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const
 
 // 旅行关系映射（Travel.travelType 枚举 → 卡片叙事文案）
@@ -63,8 +78,18 @@ interface Post {
 function dateRange(p: Post): string {
   const s = p.startDate ? p.startDate.slice(0, 10) : ''
   const e = p.endDate ? p.endDate.slice(0, 10) : ''
-  if (s && e && s !== e) return s + ' ~ ' + e
-  return s || e || ''
+  if (!s && !e) return ''
+  const fmt = (iso: string) => {
+    const d = new Date(iso + 'T00:00:00')
+    if (isNaN(d.getTime())) return iso
+    return `${d.getMonth() + 1}月${d.getDate()}日`
+  }
+  // 「2026-01-01 ~ 2026-01-05」这种原始 ISO 串太机械；同年省略年份更贴合中文语境
+  if (s && e && s !== e) {
+    const sameYear = s.slice(0, 4) === e.slice(0, 4)
+    return sameYear ? `${fmt(s)} – ${fmt(e)}` : `${s.slice(0, 4)}年${fmt(s)} – ${fmt(e)}`
+  }
+  return fmt(s || e)
 }
 
 function displayName(a: PostAuthor | null): string {
@@ -86,7 +111,8 @@ export default function TravelCircleFeed() {
   const [hasMore, setHasMore] = useState(false)
   const [total, setTotal] = useState(0)
   const [offline, setOffline] = useState(false)
-  const [activeTheme, setActiveTheme] = useState<string | null>(null)
+  /** 同行关系筛选（'' = 全部）——真实筛选，透传 travelType 给 API */
+  const [activeType, setActiveType] = useState('')
   /** 访客态：只读浏览。`authChecked` 之前不渲染提示，避免登录用户看到一闪而过的横幅 */
   const [loggedIn, setLoggedIn] = useState(true)
   const [authChecked, setAuthChecked] = useState(false)
@@ -107,13 +133,15 @@ export default function TravelCircleFeed() {
     }
   }, [])
 
-  const load = useCallback(async (t: string, p: number, append: boolean) => {
+  const load = useCallback(async (t: string, p: number, append: boolean, type = '') => {
     if (append) setLoadingMore(true); else setLoading(true)
     setError('')
     try {
       const result = await readWithFallback<{ data: Post[]; total: number; hasMore: boolean }>(
         async () => {
-          const res = await fetch(apiUrl('/api/social/posts?tab=' + t + '&page=' + p + '&pageSize=12'), { credentials: 'include' })
+          const query = new URLSearchParams({ tab: t, page: String(p), pageSize: '12' })
+          if (type) query.set('travelType', type)
+          const res = await fetch(apiUrl('/api/social/posts?' + query.toString()), { credentials: 'include' })
           if (!res.ok) throw new Error('http ' + res.status)
           return (await res.json()) as { data: Post[]; total: number; hasMore: boolean }
         },
@@ -137,8 +165,25 @@ export default function TravelCircleFeed() {
 
   useEffect(() => { load('recommended', 1, false) }, [load])
 
-  const switchTab = (t: string) => { setTab(t); load(t, 1, false) }
-  const loadMore = () => { if (hasMore && !loadingMore) load(tab, page + 1, true) }
+  const switchTab = (t: string) => { setTab(t); load(t, 1, false, activeType) }
+  const changeType = (type: string) => { setActiveType(type); load(tab, 1, false, type) }
+  const loadMore = () => { if (hasMore && !loadingMore && !loading) load(tab, page + 1, true, activeType) }
+
+  // 无限滚动：哨兵进入视口自动加载下一页（手动「加载更多」保留作兜底）
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) loadMore()
+      },
+      { rootMargin: '400px 0px 0px 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loadingMore, loading, tab, page, activeType])
 
   const hero = posts[0]
 
@@ -222,29 +267,22 @@ export default function TravelCircleFeed() {
         </div>
 
         {/*
-          UI 精修（R3）：
-          · 「探索旅途」原先是独立一段（标题 + 分隔线 + 话题 chips），占掉手机首屏近 1/4，
-            而它其实是**次级筛选**。现在收进一条横向滚动条，与分段控制器连成一组筛选区，
-            首屏能直接看到第一张卡片。
-          · 未选话题时不显示任何 chip 的高亮，避免"看起来已经筛过了"的误导。
+          同行关系筛选（C1 精修）：替换早期纯装饰的话题 chips —— 那排「海边/周末旅行」
+          从未接入取数逻辑，点了没有任何效果。现在按 Travel.travelType 真实筛选，
+          且 chips 样式统一走 m-chip token（不再裸写 border/ring）。
         */}
         <div className="mb-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {THEMES.map((theme) => {
-            const active = activeTheme === theme
+          {TYPE_FILTERS.map((filter) => {
+            const active = activeType === filter.key
             return (
               <button
-                key={theme}
+                key={filter.key || 'all'}
                 type="button"
-                onClick={() => setActiveTheme(active ? null : theme)}
+                onClick={() => changeType(filter.key)}
                 aria-pressed={active}
-                className={cn(
-                  'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition active:scale-95',
-                  active
-                    ? 'border-[var(--social-accent)] bg-[var(--social-accent)] text-[var(--social-on-accent)]'
-                    : 'border-[var(--social-line)] text-[var(--social-muted)] hover:text-[var(--social-text)]',
-                )}
+                className={cn('m-chip shrink-0', active && 'm-chip-active')}
               >
-                # {theme}
+                {filter.label}
               </button>
             )
           })}
@@ -270,7 +308,7 @@ export default function TravelCircleFeed() {
           <>
             <div className="hidden flex-col items-center gap-3 py-28 text-[var(--social-faint)] md:flex"><Icon icon={Loader2} size="lg" tone="accent" className="animate-spin" /><span className="text-sm">正在翻阅旅行相册…</span></div>
             <div className="space-y-4 md:hidden">
-              <Skeleton className="h-72 w-full !rounded-[26px]" />
+              <Skeleton className="h-72 w-full" style={{ borderRadius: 26 }} />
               <SkeletonCard />
               <SkeletonCard />
             </div>
@@ -284,7 +322,9 @@ export default function TravelCircleFeed() {
                 title="网络开小差了"
                 description={error}
                 action={
-                  <button type="button" onClick={() => load(tab, 1, false)} className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm">重新加载</button>
+                  <Button variant="secondary" onClick={() => load(tab, 1, false, activeType)}>
+                    重新加载
+                  </Button>
                 }
               />
             </div>
@@ -310,13 +350,11 @@ export default function TravelCircleFeed() {
                   : '登录后可以翻看大家公开的旅行记录。'
               }
               action={
-                <button
-                  type="button"
+                <Button
                   onClick={() => router.push(loggedIn ? '/travel' : '/login?redirect=%2Fcircle')}
-                  className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm"
                 >
                   {loggedIn ? '去我的旅行' : '去登录'}
-                </button>
+                </Button>
               }
             />
           </div>
@@ -347,11 +385,16 @@ export default function TravelCircleFeed() {
                 />
               ))}
             </Stagger>
-            <div className="mt-6 flex justify-center">
-              {hasMore ? (
-                <button type="button" onClick={loadMore} disabled={loadingMore}
-                  className="rounded-full bg-[var(--social-surface)] px-6 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)] active:scale-95 disabled:opacity-50">
-                  {loadingMore ? '加载中…' : '加载更多'}
+            <div ref={sentinelRef} className="mt-6 flex justify-center">
+              {loadingMore ? (
+                <span className="flex items-center gap-1.5 text-xs text-[var(--social-faint)]">
+                  <Icon icon={Loader2} size="sm" className="animate-spin" />
+                  正在加载更多…
+                </span>
+              ) : hasMore ? (
+                <button type="button" onClick={loadMore}
+                  className="m-pressable rounded-full bg-[var(--social-surface)] px-6 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition-colors hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)]">
+                  加载更多
                 </button>
               ) : (
                 posts.length > 0 && (

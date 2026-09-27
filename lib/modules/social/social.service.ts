@@ -131,18 +131,28 @@ export interface SocialFeedResult {
   hasMore: boolean
 }
 
+/** 旅行圈「同行关系」筛选（Travel.travelType 枚举；与前端 TYPE_FILTERS 一致） */
+export const SOCIAL_FEED_TRAVEL_TYPES = ['ALONE', 'COUPLE', 'FAMILY', 'FRIENDS', 'BFF', 'GROUP', 'OTHER'] as const
+
 export async function listSocialFeed(params: {
   tab?: SocialFeedTab
   userId?: number | null
   page?: number
   pageSize?: number
+  travelType?: string | null
 }): Promise<SocialFeedResult> {
   const tab = params.tab ?? 'recommended'
   const page = Math.max(1, params.page ?? 1)
   const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20))
   const userId = params.userId ?? null
+  const travelType =
+    params.travelType && (SOCIAL_FEED_TRAVEL_TYPES as readonly string[]).includes(params.travelType)
+      ? params.travelType
+      : null
 
   const baseWhere: any = { visibility: 'PUBLIC' }
+  // 类型筛选：travelType 挂在关联的 Travel 上（legacy 帖没有 travel，不匹配任何类型）
+  if (travelType) baseWhere.travel = { travelType }
   if (userId) {
     const blocked = await blockedAuthorIds(userId)
     if (blocked.length) baseWhere.authorId = { notIn: blocked }
@@ -172,8 +182,9 @@ export async function listSocialFeed(params: {
 
   // recommended：近 90 天候选按热度分排序（第一版简单算法）
   // 阶段 A · A3：候选 + 评分结果内存缓存 60s，避免每个请求都重算 500 条热度排序
+  // 缓存 key 必须带上类型筛选——同一用户在不同筛选下不能共享同一份候选集
   const since = new Date(Date.now() - 90 * 24 * 3600 * 1000)
-  const feedCacheKey = `social:feed:recommended:u${userId ?? 'anon'}`
+  const feedCacheKey = `social:feed:recommended:u${userId ?? 'anon'}:t${travelType ?? 'all'}`
   const cachedScored = await appCache.get<Array<{ p: any; score: number }>>(feedCacheKey)
   let scored: Array<{ p: any; score: number }>
   if (cachedScored) {

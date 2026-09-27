@@ -1333,7 +1333,8 @@ html.dark .m-toast {
   box-shadow: var(--m-elev-2);
 }
 .m-card-pressable {
-  transition: transform 0.4s var(--m-ease-spring), box-shadow 0.18s ease;
+  transition: transform 0.4s var(--m-ease-spring), box-shadow 0.18s ease,
+    background-color 0.18s ease, border-color 0.18s ease;
 }
 .m-card-pressable:active {
   transform: scale(0.985);

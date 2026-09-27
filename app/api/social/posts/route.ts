@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
     const tab = (searchParams.get('tab') || 'recommended') as SocialFeedTab
     const { page, pageSize } = getPaginationFromSearchParams(searchParams, 20)
     const userId = await getCurrentUserId()
-    const result = await listSocialFeed({ tab, userId, page, pageSize })
+    // 同行关系筛选（独旅/与TA/与家人...）：无效值在 service 内回落为不过滤
+    const travelType = searchParams.get('travelType')
+    const result = await listSocialFeed({ tab, userId, page, pageSize, travelType })
     const res = paginatedResponse(result.data, result.total, page, pageSize)
     return applyCacheControl(res, 'user', !!userId)
   } catch (error: any) {

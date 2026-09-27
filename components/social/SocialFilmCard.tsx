@@ -118,7 +118,14 @@ export default function SocialFilmCard({
   const cover = (aspectClass: string, overlay?: React.ReactNode) => (
     <div className={cn('relative w-full overflow-hidden bg-[var(--social-surface2)]', aspectClass)}>
       {coverUrl ? (
-        <Image src={coverUrl} alt={title || cityName || '旅行封面'} fill sizes={variant === 'hero' ? '100vw' : '(max-width: 768px) 100vw, 33vw'} className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+        <Image
+          src={coverUrl}
+          alt={title || cityName || '旅行封面'}
+          fill
+          sizes={variant === 'hero' ? '100vw' : '(max-width: 768px) 100vw, 33vw'}
+          onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
+          className="m-img-fade object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+        />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-[var(--social-faint)]"><Icon icon={ImageIcon} size="lg" /></div>
       )}
@@ -151,7 +158,7 @@ export default function SocialFilmCard({
 
   return (
     <div
-      className={cn('group relative block w-full overflow-hidden rounded-[1.4rem] bg-[var(--social-surface-90)] text-left ring-1 ring-[var(--social-line)] transition duration-300',
+      className={cn('m-card-pressable group relative block w-full overflow-hidden rounded-[1.4rem] bg-[var(--social-surface-90)] text-left ring-1 ring-[var(--social-line)] transition-colors duration-300',
         onOpen && 'hover:-translate-y-0.5 hover:bg-[var(--social-surface)] hover:ring-[var(--social-line-strong)]', className)}>
       {openLayer}
       {cover(
