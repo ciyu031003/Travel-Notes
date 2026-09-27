@@ -343,18 +343,26 @@ export default function TravelCircleFeed() {
           <div className="md:hidden">
             <EmptyState
               icon={Compass}
-              title="这里还没有故事"
+              title={activeType ? '这个类型下还没有故事' : '这里还没有故事'}
               description={
-                loggedIn
-                  ? '把你的旅行公开出来，它就是这里的第一篇。'
-                  : '登录后可以翻看大家公开的旅行记录。'
+                activeType
+                  ? '换一个同行关系，或把你的同类旅行公开出来。'
+                  : loggedIn
+                    ? '把你的旅行公开出来，它就是这里的第一篇。'
+                    : '登录后可以翻看大家公开的旅行记录。'
               }
               action={
-                <Button
-                  onClick={() => router.push(loggedIn ? '/travel' : '/login?redirect=%2Fcircle')}
-                >
-                  {loggedIn ? '去我的旅行' : '去登录'}
-                </Button>
+                activeType ? (
+                  <Button variant="secondary" onClick={() => changeType('')}>
+                    看全部
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => router.push(loggedIn ? '/travel' : '/login?redirect=%2Fcircle')}
+                  >
+                    {loggedIn ? '去我的旅行' : '去登录'}
+                  </Button>
+                )
               }
             />
           </div>
