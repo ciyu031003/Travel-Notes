@@ -1,6 +1,6 @@
 {
   "name": "travel-notes",
-  "version": "1.16.10",
+  "version": "1.16.11",
   "private": true,
   "scripts": {
     "dev": "next dev",

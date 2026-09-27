@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '新增：失败页诊断信息与「数据与同步」页会显示离线存储是否可用（区分「离线层坏了」与「离线层正常但没数据」）',
+    changelog: process.env.APP_CHANGELOG || '修：个人旅行（不属于任何空间）删不掉、也改不了——判权错用了空间角色，改为按创建者所有权；新增删除权限回归测试与端到端验证脚本',
     forceUpdate,
   })
 }
