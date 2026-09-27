@@ -465,6 +465,24 @@ html.dark {
   animation: m-page-fade 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* M6：方向感知转场（iOS push/pop 心智）。
+   转场只包 <main> 内容（fixed 的 Tab 栏在 LayoutContent 中已移出转场容器），
+   因此可以放心用 translate；页面内自带的 fixed FAB 会随内容一起滑动，符合 iOS 的整页推入观感。 */
+@keyframes m-push-in {
+  from { opacity: 0; transform: translateX(28%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes m-pop-in {
+  from { opacity: 0; transform: translateX(-22%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.m-page-push {
+  animation: m-push-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.m-page-pop {
+  animation: m-pop-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes m-pop {
   0%   { transform: scale(0.6); }
   45%  { transform: scale(1.28); }
@@ -1225,7 +1243,7 @@ html.dark .m-toast {
 @media (prefers-reduced-motion: reduce) {
   .m-spring, .m-press, .m-enter, .m-fab, .m-shimmer, .m-list-item, .m-soft-pulse,
   .m-pressable, .m-seg-thumb, .m-switch, .m-switch-knob, .m-sheet, .m-sheet-backdrop,
-  .m-skeleton::after, .m-ptr-spin, .m-action-item, .m-page-fade, .m-pop,
+  .m-skeleton::after, .m-ptr-spin, .m-action-item, .m-page-fade, .m-page-push, .m-page-pop, .m-pop,
   .m-btn, .m-btn-spinner, .m-check, .m-check-path, .m-choice, .m-card-pressable,
   .m-seg-item, .m-switch-bare, .m-drawer-panel, .m-drawer-backdrop,
   .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after {

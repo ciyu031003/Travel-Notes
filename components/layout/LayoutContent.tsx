@@ -37,10 +37,12 @@ export default function LayoutContent({
   }
 
   // /travel 走标准壳：桌面端统一 Navbar + Footer，移动端走底部导航。
+  // MobileBottomNav（fixed）放在转场容器外：转场做 push/pop translate 时
+  // fixed 元素会以 transformed 祖先为锚点跟着滑走，必须留在动画层之外。
   if (isTravelPage) {
     return (
-      <MobilePageTransition>
-        <>
+      <>
+        <MobilePageTransition>
           <div className="hidden md:block">
             <Navbar />
           </div>
@@ -50,9 +52,9 @@ export default function LayoutContent({
           <div className="hidden md:block">
             <Footer />
           </div>
-          <MobileBottomNav />
-        </>
-      </MobilePageTransition>
+        </MobilePageTransition>
+        <MobileBottomNav />
+      </>
     )
   }
 
@@ -60,36 +62,34 @@ export default function LayoutContent({
   // 桌面端壳层不受影响。
   if (isHomePage) {
     return (
-      <MobilePageTransition>
-        <>
+      <>
+        <MobilePageTransition>
           <div className="hidden md:block">
             <Navbar />
           </div>
           <main id="main-content" className="flex-1 pt-0 md:pt-16">
             {children}
           </main>
-          <MobileBottomNav />
-        </>
-      </MobilePageTransition>
+        </MobilePageTransition>
+        <MobileBottomNav />
+      </>
     )
   }
 
   if (isCirclePage || isMePage || isSyncPage || isAdminPage) {
     return (
-      <MobilePageTransition>
-        <>
-          {children}
-          <MobileBottomNav />
-        </>
-      </MobilePageTransition>
+      <>
+        <MobilePageTransition>{children}</MobilePageTransition>
+        <MobileBottomNav />
+      </>
     )
   }
 
   // 次级页面（时间线 / 碎碎念 / 搜索等）：移动端仍保留全局导航用于返回与设置，
   // 但页脚仅在桌面展示，移动端不显示 Web 版页脚。
   return (
-    <MobilePageTransition>
-      <>
+    <>
+      <MobilePageTransition>
         <div className="hidden md:block">
           <Navbar />
         </div>
@@ -104,9 +104,9 @@ export default function LayoutContent({
         <div className="hidden md:block">
           <Footer />
         </div>
-        <MobileBottomNav />
-      </>
-    </MobilePageTransition>
+      </MobilePageTransition>
+      <MobileBottomNav />
+    </>
   )
 }
 
