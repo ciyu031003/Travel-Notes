@@ -87,7 +87,7 @@ export function MobilePageTransition({
   }, [pathname])
 
   return (
-    <div ref={ref} className={cn('flex min-h-0 flex-1 flex-col', className)}>
+    <div ref={ref} className={cn('m-page-shell flex min-h-0 flex-1 flex-col', className)}>
       {children}
     </div>
   )

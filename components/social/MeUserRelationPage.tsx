@@ -5,6 +5,7 @@ import { apiUrl } from '@/lib/api-base'
 import { useSessionRedirect } from '@/hooks/use-session-redirect'
 import AsyncState from '@/components/AsyncState'
 import UserList from '@/components/social/UserList'
+import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 
 /**
  * 我的粉丝 / 我的关注 共用页。
@@ -32,5 +33,10 @@ export default function MeUserRelationPage({
     )
   }
   if (loading || !id) return <AsyncState variant="loading" message={`正在加载${title}…`} />
-  return <UserList endpoint={`/api/social/users/${id}/${endpoint}`} title={title} />
+  return (
+    <>
+      <EdgeSwipeBack />
+      <UserList endpoint={`/api/social/users/${id}/${endpoint}`} title={title} />
+    </>
+  )
 }

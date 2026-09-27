@@ -17,6 +17,7 @@ import {
 import { Icon } from '@/components/mobile/Icon'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { ListSection, ListRow } from '@/components/mobile/ListRow'
+import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { apiUrl } from '@/lib/api-base'
 import { useApi } from '@/lib/client/use-api'
 import { isMobileShell } from '@/lib/routes'
@@ -99,6 +100,7 @@ export default function MeSettingsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
+      <EdgeSwipeBack />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-2xl px-4 pb-8 pt-[max(16px,env(safe-area-inset-top))] sm:px-6 sm:py-8">
         <LargeTitle title="账号设置" subtitle="资料、安全与账号" back="/me" />

@@ -40,7 +40,7 @@ export default function MobileBottomNav() {
 
   return (
     <nav
-      className="m-glass fixed inset-x-0 bottom-0 z-40 pt-[6px] pb-[max(6px,env(safe-area-inset-bottom))] md:hidden"
+      className="m-bottom-nav m-glass fixed inset-x-0 bottom-0 z-40 pt-[6px] pb-[max(6px,env(safe-area-inset-bottom))] md:hidden"
       style={{ borderTop: '0.5px solid var(--m-line-strong)', background: 'var(--m-surface)' }}
       aria-label="移动端导航"
     >

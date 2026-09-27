@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/mobile/EmptyState'
 import { hapticLight } from '@/lib/mobile/haptics'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { circlePostHref, circleUserHref } from '@/lib/routes'
 
 /**
@@ -79,6 +80,7 @@ export default function NotificationsList() {
 
   return (
     <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
+      <EdgeSwipeBack />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
 
       <div className="relative mx-auto max-w-2xl px-4 pb-8 pt-[max(16px,env(safe-area-inset-top))] sm:px-6 sm:py-8">

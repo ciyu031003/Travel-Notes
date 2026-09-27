@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { circlePostHref } from '@/lib/routes'
 
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const
@@ -43,6 +44,7 @@ export default function FavoritesGrid() {
 
   return (
     <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
+      <EdgeSwipeBack />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-5xl px-4 py-6">
         <header className="mb-8 flex items-center gap-3">
