@@ -72,7 +72,8 @@ import { getOfflineDb, closeOfflineDb, clearColumnCache, toRows, rowGet } from '
 import { SqliteSyncQueueStorage } from '@/lib/modules/offline/native/sqlite-sync-queue'
 import { SyncQueue } from '@/lib/modules/offline/sync-queue'
 import { writeLocalEntity, markEntitySynced } from '@/lib/modules/offline/local-write'
-import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
+import { readLocalTravelBySlug, readAllLocalTravels } from '@/lib/modules/offline/travel-read'
+import { markTravelDeletedLocally } from '@/lib/modules/offline/travel-edit'
 import { applyPullEntity, pullEntityTypes } from '@/lib/modules/offline/pull'
 
 function freshRaw() {
@@ -436,5 +437,49 @@ describe('真实 SQLite · 拉取健壮性', () => {
     const written = await pullEntityTypes(dispatcher as never, ['MOMENT', 'TRAVEL'] as never)
     expect(written).toBe(1)
     expect(await readLocalTravelBySlug('reng-ke')).not.toBeNull()
+  })
+})
+
+/**
+ * 删除后本地要打墓碑 —— 真机反馈「在线删掉了，进离线模式它又冒出来」。
+ * 本地的列表读与详情读都是 `WHERE deleted = 0`，所以只要把那一行标记为 deleted=1，
+ * 离线兜底就不再显示它；同时**保留行**（而不是物理删除），
+ * 好让拉取侧的「墓碑防复活」规则继续生效。
+ */
+describe('真实 SQLite · 删除打墓碑', () => {
+  it('标记后：详情读不到、列表里也没有，但行仍以 deleted=1 保留', async () => {
+    await initOffline()
+    const queue = new SyncQueue(new SqliteSyncQueueStorage())
+    await writeLocalEntity(
+      { table: 'travel', id: 'local-del-1', entityType: 'TRAVEL', remoteId: 500, operation: 'CREATE', data: { ...TRAVEL_DATA, slug: 'shan-chu', title: '将被删除' } },
+      queue,
+    )
+    await markEntitySynced('TRAVEL', 'local-del-1', 500, 'shan-chu')
+
+    // 删除前：详情与列表都能看到
+    expect(await readLocalTravelBySlug('shan-chu')).not.toBeNull()
+    const before = (await readAllLocalTravels()) ?? []
+    expect(before.some((t) => t.slug === 'shan-chu')).toBe(true)
+
+    // 打墓碑（客户端在服务端删除成功后调用）
+    const marked = await markTravelDeletedLocally('shan-chu', 500)
+    expect(marked).toBe(true)
+
+    // 删除后：离线兜底不再显示
+    expect(await readLocalTravelBySlug('shan-chu')).toBeNull()
+    const after = (await readAllLocalTravels()) ?? []
+    expect(after.some((t) => t.slug === 'shan-chu')).toBe(false)
+
+    // 行仍在库里（墓碑），供拉取侧防复活
+    const row = (box.raw as DatabaseSync)
+      .prepare('SELECT deleted, syncStatus FROM travel WHERE id = ?')
+      .get('local-del-1') as { deleted: number; syncStatus: string }
+    expect(Number(row.deleted)).toBe(1)
+    expect(row.syncStatus).toBe('SYNCED')
+  })
+
+  it('本地没有这一行时返回 false，且不抛错（删除结果不因此回滚）', async () => {
+    await initOffline()
+    await expect(markTravelDeletedLocally('bu-cun-zai', 999)).resolves.toBe(false)
   })
 })

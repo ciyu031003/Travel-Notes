@@ -3,6 +3,7 @@
  * 供 /travel 页面用 readWithFallback 在离线/失败时回退本地。
  */
 import { queryRows, tableColumnNames, type Row } from './dao'
+import { rowGet } from './native/sqlite-db'
 import { isNativePlatform } from './platform'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
 
@@ -60,28 +61,43 @@ async function queryLocalTravelRows(): Promise<LocalTravelRow[] | null> {
   }
 }
 
+/**
+ * 本地行 → 列表项。
+ *
+ * ⚠️ 必须**按列名**取值（`rowGet`）：Android 插件返回的行是"按列名索引的对象"，
+ * 键序没有任何保证（org.json 实现细节）；此前这里按 r[0]、r[1]… 位置取值，
+ * 一旦键序与 SELECT 列序不一致，**列表里的标题/日期/位置会整体错位**
+ * （离线模式下列表显示错乱）。这是与 1.16.6 同一类缺陷，只是漏了这个映射函数。
+ */
 function toLocalTravelPost(r: LocalTravelRow): LocalTravelPost {
-  const remoteId = r[1] == null ? null : Number(r[1])
-  const localId = String(r[0])
+  const g = (name: string): unknown => rowGet(r, name)
+  const remoteIdRaw = g('remoteId')
+  const remoteId = remoteIdRaw == null ? null : Number(remoteIdRaw)
+  const localId = String(g('id'))
   const id = remoteId ?? localId
-  const startMs = Number(r[7]) || 0
+  const startMs = Number(g('startDate')) || 0
   // slug 兜底只针对**历史遗留的空 slug 行**（新建已经会写入确定的 slug）
-  const storedSlug = String(r[3] || '').trim()
+  const storedSlug = String(g('slug') || '').trim()
+  const syncStatusRaw = g('syncStatus')
+  const coverRaw = g('cover')
+  const descriptionRaw = g('description')
+  const locationRaw = g('location')
+  const titleRaw = g('title')
   return {
     id,
     /** 本地行 id（字符串）；用于「本地未同步」判断与本地详情定位 */
     localId,
     remoteId,
-    syncStatus: r[12] == null ? 'SYNCED' : String(r[12]),
+    syncStatus: syncStatusRaw == null ? 'SYNCED' : String(syncStatusRaw),
     slug: storedSlug || 'travel-' + localId,
-    title: String(r[2] ?? '未命名旅行'),
+    title: String(titleRaw ?? '未命名旅行'),
     date: startMs ? new Date(startMs).toISOString() : '',
-    description: r[4] == null ? undefined : String(r[4]),
-    cover: r[6] == null ? undefined : String(r[6]),
+    description: descriptionRaw == null ? undefined : String(descriptionRaw),
+    cover: coverRaw == null ? undefined : String(coverRaw),
     images: [] as string[],
     videos: [] as unknown[],
     tags: [] as string[],
-    location: r[5] == null ? undefined : String(r[5]),
+    location: locationRaw == null ? undefined : String(locationRaw),
     type: 'travel',
     published: true,
   }

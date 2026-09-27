@@ -8,7 +8,8 @@ import { writeLocalEntity, markEntitySynced } from './local-write'
 import { SyncQueue } from './sync-queue'
 import { getSyncQueueStorage } from './storage'
 import { queryById, queryRows } from './dao'
-import { rowGet } from './native/sqlite-db'
+import { rowGet, getOfflineDb } from './native/sqlite-db'
+import { isNativePlatform } from './platform'
 import { apiUrl } from '@/lib/api-base'
 import { writeThrough } from './write-through'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
@@ -54,6 +55,36 @@ export async function findLocalTravelRowId(slug: string, remoteId: number | null
   const byId = await queryById('travel', slug).catch(() => null)
   const localId = rowGet(byId, 'id')
   return localId != null ? String(localId) : null
+}
+
+/**
+ * 云端删除成功后：在本地 SQLite 里给这本旅行**打墓碑**（deleted = 1）。
+ *
+ * 为什么必须做（真机反馈的后续）：本地的列表读与详情读都是 `WHERE deleted = 0`，
+ * 而此前的删除只调了服务端接口 —— 本地那一行原封不动留在库里。
+ * 结果就是「在线删掉了，一进离线模式它又冒出来」。
+ *
+ * 打墓碑而不是物理删除，是刻意的：拉取侧有「墓碑防复活」规则（pull.ts），
+ * 物理删除后远端一旦再次下发就会重新长出来。
+ *
+ * syncStatus 置 SYNCED：墓碑本身就是"服务端已删除"的结果，不需要再上传。
+ * 本地没有这一行 / 离线层不可用时返回 false，**不抛错**（删除结果不该因此回滚）。
+ */
+export async function markTravelDeletedLocally(slug: string, remoteId: number | null): Promise<boolean> {
+  if (!isNativePlatform()) return false
+  try {
+    const rowId = await findLocalTravelRowId(slug, remoteId)
+    if (!rowId) return false
+    const db = await getOfflineDb()
+    await db.run('UPDATE travel SET deleted = 1, syncStatus = ?, updatedAt = ? WHERE id = ?', [
+      'SYNCED',
+      Date.now(),
+      rowId,
+    ])
+    return true
+  } catch {
+    return false
+  }
 }
 
 export async function updateTravelInfo(input: UpdateTravelInfoInput): Promise<UpdateTravelInfoResult> {

@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：个人旅行（不属于任何空间）删不掉、也改不了——判权错用了空间角色，改为按创建者所有权；新增删除权限回归测试与端到端验证脚本',
+    changelog: process.env.APP_CHANGELOG || '修：删除旅行后本地未打墓碑，离线时已删除的旅行会复活；修：旅行列表/相册/碎碎念/旅行圈 Feed 按位置读列导致字段错位；新增禁止位置取列的守卫测试',
     forceUpdate,
   })
 }

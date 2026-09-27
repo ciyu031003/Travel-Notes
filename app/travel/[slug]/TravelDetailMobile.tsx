@@ -34,6 +34,7 @@ import TravelAlbumTab from '@/components/travel/detail/TravelAlbumTab'
 import TravelExpenseTab from '@/components/travel/detail/TravelExpenseTab'
 import TravelOverviewTab from '@/components/travel/detail/TravelOverviewTab'
 import { apiUrl } from '@/lib/api-base'
+import { markTravelDeletedLocally } from '@/lib/modules/offline/travel-edit'
 import { toast } from '@/lib/mobile/toast-store'
 import { travelDetailHref } from '@/lib/routes'
 import { hapticLight } from '@/lib/mobile/haptics'
@@ -649,6 +650,12 @@ export default function TravelDetailMobile({
                 credentials: 'include',
               }).catch(() => null)
               if (res && res.ok) {
+                /**
+                 * 云端删掉了，本地也必须打墓碑。
+                 * 否则：本地的列表/详情读都是 `WHERE deleted = 0`，那行还在库里 →
+                 * 一进离线模式，已删除的旅行会从本地缓存"复活"（真机反馈的后续问题）。
+                 */
+                await markTravelDeletedLocally(travel.slug || slug, travelId).catch(() => {})
                 toast.success('已删除')
                 router.replace('/travel')
               } else {

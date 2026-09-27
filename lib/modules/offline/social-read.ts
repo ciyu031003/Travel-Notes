@@ -42,31 +42,41 @@ export async function readLocalSocialFeed(): Promise<LocalSocialPost[] | null> {
         'isLiked, isFavorited, publishedAt FROM social_post WHERE deleted = 0 ORDER BY COALESCE(publishedAt, updatedAt) DESC',
     )
     if (rows.length === 0) return null
+    // 按列名取值：Android 返回的行是「列名对象」，键序无保证，位置取值会让整条 Feed 字段错位
     return rows.map((r) => {
-      const remoteId = r[1] == null ? null : Number(r[1])
-      const localId = String(r[0])
+      const g = (name: string): unknown => rowGet(r, name)
+      const remoteIdRaw = g('remoteId')
+      const remoteId = remoteIdRaw == null ? null : Number(remoteIdRaw)
+      const localId = String(g('id'))
+      const authorId = g('authorId')
+      const summary = g('summary')
+      const coverUrl = g('coverUrl')
+      const location = g('location')
+      const authorName = g('authorName')
+      const authorNickname = g('authorNickname')
+      const authorAvatar = g('authorAvatar')
       return {
         id: remoteId ?? localId,
-        title: String(r[2] ?? ''),
-        summary: r[3] == null ? null : String(r[3]),
-        coverUrl: r[4] == null ? null : String(r[4]),
-        location: r[5] == null ? null : String(r[5]),
-        startDate: msToIso(r[6]),
-        endDate: msToIso(r[7]),
-        dayCount: Number(r[8]) || 0,
-        photoCount: Number(r[9]) || 0,
-        author: r[10] == null ? null : {
-          id: Number(r[10]),
-          username: r[11] == null ? null : String(r[11]),
-          nickname: r[12] == null ? null : String(r[12]),
-          avatarUrl: r[13] == null ? null : String(r[13]),
+        title: String(g('title') ?? ''),
+        summary: summary == null ? null : String(summary),
+        coverUrl: coverUrl == null ? null : String(coverUrl),
+        location: location == null ? null : String(location),
+        startDate: msToIso(g('startDate')),
+        endDate: msToIso(g('endDate')),
+        dayCount: Number(g('dayCount')) || 0,
+        photoCount: Number(g('photoCount')) || 0,
+        author: authorId == null ? null : {
+          id: Number(authorId),
+          username: authorName == null ? null : String(authorName),
+          nickname: authorNickname == null ? null : String(authorNickname),
+          avatarUrl: authorAvatar == null ? null : String(authorAvatar),
         },
-        likeCount: Number(r[14]) || 0,
-        commentCount: Number(r[15]) || 0,
-        favoriteCount: Number(r[16]) || 0,
-        isLiked: !!r[17],
-        isFavorited: !!r[18],
-        publishedAt: msToIso(r[19]),
+        likeCount: Number(g('likeCount')) || 0,
+        commentCount: Number(g('commentCount')) || 0,
+        favoriteCount: Number(g('favoriteCount')) || 0,
+        isLiked: !!g('isLiked'),
+        isFavorited: !!g('isFavorited'),
+        publishedAt: msToIso(g('publishedAt')),
       }
     })
   } catch {

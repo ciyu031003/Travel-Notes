@@ -3,6 +3,7 @@
  * 供 MomentTimeline 用 readWithFallback 在离线/失败时回退本地。
  */
 import { queryRows } from './dao'
+import { rowGet } from './native/sqlite-db'
 import { isNativePlatform } from './platform'
 
 export interface LocalMoment {
@@ -40,17 +41,21 @@ export async function readLocalMoments(): Promise<LocalMoment[] | null> {
       'SELECT id, remoteId, content, tags, userId, isPublic, updatedAt FROM moment WHERE deleted = 0 ORDER BY updatedAt DESC',
     )
     if (rows.length === 0) return null
+    // 按列名取值：Android 返回的行是「列名对象」，键序无保证，位置取值会整体错位
     return rows.map((r) => {
-      const remoteId = r[1] == null ? null : Number(r[1])
-      const localId = String(r[0])
+      const g = (name: string): unknown => rowGet(r, name)
+      const remoteIdRaw = g('remoteId')
+      const remoteId = remoteIdRaw == null ? null : Number(remoteIdRaw)
+      const localId = String(g('id'))
+      const userIdRaw = g('userId')
       return {
         id: remoteId ?? localId,
-        content: String(r[2] ?? ''),
-        tags: parseTags(r[3]),
-        userId: r[4] == null ? null : Number(r[4]),
-        isPublic: !!r[5],
-        createdAt: msToIso(r[6]),
-        updatedAt: msToIso(r[6]),
+        content: String(g('content') ?? ''),
+        tags: parseTags(g('tags')),
+        userId: userIdRaw == null ? null : Number(userIdRaw),
+        isPublic: !!g('isPublic'),
+        createdAt: msToIso(g('updatedAt')),
+        updatedAt: msToIso(g('updatedAt')),
       }
     })
   } catch {

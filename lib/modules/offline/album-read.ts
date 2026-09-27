@@ -3,6 +3,7 @@
  * 供 /album 页面在离线/失败时回退本地（纪念相册区）。
  */
 import { queryRows } from './dao'
+import { rowGet } from './native/sqlite-db'
 import { isNativePlatform } from './platform'
 
 export interface LocalAlbum {
@@ -32,17 +33,23 @@ export async function readLocalAlbums(): Promise<LocalAlbum[] | null> {
         'FROM album a WHERE a.deleted = 0 ORDER BY COALESCE(a.date, a.updatedAt) DESC',
     )
     if (rows.length === 0) return null
+    // 按列名取值：Android 返回的行是「列名对象」，键序无保证，位置取值会整体错位
     return rows.map((r) => {
-      const remoteId = r[1] == null ? null : Number(r[1])
-      const localId = String(r[0])
+      const g = (name: string): unknown => rowGet(r, name)
+      const remoteIdRaw = g('remoteId')
+      const remoteId = remoteIdRaw == null ? null : Number(remoteIdRaw)
+      const localId = String(g('id'))
+      const coverRemote = g('coverRemote')
+      const descriptionRaw = g('description')
+      const titleRaw = g('title')
       return {
         id: remoteId ?? localId,
-        title: String(r[2] ?? '未命名相册'),
-        description: r[3] == null ? null : String(r[3]),
-        coverUrl: r[7] ? String(r[7]) : null, // 远端封面 URL，页面侧经 useLocalMediaUrls 解析本地缓存
+        title: String(titleRaw ?? '未命名相册'),
+        description: descriptionRaw == null ? null : String(descriptionRaw),
+        coverUrl: coverRemote ? String(coverRemote) : null, // 远端封面 URL，页面侧经 useLocalMediaUrls 解析本地缓存
         mediaCount: 0,
-        date: msToIso(r[4]),
-        createdAt: msToIso(r[6]),
+        date: msToIso(g('date')),
+        createdAt: msToIso(g('updatedAt')),
       }
     })
   } catch {
