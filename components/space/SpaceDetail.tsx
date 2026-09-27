@@ -10,8 +10,11 @@ import {
 import { Icon } from '@/components/mobile/Icon'
 import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { Field, FieldTextarea, FieldSelect } from '@/components/mobile/Field'
 import { Pill } from '@/components/mobile/Pills'
+import { toast } from '@/lib/mobile/toast-store'
+import { hapticLight } from '@/lib/mobile/haptics'
 import { apiUrl } from '@/lib/api-base'
 import { SPACE_TYPES, spaceThemeOf, spaceTypeIconOf, spaceTypeLabelOf, spaceRoleLabelOf } from '@/lib/mobile/space-system'
 import { travelTypeIconOf, travelTypeLabelOf } from '@/lib/mobile/icon-system'
@@ -60,6 +63,7 @@ export default function SpaceDetail({
   const { space, stats } = data
   const [inviteOpen, setInviteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [leaveOpen, setLeaveOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -95,16 +99,16 @@ export default function SpaceDetail({
   }
 
   const leave = async () => {
-    if (!window.confirm('确定退出该空间吗？退出后将无法查看空间内共享内容')) return
     try {
       const res = await fetch(apiUrl(`/api/spaces/${space.id}/leave`), {
         method: 'POST',
         credentials: 'include',
       })
       if (!res.ok) throw new Error('退出失败')
+      toast.info('已退出空间')
       router.push('/space')
     } catch (e: any) {
-      setError(e.message || '退出失败')
+      toast.error(e.message || '退出失败')
     }
   }
 
@@ -217,7 +221,7 @@ export default function SpaceDetail({
                 <Link
                   key={t.id}
                   href={`/travel/${t.slug}`}
-                  className="flex items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--social-surface)] p-3.5 ring-1 ring-[var(--social-line)] transition active:scale-[0.995]"
+                  className="m-card-pressable flex items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--social-surface)] p-3.5 ring-1 ring-[var(--social-line)]"
                 >
                   <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[14px] bg-[var(--space-accent-soft)] text-[var(--space-accent-strong)]">
                     <Icon icon={travelTypeIconOf(t.travelType)} size="md" />
@@ -265,7 +269,7 @@ export default function SpaceDetail({
                 <Link
                   key={a.id}
                   href="/album"
-                  className="overflow-hidden rounded-[var(--m-radius-control)] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]"
+                  className="m-pressable overflow-hidden rounded-[var(--m-radius-control)] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]"
                 >
                   <span className="block aspect-square w-full bg-[var(--space-accent-soft)]">
                     {a.coverUrl ? (
@@ -291,7 +295,7 @@ export default function SpaceDetail({
                 <Link
                   key={t.id}
                   href={`/travel/${t.slug}`}
-                  className="flex items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--space-accent-soft)] p-3.5"
+                  className="m-card-pressable flex items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--space-accent-soft)] p-3.5"
                 >
                   <Icon icon={MapPin} size="md" className="text-[var(--space-accent-strong)]" />
                   <span className="min-w-0 flex-1">
@@ -375,13 +379,30 @@ export default function SpaceDetail({
         {space.myRole !== 'OWNER' && (
           <button
             type="button"
-            onClick={() => void leave()}
-            className="mt-6 flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
+            onClick={() => {
+              void hapticLight()
+              setLeaveOpen(true)
+            }}
+            className="m-pressable mt-6 flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-[13px] text-[var(--social-faint)] transition-colors hover:text-[var(--danger-soft)]"
           >
             <Icon icon={LogOut} size="sm" />
             退出空间
           </button>
         )}
+
+        {/* 退出确认：iOS ActionSheet（破坏性项红色），替代 window.confirm 的浏览器弹窗 */}
+        <ActionSheet
+          open={leaveOpen}
+          onClose={() => setLeaveOpen(false)}
+          title={`退出「${space.name}」后将无法查看空间内的共享内容`}
+          options={[
+            {
+              label: '退出空间',
+              destructive: true,
+              onClick: () => void leave(),
+            },
+          ]}
+        />
 
         {error && !settingsOpen && (
           <p className="mt-3 text-center text-[13px] text-[var(--danger-soft)]">{error}</p>

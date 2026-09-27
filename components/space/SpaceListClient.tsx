@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, KeyRound, Users, Sparkles } from '@/lib/mobile/icon-system'
-import { Icon } from '@/components/mobile/Icon'
+import { Plus, KeyRound, Sparkles } from '@/lib/mobile/icon-system'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Field, FieldTextarea } from '@/components/mobile/Field'
 import { LoaderBlock } from '@/components/mobile/Loader'
+import { toast } from '@/lib/mobile/toast-store'
 import { apiUrl } from '@/lib/api-base'
 import { spaceDetailHref } from '@/lib/routes'
 import { SPACE_TYPE_NAME_HINTS, SPACE_ROLE_LABELS } from '@/lib/mobile/space-system'
@@ -33,7 +33,6 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
   const [spaces, setSpaces] = useState<SpaceCardData[]>(initialSpaces || [])
   const [loading, setLoading] = useState(!initialSpaces)
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
 
   // 创建
   const [createOpen, setCreateOpen] = useState(false)
@@ -76,8 +75,7 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
   }, [])
 
   const showToast = (text: string) => {
-    setToast(text)
-    window.setTimeout(() => setToast(''), 2600)
+    toast.success(text)
   }
 
   const create = async (e: React.FormEvent) => {
@@ -269,15 +267,6 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
           </Button>
         </form>
       </BottomSheet>
-
-      {toast && (
-        <div className="fixed bottom-24 left-1/2 z-[96] -translate-x-1/2 rounded-full bg-[var(--social-text)]/90 px-5 py-2.5 text-[13px] text-[var(--social-bg)] backdrop-blur">
-          <span className="flex items-center gap-1.5">
-            <Icon icon={Users} size="sm" />
-            {toast}
-          </span>
-        </div>
-      )}
     </div>
   )
 }

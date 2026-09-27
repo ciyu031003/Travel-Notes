@@ -64,7 +64,7 @@ export function SpaceCard({ space, className }: { space: SpaceCardData; classNam
     <Link
       href={spaceDetailHref(space.slug)}
       className={cn(
-        'block overflow-hidden rounded-[var(--m-radius-card)] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)] transition active:scale-[0.995]',
+        'm-card-pressable block overflow-hidden rounded-[var(--m-radius-card)] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]',
         className,
       )}
     >
