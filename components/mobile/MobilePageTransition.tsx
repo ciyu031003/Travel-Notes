@@ -72,10 +72,18 @@ export function MobilePageTransition({
     const el = ref.current
     if (!el) return
     const direction = classifyNavDirection(prev, pathname)
+    const cls = DIRECTION_CLASS[direction]
     el.classList.remove('m-page-fade', 'm-page-push', 'm-page-pop')
     // 强制 reflow，保证连续导航时动画可重放
     void el.offsetWidth
-    el.classList.add(DIRECTION_CLASS[direction])
+    el.classList.add(cls)
+    // 播完即移除：fill-mode: both 会把 transform 永久留在容器上，
+    // 而任何非 none 的 transform 都会成为 fixed 后代（折叠栏等）的包含块
+    el.addEventListener(
+      'animationend',
+      () => el.classList.remove(cls),
+      { once: true },
+    )
   }, [pathname])
 
   return (

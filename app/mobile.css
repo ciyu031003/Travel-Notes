@@ -356,6 +356,44 @@ html.dark {
   color: var(--m-text);
 }
 
+/* ── 大标题滚动折叠栏（LargeTitle 的 compact 态）──────────────────
+   标题滚出视口顶部时浮出：毛玻璃 + 0.5px hairline，只动 opacity/transform。
+   显隐由 LargeTitle 内的 IntersectionObserver 驱动（零 scroll 监听）。 */
+.m-collapser {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  padding: 4px 10px 6px;
+  padding-top: calc(var(--m-safe-top) + 2px);
+  background: var(--m-surface);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 0.5px solid var(--m-line-strong);
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.3s var(--m-ease-spring);
+}
+.m-collapser.is-collapsed {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.m-collapser-title {
+  text-align: center;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  color: var(--m-text);
+}
+.m-collapser > .m-pressable {
+  justify-self: center;
+}
+
 .m-spring {
   transition-property: transform, opacity;
   transition-duration: 0.3s;
@@ -1246,7 +1284,8 @@ html.dark .m-toast {
   .m-skeleton::after, .m-ptr-spin, .m-action-item, .m-page-fade, .m-page-push, .m-page-pop, .m-pop,
   .m-btn, .m-btn-spinner, .m-check, .m-check-path, .m-choice, .m-card-pressable,
   .m-seg-item, .m-switch-bare, .m-drawer-panel, .m-drawer-backdrop,
-  .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after {
+  .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after,
+  .m-collapser {
     animation: none !important;
     transition: none !important;
   }
