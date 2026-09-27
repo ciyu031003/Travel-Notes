@@ -1,3 +1,23 @@
+## [1.17.0] - 2026-09-27
+
+### Added（移动端 UI 精修 2.0 · 流畅感与原生感）
+
+- **按压弹簧化**：所有可按元素统一「按下快进（0.1s ease-out）、松手弹簧过冲回弹（0.4s spring）」两相位；档位收敛为控件 0.96 / 大卡片 0.985 / 小按钮 0.94。
+- **BottomSheet / SideDrawer 2.0**：把手与标题栏跟手拖拽（内容区滚动不受干扰）、下拉过半或快速一甩直接关闭、不足弹簧回弹；进退场统一弹簧动画——关闭不再「瞬间消失」。13 个使用方零改动自动受益。
+- **方向感知页面转场**：进入更深路径新页右滑入（push）、返回时左滑回（pop）、Tab 间轻淡入；底部 Tab 栏移出转场层，从此可以安全使用 translate 动画。
+- **大标题滚动折叠**：`LargeTitle` 滚出视口顶部时浮出毛玻璃 compact 栏（返回键 + 居中小标题），16 处页面自动获得；IntersectionObserver 哨兵实现，零 scroll 监听。
+- **下拉刷新 iOS 化**：纯 spinner 跟手旋转（进度 ×180°）、去掉文字标签、松手弹簧收位。
+- **原生状态栏随主题联动**：新增 `@capacitor/status-bar`，图标风格与底色随暗色模式实时切换；新增 `@capacitor/keyboard`（resize=native）避免键盘遮挡弹层输入。
+- **边缘右滑返回**：二级页（旅行详情/帖子详情/设置/收藏/通知/关注粉丝）左缘右滑即整页+Tab 栏方向性退场返回。
+
+### Fixed
+- `viewport-fit=cover` 缺失导致 `env(safe-area-inset-*)` 恒为 0（刘海/挖孔屏安全区退化为固定 20px）——已导出 Next viewport 配置。
+- `theme-color` 写死 `#FAF6EE` 不随暗色切换——现由 `ThemeColorSync` 实时同步（Web meta + 原生状态栏共用一个观察器）。
+- Android 12+ 拉伸 overscroll 效果未禁用——`overscroll-behavior-y: none`；全局 `touch-action: manipulation` 消灭 tap 高亮/双击延迟；界面框架禁长按选中。
+- 方向转场动画 `fill-mode: both` 残留 transform 会把容器内 `position:fixed` 后代（折叠栏）锚点拖走——动画播完即移除动画类。
+
+---
+
 ## [1.16.0] - 2026-09-25
 
 ### Added

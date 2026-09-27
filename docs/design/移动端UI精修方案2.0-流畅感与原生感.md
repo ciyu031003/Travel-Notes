@@ -387,4 +387,25 @@ P2（I/J/K，穿插）
 
 ---
 
-*— 方案待确认，确认后按 P0 → P1 → P2 顺序实施 —*
+## 9. 实施记录（2026-09-27，v1.17.0）
+
+> P0/P1/P2-I 全部落地，P2-J 暂缓，P2-K 以静态审计完成。`tsc --noEmit` 0 错误、`vitest` 493 用例全绿、`SKIP_DB_ON_BUILD=1 next build` 通过、design-token checker 无新增违规；dev 冒烟（390×844 视口）验证：页面渲染正常、大标题折叠栏出现、SideDrawer/BottomSheet 开关含退场动画、Tab 转场在跑。
+
+| 项 | 状态 | 落地内容 |
+|---|---|---|
+| P0-A 按压弹簧 | ✅ | `mobile.css`：`.m-pressable/.m-press/.m-card-pressable/.m-btn/.m-chip/.m-action-item/.m-seg-item/.m-choice` 统一两相位（按下 0.1s ease-out，松手 0.4s `--m-ease-spring` 过冲）；档位 0.96 / 0.985 / 0.94 |
+| P0-B 弹层手势 | ✅ | `BottomSheet`：把手热区（`.m-sheet-grabber-zone`）+ 标题栏起拖，`dragListener=false` 内容滚动不受干扰；>120px 或 >500px/s 关闭；`AnimatePresence` 退场。`SideDrawer`：`drag="x"` 右滑关闭。CSS keyframes 移交 motion |
+| P0-C 滚动细节 | ✅ | ≤767px：`overscroll-behavior-y:none`、全局 `touch-action:manipulation`、框架元素 `user-select:none`；`layout.tsx` 导出 `viewport`（viewport-fit=cover）；theme-color 随暗色实时同步（`ThemeColorSync`，MutationObserver） |
+| P1-E 方向转场 | ✅ | `MobilePageTransition` 内置方向判定（深=push 右滑入 / 浅=pop 左滑回 / Tab 根互切=fade）；`LayoutContent` 把 fixed 的 Tab 栏移出转场容器；**动画播完即移除 class**（fill-mode both 留下的 transform 会成为 fixed 后代包含块） |
+| P1-F 大标题折叠 | ✅ | `LargeTitle` 内置折叠（默认开）：IntersectionObserver 哨兵 + `.m-collapser` 毛玻璃栏（返回键 + 居中 16px 标题）；trailing 不复制（避免双实例状态漂移） |
+| P1-G 下拉刷新 | ✅ | 纯 spinner 跟手旋转（进度×180°）、无文字、松手/完成弹簧收位 |
+| P1-H 原生层 | ✅ | `@capacitor/status-bar@8.0.3`（图标/底色随主题，`lib/mobile/status-bar.ts`，吞错降级）+ `@capacitor/keyboard@8.0.5`（resize=native）；**edge-to-edge 深度改造（禁用原生补边改用 CSS env）留待真机验证后再做**，本轮仅接管颜色 |
+| P2-I 边缘右滑返回 | ✅ | `EdgeSwipeBack` v1：左缘 24px 起手、右滑 >48px 触发整页+Tab 栏滑出（0.22s）→ `router.back()`；不做跟手位移（transform 常驻的包含块问题）；挂载 6 类二级页 |
+| P2-J 图片渐进加载 | ⏸ 暂缓 | 需要服务端缩略图链路 + 视觉验收配合，单独立项更稳 |
+| P2-K 性能审计 | ✅ 静态 | 结论：① 同屏 backdrop-filter 最多 2 层（Tab 栏 + 折叠栏/Sheet，不叠加时刻 ≤2），可接受但低端机留意；② `m-list-item`/`m-enter` 均 `animation-fill-mode: both`，动画结束后保留 `translateY(0)` transform——若未来把 fixed 元素放进 Stagger 子项会被锚点拖住，**约定：fixed 元素不得放进 Stagger/m-enter 子项**；③ 方向转场/折叠栏只动 transform/opacity 合成属性，符合 60fps 纪律 |
+
+**遗留到真机验收**（无 Android 设备无法在本轮完成）：
+1. 状态栏：亮/暗主题切换时图标可读性（`syncNativeStatusBar` 已就位）；
+2. `env(safe-area-inset-*)` 在 targetSdk 36 + Capacitor 8 下的真实取值（决定是否做 edge-to-edge 深度改造）；
+3. 键盘弹出时 sheet 内输入可见性（Keyboard 插件已装，config 已设 resize=native）；
+4. 边缘右滑返回与横向轮播的实际冲突面（已留 `data-no-swipeback` 白名单）。

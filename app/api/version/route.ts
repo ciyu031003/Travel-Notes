@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：待同步（尚未上传）的旅行删不掉——本地删也要清同步队列，否则会被重新创建；云端已删除时按成功处理（404）',
+    changelog: process.env.APP_CHANGELOG || '移动端 iOS 化精修 2.0：按压弹簧回弹、弹层跟手拖拽与退场动画、方向感知页面转场、大标题滚动折叠、下拉刷新 iOS 化、状态栏随主题联动、边缘右滑返回',
     forceUpdate,
   })
 }
