@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import LayoutContent from '@/components/layout/LayoutContent'
 import CommandPalette from '@/components/command/CommandPalette'
@@ -7,10 +7,22 @@ import OfflineBootstrap from '@/components/offline/OfflineBootstrap'
 import { ToastHost } from '@/components/mobile/Toast'
 import { Onboarding } from '@/components/mobile/Onboarding'
 import { PreferenceSurvey } from '@/components/mobile/PreferenceSurvey'
+import ThemeColorSync from '@/components/mobile/ThemeColorSync'
 
 export const metadata: Metadata = {
   title: '行迹 | 旅行记忆空间',
   description: '记录每一次出发与归来，沉淀属于你的旅行记忆。',
+}
+
+/**
+ * viewport-fit=cover：没有它 env(safe-area-inset-*) 在刘海屏/挖孔屏上恒为 0，
+ * --m-safe-top 只剩固定 20px 兜底。
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#FFFBF7',
 }
 
 export default function RootLayout({
@@ -22,7 +34,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#FAF6EE" />
+        {/* theme-color 由 viewport 导出注入，运行时由 ThemeColorSync 随暗色切换同步 */}
         {/* favicon 由 app/icon.png / app/apple-icon.png 文件约定自动注入（源：public/brand/logo.png） */}
         <script src="/register-sw.js" defer />
       </head>
@@ -34,6 +46,7 @@ export default function RootLayout({
           跳到主内容
         </a>
         <LayoutContent>{children}</LayoutContent>
+        <ThemeColorSync />
         <Onboarding />
         {/* 新用户偏好问卷：与首启引导互斥（等它退场后才上场），完成或跳过后不再弹 */}
         <PreferenceSurvey />

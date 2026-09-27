@@ -189,11 +189,38 @@ html.dark {
 }
 
 @media (max-width: 767px) {
+  /* 禁 Android 12+ 的拉伸 overscroll（页面到顶整体拉伸是"一眼 WebView"的信号） */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
   body {
     background-color: var(--m-bg);
     color: var(--m-text);
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
+  }
+  /* 全局消灭 tap 高亮与双击缩放延迟（此前仅 m-pressable/m-btn 覆盖） */
+  a,
+  button,
+  [role='button'],
+  input,
+  select,
+  textarea,
+  label {
+    touch-action: manipulation;
+  }
+  /* 界面框架禁长按选中/呼出菜单（正文内容不受影响） */
+  nav,
+  header,
+  .m-title,
+  .m-btn,
+  .m-tab-label,
+  .m-chip,
+  .m-seg,
+  .m-section-title {
+    user-select: none;
+    -webkit-touch-callout: none;
   }
 }
 
