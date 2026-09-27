@@ -81,6 +81,15 @@ export async function markTravelDeletedLocally(slug: string, remoteId: number | 
       Date.now(),
       rowId,
     ])
+    /**
+     * **同步处理**：把这个实体在队列里待上传的项一并清掉。
+     *
+     * 为什么必须做（真机反馈「删除以后需要同步处理」）：若这本旅行还在
+     * 「待同步」（队列里躺着 CREATE），只打墓碑而不出队的话，
+     * SyncEngine 之后会照旧把它**重新创建到云端** —— 用户看到的将是
+     * "删了又回来了"，甚至离线删、联网后云端又冒出来。
+     */
+    await new SyncQueue(getSyncQueueStorage()).markDoneByEntityId(rowId).catch(() => {})
     return true
   } catch {
     return false

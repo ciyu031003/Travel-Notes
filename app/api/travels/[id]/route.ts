@@ -63,6 +63,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     await travelService.deleteTravel(auth.username, travelId)
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || '删除失败' }, { status: 400 })
+    const msg = error?.message || '删除失败'
+    /**
+     * 「旅行不存在」用 404 表达（此前统一 400）。
+     *
+     * 为什么重要：本地还留着行、但云端已经删掉的情况很常见
+     * （用户删过一次、或先离线删后联网）。客户端据此把 404 当作
+     * **"目标状态已达成"**处理并完成本地清理，而不是弹"删除失败"
+     * 让用户反复点 —— 真机反馈「新建的几篇显示待同步、删除不了」即此。
+     */
+    return NextResponse.json({ error: msg }, { status: msg.includes('不存在') ? 404 : 400 })
   }
 }

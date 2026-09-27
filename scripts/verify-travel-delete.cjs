@@ -73,6 +73,15 @@ const s = Date.now()
   const after = await api(`/api/travels/by-slug/${encodeURIComponent(slug)}/detail`, { cookie: owner })
   check('删除后详情返回 404', after.status === 404, `status=${after.status}`)
 
+  /* 关键补充：重复删除 / 删一个已经不存在的 id
+     —— 「本地还留着行、云端已删」时客户端要按成功处理，不能被 400 卡住
+        （真机反馈：新建的几篇显示待同步，怎么点都删不掉） */
+  const again = await api(`/api/travels/${id}`, { method: 'DELETE', cookie: owner })
+  check('重复删除已不存在的旅行 → 404（客户端据此按成功处理）', again.status === 404, `status=${again.status} ${again.text.slice(0, 80)}`)
+
+  const bogus = await api(`/api/travels/99999999`, { method: 'DELETE', cookie: owner })
+  check('删除不存在的 id → 404 而不是 400', bogus.status === 404, `status=${bogus.status}`)
+
   const failed = out.filter((r) => !r.ok)
   console.log(`\n结果：${out.length - failed.length}/${out.length} 通过`)
   if (failed.length) { console.log('失败项：' + failed.map((f) => f.name).join(' / ')); process.exitCode = 1 }

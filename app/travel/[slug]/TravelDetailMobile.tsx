@@ -645,17 +645,28 @@ export default function TravelDetailMobile({
                 return
               }
               if (!window.confirm('删除后旅行及其回忆、照片会一起消失，确定？')) return
-              const res = await fetch(apiUrl(`/api/travels/${travelId}`), {
-                method: 'DELETE',
-                credentials: 'include',
-              }).catch(() => null)
-              if (res && res.ok) {
+              /**
+               * 两种"删除"要分清（真机反馈「新建的几篇显示待同步、删除不了」）：
+               *  · travelId 为空 → 这本旅行**还没同步到云端**（云端 id 为 0/未知），
+               *    根本不该去调 DELETE（会得到 400「无效的旅行 ID」→ 永远删不掉）；
+               *    直接做本地删除即可。
+               *  · travelId 有值 → 调服务端；**404 视为"云端已经不在了"**（可能删过、
+               *    或本地残留），同样按成功处理并完成本地清理，而不是让用户反复点。
+               */
+              let serverOk = !travelId
+              if (travelId) {
+                const res = await fetch(apiUrl(`/api/travels/${travelId}`), {
+                  method: 'DELETE',
+                  credentials: 'include',
+                }).catch(() => null)
+                serverOk = !!res && (res.ok || res.status === 404)
+              }
+              if (serverOk) {
                 /**
-                 * 云端删掉了，本地也必须打墓碑。
-                 * 否则：本地的列表/详情读都是 `WHERE deleted = 0`，那行还在库里 →
-                 * 一进离线模式，已删除的旅行会从本地缓存"复活"（真机反馈的后续问题）。
+                 * 云端/本地删除都要落地：本地打墓碑（否则离线兜底会把已删除的旅行显示回来），
+                 * 并清掉队列里待上传的项（否则同步引擎会把它重新创建到云端）。
                  */
-                await markTravelDeletedLocally(travel.slug || slug, travelId).catch(() => {})
+                await markTravelDeletedLocally(travel.slug || slug, travelId || null).catch(() => {})
                 toast.success('已删除')
                 router.replace('/travel')
               } else {

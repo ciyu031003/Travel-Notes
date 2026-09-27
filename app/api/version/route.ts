@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修：删除旅行后本地未打墓碑，离线时已删除的旅行会复活；修：旅行列表/相册/碎碎念/旅行圈 Feed 按位置读列导致字段错位；新增禁止位置取列的守卫测试',
+    changelog: process.env.APP_CHANGELOG || '修：待同步（尚未上传）的旅行删不掉——本地删也要清同步队列，否则会被重新创建；云端已删除时按成功处理（404）',
     forceUpdate,
   })
 }

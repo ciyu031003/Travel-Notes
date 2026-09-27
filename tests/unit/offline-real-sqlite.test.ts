@@ -460,10 +460,21 @@ describe('真实 SQLite · 删除打墓碑', () => {
     expect(await readLocalTravelBySlug('shan-chu')).not.toBeNull()
     const before = (await readAllLocalTravels()) ?? []
     expect(before.some((t) => t.slug === 'shan-chu')).toBe(true)
+    // 删除前队列里有它的待上传项（本地写下就会入队）
+    expect((await queue.all()).some((i) => i.entityId === 'local-del-1')).toBe(true)
 
     // 打墓碑（客户端在服务端删除成功后调用）
     const marked = await markTravelDeletedLocally('shan-chu', 500)
     expect(marked).toBe(true)
+
+    /**
+     * **同步处理**：队列里这一项的待上传项必须被清掉。
+     * 否则 SyncEngine 之后会照旧把它重新创建到云端 —— 用户看到"删了又回来"。
+     */
+    expect(
+      (await queue.all()).some((i) => i.entityId === 'local-del-1'),
+      '删除后不应再留下待上传项（否则会被重新创建）',
+    ).toBe(false)
 
     // 删除后：离线兜底不再显示
     expect(await readLocalTravelBySlug('shan-chu')).toBeNull()
