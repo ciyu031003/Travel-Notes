@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '移动端 iOS 化精修 2.0：按压弹簧回弹、弹层跟手拖拽与退场动画、方向感知页面转场、大标题滚动折叠、下拉刷新 iOS 化、状态栏随主题联动、边缘右滑返回',
+    changelog: process.env.APP_CHANGELOG || '空间与旅行圈模块精修：旅行圈真实类型筛选（修复假话题chips）、无限滚动、卡片按压弹簧；空间退出确认ActionSheet、空间色折叠栏、图片淡入、按压与toast统一',
     forceUpdate,
   })
 }
