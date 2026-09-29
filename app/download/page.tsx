@@ -24,6 +24,7 @@ import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 import { APP_DOWNLOAD_URL } from '@/lib/app-version'
+import IcpLicense from '@/components/IcpLicense'
 
 interface VersionManifest {
   version: string
@@ -315,6 +316,15 @@ export default function DownloadPage() {
           <p className="mt-4 text-center text-xs text-travel-ink/40 dark:text-shell-faint">
             官网直连下载 · 支持断点续传 · 数据自动加密同步
           </p>
+        </section>
+
+        {/* 备案号：下载页同样展示 App 备案编号，编号可点击跳转工信部备案系统查询 */}
+        <section className="mt-8 text-center">
+          <IcpLicense
+            className="text-xs text-travel-ink/50 dark:text-shell-faint"
+            numberClassName="hover:text-travel-accent dark:hover:text-travel-bloom"
+            linkClassName="hover:text-travel-accent dark:hover:text-travel-bloom"
+          />
         </section>
       </main>
     </div>

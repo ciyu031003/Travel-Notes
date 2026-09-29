@@ -26,6 +26,7 @@ import { CountUp } from '@/components/mobile/CountUp'
 import { Icon } from '@/components/mobile/Icon'
 import { IconBadge } from '@/components/mobile/IconBadge'
 import { toast } from '@/lib/mobile/toast-store'
+import IcpLicense from '@/components/IcpLicense'
 
 /**
  * 首页 Hero 足迹地图：懒加载。
@@ -552,6 +553,18 @@ export default function HomeMobile({
             首页只承担"看"（足迹地图 / 画册 / 最近旅行 / 重要日子），
             入口类功能统一收进「我的」，避免首页变成功能目录。
           */}
+
+          {/*
+            ICP 备案号：移动互联网应用程序备案要求「App 内显著位置展示备案编号」，
+            编号可点击跳转工信部备案系统（https://beian.miit.gov.cn/）供用户查询。
+          */}
+          <section className="px-4 pb-12 pt-2">
+            <IcpLicense
+              className="text-center text-[11px] text-[var(--m-muted)]"
+              numberClassName="text-[var(--m-muted)] hover:text-[var(--m-accent-strong)]"
+              linkClassName="text-[var(--m-faint)] hover:text-[var(--m-accent-strong)]"
+            />
+          </section>
         </div>
       </PullToRefresh>
     </div>

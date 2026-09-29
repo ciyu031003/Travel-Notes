@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Heart, Mail, MapPin } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import IcpLicense from '@/components/IcpLicense'
 
 function GithubIcon({ className }: { className?: string }) {
   return (
@@ -51,6 +52,8 @@ export default function Footer() {
             Made with <Icon icon={Heart} size="sm" className="text-travel-accent fill-travel-accent" /> by 行迹
           </p>
           <p className="mt-1">© {new Date().getFullYear()} All rights reserved.</p>
+          {/* 备案号：移动互联网应用程序备案要求站点/应用内显著位置展示，编号可跳转工信部备案系统查询 */}
+          <IcpLicense className="mt-2 text-[11px]" numberClassName="hover:text-travel-accentStrong" />
         </div>
       </div>
     </footer>

@@ -22,6 +22,7 @@ import MomentsStrip from '@/components/moments/MomentsStrip'
 import { DanmakuSection, type DanmakuSectionHandle } from '@/components/home/DanmakuSection'
 import { apiUrl } from '@/lib/api-base'
 import { albumDeepLink } from '@/lib/album-deep-link'
+import IcpLicense from '@/components/IcpLicense'
 
 interface PostMeta {
   slug: string
@@ -527,6 +528,10 @@ export default function HomeClient({
             <p className="mt-2 text-xs text-travel-ink dark:text-shell-muted">
               © {new Date().getFullYear()} All rights reserved.
             </p>
+            <IcpLicense
+              className="mt-3 text-center text-[11px] text-travel-ink/70 dark:text-shell-muted"
+              numberClassName="hover:text-travel-accent dark:hover:text-travel-bloom"
+            />
             <Link
               href="/download"
               className="mt-4 hidden md:inline-flex items-center gap-1.5 rounded-full border border-travel-line bg-white/70 px-4 py-2 text-xs font-medium text-travel-accent transition hover:bg-white dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom dark:hover:bg-shell-surface"

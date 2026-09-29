@@ -11,6 +11,7 @@ import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 import { hapticError, hapticSuccess } from '@/lib/mobile/haptics'
+import IcpLicense from '@/components/IcpLicense'
 
 const allCities = [
   '北京', '上海', '广州', '深圳', '杭州', '成都', '西安', '南京', '武汉',
@@ -350,6 +351,16 @@ function LoginPageContent() {
             <p className="mt-5 text-center text-xs text-white/85 drop-shadow">
               Made with ♥ by 行迹
             </p>
+
+            {/*
+              备案号：App 首屏（登录页）即可见的显著位置。
+              移动互联网应用程序备案 + 应用商店上架规范要求：编号可见且可点击跳转工信部备案系统。
+            */}
+            <IcpLicense
+              className="mt-2 text-center text-[11px] text-white/70 drop-shadow"
+              numberClassName="text-white/85"
+              linkClassName="text-white/60"
+            />
           </div>
         </div>
       </LoginDoor>

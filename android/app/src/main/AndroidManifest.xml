@@ -10,6 +10,18 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!--
+          移动互联网应用程序备案号（工信部 App 备案 · 赣ICP备2024031528号-4A）。
+          写入安装包元数据，供应用市场 / 备案核验工具在扫描 APK 时读取；
+          App 内的可见展示见 www/（登录页、首页、账号设置 → 关于、下载页）。
+        -->
+        <meta-data
+            android:name="icp_license"
+            android:value="@string/icp_license" />
+        <meta-data
+            android:name="icp_license_query_url"
+            android:value="@string/icp_license_query_url" />
+
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"

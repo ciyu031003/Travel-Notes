@@ -1,3 +1,38 @@
+## [1.18.1] - 2026-09-29
+
+### Added（App 备案号 · 赣ICP备2024031528号-4A）
+
+- **应用内展示备案编号**：按《工业和信息化部关于开展移动互联网应用程序备案工作的通知》与各应用商店
+  上架规范（小米《APP备案编号的应用内展示指南》、华为/OPPO/vivo/应用宝同源要求）——App 内需在
+  **显著位置**展示 App 备案编号，且编号可点击（或在编号下方）跳转工信部备案系统
+  https://beian.miit.gov.cn/ 供用户查询。新增：
+  - `lib/icp.ts`：备案号与备案系统地址单一来源（`ICP_LICENSE` 默认 `赣ICP备2024031528号-4A`；
+    可用 `NEXT_PUBLIC_ICP_LICENSE` / `NEXT_PUBLIC_ICP_LICENSE_QUERY_URL` 覆盖）。
+  - `components/IcpLicense.tsx`：统一展示块（「ICP 备案号：<编号>」+「工信部备案查询：<网址>」，
+    两个链接均可跳转备案系统；根节点带 `data-icp-license`）。
+  - 展示位置 6 处：**账号设置 →「关于」（新，规范推荐位）**、登录页（App 首屏）、移动端首页底部、
+    门户首页页脚、全站桌面页脚、APK 下载页。
+- **安装包内可扫描**：`android/app/src/main/res/values/strings.xml` 新增 `icp_license` /
+  `icp_license_query_url` 字符串资源；`AndroidManifest.xml` 的 `<application>` 新增同名
+  `<meta-data>`（运行期亦可用 `PackageManager.GET_META_DATA` 读取）；新增 `public/icp-license.txt`
+  随静态壳打进 APK 的 `assets/public/icp-license.txt` —— 应用市场/备案核验扫描安装包
+  （resources.arsc / AndroidManifest / assets / 内嵌 HTML）时均可读到备案号。
+- 「账号设置 →「关于」」区块同时展示当前版本（v1.18.1 · build 36）。
+
+### Changed
+
+- 版本 1.18.0 / build 35 → **1.18.1 / build 36**（`scripts/bump-version.cjs`，`verify-version.cjs` 通过），
+  OTA 更新说明同步更新（`app/api/version/route.ts`）。
+- 重新打包 release APK：沿用 `tiantu-release.keystore`，包名 `com.tiantu.app`、签名与公钥不变，
+  继续与已通过的 App 备案信息一致。
+
+### 验证
+
+- `npx tsc --noEmit` 0 错误；`npx vitest run` **493/493（52 files）** 通过。
+- 静态壳 `www/`：20 个文件含备案号明文（15 个 HTML + 4 个 JS chunk + `icp-license.txt`）。
+
+---
+
 ## [1.18.0] - 2026-09-27
 
 ### Added（移动端 UI 精修 3.0 · 空间与旅行圈）

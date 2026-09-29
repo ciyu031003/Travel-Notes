@@ -23,6 +23,8 @@ import { useApi } from '@/lib/client/use-api'
 import { isMobileShell } from '@/lib/routes'
 import { toast } from '@/lib/mobile/toast-store'
 import { useSessionRedirect } from '@/hooks/use-session-redirect'
+import IcpLicense from '@/components/IcpLicense'
+import { APP_VERSION, APP_BUILD_NUMBER } from '@/lib/app-version'
 
 /**
  * 「账号设置」独立页（R3）。
@@ -194,6 +196,26 @@ export default function MeSettingsPage() {
               {info?.capabilities?.isOwner && !native && (
                 <ListRow icon={ShieldCheck} tone="accent" title="管理后台" description="内容、成员与审计日志" href="/admin" />
               )}
+            </ListSection>
+
+            {/*
+              关于：应用商店（小米《APP备案编号的应用内展示指南》/ 华为 / OPPO / vivo / 应用宝）
+              要求 App 在「设置 - 关于」这类显著位置展示 App 备案编号，且编号可跳转工信部备案系统。
+            */}
+            <ListSection title="关于" className="mt-6">
+              <div className="px-4 py-3.5">
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-[var(--social-muted)]">版本</span>
+                  <span className="font-medium">甜途 v{APP_VERSION}（build {APP_BUILD_NUMBER}）</span>
+                </div>
+                <div className="mt-3 border-t border-[var(--social-line)] pt-3">
+                  <IcpLicense
+                    className="text-xs text-[var(--social-faint)]"
+                    numberClassName="text-[var(--social-muted)] hover:text-[var(--social-accent)]"
+                    linkClassName="text-[var(--social-faint)] hover:text-[var(--social-accent)]"
+                  />
+                </div>
+              </div>
             </ListSection>
 
             <button

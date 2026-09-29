@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '空间与旅行圈模块精修：旅行圈真实类型筛选（修复假话题chips）、无限滚动、卡片按压弹簧；空间退出确认ActionSheet、空间色折叠栏、图片淡入、按压与toast统一',
+    changelog: process.env.APP_CHANGELOG || '新增 ICP App 备案号（赣ICP备2024031528号-4A）：登录页/首页页脚/账号设置-关于/下载页均展示且可点击跳转工信部备案系统；安装包元数据同步内置备案号，便于应用市场与备案核验扫描',
     forceUpdate,
   })
 }
