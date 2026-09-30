@@ -1,3 +1,40 @@
+## [1.18.2] - 2026-09-30
+
+### Added（网站备案信息 · ICP / 工信部备案号 / 公安联网备案号）
+
+- **备案信息补全**：`lib/icp.ts` 扩展为四类编号的单一来源 —— 网站 ICP `赣ICP备2024031528号-2`
+  （www.yuanabd.cn 主站及 travel-notes / learn 子域名共用）、App ICP `赣ICP备2024031528号-4A`、
+  工信部备案号 `30178737190355077`、公安联网备案号 `粤公网安备44010602017246号`（编号 44010602017246）。
+- `components/IcpLicense.tsx` 改为四行「标签 + 可点击编号」：ICP（网站）→ 工信部备案系统、
+  ICP（App）→ 工信部备案系统、工信部备案号 → 备案查询页、公安备案号（带官方警徽标识
+  `public/brand/gongan-beian.png`）→ 全国互联网安全管理服务平台查询页；末行保留工信部备案系统网址。
+  展示位沿用 6 处：账号设置 →「关于」、登录页、移动端首页底部、门户首页页脚、全站页脚、APK 下载页。
+- **安装包内同步**：`android/app/src/main/res/values/strings.xml` 增加 `site_icp_license` /
+  `miit_filing_no` / `police_filing_no` / `police_filing_query_url`；`AndroidManifest.xml` 同步增加
+  4 条 `<meta-data>`；`public/icp-license.txt` 补全网站 + App 备案信息。
+- **主站 www.yuanabd.cn**：新增 `site/yuanabd/filing-snippet.html`（页脚备案信息片段，唯一版本来源），
+  `site/yuanabd/README.md` 增加部署目标（`public/brand/gongan-beian.png` →
+  `/var/www/yuanabd/img/gongan-beian.png`）与 index.html 改动 ⑥。
+
+### Changed
+
+- 版本 1.18.1/b36 → **1.18.2/b37**（`bump-version.cjs`；typecheck 0 错误、vitest 493/493）。
+
+### 验证
+
+- APK：26,271,954 字节、SHA-256 `8a54cc5e…`；`aapt2 dump resources` 可读出四个编号，
+  AndroidManifest 6 条 meta-data 均在；`apksigner` 证书 MD5 仍为 `f67e57f3…`（与备案登记一致）。
+
+### 部署（2026-09-30）
+
+- 生产 `.env` 对齐 1.18.2 / 37 + 新更新说明，`server-rebuild.sh` 重建上线：`/api/health` 与
+  `/api/version` 均返回 1.18.2 / 37，`/download` 页直出四项备案信息与警徽。
+- APK 复发布至 https://travel-notes.yuanabd.cn/downloads/tiantu.apk（新副本 `tiantu-20260930-v1.18.2-b37.apk`）。
+- 主站 www.yuanabd.cn 页脚上线（index.html 备份于服务器 `~/backups/`）。
+- learn.yuanabd.cn（learn-workbench 项目，不在本仓库）：落地页页脚同步加入同一备案信息。
+
+---
+
 ## [1.18.1] - 2026-09-29
 
 ### Added（App 备案号 · 赣ICP备2024031528号-4A）

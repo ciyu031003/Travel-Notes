@@ -15,12 +15,13 @@
 |---|---|
 | `app-download.css` | `/var/www/yuanabd/css/app-download.css` |
 | `app-download.js` | `/var/www/yuanabd/js/app-download.js` |
+| `../public/brand/gongan-beian.png`（仓库 `public/brand/`，官方警徽） | `/var/www/yuanabd/img/gongan-beian.png` |
 
 二维码图片复用甜途门户已有的静态图：
 `/var/www/travel-landing/img/download-qr.png` → 复制到 `/var/www/yuanabd/img/download-qr.png`
 （内容为 `https://travel-notes.yuanabd.cn/downloads/tiantu.apk`，APK 路径固定不变，故可长期使用。）
 
-## `index.html` 需要配合的 5 处改动
+## `index.html` 需要配合的 6 处改动
 
 > 主站 `index.html` 不在仓库，以下改动需在服务器上执行（已备份至 `/home/ubuntu/backups/`）。
 
@@ -77,6 +78,23 @@
    ```html
    <script src="./js/app-download.js" defer></script>
    ```
+
+## ⑥ 底部备案信息（ICP 备案号 / 工信部备案号 / 公安联网备案号）
+
+> 依据《互联网信息服务管理办法》与公安部《计算机信息网络国际联网安全保护管理办法》：
+> 网站页面底部需展示备案编号，并可点击跳转对应备案系统查询。
+> 完整片段（唯一版本来源）：[`filing-snippet.html`](./filing-snippet.html)。
+
+**插入位置**：`<footer class="footer">` 内、`.footer__base` 所在的 `<div>` 之后、`</div></footer>` 之前
+（即 `index.html` 约 700 行处）。
+
+三个条目均为超链接：ICP 备案号 → `https://beian.miit.gov.cn/`、工信部备案号 →
+`https://beian.miit.gov.cn/#/Integrated/recordQuery`、公安备案号（带警徽标识）→
+`https://beian.mps.gov.cn/#/query/webSearch?code=44010602017246`。
+
+**配套资产**：把仓库 `public/brand/gongan-beian.png` 放到 `/var/www/yuanabd/img/gongan-beian.png`。
+
+**备份**：改动前 `cp -a index.html ~/backups/yuanabd-index-$(date +%Y%m%d%H%M%S).html`。
 
 ## 依赖：nginx 同源代理 `/api/version`
 
