@@ -31,6 +31,13 @@
 - `npx tsc --noEmit` 0 错误；`npx vitest run` **493/493（52 files）** 通过。
 - 静态壳 `www/`：20 个文件含备案号明文（15 个 HTML + 4 个 JS chunk + `icp-license.txt`）。
 
+### 部署（2026-09-30）
+
+- 生产 `.env` 的 `APP_VERSION` / `APP_BUILD_NUMBER` / `APP_CHANGELOG` 同步为 1.18.1 / 36（改动前已备份），
+  `scripts/server-rebuild.sh` 完成 Docker 重建上线：`/api/health` 返回 1.18.1/36，`/download` 页直出备案号。
+- APK 重新打包并复发布至 https://travel-notes.yuanabd.cn/downloads/tiantu.apk（SHA-256 `ae65426a…`，
+  签名 MD5 `f67e57f3…` 与备案登记一致）。
+
 ---
 
 ## [1.18.0] - 2026-09-27
