@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '新增 ICP App 备案号（赣ICP备2024031528号-4A）：登录页/首页页脚/账号设置-关于/下载页均展示且可点击跳转工信部备案系统；安装包元数据同步内置备案号，便于应用市场与备案核验扫描',
+    changelog: process.env.APP_CHANGELOG || '备案信息补全：网站（yuanabd.cn 及子域名）ICP 备案号 赣ICP备2024031528号-2、工信部备案号 30178737190355077、公安联网备案号 粤公网安备44010602017246号，与甜途 App 备案号 赣ICP备2024031528号-4A 一并展示在网站页脚与 App 内（登录页/首页/账号设置-关于/下载页），编号均可点击跳转工信部备案系统与全国互联网安全管理服务平台',
     forceUpdate,
   })
 }

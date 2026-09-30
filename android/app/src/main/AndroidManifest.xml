@@ -21,6 +21,19 @@
         <meta-data
             android:name="icp_license_query_url"
             android:value="@string/icp_license_query_url" />
+        <!-- 网站备案号（yuanabd.cn 主站及子域名）、工信部备案号、公安联网备案号 -->
+        <meta-data
+            android:name="site_icp_license"
+            android:value="@string/site_icp_license" />
+        <meta-data
+            android:name="miit_filing_no"
+            android:value="@string/miit_filing_no" />
+        <meta-data
+            android:name="police_filing_no"
+            android:value="@string/police_filing_no" />
+        <meta-data
+            android:name="police_filing_query_url"
+            android:value="@string/police_filing_query_url" />
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
