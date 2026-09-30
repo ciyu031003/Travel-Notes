@@ -31,8 +31,9 @@
   `/api/version` 均返回 1.18.2 / 37，`/download` 页直出四项备案信息与警徽。
 - APK 复发布至 https://travel-notes.yuanabd.cn/downloads/tiantu.apk（新副本 `tiantu-20260930-v1.18.2-b37.apk`）。
 - 主站 www.yuanabd.cn 页脚上线（index.html 备份于服务器 `~/backups/`）。
-- learn.yuanabd.cn（learn-workbench 项目，不在本仓库）：落地页页脚源码已加入同一备案信息，
-  **镜像重建待执行**（其 apt 源 debian-security 502 + 服务器带宽限制导致构建未完成，收尾命令见改动记录）。
+- learn.yuanabd.cn（learn-workbench 项目，不在本仓库）：落地页页脚已加入同一备案信息并**已上线**
+  （其 apt 源 debian-security 502 + 服务器带宽限制使常规 Docker 重建不可用，改用「以现有镜像为基座
+  只重编译 Next 产物」的快路径，约 40 秒完成，详见改动记录）。
 
 ---
 
