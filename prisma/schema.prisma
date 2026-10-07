@@ -711,15 +711,17 @@ model ItineraryItem {
 
 /// 旅行花费（支持分类与分摊记录）
 model Expense {
-  id         Int       @id @default(autoincrement())
-  travelId   Int
-  amount     Float
-  currency   String    @default("CNY") @db.VarChar(10)
-  category   String    @db.VarChar(50)
-  payer      String?   @db.VarChar(255)
-  note       String?   @db.Text
-  happenedAt DateTime? @db.Timestamp(3)
-  createdAt  DateTime  @default(now()) @db.Timestamp(3)
+  id          Int       @id @default(autoincrement())
+  travelId    Int
+  /// 金额整数分（1 元 = 100 分）。元↔分换算统一走 lib/modules/travel/money.ts，
+  /// API/前端契约仍是「元」；历史 Float 元列的回填迁移见 scripts/apply-schema-migration.cjs。
+  amountCents Int
+  currency    String    @default("CNY") @db.VarChar(10)
+  category    String    @db.VarChar(50)
+  payer       String?   @db.VarChar(255)
+  note        String?   @db.Text
+  happenedAt  DateTime? @db.Timestamp(3)
+  createdAt   DateTime  @default(now()) @db.Timestamp(3)
 
   travel Travel @relation(fields: [travelId], references: [id], onDelete: Cascade)
 

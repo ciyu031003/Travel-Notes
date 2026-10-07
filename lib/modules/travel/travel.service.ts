@@ -6,6 +6,7 @@ import { prisma } from '../../db'
 import { scopedWhere } from '../../visibility'
 import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
 import { makeTravelSlug } from './slug'
+import { yuanToCents, centsToYuan } from './money'
 import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
 import { absoluteMediaUrl, storageKeyToUrl } from '../../media-url'
@@ -184,7 +185,8 @@ export async function listTravels(
       endDate: iso(t.endDate),
       status: t.status,
       dayCount: t._count.days,
-      expenseTotal: t.expenses.reduce((s: number, e: any) => s + (e.amount || 0), 0),
+      // 花费合计：整数分求和（无浮点误差），出边界时转回元
+      expenseTotal: centsToYuan(t.expenses.reduce((s: number, e: { amountCents?: number | null }) => s + (e.amountCents ?? 0), 0)),
       cover: coverUrl ?? t.cover ?? null,
       coverMediaId: t.coverMediaId ?? null,
       photos,
@@ -246,9 +248,9 @@ export async function getTravelDetail(
         locationName: it.location?.name ?? null,
       })),
     })),
-    expenses: travel.expenses.map((e: any) => ({
+    expenses: travel.expenses.map((e: { id: number; amountCents: number; currency: string; category: string; payer: string | null; note: string | null; happenedAt: Date | null }) => ({
       id: e.id,
-      amount: e.amount,
+      amount: centsToYuan(e.amountCents),
       currency: e.currency,
       category: e.category,
       payer: e.payer,
@@ -884,7 +886,7 @@ export async function addExpense(travelId: number, input: {
   const row = await prisma.expense.create({
     data: {
       travelId,
-      amount: input.amount,
+      amountCents: yuanToCents(input.amount),
       currency: input.currency || 'CNY',
       category: input.category || 'OTHER',
       payer: input.payer || null,
@@ -910,16 +912,17 @@ export async function getTravelExpenses(travelId: number): Promise<{
     where: { travelId },
     orderBy: [{ happenedAt: 'asc' }, { id: 'asc' }],
   })
-  const expenses = rows.map((e: any) => ({
+  const expenses = rows.map((e: { id: number; amountCents: number; currency: string; category: string; payer: string | null; note: string | null; happenedAt: Date | null }) => ({
     id: e.id,
-    amount: e.amount,
+    amount: centsToYuan(e.amountCents),
     currency: e.currency,
     category: e.category,
     payer: e.payer,
     note: e.note,
     happenedAt: iso(e.happenedAt),
   }))
-  return { expenses, total: expenses.reduce((s: number, e: ExpenseRecord) => s + (e.amount || 0), 0) }
+  // 合计在整数分上求和（永不丢精度），出边界时转回元
+  return { expenses, total: centsToYuan(rows.reduce((s: number, e: { amountCents: number }) => s + e.amountCents, 0)) }
 }
 
 /**

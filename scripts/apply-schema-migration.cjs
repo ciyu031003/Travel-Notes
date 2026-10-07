@@ -189,6 +189,33 @@ async function main() {
   await addColumn(conn, 'Travel', 'confirmedAt', 'confirmedAt DATETIME(3) NULL AFTER budget')
   await addFk(conn, 'Travel', 'Travel_ownerId_fkey', 'FOREIGN KEY (ownerId) REFERENCES User(id) ON DELETE SET NULL ON UPDATE CASCADE')
 
+  // Expense 金额 Float 元 → Int 分（1.19.0）。
+  // ⚠️ 必须在本脚本内（prisma db push 之前）完成回填：schema 已把字段改为 amountCents，
+  // db push 会 DROP 旧 amount 列——若回填未先行执行，历史金额就永久丢了。
+  // 步骤（幂等，值保持）：加 amountCents → 元×100 回填 → 删旧列。中途失败可安全重跑
+  // （重跑时旧 amount 列还在，重新 ROUND 覆盖即得同一结果；启动路径内无并发写入）。
+  try {
+    const [amountCol] = await conn.query(
+      "SELECT DATA_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Expense' AND column_name = 'amount'"
+    )
+    const amountType = ((amountCol[0] && amountCol[0].DATA_TYPE) || '').toLowerCase()
+    if (amountType === 'double' || amountType === 'float' || amountType === 'decimal') {
+      await addColumn(conn, 'Expense', 'amountCents', 'amountCents INT NOT NULL DEFAULT 0 AFTER travelId')
+      const [fillRes] = await conn.query('UPDATE Expense SET amountCents = ROUND(amount * 100)')
+      console.log(`  [expense] 金额元→分回填 ${fillRes.affectedRows} 行`)
+      await conn.query('ALTER TABLE `Expense` DROP COLUMN `amount`')
+      console.log('  [expense] 旧 amount(DOUBLE) 列已移除，存储改为整数分')
+    } else if (amountType) {
+      console.log(`  [skip] Expense.amount 类型为 ${amountType}（非浮点元），跳过回填`)
+    } else {
+      // amount 列不存在：新库（db push 直接建 amountCents）或已完成迁移。
+      // 兜底补列，保证旧镜像先于新代码启动时表结构可用。
+      await addColumn(conn, 'Expense', 'amountCents', 'amountCents INT NOT NULL DEFAULT 0 AFTER travelId')
+    }
+  } catch (e) {
+    console.log(`  [warn] Expense 金额分迁移未完成: ${e.message || e}（请核对 Expense 表后重试，勿带旧列部署新代码）`)
+  }
+
   // 多元场景：Space 空间类型（情侣/家庭/朋友/个人/其他）
   await addColumn(conn, 'Space', 'spaceType', "spaceType ENUM('COUPLE','FAMILY','FRIENDS','SOLO','OTHER') NOT NULL DEFAULT 'COUPLE' AFTER coverMediaId")
 
