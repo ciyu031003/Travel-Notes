@@ -1,10 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { X, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { IconButton } from '@/components/mobile/IconButton'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 
 export interface ViewerPhoto {
   id?: number
@@ -47,48 +48,23 @@ export default function TravelPhotoViewer({
   const containerRef = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(startIndex)
   const [chromeVisible, setChromeVisible] = useState(true)
-  /** 是否已压入一条历史记录（决定关闭时是 history.back() 还是直接 onClose） */
-  const pushedRef = useRef(false)
-  /** 避免 popstate 与关闭按钮重复触发 onClose */
-  const closingRef = useRef(false)
 
-  const close = useCallback(() => {
-    if (closingRef.current) return
-    closingRef.current = true
-    if (pushedRef.current) {
-      // 让 popstate 处理关闭，保持历史栈干净
-      window.history.back()
-      return
-    }
-    onClose()
-  }, [onClose])
+  // Android 物理返回 / 浏览器返回：先关查看器而不是离开详情页。
+  // （原内联 pushState+popstate 实现已抽为该 hook，嵌套弹层由栈序保证逐层关闭）
+  useCloseOnBack(open, onClose)
 
-  // 打开：压一条历史 + 监听返回
+  // 打开：复位视图状态 + Esc 关闭 + 滚动锁
   useEffect(() => {
     if (!open) return
     setIndex(Math.max(0, Math.min(startIndex, Math.max(0, photos.length - 1))))
     setChromeVisible(true)
-    closingRef.current = false
-    try {
-      window.history.pushState({ travelPhotoViewer: true }, '')
-      pushedRef.current = true
-    } catch {
-      pushedRef.current = false
-    }
-    const onPop = () => {
-      pushedRef.current = false
-      if (!closingRef.current) closingRef.current = true
-      onClose()
-    }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close()
+      if (e.key === 'Escape') onClose()
     }
-    window.addEventListener('popstate', onPop)
     window.addEventListener('keydown', onKey)
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
-      window.removeEventListener('popstate', onPop)
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
     }
@@ -126,7 +102,7 @@ export default function TravelPhotoViewer({
       >
         <button
           type="button"
-          onClick={close}
+          onClick={onClose}
           aria-label="关闭相册"
           className="flex h-11 items-center gap-1 rounded-full px-3 text-[15px] font-medium text-white active:scale-95"
         >
@@ -143,7 +119,7 @@ export default function TravelPhotoViewer({
             设为封面
           </button>
         )}
-        <IconButton icon={X} label="关闭" variant="plain" onClick={close} className="text-white" />
+        <IconButton icon={X} label="关闭" variant="plain" onClick={onClose} className="text-white" />
       </div>
 
       <div
@@ -198,7 +174,7 @@ export default function TravelPhotoViewer({
                 aria-label="上一张"
                 onClick={(e) => { e.stopPropagation(); go(index - 1) }}
                 disabled={index === 0}
-                className="absolute left-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/12 text-white backdrop-blur-md disabled:opacity-0"
+                className="absolute left-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/[0.12] text-white backdrop-blur-md disabled:opacity-0"
               >
                 <Icon icon={ChevronLeft} size="md" />
               </button>
@@ -207,7 +183,7 @@ export default function TravelPhotoViewer({
                 aria-label="下一张"
                 onClick={(e) => { e.stopPropagation(); go(index + 1) }}
                 disabled={index === photos.length - 1}
-                className="absolute right-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/12 text-white backdrop-blur-md disabled:opacity-0"
+                className="absolute right-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/[0.12] text-white backdrop-blur-md disabled:opacity-0"
               >
                 <Icon icon={ChevronRight} size="md" />
               </button>

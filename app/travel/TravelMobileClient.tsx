@@ -229,7 +229,7 @@ export default function TravelMobileClient({
                       )}
                       <div className="absolute inset-x-0 bottom-0 p-4">
                         {post.location && (
-                          <span className="m-chip !border-white/18 !bg-white/16 !text-white">
+                          <span className="m-chip !border-white/[0.18] !bg-white/[0.16] !text-white">
                             {post.location}
                           </span>
                         )}

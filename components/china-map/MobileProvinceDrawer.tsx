@@ -42,7 +42,7 @@ export default function MobileProvinceDrawer({
     <>
       <div
         data-map-overlay
-        className="fixed inset-0 z-40 bg-black/18 md:hidden"
+        className="fixed inset-0 z-40 bg-black/[0.18] md:hidden"
         onClick={onClose}
       />
 

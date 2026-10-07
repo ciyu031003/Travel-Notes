@@ -490,12 +490,12 @@ export default function HomeMobile({
                   <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(24,15,9,0.72),rgba(24,15,9,0)_62%)]" />
                   <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                     {post.location && (
-                      <span className="m-chip !border-white/20 !bg-white/18 !text-white">
+                      <span className="m-chip !border-white/20 !bg-white/[0.18] !text-white">
                         {post.location}
                       </span>
                     )}
                     <h3 className="m-title-2 mt-2 line-clamp-1">{post.title}</h3>
-                    <p className="mt-1 text-xs text-white/72">
+                    <p className="mt-1 text-xs text-white/[0.72]">
                       {new Date(post.date).toLocaleDateString('zh-CN')}
                     </p>
                   </div>

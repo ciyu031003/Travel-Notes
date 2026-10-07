@@ -150,7 +150,7 @@ function FeatureCard({
     })
   }
   const cls =
-    'group relative flex flex-col items-start gap-3 rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-7 text-left shadow- lg:p-8[0_10px_28px_-12px_rgba(90,102,112,0.18)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-16px_rgba(168,95,58,0.28)]'
+    'group relative flex flex-col items-start gap-3 rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-7 text-left lg:p-8 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-16px_rgba(168,95,58,0.28)]'
   const body = (
     <>
       <span
