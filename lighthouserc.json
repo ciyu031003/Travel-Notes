@@ -1,0 +1,33 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npx next start -p 3111",
+      "startServerReadyPattern": "Ready|started|listening",
+      "url": [
+        "http://localhost:3111/login",
+        "http://localhost:3111/travel"
+      ],
+      "numberOfRuns": 1
+    },
+    "assert": {
+      "assertions": {
+        "resource-summary:script:size": [
+          "error",
+          { "maxNumericValue": 500000, "aggregationMethod": "optimistic" }
+        ],
+        "resource-summary:total:size": [
+          "error",
+          { "maxNumericValue": 1500000, "aggregationMethod": "optimistic" }
+        ],
+        "largest-contentful-paint": [
+          "warn",
+          { "maxNumericValue": 4000, "aggregationMethod": "pessimistic" }
+        ]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "test-results/lhci"
+    }
+  }
+}

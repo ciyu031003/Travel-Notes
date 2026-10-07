@@ -9,6 +9,7 @@
  * - 降级：ffmpeg 不可用时一次性记日志并整体跳过（功能开关式降级，不影响上传主链路）。
  */
 import { spawn } from 'child_process'
+import { logger } from './logger'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -89,7 +90,7 @@ async function processQueue(): Promise<void> {
       await runFfmpeg(src, tmpDst)
       fs.copyFileSync(tmpDst, dst)
       const kb = Math.round(fs.statSync(dst).size / 1024)
-      console.log(`[video-transcode] ${filename} -> ${variant} (${kb}KB, ${Date.now() - t0}ms)`)
+      logger.info('video-transcode', 'done', { filename, variant, kb, ms: Date.now() - t0 })
     } catch (e) {
       console.error(`[video-transcode] ${filename} 转码失败:`, (e as Error).message)
       // 失败清半成品，避免留下坏变体
@@ -147,7 +148,7 @@ export function sweepAndEnqueue(): number {
       enqueueTranscode(name)
       enqueued += 1
     }
-    if (enqueued > 0) console.log(`[video-transcode] sweep 补队 ${enqueued} 个历史视频`)
+    if (enqueued > 0) logger.info('video-transcode', 'sweep-requeue', { enqueued })
     return enqueued
   } catch (e) {
     console.warn('[video-transcode] sweep 失败:', (e as Error).message)

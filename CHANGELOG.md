@@ -1,3 +1,98 @@
+## [1.21.0] - 2026-10-07
+
+> 评审第三批（收尾）：结构收敛 / 代码优化 / 测试基建。typecheck 0 错误 · `next lint` **0 error**
+> （CI Lint 步骤此前必然失败）· vitest 498 全绿 · 版本 1.21.0/b40 五处一致。
+> 说明：本批次前半段由上一位执行者完成但未提交，本次接续补齐剩余项并逐项复核。
+
+### Fixed（确定性缺陷）
+
+- **CI 由红转绿 —— lint 存量 3 个 error**：`npm run lint`（= `next lint`）退出码 1，
+  与本次改动无关的既有欠账，但会让 CI 的 Lint 步骤一直失败：
+  - `components/album/space/GalaxyAlbumScene.tsx`、`SpaceAlbumHUD.tsx`：空银河态顶栏的
+    「返回」用裸 `<a href="/">`，改为 `next/link` 的 `<Link>`（顺带获得客户端路由与预取）；
+  - `components/home/DanmakuSection.tsx`：空 `interface DanmakuSectionProps {}` 改为
+    `Record<never, never>`。两者对 TS 等价，但后者不触发 `no-empty-object-type`；
+    **不能**用 `Record<string, never>`——它带索引签名，会与 `forwardRef` 注入的 `ref` 冲突
+    （已实测报 TS2322）。
+- **mermaid「只改动态 import」不等于省体积**：上一轮把静态 `import mermaid` 换成运行时
+  `await import('mermaid')`，但 effect 在挂载时即执行，**每个旅行详情页仍会下载该 chunk**，
+  等于换个位置付同一笔体积（该 item 的收益此前并未真正兑现）。现在先查 DOM 是否存在
+  `pre code.language-mermaid`，无图表则完全不加载；另补 MutationObserver 兜底
+  「正文将来改成异步注入」的情形，以及渲染异常兜底（图表失败不再把详情页带崩）。
+- **新增的 a11y 用例会假绿**：`playwright.config.ts` 全局注入登录后的 `storageState`，
+  而 `a11y.spec.ts` 要验的恰恰是「未登录用户第一眼看到的页面」。现该文件显式
+  `test.use({ storageState: { cookies: [], origins: [] } })` 走匿名态；否则 `/login`
+  一旦加「已登录则跳转」就会静默扫到别的页面。注释里多写的 `/timeline` 一并修正
+  （该页需登录，不属于匿名基线）。
+- **`npm run lhci` 指向未安装的二进制**：补 `@lhci/cli@0.15.1` 到 devDependencies
+  （`lighthouserc.json` 本身有效，仅缺可执行依赖）。
+- **最后一处 `console.log`**：`components/album/space/galaxyEngine.ts` 的「自适应画质切换」
+  调试输出改走 `logger.debug`。全项目 `console.log` 归零（仅剩 logger 自身实现）。
+
+### Changed（结构收敛）
+
+- **相册解锁三弹窗状态机收敛**：`AlbumUnlockModal` / `PixelUnlockModal` /
+  `SpaceUnlockModal` 三份同构的 fetch + error + verifying 逻辑抽为
+  `hooks/use-album-unlock.ts`；三套刻意设计的视觉（旅行暖色 / 像素存档点 / 银河玻璃）
+  刻意保留，仅共享状态与 API，并补 `role="dialog"` / `aria-modal` / `aria-label`。
+- **admin 后台暖灰归一**：714 处 `gray-N` → 新增 `warm-N` 数字阶（stone 暖灰系，
+  与 `gray-N` 亮度逐档对齐，替换后视觉零跳变），后台从「第三套色系」并入项目 token 体系。
+- **结构化日志收口**：video-upload / mailer / video-transcode / prisma-adapter /
+  admin send-code 的裸 console 输出改走 `logger`（JSON 行，便于采集与告警）。
+- **`travel-stats.ts` 去 any**：`m: any` / `v: any` 换成显式结构类型
+  （StatMedia / StatMemory / StatTravelRow），并注明「loadMyTravels 的 select 只取
+  storageKey，THUMBNAIL 过滤在 where 完成」这一原本隐式的约定。
+- **设计 token 与依赖审计进 CI**：token 走 `tokens:check` 基线门禁（**阻塞**，
+  只拦新增回退）+ `tokens` 全量报告（不阻塞，保留欠债可见性）；`npm audit --audit-level=high`
+  仍为报告模式——上游公告不该直接卡住发布。
+
+### Added（测试基建）
+
+- `tests/e2e/a11y.spec.ts`：axe-core 对 /login · /admin/login · /download 断言无
+  critical / serious 违规，并断言不存在「无可读名的按钮/链接」。
+- `lighthouserc.json`：脚本体积预算（script ≤ 500KB / total ≤ 1.5MB）+ LCP 警戒，
+  用于拦住 mermaid 这类重库再次被静态引入。
+- **设计规范「基线回归门禁」`npm run tokens:check`**：上一轮把 `check-design-tokens`
+  接进 CI 时用的是报告模式，而报告模式**拦不住回归**；`--strict` 又因存量 439 处等于永久红灯。
+  故新增 `--check-baseline`：把每条规则的当前计数固化到 `scripts/design-token-baseline.json`
+  （**逐规则**比对，避免「A 规则 +3、B 规则 -3」被总数掩盖），只要求「不得多于基线」；
+  收敛一批后跑 `--update-baseline` 收紧。实测：临时写入一处 `#123456` + `text-[17px]`，
+  门禁以 exit 1 精确报出 `硬编码 hex 颜色: 77 → 78（+1）` 与 `非标字号: 100 → 101（+1）`，
+  移除后恢复 exit 0。
+- 新脚本：`npm run tokens` / `npm run tokens:check` / `npm run test:a11y` / `npm run lhci`。
+
+### 暂缓（本次明确不做，附实测依据）
+
+- **admin 移出设计 token 豁免名单**：实测把 `components/admin/` + `app/admin/` 从
+  `THEME_ALLOWLIST` 移除后，报告从 335 处涨到 **578 处（+243）**，且多为移动端专用规则
+  （字阶 / 图标尺寸 / 字符图标）产生的噪音。与其把门禁直接变红，不如与「admin 全面重设计」
+  一起做；当前 admin 欠债已以 info 形式可见。
+- **`travel.service.ts` 行级 any（32 处）**：正确解法是改用
+  `Prisma.TravelGetPayload<{ include: ... }>` 真类型；手写结构类型会给出「看似类型安全、
+  实则可能与运行时形状不符」的虚假保证，风险高于收益，推迟。
+- ResponsiveShell 整页双树（`hidden md:block` 57 处）、globals.css 拆分。
+
+### 验证
+
+- `npm run typecheck` **0 错误**；`npx next lint` **0 error**（471 warning 为存量基线）
+  → `npm run lint` 退出码 0，CI Lint 步骤恢复；
+- `npm test` **53 文件 / 498 用例全绿**；
+- `npm run tokens` 无回退（原有 7 条规则 335 处 / 待处理合计 439 处，与 1.20.0 一致）；
+  `npm run tokens:check` exit 0，且已实测能拦住新增违规（见上「基线回归门禁」）；
+- `npm run build` **成功**（BUILD_EXIT=0）；
+- **mermaid 体积收益实测**（对照 `.next` 编译产物）：mermaid 落在两个独立懒加载 chunk
+  （200 KB + 406 KB），且**不在** `/travel/[slug]` 的 21 个初始 chunk 中——该路由
+  First Load JS 为 232 kB，装不下 606 KB 的 mermaid。即「没有图表的详情页不付这笔体积」
+  成立；此前只改动态 import 时，chunk 仍会在每次挂载后被下载；
+- Playwright 用例发现自检：全套 **73 用例 / 17 文件**（含新增 a11y 4 例），`--list` 通过；
+- 版本一致性自检 **8/8 通过**：package.json · package-lock.json · lib/app-version.ts ·
+  android/app/build.gradle · scripts/build-mobile.cjs。
+- ⚠️ **未在本机执行的部分**：本机无 MySQL（3306 未监听），Playwright e2e（含新增 a11y 用例）
+  与 `lhci autorun` 都需要运行中的服务与数据库，未实跑；建议在具备数据库的环境补跑
+  `npm run test:a11y`，并首次运行 `npm run lhci` 校准体积预算阈值。
+
+---
+
 ## [1.20.0] - 2026-10-07
 
 > 评审第二批：UI / 无障碍 / 设计 token 收敛。typecheck 0 错误 · vitest 498 全绿 ·

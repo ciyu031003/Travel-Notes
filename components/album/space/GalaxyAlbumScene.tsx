@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Loader2, MessageCircle, Sparkles, RotateCcw, ArrowLeft, BookOpen } from 'lucide-react'
 import { GalaxyAlbumEngine } from './galaxyEngine'
 import type { CityData } from './particlePhoto'
@@ -105,13 +106,13 @@ export default function GalaxyAlbumScene({
         {/* 空态也保留顶栏（返回首页 + 标题 + 模式切换），与像素/画册模式同构，避免被困在空银河 */}
         <header className="absolute top-0 inset-x-0 z-40 flex h-14 items-center justify-between gap-2 px-3 md:px-8 space-glass rounded-none border-x-0 border-t-0">
           <div className="flex items-center gap-3 min-w-0">
-            <a
+            <Link
               href="/"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full space-glass-btn text-album-text1 text-xs"
             >
               <Icon icon={ArrowLeft} size="sm" />
               返回
-            </a>
+            </Link>
             <div className="flex items-center gap-2 min-w-0">
               <Icon icon={BookOpen} size="sm" className="shrink-0 text-album-accent" />
               <h1 className="text-album-text1 text-sm font-semibold tracking-widest truncate">银河相册</h1>

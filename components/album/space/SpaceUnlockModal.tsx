@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { Lock, X, Sparkles } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useAlbumUnlock } from '@/hooks/use-album-unlock'
 
 interface SpaceUnlockModalProps {
   isOpen: boolean
@@ -11,52 +11,23 @@ interface SpaceUnlockModalProps {
 }
 
 /**
- * 银河模式解锁弹窗（Mineradio 玻璃质感版）：逻辑与 PixelUnlockModal 一致
+ * 银河模式解锁弹窗（Mineradio 玻璃质感版）。
+ * 解锁状态机走 useAlbumUnlock（1.21.0 收敛），视觉保留银河玻璃主题。
  */
 export default function SpaceUnlockModal({ isOpen, onClose, onSuccess }: SpaceUnlockModalProps) {
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [verifying, setVerifying] = useState(false)
-
-  const handleClose = () => {
-    setPassword('')
-    setError('')
-    onClose()
-  }
-
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setVerifying(true)
-    try {
-      const res = await fetch('/api/verify-album-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: password }),
-      })
-      if (res.ok) {
-        setPassword('')
-        onClose()
-        onSuccess()
-      } else {
-        const data = await res.json()
-        setError(data.error || '验证失败')
-      }
-    } catch {
-      setError('网络错误，请重试')
-    } finally {
-      setVerifying(false)
-    }
-  }
+  const { password, setPassword, error, verifying, submit, close } = useAlbumUnlock({
+    onClose,
+    onSuccess,
+  })
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="相册已上锁">
       <div className="relative w-full max-w-sm space-glass rounded-3xl p-7 text-center">
         <button
           type="button"
-          onClick={handleClose}
+          onClick={close}
           className="absolute top-3 right-3 space-glass-btn w-8 h-8 rounded-full flex items-center justify-center text-album-text1"
           aria-label="关闭"
         >
@@ -69,7 +40,7 @@ export default function SpaceUnlockModal({ isOpen, onClose, onSuccess }: SpaceUn
         <h3 className="text-album-text1 text-lg font-semibold tracking-widest">相册已上锁</h3>
         <p className="text-album-text2 text-xs mt-1.5">输入纪念日，唤醒旅行中的回忆</p>
 
-        <form onSubmit={handleUnlock} className="mt-5 space-y-3">
+        <form onSubmit={submit} className="mt-5 space-y-3">
           <input
             type="text"
             value={password}
@@ -103,5 +74,3 @@ export default function SpaceUnlockModal({ isOpen, onClose, onSuccess }: SpaceUn
     </div>
   )
 }
-
-

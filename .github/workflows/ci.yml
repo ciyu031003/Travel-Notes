@@ -51,3 +51,16 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # 1.21.0：设计规范进 CI。
+      # 门禁用「基线回归」（只拦新增违规）而不是 --strict（存量 439 处，直接 strict 等于永久红灯），
+      # 收敛一批后用 npm run tokens -- --update-baseline 收紧基线。
+      - name: Design tokens (baseline gate)
+        run: npm run tokens:check
+
+      # 报告模式：给出存量欠债的全貌，便于分批收敛（不阻塞）
+      - name: Design token report
+        run: npm run tokens
+
+      - name: Dependency audit (high+, report only)
+        run: npm audit --audit-level=high || true

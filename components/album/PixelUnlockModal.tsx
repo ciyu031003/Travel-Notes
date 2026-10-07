@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { Lock, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useAlbumUnlock } from '@/hooks/use-album-unlock'
 
 interface PixelUnlockModalProps {
   isOpen: boolean
@@ -12,48 +12,19 @@ interface PixelUnlockModalProps {
 
 /**
  * 像素风相册解锁弹窗（SavePoint 风格）：羊皮纸书 + 金色书角 + MC 按钮
- * 仅用于相册页；登录页等其它入口继续使用 AlbumUnlockModal
+ * 仅用于相册页；登录页等其它入口继续使用 AlbumUnlockModal。
+ * 解锁状态机走 useAlbumUnlock（1.21.0 收敛），视觉保留像素主题。
  */
 export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUnlockModalProps) {
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [verifying, setVerifying] = useState(false)
-
-  const handleClose = () => {
-    setPassword('')
-    setError('')
-    onClose()
-  }
-
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setVerifying(true)
-    try {
-      const res = await fetch('/api/verify-album-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: password }),
-      })
-      if (res.ok) {
-        setPassword('')
-        onClose()
-        onSuccess()
-      } else {
-        const data = await res.json()
-        setError(data.error || '验证失败')
-      }
-    } catch {
-      setError('网络错误，请重试')
-    } finally {
-      setVerifying(false)
-    }
-  }
+  const { password, setPassword, error, verifying, submit, close } = useAlbumUnlock({
+    onClose,
+    onSuccess,
+  })
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="相册已上锁">
       <div className="relative w-full max-w-sm pixel-book-container rounded-sm p-6">
         <div className="pixel-corner-gold-tl" />
         <div className="pixel-corner-gold-tr" />
@@ -62,7 +33,7 @@ export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUn
 
         <button
           type="button"
-          onClick={handleClose}
+          onClick={close}
           className="pixel-close-btn absolute top-3 right-3"
           aria-label="关闭"
         >
@@ -77,7 +48,7 @@ export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUn
           <p className="text-xs text-album-warm mt-1.5">请输入纪念日作为密码</p>
         </div>
 
-        <form onSubmit={handleUnlock} className="space-y-4">
+        <form onSubmit={submit} className="space-y-4">
           <input
             type="text"
             value={password}

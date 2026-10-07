@@ -6,9 +6,18 @@
  *       没有这一步，改完一轮后新增页面仍会各写各的，几周后回到原样。
  *
  * 用法：
- *   node scripts/check-design-tokens.mjs            # 报告模式（默认，不失败）
- *   node scripts/check-design-tokens.mjs --strict   # CI 模式（有违规即 exit 1）
- *   node scripts/check-design-tokens.mjs --json     # 输出 JSON
+ *   node scripts/check-design-tokens.mjs                  # 报告模式（默认，不失败）
+ *   node scripts/check-design-tokens.mjs --strict         # 有违规即 exit 1（存量 439 处，暂不接 CI）
+ *   node scripts/check-design-tokens.mjs --check-baseline # CI 门禁：只拦"新增"回退（见下）
+ *   node scripts/check-design-tokens.mjs --update-baseline# 重算基线（收敛完成后手动更新）
+ *   node scripts/check-design-tokens.mjs --json           # 输出 JSON
+ *
+ * 关于 --check-baseline（1.21.0）：
+ *   --strict 要求"违规数为 0"，但存量有 439 处，直接接 CI 等于永久红灯；而只跑报告模式
+ *   又拦不住回归。折中方案是**基线回归门禁**：把当前每条规则的计数固化到
+ *   scripts/design-token-baseline.json，只要求"不得比基线更多"。
+ *   于是「新增一个页面又写死 #A85F3A / text-[17px]」会当场失败，
+ *   而存量欠债照旧可见、可分批收敛（收敛后跑 --update-baseline 收紧基线）。
  *
  * 检查项：
  *   1. 硬编码颜色（hex / rgb / rgba）出现在组件样式里
@@ -24,7 +33,7 @@
  *   9. 散落的 iOS 冷色系统色与历史"危险红"字面量
  *  10. Tailwind !important 前缀覆盖（"缺组件"的症状）
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { join, relative, extname } from 'node:path'
 
 const ROOT = process.cwd()
@@ -32,6 +41,9 @@ const SCAN_DIRS = ['components', 'app']
 const EXTS = new Set(['.tsx', '.ts'])
 const STRICT = process.argv.includes('--strict')
 const JSON_OUT = process.argv.includes('--json')
+const CHECK_BASELINE = process.argv.includes('--check-baseline')
+const UPDATE_BASELINE = process.argv.includes('--update-baseline')
+const BASELINE_PATH = 'scripts/design-token-baseline.json'
 
 /**
  * 豁免清单：这些文件属于「刻意保留自有视觉」的主题实现，
@@ -466,8 +478,55 @@ console.log(`\n原有 7 条规则合计: ${legacyTotal} 处   ← 与历史基�
 console.log(`M5/P1 新增规则:    ${newTotal} 处   ← 新增规则首次暴露的既有欠债`)
 console.log(`待处理合计:        ${total} 处\n`)
 
+/* ── 基线门禁（--update-baseline 写入 / --check-baseline 校验）──────────
+   逐规则比对而不是只比总数：否则「A 规则 +3 处、B 规则 -3 处」会被总数掩盖成"没变"。 */
+if (UPDATE_BASELINE) {
+  const baseline = {
+    generatedAt: new Date().toISOString().slice(0, 10),
+    legacyTotal,
+    total,
+    rules: summary,
+  }
+  writeFileSync(join(ROOT, BASELINE_PATH), JSON.stringify(baseline, null, 2) + '\n')
+  console.log(
+    '已写入基线：' + BASELINE_PATH + '（原有 7 条规则 ' + legacyTotal + ' 处 / 合计 ' + total + ' 处）\n'
+  )
+  process.exit(0)
+}
+
+if (CHECK_BASELINE) {
+  let baseline
+  try {
+    baseline = JSON.parse(readFileSync(join(ROOT, BASELINE_PATH), 'utf8'))
+  } catch {
+    console.error('❌ 缺少基线文件 ' + BASELINE_PATH + '（先跑一次 --update-baseline 生成）')
+    process.exit(1)
+  }
+  const regressions = []
+  const improvements = []
+  for (const [key, label] of Object.entries(LABELS)) {
+    const now = summary[key] ?? 0
+    const was = baseline.rules?.[key] ?? 0
+    if (now > was) regressions.push({ label, now, was, delta: now - was })
+    else if (now < was) improvements.push({ label, now, was, delta: now - was })
+  }
+  for (const r of improvements) {
+    console.log('📉 已收敛：' + r.label + ' ' + r.was + ' → ' + r.now + '（' + r.delta + '）—— 记得跑 --update-baseline 收紧基线')
+  }
+  if (regressions.length > 0) {
+    console.error('\n❌ 设计规范出现新增回退（对比基线 ' + BASELINE_PATH + '）：')
+    for (const r of regressions) {
+      console.error('   · ' + r.label + ': ' + r.was + ' → ' + r.now + '（+' + r.delta + '）')
+    }
+    console.error('   修掉新增项；确认可接受后再跑 --update-baseline 更新基线。\n')
+    process.exit(1)
+  }
+  console.log('✅ 无新增回退（原有 7 条规则 ' + legacyTotal + ' 处 / 合计 ' + total + ' 处，未超过基线）\n')
+  process.exit(0)
+}
+
 if (STRICT && total > 0) {
   console.error('❌ 存在设计规范违规（--strict 模式）')
   process.exit(1)
 }
-console.log('报告模式：未失败。CI 请加 --strict。\n')
+console.log('报告模式：未失败。CI 请加 --check-baseline（只拦新增回退）或 --strict。\n')

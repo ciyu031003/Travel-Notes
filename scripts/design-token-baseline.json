@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-10-07",
+  "legacyTotal": 335,
+  "total": 439,
+  "rules": {
+    "hexColor": 77,
+    "rgbaColor": 57,
+    "lucideImport": 90,
+    "fontSize": 100,
+    "charIcon": 3,
+    "iconSize": 0,
+    "magicRadius": 8,
+    "rawGradient": 85,
+    "undefinedToken": 0,
+    "scatteredColor": 0,
+    "importantOverride": 19,
+    "spaceTokenLeak": 0
+  }
+}

@@ -76,7 +76,7 @@ export default function PolaroidWall({ images, cityName, date, onPhotoClick }: P
                     {date ? ` · ${date}` : ''}
                   </p>
                 </div>
-                <span className="wax-seal w-7 h-7 text-[9px] shrink-0" title="点击留言">
+                <span className="wax-seal w-7 h-7 text-[10px] shrink-0" title="点击留言">
                   记
                 </span>
               </div>

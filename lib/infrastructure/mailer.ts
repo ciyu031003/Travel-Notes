@@ -7,6 +7,7 @@
  * 配置说明见 docs/EMAIL_SETUP.md
  */
 import nodemailer from 'nodemailer'
+import { logger } from './logger'
 
 export function isSmtpConfigured(): boolean {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
@@ -31,8 +32,7 @@ function getTransporter(): nodemailer.Transporter {
 export async function sendMail(to: string, subject: string, text: string): Promise<boolean> {
   if (!isSmtpConfigured()) {
     // 未配置 SMTP：仅写服务端日志（本地调试），不回显给前端
-    console.log(`[Mailer] SMTP 未配置，跳过真实发送。收件人: ${to} | 主题: ${subject}`)
-    console.log(`[Mailer] 内容: ${text}`)
+    logger.info('mailer', 'smtp-skipped', { to, subject, text })
     return false
   }
 
@@ -45,7 +45,7 @@ export async function sendMail(to: string, subject: string, text: string): Promi
     })
     return true
   } catch (error) {
-    console.error('[Mailer] 发送失败:', error)
+    logger.error('mailer', 'send-failed', { to, subject, message: (error as Error)?.message })
     return false
   }
 }

@@ -39,9 +39,9 @@ export interface TravelArchiveStats {
 }
 
 /** 单条 media → 缩略图优先、回退原图 */
-function thumbOf(m: any): string | null {
+function thumbOf(m: StatMedia | null | undefined): string | null {
   const variants = Array.isArray(m?.variants) ? m.variants : []
-  const thumb = variants.find((v: any) => v.variant === 'THUMBNAIL') ?? variants[0]
+  const thumb = variants.find((v) => v.variant === 'THUMBNAIL') ?? variants[0]
   return storageKeyToUrl(thumb?.storageKey ?? m?.storageKey ?? null)
 }
 
@@ -50,8 +50,29 @@ export function diffInDays(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000)
 }
 
+/** 统计查询的最小结构类型（与 loadMyTravels 的 select 同构，替代此前的 any）。
+    variant 为可选：loadMyTravels 的 select 只取 storageKey（THUMBNAIL 过滤在 where 完成），
+    而 profile.service 传入的行带 variant 字段。 */
+interface StatMediaVariant {
+  variant?: string
+  storageKey: string
+}
+interface StatMedia {
+  storageKey: string | null
+  variants: StatMediaVariant[]
+}
+interface StatMemory {
+  media: StatMedia[]
+  mediaLinks: { media: StatMedia | null }[]
+}
+interface StatTravelRow {
+  cover: string | null
+  coverMedia: StatMedia | null
+  days: { memories: StatMemory[] }[]
+}
+
 /** 一本旅行涉及的照片 URL（封面 + 所有回忆的主图与关联图，去重） */
-export function travelPhotoUrls(t: any): string[] {
+export function travelPhotoUrls(t: StatTravelRow): string[] {
   const out = new Set<string>()
   const cover = thumbOf(t.coverMedia) ?? absoluteMediaUrl(t.cover ?? null)
   if (cover) out.add(cover)

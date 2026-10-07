@@ -3,6 +3,7 @@ import type { CityData } from './particlePhoto'
 import { buildPhotoAtlas } from './particlePhoto'
 import { createNebulaSkybox, createStarField, createMeteorField } from './galaxyBackground'
 import { createVinylRecord, updateVinylRecordUniforms, type VinylRecord } from './vinylRecord'
+import { logger } from '@/lib/infrastructure/logger'
 
 export interface GalaxyEngineCallbacks {
   onSelect?: (index: number) => void
@@ -296,7 +297,7 @@ export class GalaxyAlbumEngine {
       this.renderer.setPixelRatio(0.75)
       this.resize()
     }
-    console.log('[GalaxyAlbum] adaptive quality level', this.qualityLevel)
+    logger.debug('galaxy-engine', 'adaptive-quality', { level: this.qualityLevel })
   }
 
   private updateRecords(dt: number) {

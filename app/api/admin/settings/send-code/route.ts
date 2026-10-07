@@ -9,6 +9,7 @@ import {
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
 import { sendMail } from '@/lib/infrastructure/mailer'
 import { getClientIp } from '@/lib/request-utils'
+import { logger } from '@/lib/infrastructure/logger'
 
 export async function POST(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
     const maskedEmail = (email as string).replace(/^(.).*(@.*)$/, '$1***$2')
     if (isEmailDeliveryConfigured()) {
       // TODO: 接入真实邮件服务（nodemailer/Resend/阿里云邮件等）后在此发送
-      console.log(`[Email Verification] Send code to ${maskedEmail}`)
+      logger.info('admin-email', 'send-code', { to: maskedEmail })
       return NextResponse.json({
         success: true,
         message: '验证码已发送到您的邮箱，请在 5 分钟内完成验证',
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
 
     // 未配置邮件服务：开发环境可从服务端日志取验证码；生产环境不落明文
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[Email Verification] Code for ${maskedEmail}: ${code}（未配置邮件服务，仅本地调试）`)
+      logger.info('admin-email', 'debug-code', { to: maskedEmail, code, note: '未配置邮件服务，仅本地调试' })
     } else {
       console.warn('[Email Verification] SMTP 未配置且处于生产环境，验证码无法送达，请配置 SMTP_* 环境变量')
     }

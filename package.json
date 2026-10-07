@@ -1,6 +1,6 @@
 {
   "name": "travel-notes",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:a11y": "playwright test tests/e2e/a11y.spec.ts",
+    "lhci": "lhci autorun",
+    "tokens": "node scripts/check-design-tokens.mjs",
+    "tokens:check": "node scripts/check-design-tokens.mjs --check-baseline",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -71,7 +75,9 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@capacitor/cli": "^8.5.0",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.63.0",
     "@types/archiver": "^6.0.4",
     "@types/bcryptjs": "^2.4.6",

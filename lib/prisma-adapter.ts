@@ -1,4 +1,5 @@
 import { createPool, Pool, PoolConnection, ResultSetHeader, FieldPacket } from 'mysql2/promise'
+import { logger } from './infrastructure/logger'
 
 const ColumnTypeEnum = {
   Int32: 0,
@@ -136,7 +137,7 @@ export class PrismaMariaDB {
     const shutdown = async () => {
       if (this.isShuttingDown) return
       this.isShuttingDown = true
-      console.log('[PrismaMariaDB] Received shutdown signal, closing pool...')
+      logger.info('prisma-adapter', 'shutdown-start')
       if (this.healthCheckTimer) {
         clearInterval(this.healthCheckTimer)
         this.healthCheckTimer = null
@@ -144,7 +145,7 @@ export class PrismaMariaDB {
       if (this.pool) {
         try {
           await this.pool.end()
-          console.log('[PrismaMariaDB] Pool closed successfully')
+          logger.info('prisma-adapter', 'pool-closed')
         } catch (err) {
           console.error('[PrismaMariaDB] Error closing pool:', err)
         }
@@ -214,8 +215,8 @@ export class PrismaMariaDB {
       connectTimeout: DB_CONFIG.timeout,
       namedPlaceholders: true,
     }
-    console.log(`[PrismaMariaDB] Connecting to MySQL: ${config.host}:${config.port}/${config.database}`)
-    console.log(`[PrismaMariaDB] Pool config: limit=${DB_CONFIG.connectionLimit}, queue=${DB_CONFIG.queueLimit}`)
+    logger.info('prisma-adapter', 'connecting', { host: config.host, port: config.port, database: config.database })
+    logger.info('prisma-adapter', 'pool-config', { connectionLimit: DB_CONFIG.connectionLimit, queueLimit: DB_CONFIG.queueLimit })
 
     this.pool = createPool(config)
 
@@ -227,7 +228,7 @@ export class PrismaMariaDB {
       const conn = await this.pool.getConnection()
       await conn.ping()
       conn.release()
-      console.log('[PrismaMariaDB] Connected successfully')
+      logger.info('prisma-adapter', 'connected')
 
       this.startHealthCheck()
 
@@ -300,7 +301,7 @@ export class PrismaMariaDB {
       const conn = await this.pool.getConnection()
       await conn.ping()
       conn.release()
-      console.log('[PrismaMariaDB] Reconnected successfully')
+      logger.info('prisma-adapter', 'reconnected')
     } catch (err: any) {
       console.error('[PrismaMariaDB] Reconnection failed:', err.message)
     }

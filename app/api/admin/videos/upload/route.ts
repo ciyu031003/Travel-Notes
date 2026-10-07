@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { requireAuth } from '@/lib/auth-middleware'
+import { logger } from '@/lib/infrastructure/logger'
 import fs from 'fs'
 import path from 'path'
 import { pipeline } from 'stream/promises'
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      console.log('[Video Upload] Processing:', file.name, file.type, file.size)
+      logger.info('video-upload', 'processing', { name: file.name, type: file.type, size: file.size })
 
       if (file.size > MAX_VIDEO_SIZE) {
         return NextResponse.json(
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
         mimeType: realMime,
       })
 
-      console.log('[Video Upload] Saved:', url, 'size:', stat.size)
+      logger.info('video-upload', 'saved', { url, size: stat.size })
 
       // 转码管线：大视频入队生成 720p 变体（后台执行，不阻塞响应）
       if (stat.size >= TRANSCODE_MIN_SIZE) {
@@ -158,7 +159,7 @@ export async function POST(request: NextRequest) {
       videos: results,
     })
   } catch (error: any) {
-    console.error('[Video Upload] Error:', error?.message, error?.stack)
+    logger.error('video-upload', 'error', { message: error?.message, stack: error?.stack })
     return NextResponse.json(
       { error: error.message || '视频上传失败' },
       { status: 500 }
@@ -183,18 +184,18 @@ export async function DELETE(request: NextRequest) {
     const videoDir = getVideoDir()
     const filePath = path.join(videoDir, path.basename(url))
 
-    console.log('[Video DELETE] Deleting:', filePath)
+    logger.info('video-upload', 'delete-start', { filePath })
 
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath)
-      console.log('[Video DELETE] Deleted successfully')
+      logger.info('video-upload', 'deleted')
     } else {
-      console.warn('[Video DELETE] File not found:', filePath)
+      logger.warn('video-upload', 'delete-miss', { filePath })
     }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('[Video DELETE] Error:', error?.message)
+    logger.error('video-upload', 'delete-error', { message: error?.message })
     return NextResponse.json(
       { error: error.message || '删除失败' },
       { status: 500 }

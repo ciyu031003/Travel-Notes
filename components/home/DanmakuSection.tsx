@@ -25,7 +25,13 @@ export interface DanmakuSectionHandle {
   open: () => void
 }
 
-interface DanmakuSectionProps {}
+/**
+ * 无 props（HomeClient 仅通过 ref 唤起）。
+ * 这里刻意用 `Record<never, never>` 而不是 `interface X {}`：两者对 TS 等价（都是空对象类型），
+ * 但后者会触发 @typescript-eslint/no-empty-object-type（CI 的 lint 门禁是 0 error）。
+ * 注意不能用 `Record<string, never>` —— 它带索引签名，会和 forwardRef 注入的 `ref` 冲突。
+ */
+type DanmakuSectionProps = Record<never, never>
 
 /**
  * 首页留言/弹幕功能（UI-V3 P3 从 HomeClient 拆分）：

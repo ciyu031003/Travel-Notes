@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, X, Heart, ArrowLeft } from 'lucide-react'
+import { Lock, X, Heart } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useAlbumUnlock } from '@/hooks/use-album-unlock'
 
 interface AlbumUnlockModalProps {
   isOpen: boolean
@@ -14,76 +14,18 @@ interface AlbumUnlockModalProps {
 
 export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectToAlbum = true }: AlbumUnlockModalProps) {
   const router = useRouter()
-  const [albumPassword, setAlbumPassword] = useState('')
-  const [albumError, setAlbumError] = useState('')
-  const [albumVerifying, setAlbumVerifying] = useState(false)
-
-  const handleAlbumUnlock = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setAlbumError('')
-    setAlbumVerifying(true)
-
-    try {
-      const res = await fetch('/api/verify-album-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: albumPassword }),
-      })
-
-      if (res.ok) {
-        setAlbumPassword('')
-        onClose()
-        onSuccess?.()
-        if (redirectToAlbum) {
-          router.push('/album')
-        }
-      } else {
-        const data = await res.json()
-        setAlbumError(data.error || '验证失败')
-      }
-    } catch {
-      setAlbumError('网络错误，请重试')
-    } finally {
-      setAlbumVerifying(false)
-    }
-  }
-
-  const handleClose = () => {
-    setAlbumPassword('')
-    setAlbumError('')
-    onClose()
-  }
-
-  // 多元场景：无纪念日用户直接进入相册（服务端无密码时放行）
-  const handleSkipUnlock = async () => {
-    setAlbumError('')
-    setAlbumVerifying(true)
-    try {
-      const res = await fetch('/api/verify-album-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skip: true }),
-      })
-      if (res.ok) {
-        setAlbumPassword('')
-        onClose()
-        onSuccess?.()
-        if (redirectToAlbum) router.push('/album')
-      } else {
-        const data = await res.json()
-        setAlbumError(data.error || '无法进入相册')
-      }
-    } catch {
-      setAlbumError('网络错误，请重试')
-    } finally {
-      setAlbumVerifying(false)
-    }
-  }
+  const { password, setPassword, error, verifying, submit, skip, close } = useAlbumUnlock({
+    onClose,
+    onSuccess: () => {
+      onSuccess?.()
+      if (redirectToAlbum) router.push('/album')
+    },
+  })
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-label="相册已上锁">
       <div className="w-full max-w-sm bg-white/95 dark:bg-shell-surface/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/80 dark:border-shell-line overflow-hidden animate-[fadeIn_0.2s_ease-out]">
         <style>{`
           @keyframes fadeIn {
@@ -95,8 +37,9 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
         <div className="relative p-8 bg-gradient-to-br from-travel-parchment to-travel-parchmentDim dark:from-[#1E1A1C] dark:to-[#241E22]">
           <button
             type="button"
-            onClick={handleClose}
+            onClick={close}
             className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-travel-sand/50 hover:text-travel-sand hover:bg-white/60 dark:text-travel-sandSoft/60 dark:hover:text-travel-sandLight dark:hover:bg-white/10 rounded-full transition-colors"
+            aria-label="关闭"
           >
             <Icon icon={X} size="sm" />
           </button>
@@ -114,7 +57,7 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
             </p>
           </div>
 
-          <form onSubmit={handleAlbumUnlock} className="mt-6 space-y-4">
+          <form onSubmit={submit} className="mt-6 space-y-4">
             <div>
               <div className="relative">
                 <Icon
@@ -124,8 +67,8 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
                 />
                 <input
                   type="text"
-                  value={albumPassword}
-                  onChange={(e) => setAlbumPassword(e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-white/60 border border-travel-line rounded-2xl text-travel-inkStrong dark:text-shell-text placeholder-travel-sand/40 dark:bg-shell-surface2/80 dark:border-shell-line dark:placeholder-travel-sandSoft/50 focus:outline-none focus:ring-2 focus:ring-travel-bloom/60 focus:border-transparent transition-all"
                   placeholder="如 2023-06-20"
                   required
@@ -137,23 +80,23 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
               </p>
             </div>
 
-            {albumError && (
+            {error && (
               <div className="px-4 py-2.5 bg-travel-sakura/40 border border-travel-bloom/50 rounded-xl text-travel-accentStrong dark:bg-shell-surface/70 dark:border-shell-line dark:text-travel-bloom text-sm text-center">
-                {albumError}
+                {error}
               </div>
             )}
 
             <button
               type="submit"
-              disabled={albumVerifying}
+              disabled={verifying}
               className="w-full py-3 bg-gradient-to-r from-travel-bloom to-travel-bloom text-white font-semibold rounded-2xl hover:from-travel-bloom hover:to-travel-accentSoft transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-travel-bloom/30"
             >
-              {albumVerifying ? '验证中...' : '解锁相册'}
+              {verifying ? '验证中...' : '解锁相册'}
             </button>
             <button
               type="button"
-              onClick={() => handleSkipUnlock()}
-              disabled={albumVerifying}
+              onClick={skip}
+              disabled={verifying}
               className="w-full py-2 text-sm text-travel-sand/70 hover:text-travel-accent transition-colors dark:text-travel-sandSoft/70"
             >
               没有纪念日？直接进入相册
@@ -164,4 +107,3 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
     </div>
   )
 }
-

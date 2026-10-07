@@ -19,6 +19,8 @@ out/
 # 依赖、日志、缓存
 node_modules/
 npm-debug.log
+# 受限环境下把 npm 缓存落到仓库内（避免写系统 %LocalAppData% 被沙箱拒绝）
+.npm-cache/
 .env*
 .env.local
 # 部署脚本产生的日志和备份

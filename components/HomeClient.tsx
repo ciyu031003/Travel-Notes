@@ -420,7 +420,7 @@ export default function HomeClient({
               </p>
               <div className="mx-auto mt-5 flex h-20 w-20 rotate-[-6deg] items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft dark:border-travel-bloom/70">
                 <div className="text-center text-travel-accent dark:text-travel-bloom">
-                  <p className="text-[9px] tracking-[0.25em]">DAILY</p>
+                  <p className="text-[10px] tracking-[0.25em]">DAILY</p>
                   <p className="font-display text-base font-bold">
                     {new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
                   </p>
