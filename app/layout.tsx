@@ -33,6 +33,13 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
+        {/* 主题初始化必须阻塞首帧：否则暗色用户冷加载先画亮色底再被 Navbar 水合后翻转（闪白）。
+            与 components/layout/Navbar.tsx 的恢复逻辑保持同一 key（localStorage.theme === 'dark'）。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}`,
+          }}
+        />
         <link rel="manifest" href="/manifest.json" />
         {/* theme-color 由 viewport 导出注入，运行时由 ThemeColorSync 随暗色切换同步 */}
         {/* favicon 由 app/icon.png / app/apple-icon.png 文件约定自动注入（源：public/brand/logo.png） */}
