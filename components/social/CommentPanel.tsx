@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Send, X, CornerDownRight } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { cn } from '@/lib/utils'
 import { createComment } from '@/lib/modules/offline/social-write'
 
@@ -35,6 +36,8 @@ function timeAgo(iso: string): string {
 }
 
 export default function CommentPanel({ postId, onClose }: { postId: number; onClose?: () => void }) {
+  // 面板仅在打开期间挂载（PostDetail 条件渲染）；给了 onClose 就接管系统返回
+  useCloseOnBack(Boolean(onClose), onClose ?? (() => {}), Boolean(onClose))
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [content, setContent] = useState('')

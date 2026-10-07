@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { goBackOrHome } from '@/lib/navigation'
 import { Icon } from '@/components/mobile/Icon'
 import { hapticLight } from '@/lib/mobile/haptics'
 
@@ -59,12 +60,9 @@ export function LargeTitle({
 
   const goBack = () => {
     void hapticLight()
-    // 有历史就回上一页（保留用户的来路），否则回兜底地址
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back()
-      return
-    }
-    if (typeof back === 'string') router.replace(back)
+    // 有历史就回上一页（保留用户的来路），否则回兜底地址（深链进入时 back() 会离开站点）
+    if (typeof back === 'string') goBackOrHome(router, back)
+    else goBackOrHome(router)
   }
 
   const backKey = (extraClass?: string) =>

@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { cn } from '@/lib/utils'
 
 interface ModalProps {
@@ -37,6 +38,9 @@ export function Modal({
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement | null>(null)
   const lastFocused = useRef<HTMLElement | null>(null)
+
+  // Android 物理返回 / 浏览器返回：先关弹层而不是离开页面
+  useCloseOnBack(open, onClose)
 
   // 打开：记录焦点 + 滚动锁；关闭：恢复焦点
   useEffect(() => {

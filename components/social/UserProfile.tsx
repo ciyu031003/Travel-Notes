@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
 import { circlePostHref } from '@/lib/routes'
+import { goBackOrHome } from '@/lib/navigation'
 
 interface Profile {
   id: number
@@ -110,7 +111,7 @@ export default function UserProfile({ userId }: { userId: number }) {
       <div className="relative mx-auto max-w-5xl px-4 py-6">
         <header className="mb-8 flex items-center gap-3">
           <div className="ml-auto"><SocialThemeToggle /></div>
-          <button type="button" onClick={() => router.back()} className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></button>
+          <button type="button" onClick={() => goBackOrHome(router)} className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></button>
           <span className="text-sm text-[var(--social-muted)]">旅行者主页</span>
         </header>
 

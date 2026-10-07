@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { X } from 'lucide-react'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { cn } from '@/lib/utils'
 import { Icon } from './Icon'
 import { IconButton } from './IconButton'
@@ -49,6 +50,9 @@ export function SideDrawer({
       document.body.style.overflow = previous
     }
   }, [open, onClose])
+
+  // Android 物理返回 / 浏览器返回：先关抽屉而不是离开页面
+  useCloseOnBack(open, onClose)
 
   return (
     <MotionConfig reducedMotion="user">

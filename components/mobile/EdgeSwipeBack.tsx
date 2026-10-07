@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { goBackOrHome } from '@/lib/navigation'
 
 /**
  * iOS 边缘右滑返回（v1）：从左缘起手、向右滑动超过阈值即触发——
@@ -54,7 +55,7 @@ export default function EdgeSwipeBack() {
         window.setTimeout(() => {
           reset()
           committed = false
-          router.back()
+          goBackOrHome(router)
         }, 230)
       } else if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) {
         // 明确是纵向滚动，退出跟踪

@@ -4,6 +4,7 @@ import { useEffect, type PointerEvent as ReactPointerEvent, type ReactNode } fro
 import { AnimatePresence, MotionConfig, motion, useDragControls } from 'motion/react'
 import { X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { cn } from '@/lib/utils'
 
 /**
@@ -30,6 +31,9 @@ export function BottomSheet({
   dismissible?: boolean
 }) {
   const dragControls = useDragControls()
+
+  // Android 物理返回 / 浏览器返回：先关面板而不是离开页面（不可关闭面板不接管）
+  useCloseOnBack(open, onClose, dismissible)
 
   useEffect(() => {
     if (!open) return

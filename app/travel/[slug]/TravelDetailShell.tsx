@@ -24,6 +24,7 @@ import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
 import { getSyncEngine, startSyncEngine } from '@/lib/modules/offline/bootstrap'
 import { getOfflineInitError } from '@/lib/modules/offline/native/sqlite-db'
+import { goBackOrHome } from '@/lib/navigation'
 import TravelDetailMobile from './TravelDetailMobile'
 import TravelPhotoViewer, { type ViewerPhoto } from './TravelPhotoViewer'
 import type { TravelInfoForDetail } from '@/components/travel/detail/types'
@@ -99,8 +100,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
 
   const handleBack = useCallback(() => {
     void hapticLight()
-    if (typeof window !== 'undefined' && window.history.length > 1) router.back()
-    else router.push('/travel')
+    goBackOrHome(router, '/travel')
   }, [router])
 
   useEffect(() => {
