@@ -85,8 +85,10 @@ export default function MomentsStrip() {
             <div className="py-10 text-center">
               <Icon icon={Sparkles} size="lg" tone="accent" className="mx-auto" />
               <p className="mt-3 text-sm text-travel-ink dark:text-shell-muted">还没有碎碎念，来写第一条吧</p>
+              {/* 空态引导去 /moments（页面内有写入口）；此前指向 /admin/moments，
+                  未登录访客会被甩到后台登录页，体验断裂 */}
               <Link
-                href="/admin/moments"
+                href="/moments"
                 className="mt-4 inline-flex items-center gap-1 rounded-xl bg-travel-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-travel-accentStrong"
               >
                 写一条碎碎念
