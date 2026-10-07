@@ -1,3 +1,54 @@
+## [1.19.0] - 2026-10-07
+
+> 全维度代码评审后的第一批确定性修复（P0）。评审基线：typecheck 0 错误、vitest 全绿、
+> 移动端/桌面/admin 三套 UI 的 token 与交互逐行核对。
+
+### Fixed（确定性 bug · 9 项）
+
+- **暗色用户冷加载闪白屏**：theme class 此前等 Navbar 水合后才从 localStorage 恢复，
+  html 底色固定亮色——暗色用户每次冷加载先画亮色首帧。`app/layout.tsx` `<head>` 加
+  阻塞式内联脚本先于首帧完成 `classList.add('dark')`（与 Navbar 同一 key）。
+- **HomeClient FeatureCard className 拼接事故**：`shadow- lg:p-8[…]` 是两个无效类，
+  lg 屏丢加宽 padding 与预期阴影 → 拆回合法写法。
+- **8 处无效透明度修饰符**（样式静默失效）：Tailwind 3 默认刻度不含 /12 /16 /18 /72 /97，
+  编译产物中不存在这些类。涉及 HomeMobile（地点 chip 半透明白底、卡片日期弱化）、
+  TravelMobileClient、TravelPhotoViewer（左右翻页按钮底色）、ProvinceCityPanel、
+  MobileProvinceDrawer，统一改为任意值写法 `/[0.x]`。
+- **深链返回行为**：`router.back()` 在通知/分享深链进入时会把用户退出站点。
+  新增 `lib/navigation.ts#goBackOrHome`（有应用内历史 → back，否则 fallback），
+  统一接入 EdgeSwipeBack / UserProfile / TravelDetailShell / LargeTitle
+  （LargeTitle 原实现无历史且无 back 参数时会卡住，一并修复）。
+- **弹层不接管物理返回键**：Android 返回键/浏览器返回在弹层打开时直接离开页面。
+  TravelPhotoViewer 已验证的 pushState+popstate 模式抽为 `useCloseOnBack` hook
+  （补齐嵌套语义：栈序保证逐层关闭），接入 ui/Modal、BottomSheet（含 ActionSheet）、
+  SideDrawer、CommentPanel。
+- **碎碎念空态 CTA 甩访客去后台登录页**：首页空态「写一条碎碎念」href=/admin/moments
+  → 改跳 /moments（页面内有写入口）。
+- **Footer 占位死链**：移除 mailto:your@email.com / github.com 脚手架占位，
+  「联系方式」改为「获取应用」→ /download。
+
+### Changed
+
+- **花费金额改整数分存储**（精度修复）：`Expense.amount Float(元)` → `amountCents Int(分)`。
+  浮点元直接求和会累积 0.1+0.2 类二进制误差；整数分求和永不丢精度。
+  - 迁移内嵌 `scripts/apply-schema-migration.cjs`（幂等、值保持）：加列 → 元×100 回填 →
+    删旧列。**特意在启动路径、prisma db push 之前执行**——新 schema 已删 amount 字段，
+    db push 会 DROP 该列，回填不先行则历史金额永久丢失。
+  - 元↔分换算单一事实源 `lib/modules/travel/money.ts`；API/前端契约仍是「元」，
+    Web 与移动端 App 均无需感知；合计在整数分上求和后转回元。
+  - 新增 `tests/unit/money.test.ts`（往返无损 / 0.1 类收口 / Int 上限 / 浮点对照）。
+- **CSP 收紧**：生产 `script-src` 移除 `'unsafe-eval'`（React19/Next15/mermaid/katex
+  运行期均不需要）；开发模式 HMR 依赖 eval 仅开发保留。
+- **CORS 白名单收口**：允许主机名改由 `CORS_ALLOWED_HOSTNAMES` 环境变量配置
+  （默认值保留历史域名与服务器 IP 兼容存量部署），换域名不再需要改代码。
+
+### 验证
+
+- typecheck 0 错误；vitest **53 文件 / 498 用例**全绿（+5 金额精度用例）；prisma schema valid。
+- 版本 1.18.2/b37 → **1.19.0/b38**，四处版本一致自检通过。
+
+---
+
 ## [1.18.2] - 2026-09-30
 
 ### Added（网站备案信息 · ICP / 工信部备案号 / 公安联网备案号）
