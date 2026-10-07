@@ -98,7 +98,7 @@ export default function LayoutContent({
           用户反馈的「设置了子页却回不去」就是它造成的（页面自己的返回键多半是 `hidden md:flex`）。
           现在移动端靠两层保障：页面内的 LargeTitle 返回键 + 底部 tab。
         */}
-        <main id="main-content" className="flex-1 pt-0 md:pt-20 md:pb-12">
+        <main id="main-content" className="flex-1 pt-0 md:pt-16 md:pb-12">
           {children}
         </main>
         <div className="hidden md:block">

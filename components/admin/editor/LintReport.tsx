@@ -99,14 +99,14 @@ export default function LintReport({ issues }: LintReportProps) {
         </div>
       )}
 
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+      <div className="flex items-center justify-between px-4 py-3 bg-warm-50 dark:bg-warm-700/50 rounded-lg border border-warm-200 dark:border-warm-600">
         <div className="flex items-center gap-2">
           <CheckCircle className="w-5 h-5 text-green-500" />
-          <span className="text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-sm text-warm-700 dark:text-warm-300">
             通过 {passedChecks} 项检查
           </span>
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-warm-500 dark:text-warm-400">
           {errors.length} 错误 / {warnings.length} 警告
         </div>
       </div>

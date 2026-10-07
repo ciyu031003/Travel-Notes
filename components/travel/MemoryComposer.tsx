@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, ImagePlus, Loader2, X } from 'lucide-react'
+import { Check, ImagePlus, X } from 'lucide-react'
+import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
@@ -244,15 +245,18 @@ export default function MemoryComposer({
           {error && <p role="alert" className="text-[13px] text-[var(--m-danger,#d9534f)]">{error}</p>}
         </div>
 
-        <button
-          type="button"
-          onClick={submit}
+        {/* v4 M5 接入：主 CTA 收敛到统一 Button（此前为内联复制的样式串） */}
+        <Button
+          block
+          size="lg"
+          icon={Check}
+          loading={saving}
           disabled={saving}
-          className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--m-accent)] text-[15px] font-semibold text-[var(--m-on-accent)] transition active:scale-[0.98] disabled:opacity-50"
+          onClick={submit}
+          className="mt-5"
         >
-          {saving ? <Icon icon={Loader2} size="md" className="animate-spin" /> : <Icon icon={Check} size="sm" />}
           {progress || (saving ? '保存中…' : '保存')}
-        </button>
+        </Button>
       </div>
     </div>
   )

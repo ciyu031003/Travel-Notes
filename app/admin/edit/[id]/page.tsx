@@ -251,7 +251,7 @@ export default function AdminEditPage() {
             className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
               tabMode === 'manual'
                 ? 'bg-gradient-to-r from-travel-accent to-travel-accentSoft text-white shadow-md shadow-travel-accent/25'
-                : 'border border-white/70 bg-white/80 text-travel-ink shadow-sm backdrop-blur-xl hover:text-travel-accent dark:border-white/10 dark:bg-white/5 dark:text-gray-300'
+                : 'border border-white/70 bg-white/80 text-travel-ink shadow-sm backdrop-blur-xl hover:text-travel-accent dark:border-white/10 dark:bg-white/5 dark:text-warm-300'
             }`}
           >
             手动编辑
@@ -262,7 +262,7 @@ export default function AdminEditPage() {
             className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
               tabMode === 'import'
                 ? 'bg-gradient-to-r from-travel-accent to-travel-accentSoft text-white shadow-md shadow-travel-accent/25'
-                : 'border border-white/70 bg-white/80 text-travel-ink shadow-sm backdrop-blur-xl hover:text-travel-accent dark:border-white/10 dark:bg-white/5 dark:text-gray-300'
+                : 'border border-white/70 bg-white/80 text-travel-ink shadow-sm backdrop-blur-xl hover:text-travel-accent dark:border-white/10 dark:bg-white/5 dark:text-warm-300'
             }`}
           >
             文档导入发布

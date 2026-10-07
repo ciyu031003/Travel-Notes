@@ -198,6 +198,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                     : 'text-travel-ink hover:bg-travel-sakura/30 dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-white'
                 )}
                 title="退出登录"
+                aria-label="退出登录"
               >
                 <Icon icon={LogOut} size="md" />
               </button>

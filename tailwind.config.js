@@ -127,6 +127,21 @@ module.exports = {
         success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
         warning: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
         danger:  { 50: '#fef2f2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c' },
+        // ★ 暖灰数字阶（1.20.0）：admin 后台由 Tailwind 冷灰 gray-N 归一到项目 token。
+        //   取 stone（暖灰）系，与 gray-N 亮度逐档对齐 —— 批量替换后视觉零跳变，
+        //   但整体色温与全站暖陶土色板一致，且受 check-design-tokens 治理。
+        warm: {
+          50: '#FAFAF9',
+          100: '#F5F5F4',
+          200: '#E7E5E4',
+          300: '#D6D3D1',
+          400: '#A8A29E',
+          500: '#78716C',
+          600: '#57534E',
+          700: '#44403C',
+          800: '#292524',
+          900: '#1C1917',
+        },
         // ★ travel 语义色（Phase2 对齐命名；色值与上方 success/warning/danger 保持一致）
         'travel-success': '#22c55e',
         'travel-warning': '#f59e0b',

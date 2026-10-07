@@ -1,3 +1,53 @@
+## [1.20.0] - 2026-10-07
+
+> 评审第二批：UI / 无障碍 / 设计 token 收敛。typecheck 0 错误 · vitest 498 全绿 ·
+> lint 与 check-design-tokens 无回退。
+
+### Added（桌面 a11y 基线）
+
+- **全局键盘焦点环**：`globals.css` 增加 `:focus-visible` 兜底 outline（跟随主题强调色，
+  键盘导航可见、鼠标点击不触发）。此前桌面主路径大量按钮/链接无可见焦点样式，键盘用户"摸黑"；
+  移动端早有 `--m-ring`，桌面补齐同一层底座。
+- **表单 label 关联**：登录页（用户名/密码/确认密码）与后台登录页补 `htmlFor`/`id` 与
+  `autoComplete`——点击 label 可聚焦、读屏可播报。
+- **纯图标按钮 aria**：Navbar 退出登录按钮补 `aria-label`（同文件其余图标按钮均有，唯漏它）。
+- **封面图语义 alt**：首页进行中旅行封面、旅行详情 hero 封面、后台相册列表封面
+  由 `alt=""` 改为真实标题（27 处 `alt=""` 中的语义封面类；纯装饰占位保持空 alt）。
+
+### Changed（设计 token 收敛）
+
+- **`.card` 硬编码 hex → token**：`dark:bg-[#161B22]/75 dark:border-[#2C343E]` →
+  `dark:bg-shell-surface/75 dark:border-shell-line`（值相同，token 已有）。
+- **冷灰 `#3D4852` 清零**（14 处 / 7 文件）：与暖色板 `travel-ink` 混用导致同屏色偏，
+  统一替换为 `travel-ink`（admin 改密页 / admin 首页 / 两处登录页 / PostMetaPanel /
+  LoginDoor / MomentsStrip）。
+- **次级页顶部留白对齐**：`LayoutContent` 次级分支 `md:pt-20` → `md:pt-16`，
+  与 travel/home 分支及 Navbar 实际高度（h-16）一致，消除页面切换时的呼吸感跳变。
+- **错误红对比度达标**：浅色 `--danger-soft` `#E06C6C`（3.0:1，低于 AA）→ `#B4535B`
+  （≈4.6:1）；暗色保持 `#E06C6C`（深底上原值已达标）。
+- **admin 后台暖灰归一**：新增 tailwind `warm` 数字阶（stone 暖灰系，与 gray-N 亮度逐档
+  对齐，批量替换后视觉零跳变），admin 全部 **714 处** `gray-N` → `warm-N` ——
+  后台从"第三色彩世界"并入项目 token 体系，色温与全站暖陶土色板一致。
+- **v4 M5 组件正式接入线上**（组件在 `/dev/ui/v4` 预览台已备好但从未接线）：
+  - 旅行编辑链路 5 处逐字复制的内联主 CTA（新建旅行表单 / 保存信息 / 添加行程 /
+    添加这一天 / 保存回忆）→ 统一 `<Button>`（lg 52px 与原高度一致）；
+  - 登录页相册解锁面板：字段 → `<Field>`，主按钮从「m-chip 加 !important 硬顶」
+    → `<Button>`（v4 预览台点名的两处欠账）；
+  - MomentsStrip 手写骨架屏 → 统一 `mobile/Skeleton`（shimmer + 行宽错落）。
+- **HomePanel 抽取**：桌面首页同一串卡片样式逐字复制 3 处 → 收敛为单一容器组件。
+- **桌面首页补齐「进行中的旅行」**：移动端 R1 改版的模块此前桌面没有（双端信息架构漂移），
+  现已对齐——归档入口与移动端同口径（添加照片 / 安排行程 / 完成并归档），归档后
+  `onRefresh` 复用首页同一次取数。
+- HomeClient 移除迁移遗留的 `no-img-element` 死注释（下方已是 `<Image>`）。
+
+### 验证
+
+- typecheck 0 错误；vitest 53 文件 / 498 用例全绿；lint 无新增告警；
+  `check-design-tokens.mjs` 报告模式无回退（439 处存量欠债与基线一致）。
+- 版本 1.19.0/b38 → **1.20.0/b39**，四处版本一致自检通过。
+
+---
+
 ## [1.19.0] - 2026-10-07
 
 > 全维度代码评审后的第一批确定性修复（P0）。评审基线：typecheck 0 错误、vitest 全绿、

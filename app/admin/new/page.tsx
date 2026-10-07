@@ -11,8 +11,8 @@ export default function AdminNewPage() {
   }, [router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="text-gray-500">跳转中...</div>
+    <div className="min-h-screen flex items-center justify-center bg-warm-50 dark:bg-warm-900">
+      <div className="text-warm-500">跳转中...</div>
     </div>
   )
 }

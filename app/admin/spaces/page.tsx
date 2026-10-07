@@ -51,7 +51,7 @@ const ROLE_LABEL: Record<string, string> = { OWNER: '创建者', MEMBER: '成员
 const ROLE_COLOR: Record<string, string> = {
   OWNER: 'bg-travel-sakura dark:bg-travel-accentStrong/40 text-travel-accentStrong dark:text-travel-accentSoft',
   MEMBER: 'bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300',
-  VIEWER: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300',
+  VIEWER: 'bg-warm-100 dark:bg-warm-700 text-warm-500 dark:text-warm-300',
 }
 
 const SPACE_GRADIENTS = [
@@ -294,7 +294,7 @@ export default function AdminSpacesPage() {
   const inviteUrl = (code: string) => `${window.location.origin}/admin/spaces?join=${code}`
 
   const inputCls =
-    'w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/70 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-500'
+    'w-full px-3.5 py-2.5 border border-warm-300 dark:border-warm-600 rounded-xl bg-white dark:bg-warm-800 text-warm-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/70 focus:border-transparent transition-all placeholder-warm-400 dark:placeholder-warm-500'
 
   return (
     <AdminShell title="空间管理">
@@ -336,17 +336,17 @@ export default function AdminSpacesPage() {
         {/* 空间列表 */}
         <div className="mt-8">
           {loading ? (
-            <div className="flex items-center justify-center py-20 text-gray-400">
+            <div className="flex items-center justify-center py-20 text-warm-400">
               <Loader2 className="w-6 h-6 animate-spin mr-2" />
               加载中...
             </div>
           ) : spaces.length === 0 ? (
-            <div className="rounded-3xl border-2 border-dashed border-travel-sakura dark:border-travel-accent/40/60 bg-white/60 dark:bg-gray-900/40 p-14 text-center">
+            <div className="rounded-3xl border-2 border-dashed border-travel-sakura dark:border-travel-accent/40/60 bg-white/60 dark:bg-warm-900/40 p-14 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-pink-100 dark:from-travel-accentStrong/30 dark:to-pink-900/30">
                 <Heart className="w-8 h-8 text-travel-accentSoft" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">还没有空间</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <h3 className="text-lg font-semibold text-warm-800 dark:text-warm-100">还没有空间</h3>
+              <p className="mt-1 text-sm text-warm-500 dark:text-warm-400">
                 创建第一个空间，邀请你的伙伴一起开始记录
               </p>
               <button
@@ -368,7 +368,7 @@ export default function AdminSpacesPage() {
                 return (
                   <div
                     key={space.id}
-                    className="group overflow-hidden rounded-3xl border border-gray-200/70 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                    className="group overflow-hidden rounded-3xl border border-warm-200/70 dark:border-warm-800 bg-white dark:bg-warm-900 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
                   >
                     {/* 封面 */}
                     <div className={`relative h-24 bg-gradient-to-br ${gradient} p-4`}>
@@ -388,11 +388,11 @@ export default function AdminSpacesPage() {
 
                     <div className="p-5">
                       {/* 类型徽标：与移动端空间页显示的同一套标签，避免两处口径不一致 */}
-                      <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                      <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-warm-100 px-2.5 py-1 text-xs font-medium text-warm-600 dark:bg-warm-800 dark:text-warm-300">
                         <TypeIcon className="w-3.5 h-3.5" aria-hidden="true" />
                         {spaceTypeLabelOf(space.spaceType)}
                       </span>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 min-h-[2.5rem]">
+                      <p className="text-sm text-warm-500 dark:text-warm-400 line-clamp-2 min-h-[2.5rem]">
                         {space.description || '还没有简介，写一句话介绍这个空间吧'}
                       </p>
 
@@ -400,23 +400,23 @@ export default function AdminSpacesPage() {
                       <div className="mt-4 grid grid-cols-4 gap-2">
                         <div className="flex flex-col items-center gap-1 rounded-2xl bg-travel-sakura/50 dark:bg-travel-accentStrong/15 py-2.5">
                           <Images className="w-4 h-4 text-travel-accent" />
-                          <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{space.albumCount ?? 0}</span>
-                          <span className="text-[10px] text-gray-400">相册</span>
+                          <span className="text-sm font-bold text-warm-800 dark:text-warm-100">{space.albumCount ?? 0}</span>
+                          <span className="text-[10px] text-warm-400">相册</span>
                         </div>
                         <div className="flex flex-col items-center gap-1 rounded-2xl bg-sky-50 dark:bg-sky-900/15 py-2.5">
                           <MapPin className="w-4 h-4 text-sky-500" />
-                          <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{space.travelCount ?? 0}</span>
-                          <span className="text-[10px] text-gray-400">旅行</span>
+                          <span className="text-sm font-bold text-warm-800 dark:text-warm-100">{space.travelCount ?? 0}</span>
+                          <span className="text-[10px] text-warm-400">旅行</span>
                         </div>
                         <div className="flex flex-col items-center gap-1 rounded-2xl bg-purple-50 dark:bg-purple-900/15 py-2.5">
                           <Sparkles className="w-4 h-4 text-purple-500" />
-                          <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{space.memoryCount ?? 0}</span>
-                          <span className="text-[10px] text-gray-400">回忆</span>
+                          <span className="text-sm font-bold text-warm-800 dark:text-warm-100">{space.memoryCount ?? 0}</span>
+                          <span className="text-[10px] text-warm-400">回忆</span>
                         </div>
                         <div className="flex flex-col items-center gap-1 rounded-2xl bg-amber-50 dark:bg-amber-900/15 py-2.5">
                           <Camera className="w-4 h-4 text-amber-500" />
-                          <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{space.mediaCount ?? 0}</span>
-                          <span className="text-[10px] text-gray-400">照片</span>
+                          <span className="text-sm font-bold text-warm-800 dark:text-warm-100">{space.mediaCount ?? 0}</span>
+                          <span className="text-[10px] text-warm-400">照片</span>
                         </div>
                       </div>
 
@@ -428,22 +428,22 @@ export default function AdminSpacesPage() {
                               <div
                                 key={m.id}
                                 title={`${m.username} · ${ROLE_LABEL[m.role] || m.role}`}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-gray-900 bg-gradient-to-br from-travel-accentSoft to-pink-400 text-xs font-bold text-white shadow"
+                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-warm-900 bg-gradient-to-br from-travel-accentSoft to-pink-400 text-xs font-bold text-white shadow"
                               >
                                 {(m.username || '?').slice(0, 1).toUpperCase()}
                               </div>
                             ))
                           ) : (
-                            <span className="text-xs text-gray-400">加载成员...</span>
+                            <span className="text-xs text-warm-400">加载成员...</span>
                           )}
-                          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                          <span className="ml-2 text-xs text-warm-500 dark:text-warm-400">
                             {space.memberCount} 位成员
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => fetchMembers(space.id)}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-warm-500 dark:text-warm-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors"
                         >
                           管理
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -476,7 +476,7 @@ export default function AdminSpacesPage() {
                                 })
                               }
                             }}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400 transition-all hover:border-red-300 hover:text-red-500 active:scale-95"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-warm-200 dark:border-warm-700 px-3 py-2.5 text-sm text-warm-500 dark:text-warm-400 transition-all hover:border-red-300 hover:text-red-500 active:scale-95"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -497,7 +497,7 @@ export default function AdminSpacesPage() {
           <form onSubmit={handleCreate} className="space-y-4">
             {error && <ErrorBox message={error} />}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间类型</label>
+              <label className="mb-1.5 block text-sm font-medium text-warm-700 dark:text-warm-300">空间类型</label>
               <select
                 value={spaceType}
                 onChange={(e) => setSpaceType(e.target.value)}
@@ -507,28 +507,28 @@ export default function AdminSpacesPage() {
                   <option key={t} value={t}>{spaceTypeLabelOf(t)}</option>
                 ))}
               </select>
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-1.5 text-xs text-warm-400">
                 类型决定移动端空间页的配色（五种清新淡雅主题），创建后也可在空间设置里改。
               </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间名称</label>
+              <label className="mb-1.5 block text-sm font-medium text-warm-700 dark:text-warm-300">空间名称</label>
               <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="例如：我们的小家" required />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">空间标识（可选）</label>
+              <label className="mb-1.5 block text-sm font-medium text-warm-700 dark:text-warm-300">空间标识（可选）</label>
               <input
                 value={slug}
                 onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 className={inputCls}
                 placeholder="留空自动生成（小写字母/数字/连字符）"
               />
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-1.5 text-xs text-warm-400">
                 用于空间页地址 /space/&lt;标识&gt;。留空时服务端按名称派生，中文名会自动生成随机标识。
               </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">简介（可选）</label>
+              <label className="mb-1.5 block text-sm font-medium text-warm-700 dark:text-warm-300">简介（可选）</label>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={inputCls} placeholder="一句话介绍这个空间" />
             </div>
             <button
@@ -549,7 +549,7 @@ export default function AdminSpacesPage() {
           <form onSubmit={handleJoin} className="space-y-4">
             {error && <ErrorBox message={error} />}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">邀请码</label>
+              <label className="mb-1.5 block text-sm font-medium text-warm-700 dark:text-warm-300">邀请码</label>
               <input
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
@@ -557,7 +557,7 @@ export default function AdminSpacesPage() {
                 placeholder="XXXX-XXXX"
                 required
               />
-              <p className="mt-2 text-xs text-gray-400">输入伙伴分享给你的邀请码（8 位，如 7XK2-M9PQ）</p>
+              <p className="mt-2 text-xs text-warm-400">输入伙伴分享给你的邀请码（8 位，如 7XK2-M9PQ）</p>
             </div>
             <button
               type="submit"
@@ -581,19 +581,19 @@ export default function AdminSpacesPage() {
         >
           <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
             {membersLoading ? (
-              <div className="flex justify-center py-10 text-gray-400"><Loader2 className="w-5 h-5 animate-spin" /></div>
+              <div className="flex justify-center py-10 text-warm-400"><Loader2 className="w-5 h-5 animate-spin" /></div>
             ) : (members[memberSpaceId] || []).length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-400">暂无成员</p>
+              <p className="py-8 text-center text-sm text-warm-400">暂无成员</p>
             ) : (
               (members[memberSpaceId] || []).map((m) => (
-                <div key={m.id} className="flex items-center justify-between rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/50 p-3">
+                <div key={m.id} className="flex items-center justify-between rounded-2xl border border-warm-100 dark:border-warm-800 bg-warm-50/70 dark:bg-warm-800/50 p-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-travel-accentSoft to-pink-400 text-sm font-bold text-white">
                       {(m.username || '?').slice(0, 1).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{m.username}</p>
-                      <p className="text-xs text-gray-400">加入于 {fmtDate(m.joinedAt)}</p>
+                      <p className="text-sm font-medium text-warm-800 dark:text-warm-100">{m.username}</p>
+                      <p className="text-xs text-warm-400">加入于 {fmtDate(m.joinedAt)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -604,7 +604,7 @@ export default function AdminSpacesPage() {
                       <button
                         type="button"
                         onClick={() => handleRemoveMember(memberSpaceId, m.username)}
-                        className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                        className="rounded-lg p-2 text-warm-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                         title="移除成员"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -635,7 +635,7 @@ export default function AdminSpacesPage() {
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+                  className="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm text-warm-700 dark:text-warm-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
                 >
                   <option value="MEMBER">成员（可共同编辑）</option>
                   <option value="VIEWER">访客（仅可查看）</option>
@@ -643,7 +643,7 @@ export default function AdminSpacesPage() {
                 <select
                   value={inviteDays}
                   onChange={(e) => setInviteDays(parseInt(e.target.value, 10))}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+                  className="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm text-warm-700 dark:text-warm-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
                 >
                   <option value={1}>1 天有效</option>
                   <option value={3}>3 天有效</option>
@@ -662,8 +662,8 @@ export default function AdminSpacesPage() {
               </div>
 
               {generatedCode && (
-                <div className="mt-4 rounded-2xl bg-white dark:bg-gray-900 border border-travel-sakura dark:border-travel-accentStrong/50 p-4">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <div className="mt-4 rounded-2xl bg-white dark:bg-warm-900 border border-travel-sakura dark:border-travel-accentStrong/50 p-4">
+                  <p className="text-xs text-warm-500 dark:text-warm-400 mb-2">
                     {inviteRole === 'VIEWER' ? '把下面的邀请码发给访客（仅可查看）' : '把下面的邀请码发给你的伙伴'}
                   </p>
                   <div className="flex items-center gap-3">
@@ -673,7 +673,7 @@ export default function AdminSpacesPage() {
                     <button
                       type="button"
                       onClick={() => handleCopy(inviteUrl(generatedCode))}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm text-gray-600 dark:text-gray-300 transition-all hover:border-travel-accentSoft hover:text-travel-accent active:scale-95"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-warm-200 dark:border-warm-700 px-3 py-3 text-sm text-warm-600 dark:text-warm-300 transition-all hover:border-travel-accentSoft hover:text-travel-accent active:scale-95"
                       title="复制邀请链接"
                     >
                       {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
@@ -682,14 +682,14 @@ export default function AdminSpacesPage() {
                     <button
                       type="button"
                       onClick={() => handleCopy(generatedCode)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm text-gray-600 dark:text-gray-300 transition-all hover:border-travel-accentSoft hover:text-travel-accent active:scale-95"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-warm-200 dark:border-warm-700 px-3 py-3 text-sm text-warm-600 dark:text-warm-300 transition-all hover:border-travel-accentSoft hover:text-travel-accent active:scale-95"
                       title="复制邀请码"
                     >
                       <Link2 className="w-4 h-4" />
                       复制码
                     </button>
                   </div>
-                  <p className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                  <p className="mt-2 text-xs text-warm-400 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {`${inviteDays} 天内有效，${inviteRole === 'MEMBER' ? '对方加入后为成员，可共同编辑内容' : '对方加入后为访客，仅可查看'}`}
                   </p>
@@ -699,20 +699,20 @@ export default function AdminSpacesPage() {
 
             {/* 邀请记录 */}
             <div>
-              <h4 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">邀请记录</h4>
+              <h4 className="mb-2 text-sm font-semibold text-warm-700 dark:text-warm-200">邀请记录</h4>
               {(invites[inviteSpaceId] || []).length === 0 ? (
-                <p className="py-4 text-center text-xs text-gray-400">还没有邀请记录</p>
+                <p className="py-4 text-center text-xs text-warm-400">还没有邀请记录</p>
               ) : (
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {(invites[inviteSpaceId] || []).map((inv) => (
-                    <div key={inv.id} className="flex items-center justify-between rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/50 px-3 py-2.5">
+                    <div key={inv.id} className="flex items-center justify-between rounded-xl border border-warm-100 dark:border-warm-800 bg-warm-50/70 dark:bg-warm-800/50 px-3 py-2.5">
                       <div className="flex items-center gap-2.5">
                         <Gift className="w-4 h-4 text-travel-accentSoft" />
                         <div>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                          <p className="text-xs font-medium text-warm-700 dark:text-warm-200">
                             邀请 #{inv.id} · {ROLE_LABEL[inv.role] || inv.role}
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-warm-400">
                             {inv.status === 'PENDING' && `${daysLeft(inv.expiresAt)} 天后过期`}
                             {inv.status === 'USED' && '已使用'}
                             {inv.status === 'EXPIRED' && '已过期'}
@@ -731,7 +731,7 @@ export default function AdminSpacesPage() {
                             ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300'
                             : inv.status === 'USED'
                             ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
+                            : 'bg-warm-100 dark:bg-warm-700 text-warm-400'
                         }`}>
                           {inv.status === 'PENDING' ? '待使用' : inv.status === 'USED' ? '已使用' : '已过期'}
                         </span>
@@ -739,7 +739,7 @@ export default function AdminSpacesPage() {
                           <button
                             type="button"
                             onClick={() => handleRevealAndCopy(inv)}
-                            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-travel-sakura/60 hover:text-travel-accent dark:hover:bg-travel-accentStrong/20"
+                            className="rounded-lg p-1.5 text-warm-400 transition-colors hover:bg-travel-sakura/60 hover:text-travel-accent dark:hover:bg-travel-accentStrong/20"
                             title="查看并复制邀请码"
                           >
                             {revealedInviteId === inv.id && copiedInviteId === inv.id ? (
@@ -753,7 +753,7 @@ export default function AdminSpacesPage() {
                           <button
                             type="button"
                             onClick={() => handleRevokeInvite(inviteSpaceId, inv.id)}
-                            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 transition-colors"
+                            className="rounded-lg p-1.5 text-warm-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 transition-colors"
                             title="撤销邀请"
                           >
                             <Ban className="w-3.5 h-3.5" />
@@ -771,7 +771,7 @@ export default function AdminSpacesPage() {
 
       {/* 轻提示 */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 animate-[fadeIn_0.25s_ease] rounded-full bg-gray-900/90 dark:bg-gray-800/95 px-5 py-2.5 text-sm text-white shadow-2xl backdrop-blur">
+        <div className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 animate-[fadeIn_0.25s_ease] rounded-full bg-warm-900/90 dark:bg-warm-800/95 px-5 py-2.5 text-sm text-white shadow-2xl backdrop-blur">
           {toast}
         </div>
       )}
@@ -800,17 +800,17 @@ function Modal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`w-full ${wide ? 'max-w-lg' : 'max-w-md'} max-h-[85vh] overflow-y-auto rounded-3xl bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 animate-[fadeInUp_0.25s_ease]`}
+        className={`w-full ${wide ? 'max-w-lg' : 'max-w-md'} max-h-[85vh] overflow-y-auto rounded-3xl bg-white dark:bg-warm-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 animate-[fadeInUp_0.25s_ease]`}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 px-5 py-4 backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-warm-100 dark:border-warm-800 bg-white/90 dark:bg-warm-900/90 px-5 py-4 backdrop-blur">
           <div className="flex items-center gap-2.5">
             {icon}
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
+            <h3 className="text-base font-semibold text-warm-900 dark:text-white">{title}</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-warm-400 transition-colors hover:bg-warm-100 hover:text-warm-600 dark:hover:bg-warm-800 dark:hover:text-warm-200"
             aria-label="关闭"
           >
             <X className="w-4 h-4" />

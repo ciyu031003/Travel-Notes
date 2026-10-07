@@ -143,34 +143,34 @@ export default function AdminMomentsPage() {
                 发布
               </AdminButton>
             </div>
-            <p className="mt-2 text-xs text-travel-ink/50 dark:text-gray-400">{content.length}/2000</p>
+            <p className="mt-2 text-xs text-travel-ink/50 dark:text-warm-400">{content.length}/2000</p>
           </AdminCard>
         </form>
 
-        <div className="mb-4 text-sm text-travel-ink/60 dark:text-gray-400">
+        <div className="mb-4 text-sm text-travel-ink/60 dark:text-warm-400">
           共 {total} 条碎碎念
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 text-travel-ink/50 dark:text-gray-500">
+          <div className="flex flex-col items-center justify-center py-16 text-travel-ink/50 dark:text-warm-500">
             <Loader2 className="h-6 w-6 animate-spin" />
             加载中...
           </div>
         ) : moments.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-shell-line dark:bg-white/5">
             <Inbox className="mx-auto mb-4 h-12 w-12 opacity-30 text-travel-accentSoft" />
-            <p className="text-travel-ink/70 dark:text-gray-400">还没有碎碎念，发布第一条吧~</p>
+            <p className="text-travel-ink/70 dark:text-warm-400">还没有碎碎念，发布第一条吧~</p>
           </div>
         ) : (
           <div className="space-y-3">
             {moments.map((moment) => (
               <div key={moment.id} className="rounded-2xl border border-travel-line/50 bg-white/80 p-5 shadow-soft dark:border-shell-line dark:bg-shell-bg/80 flex items-start gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-travel-ink dark:text-gray-200 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  <p className="text-travel-ink dark:text-warm-200 text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {moment.content}
                   </p>
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    <span className="text-xs text-travel-ink/50 dark:text-gray-400">{formatTime(moment.createdAt)}</span>
+                    <span className="text-xs text-travel-ink/50 dark:text-warm-400">{formatTime(moment.createdAt)}</span>
                     {moment.tags && moment.tags.length > 0 && (
                       <span className="flex gap-1.5 flex-wrap">
                         {moment.tags.map((tag) => (

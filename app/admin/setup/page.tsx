@@ -69,13 +69,13 @@ export default function AdminSetupPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-warm-50 dark:bg-warm-900 flex items-center justify-center px-4">
+        <div className="bg-white dark:bg-warm-800 rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
           <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 mb-3">
             <CheckCircle className="w-6 h-6" />
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">初始化完成</h1>
+            <h1 className="text-xl font-bold text-warm-900 dark:text-white">初始化完成</h1>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-sm text-warm-500 dark:text-warm-400 mb-6">
             管理员账号已创建，初始化入口已关闭。请使用新账号登录后台。
           </p>
           <button
@@ -90,60 +90,60 @@ export default function AdminSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-warm-50 dark:bg-warm-900">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="mb-8">
           <Link
             href="/admin/login"
-            className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-sm"
+            className="inline-flex items-center gap-2 text-warm-500 dark:text-warm-400 hover:text-warm-700 dark:hover:text-warm-300 text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             返回登录
           </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-warm-800 rounded-2xl shadow-sm p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
               <KeyRound className="w-6 h-6 text-primary-500" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">初始化管理员</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">首次启动：设置管理员账户</p>
+              <h1 className="text-2xl font-bold text-warm-900 dark:text-white">初始化管理员</h1>
+              <p className="text-sm text-warm-500 dark:text-warm-400">首次启动：设置管理员账户</p>
             </div>
           </div>
 
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">用户名</label>
+              <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">用户名</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="admin"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">密码</label>
+              <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">密码</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="至少 8 位"
               />
-              <p className="mt-1 text-xs text-gray-400">建议包含大小写字母、数字与符号</p>
+              <p className="mt-1 text-xs text-warm-400">建议包含大小写字母、数字与符号</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">确认密码</label>
+              <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">确认密码</label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="再次输入密码"
               />
             </div>

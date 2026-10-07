@@ -8,6 +8,8 @@ import LoginDoor from '@/components/login/LoginDoor'
 import BrandLogo from '@/components/brand/BrandLogo'
 import { Icon } from '@/components/mobile/Icon'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { Button } from '@/components/mobile/Button'
+import { Field } from '@/components/mobile/Field'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 import { hapticError, hapticSuccess } from '@/lib/mobile/haptics'
@@ -171,7 +173,7 @@ function LoginPageContent() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-[#3D4852] transition-all placeholder-travel-sand/50 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-shell-faint'
+    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-travel-ink transition-all placeholder-travel-sand/50 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-shell-faint'
 
   return (
     <>
@@ -182,7 +184,7 @@ function LoginPageContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BrandLogo size={36} rounded="rounded-lg" />
-                  <span className="font-bold text-[#3D4852] dark:text-shell-text">行迹</span>
+                  <span className="font-bold text-travel-ink dark:text-shell-text">行迹</span>
                 </div>
                 {isAuthed && (
                   <Link
@@ -205,36 +207,40 @@ function LoginPageContent() {
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-4 md:mt-8">
                 <div>
-                  <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
+                  <label htmlFor="login-username" className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
                     <Icon icon={Lock} size="sm" />
                     登录账号
                   </label>
                   <div className="relative">
                     <Icon icon={Lock} size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/50" />
                     <input
+                      id="login-username"
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       className={inputCls}
                       placeholder="请输入用户名"
+                      autoComplete="username"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
+                  <label htmlFor="login-password" className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
                     <Icon icon={Lock} size="sm" />
                     登录密码
                   </label>
                   <div className="relative">
                     <Icon icon={Lock} size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/50" />
                     <input
+                      id="login-password"
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={`${inputCls} pr-12`}
                       placeholder="请输入密码"
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                       required
                     />
                     <button
@@ -250,18 +256,20 @@ function LoginPageContent() {
 
                 {mode === 'register' && (
                   <div>
-                    <label className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
+                    <label htmlFor="login-confirm-password" className="mb-2 flex items-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
                       <Icon icon={Lock} size="sm" />
                       确认密码
                     </label>
                     <div className="relative">
                       <Icon icon={Lock} size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/50" />
                       <input
+                        id="login-confirm-password"
                         type={showPassword ? 'text' : 'password'}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className={`${inputCls} pr-12`}
                         placeholder="请再次输入密码"
+                        autoComplete="new-password"
                         required
                       />
                     </div>
@@ -450,18 +458,17 @@ function LoginPageContent() {
               </p>
 
               <form onSubmit={handleAlbumUnlock} className="mt-6 w-full space-y-3">
-                <div className="relative">
-                  <Icon icon={Lock} size="sm" tone="faint" className="absolute left-4 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={albumPassword}
-                    onChange={(e) => setAlbumPassword(e.target.value)}
-                    className="w-full rounded-2xl border border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] py-3.5 pl-11 pr-4 text-[15px] text-[var(--m-text)] outline-none transition-all placeholder:text-[var(--m-faint)] focus:border-transparent focus:ring-2 focus:ring-[var(--m-accent)]"
-                    placeholder="如 2023-06-20"
-                    required
-                    autoFocus
-                  />
-                </div>
+                {/* v4 M5 接入：字段/主按钮收敛到统一 Field / Button
+                    （此前按钮是 m-chip 加 !important 硬顶的写法） */}
+                <Field
+                  type="text"
+                  value={albumPassword}
+                  onChange={(e) => setAlbumPassword(e.target.value)}
+                  leadingIcon={Lock}
+                  placeholder="如 2023-06-20"
+                  required
+                  autoFocus
+                />
                 <p className="text-center text-xs text-[var(--m-faint)]">
                   支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
                 </p>
@@ -472,13 +479,9 @@ function LoginPageContent() {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={albumVerifying}
-                  className="m-press m-chip m-chip-active !mt-4 flex h-12 w-full items-center justify-center gap-2 !rounded-2xl !text-[15px] font-semibold"
-                >
+                <Button type="submit" block loading={albumVerifying} disabled={albumVerifying} className="!mt-4">
                   {albumVerifying ? '验证中…' : '解锁相册'}
-                </button>
+                </Button>
               </form>
             </div>
           </BottomSheet>

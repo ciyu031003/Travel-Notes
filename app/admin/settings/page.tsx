@@ -42,7 +42,7 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-warm-50 dark:bg-warm-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     )
@@ -51,15 +51,15 @@ export default function AdminSettingsPage() {
   return (
     <AdminShell title="账号设置">
       <main className="mx-auto max-w-4xl px-1 py-2">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-          <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm overflow-hidden">
+          <div className="border-b border-warm-200 dark:border-warm-700">
             <nav className="flex -mb-px" aria-label="Tabs">
               <button
                 onClick={() => setActiveTab('profile')}
                 className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'profile'
                     ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    : 'border-transparent text-warm-500 hover:text-warm-700 dark:text-warm-400 dark:hover:text-warm-300'
                 }`}
               >
                 <User className="w-4 h-4 inline mr-2" />
@@ -70,7 +70,7 @@ export default function AdminSettingsPage() {
                 className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'password'
                     ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    : 'border-transparent text-warm-500 hover:text-warm-700 dark:text-warm-400 dark:hover:text-warm-300'
                 }`}
               >
                 <Key className="w-4 h-4 inline mr-2" />
@@ -81,7 +81,7 @@ export default function AdminSettingsPage() {
                 className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'email'
                     ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    : 'border-transparent text-warm-500 hover:text-warm-700 dark:text-warm-400 dark:hover:text-warm-300'
                 }`}
               >
                 <Mail className="w-4 h-4 inline mr-2" />
@@ -92,7 +92,7 @@ export default function AdminSettingsPage() {
                 className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'travel'
                     ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    : 'border-transparent text-warm-500 hover:text-warm-700 dark:text-warm-400 dark:hover:text-warm-300'
                 }`}
               >
                 <Heart className="w-4 h-4 inline mr-2" />
@@ -103,7 +103,7 @@ export default function AdminSettingsPage() {
                 className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'paint'
                     ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    : 'border-transparent text-warm-500 hover:text-warm-700 dark:text-warm-400 dark:hover:text-warm-300'
                 }`}
               >
                 <Palette className="w-4 h-4 inline mr-2" />
@@ -240,64 +240,64 @@ function ProfileTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
       <div>
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">基本信息</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">修改您的登录用户名</p>
+        <h3 className="text-base font-semibold text-warm-900 dark:text-white mb-1">基本信息</h3>
+        <p className="text-sm text-warm-500 dark:text-warm-400">修改您的登录用户名</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
           当前用户名
         </label>
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
           <input
             type="text"
             value={currentUsername}
             disabled
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400"
+            className="w-full pl-10 pr-4 py-2.5 bg-warm-100 dark:bg-warm-700 border border-warm-200 dark:border-warm-600 rounded-lg text-warm-500 dark:text-warm-400"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
           新用户名
         </label>
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
           <input
             type="text"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="输入新的用户名"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
           当前密码 <span className="text-red-500">*</span>
         </label>
         <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
           <input
             type={showPassword ? 'text' : 'password'}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="必须输入当前密码以验证身份"
             required
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600"
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs text-warm-500 dark:text-warm-400">
           修改用户名需要验证您的当前密码
         </p>
       </div>
@@ -405,28 +405,28 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
       <div>
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">修改密码</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">定期更换密码有助于保护账号安全</p>
+        <h3 className="text-base font-semibold text-warm-900 dark:text-white mb-1">修改密码</h3>
+        <p className="text-sm text-warm-500 dark:text-warm-400">定期更换密码有助于保护账号安全</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
           当前密码 <span className="text-red-500">*</span>
         </label>
         <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
           <input
             type={showCurrentPwd ? 'text' : 'password'}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="输入当前密码"
             required
           />
           <button
             type="button"
             onClick={() => setShowCurrentPwd(!showCurrentPwd)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600"
           >
             {showCurrentPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
@@ -434,11 +434,11 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
           新密码 <span className="text-red-500">*</span>
         </label>
         <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
           <input
             type={showNewPwd ? 'text' : 'password'}
             value={newPassword}
@@ -446,14 +446,14 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
               setNewPassword(e.target.value)
               evaluatePassword(e.target.value)
             }}
-            className="w-full pl-10 pr-12 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="至少 6 位字符"
             required
           />
           <button
             type="button"
             onClick={() => setShowNewPwd(!showNewPwd)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600"
           >
             {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
@@ -465,12 +465,12 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
                 <div
                   key={i}
                   className={`h-1 flex-1 rounded-full ${
-                    i <= passwordStrength.score ? passwordStrength.color : 'bg-gray-200 dark:bg-gray-600'
+                    i <= passwordStrength.score ? passwordStrength.color : 'bg-warm-200 dark:bg-warm-600'
                   }`}
                 />
               ))}
             </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-warm-500 dark:text-warm-400">
               密码强度：<span className="font-medium">{passwordStrength.label}</span>
             </p>
           </div>
@@ -478,23 +478,23 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
           确认新密码 <span className="text-red-500">*</span>
         </label>
         <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
           <input
             type={showConfirmPwd ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="再次输入新密码"
             required
           />
           <button
             type="button"
             onClick={() => setShowConfirmPwd(!showConfirmPwd)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600"
           >
             {showConfirmPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
@@ -660,19 +660,19 @@ function EmailTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' 
   return (
     <div className="space-y-6 max-w-lg">
       <div>
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">邮箱绑定</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">绑定邮箱后，可通过邮箱找回密码</p>
+        <h3 className="text-base font-semibold text-warm-900 dark:text-white mb-1">邮箱绑定</h3>
+        <p className="text-sm text-warm-500 dark:text-warm-400">绑定邮箱后，可通过邮箱找回密码</p>
       </div>
 
       {currentEmail ? (
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+        <div className="bg-warm-50 dark:bg-warm-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
                 <Mail className="w-5 h-5 text-primary-500" />
               </div>
               <div>
-                <p className="font-medium text-gray-900 dark:text-white">{currentEmail}</p>
+                <p className="font-medium text-warm-900 dark:text-white">{currentEmail}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {emailVerified ? (
                     <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
@@ -697,8 +697,8 @@ function EmailTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' 
           </div>
         </div>
       ) : (
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="bg-warm-50 dark:bg-warm-700 rounded-xl p-4">
+          <p className="text-sm text-warm-500 dark:text-warm-400">
             尚未绑定邮箱。绑定邮箱后，忘记密码时可通过邮箱验证找回。
           </p>
         </div>
@@ -706,23 +706,23 @@ function EmailTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' 
 
       <form onSubmit={handleBindEmail} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
             邮箱地址
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
             <input
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="example@email.com"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
             验证码
           </label>
           <div className="flex gap-3">
@@ -731,20 +731,20 @@ function EmailTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' 
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
               maxLength={6}
-              className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="6 位验证码"
             />
             <button
               type="button"
               onClick={handleSendCode}
               disabled={sendingCode || countdown > 0}
-              className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="px-4 py-2.5 bg-warm-100 hover:bg-warm-200 dark:bg-warm-600 dark:hover:bg-warm-500 text-warm-700 dark:text-warm-200 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {sendingCode ? '发送中...' : countdown > 0 ? `${countdown}s 后重试` : '发送验证码'}
             </button>
           </div>
           {codeSent && (
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-xs text-warm-500 dark:text-warm-400">
               验证码将发送到您填写的邮箱（演示环境：验证码为 123456）
             </p>
           )}
@@ -845,25 +845,25 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
       <div>
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">旅行设置</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">设置纪念日开始日期，旅行地图页面将自动计算天数</p>
+        <h3 className="text-base font-semibold text-warm-900 dark:text-white mb-1">旅行设置</h3>
+        <p className="text-sm text-warm-500 dark:text-warm-400">设置纪念日开始日期，旅行地图页面将自动计算天数</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
           纪念日
         </label>
         <div className="relative">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
           <input
             type="date"
             value={anniversaryStart}
             onChange={(e) => setAnniversaryStart(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="选择日期"
           />
         </div>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs text-warm-500 dark:text-warm-400">
           选择开始日期，系统将自动计算天数
         </p>
       </div>
@@ -872,14 +872,14 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
         <div className="bg-gradient-to-r from-travel-sakura to-travel-mist dark:from-travel-accent/20 dark:to-travel-sky/10 rounded-xl p-4 border border-travel-bloom/40 dark:border-travel-accent/30">
           <div className="flex items-center gap-2 mb-2">
             <Heart className="w-4 h-4 text-travel-accent" />
-            <span className="text-sm font-medium text-travel-ink dark:text-gray-300">预览效果</span>
+            <span className="text-sm font-medium text-travel-ink dark:text-warm-300">预览效果</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
+            <span className="text-3xl font-bold text-warm-900 dark:text-white tabular-nums">
               {calculatedDays}
             </span>
-            <span className="text-sm text-gray-600 dark:text-gray-400">天</span>
-            <span className="text-xs text-gray-500 dark:text-gray-500 ml-2">
+            <span className="text-sm text-warm-600 dark:text-warm-400">天</span>
+            <span className="text-xs text-warm-500 dark:text-warm-500 ml-2">
               从 {anniversaryStart} 开始
             </span>
           </div>
@@ -887,23 +887,23 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
           当前密码 <span className="text-red-500">*</span>
         </label>
         <div className="relative">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
           <input
             type={showPassword ? 'text' : 'password'}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="必须输入当前密码以验证身份"
             required
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600"
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
@@ -926,7 +926,7 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
               setAnniversaryStart('')
               setCalculatedDays(null)
             }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-warm-100 hover:bg-warm-200 dark:bg-warm-700 dark:hover:bg-warm-600 text-warm-700 dark:text-warm-200 text-sm rounded-lg transition-colors"
           >
             清除
           </button>
@@ -1010,11 +1010,11 @@ function OilTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' | 
       )}
 
       {/* 开关 */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+      <div className="border border-warm-200 dark:border-warm-700 rounded-xl p-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">照片转油画</p>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="font-medium text-warm-900 dark:text-white">照片转油画</p>
+            <p className="mt-1 text-sm text-warm-500 dark:text-warm-400">
               开启后，画册阅读器里的照片可按需生成油画版（通义 wanx2.1-imageedit，按张计费，生成结果缓存、每张只生成一次）。
               {status?.enabledSource === 'env' && '（当前开关来自服务器环境变量，保存后改为后台管理）'}
             </p>
@@ -1026,7 +1026,7 @@ function OilTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' | 
             disabled={saving || !status?.encryptionConfigured}
             onClick={() => save({ enabled: !status?.enabled }, status?.enabled ? '已关闭油画生成' : '已开启油画生成')}
             className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
-              status?.enabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+              status?.enabled ? 'bg-primary-500' : 'bg-warm-300 dark:bg-warm-600'
             }`}
           >
             <span
@@ -1039,9 +1039,9 @@ function OilTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' | 
       </div>
 
       {/* API key */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-        <p className="font-medium text-gray-900 dark:text-white">通义 API Key（DashScope）</p>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <div className="border border-warm-200 dark:border-warm-700 rounded-xl p-4">
+        <p className="font-medium text-warm-900 dark:text-white">通义 API Key（DashScope）</p>
+        <p className="mt-1 text-sm text-warm-500 dark:text-warm-400">
           以 AES-256-GCM 加密存入数据库，保存后不再回显完整 key。
           {status?.hasKey ? ` 当前已配置：${status.keyMasked}` : ' 当前未配置。'}
         </p>
@@ -1053,12 +1053,12 @@ function OilTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' | 
             placeholder="粘贴新的 API key（sk-...）"
             autoComplete="off"
             maxLength={200}
-            className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+            className="w-full px-3 py-2.5 pr-10 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
           />
           <button
             type="button"
             onClick={() => setShowKey(!showKey)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600"
             aria-label={showKey ? '隐藏 key' : '显示 key'}
           >
             {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1079,7 +1079,7 @@ function OilTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' | 
               type="button"
               disabled={saving || !status?.encryptionConfigured}
               onClick={() => save({ clearKey: true }, 'API key 已清除')}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-warm-100 hover:bg-warm-200 dark:bg-warm-700 dark:hover:bg-warm-600 text-warm-700 dark:text-warm-200 text-sm rounded-lg transition-colors disabled:opacity-50"
             >
               清除 Key
             </button>

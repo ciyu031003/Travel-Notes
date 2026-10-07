@@ -384,7 +384,7 @@ export default function HomeMobile({
                   <article key={d.id} className="m-enter m-card overflow-hidden">
                     {d.cover ? (
                       <div className="relative h-32 w-full bg-[var(--m-surface-2)]">
-                        <Image src={d.cover} alt="" fill sizes="100vw" className="object-cover" />
+                        <Image src={d.cover} alt={d.title} fill sizes="100vw" className="object-cover" />
                       </div>
                     ) : (
                       <div className="flex h-20 w-full items-center justify-center bg-[linear-gradient(135deg,var(--m-bg-soft),var(--m-surface-2))] text-[var(--m-faint)]">

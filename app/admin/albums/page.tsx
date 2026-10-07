@@ -161,14 +161,14 @@ export default function AdminAlbumsPage() {
       <div className="mx-auto max-w-5xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-warm-500 dark:text-warm-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           返回后台
         </Link>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">相册管理</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-2xl font-bold text-warm-900 dark:text-white mb-1">相册管理</h1>
+        <p className="text-sm text-warm-500 dark:text-warm-400">
           创建纪念相册并上传照片（支持批量、自动压缩与元数据清理）
         </p>
       </div>
@@ -177,7 +177,7 @@ export default function AdminAlbumsPage() {
         {/* 左：相册列表 + 创建 */}
         <div>
           <form onSubmit={handleCreate} className="card p-5 mb-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+            <h2 className="text-base font-semibold text-warm-900 dark:text-warm-100 mb-3 flex items-center gap-2">
               <Plus className="w-4 h-4 text-travel-accentSoft" />
               新建相册
             </h2>
@@ -187,7 +187,7 @@ export default function AdminAlbumsPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="相册名称"
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+                className="flex-1 px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
               />
               <button
                 type="submit"
@@ -202,12 +202,12 @@ export default function AdminAlbumsPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="简介（可选）"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+              className="w-full px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             />
             <select
               value={travelId}
               onChange={(e) => setTravelId(e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+              className="w-full mt-2 px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
             >
               <option value="">关联旅行（可选）</option>
               {travels.map((t) => (
@@ -222,9 +222,9 @@ export default function AdminAlbumsPage() {
           </form>
 
           {loading ? (
-            <div className="text-center py-10 text-gray-500">加载中...</div>
+            <div className="text-center py-10 text-warm-500">加载中...</div>
           ) : albums.length === 0 ? (
-            <div className="card p-6 text-center text-gray-500">还没有相册</div>
+            <div className="card p-6 text-center text-warm-500">还没有相册</div>
           ) : (
             <div className="space-y-2">
               {albums.map((a) => (
@@ -235,22 +235,22 @@ export default function AdminAlbumsPage() {
                   className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${
                     selected === a.id
                       ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 border border-travel-sakura dark:border-travel-accent/40'
-                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-travel-sakura'
+                      : 'bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 hover:border-travel-sakura'
                   }`}
                 >
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-warm-100 dark:bg-warm-700 flex-shrink-0">
                     {a.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <Image src={a.coverUrl} alt="" fill sizes="48px" className="object-cover" />
+                      <Image src={a.coverUrl} alt={a.title} fill sizes="48px" className="object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="w-full h-full flex items-center justify-center text-warm-400">
                         <Images className="w-5 h-5" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{a.title}</p>
-                    <p className="text-xs text-gray-500">{a.mediaCount} 张照片</p>
+                    <p className="font-medium text-warm-900 dark:text-warm-100 truncate">{a.title}</p>
+                    <p className="text-xs text-warm-500">{a.mediaCount} 张照片</p>
                   </div>
                 </button>
               ))}
@@ -261,16 +261,16 @@ export default function AdminAlbumsPage() {
         {/* 右：相册详情 */}
         <div className="card p-5">
           {!selected || !detail ? (
-            <div className="text-center py-16 text-gray-500">选择一个相册查看与管理照片</div>
+            <div className="text-center py-16 text-warm-500">选择一个相册查看与管理照片</div>
           ) : (
             <>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{detail.title}</h2>
+                  <h2 className="text-lg font-semibold text-warm-900 dark:text-warm-100">{detail.title}</h2>
                   {detail.description && (
-                    <p className="text-sm text-gray-500">{detail.description}</p>
+                    <p className="text-sm text-warm-500">{detail.description}</p>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">{detail.mediaCount} 张照片</p>
+                  <p className="text-xs text-warm-400 mt-1">{detail.mediaCount} 张照片</p>
                 </div>
                 <button
                   type="button"
@@ -282,7 +282,7 @@ export default function AdminAlbumsPage() {
                 </button>
               </div>
 
-              <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 hover:border-travel-accentSoft cursor-pointer mb-4">
+              <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-warm-300 dark:border-warm-600 rounded-xl text-sm text-warm-500 hover:border-travel-accentSoft cursor-pointer mb-4">
                 <Upload className="w-4 h-4" />
                 {uploading ? '上传中...' : '点击上传照片（支持多选）'}
                 <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleUpload} disabled={uploading} />
@@ -292,7 +292,7 @@ export default function AdminAlbumsPage() {
               )}
 
               {detail.media.length === 0 ? (
-                <div className="text-center py-10 text-gray-400">还没有照片，上传第一张吧</div>
+                <div className="text-center py-10 text-warm-400">还没有照片，上传第一张吧</div>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
                   {detail.media.map((m) => (

@@ -146,8 +146,9 @@
     --social-line-strong: rgba(90, 74, 58, 0.22);
     /* 通用「错误红」：#E06C6C 原先散落在 social / offline / login 等 6 个组件里。
        此值同时等于 album 体系的 --album-error，两者并存但归属不同体系，暂不强行合并。
-       注：该值在浅底上对比度约 3.0:1，低于 AA 正文标准 —— 属既有问题，本次保持原值不改观感。 */
-    --danger-soft: #E06C6C;
+       1.20.0：浅底对比度 3.0:1 低于 AA → 浅色调深至 #B4535B（约 4.6:1）；
+       暗底（html.dark）保持 #E06C6C 不变——深底上原值对比度已达标。 */
+    --danger-soft: #B4535B;
   }
 
   html.dark {
@@ -343,7 +344,7 @@
   }
 
   .card {
-    @apply bg-white/75 dark:bg-[#161B22]/75 backdrop-blur-sm rounded-2xl shadow-soft border border-travel-line/70 dark:border-[#2C343E] transition-all duration-200 hover:shadow-card;
+    @apply bg-white/75 dark:bg-shell-surface/75 backdrop-blur-sm rounded-2xl shadow-soft border border-travel-line/70 dark:border-shell-line transition-all duration-200 hover:shadow-card;
   }
 
   /* ── 空间主题的渐变（P1） ────────────────────────────────────────────────
@@ -383,6 +384,15 @@ html {
   scroll-behavior: smooth;
   /* 首帧底色：暖米白铺底，D2 启动/水合前不再闪白（暗色由各页自身背景接管） */
   background-color: #FAF6EE;
+}
+
+/* 全局键盘焦点兜底环（1.20.0）：桌面端此前大量按钮/链接无可见 focus 样式，
+   键盘用户"摸黑"；移动端有统一 --m-ring，桌面补齐同一层底座。
+   只在 :focus-visible（键盘导航）时出现，鼠标点击不触发。 */
+:focus-visible {
+  outline: 2px solid var(--social-accent, #A85F3A);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 body {

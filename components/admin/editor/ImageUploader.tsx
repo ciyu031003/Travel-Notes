@@ -120,12 +120,12 @@ export default function ImageUploader({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300">
           旅行照片管理
         </label>
-        <span className="text-xs text-gray-500">{images.length} 张照片</span>
+        <span className="text-xs text-warm-500">{images.length} 张照片</span>
       </div>
 
       <div
@@ -136,7 +136,7 @@ export default function ImageUploader({
         className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
           dragOver
             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-            : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+            : 'border-warm-300 dark:border-warm-600 hover:border-primary-400 hover:bg-warm-50 dark:hover:bg-warm-700/50'
         }`}
       >
         <input
@@ -154,15 +154,15 @@ export default function ImageUploader({
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
             <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">上传中...</p>
+            <p className="text-sm text-warm-500">上传中...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <Upload className="w-10 h-10 text-gray-400" />
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <Upload className="w-10 h-10 text-warm-400" />
+            <p className="text-sm text-warm-600 dark:text-warm-300">
               点击或拖拽图片到此处上传
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-warm-400">
               支持多张图片同时上传，JPG / PNG / GIF / WEBP
             </p>
           </div>
@@ -178,7 +178,7 @@ export default function ImageUploader({
               onDragStart={() => handleDragStart(index)}
               onDragEnd={handleDragEnd}
               onDragOver={(e) => handleDragOverImage(e, index)}
-              className={`group relative h-32 rounded-lg overflow-hidden border-2 transition-all bg-gradient-to-br from-gray-100 to-gray-200 ${
+              className={`group relative h-32 rounded-lg overflow-hidden border-2 transition-all bg-gradient-to-br from-warm-100 to-warm-200 ${
                 cover === img
                   ? 'border-sky-500 ring-2 ring-sky-500/30'
                   : 'border-transparent'
@@ -207,7 +207,7 @@ export default function ImageUploader({
                   <button
                     type="button"
                     onClick={() => setImagePreview(img)}
-                    className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white transition-colors"
+                    className="p-1.5 bg-white/90 rounded text-warm-700 hover:bg-white transition-colors"
                     title="预览"
                   >
                     <ZoomIn className="w-4 h-4" />
@@ -218,7 +218,7 @@ export default function ImageUploader({
                     className={`px-2 py-1 text-xs rounded transition-colors ${
                       cover === img
                         ? 'bg-primary-500 text-white'
-                        : 'bg-white/90 text-gray-700 hover:bg-white'
+                        : 'bg-white/90 text-warm-700 hover:bg-white'
                     }`}
                     title="设为封面"
                   >
@@ -228,7 +228,7 @@ export default function ImageUploader({
                     type="button"
                     onClick={() => moveImage(index, 'up')}
                     disabled={index === 0}
-                    className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white disabled:opacity-30"
+                    className="p-1.5 bg-white/90 rounded text-warm-700 hover:bg-white disabled:opacity-30"
                     title="上移"
                   >
                     <ChevronUp className="w-4 h-4" />
@@ -237,7 +237,7 @@ export default function ImageUploader({
                     type="button"
                     onClick={() => moveImage(index, 'down')}
                     disabled={index === images.length - 1}
-                    className="p-1.5 bg-white/90 rounded text-gray-700 hover:bg-white disabled:opacity-30"
+                    className="p-1.5 bg-white/90 rounded text-warm-700 hover:bg-white disabled:opacity-30"
                     title="下移"
                   >
                     <ChevronDown className="w-4 h-4" />

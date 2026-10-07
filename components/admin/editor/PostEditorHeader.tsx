@@ -22,7 +22,7 @@ export default function PostEditorHeader({
       <div className="flex items-center gap-3">
         <Link
           href={backHref}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/80 px-3.5 py-2 text-sm text-travel-ink shadow-sm backdrop-blur-xl transition-all hover:border-travel-bloom/60 hover:text-travel-accent active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+          className="inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/80 px-3.5 py-2 text-sm text-travel-ink shadow-sm backdrop-blur-xl transition-all hover:border-travel-bloom/60 hover:text-travel-accent active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-warm-300"
         >
           <ArrowLeft className="h-4 w-4" />
           返回
@@ -35,7 +35,7 @@ export default function PostEditorHeader({
         <button
           type="button"
           onClick={onPreview}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/80 px-4 py-2 text-sm text-travel-ink shadow-sm backdrop-blur-xl transition-all hover:border-travel-mist hover:text-[#2E6E8E] active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+          className="inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/80 px-4 py-2 text-sm text-travel-ink shadow-sm backdrop-blur-xl transition-all hover:border-travel-mist hover:text-[#2E6E8E] active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-warm-300"
         >
           <Eye className="h-4 w-4" />
           预览

@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-[#3D4852] transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
+    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-travel-ink transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-shell-bg">
@@ -114,15 +114,17 @@ export default function AdminLoginPage() {
 
           <motion.form variants={item} onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">用户名</label>
+              <label htmlFor="admin-login-username" className="mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">用户名</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
                 <input
+                  id="admin-login-username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className={inputCls}
                   placeholder="请输入用户名"
+                  autoComplete="username"
                   required
                   autoFocus
                 />
@@ -130,15 +132,17 @@ export default function AdminLoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">密码</label>
+              <label htmlFor="admin-login-password" className="mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">密码</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
                 <input
+                  id="admin-login-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={inputCls}
                   placeholder="请输入密码"
+                  autoComplete="current-password"
                   required
                 />
                 <button

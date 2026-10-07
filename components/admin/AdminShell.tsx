@@ -144,7 +144,7 @@ export default function AdminShell({
           <BrandLogo size={36} />
           <div className="leading-tight">
             <p className="text-sm font-bold text-travel-inkStrong dark:text-white">行迹</p>
-            <p className="text-xs text-travel-ink/50 dark:text-gray-500">旅行记忆空间</p>
+            <p className="text-xs text-travel-ink/50 dark:text-warm-500">旅行记忆空间</p>
           </div>
         </div>
 
@@ -158,7 +158,7 @@ export default function AdminShell({
               {(username || '访').slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-travel-ink dark:text-gray-100">{username || '加载中...'}</p>
+              <p className="truncate text-sm font-medium text-travel-ink dark:text-warm-100">{username || '加载中...'}</p>
               <Link href="/" target="_blank" className="inline-flex items-center gap-1 text-xs text-travel-ink/50 hover:text-travel-accent transition-colors">
                 <ExternalLink className="h-3 w-3" /> 查看前台
               </Link>
@@ -190,7 +190,7 @@ export default function AdminShell({
               onClick={() => setOpen(true)}
               aria-label="打开菜单"
               aria-expanded={open}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-700 dark:text-gray-200 transition-all hover:bg-black/5 dark:hover:bg-white/10 active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-warm-700 dark:text-warm-200 transition-all hover:bg-black/5 dark:hover:bg-white/10 active:scale-95"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -226,7 +226,7 @@ export default function AdminShell({
                 type="button"
                 onClick={close}
                 aria-label="关闭菜单"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-warm-500 dark:text-warm-400 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -238,7 +238,7 @@ export default function AdminShell({
               <Link
                 href="/admin/settings"
                 onClick={close}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-travel-ink/80 dark:text-gray-200 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-travel-ink/80 dark:text-warm-200 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
               >
                 <Settings className="h-4 w-4" />
                 账号设置
@@ -261,7 +261,7 @@ export default function AdminShell({
 
 export function ShellLoader() {
   return (
-    <div className="flex min-h-[50vh] items-center justify-center text-gray-400">
+    <div className="flex min-h-[50vh] items-center justify-center text-warm-400">
       <Loader2 className="h-6 w-6 animate-spin" />
     </div>
   )

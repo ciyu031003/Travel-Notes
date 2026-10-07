@@ -88,14 +88,14 @@ export default function AdminAnniversariesPage() {
       <div className="mx-auto max-w-4xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-warm-500 dark:text-warm-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           返回后台
         </Link>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">纪念日管理</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-2xl font-bold text-warm-900 dark:text-white mb-1">纪念日管理</h1>
+        <p className="text-sm text-warm-500 dark:text-warm-400">
           记录第一次见面、第一次旅行、生日等重要日子
         </p>
       </div>
@@ -104,7 +104,7 @@ export default function AdminAnniversariesPage() {
         <AdminCard title="新增纪念日" icon={Plus}>
           <div className="grid md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-travel-ink dark:text-gray-300 mb-1">名称</label>
+              <label className="block text-sm font-medium text-travel-ink dark:text-warm-300 mb-1">名称</label>
               <AdminInput
                 type="text"
                 value={title}
@@ -113,7 +113,7 @@ export default function AdminAnniversariesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-travel-ink dark:text-gray-300 mb-1">日期</label>
+              <label className="block text-sm font-medium text-travel-ink dark:text-warm-300 mb-1">日期</label>
               <AdminInput
                 type="date"
                 value={date}
@@ -121,15 +121,15 @@ export default function AdminAnniversariesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-travel-ink dark:text-gray-300 mb-1">类型</label>
-              <label className="flex items-center gap-2 px-3 py-2.5 text-sm text-travel-ink dark:text-gray-300">
+              <label className="block text-sm font-medium text-travel-ink dark:text-warm-300 mb-1">类型</label>
+              <label className="flex items-center gap-2 px-3 py-2.5 text-sm text-travel-ink dark:text-warm-300">
                 <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} className="rounded" />
                 每年重复（周年纪念）
               </label>
             </div>
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-travel-ink dark:text-gray-300 mb-1">备注</label>
+            <label className="block text-sm font-medium text-travel-ink dark:text-warm-300 mb-1">备注</label>
             <AdminInput
               type="text"
               value={description}
@@ -151,7 +151,7 @@ export default function AdminAnniversariesPage() {
       </form>
 
       {loading ? (
-        <div className="py-16 text-center text-travel-ink/50 dark:text-gray-500">加载中...</div>
+        <div className="py-16 text-center text-travel-ink/50 dark:text-warm-500">加载中...</div>
       ) : items.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-8 text-center text-travel-ink/60 dark:border-shell-line dark:bg-white/5">还没有纪念日</div>
       ) : (
@@ -164,7 +164,7 @@ export default function AdminAnniversariesPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-travel-ink dark:text-gray-100">{item.title}</h3>
+                    <h3 className="font-semibold text-travel-ink dark:text-warm-100">{item.title}</h3>
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full ${
                         item.recurring
@@ -175,7 +175,7 @@ export default function AdminAnniversariesPage() {
                       {item.recurring ? '周年纪念' : '单次'}
                     </span>
                   </div>
-                  <p className="text-sm text-travel-ink/60 dark:text-gray-400 mt-0.5">
+                  <p className="text-sm text-travel-ink/60 dark:text-warm-400 mt-0.5">
                     {new Date(item.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
                     {item.description ? ` · ${item.description}` : ''}
                   </p>

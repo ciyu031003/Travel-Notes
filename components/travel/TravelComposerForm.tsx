@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, CalendarDays, Check, ChevronDown, Loader2, MapPin, Plus, X } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, Plus, X } from 'lucide-react'
+import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
 import DateRangePicker from './DateRangePicker'
 import { apiUrl } from '@/lib/api-base'
@@ -508,17 +509,17 @@ export default function TravelComposerForm({
             {!validation.canSubmit && validation.blocker && (
               <p className="mb-2 text-center text-[12px] text-[var(--m-faint)]">{validation.blocker}</p>
             )}
-            <button
+            {/* v4 M5 接入：页面主 CTA 收敛到统一 Button（lg=52px，与原 h-[52px] 等高） */}
+            <Button
               type="submit"
-              disabled={submitting || succeeded || !validation.canSubmit}
-              className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--m-accent)] text-[16px] font-semibold text-[var(--m-on-accent)] shadow-[var(--m-shadow-lg)] transition active:scale-[0.98] disabled:opacity-50"
+              block
+              size="lg"
+              icon={succeeded ? Check : undefined}
+              loading={submitting}
+              disabled={succeeded || !validation.canSubmit}
             >
-              {succeeded
-                ? <><Icon icon={Check} size="md" />已创建</>
-                : submitting
-                  ? <><Icon icon={Loader2} size="md" className="animate-spin" />正在创建…</>
-                  : '开始记录'}
-            </button>
+              {succeeded ? '已创建' : submitting ? '正在创建…' : '开始记录'}
+            </Button>
           </div>
         </form>
       </main>

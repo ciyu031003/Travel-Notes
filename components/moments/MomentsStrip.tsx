@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { SkeletonLines } from '@/components/mobile/Skeleton'
 import { apiUrl } from '@/lib/api-base'
 
 interface MomentItem {
@@ -26,13 +27,12 @@ function timeAgo(dateStr: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
+/* 骨架屏统一走 components/mobile/Skeleton（1.20.0）：
+   此前这里手写了一份带 dark: 对的 animate-pulse 版本，与移动端 shimmer 实现漂移 */
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-xl border border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-surface p-4">
-      <div className="h-3 w-full rounded bg-travel-line/70 dark:bg-shell-line" />
-      <div className="mt-2 h-3 w-4/5 rounded bg-travel-line/70 dark:bg-shell-line" />
-      <div className="mt-2 h-3 w-2/5 rounded bg-travel-line/70 dark:bg-shell-line" />
-      <div className="mt-4 h-2.5 w-1/4 rounded bg-travel-line/50 dark:bg-shell-line/60" />
+    <div aria-hidden="true" className="m-card p-4">
+      <SkeletonLines lines={4} />
     </div>
   )
 }
@@ -62,7 +62,7 @@ export default function MomentsStrip() {
       <div className="mx-auto max-w-7xl">
         <div className="rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="flex items-center gap-2.5 text-lg font-semibold text-[#3D4852] dark:text-shell-text">
+            <h2 className="flex items-center gap-2.5 text-lg font-semibold text-travel-ink dark:text-shell-text">
               <Icon icon={Sparkles} size="md" className="text-travel-accent dark:text-travel-bloom" />
               碎碎念
             </h2>
@@ -103,7 +103,7 @@ export default function MomentsStrip() {
                   href="/moments"
                   className="group block rounded-xl border border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-surface p-4 transition-all hover:border-travel-bloom/70 hover:shadow-md"
                 >
-                  <p className="text-sm leading-relaxed text-[#3D4852] dark:text-shell-text line-clamp-3 whitespace-pre-wrap break-words">
+                  <p className="text-sm leading-relaxed text-travel-ink dark:text-shell-text line-clamp-3 whitespace-pre-wrap break-words">
                     {moment.content}
                   </p>
                   <div className="mt-3 flex items-center gap-2">

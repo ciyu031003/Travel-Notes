@@ -362,7 +362,7 @@ export default function TravelDetailMobile({
             onClick={() => setViewer({ photos: allPhotos as ViewerPhoto[], index: 0 })}
             className="relative block h-48 w-full overflow-hidden bg-[var(--m-bg-soft)] text-left"
           >
-            <Image src={heroCover} alt="" fill sizes="100vw" className="object-cover" priority />
+            <Image src={heroCover} alt={travel.title} fill sizes="100vw" className="object-cover" priority />
             <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(26,16,9,0.72),rgba(26,16,9,0)_62%)]" />
             {/* 右上角：全屏查看（图片上一个明确的按钮，符合真机要求） */}
             <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[12px] font-medium text-white backdrop-blur-md">

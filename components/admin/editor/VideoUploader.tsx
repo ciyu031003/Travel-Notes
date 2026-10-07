@@ -115,12 +115,12 @@ export default function VideoUploader({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="block text-sm font-medium text-warm-700 dark:text-warm-300">
           旅行视频管理
         </label>
-        <span className="text-xs text-gray-500">{videos.length} 个视频</span>
+        <span className="text-xs text-warm-500">{videos.length} 个视频</span>
       </div>
 
       <div
@@ -128,7 +128,7 @@ export default function VideoUploader({
         className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
           videoUploading
             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-            : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+            : 'border-warm-300 dark:border-warm-600 hover:border-primary-400 hover:bg-warm-50 dark:hover:bg-warm-700/50'
         }`}
       >
         <input
@@ -146,22 +146,22 @@ export default function VideoUploader({
         {videoUploading ? (
           <div className="flex flex-col items-center gap-2">
             <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">{uploadState?.label || '视频上传中...'}</p>
-            <div className="w-56 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <p className="text-sm text-warm-500">{uploadState?.label || '视频上传中...'}</p>
+            <div className="w-56 h-1.5 rounded-full bg-warm-200 dark:bg-warm-700 overflow-hidden">
               <div
                 className="h-full rounded-full bg-primary-500 transition-all duration-300"
                 style={{ width: `${uploadState?.percent ?? 0}%` }}
               />
             </div>
-            <p className="text-xs text-gray-400">{uploadState?.percent ?? 0}% · 支持断点续传，中断后重新选择同一文件可续传</p>
+            <p className="text-xs text-warm-400">{uploadState?.percent ?? 0}% · 支持断点续传，中断后重新选择同一文件可续传</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <Upload className="w-10 h-10 text-gray-400" />
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <Upload className="w-10 h-10 text-warm-400" />
+            <p className="text-sm text-warm-600 dark:text-warm-300">
               点击上传视频文件
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-warm-400">
               支持 MP4 / WebM / MOV 等格式，单个最大 500MB · 分片断点续传 · 完成后自动转 720p 流畅版
             </p>
           </div>
@@ -177,11 +177,11 @@ export default function VideoUploader({
               onDragStart={() => handleVideoDragStart(index)}
               onDragEnd={handleVideoDragEnd}
               onDragOver={(e) => handleDragOverVideo(e, index)}
-              className={`group relative rounded-lg overflow-hidden border-2 transition-all bg-gray-900 ${
+              className={`group relative rounded-lg overflow-hidden border-2 transition-all bg-warm-900 ${
                 videoDraggedIndex === index ? 'opacity-50' : ''
               } cursor-move`}
             >
-              <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 relative">
+              <div className="aspect-video bg-gradient-to-br from-warm-800 to-warm-900 relative">
                 <video
                   src={video.url}
                   poster={video.thumbnail}
@@ -211,7 +211,7 @@ export default function VideoUploader({
                 <button
                   type="button"
                   onClick={() => setVideoPreview(video.url)}
-                  className="p-1.5 bg-white/80 rounded text-gray-700 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-1.5 bg-white/80 rounded text-warm-700 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
                   title="预览"
                 >
                   <Eye className="w-4 h-4" />
@@ -220,7 +220,7 @@ export default function VideoUploader({
                   type="button"
                   onClick={() => moveVideo(index, 'up')}
                   disabled={index === 0}
-                  className="p-1.5 bg-white/80 rounded text-gray-700 hover:bg-white disabled:opacity-30 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-1.5 bg-white/80 rounded text-warm-700 hover:bg-white disabled:opacity-30 opacity-0 group-hover:opacity-100 transition-opacity"
                   title="上移"
                 >
                   <ChevronUp className="w-4 h-4" />
@@ -229,7 +229,7 @@ export default function VideoUploader({
                   type="button"
                   onClick={() => moveVideo(index, 'down')}
                   disabled={index === videos.length - 1}
-                  className="p-1.5 bg-white/80 rounded text-gray-700 hover:bg-white disabled:opacity-30 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-1.5 bg-white/80 rounded text-warm-700 hover:bg-white disabled:opacity-30 opacity-0 group-hover:opacity-100 transition-opacity"
                   title="下移"
                 >
                   <ChevronDown className="w-4 h-4" />

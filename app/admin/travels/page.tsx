@@ -245,14 +245,14 @@ export default function AdminTravelsPage() {
       <div className="mx-auto max-w-6xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-warm-500 dark:text-warm-400 hover:text-travel-accent dark:hover:text-travel-accentSoft transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           返回后台
         </Link>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-travel-inkStrong dark:text-white mb-1">旅行规划</h1>
-        <p className="text-sm text-travel-ink/60 dark:text-gray-400">
+        <p className="text-sm text-travel-ink/60 dark:text-warm-400">
           管理一段旅行的天数、每日行程与花费
         </p>
       </div>
@@ -261,7 +261,7 @@ export default function AdminTravelsPage() {
         {/* 左列：旅行列表 */}
         <div>
           <form onSubmit={handleCreate} className="card p-5 mb-4">
-            <h2 className="text-base font-semibold text-travel-ink dark:text-gray-100 mb-3 flex items-center gap-2">
+            <h2 className="text-base font-semibold text-travel-ink dark:text-warm-100 mb-3 flex items-center gap-2">
               <Plus className="w-4 h-4 text-travel-accentSoft" />
               新建旅行
             </h2>
@@ -277,7 +277,7 @@ export default function AdminTravelsPage() {
               <AdminInput type="date" value={createEnd} onChange={(e) => setCreateEnd(e.target.value)} />
             </div>
             <div className="mb-2">
-              <span className="mb-1 block text-xs text-travel-ink/60 dark:text-gray-400">这次旅行是？</span>
+              <span className="mb-1 block text-xs text-travel-ink/60 dark:text-warm-400">这次旅行是？</span>
               <div className="flex flex-wrap gap-1.5">
                 {TRAVEL_TYPES.map((t) => (
                   <button
@@ -287,7 +287,7 @@ export default function AdminTravelsPage() {
                     className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
                       createTravelType === t.value
                         ? 'bg-travel-accent text-white'
-                        : 'bg-travel-dim/40 text-travel-ink/70 hover:bg-travel-dim/70 dark:bg-white/10 dark:text-gray-300'
+                        : 'bg-travel-dim/40 text-travel-ink/70 hover:bg-travel-dim/70 dark:bg-white/10 dark:text-warm-300'
                     }`}
                   >
                     {t.label}
@@ -296,8 +296,8 @@ export default function AdminTravelsPage() {
               </div>
             </div>
             <div className="mb-2">
-              <span className="mb-1 block text-xs text-travel-ink/60 dark:text-gray-400">
-                和谁一起去的？<span className="text-travel-ink/40 dark:text-gray-500">（可选，最多 {MAX_COMPANIONS} 人）</span>
+              <span className="mb-1 block text-xs text-travel-ink/60 dark:text-warm-400">
+                和谁一起去的？<span className="text-travel-ink/40 dark:text-warm-500">（可选，最多 {MAX_COMPANIONS} 人）</span>
               </span>
               <div className="flex gap-1.5">
                 <AdminInput
@@ -320,7 +320,7 @@ export default function AdminTravelsPage() {
                   type="button"
                   onClick={addCompanion}
                   disabled={!companionName.trim() || createCompanions.length >= MAX_COMPANIONS}
-                  className="shrink-0 rounded-lg border border-travel-line/70 px-2.5 py-1.5 text-xs font-medium text-travel-ink/70 transition hover:bg-travel-dim/50 disabled:opacity-40 dark:border-shell-line dark:text-gray-300"
+                  className="shrink-0 rounded-lg border border-travel-line/70 px-2.5 py-1.5 text-xs font-medium text-travel-ink/70 transition hover:bg-travel-dim/50 disabled:opacity-40 dark:border-shell-line dark:text-warm-300"
                 >
                   + 添加
                 </button>
@@ -330,15 +330,15 @@ export default function AdminTravelsPage() {
                   {createCompanions.map((c, i) => (
                     <span
                       key={`${c.name}-${i}`}
-                      className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/50 px-2.5 py-0.5 text-xs text-travel-ink dark:bg-white/10 dark:text-gray-200"
+                      className="inline-flex items-center gap-1 rounded-full bg-travel-sakura/50 px-2.5 py-0.5 text-xs text-travel-ink dark:bg-white/10 dark:text-warm-200"
                     >
                       {c.name}
-                      {c.relation ? <span className="text-travel-ink/50 dark:text-gray-400">· {c.relation}</span> : null}
+                      {c.relation ? <span className="text-travel-ink/50 dark:text-warm-400">· {c.relation}</span> : null}
                       <button
                         type="button"
                         onClick={() => setCreateCompanions(createCompanions.filter((_, j) => j !== i))}
                         aria-label={`移除 ${c.name}`}
-                        className="ml-0.5 rounded-full p-0.5 text-travel-ink/50 hover:text-travel-ink dark:text-gray-400"
+                        className="ml-0.5 rounded-full p-0.5 text-travel-ink/50 hover:text-travel-ink dark:text-warm-400"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -354,7 +354,7 @@ export default function AdminTravelsPage() {
           </form>
 
           {loading ? (
-            <div className="py-10 text-center text-travel-ink/50 dark:text-gray-500">加载中...</div>
+            <div className="py-10 text-center text-travel-ink/50 dark:text-warm-500">加载中...</div>
           ) : travels.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-6 text-center text-travel-ink/60 dark:border-shell-line dark:bg-white/5">还没有旅行规划</div>
           ) : (
@@ -371,7 +371,7 @@ export default function AdminTravelsPage() {
                   }`}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-travel-ink dark:text-gray-100 truncate">{t.title}</p>
+                    <p className="font-medium text-travel-ink dark:text-warm-100 truncate">{t.title}</p>
                     <p className="text-xs text-travel-ink/60">
                       {t.dayCount} 天 · 花费 ¥{t.expenseTotal.toFixed(0)}
                     </p>
@@ -392,7 +392,7 @@ export default function AdminTravelsPage() {
               <AdminCard className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-travel-ink dark:text-gray-100 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-travel-ink dark:text-warm-100 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-travel-accentSoft" />
                       {detail.title}
                     </h2>
@@ -408,7 +408,7 @@ export default function AdminTravelsPage() {
 
               {/* 天数 + 行程 */}
               <AdminCard className="p-5">
-                <h3 className="font-semibold text-travel-ink dark:text-gray-100 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-travel-ink dark:text-warm-100 mb-3 flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-travel-accentSoft" />
                   行程安排
                 </h3>
@@ -423,14 +423,14 @@ export default function AdminTravelsPage() {
                 ) : (
                   <div className="space-y-4">
                     {detail.days.map((day) => (
-                      <div key={day.id} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                      <div key={day.id} className="border border-warm-200 dark:border-warm-700 rounded-xl p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold text-travel-accent">
                               Day {day.sortOrder + 1}
                             </span>
-                            {day.date && <span className="text-xs text-gray-500">{day.date.slice(0, 10)}</span>}
-                            {day.title && <span className="text-sm text-gray-700 dark:text-gray-200">{day.title}</span>}
+                            {day.date && <span className="text-xs text-warm-500">{day.date.slice(0, 10)}</span>}
+                            {day.title && <span className="text-sm text-warm-700 dark:text-warm-200">{day.title}</span>}
                           </div>
                           <button type="button" onClick={() => handleDeleteDay(day.id)} className="p-1 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
                             <X className="w-4 h-4" />
@@ -441,12 +441,12 @@ export default function AdminTravelsPage() {
                           <ul className="space-y-1.5 mb-3">
                             {day.itinerary.map((item) => (
                               <li key={item.id} className="flex items-center gap-2 text-sm">
-                                <span className="inline-block w-16 text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-center">
+                                <span className="inline-block w-16 text-xs px-1.5 py-0.5 rounded bg-warm-100 dark:bg-warm-700 text-warm-500 dark:text-warm-300 text-center">
                                   {ITINERARY_LABELS[item.type] || item.type}
                                 </span>
-                                <span className="text-gray-700 dark:text-gray-200">{item.title}</span>
+                                <span className="text-warm-700 dark:text-warm-200">{item.title}</span>
                                 {item.startTime && (
-                                  <span className="text-xs text-gray-400">{item.startTime.slice(11, 16)}</span>
+                                  <span className="text-xs text-warm-400">{item.startTime.slice(11, 16)}</span>
                                 )}
                                 <button type="button" onClick={() => handleDeleteItinerary(item.id)} className="ml-auto p-0.5 text-red-400 hover:text-red-500">
                                   <X className="w-3.5 h-3.5" />
@@ -462,12 +462,12 @@ export default function AdminTravelsPage() {
                             value={itineraryDay === day.id ? itineraryTitle : ''}
                             onChange={(e) => { setItineraryTitle(e.target.value); setItineraryDay(day.id) }}
                             placeholder="添加行程，如：浅草寺"
-                            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="flex-1 px-3 py-1.5 text-sm border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white"
                           />
                           <select
                             value={itineraryDay === day.id ? itineraryType : 'SPOT'}
                             onChange={(e) => { setItineraryType(e.target.value); setItineraryDay(day.id) }}
-                            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="px-2 py-1.5 text-sm border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white"
                           >
                             {ITINERARY_TYPES.map((tp) => (
                               <option key={tp} value={tp}>{ITINERARY_LABELS[tp]}</option>
@@ -477,7 +477,7 @@ export default function AdminTravelsPage() {
                             type="time"
                             value={itineraryDay === day.id ? itineraryTime : ''}
                             onChange={(e) => { setItineraryTime(e.target.value); setItineraryDay(day.id) }}
-                            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="px-2 py-1.5 text-sm border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white"
                           />
                           <button type="button" onClick={handleAddItinerary} className="px-3 py-1.5 text-sm text-travel-accent hover:bg-travel-sakura/60 dark:hover:bg-travel-accentStrong/20 rounded-lg transition-colors">
                             添加
@@ -491,10 +491,10 @@ export default function AdminTravelsPage() {
 
               {/* 花费 */}
               <div className="card p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-warm-900 dark:text-warm-100 mb-3 flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-emerald-500" />
                   旅行花费
-                  <span className="ml-auto text-sm text-gray-500">合计 ¥{totalExpense.toFixed(2)}</span>
+                  <span className="ml-auto text-sm text-warm-500">合计 ¥{totalExpense.toFixed(2)}</span>
                 </h3>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <input
@@ -502,12 +502,12 @@ export default function AdminTravelsPage() {
                     value={expenseAmount}
                     onChange={(e) => setExpenseAmount(e.target.value)}
                     placeholder="金额"
-                    className="w-24 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-24 px-3 py-1.5 text-sm border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white"
                   />
                   <select
                     value={expenseCategory}
                     onChange={(e) => setExpenseCategory(e.target.value)}
-                    className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="px-2 py-1.5 text-sm border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white"
                   >
                     {EXPENSE_CATEGORIES.map((c) => (
                       <option key={c} value={c}>{EXPENSE_LABELS[c]}</option>
@@ -518,14 +518,14 @@ export default function AdminTravelsPage() {
                     value={expensePayer}
                     onChange={(e) => setExpensePayer(e.target.value)}
                     placeholder="付款人（可选）"
-                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="px-3 py-1.5 text-sm border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white"
                   />
                   <button type="button" onClick={handleAddExpense} className="px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors">
                     添加花费
                   </button>
                 </div>
                 {detail.expenses.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">还没有花费记录</p>
+                  <p className="text-sm text-warm-400 text-center py-4">还没有花费记录</p>
                 ) : (
                   <ul className="space-y-1.5">
                     {detail.expenses.map((e) => (
@@ -533,8 +533,8 @@ export default function AdminTravelsPage() {
                         <span className="inline-block w-14 text-xs px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 text-center">
                           {EXPENSE_LABELS[e.category] || e.category}
                         </span>
-                        <span className="font-medium text-gray-800 dark:text-gray-100">¥{e.amount.toFixed(2)}</span>
-                        {e.payer && <span className="text-xs text-gray-400">({e.payer})</span>}
+                        <span className="font-medium text-warm-800 dark:text-warm-100">¥{e.amount.toFixed(2)}</span>
+                        {e.payer && <span className="text-xs text-warm-400">({e.payer})</span>}
                         <button type="button" onClick={() => handleDeleteExpense(e.id)} className="ml-auto p-0.5 text-red-400 hover:text-red-500">
                           <X className="w-3.5 h-3.5" />
                         </button>

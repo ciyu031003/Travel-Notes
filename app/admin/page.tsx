@@ -197,7 +197,7 @@ export default function AdminDashboard() {
   })
 
   const glassInput =
-    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-[#3D4852] dark:text-shell-text placeholder-[#9A958F] shadow-sm backdrop-blur-xl transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50'
+    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-travel-ink dark:text-shell-text placeholder-[#9A958F] shadow-sm backdrop-blur-xl transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50'
 
   return (
     <AdminShell title="文章管理">
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom/60 dark:from-[#32261D] dark:to-[#4A3427]">
             <FileText className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
           </div>
-          <h3 className="text-lg font-semibold text-[#3D4852] dark:text-shell-text">
+          <h3 className="text-lg font-semibold text-travel-ink dark:text-shell-text">
             {posts.length === 0 ? '还没有文章' : '没有匹配的文章'}
           </h3>
           <p className="mt-1 text-sm text-travel-ink/70 dark:text-shell-muted">
@@ -358,12 +358,12 @@ export default function AdminDashboard() {
                   )}
 
                   {/* 状态与操作 */}
-                  <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3.5 dark:border-white/5">
+                  <div className="mt-4 flex items-center justify-between border-t border-warm-100 pt-3.5 dark:border-white/5">
                     <div className="flex items-center gap-1.5">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                         post.published
                           ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300'
-                          : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400'
+                          : 'bg-warm-100 text-warm-500 dark:bg-white/10 dark:text-warm-400'
                       }`}>
                         {post.published ? '已发布' : '草稿'}
                       </span>
@@ -374,7 +374,7 @@ export default function AdminDashboard() {
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-all active:scale-95 disabled:opacity-60 ${
                           post.isPublic
                             ? 'bg-sky-100 text-sky-600 hover:bg-sky-200 dark:bg-sky-500/15 dark:text-sky-300'
-                            : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-600 dark:bg-white/10 dark:text-gray-400'
+                            : 'bg-warm-100 text-warm-500 hover:bg-amber-100 hover:text-amber-600 dark:bg-white/10 dark:text-warm-400'
                         }`}
                       >
                         {togglingId === post.id ? (
@@ -415,7 +415,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* 旅行圈分享状态与操作（内容管理 2.0，与文章可见性解耦） */}
-                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-white/5">
+                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-warm-100 pt-3 dark:border-white/5">
                     <button
                       type="button"
                       onClick={() => openShare(post)}
@@ -471,7 +471,7 @@ export default function AdminDashboard() {
                 </div>
                 <h3 className="text-base font-semibold text-[#2D3842] dark:text-shell-text">删除这篇文章？</h3>
               </div>
-              <button onClick={() => setDeleteId(null)} className="rounded-lg p-1.5 text-gray-400 hover:bg-black/5 dark:hover:bg-white/10" aria-label="关闭">
+              <button onClick={() => setDeleteId(null)} className="rounded-lg p-1.5 text-warm-400 hover:bg-black/5 dark:hover:bg-white/10" aria-label="关闭">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -481,7 +481,7 @@ export default function AdminDashboard() {
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-travel-ink transition-all hover:bg-black/5 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                className="flex-1 rounded-xl border border-warm-200 py-2.5 text-sm font-medium text-travel-ink transition-all hover:bg-black/5 dark:border-white/10 dark:text-warm-300 dark:hover:bg-white/5"
               >
                 取消
               </button>
@@ -508,7 +508,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={closeShare}
-              className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-travel-ink transition-all hover:bg-black/5 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+              className="rounded-xl border border-warm-200 px-4 py-2.5 text-sm font-medium text-travel-ink transition-all hover:bg-black/5 dark:border-white/10 dark:text-warm-300 dark:hover:bg-white/5"
             >
               取消
             </button>

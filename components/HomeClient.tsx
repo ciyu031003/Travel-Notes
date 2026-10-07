@@ -12,15 +12,19 @@ import {
   Quote,
   CalendarDays,
   Image as ImageIcon,
+  Images,
   Smartphone,
   BookOpen,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { toast } from '@/lib/mobile/toast-store'
 import HeroFootprintMap from '@/components/home/HeroFootprintMap'
 import MomentsStrip from '@/components/moments/MomentsStrip'
 import { DanmakuSection, type DanmakuSectionHandle } from '@/components/home/DanmakuSection'
 import { apiUrl } from '@/lib/api-base'
+import { travelDetailHref } from '@/lib/routes'
 import { albumDeepLink } from '@/lib/album-deep-link'
 import IcpLicense from '@/components/IcpLicense'
 
@@ -43,10 +47,28 @@ interface AnniversaryItem {
   description: string | null
 }
 
+/** 进行中（未归档）的旅行：与 /api/home 的 draftTravels 同形 */
+interface DraftTravel {
+  id: number
+  slug: string
+  title: string
+  location: string | null
+  startDate: string | null
+  endDate: string | null
+  dayCount: number
+  photoCount: number
+  cover: string | null
+  createdAt: string | null
+}
+
 interface HomeClientProps {
   travelPosts: PostMeta[]
   provincesVisitedCount: number
   anniversaries?: AnniversaryItem[]
+  /** 进行中的旅行（桌面端此前没有该模块，双端信息架构对齐于 1.20.0） */
+  draftTravels?: DraftTravel[]
+  /** 归档后刷新首页数据（与 HomeMobile 的 onRefresh 同一来源） */
+  onRefresh?: () => void
 }
 
 /** 画册摘要（/api/travel-book 摘要口径，与移动端横滑条一致） */
@@ -104,6 +126,20 @@ function getDailyQuote(): string {
       (1000 * 60 * 60 * 24)
   )
   return dailyQuotes[dayOfYear % dailyQuotes.length]
+}
+
+/** 首页面板卡片（1.20.0）：此前同一串样式逐字复制 3 处，收敛为单一容器 */
+function HomePanel({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={
+        'rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8' +
+        (className ? ' ' + className : '')
+      }
+    >
+      {children}
+    </div>
+  )
 }
 
 function SectionTitle({
@@ -208,7 +244,7 @@ function HomeBooks() {
   return (
     <section className="px-3 pb-12 md:px-6 md:pb-16">
       <div className="mx-auto max-w-7xl">
-        <div className="rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
+        <HomePanel>
           <SectionTitle
             icon={BookOpen}
             action={
@@ -260,7 +296,7 @@ function HomeBooks() {
               </Link>
             ))}
           </div>
-        </div>
+        </HomePanel>
       </div>
     </section>
   )
@@ -270,9 +306,27 @@ export default function HomeClient({
   travelPosts,
   provincesVisitedCount,
   anniversaries = [],
+  draftTravels = [],
+  onRefresh,
 }: HomeClientProps) {
   const danmakuRef = useRef<DanmakuSectionHandle | null>(null)
   const quote = getDailyQuote()
+  const [confirmingId, setConfirmingId] = useState<number | null>(null)
+
+  /** 与 HomeMobile 同口径：归档后该旅行进入画册与最近旅行 */
+  const confirmDraft = async (id: number) => {
+    setConfirmingId(id)
+    try {
+      const res = await fetch(apiUrl(`/api/travels/${id}/confirm`), { method: 'POST', credentials: 'include' })
+      if (!res.ok) throw new Error('confirm failed')
+      toast.success('已归档，已加入旅行画册与最近旅行')
+      onRefresh?.()
+    } catch {
+      toast.error('归档失败，请重试')
+    } finally {
+      setConfirmingId(null)
+    }
+  }
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream text-travel-ink dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C] dark:text-shell-text">
@@ -379,7 +433,7 @@ export default function HomeClient({
         {/* 最近旅行 */}
         <section className="px-3 pb-12 md:px-6 md:pb-16">
           <div className="mx-auto max-w-7xl">
-            <div className="rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
+            <HomePanel>
               <SectionTitle
                 icon={MapPin}
                 action={
@@ -403,7 +457,6 @@ export default function HomeClient({
                   >
                     {post.cover ? (
                       <div className="relative h-40 overflow-hidden bg-travel-sakura/40 dark:bg-shell-surface">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <Image
                           src={post.cover}
                           alt={post.title}
@@ -441,9 +494,82 @@ export default function HomeClient({
                   </div>
                 )}
               </div>
-            </div>
+            </HomePanel>
           </div>
         </section>
+
+        {/* 进行中的旅行（1.20.0 桌面补齐：与移动端同模块，新建后在这里继续补照片/排行程/归档） */}
+        {draftTravels.length > 0 && (
+          <section className="px-3 pb-12 md:px-6 md:pb-16">
+            <div className="mx-auto max-w-7xl">
+              <HomePanel>
+                <SectionTitle icon={Sparkles}>进行中的旅行</SectionTitle>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {draftTravels.map((d) => {
+                    const href = travelDetailHref(d.slug)
+                    return (
+                      <article
+                        key={d.id}
+                        className="overflow-hidden rounded-xl border border-travel-line/60 dark:border-shell-line bg-white/80 dark:bg-shell-surface/80"
+                      >
+                        {d.cover ? (
+                          <div className="relative h-32 w-full bg-travel-sakura/40 dark:bg-shell-surface2">
+                            <Image src={d.cover} alt={d.title} fill sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+                          </div>
+                        ) : (
+                          <div className="flex h-20 w-full items-center justify-center bg-travel-sakura/30 text-travel-sand dark:bg-shell-surface2 dark:text-shell-faint">
+                            <Icon icon={Images} size="md" />
+                          </div>
+                        )}
+                        <div className="p-4">
+                          <div className="flex items-center gap-2">
+                            <Link href={href} className="min-w-0 flex-1 truncate text-sm font-semibold text-travel-inkStrong dark:text-shell-text">
+                              {d.title}
+                            </Link>
+                            <span className="shrink-0 rounded-full bg-travel-accentSoft px-2 py-0.5 text-[11px] font-medium text-travel-accentStrong dark:bg-travel-bloom/15 dark:text-travel-bloom">
+                              进行中
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-travel-ink/70 dark:text-shell-muted">
+                            {d.location || '还没填目的地'} · {d.dayCount} 天 · 已有 {d.photoCount} 张照片
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Link
+                              href={href + '#album'}
+                              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-travel-accentSoft px-3 text-xs font-semibold text-travel-accentStrong transition-colors hover:bg-travel-accent/20 dark:bg-travel-bloom/15 dark:text-travel-bloom"
+                            >
+                              <Icon icon={Images} size="sm" />
+                              添加照片
+                            </Link>
+                            <Link
+                              href={href + '#itinerary'}
+                              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-travel-accentSoft px-3 text-xs font-semibold text-travel-accentStrong transition-colors hover:bg-travel-accent/20 dark:bg-travel-bloom/15 dark:text-travel-bloom"
+                            >
+                              <Icon icon={CalendarDays} size="sm" />
+                              安排行程
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => void confirmDraft(d.id)}
+                              disabled={confirmingId === d.id}
+                              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full bg-travel-accent px-3.5 text-xs font-semibold text-white transition-colors hover:bg-travel-accentStrong disabled:opacity-60"
+                            >
+                              <Icon icon={Sparkles} size="sm" />
+                              {confirmingId === d.id ? '归档中…' : '完成并归档'}
+                            </button>
+                          </div>
+                          <p className="mt-2 text-[11px] text-travel-sand dark:text-shell-faint">
+                            归档后会出现在旅行画册与最近旅行里
+                          </p>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              </HomePanel>
+            </div>
+          </section>
+        )}
 
         {/* 旅行画册 · 每个城市一本 */}
         <HomeBooks />
@@ -455,7 +581,7 @@ export default function HomeClient({
         {anniversaries.length > 0 && (
           <section className="px-3 pb-12 md:px-6 md:pb-16">
             <div className="mx-auto max-w-7xl">
-              <div className="rounded-2xl border border-travel-line/70 dark:border-shell-line bg-white/85 dark:bg-shell-surface/90 p-6 shadow-[0_10px_28px_-12px_rgba(90,102,112,0.18)] md:p-8">
+              <HomePanel>
                 <SectionTitle icon={CalendarDays}>重要日子</SectionTitle>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {anniversaries.map((a) => {
@@ -485,7 +611,7 @@ export default function HomeClient({
                     )
                   })}
                 </div>
-              </div>
+              </HomePanel>
             </div>
           </section>
         )}

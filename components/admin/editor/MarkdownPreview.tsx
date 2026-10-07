@@ -53,23 +53,23 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
   }, [content])
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
+      <div className="text-sm font-medium text-warm-700 dark:text-warm-300 mb-4">
         实时预览
         {loading && (
-          <span className="ml-2 text-xs text-gray-500">(渲染中...)</span>
+          <span className="ml-2 text-xs text-warm-500">(渲染中...)</span>
         )}
       </div>
       <div className="prose prose-lg dark:prose-invert max-w-none">
         {loading && !html ? (
-          <div className="text-gray-400 text-center py-8">正在渲染预览...</div>
+          <div className="text-warm-400 text-center py-8">正在渲染预览...</div>
         ) : html ? (
           <>
             <div dangerouslySetInnerHTML={{ __html: html }} />
             <MermaidRenderer />
           </>
         ) : (
-          <div className="text-gray-400 text-center py-8">暂无内容</div>
+          <div className="text-warm-400 text-center py-8">暂无内容</div>
         )}
       </div>
     </div>

@@ -62,6 +62,8 @@ export default function HomePage() {
           travelPosts={data.travelPosts as never[]}
           provincesVisitedCount={data.provincesVisitedCount}
           anniversaries={data.anniversaries as never[]}
+          draftTravels={data.draftTravels ?? []}
+          onRefresh={reload}
         />
       </div>
       <div className="md:hidden">
