@@ -30,7 +30,9 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    // 生产移除 'unsafe-eval'：React 19 / Next 15 / mermaid / katex 运行期均不需要 eval，
+    // 保留会明显削弱 CSP 防线；开发模式 HMR（react-refresh）依赖 eval，仅开发保留。
+    isProd ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https: http:",
     "media-src 'self' blob: data: https:",
@@ -66,7 +68,17 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 /**
  * 移动端本地壳（跨域）访问服务器 API：对允许的来源回显 Origin + 允许携带凭据。
  * App 壳 origin 通常是 http://localhost / capacitor://localhost，故放行 localhost 与站点域名。
+ * 允许的站点域名收口在 CORS_ALLOWED_HOSTNAMES（逗号分隔，1.19.0 起不再硬编码，
+ * 默认值保留历史域名与服务器 IP 以兼容存量部署；换域名/换 IP 只改环境变量）。
  */
+function corsAllowedHostnames(): Set<string> {
+  const extra = (process.env.CORS_ALLOWED_HOSTNAMES || 'travel-notes.yuanabd.cn,106.55.2.197')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  return new Set(['localhost', '127.0.0.1', ...extra])
+}
+
 function applyCorsHeaders(response: NextResponse, request: NextRequest): NextResponse {
   const origin = request.headers.get('origin')
   if (!origin) return response
@@ -76,8 +88,7 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest): NextRes
   } catch {
     return response
   }
-  const allowed = new Set(['localhost', '127.0.0.1', 'travel-notes.yuanabd.cn', '106.55.2.197'])
-  if (hostname && allowed.has(hostname)) {
+  if (hostname && corsAllowedHostnames().has(hostname)) {
     response.headers.set('Access-Control-Allow-Origin', origin)
     response.headers.set('Access-Control-Allow-Credentials', 'true')
     response.headers.set('Vary', 'Origin')
