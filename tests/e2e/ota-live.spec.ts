@@ -7,8 +7,8 @@ import { test, expect } from '@playwright/test'
  * 这组**故意不注入任何数据**，直接打生产接口，验证「真机装旧版本壳时，
  * 打开 App 会看到线上版本的更新提示，且下载地址就是那个固定 APK 路径」。
  *
- * 原生壳用 addInitScript 模拟：isNativePlatform() 只看 window.Capacitor，
- * 因此注入 isNativePlatform: () => true 即可让 OTA 检查逻辑真实执行。
+ * 原生壳用 addInitScript 模拟：@capacitor/core 会根据 androidBridge 判定平台，
+ * 因此需要同时注入 androidBridge、PluginHeaders 和原生 promise 桥。
  */
 
 const PROD_API = 'https://travel-notes.yuanabd.cn'
@@ -25,8 +25,12 @@ const VERSION_RE = /^\d+\.\d+\.\d+$/
  * 「模拟旧版本壳」那条用例要求本地构建的 NEXT_PUBLIC_APP_VERSION 低于线上版本，
  * 否则 isNewerVersion(built, remote) 为 false，提示本就不该出现。
  * 因此默认跳过，由显式环境变量启用：
- *   OTA_LIVE=1 NEXT_PUBLIC_APP_VERSION=1.7.0 NEXT_PUBLIC_APP_BUILD_NUMBER=8 \
+ *   OTA_LIVE=1 NEXT_PUBLIC_APP_VERSION=1.21.0 NEXT_PUBLIC_APP_BUILD_NUMBER=40 \
+ *     NEXT_PUBLIC_API_BASE=https://travel-notes.yuanabd.cn \
  *     npx playwright test tests/e2e/ota-live.spec.ts
+ *
+ * NEXT_PUBLIC_API_BASE 必须指向生产：否则页面会请求本地同版本 /api/version，
+ * 旧版本壳自然判不出更新，用例会以「没有提示」这种误导性的方式失败。
  */
 const LOWER_SHELL = process.env.OTA_LIVE === '1'
 
@@ -51,19 +55,44 @@ test('生产 /api/version 返回可用的版本信息，且下载地址可用', 
 test('模拟原生壳旧版本：App 内出现 OTA 更新提示，下载地址指向新版 APK', async ({ page }) => {
   test.skip(!LOWER_SHELL, '需以 OTA_LIVE=1 + 低版本 NEXT_PUBLIC_APP_VERSION 构建后运行')
 
-  // 模拟 Capacitor 原生壳 + 拦截 window.open 以捕获下载动作
+  // 模拟 Capacitor Android 原生壳，并提供 AppUpdater 原生桥，捕获 OTA 下载调用。
+  // 只改 window.Capacitor 不够：@capacitor/core 初始化时会重算 isNativePlatform()，
+  // 必须同时提供 androidBridge 才会被识别为 android。
   await page.addInitScript(() => {
-    ;(window as unknown as { Capacitor?: unknown }).Capacitor = {
-      isNativePlatform: () => true,
-      getPlatform: () => 'android',
+    const nativeWindow = window as unknown as {
+      androidBridge?: unknown
+      __downloadOptions?: { url?: string; fileName?: string }
+      Capacitor?: {
+        PluginHeaders?: unknown[]
+        nativePromise?: (plugin: string, method: string, options?: unknown) => Promise<unknown>
+        nativeCallback?: (plugin: string, method: string, options: unknown, callback: unknown) => string
+      }
     }
-    ;(window as unknown as { __opened: string[] }).__opened = []
-    const origOpen = window.open.bind(window)
-    window.open = ((url?: string | URL, target?: string, features?: string) => {
-      ;(window as unknown as { __opened: string[] }).__opened.push(String(url))
-      if (target === '_system') return null
-      return origOpen(url as string, target, features)
-    }) as typeof window.open
+    nativeWindow.androidBridge = {}
+    nativeWindow.Capacitor = {
+      PluginHeaders: [
+        {
+          name: 'AppUpdater',
+          methods: [
+            { name: 'canInstall', rtype: 'promise' },
+            { name: 'openInstallSettings', rtype: 'promise' },
+            { name: 'downloadAndInstall', rtype: 'promise' },
+            { name: 'installDownloaded', rtype: 'promise' },
+            { name: 'addListener', rtype: 'promise' },
+          ],
+        },
+      ],
+      nativePromise: async (_plugin, method, options) => {
+        if (method === 'canInstall') return { allowed: true, sdkInt: 35 }
+        if (method === 'downloadAndInstall') {
+          nativeWindow.__downloadOptions = options as { url?: string; fileName?: string }
+          return { started: true }
+        }
+        if (method === 'addListener') return { remove: async () => {} }
+        return {}
+      },
+      nativeCallback: () => '',
+    }
   })
 
   await page.goto('/')
@@ -76,15 +105,17 @@ test('模拟原生壳旧版本：App 内出现 OTA 更新提示，下载地址�
   await expect(page.getByText(new RegExp(`v${remote.version.replace(/\./g, '\\.')}`)).first()).toBeVisible({
     timeout: 20_000,
   })
-  // changelog 来自线上 /api/version
-  await expect(page.getByText(/旅行画册 2\.0/).first()).toBeVisible({ timeout: 20_000 })
+  // changelog 来自线上 /api/version，避免每次发版都同步维护测试里的文案副本
+  await expect(page.getByText(remote.changelog).first()).toBeVisible({ timeout: 20_000 })
 
   // 点击「立即更新」→ window.open 应拿到新版 APK 地址
   const updateBtn = page.getByRole('button', { name: '立即更新' })
   await expect(updateBtn).toBeVisible()
   await updateBtn.click()
 
-  const opened = await page.evaluate(() => (window as unknown as { __opened: string[] }).__opened)
-  expect(opened.length, 'window.open 应被调用').toBeGreaterThan(0)
-  expect(opened[0]).toBe(EXPECTED_APK)
+  const downloadOptions = await page.evaluate(
+    () => (window as unknown as { __downloadOptions?: { url?: string; fileName?: string } }).__downloadOptions
+  )
+  expect(downloadOptions?.url, '应调用 AppUpdater 原生下载桥').toBe(EXPECTED_APK)
+  expect(downloadOptions?.fileName).toBe('tiantu-update.apk')
 })
