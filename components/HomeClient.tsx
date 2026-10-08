@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -27,6 +27,7 @@ import { apiUrl } from '@/lib/api-base'
 import { travelDetailHref } from '@/lib/routes'
 import { albumDeepLink } from '@/lib/album-deep-link'
 import IcpLicense from '@/components/IcpLicense'
+import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 
 interface PostMeta {
   slug: string
@@ -69,17 +70,8 @@ interface HomeClientProps {
   draftTravels?: DraftTravel[]
   /** 归档后刷新首页数据（与 HomeMobile 的 onRefresh 同一来源） */
   onRefresh?: () => void
-}
-
-/** 画册摘要（/api/travel-book 摘要口径，与移动端横滑条一致） */
-interface BookSummaryMeta {
-  bookKey: string
-  title: string
-  location: string | null
-  startDate: string | null
-  coverThumb: string | null
-  dayCount: number
-  photoCount: number
+  books?: HomeBookSummary[]
+  recentMoments?: HomeMoment[]
 }
 
 function daysUntil(date: string, recurring: boolean): number {
@@ -223,23 +215,9 @@ function FeatureCard({
 }
 
 /** 首页画册目录（桌面版）：每个城市一本画册，摘要接口取前 8 本，点开进 /album 阅读 */
-function HomeBooks() {
-  const [books, setBooks] = useState<BookSummaryMeta[]>([])
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(apiUrl('/api/travel-book'), { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (!cancelled && Array.isArray(json?.books)) setBooks(json.books.slice(0, 8))
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  if (books.length === 0) return null
+function HomeBooks({ books }: { books: HomeBookSummary[] }) {
+  const visibleBooks = books.slice(0, 8)
+  if (visibleBooks.length === 0) return null
 
   return (
     <section className="px-3 pb-12 md:px-6 md:pb-16">
@@ -261,7 +239,7 @@ function HomeBooks() {
           </SectionTitle>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-5">
-            {books.map((book, i) => (
+            {visibleBooks.map((book, i) => (
               <Link
                 key={book.bookKey}
                 href={albumDeepLink(book.bookKey)}
@@ -307,6 +285,8 @@ export default function HomeClient({
   provincesVisitedCount,
   anniversaries = [],
   draftTravels = [],
+  books = [],
+  recentMoments = [],
   onRefresh,
 }: HomeClientProps) {
   const danmakuRef = useRef<DanmakuSectionHandle | null>(null)
@@ -572,10 +552,10 @@ export default function HomeClient({
         )}
 
         {/* 旅行画册 · 每个城市一本 */}
-        <HomeBooks />
+        <HomeBooks books={books} />
 
         {/* 碎碎念 */}
-        <MomentsStrip />
+        <MomentsStrip moments={recentMoments} />
 
         {/* 纪念日 */}
         {anniversaries.length > 0 && (

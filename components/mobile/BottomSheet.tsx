@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { cn } from '@/lib/utils'
+import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/motion'
 
 /**
  * 底部抽屉 2.0（iOS 手感）：
@@ -72,7 +73,7 @@ export function BottomSheet({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
+              transition={MOBILE_OVERLAY_TRANSITION}
             />
             <motion.div
               role="dialog"
@@ -82,7 +83,7 @@ export function BottomSheet({
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 420, damping: 44 }}
+              transition={MOBILE_PANEL_SPRING}
               drag={dismissible ? 'y' : false}
               dragListener={false}
               dragControls={dragControls}

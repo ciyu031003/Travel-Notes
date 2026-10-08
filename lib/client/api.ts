@@ -14,6 +14,9 @@ export interface ApiFetchOptions {
   /** 浏览器内存缓存时长（毫秒）；默认 0 = 不缓存 */
   ttlMs?: number
   signal?: AbortSignal
+  /** 显式重载时跳过内存缓存，并转发给 fetch 的 HTTP 缓存策略 */
+  bypassMemoryCache?: boolean
+  cache?: RequestCache
 }
 
 export class ApiError extends Error {
@@ -57,7 +60,7 @@ function extractError(json: unknown): string | null {
 export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions = {}): Promise<T> {
   const key = path
 
-  const cached = memoryCache.get(key)
+  const cached = opts.bypassMemoryCache ? undefined : memoryCache.get(key)
   if (cached && cached.expireAt > Date.now()) {
     return cached.value as T
   }
@@ -75,7 +78,12 @@ export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions 
     // 既不抛错也没有数据，resolve(null)。消费方（useApi）因此得到
     // data=null / error='' / loading=false，页面条件 `loading || !profile` 恒真，
     // 表现为「一直转圈，只有登录后才显示」——真机上复现过的 bug。
-    const res = await fetch(path, { credentials: 'include', signal: opts.signal, redirect: 'manual' })
+    const res = await fetch(path, {
+      credentials: 'include',
+      signal: opts.signal,
+      redirect: 'manual',
+      cache: opts.cache,
+    })
 
     // 被重定向（同源 3xx，或跨源 opaqueredirect：type='opaqueredirect' 且 status=0）
     // 一律视为「未登录/会话失效」，交给消费方走登录引导。

@@ -12,6 +12,7 @@ import TravelImageCarousel from '@/components/TravelImageCarousel'
 import TravelInfoPanel from '@/components/TravelInfoPanel'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 
 // v3.1 M3-D2：ChinaMap 重组件按需加载（首屏不打包）
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
@@ -37,17 +38,8 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const [anniversaryStart, setAnniversaryStart] = useState<string | undefined>(undefined)
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useIsMobile() === true
   const visiblePosts = showAll ? posts : posts.slice(0, 6)
-
-  // 移动端默认收起左右面板，避免遮挡 40vh 小地图（桌面保持默认展开）
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const update = () => setIsMobile(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
 
   useEffect(() => {
     if (isMobile) {

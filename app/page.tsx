@@ -5,6 +5,8 @@ import HomeMobile, { HomeMobileError, HomeMobileLoading } from '@/components/Hom
 import AsyncState from '@/components/AsyncState'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
+import { useIsMobile } from '@/hooks/use-is-mobile'
+import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 
 interface DraftTravel {
   id: number
@@ -25,56 +27,51 @@ interface HomeData {
   draftTravels?: DraftTravel[]
   anniversaries: unknown[]
   provincesVisitedCount: number
+  books?: HomeBookSummary[]
+  recentMoments?: HomeMoment[]
 }
 
 export default function HomePage() {
   // 阶段 A · A2：统一取数层（去重/取消/统一错误），服务端 Cache-Control 兜底浏览器缓存
   const { data, error, loading, reload } = useApi<HomeData>(apiUrl('/api/home'))
+  const isMobile = useIsMobile()
 
   if (error) {
-    return (
-      <>
-        <div className="hidden md:block">
-          <AsyncState variant="error" message={error} title="首页加载失败" />
-        </div>
-        <div className="md:hidden">
-          <HomeMobileError message={error} onRetry={reload} />
-        </div>
-      </>
+    if (isMobile === null) {
+      return <AsyncState variant="error" message={error} title="首页加载失败" />
+    }
+    return isMobile ? (
+      <HomeMobileError message={error} onRetry={reload} />
+    ) : (
+      <AsyncState variant="error" message={error} title="首页加载失败" />
     )
   }
-  if (loading || !data) {
-    return (
-      <>
-        <div className="hidden md:block">
-          <AsyncState variant="loading" message="正在翻开你的旅行记忆…" />
-        </div>
-        <div className="md:hidden">
-          <HomeMobileLoading />
-        </div>
-      </>
+  if (loading || !data || isMobile === null) {
+    return isMobile === true ? (
+      <HomeMobileLoading />
+    ) : (
+      <AsyncState variant="loading" message="正在翻开你的旅行记忆…" />
     )
   }
-  return (
-    <>
-      <div className="hidden md:block">
-        <HomeClient
-          travelPosts={data.travelPosts as never[]}
-          provincesVisitedCount={data.provincesVisitedCount}
-          anniversaries={data.anniversaries as never[]}
-          draftTravels={data.draftTravels ?? []}
-          onRefresh={reload}
-        />
-      </div>
-      <div className="md:hidden">
-        <HomeMobile
-          travelPosts={data.travelPosts as never[]}
-          draftTravels={data.draftTravels ?? []}
-          provincesVisitedCount={data.provincesVisitedCount}
-          anniversaries={data.anniversaries as never[]}
-          onRefresh={reload}
-        />
-      </div>
-    </>
+  return isMobile ? (
+    <HomeMobile
+      travelPosts={data.travelPosts as never[]}
+      draftTravels={data.draftTravels ?? []}
+      provincesVisitedCount={data.provincesVisitedCount}
+      anniversaries={data.anniversaries as never[]}
+      books={data.books ?? []}
+      recentMoments={data.recentMoments ?? []}
+      onRefresh={reload}
+    />
+  ) : (
+    <HomeClient
+      travelPosts={data.travelPosts as never[]}
+      provincesVisitedCount={data.provincesVisitedCount}
+      anniversaries={data.anniversaries as never[]}
+      draftTravels={data.draftTravels ?? []}
+      books={data.books ?? []}
+      recentMoments={data.recentMoments ?? []}
+      onRefresh={reload}
+    />
   )
 }

@@ -5,6 +5,8 @@ import { listAnniversaries } from '@/lib/modules/anniversary/anniversary.service
 import { getCurrentUserId } from '@/lib/current-user'
 import { applyCacheControl } from '@/lib/http-cache'
 import { listTravels } from '@/lib/modules/travel/travel.service'
+import { listTravelBookSummaries } from '@/lib/modules/album/travel-book.service'
+import { getMomentService } from '@/lib/container'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,10 +25,16 @@ export async function GET(_request: NextRequest) {
   try {
     const userId = await getCurrentUserId()
     const postService = getPostService()
-    const [legacyPosts, anniversaries, travels] = await Promise.all([
+    const [legacyPosts, anniversaries, travels, books, recentMoments] = await Promise.all([
       postService.getPostsHybrid('travel', userId),
       listAnniversaries(userId),
       listTravels(userId).catch(() => []),
+      listTravelBookSummaries(userId)
+        .then((items) => items.slice(0, 8))
+        .catch(() => []),
+      getMomentService()
+        .getRecentMoments(3, userId)
+        .catch(() => []),
     ])
 
     const confirmed = travels.filter((t) => t.confirmedAt)
@@ -77,6 +85,8 @@ export async function GET(_request: NextRequest) {
       draftTravels,
       anniversaries,
       provincesVisitedCount: provincesVisited.size,
+      books,
+      recentMoments,
     })
     return applyCacheControl(res, 'user', !!userId)
   } catch (error) {

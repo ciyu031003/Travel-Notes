@@ -19,6 +19,7 @@ import { TravelTypePill } from '@/components/mobile/Pills'
 import { Icon } from '@/components/mobile/Icon'
 import { IconButton } from '@/components/mobile/IconButton'
 import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import { hapticLight } from '@/lib/mobile/haptics'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalTravelBySlug } from '@/lib/modules/offline/travel-read'
@@ -34,19 +35,6 @@ import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/github-dark.css'
 
 const VideoPlayer = dynamicImport(() => import('@/components/VideoPlayer'))
-
-/** 断点与 Tailwind 的 md（768px）对齐：<768 视为移动端 */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const update = () => setIsMobile(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
-  return isMobile
-}
 
 interface LegacyDetail {
   id: number
@@ -228,7 +216,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
    * 桌面分支的 TravelTimeline 会在手机上空跑一次时间线请求。
    * 断点与 Tailwind 的 md 对齐（768px），与 TravelClient 的既有判断同口径。
    */
-  const isMobile = useIsMobile()
+  const isMobile = useIsMobile() === true
 
   /**
    * 保存后：标题变化会连带 slug 变化（服务端重算），此时必须换地址再整页重载，

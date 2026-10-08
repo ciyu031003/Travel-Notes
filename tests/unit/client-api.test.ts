@@ -76,4 +76,23 @@ describe('apiFetch（阶段 A · A2 统一取数层）', () => {
     expect(init.credentials).toBe('include')
     expect(init.signal).toBe(ctrl.signal)
   })
+
+  it('explicit reload bypasses memory cache and HTTP cache', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ success: true, data: 'v1' }))
+      .mockResolvedValueOnce(jsonResponse({ success: true, data: 'v2' }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await apiFetch('/api/reload', { ttlMs: 5000 })).toBe('v1')
+    expect(
+      await apiFetch('/api/reload', {
+        ttlMs: 5000,
+        bypassMemoryCache: true,
+        cache: 'no-store',
+      }),
+    ).toBe('v2')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ cache: 'no-store' })
+  })
 })

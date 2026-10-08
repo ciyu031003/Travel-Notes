@@ -1,18 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
-import { SkeletonLines } from '@/components/mobile/Skeleton'
-import { apiUrl } from '@/lib/api-base'
-
-interface MomentItem {
-  id: number
-  content: string
-  tags: string[] | null
-  createdAt: string
-}
+import type { HomeMoment } from '@/lib/home/types'
 
 function timeAgo(dateStr: string): string {
   const d = new Date(dateStr)
@@ -27,36 +18,7 @@ function timeAgo(dateStr: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
-/* 骨架屏统一走 components/mobile/Skeleton（1.20.0）：
-   此前这里手写了一份带 dark: 对的 animate-pulse 版本，与移动端 shimmer 实现漂移 */
-function SkeletonCard() {
-  return (
-    <div aria-hidden="true" className="m-card p-4">
-      <SkeletonLines lines={4} />
-    </div>
-  )
-}
-
-export default function MomentsStrip() {
-  const [moments, setMoments] = useState<MomentItem[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(apiUrl('/api/moments?page=1&pageSize=3'), { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (!cancelled && json?.data?.data) setMoments(json.data.data)
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
+export default function MomentsStrip({ moments = [] }: { moments?: HomeMoment[] }) {
   return (
     <section className="px-3 pb-12 md:px-6 md:pb-16">
       <div className="mx-auto max-w-7xl">
@@ -75,13 +37,7 @@ export default function MomentsStrip() {
             </Link>
           </div>
 
-          {loading ? (
-            <div className="grid gap-3 md:grid-cols-3">
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </div>
-          ) : moments.length === 0 ? (
+          {moments.length === 0 ? (
             <div className="py-10 text-center">
               <Icon icon={Sparkles} size="lg" tone="accent" className="mx-auto" />
               <p className="mt-3 text-sm text-travel-ink dark:text-shell-muted">还没有碎碎念，来写第一条吧</p>

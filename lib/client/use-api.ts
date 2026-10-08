@@ -28,7 +28,12 @@ export function useApi<T = unknown>(path: string, opts: { ttlMs?: number } = {})
     let alive = true
 
     setLoading(true)
-    apiFetch<T>(path, { ttlMs: opts.ttlMs, signal: ctrl.signal })
+    apiFetch<T>(path, {
+      ttlMs: opts.ttlMs,
+      signal: ctrl.signal,
+      bypassMemoryCache: version > 0,
+      cache: version > 0 ? 'no-store' : 'default',
+    })
       .then((d) => {
         if (alive) {
           setData(d)

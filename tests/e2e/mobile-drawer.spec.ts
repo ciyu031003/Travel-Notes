@@ -33,6 +33,8 @@ test('移动端首页状态栏安全区与功能抽屉契约', async ({ page }) 
   const dialog = page.getByRole('dialog', { name: '功能菜单' })
   await expect(dialog).toBeVisible()
   await expect(dialog.locator('[data-icp-license]')).toBeVisible()
+  await expect(dialog.getByRole('link', { name: '我的旅行' })).toHaveCount(0)
+  await expect(dialog.getByRole('link', { name: '旅行圈' })).toHaveCount(0)
 
   await expect
     .poll(() =>

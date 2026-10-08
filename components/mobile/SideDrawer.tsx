@@ -7,6 +7,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { cn } from '@/lib/utils'
+import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/motion'
 import { Icon } from './Icon'
 import { IconButton } from './IconButton'
 
@@ -134,7 +135,7 @@ export function SideDrawer({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              transition={MOBILE_OVERLAY_TRANSITION}
             />
             <motion.aside
               ref={panelRef}
@@ -146,7 +147,7 @@ export function SideDrawer({
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', stiffness: 420, damping: 44 }}
+              transition={MOBILE_PANEL_SPRING}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={{ left: 0, right: 0.55 }}

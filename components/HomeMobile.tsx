@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import dynamicImport from 'next/dynamic'
@@ -15,11 +15,9 @@ import {
   PenLine,
   WifiOff,
   Menu,
-  Route,
   NotebookPen,
   ChartColumn,
   Bookmark,
-  Compass,
   Settings,
 } from 'lucide-react'
 import { travelDetailHref } from '@/lib/routes'
@@ -36,6 +34,7 @@ import { IconButton } from '@/components/mobile/IconButton'
 import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDrawer'
 import { toast } from '@/lib/mobile/toast-store'
 import IcpLicense from '@/components/IcpLicense'
+import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 
 /**
  * 首页 Hero 足迹地图：懒加载。
@@ -45,7 +44,7 @@ import IcpLicense from '@/components/IcpLicense'
  */
 const HeroFootprintMapLazy = dynamicImport(() => import('@/components/home/HeroFootprintMap'), {
   ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse" />,
+  loading: () => <Skeleton className="h-full w-full" />,
 })
 
 interface PostMeta {
@@ -65,24 +64,6 @@ interface AnniversaryItem {
   date: string
   recurring: boolean
   description: string | null
-}
-
-interface MomentItem {
-  id: number
-  content: string
-  tags: string[] | null
-  createdAt: string
-}
-
-/** 画册摘要（/api/travel-book 摘要口径，不含章节明细） */
-interface BookSummaryMeta {
-  bookKey: string
-  title: string
-  location: string | null
-  startDate: string | null
-  coverThumb: string | null
-  dayCount: number
-  photoCount: number
 }
 
 const DAILY_QUOTES = [
@@ -130,27 +111,9 @@ function formatAnniversaryDate(date: string): string {
 }
 
 /** 首页画册横滑：摘要接口取前 6 本，点开进 /album 阅读（M3-1：给最重要的内容一个首页入口） */
-function MobileBooks() {
-  const [books, setBooks] = useState<BookSummaryMeta[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(apiUrl('/api/travel-book'), { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (!cancelled && Array.isArray(json?.books)) setBooks(json.books.slice(0, 6))
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  if (loading || books.length === 0) return null
+function MobileBooks({ books }: { books: HomeBookSummary[] }) {
+  const visibleBooks = books.slice(0, 6)
+  if (visibleBooks.length === 0) return null
 
   return (
     <section className="px-4 pb-10">
@@ -166,7 +129,7 @@ function MobileBooks() {
       </div>
 
       <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {books.map((book) => (
+        {visibleBooks.map((book) => (
           <Link
             key={book.bookKey}
             href={albumDeepLink(book.bookKey)}
@@ -195,26 +158,7 @@ function MobileBooks() {
   )
 }
 
-function MobileMoments() {
-  const [items, setItems] = useState<MomentItem[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(apiUrl('/api/moments?page=1&pageSize=3'), { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (!cancelled && json?.data?.data) setItems(json.data.data)
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
+function MobileMoments({ moments }: { moments: HomeMoment[] }) {
   return (
     <section className="m-enter px-4 pb-6">
       <div className="m-section-title">
@@ -238,11 +182,7 @@ function MobileMoments() {
         <span className="min-w-0 flex-1">
           <span className="m-body block font-semibold">碎碎念</span>
           <span className="m-caption mt-0.5 block truncate text-[var(--m-muted)]">
-            {loading
-              ? '正在加载…'
-              : items.length === 0
-                ? '还没有碎碎念，来写下此刻心情吧'
-                : items[0].content}
+            {moments.length === 0 ? '还没有碎碎念，来写下此刻心情吧' : moments[0].content}
           </span>
         </span>
         <Icon icon={ArrowRight} size="sm" tone="faint" />
@@ -270,12 +210,16 @@ export default function HomeMobile({
   draftTravels = [],
   provincesVisitedCount,
   anniversaries = [],
+  books = [],
+  recentMoments = [],
   onRefresh = async () => {},
 }: {
   travelPosts: PostMeta[]
   draftTravels?: DraftTravel[]
   provincesVisitedCount: number
   anniversaries?: AnniversaryItem[]
+  books?: HomeBookSummary[]
+  recentMoments?: HomeMoment[]
   onRefresh?: () => Promise<unknown> | void
 }) {
   const quote = dailyQuote()
@@ -459,7 +403,7 @@ export default function HomeMobile({
         )}
 
         {/* 旅行画册：横滑入口（最近旅行之前） */}
-          <MobileBooks />
+          <MobileBooks books={books} />
 
         {/* 最近旅行：大卡片横向滑动，不是 Web 缩小版列表 */}
         <section className="px-4 pb-10">
@@ -524,7 +468,7 @@ export default function HomeMobile({
           )}
         </section>
 
-          <MobileMoments />
+          <MobileMoments moments={recentMoments} />
 
           {/* 重要日子：色彩卡片 */}
           {anniversaries.length > 0 && (
@@ -589,13 +533,11 @@ export default function HomeMobile({
         }
       >
         <DrawerSection title="记录">
-          <DrawerRow icon={Route} title="我的旅行" href="/travel" onClick={() => setDrawerOpen(false)} />
           <DrawerRow icon={Images} title="旅行画册" href="/album" onClick={() => setDrawerOpen(false)} />
           <DrawerRow icon={CalendarDays} title="时间线" href="/timeline" onClick={() => setDrawerOpen(false)} />
           <DrawerRow icon={NotebookPen} title="碎碎念" href="/moments" onClick={() => setDrawerOpen(false)} />
           <DrawerRow icon={ChartColumn} title="数据看板" href="/dashboard" onClick={() => setDrawerOpen(false)} />
           <DrawerRow icon={Bookmark} title="我的收藏" href="/me/favorites" onClick={() => setDrawerOpen(false)} />
-          <DrawerRow icon={Compass} title="旅行圈" href="/circle" onClick={() => setDrawerOpen(false)} />
         </DrawerSection>
 
         <DrawerSection title="设置">
