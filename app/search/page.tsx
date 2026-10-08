@@ -288,7 +288,7 @@ function SearchContent() {
 
     {/* 移动端：iOS 大标题内嵌搜索 + 结果骨架 */}
     <div className="md:hidden">
-      <div className="min-h-screen bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
+      <div className="m-mobile-page m-bottom-nav-safe bg-[var(--m-bg)] text-[var(--m-text)]">
         <LargeTitle title="搜索" subtitle="输入关键词，找回每一段旅行足迹" back="/" />
         <div className="px-4 pt-1">
           {/* iOS 搜索栏 */}

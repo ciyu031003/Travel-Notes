@@ -5,24 +5,12 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { X } from 'lucide-react'
-import { useCloseOnBack } from '@/hooks/use-close-on-back'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 import { cn } from '@/lib/utils'
 import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/motion'
 import { Icon } from './Icon'
 import { IconButton } from './IconButton'
 
-/**
- * 右半屏抽屉（参考圆周旅迹「我的」页右上角 ≡ 的形态）。
- *
- * 为什么单独做一个组件而不是复用 BottomSheet：
- *  ① 从**右侧**滑出、占半屏，露出背景页（表达"这是当前页的附属操作"，不是新页面）；
- *  ② 里面的内容是「入口列表」，需要可滚动 + 顶部标题 + 关闭；
- *  ③ 后续「旅行详情」的编辑入口也要用同一种形态，抽出来避免两处各写一遍。
- *
- * 行为：遮罩点击关闭、Esc 关闭、锁定背景滚动、安全区适配；
- * 进出场与右滑跟手关闭由 motion 接管（往右甩 >90px 或速度 >500px/s 即关闭），
- * 内容区纵向滚动不受横向拖拽影响（motion 对 drag="x" 自动放行 pan-y）。
- */
 export function SideDrawer({
   open,
   onClose,
@@ -36,13 +24,10 @@ export function SideDrawer({
   title: string
   children: ReactNode
   className?: string
-  /** 固定在底部的操作区（如「退出登录」） */
+  /** 固定在底部的操作区，例如“退出登录”。 */
   footer?: ReactNode
 }) {
-  const panelRef = useRef<HTMLElement>(null)
-  const restoreFocusRef = useRef<HTMLElement | null>(null)
-  const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+  const panelRef = useRef<HTMLElement | null>(null)
   const titleId = useId()
   const [mounted, setMounted] = useState(false)
 
@@ -50,73 +35,7 @@ export function SideDrawer({
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (!open) return
-    restoreFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null
-
-    const panel = panelRef.current
-    const background = [
-      document.getElementById('main-content'),
-      document.querySelector('nav[aria-label="移动端导航"]'),
-    ].filter((element): element is HTMLElement => element instanceof HTMLElement)
-    const previousInert = new Map<HTMLElement, boolean>()
-    for (const element of background) {
-      previousInert.set(element, element.hasAttribute('inert'))
-      element.setAttribute('inert', '')
-    }
-
-    const focusFirst = window.requestAnimationFrame(() => {
-      const focusable = getFocusableElements(panel)
-      ;(focusable[0] ?? panel)?.focus({ preventScroll: true })
-    })
-
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onCloseRef.current()
-        return
-      }
-      if (event.key !== 'Tab' || !panel) return
-
-      const focusable = getFocusableElements(panel)
-      if (focusable.length === 0) {
-        event.preventDefault()
-        panel.focus({ preventScroll: true })
-        return
-      }
-
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      const active = document.activeElement
-      if (event.shiftKey && (active === first || !panel.contains(active))) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && (active === last || !panel.contains(active))) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-
-    window.addEventListener('keydown', onKey)
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      window.cancelAnimationFrame(focusFirst)
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previous
-      for (const [element, wasInert] of Array.from(previousInert.entries())) {
-        if (!wasInert) element.removeAttribute('inert')
-      }
-      const restore = restoreFocusRef.current
-      if (restore?.isConnected) {
-        window.requestAnimationFrame(() => restore.focus({ preventScroll: true }))
-      }
-    }
-  }, [open])
-
-  // Android 物理返回 / 浏览器返回：先关抽屉而不是离开页面
-  useCloseOnBack(open, onClose)
+  useModalLayer({ open: open && mounted, onClose, panelRef })
 
   if (!mounted) return null
 
@@ -124,8 +43,7 @@ export function SideDrawer({
     <MotionConfig reducedMotion="user">
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-[115]">
-            {/* 遮罩：点一下关闭（用 button 保证键盘可达） */}
+          <div className="fixed inset-0 z-[115]" data-modal-layer="side-drawer">
             <motion.button
               type="button"
               aria-label="关闭侧边面板"
@@ -184,24 +102,7 @@ export function SideDrawer({
   )
 }
 
-const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',')
-
-function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
-  if (!container) return []
-  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((element) => {
-    if (element.getAttribute('aria-hidden') === 'true') return false
-    return element.getClientRects().length > 0
-  })
-}
-
-/** 抽屉里的分组（与 ListSection 同构，但没有页面级 gutter 与标题缩进） */
+/** 抽屉里的分组：比页面级列表更紧凑。 */
 export function DrawerSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-5 first:mt-2">
@@ -211,7 +112,7 @@ export function DrawerSection({ title, children }: { title: string; children: Re
   )
 }
 
-/** 抽屉里的「一行」：图标 + 标题 + 右侧内容（无 chevron，比 ListRow 更紧凑） */
+/** 抽屉行：图标 + 标题 + 可选说明与尾部内容。 */
 export function DrawerRow({
   icon,
   title,
@@ -234,14 +135,17 @@ export function DrawerRow({
       </span>
       <span className="min-w-0 flex-1">
         <span className="m-body block truncate font-medium text-[var(--m-text)]">{title}</span>
-        {description && <span className="m-caption mt-0.5 block truncate text-[var(--m-muted)]">{description}</span>}
+        {description && (
+          <span className="m-caption mt-0.5 block truncate text-[var(--m-muted)]">
+            {description}
+          </span>
+        )}
       </span>
       {trailing}
     </>
   )
   const cls = 'm-pressable flex min-h-[56px] w-full items-center gap-3 px-4 py-2.5 text-left'
   if (href) {
-    // 用 next/link：站内跳转走客户端路由（不整页刷新），同时保留真实 <a> 语义
     return (
       <Link href={href} className={cls} onClick={onClick}>
         {body}

@@ -1,10 +1,17 @@
 'use client'
 
-import { useEffect, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, MotionConfig, motion, useDragControls } from 'motion/react'
 import { X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
-import { useCloseOnBack } from '@/hooks/use-close-on-back'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 import { cn } from '@/lib/utils'
 import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/motion'
 
@@ -32,23 +39,14 @@ export function BottomSheet({
   dismissible?: boolean
 }) {
   const dragControls = useDragControls()
-
-  // Android 物理返回 / 浏览器返回：先关面板而不是离开页面（不可关闭面板不接管）
-  useCloseOnBack(open, onClose, dismissible)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (!open) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && dismissible) onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previous
-    }
-  }, [open, onClose, dismissible])
+    setMounted(true)
+  }, [])
+
+  useModalLayer({ open: open && mounted, onClose, dismissible, panelRef })
 
   const startDrag = (event: ReactPointerEvent<HTMLElement>) => {
     if (!dismissible) return
@@ -57,11 +55,13 @@ export function BottomSheet({
     dragControls.start(event)
   }
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <MotionConfig reducedMotion="user">
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-[95]">
+          <div className="fixed inset-0 z-[95]" data-modal-layer="bottom-sheet">
             <motion.button
               type="button"
               aria-label="关闭面板"
@@ -76,8 +76,10 @@ export function BottomSheet({
               transition={MOBILE_OVERLAY_TRANSITION}
             />
             <motion.div
+              ref={panelRef}
               role="dialog"
               aria-modal="true"
+              tabIndex={-1}
               aria-label={title || '底部面板'}
               className={cn('m-sheet', className)}
               initial={{ y: '100%' }}
@@ -116,6 +118,7 @@ export function BottomSheet({
           </div>
         )}
       </AnimatePresence>
-    </MotionConfig>
+    </MotionConfig>,
+    document.body,
   )
 }

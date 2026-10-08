@@ -45,6 +45,21 @@ test('移动端首页状态栏安全区与功能抽屉契约', async ({ page }) 
     )
     .toBe(true)
 
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const layer = document.querySelector('[data-modal-layer="side-drawer"]')
+        const background = Array.from(document.body.children).filter(
+          (element) => element !== layer,
+        )
+        return (
+          background.length > 0 &&
+          background.every((element) => element.hasAttribute('inert'))
+        )
+      }),
+    )
+    .toBe(true)
+
   for (let index = 0; index < 8; index += 1) {
     await page.keyboard.press('Tab')
     const focusInside = await page.evaluate(() => {
@@ -55,6 +70,13 @@ test('移动端首页状态栏安全区与功能抽屉契约', async ({ page }) 
   }
 
   await page.keyboard.press('Shift+Tab')
+  await page.evaluate(() => window.history.back())
+  await expect(dialog).toBeHidden()
+  await expect(trigger).toBeFocused()
+  expect(new URL(page.url()).pathname).toBe('/')
+
+  await trigger.click()
+  await expect(dialog).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
   await expect(trigger).toBeFocused()

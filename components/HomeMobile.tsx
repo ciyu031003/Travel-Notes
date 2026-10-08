@@ -13,7 +13,6 @@ import {
   Sparkles,
   BookOpen,
   PenLine,
-  WifiOff,
   Menu,
   NotebookPen,
   ChartColumn,
@@ -24,8 +23,7 @@ import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
 import { albumDeepLink } from '@/lib/album-deep-link'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { EmptyState } from '@/components/mobile/EmptyState'
-import { Skeleton, SkeletonCard, SkeletonLines } from '@/components/mobile/Skeleton'
+import { Skeleton } from '@/components/mobile/Skeleton'
 import { Stagger } from '@/components/mobile/Stagger'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Icon } from '@/components/mobile/Icon'
@@ -243,7 +241,7 @@ export default function HomeMobile({
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
+    <div className="relative m-mobile-page m-bottom-nav-safe bg-[var(--m-bg)] text-[var(--m-text)]">
 
       <PullToRefresh onRefresh={onRefresh}>
         <div className="relative z-10">
@@ -557,52 +555,6 @@ export default function HomeMobile({
           />
         </DrawerSection>
       </SideDrawer>
-    </div>
-  )
-}
-
-/** 首页移动端加载骨架（替代 AsyncState 整页转圈，防 CLS 抖动） */
-export function HomeMobileLoading() {
-  return (
-    <div className="min-h-screen bg-[var(--m-bg)] text-[var(--m-text)]">
-      <div className="m-safe-top-40 space-y-6 px-5 pb-10">
-        <div>
-          <Skeleton className="h-3.5 w-28" />
-          <div className="mt-4 space-y-2.5">
-            <Skeleton className="h-9 w-3/4" />
-            <Skeleton className="h-9 w-1/2" />
-          </div>
-          <SkeletonLines lines={2} className="mt-5 w-4/5" />
-          <div className="mt-7 flex gap-3">
-            <Skeleton className="h-12 w-40 !rounded-full" />
-            <Skeleton className="h-12 w-28 !rounded-full" />
-          </div>
-        </div>
-        <SkeletonCard />
-        <SkeletonCard />
-      </div>
-    </div>
-  )
-}
-
-/** 首页移动端错误态（带重试） */
-export function HomeMobileError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className="m-safe-top-48 flex min-h-screen flex-col bg-[var(--m-bg)] text-[var(--m-text)]">
-      <EmptyState
-        icon={WifiOff}
-        title="首页加载失败"
-        description={message}
-        action={
-          <button
-            type="button"
-            onClick={onRetry}
-            className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm"
-          >
-            重新加载
-          </button>
-        }
-      />
     </div>
   )
 }

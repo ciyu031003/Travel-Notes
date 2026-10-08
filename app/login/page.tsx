@@ -467,7 +467,6 @@ function LoginPageContent() {
                   leadingIcon={Lock}
                   placeholder="如 2023-06-20"
                   required
-                  autoFocus
                 />
                 <p className="text-center text-xs text-[var(--m-faint)]">
                   支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式

@@ -5,7 +5,6 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import { MobilePageTransition } from '@/components/mobile/MobilePageTransition'
-import { cn } from '@/lib/utils'
 
 export default function LayoutContent({
   children,
@@ -109,4 +108,3 @@ export default function LayoutContent({
     </>
   )
 }
-

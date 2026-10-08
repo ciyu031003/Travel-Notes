@@ -214,7 +214,7 @@ export default function TravelCircleFeed() {
   })
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
+    <div className="m-mobile-page m-bottom-nav-safe bg-[var(--social-bg)] text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.06),transparent_60%)]" />
       <div className="m-safe-top-26 relative mx-auto max-w-6xl px-4 pb-8 sm:px-6 sm:pt-8">
         <PullToRefresh onRefresh={() => load(tab, 1, false)}>

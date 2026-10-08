@@ -284,7 +284,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   const upcoming = profile.upcomingTravel
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
+    <div className="m-mobile-page m-bottom-nav-safe bg-[var(--social-bg)] text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.05),transparent_60%)]" />
 
       <div className="m-safe-top relative mx-auto max-w-2xl px-4 pb-6 sm:px-6 sm:pt-8">

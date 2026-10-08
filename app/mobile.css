@@ -321,6 +321,13 @@ html.dark {
 .m-safe-top-48 {
   padding-top: var(--m-safe-top-48);
 }
+.m-mobile-page {
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+.m-bottom-nav-safe {
+  padding-bottom: calc(var(--m-tab-h) + max(28px, env(safe-area-inset-bottom)));
+}
 .m-safe-inset-top-10 {
   top: var(--m-safe-top-10);
 }

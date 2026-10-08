@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint",
+    "lint": "eslint app components hooks lib --ext .js,.cjs,.mjs,.ts,.tsx",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

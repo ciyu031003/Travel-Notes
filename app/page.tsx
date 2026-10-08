@@ -1,12 +1,22 @@
 'use client'
 
-import HomeClient from '@/components/HomeClient'
-import HomeMobile, { HomeMobileError, HomeMobileLoading } from '@/components/HomeMobile'
+import dynamic from 'next/dynamic'
 import AsyncState from '@/components/AsyncState'
+import { HomeMobileError, HomeMobileLoading } from '@/components/HomeMobileStates'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 import { useIsMobile } from '@/hooks/use-is-mobile'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
+
+const HomeClient = dynamic(() => import('@/components/HomeClient'), {
+  ssr: false,
+  loading: () => <AsyncState variant="loading" message="正在翻开你的旅行记忆…" />,
+})
+
+const HomeMobile = dynamic(() => import('@/components/HomeMobile'), {
+  ssr: false,
+  loading: () => <HomeMobileLoading />,
+})
 
 interface DraftTravel {
   id: number

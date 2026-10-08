@@ -5,7 +5,18 @@ import { expectPageHealthy } from './helpers'
  * 360px 小屏几何回归（固化 M4d 走查）：
  * 全部核心页在小屏断言无横向溢出、无崩溃占位。
  */
-const PAGES = ['/', '/travel', '/timeline', '/moments', '/circle', '/me', '/dashboard', '/sync']
+const PAGES = [
+  '/',
+  '/travel',
+  '/search',
+  '/timeline',
+  '/moments',
+  '/circle',
+  '/me',
+  '/me/settings',
+  '/dashboard',
+  '/sync',
+]
 
 test.describe.configure({ mode: 'serial' })
 

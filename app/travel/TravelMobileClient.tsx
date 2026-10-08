@@ -111,7 +111,7 @@ export default function TravelMobileClient({
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[var(--m-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
+    <div className="relative m-mobile-page m-bottom-nav-safe bg-[var(--m-bg)] text-[var(--m-text)]">
       <PullToRefresh onRefresh={onRefresh}>
         <div className="relative z-10">
         {offline && (
