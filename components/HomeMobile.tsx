@@ -14,6 +14,13 @@ import {
   BookOpen,
   PenLine,
   WifiOff,
+  Menu,
+  Route,
+  NotebookPen,
+  ChartColumn,
+  Bookmark,
+  Compass,
+  Settings,
 } from 'lucide-react'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
@@ -25,6 +32,8 @@ import { Stagger } from '@/components/mobile/Stagger'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Icon } from '@/components/mobile/Icon'
 import { IconBadge } from '@/components/mobile/IconBadge'
+import { IconButton } from '@/components/mobile/IconButton'
+import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDrawer'
 import { toast } from '@/lib/mobile/toast-store'
 import IcpLicense from '@/components/IcpLicense'
 
@@ -272,6 +281,7 @@ export default function HomeMobile({
   const quote = dailyQuote()
   const recent = travelPosts.slice(0, 6)
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   /** 「完成并归档」：写入 confirmedAt → 该旅行进入最近旅行与画册，首页大入口消失 */
   const confirmDraft = async (id: number) => {
@@ -297,10 +307,19 @@ export default function HomeMobile({
             每日一言**置顶**（真机要求）。问候语与品牌行也一并留在最上面，
             首屏第一眼是"问候 + 一句话"，而不是直接一张地图。
           */}
-          <section className="m-gutter m-safe-top pb-5 pt-2">
-            <div className="m-enter relative">
-              <p className="m-caption font-semibold text-[var(--m-accent-strong)]">{greeting()}</p>
-              <p className="m-label mt-3 text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
+          <section className="m-gutter m-safe-top pb-5">
+            <div className="m-enter relative flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="m-caption font-semibold text-[var(--m-accent-strong)]">{greeting()}</p>
+                <p className="m-label mt-3 text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
+              </div>
+              <IconButton
+                icon={Menu}
+                label="打开功能菜单"
+                variant="plain"
+                onClick={() => setDrawerOpen(true)}
+                className="-mr-2 -mt-2 ring-1 ring-[var(--m-line)]"
+              />
             </div>
             <div className="m-enter m-card mt-3 overflow-hidden p-5 text-center">
               <IconBadge icon={Quote} tone="accent" shape="circle" className="mx-auto" />
@@ -554,19 +573,48 @@ export default function HomeMobile({
             入口类功能统一收进「我的」，避免首页变成功能目录。
           */}
 
-          {/*
-            ICP 备案号：移动互联网应用程序备案要求「App 内显著位置展示备案编号」，
-            编号可点击跳转工信部备案系统（https://beian.miit.gov.cn/）供用户查询。
-          */}
-          <section className="px-4 pb-12 pt-2">
-            <IcpLicense
-              className="text-center text-[11px] text-[var(--m-muted)]"
-              numberClassName="text-[var(--m-muted)] hover:text-[var(--m-accent-strong)]"
-              linkClassName="text-[var(--m-faint)] hover:text-[var(--m-accent-strong)]"
-            />
-          </section>
         </div>
       </PullToRefresh>
+
+      <SideDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="功能菜单"
+        footer={
+          <IcpLicense
+            className="m-caption leading-relaxed text-[var(--m-muted)]"
+            numberClassName="text-[var(--m-muted)] hover:text-[var(--m-accent-strong)]"
+            linkClassName="text-[var(--m-faint)] hover:text-[var(--m-accent-strong)]"
+          />
+        }
+      >
+        <DrawerSection title="记录">
+          <DrawerRow icon={Route} title="我的旅行" href="/travel" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={Images} title="旅行画册" href="/album" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={CalendarDays} title="时间线" href="/timeline" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={NotebookPen} title="碎碎念" href="/moments" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={ChartColumn} title="数据看板" href="/dashboard" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={Bookmark} title="我的收藏" href="/me/favorites" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={Compass} title="旅行圈" href="/circle" onClick={() => setDrawerOpen(false)} />
+        </DrawerSection>
+
+        <DrawerSection title="设置">
+          <DrawerRow
+            icon={Settings}
+            title="账号设置"
+            description="密码、邮箱与账号信息"
+            href="/me/settings"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <DrawerRow
+            icon={Sparkles}
+            title="数据与同步"
+            description="离线内容与同步状态"
+            href="/sync"
+            onClick={() => setDrawerOpen(false)}
+          />
+        </DrawerSection>
+      </SideDrawer>
     </div>
   )
 }
@@ -575,7 +623,7 @@ export default function HomeMobile({
 export function HomeMobileLoading() {
   return (
     <div className="min-h-screen bg-[var(--m-bg)] text-[var(--m-text)]">
-      <div className="space-y-6 px-5 pb-10 pt-[max(40px,env(safe-area-inset-top))]">
+      <div className="m-safe-top-40 space-y-6 px-5 pb-10">
         <div>
           <Skeleton className="h-3.5 w-28" />
           <div className="mt-4 space-y-2.5">
@@ -598,7 +646,7 @@ export function HomeMobileLoading() {
 /** 首页移动端错误态（带重试） */
 export function HomeMobileError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--m-bg)] pt-[max(48px,env(safe-area-inset-top))] text-[var(--m-text)]">
+    <div className="m-safe-top-48 flex min-h-screen flex-col bg-[var(--m-bg)] text-[var(--m-text)]">
       <EmptyState
         icon={WifiOff}
         title="首页加载失败"

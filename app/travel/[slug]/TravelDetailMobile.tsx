@@ -321,7 +321,7 @@ export default function TravelDetailMobile({
       {/* 顶栏：返回 + 标题省略 + ⋯（编辑信息 / 删除 / 分享） */}
       <header
         className="m-glass sticky top-0 z-40 flex items-center gap-1 px-2"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        style={{ paddingTop: 'var(--m-safe-top)' }}
       >
         <IconButton icon={ChevronLeft} label="返回旅行记录" variant="plain" onClick={onBack} />
         <span className="m-body min-w-0 flex-1 truncate text-center font-medium">{travel.title}</span>

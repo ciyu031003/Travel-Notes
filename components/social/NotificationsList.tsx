@@ -83,7 +83,7 @@ export default function NotificationsList() {
       <EdgeSwipeBack />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
 
-      <div className="relative mx-auto max-w-2xl px-4 pb-8 pt-[max(16px,env(safe-area-inset-top))] sm:px-6 sm:py-8">
+      <div className="m-safe-top-16 relative mx-auto max-w-2xl px-4 pb-8 sm:px-6 sm:py-8">
         <LargeTitle
           title="我的通知"
           subtitle={unread > 0 ? `${unread} 条未读` : '赞、评论、收藏与关注'}

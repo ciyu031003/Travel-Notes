@@ -96,7 +96,7 @@ export default function TravelPhotoViewer({
       <div
         className="absolute inset-x-0 top-0 z-20 flex items-center gap-2 px-2 pb-2"
         style={{
-          paddingTop: 'max(8px, env(safe-area-inset-top))',
+          paddingTop: 'var(--m-safe-top-8)',
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.55), transparent)',
         }}
       >

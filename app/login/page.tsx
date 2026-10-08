@@ -178,7 +178,7 @@ function LoginPageContent() {
   return (
     <>
       <LoginDoor>
-        <div className="flex min-h-dvh items-start justify-center px-4 pb-[max(28px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] md:items-center md:py-10">
+        <div className="m-safe-top-24 flex min-h-dvh items-start justify-center px-4 pb-[max(28px,env(safe-area-inset-bottom))] md:items-center md:py-10">
           <div className="w-full max-w-md">
             <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-shell-line dark:bg-shell-surface/90 sm:p-7 md:p-9">
               <div className="flex items-center justify-between">

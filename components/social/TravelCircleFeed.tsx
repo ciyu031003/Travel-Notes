@@ -216,7 +216,7 @@ export default function TravelCircleFeed() {
   return (
     <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(88px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.06),transparent_60%)]" />
-      <div className="relative mx-auto max-w-6xl px-4 pb-8 pt-[max(26px,env(safe-area-inset-top))] sm:px-6 sm:pt-8">
+      <div className="m-safe-top-26 relative mx-auto max-w-6xl px-4 pb-8 sm:px-6 sm:pt-8">
         <PullToRefresh onRefresh={() => load(tab, 1, false)}>
         <header className="m-enter mb-7 hidden items-start justify-between gap-4 md:flex">
           <div>
@@ -256,7 +256,7 @@ export default function TravelCircleFeed() {
           />
         </div>
 
-        <div className="sticky top-[max(10px,env(safe-area-inset-top))] z-20 mb-4 -mx-4 hidden gap-2 overflow-x-auto px-4 pb-2 pt-1 backdrop-blur-sm md:flex [mask-image:linear-gradient(to_right,transparent,black_8px,black_calc(100%-8px),transparent)]">
+        <div className="m-safe-inset-top-10 sticky z-20 mb-4 -mx-4 hidden gap-2 overflow-x-auto px-4 pb-2 pt-1 backdrop-blur-sm md:flex [mask-image:linear-gradient(to_right,transparent,black_8px,black_calc(100%-8px),transparent)]">
           {TABS.map((t) => (
             <button key={t.key} type="button" onClick={() => switchTab(t.key)}
               className={cn('shrink-0 rounded-full px-4 py-2 text-sm transition active:scale-95',

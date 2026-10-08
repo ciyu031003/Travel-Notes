@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { X } from 'lucide-react'
@@ -37,24 +38,88 @@ export function SideDrawer({
   /** 固定在底部的操作区（如「退出登录」） */
   footer?: ReactNode
 }) {
+  const panelRef = useRef<HTMLElement>(null)
+  const restoreFocusRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  const titleId = useId()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   useEffect(() => {
     if (!open) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+
+    const panel = panelRef.current
+    const background = [
+      document.getElementById('main-content'),
+      document.querySelector('nav[aria-label="移动端导航"]'),
+    ].filter((element): element is HTMLElement => element instanceof HTMLElement)
+    const previousInert = new Map<HTMLElement, boolean>()
+    for (const element of background) {
+      previousInert.set(element, element.hasAttribute('inert'))
+      element.setAttribute('inert', '')
     }
+
+    const focusFirst = window.requestAnimationFrame(() => {
+      const focusable = getFocusableElements(panel)
+      ;(focusable[0] ?? panel)?.focus({ preventScroll: true })
+    })
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab' || !panel) return
+
+      const focusable = getFocusableElements(panel)
+      if (focusable.length === 0) {
+        event.preventDefault()
+        panel.focus({ preventScroll: true })
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+      if (event.shiftKey && (active === first || !panel.contains(active))) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (active === last || !panel.contains(active))) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
     window.addEventListener('keydown', onKey)
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+
     return () => {
+      window.cancelAnimationFrame(focusFirst)
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = previous
+      for (const [element, wasInert] of Array.from(previousInert.entries())) {
+        if (!wasInert) element.removeAttribute('inert')
+      }
+      const restore = restoreFocusRef.current
+      if (restore?.isConnected) {
+        window.requestAnimationFrame(() => restore.focus({ preventScroll: true }))
+      }
     }
-  }, [open, onClose])
+  }, [open])
 
   // Android 物理返回 / 浏览器返回：先关抽屉而不是离开页面
   useCloseOnBack(open, onClose)
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <MotionConfig reducedMotion="user">
       <AnimatePresence>
         {open && (
@@ -72,9 +137,11 @@ export function SideDrawer({
               transition={{ duration: 0.2, ease: 'easeOut' }}
             />
             <motion.aside
+              ref={panelRef}
               role="dialog"
               aria-modal="true"
-              aria-label={title}
+              aria-labelledby={titleId}
+              tabIndex={-1}
               className={cn('m-drawer-panel', className)}
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -89,9 +156,11 @@ export function SideDrawer({
             >
               <header
                 className="flex items-center gap-2 px-4 pb-2"
-                style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
+                style={{ paddingTop: 'var(--m-safe-top)' }}
               >
-                <h2 className="m-title-2 min-w-0 flex-1 truncate text-[var(--m-text)]">{title}</h2>
+                <h2 id={titleId} className="m-title-2 min-w-0 flex-1 truncate text-[var(--m-text)]">
+                  {title}
+                </h2>
                 <IconButton icon={X} label="关闭" variant="plain" onClick={onClose} />
               </header>
 
@@ -109,8 +178,26 @@ export function SideDrawer({
           </div>
         )}
       </AnimatePresence>
-    </MotionConfig>
+    </MotionConfig>,
+    document.body,
   )
+}
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
+
+function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
+  if (!container) return []
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((element) => {
+    if (element.getAttribute('aria-hidden') === 'true') return false
+    return element.getClientRects().length > 0
+  })
 }
 
 /** 抽屉里的分组（与 ListSection 同构，但没有页面级 gutter 与标题缩进） */

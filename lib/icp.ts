@@ -16,7 +16,7 @@
  *   甜途 App（移动互联网应用程序备案）：
  *     · App ICP 备案号：赣ICP备2024031528号-4A
  *
- * 展示位置（6 处共用 components/IcpLicense.tsx）：账号设置 →「关于」、登录页、移动端首页底部、
+ * 展示位置（6 处共用 components/IcpLicense.tsx）：账号设置 →「关于」、登录页、移动端首页「功能菜单」抽屉底部、
  * 门户首页页脚、全站页脚、APK 下载页；同时随静态壳打进 APK（www/ 内明文 + assets/public/icp-license.txt），
  * 原生侧另有 android values/strings.xml 与 AndroidManifest 的 meta-data，便于应用市场与备案核验扫描。
  *

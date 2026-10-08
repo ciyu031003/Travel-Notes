@@ -163,7 +163,7 @@ export default function SpaceDetail({
       </div>
 
       {/* ── 头图：空间主题渐变的唯一大面积用武之地（≤ 屏 35%） ── */}
-      <div className="space-hero relative px-5 pb-5 pt-[max(16px,env(safe-area-inset-top))]">
+      <div className="space-hero m-safe-top-16 relative px-5 pb-5">
         <div className="flex items-start justify-between">
           <Link
             href="/space"

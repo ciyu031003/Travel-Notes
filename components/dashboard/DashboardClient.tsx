@@ -71,7 +71,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         顶部内边距（内容顶到状态栏、与刘海重叠），也没有返回入口，底部导航还会
         盖住最后一段内容。这里补移动端骨架，桌面端保持不变。
       */}
-      <div className="container-custom pb-[calc(96px+env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))] md:py-14">
+      <div className="container-custom m-safe-top-16 pb-[calc(96px+env(safe-area-inset-bottom))] md:py-14">
         <div className="md:hidden">
           <LargeTitle title="数据看板" subtitle="足迹与照片的全部沉淀" back="/me" />
         </div>

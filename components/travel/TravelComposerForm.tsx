@@ -149,7 +149,7 @@ export default function TravelComposerForm({
     <div className="min-h-screen overflow-x-hidden bg-[var(--m-bg)] text-[var(--m-text)]">
       {/* 顶栏：返回 + 居中标题。不放多余动作，把注意力留给表单 */}
       <header
-        className="sticky top-0 z-20 flex items-center gap-2 px-2 pt-[max(8px,env(safe-area-inset-top))] pb-2 backdrop-blur-md"
+        className="m-safe-top-8 sticky top-0 z-20 flex items-center gap-2 px-2 pb-2 backdrop-blur-md"
         style={{ background: 'color-mix(in srgb, var(--m-bg) 86%, transparent)' }}
       >
         <button

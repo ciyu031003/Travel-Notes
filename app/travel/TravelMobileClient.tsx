@@ -283,7 +283,7 @@ export default function TravelMobileClient({
 export function TravelMobileLoading({ message }: { message?: string }) {
   if (message) {
     return (
-      <div className="flex min-h-screen flex-col bg-[var(--m-bg)] pt-[max(48px,env(safe-area-inset-top))] text-[var(--m-text)]">
+      <div className="m-safe-top-48 flex min-h-screen flex-col bg-[var(--m-bg)] text-[var(--m-text)]">
         <EmptyState
           icon={MapPin}
           title="旅行记录加载失败"
@@ -303,7 +303,7 @@ export function TravelMobileLoading({ message }: { message?: string }) {
   }
   return (
     <div className="min-h-screen bg-[var(--m-bg)] text-[var(--m-text)]">
-      <div className="space-y-5 px-5 pb-10 pt-[max(40px,env(safe-area-inset-top))]">
+      <div className="m-safe-top-40 space-y-5 px-5 pb-10">
         <div>
           <Skeleton className="h-3.5 w-24" />
           <Skeleton className="mt-3 h-9 w-44" />

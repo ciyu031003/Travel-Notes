@@ -116,7 +116,7 @@ export function Onboarding() {
       aria-label="首次使用引导"
     >
       {/* 跳过 */}
-      <div className="flex justify-end p-4 pt-[max(16px,env(safe-area-inset-top))]">
+      <div className="m-safe-top-16 flex justify-end p-4">
         <button
           type="button"
           onClick={() => close(false)}

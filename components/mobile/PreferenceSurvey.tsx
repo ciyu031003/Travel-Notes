@@ -134,7 +134,7 @@ export function PreferenceSurvey() {
       {/* 顶栏：进度 + 跳过 */}
       <div
         className="flex items-center gap-2 px-4 pb-2"
-        style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}
+        style={{ paddingTop: 'var(--m-safe-top-16)' }}
       >
         <span className="m-caption tabular-nums text-[var(--m-muted)]">
           {step + 1} / 3

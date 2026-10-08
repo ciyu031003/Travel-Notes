@@ -31,7 +31,7 @@ export function ToastHost() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[120] flex flex-col items-center gap-2 px-4"
+      className="m-safe-inset-top-12 pointer-events-none fixed inset-x-0 z-[120] flex flex-col items-center gap-2 px-4"
     >
       {items.map((item) => {
         const ToastIcon = ICONS[item.kind]

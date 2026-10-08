@@ -114,7 +114,18 @@
   /* ── 间距节奏（4pt 基准，8pt 主节奏）──────────────────── */
   --m-gutter: 20px;         /* 页面横向内边距统一值 */
   --m-section-gap: 32px;    /* 区块间垂直间距统一值 */
-  --m-safe-top: max(20px, env(safe-area-inset-top));
+  /* 原生 StatusBar 同步的兜底高度（未同步/Web 端为 0） */
+  --m-status-bar-height: 0px;
+  /* env() 在 Android WebView 某些版本下为 0，取两者较大值兜底 */
+  --m-safe-top: max(20px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --m-safe-top-8: max(8px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --m-safe-top-10: max(10px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --m-safe-top-12: max(12px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --m-safe-top-16: max(16px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --m-safe-top-24: max(24px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --m-safe-top-26: max(26px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --m-safe-top-40: max(40px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --m-safe-top-48: max(48px, env(safe-area-inset-top), var(--m-status-bar-height));
 
   /* ── 图标体系（唯一事实源，勿在组件内另写数值）──────────── */
   --m-icon-sm: 16px;
@@ -286,6 +297,33 @@ html.dark {
 }
 .m-safe-top {
   padding-top: var(--m-safe-top);
+}
+.m-safe-top-8 {
+  padding-top: var(--m-safe-top-8);
+}
+.m-safe-top-12 {
+  padding-top: var(--m-safe-top-12);
+}
+.m-safe-top-16 {
+  padding-top: var(--m-safe-top-16);
+}
+.m-safe-top-24 {
+  padding-top: var(--m-safe-top-24);
+}
+.m-safe-top-26 {
+  padding-top: var(--m-safe-top-26);
+}
+.m-safe-top-40 {
+  padding-top: var(--m-safe-top-40);
+}
+.m-safe-top-48 {
+  padding-top: var(--m-safe-top-48);
+}
+.m-safe-inset-top-10 {
+  top: var(--m-safe-top-10);
+}
+.m-safe-inset-top-12 {
+  top: var(--m-safe-top-12);
 }
 
 /* ==========================================================================

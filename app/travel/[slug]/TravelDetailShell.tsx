@@ -340,7 +340,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       */}
       {isMobile && !travel && legacy && (
         <div className="bg-travel-cream">
-          <div className="m-glass sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="m-glass m-safe-top sticky top-0 z-40">
             <div className="flex h-14 items-center gap-1 px-2">
               <IconButton icon={ChevronLeft} label="返回旅行记录" variant="plain" onClick={handleBack} />
               <span className="m-body min-w-0 flex-1 truncate font-medium text-[var(--m-text)]">{detailTitle}</span>
