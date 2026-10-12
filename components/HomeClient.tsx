@@ -237,7 +237,7 @@ function HomeBooks({ books }: { books: HomeBookSummary[] }) {
 
   return (
     <section className="px-3 pb-12 md:px-6 md:pb-16">
-      <div className="mx-auto max-w-7xl">
+      <div className="container-page">
         <HomePanel>
           <SectionTitle
             icon={BookOpen}
@@ -335,7 +335,7 @@ export default function HomeClient({
             <div className="absolute -left-28 top-4 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_35%_35%,rgba(255,214,170,0.5),rgba(198,122,78,0.05)_68%)] blur-2xl" />
             <div className="absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_60%_40%,rgba(156,199,178,0.38),transparent_70%)] blur-2xl" />
           </div>
-          <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
+          <div className="container-page relative z-10 grid items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
             <div className="animate-[fade-in-up_0.7s_ease-out_both] text-center md:text-left">
               <h1 className="font-display text-display-hero font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-6xl xl:text-7xl">
                 <span className="block">把走过的路</span>
@@ -428,7 +428,7 @@ export default function HomeClient({
 
         {/* 最近旅行 */}
         <section className="px-3 pb-12 md:px-6 md:pb-16">
-          <div className="mx-auto max-w-7xl">
+          <div className="container-page">
             <HomePanel>
               <SectionTitle
                 icon={MapPin}
@@ -497,7 +497,7 @@ export default function HomeClient({
         {/* 进行中的旅行（1.20.0 桌面补齐：与移动端同模块，新建后在这里继续补照片/排行程/归档） */}
         {draftTravels.length > 0 && (
           <section className="px-3 pb-12 md:px-6 md:pb-16">
-            <div className="mx-auto max-w-7xl">
+            <div className="container-page">
               <HomePanel>
                 <SectionTitle icon={Sparkles}>进行中的旅行</SectionTitle>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -576,10 +576,10 @@ export default function HomeClient({
         {/* 纪念日 */}
         {anniversaries.length > 0 && (
           <section className="px-3 pb-12 md:px-6 md:pb-16">
-            <div className="mx-auto max-w-7xl">
+            <div className="container-page">
               <HomePanel>
                 <SectionTitle icon={CalendarDays}>重要日子</SectionTitle>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:gap-4 2xl:grid-cols-4">
                   {anniversaries.map((a) => {
                     const days = daysUntil(a.date, a.recurring)
                     return (
@@ -614,8 +614,8 @@ export default function HomeClient({
 
         {/* 功能入口 */}
         <section className="px-3 pb-16 md:px-6 md:pb-20">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-4 sm:grid-cols-3">
+          <div className="container-page">
+            <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:gap-5">
               <FeatureCard
                 icon={ImageIcon}
                 title="旅行画册"
@@ -643,7 +643,7 @@ export default function HomeClient({
 
         {/* 底部 */}
         <footer className="border-t border-travel-line/60 dark:border-shell-line px-3 py-10 md:px-5">
-          <div className="mx-auto max-w-7xl text-center">
+          <div className="container-page text-center">
             <p className="flex items-center justify-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
               Made with <Icon icon={Heart} size="sm" className="fill-travel-accentSoft text-travel-accentSoft" /> by 行迹
             </p>

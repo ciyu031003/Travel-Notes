@@ -2,20 +2,23 @@
 
 import dynamic from 'next/dynamic'
 import AsyncState from '@/components/AsyncState'
-import { HomeMobileError, HomeMobileLoading } from '@/components/HomeMobileStates'
+import { HomeMobileError } from '@/components/HomeMobileStates'
+import { HomeLoading, HomeDesktopLoading } from '@/components/HomeLoading'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 import { useIsMobile } from '@/hooks/use-is-mobile'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 
+// P1-5：加载态统一走「复刻真实版面的骨架」，不再用居中转圈 ——
+// 转圈之后整页跳变成完全不同结构，是 CLS 与"感知慢"的主因。
 const HomeClient = dynamic(() => import('@/components/HomeClient'), {
   ssr: false,
-  loading: () => <AsyncState variant="loading" message="正在翻开你的旅行记忆…" />,
+  loading: () => <HomeDesktopLoading />,
 })
 
 const HomeMobile = dynamic(() => import('@/components/HomeMobile'), {
   ssr: false,
-  loading: () => <HomeMobileLoading />,
+  loading: () => <HomeLoading />,
 })
 
 interface DraftTravel {
@@ -47,21 +50,19 @@ export default function HomePage() {
   const isMobile = useIsMobile()
 
   if (error) {
+    // P1-5：错误态**必须带重试**。此前三处 AsyncState 都没传 onAction，
+    // 用户看到"加载失败"却无路可走，只能手动刷新整页。
     if (isMobile === null) {
-      return <AsyncState variant="error" message={error} title="首页加载失败" />
+      return <AsyncState variant="error" message={error} title="首页加载失败" actionLabel="重试" onAction={reload} />
     }
     return isMobile ? (
       <HomeMobileError message={error} onRetry={reload} />
     ) : (
-      <AsyncState variant="error" message={error} title="首页加载失败" />
+      <AsyncState variant="error" message={error} title="首页加载失败" actionLabel="重试" onAction={reload} />
     )
   }
   if (loading || !data || isMobile === null) {
-    return isMobile === true ? (
-      <HomeMobileLoading />
-    ) : (
-      <AsyncState variant="loading" message="正在翻开你的旅行记忆…" />
-    )
+    return <HomeLoading />
   }
   return isMobile ? (
     <HomeMobile

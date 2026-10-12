@@ -5,6 +5,7 @@ import { Send, X, CornerDownRight } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import { useCloseOnBack } from '@/hooks/use-close-on-back'
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { cn } from '@/lib/utils'
 import { createComment } from '@/lib/modules/offline/social-write'
 
@@ -44,6 +45,8 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
   const [replyTo, setReplyTo] = useState<{ id: number; username: string } | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  // 软键盘避让：面板贴在视口底部，键盘弹出时若不上抬，输入框会被完全遮住。
+  const keyboardInset = useKeyboardInset()
 
   const load = useCallback(async () => {
     try {
@@ -109,7 +112,11 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
   return (
     <div className="fixed inset-0 z-[60]">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[80vh] max-w-2xl flex-col overflow-hidden rounded-t-[1.8rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
+      <div
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[80vh] max-w-2xl flex-col overflow-hidden rounded-t-[1.8rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)] transition-[bottom] duration-200 ease-out"
+        // 键盘弹出时整块上抬 keyboardInset 像素（键盘收起时 insets 为 0，样式不生效）
+        style={keyboardInset ? { bottom: keyboardInset } : undefined}
+      >
         <div className="flex items-center justify-between border-b border-[var(--social-line)] px-5 py-4">
           <h3 className="text-sm font-semibold text-[var(--social-text)]">评论 {total > 0 ? '(' + total + ')' : ''}</h3>
           <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[var(--social-muted)] hover:text-[var(--social-text)]"><Icon icon={X} size="sm" /></button>

@@ -38,6 +38,7 @@ import { markTravelDeletedLocally } from '@/lib/modules/offline/travel-edit'
 import { toast } from '@/lib/mobile/toast-store'
 import { travelDetailHref } from '@/lib/routes'
 import { hapticLight } from '@/lib/mobile/haptics'
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import TravelPhotoViewer, { type ViewerPhoto } from './TravelPhotoViewer'
 import { compactRange, dayFullLabel, mediaKeyOf, rangeDays } from '@/components/travel/detail/format'
 import type { ExpenseItem, TimelineDay, TravelInfoForDetail, ViewerPhotoLike } from '@/components/travel/detail/types'
@@ -85,6 +86,8 @@ export default function TravelDetailMobile({
   const router = useRouter()
   const travelId = travel.id
   const serverKnown = travelId > 0 && !pendingSync
+  // 底部「记录一笔」是 fixed 定位：软键盘弹出时若不上抬会被完全遮住
+  const keyboardInset = useKeyboardInset()
   const [syncing, setSyncing] = useState(false)
   // 归属空间选择器（仅旅行创建者可见）：把自己的旅行放进某个空间，或收回为「仅自己」
   const [spacePickerOpen, setSpacePickerOpen] = useState(false)
@@ -544,13 +547,16 @@ export default function TravelDetailMobile({
       {/*
         底部主操作：记录一笔（写文字 + 传照片一步完成）。
         ⚠️ 必须抬到底部导航条**之上**：LayoutContent 对 /travel* 会挂 MobileBottomNav
-        （fixed bottom-0 z-40，高约 64px）。此前写成 bottom-0 z-30，会被导航条整块盖住，
+        （fixed bottom-0 z-40）。此前写成 bottom-0 z-30，会被导航条整块盖住，
         表现就是"详情页底部那个按钮点不到"。
+        高度用 --m-tab-h token（不再硬编码 64px），并在键盘弹出时再上抬。
       */}
       <div
-        className="fixed inset-x-0 z-30 px-4 pb-3 pt-3"
+        className="fixed inset-x-0 z-30 px-4 pb-3 pt-3 transition-[bottom] duration-200 ease-out"
         style={{
-          bottom: 'calc(64px + env(safe-area-inset-bottom))',
+          // 64px 硬编码改为 --m-tab-h token（导航条高度已是 token，两处不再各写各的）；
+          // 软键盘弹出时整块再上抬 keyboardInset，避免「记录一笔」被键盘遮住。
+          bottom: `calc(var(--m-tab-h) + env(safe-area-inset-bottom)${keyboardInset ? ' + ' + keyboardInset + 'px' : ''})`,
           background: 'linear-gradient(to top, var(--m-bg) 72%, transparent)',
         }}
       >

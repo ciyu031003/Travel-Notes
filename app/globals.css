@@ -338,9 +338,27 @@
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   容器宽度：收敛为 2 档（P1-2）
+
+   此前并存三套且互相打架：
+     · .container-custom = max-w-6xl(1152)  —— Navbar / Footer / 时间线 / 搜索在用；
+     · 首页主体手写 max-w-7xl(1280) × 7 处；
+     · admin 又用 max-w-7xl。
+   于是**宽屏下导航栏 1152 与首页内容 1280 左右边缘不对齐**，肉眼可见"页面比导航宽一圈"。
+
+   现在统一为两个语义档，Navbar/Footer 与页面主体共用同一档：
+     · .container-page —— 标准内容页（1152）：正文可读性优先，行长不过宽；
+     · .container-wide —— 落地页 / 画廊（1280）：首页、相册这类"宽幅陈列"场景。
+   .container-custom 保留为 .container-page 的别名，避免一次性改所有调用点。
+   ══════════════════════════════════════════════════════════════════════════ */
 @layer components {
-  .container-custom {
-    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  .container-custom,
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+  .container-wide {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
   .card {
