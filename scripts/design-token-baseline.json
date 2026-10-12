@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-10-07",
-  "legacyTotal": 335,
-  "total": 439,
+  "generatedAt": "2026-10-12",
+  "legacyTotal": 312,
+  "total": 404,
   "rules": {
-    "hexColor": 77,
+    "hexColor": 76,
     "rgbaColor": 57,
     "lucideImport": 90,
-    "fontSize": 100,
+    "fontSize": 86,
     "charIcon": 3,
     "iconSize": 0,
-    "magicRadius": 8,
+    "magicRadius": 0,
     "rawGradient": 85,
     "undefinedToken": 0,
     "scatteredColor": 0,
-    "importantOverride": 19,
+    "importantOverride": 7,
     "spaceTokenLeak": 0
   }
 }

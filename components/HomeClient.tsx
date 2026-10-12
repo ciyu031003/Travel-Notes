@@ -395,7 +395,7 @@ export default function HomeClient({
               <div className="relative h-[260px] overflow-hidden rounded-2xl border border-travel-line/40 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/40 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.35)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128] md:h-[440px] lg:h-[470px]">
                 <HeroFootprintMap posts={travelPosts} />
               </div>
-              <span className="absolute bottom-3 right-3 rounded-full border-2 border-dashed border-travel-accentSoft bg-[#FBF3E9] px-3 py-1.5 text-xs font-medium text-travel-accent shadow-sm dark:border-travel-bloom/70 dark:bg-shell-surface dark:text-travel-bloom">
+              <span className="absolute bottom-3 right-3 rounded-full border border-travel-line/70 bg-white/90 px-3 py-1.5 text-xs font-medium text-travel-accent shadow-[var(--m-elev-1)] backdrop-blur-sm dark:border-shell-line dark:bg-shell-surface/90 dark:text-travel-bloom">
                 足迹地图 · {provincesVisitedCount} 省
               </span>
             </div>
@@ -414,7 +414,10 @@ export default function HomeClient({
               <p className="mt-4 text-lg font-medium leading-relaxed text-travel-ink dark:text-shell-text md:text-2xl">
                 「{quote}」
               </p>
-              <div className="mx-auto mt-5 flex h-20 w-20 rotate-[-6deg] items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft dark:border-travel-bloom/70">
+              {/* 日期印章：保留"盖章"的语义，但去掉 rotate-[-6deg] 的刻意倾斜 ——
+                  同屏已有一处手绘下划线（hero 标题）承担"手作感"，再叠旋转印章、
+                  随机倾斜卡片与背景光斑，会变成刻意堆砌的模板味（方案 §7 视觉手法收敛）。 */}
+              <div className="mx-auto mt-5 flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft dark:border-travel-bloom/70">
                 <div className="text-center text-travel-accent dark:text-travel-bloom">
                   <p className="text-[10px] tracking-[0.25em]">DAILY</p>
                   <p className="font-display text-base font-bold">

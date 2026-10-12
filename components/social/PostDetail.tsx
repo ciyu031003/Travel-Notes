@@ -381,7 +381,13 @@ export default function PostDetail({ postId }: { postId: number }) {
               <button onClick={() => setShowReport(false)} className="text-[var(--social-muted)] hover:text-[var(--social-text)]"><Icon icon={X} size="sm" /></button>
             </div>
             <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl bg-[var(--social-bg)] px-3 py-2 text-[16px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--social-accent)]" />
-            <button onClick={submitReport} disabled={reporting || !reportReason.trim()} className="mt-3 w-full rounded-full bg-[var(--social-accent)] py-2.5 text-sm font-medium text-[var(--social-on-accent)] disabled:opacity-40">{reporting ? '提交中…' : '提交举报'}</button>
+            <button
+              onClick={submitReport}
+              disabled={reporting || !reportReason.trim()}
+              className="m-pressable mt-3 w-full rounded-full bg-[var(--social-accent)] py-3 text-sm font-medium text-[var(--social-on-accent)] transition-colors disabled:opacity-40"
+            >
+              {reporting ? '提交中…' : '提交举报'}
+            </button>
           </div>
         </div>
       )}

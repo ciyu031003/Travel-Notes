@@ -97,7 +97,10 @@ export default function AdminSocialPage() {
                     <p>还没有公开的旅行帖子</p>
                   </div>
                 ) : (
-                  <table className="w-full text-left text-sm">
+                  // 表格在窄屏会溢出：外套 overflow-x-auto 让内容可横向滚动，
+                  // 而不是把卡片撑破（审计页已有此处理，此处补齐保持一致）。
+                  <div className="overflow-x-auto">
+                  <table className="w-full min-w-[560px] text-left text-sm">
                     <thead className="bg-travel-sakura/40 text-xs text-travel-ink/70 dark:bg-white/5 dark:text-warm-400">
                       <tr><th className="px-4 py-2.5">标题</th><th className="px-4 py-2.5">作者</th><th className="px-4 py-2.5">点赞/评论/收藏</th><th className="px-4 py-2.5">发布时间</th></tr>
                     </thead>
@@ -112,6 +115,7 @@ export default function AdminSocialPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
               </div>
             )}

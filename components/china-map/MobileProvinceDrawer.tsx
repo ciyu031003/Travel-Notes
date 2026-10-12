@@ -48,7 +48,7 @@ export default function MobileProvinceDrawer({
 
       <div
         data-map-overlay
-        className="fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-[26px] border-t border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] shadow-[0_-18px_50px_-24px_rgba(20,14,8,0.35)] transition-[height] duration-300 ease-out md:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-3xl border-t border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] shadow-[var(--m-elev-3)] transition-[height] duration-300 ease-out md:hidden"
         style={{ height: expanded ? 'calc(100dvh - 56px)' : '62dvh' }}
       >
         {/* 拖拽把手：点击可切换全屏/半屏 */}
@@ -57,7 +57,7 @@ export default function MobileProvinceDrawer({
             type="button"
             onClick={onToggleExpand}
             aria-label={expanded ? '收起为半屏' : '展开为全屏'}
-            className="group inline-flex items-center gap-2 px-3 py-1.5"
+            className="m-press group inline-flex items-center gap-2 px-3 py-1.5"
           >
             <span className="h-1.5 w-12 rounded-full bg-[var(--m-faint)] transition group-active:scale-90" />
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
@@ -74,7 +74,7 @@ export default function MobileProvinceDrawer({
                 <button
                   type="button"
                   onClick={onBack}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]"
+                  className="m-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]"
                   aria-label="返回省份"
                 >
                   <Icon icon={ChevronLeft} size="md" />
@@ -99,7 +99,7 @@ export default function MobileProvinceDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-2)] text-[var(--m-muted)]"
+            className="m-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-2)] text-[var(--m-muted)]"
             aria-label="关闭"
           >
             <Icon icon={X} size="md" />

@@ -9,11 +9,14 @@ import {
   Settings, LogOut, FileText, Heart, ExternalLink, Loader2, MessageCircle, Compass,
 } from 'lucide-react'
 import BrandLogo from '@/components/brand/BrandLogo'
+import { Icon } from '@/components/mobile/Icon'
+import type { LucideIcon } from 'lucide-react'
 
 export interface AdminNavItem {
   href: string
   label: string
-  icon: any
+  /** 图标组件（交 <Icon> 渲染，尺寸/描边由设计系统锁定） */
+  icon: LucideIcon
   color: string
   external?: boolean
 }
@@ -112,7 +115,10 @@ export default function AdminShell({
 
   const navList = (onClick?: () => void) =>
     ADMIN_NAV.map((item) => {
-      const Icon = item.icon
+      // 注意：这里**不能**再写 `const Icon = item.icon` —— 那会遮蔽设计系统的 <Icon>，
+      // 于是图标尺寸只能手写 h-[18px]（既不是 16/20/24 三档，也不是任何 token）。
+      // 交给 <Icon size="md"> 渲染，尺寸与描边由组件库锁定。
+      const navIcon = item.icon
       const active = isActive(item.href)
       return (
         <Link
@@ -129,7 +135,11 @@ export default function AdminShell({
           {active && (
             <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-travel-accentSoft to-travel-accent" />
           )}
-          <Icon className={`h-[18px] w-[18px] shrink-0 transition-transform duration-200 ${active ? '' : 'group-hover:scale-110'}`} />
+          <Icon
+            icon={navIcon}
+            size="md"
+            className={`shrink-0 transition-transform duration-200 ${active ? '' : 'group-hover:scale-110'}`}
+          />
           <span className="truncate">{item.label}</span>
         </Link>
       )
