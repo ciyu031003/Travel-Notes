@@ -1,3 +1,55 @@
+## [1.23.1] - 2026-10-12
+
+> 用户反馈 8 个 bug 的集中修复 + 相关体验优化。tsc 0 错误 · lint 0 error ·
+> vitest **54 文件 / 506 用例全绿** · `next build` 成功 · 版本 1.23.1/b43 一致。
+
+### Fixed
+
+- **Web 端「进入空间」停留门户、闪烁不切换**：门户检测到登录后把入口指向 `/`，
+  而 nginx 有 `location = / { return 301 /portal/; }` → 301 弹回门户，形成自环。
+  现把「根路径该去哪」的决策上移到应用（需登录态）：middleware 未登录访问 `/`
+  跳 `/portal/`（访客仍看落地页），已登录放行渲染应用首页；nginx `location = /`
+  改为反代应用。
+- **移动端省份弹窗跑到整页最底部**：CSS 中任何非 `none` 的 transform 都会让祖先
+  成为 `position: fixed` 的包含块 —— `PullToRefresh` 内容层恒写 `translateY(0px)`、
+  `m-enter` 动画 `fill-mode: both` 保留 `translateY(0) scale(1)`，抽屉因此相对
+  内容容器而非视口定位。修：PullToRefresh 静止时不写 transform（下拉/回弹/静止三态）；
+  抽屉 portal 到 `document.body`，并补 `m-sheet-up` 从屏幕下沿滑入。
+- **旅行圈详情顶栏与手机状态栏重叠**：`/circle/*` 走「不挂 Navbar」分支，
+  顶部安全区须页面自管而该页只有 `py-6` → 改用 `m-safe-top`。
+  `/me/favorites`、`/me/followers` 同类问题一并修。
+- **评论发送后列表不显示**：原生壳 `createComment` 只写本地同步队列
+  （返回 `{ ok, local: true }`），而提交后立即从服务端重拉 —— 服务端此刻没有该数据。
+  现新增 `pendingComments` 本地待同步列表，渲染时与服务端结果合并（按「父评论+内容」
+  去重，同步完成后由服务端版本接管）。
+- **屏蔽作者不可逆、退出软件后状态回退**：详情页把「已屏蔽」只放在本地
+  `useState(false)`，既不读服务端状态也没有取消路径。现服务端 `getSocialPost`
+  返回 `isBlocked`；前端改为可切换（POST 屏蔽 / DELETE 取消），乐观更新 + 失败回滚
+  + toast，按钮文案区分「屏蔽作者 / 已屏蔽 · 点击取消」并把触达提到 44px。
+- **侧滑返回直接退出 App**：`goBackOrHome` 用 `window.history.length > 1` 判断有无
+  上一页，而 **Capacitor WebView 里该值恒 > 1** → `router.back()` 退到空白历史项，
+  真机表现即「左滑回到手机桌面」。现新增 `lib/navigation-stack.ts` 自维护**只含本站
+  路径**的导航栈（LayoutContent 每次 pathname 变化上报），`canGoBackInApp()` 作为
+  可信判据，永不退出应用。
+- **返回按钮未覆盖全部页面 / 位置不对**：`EdgeSwipeBack` 由「逐页挂载」改为挂到
+  全局壳（所有常规页面共享），内部按 `canGoBackInApp()` 兜底并在 Tab 根页自动不响应；
+  帖子详情返回键从「固定回 `/circle`」改为「返回上一级」；
+  `/me/favorites`、`/me/followers` 的返回键从**右侧**移到**左侧**、由固定 Link
+  改为返回上一级、触达 36→44px。
+
+### Added
+
+- `components/social/StackedGallery.tsx`：堆叠相册，支持**左右或上下**滑动切换、
+  跟手位移、切换触觉、计数徽标、指示点、点击打开全屏查看器；无自动轮播
+  （旧 `StackedImageSlider` 含 6s `setInterval`，违反规范 §1 第 3 条）。
+  堆叠相册与 `PhotoViewer` 共用同一相册数组，避免下标错位。
+- `components/mobile/VersionCheckRow.tsx`：「我的 → 抽屉 → 关于」中的版本行，
+  显示当前 `v{version} (b{build})` 并可手动检测更新（三态反馈 + 触觉）。
+- `lib/navigation-stack.ts` + `tests/unit/navigation-stack.test.ts`（7 例）。
+- `.m-sheet-up` / `.m-fade-in` 两个受控动画类，并纳入 `prefers-reduced-motion` 降级。
+
+---
+
 ## [1.23.0] - 2026-10-12
 
 > UI 体验优化专项：Web 端 + 移动端一次性收敛。typecheck 0 错误 · `next lint` **0 error** ·
