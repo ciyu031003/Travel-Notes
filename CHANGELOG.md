@@ -1,3 +1,109 @@
+## [1.23.0] - 2026-10-12
+
+> UI 体验优化专项：Web 端 + 移动端一次性收敛。typecheck 0 错误 · `next lint` **0 error** ·
+> vitest **499 全绿** · `next build` 成功 · 设计 token 欠债 **439 → 404** · 版本 1.23.0/b42 一致。
+> 方案文档：`docs/design/UI优化方案-评审稿.md`（评审稿，含逐条证据与复现命令）。
+
+### Performance（首屏）
+
+- **桌面首页 582KB 地理数据移出首屏**：`HomeClient.tsx` 此前**静态 import** 地图组件，
+  经 `lib/geo.ts` 把 `data/china-geo.json`（实测 **582,522 字节**）与 d3-geo 一并打进
+  桌面首页首屏 chunk —— LCP 的最大单点。移动端（`HomeMobile.tsx`）早已用
+  `dynamic(ssr:false)` 规避，本次补齐，两端策略一致。首页 First Load JS 降至 **129 kB**，
+  地理数据落到独立懒加载 chunk（583 kB）。
+
+### Fixed
+
+- **iOS 输入聚焦自动缩放**：iOS Safari / WKWebView 在表单控件字号 < 16px 时聚焦会强制
+  放大整页、失焦再缩回 —— 每点一次输入框整页跳一下。不能用 `user-scalable` 规避
+  （伤害可访问性）。现于 `@media (max-width:767px)` 对 input/textarea/select 全局兜底
+  16px，`.m-field-input` 单独声明，4 处 `text-sm` 输入控件改 `text-[16px]`；
+  规范新增 §3.1 硬约束，checker 的 `ALLOWED_FONT_SIZES` 纳入 16。
+- **焦点可见性**：全站 96 处 `outline-none` 但仅 7 处 `focus-visible`，且大量控件用
+  `focus:ring` —— 而 `focus:` 对鼠标点击同样触发，键盘与鼠标态不可区分，键盘用户实际
+  "摸黑"。脚本化把 37 文件 / 90 行的 `focus:ring|border|outline|shadow|z-` 改为
+  `focus-visible:`（已含 `focus-visible` 的行跳过），引用数 7 → 229，残留裸 `focus:` 归零。
+- **移动端键盘遮挡**：全项目此前 **0 处** `visualViewport`，《移动端UI精修方案2.0》§H.3
+  明确要求却未落地。新增 `hooks/use-keyboard-inset.ts`（容差 24px 防地址栏误判、rAF 合并
+  高频 resize、不干预滚动），用于评论面板与旅行详情底部 CTA。
+- **视口高度**：全站 46 处 `min-h-screen`(100vh) → `min-h-dvh`（34 文件）。地址栏收起/展开
+  时 100vh 会导致底部空白或内容被推出视口；dvh 桌面端与 vh 等价，可全站统一、零回归。
+- **首页加载态**：此前是居中转圈 + 一行文字，随后整页跳变成版面完全不同的内容（CLS 与
+  感知慢双输）。新增 `components/HomeLoading.tsx` 复刻真实版面的骨架；错误态补
+  `actionLabel="重试"` —— 此前三处 `AsyncState` 都没传重试回调，用户看到"加载失败"
+  却无路可走。
+- **容器宽度不对齐**：`.container-custom`(1152) 与首页手写 `max-w-7xl`(1280) 并存，
+  导致宽屏下**导航栏与首页内容左右边缘不对齐**。收敛为 `.container-page`(1152) /
+  `.container-wide`(1280) 两档，首页统一为前者，与 Navbar/Footer 同档。
+- **admin 表格窄屏撑破卡片**：`admin/social` 表格补 `overflow-x-auto` + `min-w-[560px]`。
+
+### Changed（设计系统收敛）
+
+- **`!important` 清零（19 → 0）**：根因都是"组件缺能力"，因此补能力而非压制样式 ——
+  新增 `.m-chip-inverse`（图上反色 chip）、`.m-chip-sm`（小号状态 chip）、
+  `ListSection flush` prop；3 处 `m-chip m-chip-active !h-11 !px-* !text-sm` 手搓 CTA
+  改用 `<Button>`；Navbar / login 的多余 `!` 前缀去掉。
+- **魔术圆角清零（8 → 0）**：`rounded-[28px]/[30px]/[26px]/[22px]/[2px]` →
+  `rounded-2xl`(卡片档 20) / `rounded-sm`；TravelMobileClient 的"交替圆角"噱头移除。
+- **字符冒充图标清零**：`SyncBadge` 此前用 `✓ ↑ ☁ !` 充当图标并写死 4 个 hex，
+  改为 `<Icon>` + lucide，颜色走 `--m-*` token（该组件此前全项目零引用，属死组件）。
+- **无限循环动画清零**：移除零引用的 `.m-soft-pulse`（3s 无限呼吸），同类问题
+  （`.m-fab-glow`）此前已移除。
+- **减动效降级补全**：`prefers-reduced-motion` 列表遗漏 `.m-tab-active-dot` /
+  `.m-toast-bar`，减动效用户此前仍会看到这两个动画；已补入并写明维护约定。
+- **断点契约显式化**：`tailwind.config.js` 此前没有 `screens` 键（全走隐式默认），
+  实测倾斜严重（md 250 / lg 49 / xl 8 / 2xl 0），1024–1280 无专属档位。
+  现显式固化 sm/md/lg/xl/2xl 并写明各档用途；首页卡片流补 xl/2xl 分档。
+- **玻璃材质三档**：此前 50 个文件各自手写 `backdrop-blur-*`，同屏可现 3 种强度。
+  收敛为 `.m-glass`(18px) / `.m-glass-thin`(8px) / `.m-glass-thick`(28px)，
+  与 `--m-elev` 分级对应，并补 `prefers-reduced-transparency` 降级。
+- **视觉手法收敛**：首页同屏曾叠背景光斑 + 手绘下划线 + `-6deg` 虚线印章 + 随机倾斜卡片
+  四种"营造文艺感"手法；保留手绘下划线（唯一承载品牌手作感），去掉印章倾斜，
+  地图角标改为发丝线 + 玻璃 + `--m-elev-1`。
+- **Admin 纳入设计系统（最小切口）**：`AdminShell` 此前 `const Icon = item.icon`
+  **遮蔽了设计系统的 `<Icon>`**，导致图标尺寸只能手写 `h-[18px]`（既非 16/20/24 三档，
+  也非任何 token）；现改走 `<Icon size="md">`，`AdminNavItem.icon` 的 `any` 改
+  `LucideIcon` 真类型。
+- **动效一致性专项**：全站审计 `<button>` 是否缺失过渡/按压反馈，17 处候选中 14 处
+  确认为误报（动效来自 `m-pressable`/`m-btn` 等共享类）；真缺的已修
+  （省份抽屉展开/返回/关闭补 `m-press` 并把 40×40 提到 44×44、举报提交按钮补按压）。
+- 首页容器与卡片栅格同步收敛；`app/api` 与业务层零改动。
+
+### Added
+
+- `hooks/use-keyboard-inset.ts`：虚拟键盘避让（全项目首个 visualViewport 实现）。
+- `components/HomeLoading.tsx`：复刻真实版面的首页骨架。
+- `.m-glass-thin` / `.m-glass-thick` / `.m-chip-inverse` / `.m-chip-sm` 四个受控类。
+- `tests/e2e/a11y.spec.ts` **扩面**：拆为匿名组（3 页 + 表单命名）与**登录组**
+  （首页/旅行/旅行圈/我的/时间线/碎碎念/搜索 7 页 + 无可读名按钮整体断言），
+  axe 规则集加入 `wcag22aa`（含 2.5.8 目标尺寸、2.4.13 焦点外观）。
+
+### Docs
+
+- `docs/design/UI优化方案-评审稿.md`：评审稿（五大缺口 + 硬数据 + 复现命令）。
+- 规范新增 §3.1（表单控件强制 16px）、§4.0（视口高度必须 dvh）；
+  §3 规则补"不要给 input/textarea 加 `text-sm`"。
+- token 基线收紧：`--update-baseline` → 439 → 404。
+
+### 验证
+
+- `npx tsc --noEmit` **0 错误**；`npm run lint` **0 error**（470 warning，存量基线）；
+- `npm test` **53 文件 / 499 用例全绿**；`npm run build` 成功；
+- `node scripts/check-design-tokens.mjs --check-baseline` exit 0（无回退）；
+- ⚠️ 本机无 MySQL / Docker，**Playwright e2e（含新增 a11y 登录组）未在本机实跑**，
+  将在服务端部署后补验。
+
+### 分批提交
+
+```
+ce90434 perf-ui-P0a-desktop-map-lazy-focus-visible-ios-input
+e505168 refactor-ui-P0b-tokens-a11y-motion-convergence
+ac489b9 feat-ui-P1-keyboard-inset-container-a11y-skeleton
+cc5a702 feat-ui-P2-motion-polish-material-hierarchy-admin-system
+```
+
+---
+
 ## [1.21.0] - 2026-10-07
 
 > 评审第三批（收尾）：结构收敛 / 代码优化 / 测试基建。typecheck 0 错误 · `next lint` **0 error**

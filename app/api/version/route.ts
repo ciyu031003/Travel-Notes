@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || 'P2移动端弹层可访问性与首页分包优化',
+    changelog: process.env.APP_CHANGELOG || 'UI 体验优化：桌面首屏提速（582KB 地图数据懒加载）、全站焦点可见性与 iOS 输入缩放修复、important/魔术圆角/无限动画等规范欠债清零、移动端键盘避让、首页骨架加载、可访问性扩面至登录态与 WCAG 2.2、玻璃材质三档与后台纳入设计系统',
     forceUpdate,
   })
 }
