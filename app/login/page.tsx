@@ -173,7 +173,7 @@ function LoginPageContent() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-travel-ink transition-all placeholder-travel-sand/50 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-shell-faint'
+    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-travel-ink transition-all placeholder-travel-sand/50 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-shell-faint'
 
   return (
     <>
@@ -409,7 +409,7 @@ function LoginPageContent() {
                     type="text"
                     value={albumPassword}
                     onChange={(e) => setAlbumPassword(e.target.value)}
-                    className="w-full rounded-2xl border border-travel-line bg-white/60 py-3 pl-11 pr-4 text-travel-inkStrong transition-all placeholder-travel-sand/40 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-bloom/60 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-travel-sandSoft/50"
+                    className="w-full rounded-2xl border border-travel-line bg-white/60 py-3 pl-11 pr-4 text-travel-inkStrong transition-all placeholder-travel-sand/40 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom/60 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-travel-sandSoft/50"
                     placeholder="如 2023-06-20"
                     required
                     autoFocus

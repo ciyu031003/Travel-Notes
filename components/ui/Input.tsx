@@ -4,7 +4,7 @@ import type { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode } from 'rea
 import { cn } from '@/lib/utils'
 
 const inputBase =
-  'w-full rounded-xl border border-semantic-line bg-semantic-surface px-4 py-2.5 text-sm text-semantic-text placeholder-semantic-faint shadow-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-semantic-accentSoft/50'
+  'w-full rounded-xl border border-semantic-line bg-semantic-surface px-4 py-2.5 text-sm text-semantic-text placeholder-semantic-faint shadow-sm transition-all focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-semantic-accentSoft/50'
 
 interface InputFieldProps {
   label?: string

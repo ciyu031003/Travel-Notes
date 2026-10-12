@@ -138,7 +138,7 @@ export default function TravelInfoEditor({
                 placeholder="城市或地区，例如 乌鲁木齐"
                 maxLength={120}
                 autoComplete="off"
-                className="w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] py-3.5 pl-10 pr-10 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+                className="w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] py-3.5 pl-10 pr-10 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
               />
               {location && (
                 <button
@@ -217,7 +217,7 @@ export default function TravelInfoEditor({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="例如 新疆 6 日"
               maxLength={60}
-              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3.5 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3.5 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
             />
           </section>
 
@@ -233,7 +233,7 @@ export default function TravelInfoEditor({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="想记住的理由"
-              className="mt-2 w-full resize-none rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+              className="mt-2 w-full resize-none rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
             />
           </section>
 

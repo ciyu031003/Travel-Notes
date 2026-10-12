@@ -219,7 +219,7 @@ export default function ForgotPasswordPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus:outline-none focus:ring-2 focus:ring-travel-bloom focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent"
                     placeholder="请输入绑定的邮箱"
                     required
                   />
@@ -249,7 +249,7 @@ export default function ForgotPasswordPage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   maxLength={6}
-                  className="w-full px-4 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus:outline-none focus:ring-2 focus:ring-travel-bloom focus:border-transparent text-center text-xl tracking-widest"
+                  className="w-full px-4 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent text-center text-xl tracking-widest"
                   placeholder="请输入 6 位验证码"
                   required
                 />
@@ -288,7 +288,7 @@ export default function ForgotPasswordPage() {
                       setNewPassword(e.target.value)
                       evaluatePassword(e.target.value)
                     }}
-                    className="w-full pl-10 pr-12 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus:outline-none focus:ring-2 focus:ring-travel-bloom focus:border-transparent"
+                    className="w-full pl-10 pr-12 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent"
                     placeholder="至少 6 位字符"
                     required
                   />
@@ -327,7 +327,7 @@ export default function ForgotPasswordPage() {
                     type={showConfirmPwd ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus:outline-none focus:ring-2 focus:ring-travel-bloom focus:border-transparent"
+                    className="w-full pl-10 pr-12 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent"
                     placeholder="再次输入新密码"
                     required
                   />

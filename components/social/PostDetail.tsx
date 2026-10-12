@@ -380,7 +380,7 @@ export default function PostDetail({ postId }: { postId: number }) {
               <h3 className="text-base font-semibold">举报该旅行</h3>
               <button onClick={() => setShowReport(false)} className="text-[var(--social-muted)] hover:text-[var(--social-text)]"><Icon icon={X} size="sm" /></button>
             </div>
-            <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl bg-[var(--social-bg)] px-3 py-2 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--social-accent)]" />
+            <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl bg-[var(--social-bg)] px-3 py-2 text-[16px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--social-accent)]" />
             <button onClick={submitReport} disabled={reporting || !reportReason.trim()} className="mt-3 w-full rounded-full bg-[var(--social-accent)] py-2.5 text-sm font-medium text-[var(--social-on-accent)] disabled:opacity-40">{reporting ? '提交中…' : '提交举报'}</button>
           </div>
         </div>
@@ -400,7 +400,7 @@ export default function PostDetail({ postId }: { postId: number }) {
               onChange={(e) => setEditTitle(e.target.value)}
               maxLength={255}
               placeholder="输入标题"
-              className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]"
+              className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-[16px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus-visible:ring-[var(--social-accent)]"
             />
 
             <label className="mb-1.5 mt-4 block text-xs text-[var(--social-muted)]">内容 / 摘要</label>
@@ -409,7 +409,7 @@ export default function PostDetail({ postId }: { postId: number }) {
               onChange={(e) => setEditSummary(e.target.value)}
               rows={5}
               placeholder="写下这次旅行的故事…"
-              className="w-full resize-none rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]"
+              className="w-full resize-none rounded-xl bg-[var(--social-bg)] px-4 py-3 text-[16px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus-visible:ring-[var(--social-accent)]"
             />
 
             {post.postId != null ? (

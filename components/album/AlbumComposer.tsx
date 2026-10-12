@@ -75,14 +75,14 @@ export default function AlbumComposer({ onCreated }: { onCreated?: () => void })
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="相册名称（必填）"
-          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2 text-sm text-album-text outline-none placeholder:text-album-warm/40 focus:border-album-accent"
+          className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2 text-sm text-album-text outline-none placeholder:text-album-warm/40 focus-visible:border-album-accent"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
           placeholder="描述（可选）"
-          className="w-full resize-none rounded-xl border border-white/15 bg-black/30 px-3 py-2 text-sm text-album-text outline-none placeholder:text-album-warm/40 focus:border-album-accent"
+          className="w-full resize-none rounded-xl border border-white/15 bg-black/30 px-3 py-2 text-sm text-album-text outline-none placeholder:text-album-warm/40 focus-visible:border-album-accent"
         />
         <label className="block">
           <span className="mb-1 block text-xs text-album-warm/70">日期</span>
@@ -90,7 +90,7 @@ export default function AlbumComposer({ onCreated }: { onCreated?: () => void })
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2 text-sm text-album-text outline-none focus:border-album-accent"
+            className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2 text-sm text-album-text outline-none focus-visible:border-album-accent"
           />
         </label>
       </div>

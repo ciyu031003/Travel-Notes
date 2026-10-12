@@ -294,7 +294,7 @@ export default function AdminSpacesPage() {
   const inviteUrl = (code: string) => `${window.location.origin}/admin/spaces?join=${code}`
 
   const inputCls =
-    'w-full px-3.5 py-2.5 border border-warm-300 dark:border-warm-600 rounded-xl bg-white dark:bg-warm-800 text-warm-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/70 focus:border-transparent transition-all placeholder-warm-400 dark:placeholder-warm-500'
+    'w-full px-3.5 py-2.5 border border-warm-300 dark:border-warm-600 rounded-xl bg-white dark:bg-warm-800 text-warm-900 dark:text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/70 focus-visible:border-transparent transition-all placeholder-warm-400 dark:placeholder-warm-500'
 
   return (
     <AdminShell title="空间管理">
@@ -635,7 +635,7 @@ export default function AdminSpacesPage() {
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm text-warm-700 dark:text-warm-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+                  className="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm text-warm-700 dark:text-warm-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
                 >
                   <option value="MEMBER">成员（可共同编辑）</option>
                   <option value="VIEWER">访客（仅可查看）</option>
@@ -643,7 +643,7 @@ export default function AdminSpacesPage() {
                 <select
                   value={inviteDays}
                   onChange={(e) => setInviteDays(parseInt(e.target.value, 10))}
-                  className="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm text-warm-700 dark:text-warm-200 focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+                  className="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm text-warm-700 dark:text-warm-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
                 >
                   <option value={1}>1 天有效</option>
                   <option value={3}>3 天有效</option>

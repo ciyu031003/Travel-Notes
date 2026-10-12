@@ -210,7 +210,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
               rows={1}
               maxLength={500}
               placeholder="留下你的留言..."
-              className="flex-1 resize-none bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-sm text-album-text1 placeholder-album-text3 focus:outline-none focus:border-album-accent/50 focus:bg-white/15 transition-colors max-h-24"
+              className="flex-1 resize-none bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-sm text-album-text1 placeholder-album-text3 focus-visible:outline-none focus-visible:border-album-accent/50 focus:bg-white/15 transition-colors max-h-24"
             />
             <button
               type="button"

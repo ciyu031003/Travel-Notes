@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamicImport from 'next/dynamic'
 import {
   Heart,
   MapPin,
@@ -19,8 +20,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { Skeleton } from '@/components/mobile/Skeleton'
 import { toast } from '@/lib/mobile/toast-store'
-import HeroFootprintMap from '@/components/home/HeroFootprintMap'
 import MomentsStrip from '@/components/moments/MomentsStrip'
 import { DanmakuSection, type DanmakuSectionHandle } from '@/components/home/DanmakuSection'
 import { apiUrl } from '@/lib/api-base'
@@ -28,6 +29,21 @@ import { travelDetailHref } from '@/lib/routes'
 import { albumDeepLink } from '@/lib/album-deep-link'
 import IcpLicense from '@/components/IcpLicense'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
+
+/**
+ * 首页 Hero 足迹地图：懒加载（桌面端）。
+ *
+ * lib/geo.ts 静态引入 582KB 的 china-geo.json —— 此前这里是**静态 import**，
+ * 于是整份地理数据 + d3-geo 被打进桌面首页首屏 chunk，成为 LCP 的最大单点；
+ * 而移动端（HomeMobile）早已用同一手法规避。此处补齐，两端策略一致。
+ *
+ * ssr:false 同时避免 SVG path 浮点差异造成的 hydration mismatch。
+ * loading 用与地图等高的骨架，避免懒加载引入新的 CLS。
+ */
+const HeroFootprintMap = dynamicImport(() => import('@/components/home/HeroFootprintMap'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full" />,
+})
 
 interface PostMeta {
   slug: string

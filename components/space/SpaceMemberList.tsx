@@ -118,7 +118,7 @@ export function SpaceMemberList({
                   disabled={busy === m.username}
                   onChange={(e) => void changeRole(m.username, e.target.value)}
                   aria-label={`调整 ${m.username} 的角色`}
-                  className="h-9 rounded-[10px] bg-[var(--social-surface)] px-2 text-[13px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--space-accent)] disabled:opacity-50"
+                  className="h-9 rounded-[10px] bg-[var(--social-surface)] px-2 text-[13px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--space-accent)] disabled:opacity-50"
                 >
                   {ROLE_ORDER.map((r) => (
                     <option key={r} value={r}>

@@ -562,7 +562,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           onChange={(e) => setNickname(e.target.value)}
           maxLength={24}
           placeholder="输入 1-24 位昵称"
-          className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]"
+          className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus-visible:ring-[var(--social-accent)]"
         />
         <label className="mb-1.5 mt-4 block text-xs text-[var(--social-muted)]">个性签名</label>
         <input
@@ -570,7 +570,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           onChange={(e) => setBio(e.target.value)}
           maxLength={120}
           placeholder="写一句话，成为你的旅行签名"
-          className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus:ring-[var(--social-accent)]"
+          className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus-visible:ring-[var(--social-accent)]"
         />
         <button
           onClick={saveProfile}

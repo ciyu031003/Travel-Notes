@@ -69,7 +69,7 @@ export default function MomentComposer({
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           placeholder="标签（逗号分隔，可选）"
-          className="min-w-0 flex-1 rounded-full border border-transparent bg-travel-sakura/30 px-4 py-2.5 text-xs text-travel-ink outline-none transition-colors placeholder:text-travel-sand/60 focus:border-travel-bloom/50 dark:bg-travel-accent/10 dark:text-shell-text dark:placeholder:text-shell-faint"
+          className="min-w-0 flex-1 rounded-full border border-transparent bg-travel-sakura/30 px-4 py-2.5 text-xs text-travel-ink outline-none transition-colors placeholder:text-travel-sand/60 focus-visible:border-travel-bloom/50 dark:bg-travel-accent/10 dark:text-shell-text dark:placeholder:text-shell-faint"
         />
         <button
           type="submit"

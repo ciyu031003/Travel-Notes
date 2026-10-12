@@ -103,7 +103,7 @@ export default function AccountSettings() {
             type="text"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
-            className="w-full px-4 py-2.5 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+            className="w-full px-4 py-2.5 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
             placeholder="输入新的用户名"
           />
         </div>
@@ -118,7 +118,7 @@ export default function AccountSettings() {
               type={showCurrentPwd ? 'text' : 'password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+              className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
               placeholder="必须输入当前密码以验证身份"
               required
             />
@@ -147,7 +147,7 @@ export default function AccountSettings() {
                   type={showNewPwd ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+                  className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
                   placeholder="至少 6 位字符（留空则不修改）"
                 />
                 <button
@@ -169,7 +169,7 @@ export default function AccountSettings() {
                   type={showConfirmPwd ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+                  className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
                   placeholder="再次输入新密码"
                 />
                 <button

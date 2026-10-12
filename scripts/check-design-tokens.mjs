@@ -93,9 +93,15 @@ const SPACE_THEME_ALLOWLIST = [
   'components/mobile/Pills.tsx',
 ]
 
-/** 允许的字号（对应 .m-display / title-1 / title-2 / body / caption / label / stat / tab-label） */
+/**
+ * 允许的字号（对应 .m-display / title-1 / title-2 / body / caption / label / stat / tab-label）
+ *
+ * 16 的来历：iOS Safari / WKWebView 在**表单控件字号 < 16px** 时会强制放大整页，
+ * 用户每次聚焦输入框页面就"跳一下"。这是无法用 user-scalable 规避的硬约束
+ * （禁缩放会伤害可访问性）。故 16px 是**输入控件的强制字号**，属于合法档位，
+ * 而不是魔术数字 —— 见《移动端设计规范》§3.1。 */
 const ALLOWED_FONT_SIZES = new Set([
-  32, 24, 18, 15, 13, 11,
+  32, 24, 18, 16, 15, 13, 11,
 ])
 
 /**

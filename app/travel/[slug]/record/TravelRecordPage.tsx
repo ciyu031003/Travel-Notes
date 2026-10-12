@@ -200,7 +200,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
                 required
                 maxLength={255}
                 placeholder="比如：今天看到的海"
-                className="w-full rounded-2xl border border-travel-bloom/50 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-travel-bloom/60"
+                className="w-full rounded-2xl border border-travel-bloom/50 bg-white px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom/60"
               />
             </div>
             <div>
@@ -210,7 +210,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
                 onChange={(e) => setContent(e.target.value)}
                 rows={6}
                 placeholder="此刻的心情、发生的事…"
-                className="w-full resize-none rounded-2xl border border-travel-bloom/50 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-travel-bloom/60"
+                className="w-full resize-none rounded-2xl border border-travel-bloom/50 bg-white px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom/60"
               />
             </div>
 

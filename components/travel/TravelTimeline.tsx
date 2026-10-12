@@ -70,7 +70,7 @@ export function AddDaySheet({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[16px] text-[var(--m-text)] outline-none focus:border-[var(--m-accent)]"
+              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[16px] text-[var(--m-text)] outline-none focus-visible:border-[var(--m-accent)]"
             />
           </label>
           <label className="block">
@@ -80,7 +80,7 @@ export function AddDaySheet({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="例如 抵达乌鲁木齐（可选）"
               maxLength={60}
-              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
             />
           </label>
           {error && (

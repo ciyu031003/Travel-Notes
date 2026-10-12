@@ -269,7 +269,7 @@ function ProfileTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error
             type="text"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             placeholder="输入新的用户名"
           />
         </div>
@@ -285,7 +285,7 @@ function ProfileTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error
             type={showPassword ? 'text' : 'password'}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             placeholder="必须输入当前密码以验证身份"
             required
           />
@@ -419,7 +419,7 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
             type={showCurrentPwd ? 'text' : 'password'}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             placeholder="输入当前密码"
             required
           />
@@ -446,7 +446,7 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
               setNewPassword(e.target.value)
               evaluatePassword(e.target.value)
             }}
-            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             placeholder="至少 6 位字符"
             required
           />
@@ -487,7 +487,7 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
             type={showConfirmPwd ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             placeholder="再次输入新密码"
             required
           />
@@ -715,7 +715,7 @@ function EmailTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' 
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
               placeholder="example@email.com"
             />
           </div>
@@ -731,7 +731,7 @@ function EmailTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' 
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
               maxLength={6}
-              className="flex-1 px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
               placeholder="6 位验证码"
             />
             <button
@@ -859,7 +859,7 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
             type="date"
             value={anniversaryStart}
             onChange={(e) => setAnniversaryStart(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             placeholder="选择日期"
           />
         </div>
@@ -896,7 +896,7 @@ function TravelTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error'
             type={showPassword ? 'text' : 'password'}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             placeholder="必须输入当前密码以验证身份"
             required
           />
@@ -1053,7 +1053,7 @@ function OilTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'error' | 
             placeholder="粘贴新的 API key（sk-...）"
             autoComplete="off"
             maxLength={200}
-            className="w-full px-3 py-2.5 pr-10 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+            className="w-full px-3 py-2.5 pr-10 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-warm-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
           />
           <button
             type="button"

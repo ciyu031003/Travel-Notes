@@ -235,6 +235,22 @@ html.dark {
     user-select: none;
     -webkit-touch-callout: none;
   }
+
+  /* ── iOS 输入聚焦自动缩放（P0 修复）──────────────────────────────────
+     iOS Safari / WKWebView 在**字号 < 16px** 的表单控件聚焦时，会强制把整个
+     页面放大（zoom），失焦后又缩回去 —— 用户每次点进输入框整页都"跳一下"，
+     是全站最容易被感知的"网页感"来源，且**无法用 user-scalable 关掉**
+     （那样会伤害可访问性，本项目明确不禁用缩放）。
+
+     唯一正确解法：让可聚焦控件的**计算字号 ≥ 16px**。此处用全局兜底而非逐
+     组件改，因为漏一个输入框就漏一处。视觉上 16px 与 15px 几乎无差，但换来
+     iOS 上不再跳变。
+     ⚠️ 只作用于 max-width:767px（移动端），桌面端字号策略完全不受影响。 */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
 /* ==========================================================================
@@ -1160,7 +1176,9 @@ html.dark .m-toast {
   background: transparent;
   border: 0;
   outline: none;
-  font-size: 15px;
+  /* 16px 而非字阶的 15px：iOS 在 <16px 的控件聚焦时会强制放大整页。
+     类选择器优先级高于上面的 input 元素兜底规则，故必须在此显式声明。 */
+  font-size: 16px;
   line-height: 22px;
   color: var(--m-text);
 }

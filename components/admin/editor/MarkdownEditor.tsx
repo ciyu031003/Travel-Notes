@@ -33,7 +33,7 @@ export default function MarkdownEditor({ content, onChange }: MarkdownEditorProp
         value={content}
         onChange={(e) => onChange(e.target.value)}
         rows={20}
-        className="w-full px-4 py-3 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+        className="w-full px-4 py-3 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         placeholder="在这里书写你的 Markdown 内容..."
         required
       />

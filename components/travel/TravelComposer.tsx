@@ -125,7 +125,7 @@ export default function TravelComposer({
             onChange={(e) => patch({ location: e.target.value })}
             placeholder="城市或地区，例如 乌鲁木齐"
             maxLength={120}
-            className="w-full rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none placeholder:text-travel-ink/40 focus:border-travel-accent"
+            className="w-full rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none placeholder:text-travel-ink/40 focus-visible:border-travel-accent"
           />
         </label>
 
@@ -166,7 +166,7 @@ export default function TravelComposer({
             onChange={(e) => patch({ title: e.target.value })}
             placeholder="例如 乌鲁木齐 6 日"
             maxLength={60}
-            className="w-full rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none placeholder:text-travel-ink/40 focus:border-travel-accent"
+            className="w-full rounded-xl border border-travel-dim/70 bg-white px-3 py-2 text-sm text-travel-ink outline-none placeholder:text-travel-ink/40 focus-visible:border-travel-accent"
           />
         </label>
 

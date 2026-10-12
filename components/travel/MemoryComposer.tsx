@@ -139,7 +139,7 @@ export default function MemoryComposer({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="例如 在喀纳斯的第一天"
               maxLength={80}
-              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
             />
           </label>
 
@@ -150,7 +150,7 @@ export default function MemoryComposer({
               onChange={(e) => setContent(e.target.value)}
               rows={3}
               placeholder="路上的见闻、心情……（可选）"
-              className="mt-2 w-full resize-none rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+              className="mt-2 w-full resize-none rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
             />
           </label>
 

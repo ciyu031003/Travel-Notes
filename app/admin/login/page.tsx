@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
   }
 
   const inputCls =
-    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-travel-ink transition-all placeholder-[#9A958F] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
+    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-travel-ink transition-all placeholder-[#9A958F] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-shell-bg">

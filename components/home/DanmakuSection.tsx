@@ -155,7 +155,7 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
           onChange={(e) => setDanmakuText(e.target.value)}
           placeholder="在这里输入你的留言..."
           maxLength={50}
-          className="h-24 w-full resize-none rounded-xl border border-travel-line dark:border-shell-line bg-travel-cream dark:bg-shell-surface2 p-3 text-travel-ink dark:text-shell-text transition-all placeholder-travel-sand/50 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50"
+          className="h-24 w-full resize-none rounded-xl border border-travel-line dark:border-shell-line bg-travel-cream dark:bg-shell-surface2 p-3 text-travel-ink dark:text-shell-text transition-all placeholder-travel-sand/50 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50"
         />
         <div className="mt-1 text-right text-xs text-travel-ink dark:text-shell-muted">{danmakuText.length}/50</div>
 

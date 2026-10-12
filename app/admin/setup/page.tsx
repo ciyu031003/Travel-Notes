@@ -120,7 +120,7 @@ export default function AdminSetupPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 placeholder="admin"
               />
             </div>
@@ -131,7 +131,7 @@ export default function AdminSetupPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 placeholder="至少 8 位"
               />
               <p className="mt-1 text-xs text-warm-400">建议包含大小写字母、数字与符号</p>
@@ -143,7 +143,7 @@ export default function AdminSetupPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 placeholder="再次输入密码"
               />
             </div>

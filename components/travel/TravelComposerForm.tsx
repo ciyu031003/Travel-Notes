@@ -188,7 +188,7 @@ export default function TravelComposerForm({
                 maxLength={120}
                 autoComplete="off"
                 enterKeyHint="next"
-                className="w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] py-3.5 pl-10 pr-10 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+                className="w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] py-3.5 pl-10 pr-10 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
               />
               {draft.location && (
                 <button
@@ -262,7 +262,7 @@ export default function TravelComposerForm({
               placeholder="例如 新疆 6 日"
               maxLength={60}
               enterKeyHint="done"
-              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3.5 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3.5 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
             />
             {suggestions.length > 1 && (
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
@@ -352,7 +352,7 @@ export default function TravelComposerForm({
                       maxLength={40}
                       enterKeyHint="done"
                       disabled={atCompanionLimit}
-                      className="min-w-0 flex-1 rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)] disabled:opacity-50"
+                      className="min-w-0 flex-1 rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)] disabled:opacity-50"
                     />
                     <button
                       type="button"
@@ -416,7 +416,7 @@ export default function TravelComposerForm({
                     onChange={(e) => patch({ description: e.target.value })}
                     rows={3}
                     placeholder="想记住的理由（可选）"
-                    className="mt-2.5 w-full resize-none rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus:border-[var(--m-accent)]"
+                    className="mt-2.5 w-full resize-none rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
                   />
                 </div>
 

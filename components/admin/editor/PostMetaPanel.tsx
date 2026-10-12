@@ -69,7 +69,7 @@ export default function PostMetaPanel({
           type="text"
           value={tags}
           onChange={(e) => onChange('tags', e.target.value)}
-          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-travel-ink shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
+          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-travel-ink shadow-sm backdrop-blur transition-all focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
           placeholder="标签1, 标签2, 标签3"
         />
       </div>
@@ -84,7 +84,7 @@ export default function PostMetaPanel({
             type="text"
             value={location}
             onChange={(e) => onChange('location', e.target.value)}
-            className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-travel-ink shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
+            className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-travel-ink shadow-sm backdrop-blur transition-all focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
             placeholder="例如：广东广州"
           />
         </div>
@@ -99,7 +99,7 @@ export default function PostMetaPanel({
           type="text"
           value={cover}
           onChange={(e) => onChange('cover', e.target.value)}
-          className="w-full px-4 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
           placeholder="https://example.com/image.jpg 或留空使用上传图片"
         />
         {imagesCount > 0 && (
@@ -118,7 +118,7 @@ export default function PostMetaPanel({
           value={summary}
           onChange={(e) => onChange('summary', e.target.value)}
           rows={3}
-          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-travel-ink shadow-sm backdrop-blur transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
+          className="w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm text-travel-ink shadow-sm backdrop-blur transition-all focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-white/10 dark:bg-white/5 dark:text-shell-text"
           placeholder="简短描述这篇文章..."
         />
       </div>
@@ -129,7 +129,7 @@ export default function PostMetaPanel({
           id="published"
           checked={published}
           onChange={(e) => onChange('published', e.target.checked)}
-          className="w-4 h-4 text-primary-500 border-warm-300 rounded focus:ring-primary-500"
+          className="w-4 h-4 text-primary-500 border-warm-300 rounded focus-visible:ring-primary-500"
         />
         <label htmlFor="published" className="text-sm text-warm-700 dark:text-warm-300">
           立即发布

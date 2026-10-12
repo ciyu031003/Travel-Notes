@@ -233,7 +233,7 @@ export default function DocumentImporter({
                   type="text"
                   value={editedMeta.title}
                   onChange={(e) => setEditedMeta({ ...editedMeta, title: e.target.value })}
-                  className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 />
               </div>
               <div>
@@ -244,7 +244,7 @@ export default function DocumentImporter({
                   type="text"
                   value={editedMeta.slug}
                   onChange={(e) => setEditedMeta({ ...editedMeta, slug: e.target.value })}
-                  className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 />
               </div>
               <div>
@@ -255,7 +255,7 @@ export default function DocumentImporter({
                   type="date"
                   value={editedMeta.date}
                   onChange={(e) => setEditedMeta({ ...editedMeta, date: e.target.value })}
-                  className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 />
               </div>
               <div>
@@ -266,7 +266,7 @@ export default function DocumentImporter({
                   type="text"
                   value={editedMeta.tags}
                   onChange={(e) => setEditedMeta({ ...editedMeta, tags: e.target.value })}
-                  className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                   placeholder="标签1, 标签2"
                 />
               </div>
@@ -280,7 +280,7 @@ export default function DocumentImporter({
                 value={editedMeta.description}
                 onChange={(e) => setEditedMeta({ ...editedMeta, description: e.target.value })}
                 rows={2}
-                className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
               />
             </div>
           </div>

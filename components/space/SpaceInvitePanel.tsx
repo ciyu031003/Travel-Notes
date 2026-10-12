@@ -113,7 +113,7 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
           value={role}
           onChange={(e) => setRole(e.target.value)}
           aria-label="邀请角色"
-          className="h-11 flex-1 rounded-[var(--m-radius-control)] bg-[var(--social-surface)] px-3 text-[13px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--space-accent)]"
+          className="h-11 flex-1 rounded-[var(--m-radius-control)] bg-[var(--social-surface)] px-3 text-[13px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--space-accent)]"
         >
           <option value="MEMBER">{SPACE_ROLE_LABELS.MEMBER}（可一起编辑）</option>
           <option value="VIEWER">{SPACE_ROLE_LABELS.VIEWER}（只能查看）</option>
@@ -122,7 +122,7 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
           value={days}
           onChange={(e) => setDays(parseInt(e.target.value, 10))}
           aria-label="有效期"
-          className="h-11 rounded-[var(--m-radius-control)] bg-[var(--social-surface)] px-3 text-[13px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--space-accent)]"
+          className="h-11 rounded-[var(--m-radius-control)] bg-[var(--social-surface)] px-3 text-[13px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--space-accent)]"
         >
           <option value={1}>1 天</option>
           <option value={3}>3 天</option>

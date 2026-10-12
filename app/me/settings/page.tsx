@@ -135,7 +135,7 @@ export default function MeSettingsPage() {
                 onChange={(e) => setNickname(e.target.value)}
                 maxLength={24}
                 placeholder="输入 1-24 位昵称"
-                className="mt-1.5 w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--social-accent)]"
+                className="mt-1.5 w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--social-accent)]"
               />
 
               <label className="mt-4 block text-xs text-[var(--social-muted)]">个性签名</label>
@@ -144,7 +144,7 @@ export default function MeSettingsPage() {
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={120}
                 placeholder="写一句话，成为你的旅行签名"
-                className="mt-1.5 w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--social-line)] focus:ring-[var(--social-accent)]"
+                className="mt-1.5 w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--social-accent)]"
               />
 
               {error && <p className="mt-3 text-sm text-[var(--danger-soft)]">{error}</p>}

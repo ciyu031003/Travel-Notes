@@ -187,7 +187,7 @@ export default function AdminAlbumsPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="相册名称"
-                className="flex-1 px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+                className="flex-1 px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
               />
               <button
                 type="submit"
@@ -202,12 +202,12 @@ export default function AdminAlbumsPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="简介（可选）"
-              className="w-full px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+              className="w-full px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
             />
             <select
               value={travelId}
               onChange={(e) => setTravelId(e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full mt-2 px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-travel-accentSoft"
+              className="w-full mt-2 px-3 py-2 border border-warm-300 dark:border-warm-600 rounded-lg bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
             >
               <option value="">关联旅行（可选）</option>
               {travels.map((t) => (

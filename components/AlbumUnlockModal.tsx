@@ -69,7 +69,7 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
                   type="text"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-white/60 border border-travel-line rounded-2xl text-travel-inkStrong dark:text-shell-text placeholder-travel-sand/40 dark:bg-shell-surface2/80 dark:border-shell-line dark:placeholder-travel-sandSoft/50 focus:outline-none focus:ring-2 focus:ring-travel-bloom/60 focus:border-transparent transition-all"
+                  className="w-full pl-11 pr-4 py-3 bg-white/60 border border-travel-line rounded-2xl text-travel-inkStrong dark:text-shell-text placeholder-travel-sand/40 dark:bg-shell-surface2/80 dark:border-shell-line dark:placeholder-travel-sandSoft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom/60 focus-visible:border-transparent transition-all"
                   placeholder="如 2023-06-20"
                   required
                   autoFocus
