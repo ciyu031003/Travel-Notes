@@ -406,6 +406,24 @@ html.dark {
   background: var(--m-cta-bg);
   border-color: transparent;
 }
+/* 反色 chip：压在照片/深色底上使用。
+   此前这类场景靠 `m-chip !border-white/20 !bg-white/[0.18] !text-white` 硬顶
+   （规范 §2.6 第 10 条明令禁止 `!` 前缀 —— 它是"缺组件"的症状）。
+   现补为正式变体，玻璃质感 + 发丝描边，明暗主题下都成立。 */
+.m-chip-inverse {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+/* 小号 chip：仅用于密集元信息（如"进行中"状态标），高度 24 / 字号 11。 */
+.m-chip-sm {
+  height: 24px;
+  padding: 0 10px;
+  font-size: 11px;
+  line-height: 1;
+}
 
 .m-section-title {
   display: flex;
@@ -599,14 +617,11 @@ html.dark {
   }
 }
 
-@keyframes m-soft-pulse {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50% { opacity: 0.9; transform: scale(1.06); }
-}
-
-.m-soft-pulse {
-  animation: m-soft-pulse 3s ease-in-out infinite;
-}
+/* 已移除 .m-soft-pulse（3s 无限呼吸动画）。
+   规范 §1 第 3 条：除 loading 外禁止无限循环动画 —— 常驻装饰动画是"廉价感"的
+   典型来源。该 class 在全项目**零引用**，属死代码；同类问题（.m-fab-glow）此前
+   已移除，此处补齐。
+   若将来确需"呼吸"提示，请用一次性入场动画或交给 <Loader>（唯一允许的无限动画）。 */
 
 @keyframes m-page-fade {
   from { opacity: 0; }
@@ -1407,14 +1422,19 @@ html.dark .m-toast {
   transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
 }
 
+/* 减动效全量降级。
+   P0 补齐：此前列表遗漏 .m-tab-active-dot（Tab 激活弹跳）与 .m-toast-bar
+   （Toast 倒计时进度条）—— 减动效用户仍会看到这两个动画，属于"降级不完整"。
+   维护约定：**新增任何带动画/过渡的 .m-* 类，必须同步登记到本列表**。 */
 @media (prefers-reduced-motion: reduce) {
-  .m-spring, .m-press, .m-enter, .m-fab, .m-shimmer, .m-list-item, .m-soft-pulse,
+  .m-spring, .m-press, .m-enter, .m-fab, .m-shimmer, .m-list-item,
   .m-pressable, .m-seg-thumb, .m-switch, .m-switch-knob, .m-sheet, .m-sheet-backdrop,
   .m-skeleton::after, .m-ptr-spin, .m-action-item, .m-page-fade, .m-page-push, .m-page-pop, .m-pop,
   .m-btn, .m-btn-spinner, .m-check, .m-check-path, .m-choice, .m-card-pressable,
   .m-seg-item, .m-switch-bare, .m-drawer-panel, .m-drawer-backdrop,
   .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after,
-  .m-collapser, .m-space-collapser, .m-img-fade {
+  .m-collapser, .m-space-collapser, .m-img-fade,
+  .m-tab-active-dot, .m-toast-bar, .m-chip, .m-card {
     animation: none !important;
     transition: none !important;
   }

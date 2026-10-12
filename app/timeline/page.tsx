@@ -50,7 +50,7 @@ export default function TimelinePage() {
   const memoryCount = allEntries.length - travelCount
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
+    <div className="relative min-h-dvh overflow-x-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(228,180,120,0.16),transparent_72%)]" />
 
       <div className="relative container-custom py-10 md:py-14">
@@ -124,12 +124,12 @@ export default function TimelinePage() {
                       {entry.type === 'travel' && entry.slug ? (
                         <Link
                           href={travelDetailHref(entry.slug)}
-                          className="block rounded-[22px] border border-travel-line/70 bg-white/90 p-5 shadow-[0_14px_34px_-24px_rgba(90,102,112,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_20px_44px_-24px_rgba(168,95,58,0.4)] active:scale-[0.98] dark:bg-shell-surface/90 md:rounded-2xl"
+                          className="block rounded-2xl border border-travel-line/70 bg-white/90 p-5 shadow-[0_14px_34px_-24px_rgba(90,102,112,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_20px_44px_-24px_rgba(168,95,58,0.4)] active:scale-[0.98] dark:bg-shell-surface/90 md:rounded-2xl"
                         >
                           <TimelineItem entry={entry} />
                         </Link>
                       ) : (
-                        <div className="rounded-[22px] border border-travel-line/70 bg-white/80 p-5 shadow-[0_14px_34px_-26px_rgba(90,102,112,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/50 active:scale-[0.98] dark:bg-shell-surface/80 md:rounded-2xl">
+                        <div className="rounded-2xl border border-travel-line/70 bg-white/80 p-5 shadow-[0_14px_34px_-26px_rgba(90,102,112,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/50 active:scale-[0.98] dark:bg-shell-surface/80 md:rounded-2xl">
                           <TimelineItem entry={entry} />
                         </div>
                       )}

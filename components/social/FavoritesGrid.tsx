@@ -43,7 +43,7 @@ export default function FavoritesGrid() {
   })
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
+    <div className="min-h-dvh bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
       <EdgeSwipeBack />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-5xl px-4 py-6">

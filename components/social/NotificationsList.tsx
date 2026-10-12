@@ -79,7 +79,7 @@ export default function NotificationsList() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
+    <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
       <EdgeSwipeBack />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
 

@@ -80,8 +80,8 @@ export default function UserProfile({ userId }: { userId: number }) {
     } catch { setProfile(snapshot) } finally { setBusy(false) }
   }
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--social-bg)] text-[var(--social-faint)]"><Icon icon={Loader2} size="lg" className="animate-spin" /></div>
-  if (error || !profile) return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]">{error || '用户不存在'}<Link href="/circle" className="text-[var(--social-accent)]">返回旅行圈</Link></div>
+  if (loading) return <div className="flex min-h-dvh items-center justify-center bg-[var(--social-bg)] text-[var(--social-faint)]"><Icon icon={Loader2} size="lg" className="animate-spin" /></div>
+  if (error || !profile) return <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-[var(--social-bg)] text-[var(--social-faint)]">{error || '用户不存在'}<Link href="/circle" className="text-[var(--social-accent)]">返回旅行圈</Link></div>
 
   const cardProps = (p: any, frame: (typeof FRAMES)[number]) => ({
     coverUrl: p.coverUrl || undefined,
@@ -106,7 +106,7 @@ export default function UserProfile({ userId }: { userId: number }) {
   })
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-24 text-[var(--social-text)]">
+    <div className="min-h-dvh bg-[var(--social-bg)] pb-24 text-[var(--social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-5xl px-4 py-6">
         <header className="mb-8 flex items-center gap-3">

@@ -69,7 +69,7 @@ export default function AdminSetupPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-warm-50 dark:bg-warm-900 flex items-center justify-center px-4">
+      <div className="min-h-dvh bg-warm-50 dark:bg-warm-900 flex items-center justify-center px-4">
         <div className="bg-white dark:bg-warm-800 rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
           <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 mb-3">
             <CheckCircle className="w-6 h-6" />
@@ -90,7 +90,7 @@ export default function AdminSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-warm-900">
+    <div className="min-h-dvh bg-warm-50 dark:bg-warm-900">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="mb-8">
           <Link

@@ -185,13 +185,9 @@ export default function TravelMobileClient({
             <div className="m-card px-5 py-10 text-center">
               <Icon icon={MapPin} size="lg" tone="faint" className="mx-auto" />
               <p className="mt-3 text-sm text-[var(--m-muted)]">还没有旅行记录</p>
-              <button
-                type="button"
-                onClick={handleRecord}
-                className="m-chip m-chip-active mt-5 !h-11 !px-5 !text-sm"
-              >
+              <Button onClick={handleRecord} className="mt-5">
                 记录第一次旅行
-              </button>
+              </Button>
             </div>
           ) : (
             <Stagger className="space-y-4" delayBase={120} step={40}>
@@ -202,8 +198,8 @@ export default function TravelMobileClient({
                     key={post.slug}
                     href={travelDetailHref(post.slug)}
                     className={cn(
-                      'm-enter m-press block overflow-hidden rounded-[26px] border border-[var(--m-line)] bg-[var(--m-surface-solid)] shadow-[var(--m-shadow-sm)]',
-                      index % 2 === 1 && 'rounded-[30px] border-[var(--m-line-strong)]',
+                      'm-enter m-press block overflow-hidden rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] shadow-[var(--m-shadow-sm)]',
+                      index % 2 === 1 && 'border-[var(--m-line-strong)]',
                     )}
                   >
                     <div className="relative aspect-[4/3] overflow-hidden bg-[linear-gradient(135deg,var(--m-bg-soft),var(--m-surface-2))]">
@@ -229,7 +225,7 @@ export default function TravelMobileClient({
                       )}
                       <div className="absolute inset-x-0 bottom-0 p-4">
                         {post.location && (
-                          <span className="m-chip !border-white/[0.18] !bg-white/[0.16] !text-white">
+                          <span className="m-chip m-chip-inverse">
                             {post.location}
                           </span>
                         )}
@@ -283,26 +279,18 @@ export default function TravelMobileClient({
 export function TravelMobileLoading({ message }: { message?: string }) {
   if (message) {
     return (
-      <div className="m-safe-top-48 flex min-h-screen flex-col bg-[var(--m-bg)] text-[var(--m-text)]">
+      <div className="m-safe-top-48 flex min-h-dvh flex-col bg-[var(--m-bg)] text-[var(--m-text)]">
         <EmptyState
           icon={MapPin}
           title="旅行记录加载失败"
           description={message}
-          action={
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="m-press m-chip m-chip-active !h-11 !px-6 !text-sm"
-            >
-              重新加载
-            </button>
-          }
+          action={<Button onClick={() => window.location.reload()}>重新加载</Button>}
         />
       </div>
     )
   }
   return (
-    <div className="min-h-screen bg-[var(--m-bg)] text-[var(--m-text)]">
+    <div className="min-h-dvh bg-[var(--m-bg)] text-[var(--m-text)]">
       <div className="m-safe-top-40 space-y-5 px-5 pb-10">
         <div>
           <Skeleton className="h-3.5 w-24" />
@@ -310,7 +298,8 @@ export function TravelMobileLoading({ message }: { message?: string }) {
           <SkeletonLines2 />
         </div>
         <div className="m-card overflow-hidden">
-          <Skeleton className="m-0 h-[310px] w-full !rounded-none" />
+          {/* 地图容器本身是方角卡内嵌，骨架用 rounded-none 精确复刻（无需 !important） */}
+          <Skeleton className="m-0 h-[310px] w-full rounded-none" />
         </div>
         <SkeletonCard />
         <SkeletonCard />

@@ -43,7 +43,7 @@ export default function MomentComposer({
     <form
       onSubmit={submit}
       className={cn(
-        'mb-8 rounded-[28px] border border-travel-sakura/50 bg-white/80 p-5 shadow-[0_16px_40px_-24px_rgba(168,95,58,0.45)] backdrop-blur-sm transition-colors focus-within:border-travel-bloom/70 focus-within:shadow-[0_18px_44px_-22px_rgba(168,95,58,0.5)] dark:border-travel-accent/20 dark:bg-shell-surface/70',
+        'mb-8 rounded-2xl border border-travel-sakura/50 bg-white/80 p-5 shadow-[0_16px_40px_-24px_rgba(168,95,58,0.45)] backdrop-blur-sm transition-colors focus-within:border-travel-bloom/70 focus-within:shadow-[0_18px_44px_-22px_rgba(168,95,58,0.5)] dark:border-travel-accent/20 dark:bg-shell-surface/70',
         className,
       )}
     >

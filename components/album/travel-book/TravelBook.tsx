@@ -232,7 +232,7 @@ export default function TravelBook({
   }
 
   return (
-    <div className="min-h-screen bg-travel-cream dark:bg-shell-bg">
+    <div className="min-h-dvh bg-travel-cream dark:bg-shell-bg">
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-travel-dim/40 bg-travel-cream/90 px-3 backdrop-blur-md md:px-8 dark:border-shell-line dark:bg-shell-bg/90">
         <div className="flex min-w-0 items-center gap-2">
           <Link

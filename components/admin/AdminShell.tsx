@@ -136,7 +136,7 @@ export default function AdminShell({
     })
 
   return (
-    <div className="min-h-screen bg-travel-cream text-travel-ink dark:bg-shell-bg dark:text-shell-muted">
+    <div className="min-h-dvh bg-travel-cream text-travel-ink dark:bg-shell-bg dark:text-shell-muted">
       {/* ===== 桌面侧边栏 ===== */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-travel-line/40 bg-white/75 dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:flex">
         {/* 品牌 */}

@@ -84,7 +84,7 @@ export default function DevUiPage() {
   const [tone, setTone] = useState<BadgeTone>('accent')
 
   return (
-    <div className="min-h-screen bg-[var(--m-bg)] pb-24 text-[var(--m-text)]">
+    <div className="min-h-dvh bg-[var(--m-bg)] pb-24 text-[var(--m-text)]">
       <LargeTitle
         title="组件预览台"
         subtitle="/dev/ui · 仅开发环境 · 移动端设计系统全部组件与状态"
@@ -281,7 +281,7 @@ export default function DevUiPage() {
 
       {/* ── ListRow ── */}
       <Section title="ListSection / ListRow" note="统一功能入口行；行高 64，图标位 40">
-        <ListSection className="!px-0" title="更多玩法">
+        <ListSection flush title="更多玩法">
           <ListRow icon={CalendarDays} tone="accent" title="时间线" description="按年份回顾每一段旅程" href="/timeline" />
           <ListRow icon={MessageCircle} tone="sun" title="碎碎念" description="写下此刻想说的话" href="/moments" />
           <ListRow icon={ChartColumn} tone="clay" title="数据看板" description="足迹与照片的全部沉淀" href="/dashboard" />

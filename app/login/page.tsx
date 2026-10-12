@@ -478,7 +478,7 @@ function LoginPageContent() {
                   </div>
                 )}
 
-                <Button type="submit" block loading={albumVerifying} disabled={albumVerifying} className="!mt-4">
+                <Button type="submit" block loading={albumVerifying} disabled={albumVerifying} className="mt-4">
                   {albumVerifying ? '验证中…' : '解锁相册'}
                 </Button>
               </form>
@@ -494,7 +494,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#1A1F26]">
+        <div className="flex min-h-dvh items-center justify-center bg-[#1A1F26]">
           <p className="text-white/60">加载中...</p>
         </div>
       }

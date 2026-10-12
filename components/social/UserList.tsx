@@ -17,7 +17,7 @@ export default function UserList({ endpoint, title }: { endpoint: string; title:
   }, [endpoint])
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
+    <div className="min-h-dvh bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
       <div className="relative mx-auto max-w-2xl px-4 py-6">
         <header className="mb-8 flex items-center gap-3">
           <div className="ml-auto"><SocialThemeToggle /></div>

@@ -71,7 +71,7 @@ export default function ForceChangePasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-travel-cream dark:bg-shell-bg">
+      <div className="min-h-dvh flex items-center justify-center bg-travel-cream dark:bg-shell-bg">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
@@ -90,7 +90,7 @@ export default function ForceChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-travel-cream dark:bg-shell-bg">
+    <div className="min-h-dvh flex items-center justify-center bg-travel-cream dark:bg-shell-bg">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />

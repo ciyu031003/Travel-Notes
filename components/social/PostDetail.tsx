@@ -241,7 +241,7 @@ export default function PostDetail({ postId }: { postId: number }) {
     // 失败时**保留 URL**（不 redirect），并把两条出路摆在眼前。
     // 旧实现只留一句文字 + 返回旅行圈，用户以为"点开没内容"（真机反馈的现象之一）。
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--social-bg)] px-6 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[var(--social-bg)] px-6 text-center">
         <Icon icon={WifiOff} size="lg" tone="faint" />
         <p className="text-sm text-[var(--social-text)]">{error || '这条旅行故事暂时打不开'}</p>
         <p className="max-w-xs text-xs text-[var(--social-faint)]">
@@ -275,7 +275,7 @@ export default function PostDetail({ postId }: { postId: number }) {
   const days = post.days ?? []
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
+    <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%)]" />
       <div className="relative mx-auto max-w-3xl px-4 py-6">
         {offline && (
@@ -500,7 +500,7 @@ export default function PostDetail({ postId }: { postId: number }) {
  */
 function PostDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] md:pb-28">
+    <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] md:pb-28">
       <div className="relative mx-auto max-w-3xl px-4 py-6">
         <div className="mb-7 flex items-center gap-3">
           <div className="h-9 w-9 animate-pulse rounded-full bg-[var(--social-surface2)]" />

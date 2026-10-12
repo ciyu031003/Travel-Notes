@@ -269,7 +269,7 @@ export default function SpacePreview() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--social-bg)] pb-20">
+    <div className="min-h-dvh bg-[var(--social-bg)] pb-20">
       <div className="mx-auto max-w-[1180px] px-5 py-8">
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>

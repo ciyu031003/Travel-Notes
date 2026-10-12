@@ -304,7 +304,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   const gridPhotos: ViewerPhoto[] = images.map((u) => ({ url: u }))
 
   return (
-    <div className="bg-travel-cream min-h-screen">
+    <div className="bg-travel-cream min-h-dvh">
       <EdgeSwipeBack />
       {/* 移动端：四 tab 信息架构（仅移动端挂载） */}
       {isMobile && travel && (

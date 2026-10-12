@@ -28,15 +28,22 @@ export function ListSection({
   action,
   children,
   className,
+  flush = false,
 }: {
   title?: string
   /** 右侧操作（如「全部」链接） */
   action?: ReactNode
   children: ReactNode
   className?: string
+  /**
+   * 去掉默认的 .m-gutter 横向内边距（用于已被父级留白包裹的场景）。
+   * 此前调用方写 `className="!px-0"` 硬顶，属规范 §2.6 第 10 条禁止的 `!` 前缀 ——
+   * 那是"缺能力"的症状，补一个正式 prop 即可。
+   */
+  flush?: boolean
 }) {
   return (
-    <section className={cn('m-gutter', className)}>
+    <section className={cn(flush ? '' : 'm-gutter', className)}>
       {title && (
         <div className="m-section-title">
           <span>{title}</span>

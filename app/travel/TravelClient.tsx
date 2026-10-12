@@ -112,7 +112,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
   }, [posts])
 
   return (
-    <div className="relative min-h-screen bg-travel-cream text-travel-ink pb-24 md:pb-0">
+    <div className="relative min-h-dvh bg-travel-cream text-travel-ink pb-24 md:pb-0">
       {/* 底部雾气带 */}
       <div
         className="fixed inset-x-0 bottom-0 h-[40vh] pointer-events-none opacity-40"

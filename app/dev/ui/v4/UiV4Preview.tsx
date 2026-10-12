@@ -89,7 +89,7 @@ export default function UiV4Preview() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--m-bg)] pb-24 text-[var(--m-text)]">
+    <div className="min-h-dvh bg-[var(--m-bg)] pb-24 text-[var(--m-text)]">
       <LargeTitle
         title="M5 组件预览"
         subtitle="/dev/ui/v4 · 新增与升级组件 · 仅开发环境"

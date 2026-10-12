@@ -107,7 +107,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
   const popCard = phase === 'open' && !instant
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-dvh overflow-hidden">
       {/* 动态背景（mp4）：延迟到门开始打开后才加载/播放，
           避免首屏即拉 2.9MB 视频（减轻登录首屏网络负担） */}
       {(phase === 'opening' || showContent) && (

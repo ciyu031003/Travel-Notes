@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
     'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-travel-ink transition-all placeholder-[#9A958F] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-shell-bg">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-shell-bg">
       {/* 氛围光晕 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-travel-sakura/70 blur-3xl dark:bg-shell-surface/30" />

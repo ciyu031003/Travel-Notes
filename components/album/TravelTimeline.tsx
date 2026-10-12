@@ -24,7 +24,7 @@ export default function TravelTimeline({ items, className }: TravelTimelineProps
       <span className="absolute left-[5px] top-1 bottom-1 w-px bg-album-accent/25" aria-hidden="true" />
       {items.map((item, i) => (
         <li key={`${item.title}-${i}`} className="relative pl-5">
-          <span className="absolute left-[-7px] top-1.5 h-3 w-3 rounded-[2px] border border-black bg-album-accent" aria-hidden="true" />
+          <span className="absolute left-[-7px] top-1.5 h-3 w-3 rounded-sm border border-black bg-album-accent" aria-hidden="true" />
           {item.label && (
             <p className="font-zpix text-xs tracking-wider text-album-accent">{item.label}</p>
           )}

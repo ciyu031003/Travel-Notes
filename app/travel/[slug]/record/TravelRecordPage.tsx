@@ -165,7 +165,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
   }
 
   return (
-    <div className="min-h-screen bg-travel-cream">
+    <div className="min-h-dvh bg-travel-cream">
       <header className="sticky top-0 z-10 border-b border-[#E8E8E4] bg-travel-cream/90 backdrop-blur">
         <div className="mx-auto flex max-w-xl items-center gap-3 px-4 py-3">
           <Link href={travelDetailHref(slug)} className="-ml-2 p-2 text-travel-ink" aria-label="返回">

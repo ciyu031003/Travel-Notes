@@ -42,7 +42,7 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-50 dark:bg-warm-900 flex items-center justify-center">
+      <div className="min-h-dvh bg-warm-50 dark:bg-warm-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     )

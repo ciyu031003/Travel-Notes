@@ -258,7 +258,7 @@ export default function AlbumPage() {
 
   if (checkingLock) {
     return (
-      <div className="min-h-screen pixel-desk-bg flex items-center justify-center">
+      <div className="min-h-dvh pixel-desk-bg flex items-center justify-center">
         <div className="flex items-center gap-3 text-album-accent">
           <div className="w-6 h-6 border-2 border-album-accent/30 border-t-album-accent rounded-full animate-spin" />
           <span className="text-sm tracking-wider text-album-warm">正在翻开相册...</span>
@@ -279,7 +279,7 @@ export default function AlbumPage() {
   if (!isUnlocked) {
     if (viewMode === 'space') {
       return (
-        <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-[max(16px,env(safe-area-inset-bottom))] bg-album-bg0">
+        <div className="min-h-dvh relative overflow-hidden flex items-center justify-center p-4 pb-[max(16px,env(safe-area-inset-bottom))] bg-album-bg0">
           {/* 星空氛围底（纯 CSS 星点，避免未解锁时启动 WebGL） */}
           <div className="absolute inset-0 opacity-70" aria-hidden="true">
             {Array.from({ length: 60 }, (_, i) => (
@@ -345,7 +345,7 @@ export default function AlbumPage() {
     }
 
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-[max(16px,env(safe-area-inset-bottom))] bg-album-bg1">
+      <div className="min-h-dvh relative overflow-hidden flex items-center justify-center p-4 pb-[max(16px,env(safe-area-inset-bottom))] bg-album-bg1">
         <PixelDeskBackground />
         <div className="relative z-10 w-full max-w-md pixel-book-container rounded-sm p-8 text-center">
           <div className="pixel-corner-gold-tl" />
@@ -435,7 +435,7 @@ export default function AlbumPage() {
   }
 
   return (
-    <div className="min-h-screen album-pixel-root bg-album-bg1 relative overflow-hidden motion-safe:animate-[fadeIn_.2s_ease-out]">
+    <div className="min-h-dvh album-pixel-root bg-album-bg1 relative overflow-hidden motion-safe:animate-[fadeIn_.2s_ease-out]">
       {/* 像素木屋桌面背景 */}
       <PixelDeskBackground />
 
@@ -570,7 +570,7 @@ export default function AlbumPage() {
         </div>
       </header>
 
-      <div className="relative z-10 pt-4 pb-[max(48px,env(safe-area-inset-bottom))] min-h-screen md:pb-12">
+      <div className="relative z-10 pt-4 pb-[max(48px,env(safe-area-inset-bottom))] min-h-dvh md:pb-12">
         {/* 相册封面横幅 */}
         <div className="max-w-6xl mx-auto px-4 mb-5">
           <div className="book-cover-3d relative rounded-sm p-4 sm:p-5 flex items-center justify-between gap-4">

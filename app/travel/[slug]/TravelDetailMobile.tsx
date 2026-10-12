@@ -317,7 +317,7 @@ export default function TravelDetailMobile({
   }
 
   return (
-    <div className="min-h-screen bg-[var(--m-bg)] pb-[calc(160px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
+    <div className="min-h-dvh bg-[var(--m-bg)] pb-[calc(160px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
       {/* 顶栏：返回 + 标题省略 + ⋯（编辑信息 / 删除 / 分享） */}
       <header
         className="m-glass sticky top-0 z-40 flex items-center gap-1 px-2"

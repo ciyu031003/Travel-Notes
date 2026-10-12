@@ -358,7 +358,7 @@ export default function HomeMobile({
                         <Link href={href} className="m-body min-w-0 flex-1 truncate font-semibold text-[var(--m-text)]">
                           {d.title}
                         </Link>
-                        <span className="m-chip shrink-0 !h-6 !text-[11px]">进行中</span>
+                        <span className="m-chip m-chip-sm shrink-0">进行中</span>
                       </div>
                       <p className="m-caption mt-1 text-[var(--m-muted)]">
                         {d.location || '还没填目的地'} · {d.dayCount} 天 · 已有 {d.photoCount} 张照片
@@ -451,7 +451,7 @@ export default function HomeMobile({
                   <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(24,15,9,0.72),rgba(24,15,9,0)_62%)]" />
                   <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                     {post.location && (
-                      <span className="m-chip !border-white/20 !bg-white/[0.18] !text-white">
+                      <span className="m-chip m-chip-inverse">
                         {post.location}
                       </span>
                     )}

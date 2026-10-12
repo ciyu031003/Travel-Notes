@@ -45,7 +45,7 @@ export default function RootLayout({
         {/* favicon 由 app/icon.png / app/apple-icon.png 文件约定自动注入（源：public/brand/logo.png） */}
         <script src="/register-sw.js" defer />
       </head>
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-dvh flex flex-col">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus-visible:z-[100] focus:rounded-lg focus:bg-travel-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus-visible:shadow-lg"

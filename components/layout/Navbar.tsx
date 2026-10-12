@@ -116,7 +116,9 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
           href="/"
           className={cn(
             'font-bold text-xl flex items-center gap-2',
-            useDarkText ? '!text-white' : 'text-travel-inkStrong dark:text-shell-text'
+            // 透明态未滚动时压在深色 hero 上，需要白字。两条分支同为普通工具类，
+            // 不存在优先级冲突，无需 !important（规范 §2.6 第 10 条）。
+            useDarkText ? 'text-white' : 'text-travel-inkStrong dark:text-shell-text'
           )}
         >
           <BrandLogo size={32} />

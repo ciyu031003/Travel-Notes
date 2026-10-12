@@ -107,7 +107,7 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
 
   if (moments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-travel-line/70 bg-white/60 px-6 py-16 text-center dark:border-shell-line dark:bg-shell-surface/50">
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-travel-line/70 bg-white/60 px-6 py-16 text-center dark:border-shell-line dark:bg-shell-surface/50">
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-travel-sakura/40 text-travel-accent dark:bg-travel-accent/15 dark:text-travel-accentSoft">
           <Icon icon={Inbox} size="md" />
         </span>
@@ -134,7 +134,7 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
             <Icon icon={Sparkles} size="sm" tone="inverse" />
           </span>
 
-          <div className="relative overflow-hidden rounded-[22px] border border-travel-line/70 bg-white/85 p-5 shadow-[0_12px_30px_-24px_rgba(90,102,112,0.35)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-24px_rgba(198,122,78,0.45)] active:scale-[0.98] dark:border-shell-line dark:bg-shell-surface/85 dark:hover:border-travel-accentStrong/60">
+          <div className="relative overflow-hidden rounded-2xl border border-travel-line/70 bg-white/85 p-5 shadow-[0_12px_30px_-24px_rgba(90,102,112,0.35)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-24px_rgba(198,122,78,0.45)] active:scale-[0.98] dark:border-shell-line dark:bg-shell-surface/85 dark:hover:border-travel-accentStrong/60">
             <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[radial-gradient(closest-side,rgba(228,180,120,0.14),transparent)]" />
             <Icon icon={Quote} size="sm" className="relative mb-2 text-travel-bloom/70" />
             <p className="relative whitespace-pre-wrap break-words text-[15px] leading-7 text-travel-ink dark:text-shell-text">

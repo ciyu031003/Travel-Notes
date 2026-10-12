@@ -325,7 +325,7 @@ export default function HomeClient({
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream text-travel-ink dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C] dark:text-shell-text">
+    <div className="relative min-h-dvh bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream text-travel-ink dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C] dark:text-shell-text">
       <DanmakuSection ref={danmakuRef} />
 
       <div className="relative z-10">

@@ -4,7 +4,7 @@ import TravelCircleFeed from '@/components/social/TravelCircleFeed'
 
 export default function CirclePage() {
   return (
-    <div className="min-h-screen bg-[var(--social-bg)]">
+    <div className="min-h-dvh bg-[var(--social-bg)]">
       <TravelCircleFeed />
     </div>
   )
