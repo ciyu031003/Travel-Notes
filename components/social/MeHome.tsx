@@ -33,6 +33,7 @@ import { isMobileShell, travelDetailHref } from '@/lib/routes'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDrawer'
+import VersionCheckRow from '@/components/mobile/VersionCheckRow'
 import { IconBadge } from '@/components/mobile/IconBadge'
 import { Icon } from '@/components/mobile/Icon'
 import { base64ToBytes, extFromMime } from '@/lib/media/pick-image'
@@ -546,6 +547,11 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             <span className="m-body min-w-0 flex-1 font-medium text-[var(--m-text)]">主题</span>
             <SocialThemeToggle />
           </div>
+        </DrawerSection>
+
+        {/* 版本：显示当前版本 + 手动检测更新（需求：抽屉里加一行） */}
+        <DrawerSection title="关于">
+          <VersionCheckRow />
         </DrawerSection>
       </SideDrawer>
 

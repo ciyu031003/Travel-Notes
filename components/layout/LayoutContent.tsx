@@ -1,10 +1,13 @@
 'use client'
 
+import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import { MobilePageTransition } from '@/components/mobile/MobilePageTransition'
+import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
+import { trackNavigation } from '@/lib/navigation'
 
 export default function LayoutContent({
   children,
@@ -12,6 +15,16 @@ export default function LayoutContent({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+
+  /**
+   * 记录应用内导航栈（供 goBackOrHome 判断"有无上一页"）。
+   * 必须挂在**所有页面都经过**的位置——LayoutContent 是根布局的壳，符合条件。
+   * 不依赖 window.history.length：后者在 Capacitor WebView 里恒 >1，
+   * 会让侧滑返回直接退出 App（真机 bug）。
+   */
+  useEffect(() => {
+    trackNavigation(pathname)
+  }, [pathname])
   const isTravelPage = pathname.startsWith('/travel')
   const isHomePage = pathname === '/'
   const isLoginPage = pathname === '/login'
@@ -53,6 +66,8 @@ export default function LayoutContent({
           </div>
         </MobilePageTransition>
         <MobileBottomNav />
+        {/* 全局左缘右滑返回：所有常规页面共享；组件内部按应用内历史栈判断能否退 */}
+        <EdgeSwipeBack />
       </>
     )
   }
@@ -71,6 +86,8 @@ export default function LayoutContent({
           </main>
         </MobilePageTransition>
         <MobileBottomNav />
+        {/* 全局左缘右滑返回：所有常规页面共享；组件内部按应用内历史栈判断能否退 */}
+        <EdgeSwipeBack />
       </>
     )
   }
@@ -80,6 +97,8 @@ export default function LayoutContent({
       <>
         <MobilePageTransition>{children}</MobilePageTransition>
         <MobileBottomNav />
+        {/* 全局左缘右滑返回：所有常规页面共享；组件内部按应用内历史栈判断能否退 */}
+        <EdgeSwipeBack />
       </>
     )
   }
@@ -105,6 +124,7 @@ export default function LayoutContent({
         </div>
       </MobilePageTransition>
       <MobileBottomNav />
+      <EdgeSwipeBack />
     </>
   )
 }

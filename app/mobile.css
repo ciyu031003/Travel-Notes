@@ -683,6 +683,25 @@ html.dark {
   animation: m-pop-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* ── 底部抽屉入场（省份抽屉等）──────────────────────────────────
+   从屏幕下沿滑入 + 遮罩淡入。此前这类抽屉只靠 `transition-[height]` 表达状态变化，
+   首次出现时是"凭空闪现"，没有"从下往上推入"的空间感。
+   只做 opacity + transform（规范 §7），不碰 layout 属性。 */
+@keyframes m-sheet-up-in {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.m-sheet-up {
+  animation: m-sheet-up-in 0.32s var(--m-ease-out) both;
+}
+@keyframes m-fade-in-kf {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.m-fade-in {
+  animation: m-fade-in-kf 0.24s ease-out both;
+}
+
 /* ── 边缘右滑返回（EdgeSwipeBack）────────────────────────────────
    触发后当前页与底部 Tab 栏整体右滑退场，上一层以 m-page-pop 入场。
    类挂在 body 上；.m-page-shell（转场容器）与 .m-bottom-nav 是唯二目标。 */
@@ -1466,7 +1485,7 @@ html.dark .m-toast {
   .m-seg-item, .m-switch-bare, .m-drawer-panel, .m-drawer-backdrop,
   .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after,
   .m-collapser, .m-space-collapser, .m-img-fade,
-  .m-tab-active-dot, .m-toast-bar, .m-chip, .m-card {
+  .m-tab-active-dot, .m-toast-bar, .m-chip, .m-card, .m-sheet-up, .m-fade-in {
     animation: none !important;
     transition: none !important;
   }

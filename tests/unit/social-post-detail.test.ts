@@ -20,6 +20,9 @@ const { prismaMock } = vi.hoisted(() => ({
     travelDay: { findMany: vi.fn() },
     memory: { findMany: vi.fn() },
     travel: { findUnique: vi.fn() },
+    // 2026-10-12：详情新增 isBlocked（屏蔽状态须跨会话保持），
+    // 未登录/作者本人时不会查询，故默认返回 null 即可。
+    userBlock: { findUnique: vi.fn().mockResolvedValue(null) },
   },
 }))
 

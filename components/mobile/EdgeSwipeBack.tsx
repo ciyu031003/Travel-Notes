@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { goBackOrHome } from '@/lib/navigation'
+import { canGoBackInApp } from '@/lib/navigation-stack'
 
 /**
  * iOS 边缘右滑返回（v1）：从左缘起手、向右滑动超过阈值即触发——
@@ -47,6 +48,18 @@ export default function EdgeSwipeBack() {
       const touch = event.touches[0]
       const dx = touch.clientX - startX
       const dy = touch.clientY - startY
+      /**
+       * 没有应用内上一页时**不响应**（2026-10-12）。
+       *
+       * 本组件现在挂在全局壳上（所有页面），因此必须自己判断"这页能不能退"。
+       * 若在 Tab 根页（首页/旅行/旅行圈/我的）误触发，goBackOrHome 会退到
+       * 浏览器/WebView 的历史之外 —— 真机上就是"左滑直接退出 App 回到桌面"。
+       * 用 navigation-stack 的可信判据（而非 window.history.length）兜住。
+       */
+      if (!canGoBackInApp()) {
+        tracking = false
+        return
+      }
       if (dx > COMMIT_DX && Math.abs(dx) > Math.abs(dy) * 1.4) {
         tracking = false
         committed = true

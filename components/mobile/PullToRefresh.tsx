@@ -111,10 +111,27 @@ export function PullToRefresh({
         />
       </div>
       <div
-        style={{
-          transform: `translateY(${dist}px)`,
-          transition: settling ? 'transform 0.4s var(--m-ease-spring)' : 'none',
-        }}
+        style={
+          /*
+           * ⚠️ 静止时必须**不设 transform**（而不是 translateY(0px)）。
+           *
+           * CSS 里任何非 none 的 transform 都会让该元素成为 position:fixed 后代的
+           * **包含块**。此前这里恒写 translateY(0px)，于是子树里所有 fixed 元素
+           * （省份抽屉、底部 CTA 等）不再相对视口定位，而是相对这层内容容器 ——
+           * 真机表现：在地图页点省份，弹窗跑到**整页内容的最底部**，
+           * 必须一直往下拉才能看到（用户反馈的 bug）。
+           *
+           * 现在三态处理：
+           *   · 下拉中   → translateY(dist)，跟随手指（此时不会打开弹窗）
+           *   · 回弹中   → translateY(0px) + 弹簧过渡（保留动画）
+           *   · 静止     → 不写 transform（恢复视口定位）
+           */
+          dist > 0
+            ? { transform: `translateY(${dist}px)`, transition: 'none' }
+            : settling
+              ? { transform: 'translateY(0px)', transition: 'transform 0.4s var(--m-ease-spring)' }
+              : undefined
+        }
       >
         {children}
       </div>

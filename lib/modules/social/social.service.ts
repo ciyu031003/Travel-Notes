@@ -357,6 +357,21 @@ export async function getSocialPost(id: number, userId?: number | null) {
       })
     : []
 
+  /**
+   * 当前用户是否已屏蔽该作者（2026-10-12 新增）。
+   *
+   * 为什么必须由服务端给：详情页此前把「已屏蔽」只放在本地 useState(false) 里，
+   * 既读不到历史状态（重进页面又变回"屏蔽作者"），也无法做取消屏蔽。
+   * 真机反馈："点一下屏蔽、再点一下取消，退出软件后又变回屏蔽作者"。
+   */
+  const isBlocked =
+    userId != null && row.authorId != null && userId !== row.authorId
+      ? !!(await prisma.userBlock.findUnique({
+          where: { blockerId_blockedId: { blockerId: userId, blockedId: row.authorId } },
+          select: { blockerId: true },
+        }))
+      : false
+
   return {
     ...post,
     postId: row.postId ?? null,
@@ -364,6 +379,8 @@ export async function getSocialPost(id: number, userId?: number | null) {
     slug: row.travel?.slug ?? row.post?.slug ?? null,
     photos: row.post ? postImages(row.post) : row.travelId ? await collectTravelPhotos(row.travelId) : [],
     days,
+    /** 是否已屏蔽该作者（供详情页渲染可切换的屏蔽/取消屏蔽） */
+    isBlocked,
     /** 是否可给建议（R4 用）：公开帖登录后可评论；空间帖需成员 —— 这里先给出登录态判断 */
     canSuggest: !!userId,
   }

@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { goBackOrHome } from '@/lib/navigation'
 import { circleUserHref } from '@/lib/routes'
 
 export default function UserList({ endpoint, title }: { endpoint: string; title: string }) {
+  const router = useRouter()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -18,14 +21,22 @@ export default function UserList({ endpoint, title }: { endpoint: string; title:
 
   return (
     <div className="min-h-dvh bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
-      <div className="relative mx-auto max-w-2xl px-4 py-6">
+      {/* m-safe-top：同「我的收藏」，避免标题栏与状态栏重叠 */}
+      <div className="m-safe-top relative mx-auto max-w-2xl px-4 pb-6">
         <header className="mb-8 flex items-center gap-3">
-          <div className="ml-auto"><SocialThemeToggle /></div>
-          <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
-          <div>
+          <button
+            type="button"
+            onClick={() => goBackOrHome(router, '/me')}
+            aria-label="返回上一级"
+            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition-colors hover:text-[var(--social-text)]"
+          >
+            <Icon icon={ArrowLeft} size="md" />
+          </button>
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">People</p>
             <h1 className="text-xl font-semibold">{title}</h1>
           </div>
+          <SocialThemeToggle />
         </header>
         {loading ? (
           <div className="py-20 text-center text-[var(--social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>

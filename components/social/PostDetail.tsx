@@ -3,17 +3,23 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, X, WifiOff, Pencil, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, Check, X, WifiOff, Pencil, Trash2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { cn } from '@/lib/utils'
+import { toast } from '@/lib/mobile/toast-store'
+import { hapticLight } from '@/lib/mobile/haptics'
 import SocialBar from './SocialBar'
 import CommentPanel from './CommentPanel'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import PhotoViewer from '@/components/album/PhotoViewer'
+import StackedGallery from '@/components/social/StackedGallery'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialPostById } from '@/lib/modules/offline/social-read'
 import { circleUserHref, travelDetailHref } from '@/lib/routes'
+import { goBackOrHome } from '@/lib/navigation'
 
 interface PostDetailData {
   id: number
@@ -39,6 +45,8 @@ interface PostDetailData {
   canEdit: boolean
   /** 按天游记（R2）：没有绑定 Travel 的历史帖为空数组 */
   days?: TripDay[]
+  /** 是否已屏蔽该作者（服务端状态，支持取消屏蔽且跨会话保持） */
+  isBlocked?: boolean
   canSuggest?: boolean
 }
 
@@ -70,6 +78,7 @@ function formatDayDate(iso: string | null): string {
 }
 
 export default function PostDetail({ postId }: { postId: number }) {
+  const router = useRouter()
   const [post, setPost] = useState<PostDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -79,6 +88,7 @@ export default function PostDetail({ postId }: { postId: number }) {
   const [reportReason, setReportReason] = useState('')
   const [reporting, setReporting] = useState(false)
   const [blocked, setBlocked] = useState(false)
+  const [blockBusy, setBlockBusy] = useState(false)
   const [offline, setOffline] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [editTitle, setEditTitle] = useState('')
@@ -107,6 +117,8 @@ export default function PostDetail({ postId }: { postId: number }) {
         },
       )
       setPost(result.data)
+      // 屏蔽状态以服务端为准（本地缓存可能过期）：重进页面仍显示"已屏蔽该作者"
+      setBlocked(!!result.data.isBlocked)
       setOffline(result.source === 'local')
     } catch (e) {
       setPost(null)
@@ -130,10 +142,36 @@ export default function PostDetail({ postId }: { postId: number }) {
     } catch {} finally { setReporting(false) }
   }
 
-  const blockAuthor = async () => {
-    if (!post?.author) return
-    setBlocked(true)
-    try { await fetch(apiUrl('/api/social/users/' + post.author.id + '/block'), { method: 'POST', credentials: 'include' }) } catch {}
+  /**
+   * 屏蔽 / 取消屏蔽作者（可切换，2026-10-12 修复）。
+   *
+   * 修复前：只有 POST（屏蔽），点了就本地置 true 且**不可逆**，也不读服务端状态 ——
+   * 于是"退出软件再进来"又显示成未屏蔽（真机反馈的两个现象）。
+   * 现在：POST=屏蔽、DELETE=取消屏蔽，乐观更新 + 失败回滚 + 轻触觉反馈。
+   */
+  const toggleBlockAuthor = async () => {
+    if (!post?.author || blockBusy) return
+    const next = !blocked
+    void hapticLight()
+    setBlocked(next)
+    setBlockBusy(true)
+    try {
+      const res = await fetch(apiUrl('/api/social/users/' + post.author.id + '/block'), {
+        method: next ? 'POST' : 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        setBlocked(!next) // 回滚
+        toast.error(next ? '屏蔽失败，请重试' : '取消屏蔽失败，请重试')
+      } else {
+        toast.success(next ? '已屏蔽该作者，TA 的内容不再出现' : '已取消屏蔽该作者')
+      }
+    } catch {
+      setBlocked(!next)
+      toast.error('网络错误，请重试')
+    } finally {
+      setBlockBusy(false)
+    }
   }
 
   const refreshPost = async () => {
@@ -274,10 +312,25 @@ export default function PostDetail({ postId }: { postId: number }) {
   const authorName = post.author ? post.author.nickname || post.author.username : '旅行者'
   const days = post.days ?? []
 
+  /**
+   * 相册数组：封面优先入列，并去掉与封面重复的照片（避免第一张出现两次）。
+   * 堆叠相册与全屏 PhotoViewer **共用同一个数组**，否则 onOpen(i) 传出的下标
+   * 会在两个数组之间错位（点第 2 张却打开第 3 张）。
+   */
+  const gallery = post.coverUrl
+    ? [post.coverUrl, ...(post.photos || []).filter((p) => p !== post.coverUrl)]
+    : post.photos || []
+
   return (
     <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%)]" />
-      <div className="relative mx-auto max-w-3xl px-4 py-6">
+      {/*
+        顶部安全区（2026-10-12 修复）：/circle/* 在 LayoutContent 里走的是
+        「不挂 Navbar」分支（页面自带 header），因此**顶部安全区必须由本页自己负责**。
+        此前只有 py-6，标题栏会与手机状态栏重叠 —— 返回键、编辑、深浅模式切换
+        被状态栏压住一部分（真机反馈的 bug）。改用与其它移动页一致的 m-safe-top。
+      */}
+      <div className="m-safe-top relative mx-auto max-w-3xl px-4 pb-6">
         {offline && (
           <div className="mb-4 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
             <Icon icon={WifiOff} size="sm" />
@@ -285,7 +338,19 @@ export default function PostDetail({ postId }: { postId: number }) {
           </div>
         )}
         <header className="mb-7 flex items-center gap-3">
-          <Link href="/circle" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
+          {/*
+            返回「上一级」而不是固定回 /circle：
+            从旅行详情或他人主页点进来的用户，期望回到**来路**。
+            无应用内历史（分享链接/通知直达）时才落到 /circle（见 lib/navigation.ts）。
+          */}
+          <button
+            type="button"
+            onClick={() => { void hapticLight(); goBackOrHome(router, '/circle') }}
+            aria-label="返回上一级"
+            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition-colors hover:text-[var(--social-text)]"
+          >
+            <Icon icon={ArrowLeft} size="md" />
+          </button>
           <span className="text-sm text-[var(--social-muted)]">旅行圈</span>
           <div className="ml-auto flex items-center gap-2">
             {post.canEdit && (
@@ -301,10 +366,18 @@ export default function PostDetail({ postId }: { postId: number }) {
           </div>
         </header>
 
-        {post.coverUrl && (
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[1.6rem] bg-[var(--social-surface2)] ring-1 ring-[var(--social-line)]">
-            <Image src={post.coverUrl} alt={post.title} fill priority sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
-          </div>
+        {/*
+          顶部图片：堆叠相册（2026-10-12 改造）。
+          此前是单张 16:10 封面（多图时其余照片要点进"旅行照片"九宫格才能看）。
+          现在改为堆叠卡组：左右滑动**或**上下滑动都能切图，点击当前卡打开全屏查看器。
+          单图时退化为普通封面（组件内部处理）。
+        */}
+        {gallery.length > 0 && (
+          <StackedGallery
+            images={gallery}
+            alt={post.title}
+            onOpen={(i) => setViewerIndex(i)}
+          />
         )}
 
         <div className="mt-8">
@@ -338,10 +411,24 @@ export default function PostDetail({ postId }: { postId: number }) {
 
         <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-[var(--social-faint)]">
           <button type="button" onClick={() => setShowReport(true)} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-[var(--social-text)]"><Icon icon={Flag} size="sm" />举报</button>
-          {post.author && !blocked && (
-            <button type="button" onClick={blockAuthor} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-[var(--social-text)]"><Icon icon={Ban} size="sm" />屏蔽作者</button>
+          {post.author && (
+            <button
+              type="button"
+              onClick={toggleBlockAuthor}
+              disabled={blockBusy}
+              aria-pressed={blocked}
+              className={cn(
+                // 触达 ≥44px（规范 §8）：此前 py-1.5 只有约 28px 高
+                'm-pressable inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs transition-colors disabled:opacity-60',
+                blocked
+                  ? 'bg-[var(--social-accent-soft)] text-[var(--social-accent)]'
+                  : 'ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]',
+              )}
+            >
+              <Icon icon={blocked ? Check : Ban} size="sm" />
+              {blocked ? '已屏蔽 · 点击取消' : '屏蔽作者'}
+            </button>
           )}
-          {blocked && <span>已屏蔽该作者</span>}
         </div>
 
         {post.photos && post.photos.length > 1 && (
@@ -490,7 +577,7 @@ export default function PostDetail({ postId }: { postId: number }) {
       )}
       {showComments && <CommentPanel postId={post.id} onClose={() => setShowComments(false)} />}
       {viewerIndex !== null && post.photos.length > 0 && (
-        <PhotoViewer images={post.photos.map((src) => ({ src, alt: post.title }))} index={viewerIndex} onClose={() => setViewerIndex(null)} onIndexChange={setViewerIndex} />
+        <PhotoViewer images={gallery.map((src) => ({ src, alt: post.title }))} index={viewerIndex} onClose={() => setViewerIndex(null)} onIndexChange={setViewerIndex} />
       )}
     </div>
   )

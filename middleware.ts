@@ -209,6 +209,22 @@ export async function middleware(request: NextRequest) {
   const adminSession = request.cookies.get('admin_session')
 
   if (!adminSession || !adminSession.value) {
+    /**
+     * 未登录访问站点根 → 送**门户落地页**，而不是登录页（2026-10-12）。
+     *
+     * 背景：nginx 此前用 `location = / { return 301 /portal/; }` 把根固定跳门户，
+     * 访客能看到落地页，但**已登录用户点「进入空间」也会被这条 301 弹回门户** ——
+     * 表现为页面闪烁一下却始终停在门户（用户反馈的 bug）。
+     *
+     * 现在把「根路径该去哪」的决策从 nginx 上移到应用（这里），因为它需要登录态：
+     *   · 已登录 → 放行，渲染 app/page.tsx（真正的应用首页）
+     *   · 未登录 → 跳 /portal/（门户落地页，保持访客体验不变）
+     * 对应地，nginx 的 `location = /` 改为反代应用。
+     */
+    if (pathname === '/') {
+      const portalUrl = new URL('/portal/', request.url)
+      return finalizeResponse(NextResponse.redirect(portalUrl), request)
+    }
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return finalizeResponse(NextResponse.redirect(loginUrl), request)

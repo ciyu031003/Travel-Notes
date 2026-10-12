@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Image from 'next/image'
 import { X, MapPin, Sparkles, ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'
@@ -30,6 +32,21 @@ export default function MobileProvinceDrawer({
   onCityClick: (city: City) => void
   onBack: () => void
 }) {
+  /**
+   * 必须 portal 到 document.body（2026-10-12 修复）。
+   *
+   * 原因：本组件是 fixed 定位的底部抽屉，而 CSS 规定**任何非 none 的 transform
+   * 都会让祖先成为 fixed 的包含块**。地图页的调用链上存在多个带常驻 transform 的
+   * 祖先（PullToRefresh 的内容层、`m-enter` 动画的 fill-mode:both 会保留
+   * translateY(0) scale(1)）。一旦被这些祖先捕获，抽屉的 `bottom-0` 就变成
+   * "相对那一层内容容器的底部" —— 真机表现是弹窗跑到整页最下方，
+   * 用户必须一直往下拉才能看到。
+   *
+   * portal 到 body 后，fixed 重新相对视口，行为与 BottomSheet 一致。
+   */
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   if (!provinceId) return null
   const provinceInfo = getProvince(provinceId)
   if (!provinceInfo) return null
@@ -38,17 +55,19 @@ export default function MobileProvinceDrawer({
   const provincePosts = postsByProvince.get(provinceId) || []
   const cityPosts = city ? citiesWithPosts.get(`${city.name}-${provinceId}`) || [] : []
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <>
       <div
         data-map-overlay
-        className="fixed inset-0 z-40 bg-black/[0.18] md:hidden"
+        className="fixed inset-0 z-40 bg-black/[0.18] m-fade-in md:hidden"
         onClick={onClose}
       />
 
       <div
         data-map-overlay
-        className="fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-3xl border-t border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] shadow-[var(--m-elev-3)] transition-[height] duration-300 ease-out md:hidden"
+        className="m-sheet-up fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-3xl border-t border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] shadow-[var(--m-elev-3)] transition-[height] duration-300 ease-out md:hidden"
         style={{ height: expanded ? 'calc(100dvh - 56px)' : '62dvh' }}
       >
         {/* 拖拽把手：点击可切换全屏/半屏 */}
@@ -163,7 +182,8 @@ export default function MobileProvinceDrawer({
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   )
 }
 
