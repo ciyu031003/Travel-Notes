@@ -1,6 +1,9 @@
 # 行迹 · Travel-Notes UI 优化方案（Web 端 + 移动端）
 
-> 版本：v1.1 ｜ 日期：2026-10-12 ｜ 状态：**评审稿，未改动任何代码**
+> 版本：v1.2 ｜ 日期：2026-10-12 ｜ 状态：**P0/P1/P2 已全部实施并上线**
+> 实施记录：见 `CHANGELOG.md` 的 1.23.0（P0–P2 收敛）与 1.23.1（用户反馈 bug 修复）。
+> 本文件保留为**评审依据与证据台账**；下述 §11 记录实施后由用户真机反馈暴露的 8 个缺陷
+> —— 它们全部属于"静态审计看不到、只有真机/真实登录态才暴露"的类别，值得沉淀。
 > 基线：`package.json` v1.22.0 ｜ 扫描范围 `app/` `components/` `lib/` `hooks/` `docs/design/`（374 个 UI 源文件）
 > 数据来源：`scripts/check-design-tokens.mjs` 实跑输出、PowerShell 全量统计、双线并行代码审计（Web / 移动端）逐文件抽读
 > **所有结论均已二次独立验证**，关键条目附可复现命令。
@@ -508,7 +511,47 @@ Get-ChildItem app,components,lib,hooks -Recurse -Include *.ts,*.tsx |
   Select-String 'visualViewport'                             # → 无输出
 ```
 
+
 ---
 
-*本文档为评审草案，**未修改任何代码**。所有数据来自本次实跑与双线逐文件审计，
+## 11. 实施后真机反馈暴露的缺陷（8 项，v1.23.1 已修）
+
+> **方法论价值**：下面 8 个问题在静态审计里**一条都没查出来**。它们全部依赖
+> 「真实登录态」「真实设备」「真实的 301 链路」才能暴露。这说明：
+> **静态审计 + token 门禁能守住"规范一致性"，但守不住"运行时行为正确性"。**
+> 后续每轮 UI 改动，都应在真机上过一遍这份清单。
+
+| # | 现象 | 根因（一句话） | 类别 |
+|---|---|---|---|
+| 1 | Web 点「进入空间」停在门户、闪烁不跳转 | 门户把已登录入口指向 `/`，而 nginx `location = /` 是 `return 301 /portal/` → **自环** | 跨层配置冲突 |
+| 2 | 点省份，弹窗跑到整页最底部 | **非 none 的 transform 会成为 fixed 的包含块**：`PullToRefresh` 恒写 `translateY(0px)`、`m-enter` 的 `fill-mode:both` 保留 `translateY(0) scale(1)` | CSS 包含块陷阱 |
+| 3 | 抽屉里缺版本检测 | 纯功能缺口 | 功能缺失 |
+| 4 | 旅行圈详情顶栏压状态栏 | `/circle/*` 走「不挂 Navbar」分支，顶部安全区须页面自管而该页只有 `py-6` | 安全区责任归属 |
+| 5 | 评论发送后不显示 | 原生壳 `createComment` 只写本地队列，前端却立刻从服务端重拉 | 离线优先时序 |
+| 6 | 屏蔽不可逆、退出后状态回退 | 状态只存本地 `useState`，且只有 POST 没有 DELETE | 客户端状态持久化 |
+| 7 | 侧滑返回直接退出 App | `window.history.length > 1` 在 **Capacitor WebView 里恒为真** | 平台差异假设 |
+| 8 | 返回按钮覆盖不全/位置不对 | `EdgeSwipeBack` 逐页挂载（漏页），返回键固定指向父级而非来路 | 一致性 |
+
+### 11.1 三条可复用的工程结论
+
+1. **不要用 `window.history.length` 判断"有无上一页"。**
+   浏览器里它混入站外条目，Capacitor WebView 里恒 > 1。
+   正解是自维护「只含本站路径」的导航栈（`lib/navigation-stack.ts`），
+   已补 7 例单测守护。
+
+2. **凡 `position: fixed` 的浮层，一律 portal 到 `document.body`。**
+   只要祖先链上有任何 transform（含 `animation-fill-mode: both` 保留的终态
+   transform、`translateY(0px)` 这种"看起来等于没有"的值），fixed 就会改锚点。
+   这条已写进组件注释，后续新增浮层请照做。
+
+3. **"改配置 + 改代码"的跨层修复要注意部署顺序。**
+   本次修 #1 涉及 nginx + middleware 两侧：先发应用（middleware 就绪）、
+   再改 nginx，全程无空窗；反过来则会出现匿名用户被弹到 /login 的窗口期。
+   另外：**nginx 备份文件不能放在 `sites-enabled/` 里** —— nginx 会加载该目录下
+   所有文件，两个配置同时声明 `listen 443` 会让 `nginx -t` 报 duplicate 而拒绝重载
+   （本次踩到，已改为备份到 `/etc/nginx/config-backups/`）。
+
+---
+
+*本文档最初为评审草案；P0/P1/P2 已实施上线，§11 为实施后真机反馈的修复记录。
 关键结论已二次独立验证；复现命令见 §10.1。*
