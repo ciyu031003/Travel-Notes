@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复：Android 系统返回退出 App、社交互动不保存、行程照片与全屏预览、堆叠相册切换残留；新增花销绑定行程并在行程/总览显示',
+    changelog: process.env.APP_CHANGELOG || '一致性修复：图标改走 Icon/Loader 组件、堆叠相册归入设计系统层、总览字阶改用 m-caption（无功能变化）',
     forceUpdate,
   })
 }
