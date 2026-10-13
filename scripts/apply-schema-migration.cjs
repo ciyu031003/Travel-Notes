@@ -192,7 +192,9 @@ async function main() {
   // 花销绑定行程（2026-10-13）：记一笔时可选定某个行程项，费用同时出现在行程与总览。
   // 幂等：列/索引/外键各查一次存在性。删行程项只解除关联（SET NULL），不删账目。
   await addColumn(conn, 'Expense', 'itineraryItemId', 'itineraryItemId INT NULL AFTER happenedAt')
-  await addIndex(conn, 'Expense', 'Expense_itineraryItemId_idx', 'INDEX `Expense_itineraryItemId_idx` (`itineraryItemId`)')
+  // 注意：addIndex 的第 4 个参数只传「(列)」—— 函数内部会拼 ADD INDEX `名字`，
+  // 传完整 INDEX 语句会变成 ADD INDEX `x` INDEX `x` (...)，MySQL 直接语法错误。
+  await addIndex(conn, 'Expense', 'Expense_itineraryItemId_idx', '(`itineraryItemId`)')
   await addFk(conn, 'Expense', 'Expense_itineraryItemId_fkey', 'FOREIGN KEY (itineraryItemId) REFERENCES ItineraryItem(id) ON DELETE SET NULL ON UPDATE CASCADE')
 
   // Expense 金额 Float 元 → Int 分（1.19.0）。
