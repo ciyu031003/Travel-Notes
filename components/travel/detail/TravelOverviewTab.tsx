@@ -202,8 +202,9 @@ export default function TravelOverviewTab({
         */}
         {boundExpenses.length > 0 && (
           <ul className="mt-3 space-y-1.5 border-t border-[var(--m-line)] pt-3">
+            {/* m-caption（13px）走设计系统字阶，不用魔术字号 —— 规范 §3 只允许 7 档 */}
             {boundExpenses.map((row) => (
-              <li key={row.id} className="flex items-baseline gap-2 text-[12px]">
+              <li key={row.id} className="m-caption flex items-baseline gap-2">
                 <span className="min-w-0 flex-1 truncate text-[var(--m-muted)]">
                   {row.dayLabel} · {row.title}
                   {row.count > 1 ? `（${row.count} 笔）` : ''}

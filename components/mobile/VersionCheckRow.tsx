@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { RefreshCw, Check, Download, Loader2 } from 'lucide-react'
+import { RefreshCw, Check, Download } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { Loader } from '@/components/mobile/Loader'
 import { DrawerRow } from '@/components/mobile/SideDrawer'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
@@ -84,8 +85,11 @@ export default function VersionCheckRow() {
     }
   }, [checking, installing, current, startNativeInstall])
 
+  // 规范 §6.1/§7：图标尺寸只走 <Icon> 三档；无限动画只允许 Loader 组件。
+  // 原为裸 <Loader2 className="h-4 w-4 animate-spin">，被 token 门禁判为
+  // 「图标尺寸自由取值」的新增回退。
   const trailing = checking ? (
-    <Loader2 className="h-4 w-4 animate-spin text-[var(--m-muted)]" aria-hidden="true" />
+    <Loader variant="ring" size="sm" label="" />
   ) : upToDate ? (
     <Icon icon={Check} size="sm" tone="success" />
   ) : (
