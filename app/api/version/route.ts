@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '一致性修复：图标改走 Icon/Loader 组件、堆叠相册归入设计系统层、总览字阶改用 m-caption（无功能变化）',
+    changelog: process.env.APP_CHANGELOG || '新建旅行精修：自绘时间滚轮（替代系统圆盘钟表）、日期选择器连续色带+快捷区间、品牌化下拉选择器、混合角色同行（聚会/团建）、按钮按压材质反馈',
     forceUpdate,
   })
 }
