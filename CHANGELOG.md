@@ -1,3 +1,51 @@
+## [1.23.2] - 2026-10-13
+
+> 真机反馈修复批 + 花销绑定行程。tsc 0 错误 · lint 0 error ·
+> vitest **56 文件 / 519 用例全绿** · next build 成功 · 版本 1.23.2/b44 一致。
+
+### Fixed
+
+- **Android 系统边缘返回直接退出 App**：上一轮只改了网页侧滑，但系统手势由 Activity
+  处理，网页监听拦不住。现在 MainActivity 注册 `OnBackPressedCallback`，把系统返回
+  转成网页事件 `window.__tiantuHandleBack`，不再走默认 `finish()`（默认就是回桌面）；
+  `use-close-on-back` 监听该事件，有弹层先关弹层、无弹层才返回上一级。
+- **社交互动（点赞/评论/收藏/举报/屏蔽）点了没反应、退出重进就丢**：已用内存复现
+  确认根因 —— `social-write` 入队前先 `JSON.stringify`，而 `SyncQueue.enqueue` 又
+  stringify 一次，库里存成「字符串的 JSON」；分发器只 parse 一次得到 string，
+  `payload.postId` 为 undefined 直接抛「缺少 postId」，**fetch 从未发出**。
+  修：social-write 改为**在线优先**（只有网络不可达才入队，认证/业务错误一律报错）；
+  新增 `decodeSyncPayload` 兼容历史双重编码并拒绝 string/array 穿透；分发器不再
+  `res.json().catch(()=>({}))`（2xx 但 `success:false`、重定向到登录页都必须抛错）；
+  SyncEngine 增加 30s 定时回放（原先只在启动/网络变化触发）。
+- **点赞/收藏接口非幂等**：POST 与 DELETE 都调同一个 toggle，队列重放一次就把用户
+  刚点的赞撤销。改为 `setPostLike/setPostFavorite(postId, userId, 目标态)`：
+  POST=确保已赞、DELETE=确保未赞，重复执行结果恒定。
+- **行程上传的照片只有占位图标 / 点不开 / 全屏空白**（三个独立缺陷）：
+  ① `getTravelTimeline`、`getTravelMemoryPhotos` 手拼 `/uploads/${key}` 漏掉绝对化，
+  原生壳页面源是 `https://localhost`，相对地址被解析到本地壳必然 404。已三处统一收敛到
+  `storageKeyToUrl`；② 行程缩略图是**裸 `img`**，没有 button/onClick、props 也没回调，
+  点了必然没反应 → 加 `onOpenViewer` 并包 button，父级复用同一查看器；
+  ③ 查看器只判 `open`，photos 为空时返回监听已入栈、body 滚动已锁，然后 `return null`
+  → 空白且页面锁死 → 统一用 `opened = open && photos.length > 0`，顶部封面点击的集合
+  兜底并入封面（`viewerPhotos`）。另：detail 接口 `images` 改为优先并入 `coverUrl`。
+- **堆叠相册切换残留上一张、过渡卡顿**：离场卡只偏移 18px、留 0.55 透明度（旧图一直在
+  屏里）；无离场/入场区分；touchmove 每帧 setState 掉帧；松手硬跳。已重做为方向感知三态
+  （active 居中 / peek 停在行进方向一侧 / leave 沿反方向**完全滑出** 104%），方向按原始
+  索引差值判定，touchmove 用 rAF 节流，卡片声明 `will-change`，松手恢复弹簧过渡。
+
+### Added
+
+- **花销绑定行程**：`Expense` 新增可空 `itineraryItemId`（`ON DELETE SET NULL`，
+  删行程不连带删掉真实账目），含索引与外键；`apply-schema-migration.cjs` 补幂等 DDL。
+  - 服务：`addExpense` **校验行程属于本旅行**（跨旅行/已删除/查询出错一律退化为
+    「不绑定」，不因校验失败丢账）；`getTravelExpenses` 回传；timeline 每条行程带上
+    其绑定花销（整数分求和）。
+  - UI：记一笔表单新增「选定行程」下拉（按日期唯一匹配时自动预选）；花销列表回显归属；
+    行程每条下方显示该行程花费合计；总览新增「行程费用」明细。
+- 测试：新增 `travel-expense-itinerary.test.ts`（6 例）与社交同步 7 例。
+
+---
+
 ## [1.23.1] - 2026-10-12
 
 > 用户反馈 8 个 bug 的集中修复 + 相关体验优化。tsc 0 错误 · lint 0 error ·

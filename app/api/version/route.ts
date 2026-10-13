@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复：Web 进入空间不跳转、省份弹窗位置、评论不显示、屏蔽状态不可逆、侧滑返回退出App、旅行圈详情顶栏与状态栏重叠；新增堆叠相册与版本检测',
+    changelog: process.env.APP_CHANGELOG || '修复：Android 系统返回退出 App、社交互动不保存、行程照片与全屏预览、堆叠相册切换残留；新增花销绑定行程并在行程/总览显示',
     forceUpdate,
   })
 }
