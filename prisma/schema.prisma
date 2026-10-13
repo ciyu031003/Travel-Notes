@@ -28,7 +28,7 @@ model Post {
   updatedAt DateTime @updatedAt @db.Timestamp(3)
 
   postImages PostImage[]
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   travelPost TravelPost?
 
   @@unique([type, slug])
@@ -98,53 +98,53 @@ model OilPainting {
 
 /// 用户账号（多账号基础：当前为单管理员迁移自 SiteSetting，未来支持情侣双账号）
 model User {
-  id                    Int      @id @default(autoincrement())
-  username              String   @unique @db.VarChar(255)
-  passwordHash          String   @db.Text
-  email                 String?  @db.VarChar(255)
-  emailVerified         Boolean  @default(false)
-  requirePasswordChange Boolean  @default(false)
-  anniversaryStart      String?  @db.VarChar(50)
-  nickname              String?  @db.VarChar(50)
-  avatarUrl             String?  @db.VarChar(500)
+  id                     Int       @id @default(autoincrement())
+  username               String    @unique @db.VarChar(255)
+  passwordHash           String    @db.Text
+  email                  String?   @db.VarChar(255)
+  emailVerified          Boolean   @default(false)
+  requirePasswordChange  Boolean   @default(false)
+  anniversaryStart       String?   @db.VarChar(50)
+  nickname               String?   @db.VarChar(50)
+  avatarUrl              String?   @db.VarChar(500)
   /// 档案头图（用户上传的风景图）；焦点为 0-1 归一化坐标，null 表示居中
-  coverUrl              String?  @db.VarChar(500)
-  coverFocusX           Float?
-  coverFocusY           Float?
-  bio                   String?  @db.VarChar(200)
-  accountId             String?  @unique @db.VarChar(12)
+  coverUrl               String?   @db.VarChar(500)
+  coverFocusX            Float?
+  coverFocusY            Float?
+  bio                    String?   @db.VarChar(200)
+  accountId              String?   @unique @db.VarChar(12)
   /// 偏好问卷答案（注册后一次性收集，可跳过）：
   /// { companionStyle: 'ALONE'|'COUPLE'|'FRIENDS'|'FAMILY', delights: string[], vetoes: string[], cautions: string[], skipped?: boolean }
-  preferences           Json?
+  preferences            Json?
   /// 问卷完成或跳过的时刻；**非空即表示不再弹出**（幂等锚点）
   preferencesCompletedAt DateTime? @db.Timestamp(3)
-  createdAt             DateTime @default(now()) @db.Timestamp(3)
-  updatedAt             DateTime @updatedAt @db.Timestamp(3)
+  createdAt              DateTime  @default(now()) @db.Timestamp(3)
+  updatedAt              DateTime  @updatedAt @db.Timestamp(3)
 
-  sessions      Session[]
-  spaceMembers  SpaceMember[]
-  memories      Memory[]      @relation("MemoryCreatedBy")
-  auditLogs     AuditLog[]
-  posts         Post[]
-  travels       Travel[]      @relation("TravelOwner")
-  albums        Album[]       @relation("AlbumOwner")
-  media         Media[]       @relation("MediaOwner")
-  moments       Moment[]
-  photoMessages PhotoMessage[]
-  timelineItems TimelineItem[]
-  anniversaries Anniversary[]
-  travelPosts        TravelPost[]
-  postLikes          PostLike[]
-  postFavorites      PostFavorite[]
-  comments           Comment[]
-  commentLikes       CommentLike[]
-  following          UserFollow[]  @relation("UserFollowing")
-  followers          UserFollow[]  @relation("UserFollowers")
-  notifications      Notification[] @relation("NotificationReceiver")
-  notificationActed  Notification[] @relation("NotificationActor")
-  reports            Report[]
-  blockedBy          UserBlock[]   @relation("UserBlocker")
-  blockedUsers       UserBlock[]   @relation("UserBlocked")
+  sessions          Session[]
+  spaceMembers      SpaceMember[]
+  memories          Memory[]       @relation("MemoryCreatedBy")
+  auditLogs         AuditLog[]
+  posts             Post[]
+  travels           Travel[]       @relation("TravelOwner")
+  albums            Album[]        @relation("AlbumOwner")
+  media             Media[]        @relation("MediaOwner")
+  moments           Moment[]
+  photoMessages     PhotoMessage[]
+  timelineItems     TimelineItem[]
+  anniversaries     Anniversary[]
+  travelPosts       TravelPost[]
+  postLikes         PostLike[]
+  postFavorites     PostFavorite[]
+  comments          Comment[]
+  commentLikes      CommentLike[]
+  following         UserFollow[]   @relation("UserFollowing")
+  followers         UserFollow[]   @relation("UserFollowers")
+  notifications     Notification[] @relation("NotificationReceiver")
+  notificationActed Notification[] @relation("NotificationActor")
+  reports           Report[]
+  blockedBy         UserBlock[]    @relation("UserBlocker")
+  blockedUsers      UserBlock[]    @relation("UserBlocked")
 
   @@index([email])
 }
@@ -315,7 +315,6 @@ enum AuditAction {
   SETTINGS_UPDATE
 }
 
-
 /// 评论状态（社交圈治理）
 enum CommentStatus {
   VISIBLE
@@ -342,7 +341,6 @@ enum ReportStatus {
   DISMISSED
   ACTIONED
 }
-
 
 /// 空间类型（多元场景：情侣/家庭/朋友/个人/其他）
 enum SpaceType {
@@ -445,13 +443,13 @@ model Travel {
   createdAt    DateTime     @default(now()) @db.Timestamp(3)
   updatedAt    DateTime     @updatedAt @db.Timestamp(3)
 
-  space    Space?      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  owner    User?       @relation("TravelOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  days     TravelDay[]
-  memories Memory[]
-  expenses Expense[]
-  travelPost         TravelPost?
-  albums   Album[]    @relation("AlbumTravel")
+  space      Space?      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  owner      User?       @relation("TravelOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  days       TravelDay[]
+  memories   Memory[]
+  expenses   Expense[]
+  travelPost TravelPost?
+  albums     Album[]     @relation("AlbumTravel")
 
   @@unique([spaceId, slug])
   @@index([spaceId, startDate])
@@ -511,13 +509,13 @@ model Memory {
   createdAt   DateTime   @default(now()) @db.Timestamp(3)
   updatedAt   DateTime   @updatedAt @db.Timestamp(3)
 
-  space         Space      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  travel        Travel?    @relation(fields: [travelId], references: [id], onDelete: SetNull)
-  travelDay     TravelDay? @relation(fields: [travelDayId], references: [id], onDelete: SetNull)
-  location      Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  media         Media[]    @relation("MemoryPrimaryMedia")
+  space         Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  travel        Travel?       @relation(fields: [travelId], references: [id], onDelete: SetNull)
+  travelDay     TravelDay?    @relation(fields: [travelDayId], references: [id], onDelete: SetNull)
+  location      Location?     @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  media         Media[]       @relation("MemoryPrimaryMedia")
   mediaLinks    MemoryMedia[]
-  createdByUser User?      @relation("MemoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdByUser User?         @relation("MemoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([spaceId, happenedAt])
   @@index([spaceId, travelId])
@@ -525,10 +523,10 @@ model Memory {
 
 /// 回忆-媒体 多对多关联（v3.1 M2-A2：一张照片可进多个回忆；memoryId 主关联兼容旧数据）
 model MemoryMedia {
-  id       Int    @id @default(autoincrement())
-  memoryId Int
-  mediaId  Int
-  sortOrder Int   @default(0)
+  id        Int @id @default(autoincrement())
+  memoryId  Int
+  mediaId   Int
+  sortOrder Int @default(0)
 
   memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   media  Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
@@ -706,6 +704,9 @@ model ItineraryItem {
   travelDay TravelDay? @relation(fields: [travelDayId], references: [id], onDelete: Cascade)
   location  Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
+  /// 该行程项上记的花销（"记一笔"绑定到具体行程，行程/总览里即时可见）
+  expenses Expense[]
+
   @@index([travelDayId, sortOrder])
 }
 
@@ -723,11 +724,18 @@ model Expense {
   happenedAt  DateTime? @db.Timestamp(3)
   createdAt   DateTime  @default(now()) @db.Timestamp(3)
 
+  /// 可选的行程绑定（2026-10-13）：
+  /// 记一笔花销时选定某个行程项（如"11/1 高铁 北京→上海"），该笔费用会同时
+  /// 出现在行程视图与总览里。为 null 表示这笔钱不归属任何具体行程（如签证、购物）。
+  /// onDelete: SetNull —— 删掉行程项不应连带删掉真实发生过的账目，只解除关联。
+  itineraryItemId Int?
+  itineraryItem   ItineraryItem? @relation(fields: [itineraryItemId], references: [id], onDelete: SetNull)
+
   travel Travel @relation(fields: [travelId], references: [id], onDelete: Cascade)
 
   @@index([travelId])
+  @@index([itineraryItemId])
 }
-
 
 // ============================================================
 // Stage 2 (Social Domain): 旅行圈社交
@@ -750,9 +758,9 @@ model TravelPost {
   createdAt     DateTime   @default(now()) @db.Timestamp(3)
   updatedAt     DateTime   @updatedAt @db.Timestamp(3)
 
-  travel    Travel?       @relation(fields: [travelId], references: [id], onDelete: Cascade)
-  post      Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  travel    Travel?        @relation(fields: [travelId], references: [id], onDelete: Cascade)
+  post      Post?          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likes     PostLike[]
   favorites PostFavorite[]
   comments  Comment[]
@@ -801,10 +809,10 @@ model Comment {
   createdAt DateTime      @default(now()) @db.Timestamp(3)
   updatedAt DateTime      @updatedAt @db.Timestamp(3)
 
-  post    TravelPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent  Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
-  replies Comment[]      @relation("CommentReplies")
+  post    TravelPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies Comment[]     @relation("CommentReplies")
   likes   CommentLike[]
 
   @@index([postId, status, createdAt])
@@ -873,7 +881,6 @@ model Report {
   @@index([status, createdAt])
   @@index([reporterId])
 }
-
 
 /// 用户屏蔽（社交治理：Feed 过滤被屏蔽作者）
 model UserBlock {

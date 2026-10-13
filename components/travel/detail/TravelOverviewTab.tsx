@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { CalendarDays, ImageIcon, Sparkles, Wallet } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
@@ -38,6 +39,31 @@ export default function TravelOverviewTab({
   const upcoming = days
     .flatMap((d, i) => d.itinerary.map((it) => ({ it, dayLabel: dayFullLabel(d.date, i) })))
     .slice(0, 3)
+
+  /**
+   * 已绑定到行程的花销汇总（2026-10-13）。
+   *
+   * 「记一笔」时选定行程后，这笔钱除了显示在行程那一条下面，总览里也给一行
+   * 「行程费用」，让用户一眼看出"这些钱分别花在哪几段行程上"。
+   * 未绑定的花销不计入（它们只体现在总花销里），避免与总额重复表达。
+   */
+  const boundExpenses = useMemo(() => {
+    const rows: { id: number; title: string; dayLabel: string; amount: number; count: number }[] = []
+    days.forEach((d, i) => {
+      for (const it of d.itinerary || []) {
+        const list = it.expenses || []
+        if (list.length === 0) continue
+        rows.push({
+          id: it.id,
+          title: it.title,
+          dayLabel: dayFullLabel(d.date, i),
+          amount: list.reduce((s, e) => s + e.amount, 0),
+          count: list.length,
+        })
+      }
+    })
+    return rows.sort((a, b) => b.amount - a.amount).slice(0, 4)
+  }, [days])
 
   const latestMemories = days
     .flatMap((d) => d.memories)
@@ -167,6 +193,27 @@ export default function TravelOverviewTab({
               style={{ width: `${budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : 0}%` }}
             />
           </div>
+        )}
+
+        {/*
+          行程费用明细：仅显示**已绑定行程**的花销（记一笔时选定行程的那些）。
+          用户诉求是"选定行程以后，在行程或者总览里也会相应地显示这些费用" ——
+          这里是总览侧的对应展示，按金额倒序取前 4 条。
+        */}
+        {boundExpenses.length > 0 && (
+          <ul className="mt-3 space-y-1.5 border-t border-[var(--m-line)] pt-3">
+            {boundExpenses.map((row) => (
+              <li key={row.id} className="flex items-baseline gap-2 text-[12px]">
+                <span className="min-w-0 flex-1 truncate text-[var(--m-muted)]">
+                  {row.dayLabel} · {row.title}
+                  {row.count > 1 ? `（${row.count} 笔）` : ''}
+                </span>
+                <span className="shrink-0 tabular-nums font-medium text-[var(--m-text)]">
+                  ¥{formatMoney(row.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

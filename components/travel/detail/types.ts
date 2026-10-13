@@ -14,6 +14,16 @@ export interface TimelineItineraryItem {
   type: string
   notes: string | null
   locationName: string | null
+  /** 绑定到本条行程的花销（记一笔时选定行程）；未绑定则空数组 */
+  expenses?: {
+    id: number
+    amount: number
+    currency: string
+    category: string
+    payer: string | null
+    note: string | null
+    happenedAt: string | null
+  }[]
 }
 
 export interface TimelinePhoto {
@@ -81,6 +91,8 @@ export interface ExpenseItem {
   payer: string | null
   note: string | null
   happenedAt: string | null
+  /** 绑定的行程项 id（null / 缺省 = 未绑定任何行程） */
+  itineraryItemId?: number | null
 }
 
 export interface ExpenseState {

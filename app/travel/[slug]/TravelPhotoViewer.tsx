@@ -49,13 +49,23 @@ export default function TravelPhotoViewer({
   const [index, setIndex] = useState(startIndex)
   const [chromeVisible, setChromeVisible] = useState(true)
 
+  /**
+   * 「真正打开」= open 且有图（2026-10-13 修复）。
+   *
+   * 此前只判 open：photos 为空时（例如只有封面、时间线尚未加载或加载失败）
+   * 返回监听已 pushState、body 滚动也已锁死，但第 82 行 return null 什么都不渲染 ——
+   * 真机表现正是"点开全屏是空白，而且页面不能滚动、返回键要多按一次"。
+   * 现在渲染、返回监听、滚动锁共用同一判据，空集直接当没打开。
+   */
+  const opened = open && photos.length > 0
+
   // Android 物理返回 / 浏览器返回：先关查看器而不是离开详情页。
   // （原内联 pushState+popstate 实现已抽为该 hook，嵌套弹层由栈序保证逐层关闭）
-  useCloseOnBack(open, onClose)
+  useCloseOnBack(opened, onClose)
 
   // 打开：复位视图状态 + Esc 关闭 + 滚动锁
   useEffect(() => {
-    if (!open) return
+    if (!opened) return
     setIndex(Math.max(0, Math.min(startIndex, Math.max(0, photos.length - 1))))
     setChromeVisible(true)
     const onKey = (e: KeyboardEvent) => {
@@ -69,17 +79,17 @@ export default function TravelPhotoViewer({
       document.body.style.overflow = prevOverflow
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, startIndex, photos.length])
+  }, [opened, startIndex, photos.length])
 
   // 定位到起始页（打开时一次性）
   useEffect(() => {
-    if (!open) return
+    if (!opened) return
     const el = containerRef.current
     if (!el) return
     el.scrollTop = Math.max(0, startIndex) * el.clientHeight
-  }, [open, startIndex])
+  }, [opened, startIndex])
 
-  if (!open || photos.length === 0) return null
+  if (!opened) return null
 
   const go = (next: number) => {
     const el = containerRef.current

@@ -91,3 +91,100 @@ describe('HttpSyncDispatcher 响应解析', () => {
     expect(init.method).toBe('POST')
   })
 })
+/**
+ * 社交互动同步回归（2026-10-13）
+ *
+ * 锁的是一个**线上真实故障**：点赞/收藏/评论在 App 里点了没反应、退出重进就丢。
+ * 根因是 SyncQueue.enqueue 已经 JSON.stringify(payload)，而 social-write 入队前
+ * **又 stringify 了一次**，于是库里存的是"字符串的 JSON"；分发器只 parse 一次拿到
+ * string，payload.postId 为 undefined → 抛「缺少 postId」→ fetch 根本没发出。
+ * 表现是队列里三条 FAILED、fetchCount=0。
+ *
+ * 这里同时钉住三件事：
+ *   ① 正常入队 → 单次序列化 → 请求带正确 URL/方法与 body；
+ *   ② 历史双重编码的存量队列项仍能解码（老设备升级后不清队列也不会卡死）；
+ *   ③ 取消点赞走 DELETE（幂等目标态），保证重放不会把赞翻回来。
+ */
+function socialItem(entityType: "LIKE" | "FAVORITE" | "COMMENT", operation: "CREATE" | "DELETE", payload: string): SyncQueueItem {
+  return {
+    id: 9,
+    entityType,
+    entityId: "local-soc-1",
+    remoteId: null,
+    operation,
+    payload,
+    retryCount: 0,
+    status: "PENDING",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  } as unknown as SyncQueueItem
+}
+
+describe("社交互动同步（单次序列化 / 历史兼容 / 幂等取消）", () => {
+  it("LIKE：队列单次序列化后能发出请求（而不是缺少 postId）", async () => {
+    const { SyncQueue, InMemorySyncQueueStorage } = await import("@/lib/modules/offline/sync-queue")
+    const queue = new SyncQueue(new InMemorySyncQueueStorage())
+    // 与 social-write 一致：传对象，由队列负责序列化
+    await queue.enqueue({ entityType: "LIKE", entityId: "e1", remoteId: null, operation: "CREATE", payload: { postId: 42 } })
+    const [item] = await queue.pending()
+    expect(typeof item.payload).toBe("string")
+    // 关键：parse 一次就必须拿到对象（旧实现这里得到的是 string）
+    expect(JSON.parse(item.payload)).toEqual({ postId: 42 })
+
+    const fetchMock = mockJson({ success: true, liked: true, likeCount: 1 })
+    vi.stubGlobal("fetch", fetchMock)
+    await dispatcher.upload(item)
+    const [url, init] = (fetchMock as unknown as { mock: { calls: unknown[][] } }).mock.calls[0] as [string, RequestInit]
+    expect(url).toContain("/api/social/posts/42/like")
+    expect(init.method).toBe("POST")
+  })
+
+  it("LIKE 取消：DELETE 打到同一 URL（幂等目标态，重放安全）", async () => {
+    const fetchMock = mockJson({ success: true, liked: false, likeCount: 0 })
+    vi.stubGlobal("fetch", fetchMock)
+    await dispatcher.upload(socialItem("LIKE", "DELETE", JSON.stringify({ postId: 42 })))
+    const [url, init] = (fetchMock as unknown as { mock: { calls: unknown[][] } }).mock.calls[0] as [string, RequestInit]
+    expect(url).toContain("/api/social/posts/42/like")
+    expect(init.method).toBe("DELETE")
+  })
+
+  it("FAVORITE / COMMENT 路由到各自接口", async () => {
+    const cases: Array<["FAVORITE" | "COMMENT", string]> = [
+      ["FAVORITE", "/api/social/posts/7/favorite"],
+      ["COMMENT", "/api/social/posts/7/comments"],
+    ]
+    for (const [type, expected] of cases) {
+      const fetchMock = mockJson({ success: true, id: 1 })
+      vi.stubGlobal("fetch", fetchMock)
+      await dispatcher.upload(socialItem(type, "CREATE", JSON.stringify({ postId: 7, content: "hi" })))
+      const [url] = (fetchMock as unknown as { mock: { calls: unknown[][] } }).mock.calls[0] as [string, RequestInit]
+      expect(url).toContain(expected)
+    }
+  })
+
+  it("历史双重编码的队列项仍能解码（老设备升级不清队列也不卡死）", async () => {
+    const fetchMock = mockJson({ success: true, liked: true, likeCount: 1 })
+    vi.stubGlobal("fetch", fetchMock)
+    // 旧实现写进去的形态：JSON.stringify(JSON.stringify({postId:42}))
+    const legacy = JSON.stringify(JSON.stringify({ postId: 42 }))
+    await dispatcher.upload(socialItem("LIKE", "CREATE", legacy))
+    const [url] = (fetchMock as unknown as { mock: { calls: unknown[][] } }).mock.calls[0] as [string, RequestInit]
+    expect(url).toContain("/api/social/posts/42/like")
+  })
+
+  it("缺少 postId 时明确报错（不静默成功）", async () => {
+    vi.stubGlobal("fetch", mockJson({ success: true }))
+    await expect(dispatcher.upload(socialItem("LIKE", "CREATE", JSON.stringify({})))).rejects.toThrow("缺少 postId")
+  })
+
+  it("2xx 但业务失败（success:false）必须抛错，不能静默成功", async () => {
+    vi.stubGlobal("fetch", mockJson({ success: false, error: "登录已失效" }, true))
+    await expect(dispatcher.upload(socialItem("LIKE", "CREATE", JSON.stringify({ postId: 1 })))).rejects.toThrow("登录已失效")
+  })
+
+  it("重定向到登录页视为失败（cookie 失效不能被当成成功）", async () => {
+    const redirected = vi.fn(async () => ({ ok: true, status: 200, redirected: true, json: async () => ({ success: true }) })) as unknown as typeof fetch
+    vi.stubGlobal("fetch", redirected)
+    await expect(dispatcher.upload(socialItem("LIKE", "CREATE", JSON.stringify({ postId: 1 })))).rejects.toThrow("登录已失效")
+  })
+})

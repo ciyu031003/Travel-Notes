@@ -53,6 +53,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (amount > 100_000_000) {
       return NextResponse.json({ error: '金额数值过大' }, { status: 400 })
     }
+    /**
+     * 可选绑定行程（2026-10-13）：选定后该笔花销会出现在对应行程与总览里。
+     * 只做"是不是正整数"的形态校验；**归属校验在服务层**
+     * （addExpense 会确认该行程确实属于本旅行，跨旅行/已删除则退化为不绑定）。
+     */
+    const rawItinerary = body?.itineraryItemId
+    const itineraryItemId =
+      rawItinerary === null || rawItinerary === undefined || rawItinerary === ''
+        ? null
+        : Number.isFinite(Number(rawItinerary)) && Number(rawItinerary) > 0
+          ? Number(rawItinerary)
+          : null
+
     const result = await addExpense(travelId, {
       amount,
       currency: body?.currency ? String(body.currency).slice(0, 10) : 'CNY',
@@ -60,6 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       payer: body?.payer ? String(body.payer).slice(0, 60) : undefined,
       note: body?.note ? String(body.note).slice(0, 200) : undefined,
       happenedAt: body?.happenedAt ? String(body.happenedAt) : undefined,
+      itineraryItemId,
     })
     return NextResponse.json({ success: true, id: result.id }, { status: 201 })
   } catch (error) {

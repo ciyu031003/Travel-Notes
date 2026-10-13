@@ -65,6 +65,8 @@ export interface ExpenseRecord {
   payer: string | null
   note: string | null
   happenedAt: string | null
+  /** 绑定的行程项 id（null = 未绑定任何行程） */
+  itineraryItemId?: number | null
 }
 
 export interface TravelDetail {
@@ -271,7 +273,25 @@ export interface TravelDayTimelineItem {
   title: string | null
   summary: string | null
   sortOrder: number
-  itinerary: { id: number; title: string; startTime: string | null; endTime: string | null; type: string; notes: string | null; locationName: string | null }[]
+  itinerary: {
+    id: number
+    title: string
+    startTime: string | null
+    endTime: string | null
+    type: string
+    notes: string | null
+    locationName: string | null
+    /** 绑定到本条行程的花销（记一笔时选定行程）；未绑定则为空数组 */
+    expenses: {
+      id: number
+      amount: number
+      currency: string
+      category: string
+      payer: string | null
+      note: string | null
+      happenedAt: string | null
+    }[]
+  }[]
   /** 当天的回忆（含其照片） */
   memories: {
     id: number
@@ -299,7 +319,11 @@ export async function getTravelTimeline(id: number, userId?: number | null): Pro
     include: {
       itineraryItems: {
         orderBy: { sortOrder: 'asc' },
-        include: { location: { select: { name: true } } },
+        include: {
+          location: { select: { name: true } },
+          // 绑定到该行程的花销：行程视图与总览据此显示「这条行程花了多少钱」
+          expenses: { orderBy: { happenedAt: 'asc' } },
+        },
       },
       memories: {
         orderBy: { happenedAt: 'asc' },
@@ -311,19 +335,18 @@ export async function getTravelTimeline(id: number, userId?: number | null): Pro
     },
   })
 
-  const mediaUrl = (m: any) =>
-    process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET
-      ? `${(process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')}/${m.storageKey}`
-      : `/uploads/${m.storageKey}`
+  /**
+   * 媒体 URL 统一走 storageKeyToUrl（**不要在这里手拼 /uploads/**）。
+   *
+   * 手拼会漏掉 absoluteMediaUrl：原生壳页面源是 https://localhost，
+   * 相对地址 /uploads/xxx 会被解析到本地壳 → 照片永远只显示占位图标。
+   * 该函数同时处理对象存储/CDN 分支与本地分支的绝对化，是唯一事实源。
+   */
+  const mediaUrl = (m: any) => storageKeyToUrl(m?.storageKey ?? null)
 
   /** v3.1 M3-D1：照片优先缩略图（减流量），无变体回退原图 */
-  const thumbUrl = (m: any) => {
-    const thumb = m?.variants?.[0]?.storageKey
-    if (!thumb) return mediaUrl(m)
-    return process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET
-      ? `${(process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')}/${thumb}`
-      : `/uploads/${thumb}`
-  }
+  const thumbUrl = (m: any) =>
+    storageKeyToUrl(m?.variants?.[0]?.storageKey ?? m?.storageKey ?? null)
 
   const items: TravelDayTimelineItem[] = days.map((d: any) => {
     const memories = (d.memories || []).map((mem: any) => {
@@ -358,6 +381,15 @@ export async function getTravelTimeline(id: number, userId?: number | null): Pro
         type: it.type,
         notes: it.notes,
         locationName: it.location?.name ?? null,
+        expenses: (it.expenses || []).map((e: any) => ({
+          id: e.id,
+          amount: centsToYuan(e.amountCents),
+          currency: e.currency,
+          category: e.category,
+          payer: e.payer ?? null,
+          note: e.note ?? null,
+          happenedAt: iso(e.happenedAt),
+        })),
       })),
       memories,
       photos,
@@ -416,15 +448,9 @@ export async function getTravelMemoryPhotos(travelId: number, limit = 60): Promi
     },
   })
 
-  const urlOf = (m: { storageKey: string; variants: { storageKey: string }[] }) => {
-    const key = m.variants?.[0]?.storageKey || m.storageKey
-    if (!key) return ''
-    if (process.env.STORAGE_ENDPOINT && process.env.STORAGE_BUCKET) {
-      const base = (process.env.STORAGE_PUBLIC_BASE_URL || process.env.STORAGE_ENDPOINT).replace(/\/+$/, '')
-      return `${base}/${key}`
-    }
-    return `/uploads/${key}`
-  }
+  /** 与上面 mediaUrl/thumbUrl 同一约定：统一走 storageKeyToUrl，避免漏绝对化。 */
+  const urlOf = (m: { storageKey: string; variants: { storageKey: string }[] }) =>
+    storageKeyToUrl(m.variants?.[0]?.storageKey || m.storageKey) ?? ''
 
   const out: string[] = []
   const seen = new Set<string>()
@@ -882,7 +908,25 @@ export async function addExpense(travelId: number, input: {
   payer?: string
   note?: string
   happenedAt?: string
+  /** 可选：把这笔花销绑定到某条行程（如"11/1 高铁 北京→上海"） */
+  itineraryItemId?: number | null
 }): Promise<{ id: number }> {
+  /**
+   * 绑定行程时必须校验该行程**属于本旅行**。
+   * 只信前端传来的 id 会让用户（或脚本）把花销挂到别人的行程上；
+   * 校验失败按"不绑定"处理而不是报错 —— 行程可能刚被删除，不该因此记不了账。
+   */
+  let itineraryItemId: number | null = null
+  if (input.itineraryItemId != null) {
+    const item = await prisma.itineraryItem
+      .findUnique({
+        where: { id: Number(input.itineraryItemId) },
+        select: { travelDay: { select: { travelId: true } } },
+      })
+      .catch(() => null)
+    if (item?.travelDay?.travelId === travelId) itineraryItemId = Number(input.itineraryItemId)
+  }
+
   const row = await prisma.expense.create({
     data: {
       travelId,
@@ -892,6 +936,7 @@ export async function addExpense(travelId: number, input: {
       payer: input.payer || null,
       note: input.note || null,
       happenedAt: input.happenedAt ? new Date(input.happenedAt) : null,
+      itineraryItemId,
     },
   })
   return { id: row.id }
@@ -912,7 +957,7 @@ export async function getTravelExpenses(travelId: number): Promise<{
     where: { travelId },
     orderBy: [{ happenedAt: 'asc' }, { id: 'asc' }],
   })
-  const expenses = rows.map((e: { id: number; amountCents: number; currency: string; category: string; payer: string | null; note: string | null; happenedAt: Date | null }) => ({
+  const expenses = rows.map((e: { id: number; amountCents: number; currency: string; category: string; payer: string | null; note: string | null; happenedAt: Date | null; itineraryItemId: number | null }) => ({
     id: e.id,
     amount: centsToYuan(e.amountCents),
     currency: e.currency,
@@ -920,6 +965,8 @@ export async function getTravelExpenses(travelId: number): Promise<{
     payer: e.payer,
     note: e.note,
     happenedAt: iso(e.happenedAt),
+    /** 绑定的行程项（null = 未绑定）；前端据此在行程行下展示费用 */
+    itineraryItemId: e.itineraryItemId ?? null,
   }))
   // 合计在整数分上求和（永不丢精度），出边界时转回元
   return { expenses, total: centsToYuan(rows.reduce((s: number, e: { amountCents: number }) => s + e.amountCents, 0)) }

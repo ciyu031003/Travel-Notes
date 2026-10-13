@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CalendarDays, MapPin, Plus, Clock, Sparkles } from 'lucide-react'
+import { CalendarDays, MapPin, Plus, Clock, Sparkles, Wallet } from 'lucide-react'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
@@ -12,7 +12,7 @@ import { itineraryIconOf } from '@/lib/mobile/icon-system'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
 import { cautionHint } from '@/lib/modules/user/preferences'
-import { dayDateLabel, dayFullLabel, formatTime } from './format'
+import { dayDateLabel, dayFullLabel, formatTime, formatMoney } from './format'
 import AddItinerarySheet from './AddItinerarySheet'
 import type { TimelineDay, TimelineItineraryItem } from './types'
 
@@ -32,11 +32,19 @@ export default function TravelItineraryTab({
   days,
   loading,
   onChanged,
+  onOpenViewer,
 }: {
   travelId: number
   days: TimelineDay[]
   loading: boolean
   onChanged: () => void
+  /**
+   * 点击行程里的回忆照片 → 打开全屏查看器。
+   * 修（2026-10-13）：此前这里是**裸 <img>**，既没有 button 也没有 onClick，
+   * 所以「点击行程缩略图没反应」是缺交互接线，与图片能否加载无关。
+   * 参数是「这一天/这条回忆的完整照片集 + 被点中的下标」，便于左右滑动切换。
+   */
+  onOpenViewer?: (photos: { id: number; url: string }[], index: number) => void
 }) {
   /** 'all' = 总览（所有天）；数字 = 某一天 */
   const [scope, setScope] = useState<'all' | number>('all')
@@ -174,6 +182,18 @@ export default function TravelItineraryTab({
                                 {it.locationName}
                               </span>
                             )}
+                            {/*
+                              绑定到本条行程的花销（2026-10-13）。
+                              「记一笔」时选定行程，费用即在此行下方显示，形成
+                              「行程 → 花了多少」的对应关系。
+                            */}
+                            {(it.expenses?.length ?? 0) > 0 && (
+                              <span className="inline-flex items-center gap-1 font-medium text-[var(--m-accent-strong)]">
+                                <Icon icon={Wallet} size="sm" />
+                                ¥{formatMoney((it.expenses || []).reduce((s, e) => s + e.amount, 0))}
+                                {it.expenses!.length > 1 ? ` · ${it.expenses!.length} 笔` : ''}
+                              </span>
+                            )}
                           </span>
                           {it.notes && (
                             <span className="mt-1 block whitespace-pre-wrap text-[12px] leading-relaxed text-[var(--m-faint)]">
@@ -206,16 +226,30 @@ export default function TravelItineraryTab({
                       )}
                       {mem.photos.length > 0 && (
                         <div className="mt-1.5 flex gap-1.5">
-                          {mem.photos.slice(0, 4).map((p) => (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                          {mem.photos.slice(0, 4).map((p, pi) => (
+                            <button
                               key={p.id}
-                              src={p.url}
-                              alt=""
-                              className="h-12 w-12 rounded-md object-cover"
-                              loading="lazy"
-                            />
+                              type="button"
+                              onClick={() => onOpenViewer?.(mem.photos, pi)}
+                              aria-label={`查看第 ${pi + 1} 张照片`}
+                              disabled={!onOpenViewer}
+                              className="m-press h-12 w-12 shrink-0 overflow-hidden rounded-md disabled:cursor-default"
+                            >
+                              {/* 原生壳里 p.url 由服务端绝对化；这里用裸 img 以便 onError 可见降级 */}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={p.url}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            </button>
                           ))}
+                          {mem.photos.length > 4 && (
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[var(--m-surface-2)] text-[11px] text-[var(--m-muted)]">
+                              +{mem.photos.length - 4}
+                            </span>
+                          )}
                         </div>
                       )}
                     </li>

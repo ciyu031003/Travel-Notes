@@ -53,9 +53,17 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   // 归属空间：详情页据此展示「仅自己 / 某个空间」，并决定是否给出「移入空间」入口
   const spaceInfo = travel ? await getTravelSpaceInfo(travel.id, userId).catch(() => null) : null
 
+  /**
+   * 详情页相册图片来源。
+   *
+   * 修（2026-10-13）：此前并入的是 travel.cover —— 那是**未规范化的原值**
+   * （可能是相对 /uploads/...，也可能是 raw storageKey），而规范化结果在 coverUrl。
+   * 于是"只有封面、时间线还没加载/失败"时，顶部全屏查看器会拿到一个不可用地址，
+   * 表现正是"点开全屏是空白"。这里优先用规范化后的 coverUrl。
+   */
   const images = travel
     ? dedupeUrls([
-        ...(travel.cover ? [travel.cover] : []),
+        ...(travel.coverUrl || travel.cover ? [travel.coverUrl || travel.cover] : []),
         ...memoryPhotos,
         ...(legacy?.images || []),
       ])

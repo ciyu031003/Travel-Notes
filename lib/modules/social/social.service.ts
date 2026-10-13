@@ -432,40 +432,72 @@ async function notify(recipientId: number | null, actorId: number, type: Notific
   await prisma.notification.create({ data: { userId: recipientId, actorId, type, refType, refId } }).catch(() => {})
 }
 
-export async function togglePostLike(postId: number, userId: number) {
+/**
+ * 设置点赞状态（**幂等**）。
+ *
+ * 为什么必须是"确保状态"而不是"切换"：客户端离线队列会重放写操作
+ * （网络失败 → 入队 → 恢复后回放，失败还会退避重试多次）。若 POST/DELETE 都走
+ * 同一个 toggle，一次重放就会把用户刚点的赞**撤销掉**：
+ *   · 在线点击 → 乐观入队 → 请求超时但服务端其实成功 → 回放再次 toggle → 变回未赞；
+ *   · 失败重试同理，偶数次执行等于没执行。
+ * 现在 POST = 确保已赞、DELETE = 确保未赞，重复执行结果恒定，可安全重放。
+ */
+export async function setPostLike(postId: number, userId: number, liked: boolean) {
   const post = await prisma.travelPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } })
   if (!post) throw new Error('帖子不存在')
   const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.postLike.findUnique({ where: { postId_userId: { postId, userId } } })
-    if (existing) {
+    if (liked && !existing) {
+      await tx.postLike.create({ data: { postId, userId } })
+      const p = await tx.travelPost.update({ where: { id: postId }, data: { likeCount: { increment: 1 } } })
+      return { liked: true, likeCount: p.likeCount, changed: true }
+    }
+    if (!liked && existing) {
       await tx.postLike.delete({ where: { id: existing.id } })
       const p = await tx.travelPost.update({ where: { id: postId }, data: { likeCount: { decrement: 1 } } })
-      return { liked: false, likeCount: Math.max(0, p.likeCount) }
+      return { liked: false, likeCount: Math.max(0, p.likeCount), changed: true }
     }
-    await tx.postLike.create({ data: { postId, userId } })
-    const p = await tx.travelPost.update({ where: { id: postId }, data: { likeCount: { increment: 1 } } })
-    return { liked: true, likeCount: p.likeCount }
+    // 已是目标状态：不改计数，也不重复发通知（重放安全）
+    const p = await tx.travelPost.findUnique({ where: { id: postId }, select: { likeCount: true } })
+    return { liked, likeCount: p?.likeCount ?? 0, changed: false }
   })
-  if (result.liked) await notify(post.authorId, userId, 'LIKE', 'TravelPost', postId)
-  return result
+  if (result.liked && result.changed) await notify(post.authorId, userId, 'LIKE', 'TravelPost', postId)
+  return { liked: result.liked, likeCount: result.likeCount }
 }
 
-export async function togglePostFavorite(postId: number, userId: number) {
+/** 兼容旧调用方（切换语义）；新代码请用 setPostLike 明确目标状态。 */
+export async function togglePostLike(postId: number, userId: number) {
+  const existing = await prisma.postLike.findUnique({ where: { postId_userId: { postId, userId } }, select: { id: true } })
+  return setPostLike(postId, userId, !existing)
+}
+
+/** 设置收藏状态（幂等）——语义与理由同 setPostLike，保证队列重放不会翻转状态。 */
+export async function setPostFavorite(postId: number, userId: number, favorited: boolean) {
   const post = await prisma.travelPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } })
   if (!post) throw new Error('帖子不存在')
   const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.postFavorite.findUnique({ where: { postId_userId: { postId, userId } } })
-    if (existing) {
+    if (favorited && !existing) {
+      await tx.postFavorite.create({ data: { postId, userId } })
+      const p = await tx.travelPost.update({ where: { id: postId }, data: { favoriteCount: { increment: 1 } } })
+      return { favorited: true, favoriteCount: p.favoriteCount, changed: true }
+    }
+    if (!favorited && existing) {
       await tx.postFavorite.delete({ where: { id: existing.id } })
       const p = await tx.travelPost.update({ where: { id: postId }, data: { favoriteCount: { decrement: 1 } } })
-      return { favorited: false, favoriteCount: Math.max(0, p.favoriteCount) }
+      return { favorited: false, favoriteCount: Math.max(0, p.favoriteCount), changed: true }
     }
-    await tx.postFavorite.create({ data: { postId, userId } })
-    const p = await tx.travelPost.update({ where: { id: postId }, data: { favoriteCount: { increment: 1 } } })
-    return { favorited: true, favoriteCount: p.favoriteCount }
+    const p = await tx.travelPost.findUnique({ where: { id: postId }, select: { favoriteCount: true } })
+    return { favorited, favoriteCount: p?.favoriteCount ?? 0, changed: false }
   })
-  if (result.favorited) await notify(post.authorId, userId, 'FAVORITE', 'TravelPost', postId)
-  return result
+  if (result.favorited && result.changed) await notify(post.authorId, userId, 'FAVORITE', 'TravelPost', postId)
+  return { favorited: result.favorited, favoriteCount: result.favoriteCount }
+}
+
+/** 兼容旧调用方（切换语义）；新代码请用 setPostFavorite 明确目标状态。 */
+export async function togglePostFavorite(postId: number, userId: number) {
+  const existing = await prisma.postFavorite.findUnique({ where: { postId_userId: { postId, userId } }, select: { id: true } })
+  return setPostFavorite(postId, userId, !existing)
 }
 
 function serializeComment(row: any, likedIds: Set<number>) {

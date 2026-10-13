@@ -8,6 +8,7 @@ import { ToastHost } from '@/components/mobile/Toast'
 import { Onboarding } from '@/components/mobile/Onboarding'
 import { PreferenceSurvey } from '@/components/mobile/PreferenceSurvey'
 import ThemeColorSync from '@/components/mobile/ThemeColorSync'
+import NativeBackHandler from '@/components/mobile/NativeBackHandler'
 
 export const metadata: Metadata = {
   title: '行迹 | 旅行记忆空间',
@@ -53,6 +54,7 @@ export default function RootLayout({
           跳到主内容
         </a>
         <LayoutContent>{children}</LayoutContent>
+        <NativeBackHandler />
         <ThemeColorSync />
         <Onboarding />
         {/* 新用户偏好问卷：与首启引导互斥（等它退场后才上场），完成或跳过后不再弹 */}

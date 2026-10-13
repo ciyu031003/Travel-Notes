@@ -32,7 +32,7 @@ export function useCloseOnBack(open: boolean, onClose: () => void, enabled = tru
     const id = Symbol('overlay')
     overlayStack.push(id)
     try {
-      window.history.pushState({ overlayClose: true }, '')
+      window.history.pushState({ ...window.history.state, overlayClose: true }, '')
       pushedRef.current = true
     } catch {
       pushedRef.current = false
@@ -45,8 +45,16 @@ export function useCloseOnBack(open: boolean, onClose: () => void, enabled = tru
       pushedRef.current = false
       onCloseRef.current()
     }
+    const onNativeBack = (event: Event) => {
+      if (event.defaultPrevented || overlayStack[overlayStack.length - 1] !== id) return
+      event.preventDefault()
+      // 保留 pushedRef：关闭后的清理会消耗该弹层专用历史项，不退页面。
+      onCloseRef.current()
+    }
+    window.addEventListener('tiantu:native-back', onNativeBack)
     window.addEventListener('popstate', onPop)
     return () => {
+      window.removeEventListener('tiantu:native-back', onNativeBack)
       window.removeEventListener('popstate', onPop)
       const i = overlayStack.indexOf(id)
       if (i >= 0) {

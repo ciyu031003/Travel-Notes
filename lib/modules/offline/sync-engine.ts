@@ -21,6 +21,7 @@ export class SyncEngine {
   private running = false
   private syncing = false
   private unsubscribers: Array<() => void> = []
+  private retryTimer: ReturnType<typeof setInterval> | null = null
 
   /** v3.1 M4-C1：最近一次同步统计（供同步中心展示） */
   lastSyncStats: { at: number; written: number } | null = null
@@ -48,11 +49,15 @@ export class SyncEngine {
       window.addEventListener('online', handler)
       this.unsubscribers.push(() => window.removeEventListener('online', handler))
     }
+    // 新写入及失败退避不能只等 App 重启/网络变化；定期回放持久队列。
+    this.retryTimer = setInterval(() => { void this.sync() }, BASE_RETRY_MS)
     void this.sync()
   }
 
   stop(): void {
     this.running = false
+    if (this.retryTimer) clearInterval(this.retryTimer)
+    this.retryTimer = null
     for (const off of this.unsubscribers) off()
     this.unsubscribers = []
   }

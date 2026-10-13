@@ -7,6 +7,7 @@ import type { SyncQueueItem } from './types'
 import { readLocalPhotoBase64 } from './media-upload'
 import { findRemoteIdByLocalId } from './dao'
 import { apiUrl } from '@/lib/api-base'
+import { decodeSyncPayload } from './sync-payload'
 
 export interface UploadResult {
   remoteId?: number
@@ -81,19 +82,19 @@ async function resolveEndpoint(item: SyncQueueItem): Promise<string> {
   const fixed = ENDPOINT[item.entityType]
   if (fixed) return fixed
   if (item.entityType === 'MEMORY') {
-    const payload = item.payload ? JSON.parse(item.payload) : {}
+    const payload = decodeSyncPayload(item.payload)
     if (payload.travelId == null) throw new Error('MEMORY 缺少 travelId')
     const travelId = await resolveRemoteId(payload.travelId, 'travel', '旅行')
     return '/api/travels/' + travelId + '/memories'
   }
   if (item.entityType === 'TRAVEL_DAY') {
-    const payload = item.payload ? JSON.parse(item.payload) : {}
+    const payload = decodeSyncPayload(item.payload)
     if (payload.travelId == null) throw new Error('TRAVEL_DAY 缺少 travelId')
     const travelId = await resolveRemoteId(payload.travelId, 'travel', '旅行')
     return '/api/travels/' + travelId + '/days'
   }
   if (item.entityType === 'LIKE' || item.entityType === 'FAVORITE' || item.entityType === 'COMMENT') {
-    const payload = item.payload ? JSON.parse(item.payload) : {}
+    const payload = decodeSyncPayload(item.payload)
     const postId = payload.postId
     if (postId == null) throw new Error(item.entityType + ' 缺少 postId')
     const base = '/api/social/posts/' + postId
@@ -130,26 +131,32 @@ export class HttpSyncDispatcher implements SyncDispatcher {
     }
 
     const hasBody = method !== 'DELETE'
-    const body = hasBody ? (item.payload ? JSON.parse(item.payload) : {}) : undefined
+    const body = hasBody ? (decodeSyncPayload(item.payload)) : undefined
     const res = await fetch(apiUrl(url), {
       method,
       credentials: 'include',
       headers: hasBody ? { 'Content-Type': 'application/json' } : undefined,
       body: hasBody ? JSON.stringify(body) : undefined,
     })
+    if (res.redirected) throw new Error('登录已失效，请重新登录')
     if (!res.ok) throw new Error('HTTP ' + res.status)
-    const json = await res.json().catch(() => ({}))
+    const json = await res.json()
+    if (json?.success === false || json?.error) throw new Error(json.error || '同步未保存')
     return { remoteId: pickRemoteId(json), slug: pickSlug(json) }
   }
 
   /** 媒体上传：读本地照片 → multipart → POST /api/admin/albums/{albumId}/media */
   private async uploadMedia(item: SyncQueueItem): Promise<UploadResult> {
-    const payload = item.payload ? JSON.parse(item.payload) : {}
-    const albumId = payload.albumId
-    const localPath = payload.localPath
-    const mimeType = payload.mimeType || 'image/jpeg'
-    if (albumId == null) throw new Error('UPLOAD_MEDIA 缺少 albumId')
-    if (!localPath) throw new Error('UPLOAD_MEDIA 缺少 localPath')
+    const payload = decodeSyncPayload(item.payload)
+    // decodeSyncPayload 返回 unknown 值（它要兼容历史双重编码），这里显式收窄
+    const albumRaw = payload.albumId
+    const localPathRaw = payload.localPath
+    const mimeRaw = payload.mimeType
+    if (albumRaw == null) throw new Error('UPLOAD_MEDIA 缺少 albumId')
+    if (localPathRaw == null || localPathRaw === '') throw new Error('UPLOAD_MEDIA 缺少 localPath')
+    const albumId = String(albumRaw)
+    const localPath = String(localPathRaw)
+    const mimeType = typeof mimeRaw === 'string' && mimeRaw ? mimeRaw : 'image/jpeg'
 
     const base64 = await readLocalPhotoBase64(localPath)
     if (!base64) throw new Error('本地照片读取失败')
@@ -164,8 +171,10 @@ export class HttpSyncDispatcher implements SyncDispatcher {
       credentials: 'include',
       body: form,
     })
+    if (res.redirected) throw new Error('登录已失效，请重新登录')
     if (!res.ok) throw new Error('HTTP ' + res.status)
-    const json = await res.json().catch(() => ({}))
+    const json = await res.json()
+    if (json?.success === false || json?.error) throw new Error(json.error || '同步未保存')
     const media = json && typeof json === 'object' ? (json as { media?: Array<{ id?: unknown }> }).media : undefined
     const remoteId = Array.isArray(media) && media[0] && media[0].id != null ? Number(media[0].id) : undefined
     return { remoteId: Number.isFinite(remoteId as number) ? (remoteId as number) : pickRemoteId(json) }

@@ -283,6 +283,22 @@ export default function TravelDetailMobile({
   }, [days, restImages])
 
   const heroCover = travel.coverUrl || travel.cover || allPhotos[0]?.url || null
+
+  /**
+   * 查看器实际使用的照片集（2026-10-13 修复）。
+   *
+   * 此前点击顶部封面传的是 allPhotos —— 它只来自"按天时间线的照片 + restImages"。
+   * 当旅行只有封面（coverMediaId/coverUrl 有值）而时间线尚未加载或加载失败时，
+   * allPhotos 为空 → 查看器「打开了但没有图」，且旧实现还会锁住页面滚动。
+   * 现在把封面兜底并入集合，保证"能点开就一定看得到图"。
+   */
+  const viewerPhotos = useMemo<ViewerPhoto[]>(() => {
+    const base = allPhotos as ViewerPhoto[]
+    if (!heroCover) return base
+    const key = mediaKeyOf(heroCover)
+    if (base.some((p) => mediaKeyOf(p.url) === key)) return base
+    return [{ id: travel.coverMediaId ?? undefined, url: heroCover }, ...base]
+  }, [allPhotos, heroCover, travel.coverMediaId])
   const daysCount = rangeDays(travel.startDate, travel.endDate)
   const rangeText = compactRange(travel.startDate, travel.endDate)
 
@@ -362,7 +378,7 @@ export default function TravelDetailMobile({
           <button
             type="button"
             aria-label="全屏查看旅行照片"
-            onClick={() => setViewer({ photos: allPhotos as ViewerPhoto[], index: 0 })}
+            onClick={() => setViewer({ photos: viewerPhotos, index: 0 })}
             className="relative block h-48 w-full overflow-hidden bg-[var(--m-bg-soft)] text-left"
           >
             <Image src={heroCover} alt={travel.title} fill sizes="100vw" className="object-cover" priority />
@@ -506,7 +522,14 @@ export default function TravelDetailMobile({
 
         {tab === 'itinerary' && (
           canWrite ? (
-            <TravelItineraryTab travelId={travelId} days={days} loading={timelineLoading} onChanged={reload} />
+            <TravelItineraryTab
+          travelId={travelId}
+          days={days}
+          loading={timelineLoading}
+          onChanged={reload}
+          // 行程里点缩略图 → 打开同一个全屏查看器（此前是裸 img，点了没反应）
+          onOpenViewer={(photos, index) => setViewer({ photos: photos as ViewerPhoto[], index })}
+        />
           ) : (
             <DisabledHint />
           )

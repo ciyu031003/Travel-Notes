@@ -1,11 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Plus, Trash2, Wallet } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link2, Plus, Trash2, Wallet } from 'lucide-react'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { Field, FieldTextarea } from '@/components/mobile/Field'
+import { Field, FieldSelect, FieldTextarea } from '@/components/mobile/Field'
 import { Icon } from '@/components/mobile/Icon'
 import { Loader } from '@/components/mobile/Loader'
 import { apiUrl } from '@/lib/api-base'
@@ -24,6 +24,24 @@ import type { ExpenseItem, TimelineDay } from './types'
  *
  * 这里是接口那一半 + UI 这一半：预算可设可清，流水按分类汇总，合计实时回算。
  */
+/**
+ * 行程 id → 可读标签（如 "2026-11-01 08:30 高铁 北京→上海"）。
+ *
+ * 抽到模块级：花销表单（下拉选项）与花销列表（回显归属）都要用，
+ * 两处在不同组件里，避免各自复制一份摊平逻辑。
+ */
+function buildItineraryLabelMap(days: TimelineDay[]): Map<number, string> {
+  const map = new Map<number, string>()
+  for (const d of days) {
+    const day = d.date ? toDateOnly(d.date) : ''
+    for (const it of d.itinerary || []) {
+      const time = it.startTime ? String(it.startTime).slice(11, 16) : ''
+      map.set(it.id, [day, time, it.title].filter(Boolean).join(' '))
+    }
+  }
+  return map
+}
+
 export default function TravelExpenseTab({
   travelId,
   slug,
@@ -47,6 +65,11 @@ export default function TravelExpenseTab({
   const budget = state?.budget ?? null
   const remaining = budget != null ? budget - total : null
   const percent = budget && budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : 0
+
+  /** 行程 id → 标签：列表里回显"这笔钱绑在哪条行程" */
+  const itineraryLabelMap = useMemo(() => buildItineraryLabelMap(days), [days])
+  const itineraryLabelOf = (id: number | null | undefined) =>
+    id == null ? null : itineraryLabelMap.get(id) ?? null
 
   const byCategory = useMemo(() => {
     const map = new Map<string, number>()
@@ -161,6 +184,16 @@ export default function TravelExpenseTab({
                       {e.happenedAt ? toDateOnly(e.happenedAt) : ''}
                       {e.payer ? ` · ${e.payer}` : ''}
                     </span>
+                    {/*
+                      回显"这笔钱绑在哪条行程上"，让用户在花销列表里也能确认归属
+                      （未绑定的不显示，避免噪音）。
+                    */}
+                    {e.itineraryItemId != null && itineraryLabelOf(e.itineraryItemId) && (
+                      <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[var(--m-accent-strong)]">
+                        <Icon icon={Link2} size="sm" />
+                        {itineraryLabelOf(e.itineraryItemId)}
+                      </span>
+                    )}
                   </span>
                   <span className="shrink-0 font-medium tabular-nums text-[var(--m-text)]">
                     ¥{formatMoney(e.amount)}
@@ -236,8 +269,33 @@ function AddExpenseSheet({
   const [note, setNote] = useState('')
   const [payer, setPayer] = useState('')
   const [date, setDate] = useState(toDateOnly(new Date().toISOString()))
+  /** 选定的行程（'' = 不绑定）。绑定后这笔钱会显示在对应行程与总览里。 */
+  const [itineraryItemId, setItineraryItemId] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  /**
+   * 可选行程列表：把每天的行项目摊平，带上日期便于识别
+   * （用户示例：'11/1 高铁 北京→上海'）。
+   */
+  // 复用与花销列表同一个标签来源（单一事实源，避免两处摊平逻辑漂移）
+  const itineraryOptions = useMemo(
+    () => Array.from(buildItineraryLabelMap(days), ([id, label]) => ({ id, label })),
+    [days],
+  )
+
+  /**
+   * 便利行为：切换日期时，若用户**还没手动选过**行程，自动预选当天唯一的行程。
+   * 只在天数匹配唯一时预选，避免替用户做错误归属（多行程时不猜）。
+   */
+  useEffect(() => {
+    if (itineraryItemId) return
+    if (!date) return
+    const sameDay = (days || []).filter((d) => d.date && toDateOnly(d.date) === date)
+    const items = sameDay.flatMap((d) => d.itinerary || [])
+    if (items.length === 1) setItineraryItemId(String(items[0].id))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, days])
 
   const submit = async () => {
     const value = Number(amount)
@@ -258,6 +316,8 @@ function AddExpenseSheet({
           note: note.trim() || undefined,
           payer: payer.trim() || undefined,
           happenedAt: date ? new Date(`${date}T12:00:00`).toISOString() : undefined,
+          // 绑定行程（可选）：服务端会校验该行程属于本旅行
+          itineraryItemId: itineraryItemId ? Number(itineraryItemId) : null,
         }),
       })
       const j = await res.json().catch(() => ({}))
@@ -313,6 +373,26 @@ function AddExpenseSheet({
         </div>
 
         <Field label="日期" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+
+        {/*
+          「选定行程」：把这笔花销挂到某个具体行程上（如 11/1 高铁 北京→上海）。
+          选定后该费用会同时出现在「行程」里那条行程下面，以及「总览」的行程费用汇总。
+        */}
+        {itineraryOptions.length > 0 && (
+          <FieldSelect
+            label="选定行程"
+            value={itineraryItemId}
+            onChange={(e) => setItineraryItemId(e.target.value)}
+          >
+            <option value="">不绑定行程</option>
+            {itineraryOptions.map((o) => (
+              <option key={o.id} value={String(o.id)}>
+                {o.label}
+              </option>
+            ))}
+          </FieldSelect>
+        )}
+
         <Field label="付款人" placeholder="可选" value={payer} onChange={(e) => setPayer(e.target.value)} />
         <FieldTextarea
           label="备注"
