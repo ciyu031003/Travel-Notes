@@ -1,3 +1,27 @@
+## [1.23.3] - 2026-10-13
+
+> 一致性修复（无功能变化），由 token 门禁抓出的新增回退清零。
+> tsc 0 错误 · lint 0 error · vitest 55 文件 / 519 用例全绿 · build 成功 ·
+> check-design-tokens --check-baseline **无新增回退**。
+
+### Fixed
+
+- **图标尺寸自由取值 0 → 1**：`VersionCheckRow` 用了裸
+  `<Loader2 className="h-4 w-4 animate-spin">`。规范 §6.1 要求图标只走 `<Icon>` 三档尺寸、
+  §7 要求无限动画只能由 `Loader` 组件承载，已改为 `<Loader variant="ring" size="sm" />`。
+- **直接 import lucide-react 90 → 91**：新增的 `StackedGallery` 位于 `components/social/`，
+  不在 `ICON_SYSTEM_ALLOWLIST` 内。它本质是通用 UI 原语（堆叠卡组），已归位到设计系统层
+  `components/mobile/`，同步更新 `PostDetail` 的引用路径 —— 既消除计数，也符合目录职责。
+- **非标字号 86 → 87**：总览新增的「行程费用」明细用了 `text-[12px]`（不在 7 档字阶内），
+  改用设计系统的 `.m-caption`（13px）。
+
+### 说明
+
+本轮不改基线，而是修真实问题 —— 基线是「存量欠债的可见账本」，
+不是用来把新增违规合法化的。
+
+---
+
 ## [1.23.2] - 2026-10-13
 
 > 真机反馈修复批 + 花销绑定行程。tsc 0 错误 · lint 0 error ·
