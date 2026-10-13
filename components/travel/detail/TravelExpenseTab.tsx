@@ -5,7 +5,8 @@ import { Link2, Plus, Trash2, Wallet } from 'lucide-react'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { Field, FieldSelect, FieldTextarea } from '@/components/mobile/Field'
+import { Field, FieldTextarea } from '@/components/mobile/Field'
+import { SelectField } from '@/components/mobile/SelectField'
 import { Icon } from '@/components/mobile/Icon'
 import { Loader } from '@/components/mobile/Loader'
 import { apiUrl } from '@/lib/api-base'
@@ -379,18 +380,17 @@ function AddExpenseSheet({
           选定后该费用会同时出现在「行程」里那条行程下面，以及「总览」的行程费用汇总。
         */}
         {itineraryOptions.length > 0 && (
-          <FieldSelect
+          // 用品牌化选择器而非原生 select：Android 上原生会拉起系统滚轮下拉，与设计割裂
+          <SelectField
             label="选定行程"
+            sheetTitle="选择要绑定的行程"
             value={itineraryItemId}
-            onChange={(e) => setItineraryItemId(e.target.value)}
-          >
-            <option value="">不绑定行程</option>
-            {itineraryOptions.map((o) => (
-              <option key={o.id} value={String(o.id)}>
-                {o.label}
-              </option>
-            ))}
-          </FieldSelect>
+            onChange={setItineraryItemId}
+            options={[
+              { value: "", label: "不绑定行程", hint: "这笔费用只计入总花销" },
+              ...itineraryOptions.map((o) => ({ value: String(o.id), label: o.label })),
+            ]}
+          />
         )}
 
         <Field label="付款人" placeholder="可选" value={payer} onChange={(e) => setPayer(e.target.value)} />

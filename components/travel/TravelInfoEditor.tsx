@@ -258,17 +258,17 @@ export default function TravelInfoEditor({
         </Button>
       </div>
 
-      {showPicker && (
-        <DateRangePicker
-          startDate={startDate}
-          endDate={endDate}
-          onChange={({ startDate: s, endDate: e }) => {
-            setStartDate(s)
-            setEndDate(e)
-          }}
-          onClose={() => setShowPicker(false)}
-        />
-      )}
+      {/* 保持挂载（用 open 控制），BottomSheet 退场动画才播得完 */}
+      <DateRangePicker
+        open={showPicker}
+        startDate={startDate}
+        endDate={endDate}
+        onChange={({ startDate: s, endDate: e }) => {
+          setStartDate(s)
+          setEndDate(e)
+        }}
+        onClose={() => setShowPicker(false)}
+      />
     </div>
   )
 }

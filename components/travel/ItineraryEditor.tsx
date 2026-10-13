@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
+import { TimeField } from '@/components/mobile/TimePicker'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
 
@@ -131,25 +132,10 @@ export default function ItineraryEditor({
             </div>
           </div>
 
+          {/* 时间走自绘滚轮：原生 type="time" 会拉起系统圆盘钟表，与设计语言割裂 */}
           <div className="flex gap-3">
-            <label className="flex-1">
-              <span className="text-[13px] font-semibold text-[var(--m-muted)]">开始</span>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none focus-visible:border-[var(--m-accent)]"
-              />
-            </label>
-            <label className="flex-1">
-              <span className="text-[13px] font-semibold text-[var(--m-muted)]">结束</span>
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none focus-visible:border-[var(--m-accent)]"
-              />
-            </label>
+            <TimeField className="flex-1" label="开始" value={startTime} onChange={setStartTime} />
+            <TimeField className="flex-1" label="结束" value={endTime} onChange={setEndTime} />
           </div>
 
           <label className="block">

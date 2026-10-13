@@ -5,6 +5,7 @@ import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { Button } from '@/components/mobile/Button'
 import { Field, FieldTextarea } from '@/components/mobile/Field'
+import { TimeField } from '@/components/mobile/TimePicker'
 import { Icon } from '@/components/mobile/Icon'
 import { ITINERARY_TYPES, itineraryIconOf, itineraryLabelOf } from '@/lib/mobile/icon-system'
 import { apiUrl } from '@/lib/api-base'
@@ -181,20 +182,23 @@ export default function AddItinerarySheet({
           </div>
         </div>
 
+        {/*
+          时间改用自绘滚轮（TimeField）。
+          原生 type="time" 在 Android 上会拉起系统**圆盘钟表**，与全站设计语言割裂，
+          且各 ROM 造型不一致（真机反馈「这个圆形钟表挺丑的」）。
+        */}
         <div className="flex gap-3">
-          <Field
+          <TimeField
             className="flex-1"
             label="开始"
-            type="time"
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
+            onChange={setStartTime}
           />
-          <Field
+          <TimeField
             className="flex-1"
             label="结束"
-            type="time"
             value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
+            onChange={setEndTime}
           />
         </div>
 

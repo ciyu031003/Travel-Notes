@@ -566,11 +566,16 @@ html.dark {
 }
 
 .m-press {
-  transition: transform 0.4s var(--m-ease-spring);
+  transition: transform 0.4s var(--m-ease-spring), filter 0.18s ease;
 }
+/* 按压反馈 = 缩小（形变）+ 轻微压暗/降饱和（材质变化）。
+   只做缩放会"像贴纸在动"；加一点 filter 才像被按进表面。
+   filter 不参与布局，不与 transform 的合成冲突，且在本文件的
+   prefers-reduced-motion 列表里会被一并降级。 */
 .m-press:active {
   transform: scale(0.94);
-  transition: transform 0.1s ease-out;
+  filter: brightness(0.96) saturate(0.97);
+  transition: transform 0.1s ease-out, filter 0.1s ease-out;
 }
 
 @keyframes m-enter {
@@ -683,6 +688,36 @@ html.dark {
   animation: m-pop-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+
+/* ── 时间选择器滚轮（P2 · 替代原生圆盘钟表）──────────────────────────────
+   原生 <input type="time"> 在 Android 上弹出的是系统圆盘钟表：与全站暖陶土
+   设计语言完全割裂，且不同 ROM 造型不一致。这里改为自绘「吸附滚轮」：
+   中间高亮带 + 上下渐隐遮罩，只用 transform/opacity 与既有 token。 */
+.m-wheel {
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.m-wheel::-webkit-scrollbar { display: none; }
+.m-wheel-item {
+  scroll-snap-align: center;
+  transition: color 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+}
+/* 上下渐隐：让滚轮不像"被裁断的列表" */
+.m-wheel-mask {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 26%, #000 74%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 26%, #000 74%, transparent 100%);
+}
+/* 中央选中带：发丝描边 + 极淡强调底，不抢内容 */
+.m-wheel-band {
+  border-top: 1px solid var(--m-line);
+  border-bottom: 1px solid var(--m-line);
+  background: var(--m-accent-soft);
+  border-radius: var(--m-radius-control);
+}
+
 /* ── 底部抽屉入场（省份抽屉等）──────────────────────────────────
    从屏幕下沿滑入 + 遮罩淡入。此前这类抽屉只靠 `transition-[height]` 表达状态变化，
    首次出现时是"凭空闪现"，没有"从下往上推入"的空间感。
@@ -735,11 +770,12 @@ html.dark {
 .m-pressable {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.4s var(--m-ease-spring), opacity 0.15s ease;
+  transition: transform 0.4s var(--m-ease-spring), opacity 0.15s ease, filter 0.18s ease;
 }
 .m-pressable:active {
   transform: scale(0.96);
-  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+  filter: brightness(0.97) saturate(0.98);
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out, filter 0.1s ease-out;
 }
 
 .m-skeleton {
@@ -1106,6 +1142,9 @@ html.dark .m-toast {
 }
 .m-btn:active:not(:disabled):not([aria-disabled='true']) {
   transform: scale(0.96);
+  /* 实体按钮压入感：略暗 + 内阴影收紧（--m-inset-lo 已有底部压暗变量） */
+  filter: brightness(0.96) saturate(0.98);
+  box-shadow: var(--m-inset-lo);
   transition: transform 0.1s ease-out, opacity 0.15s ease,
     background-color 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }

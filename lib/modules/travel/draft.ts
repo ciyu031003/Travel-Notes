@@ -55,13 +55,50 @@ export const TRAVEL_TYPE_OPTIONS: {
   { value: 'FAMILY', label: '家庭', hint: '带上家人' },
   { value: 'FRIENDS', label: '朋友', hint: '和朋友同行' },
   { value: 'BFF', label: '闺蜜 / 兄弟', hint: '最要好的那位' },
-  { value: 'GROUP', label: '结伴', hint: '多人拼团出行' },
+  /**
+   * GROUP 承载「聚会 / 团建」这类**多角色混合**出行（朋友+家人+同事同团）。
+   *
+   * 为什么不新增一个 PARTY 枚举值：TravelType 是数据库枚举，新增值要同时改
+   * prisma schema + 增量迁移 + 8 处枚举清单（api 校验 / social feed 过滤 /
+   * space 服务 / 图标映射…），任一处漏改就会出现「存得进、筛不出」的静默不一致。
+   * 而产品真正要的是「一次旅行里可以有多种关系的人」，这由每个同行者的
+   * relation 字段承载（见 roleMixOf），GROUP 只是它的类型标签。
+   */
+  { value: 'GROUP', label: '结伴 / 聚会', hint: '朋友、家人、同事同团' },
   { value: 'OTHER', label: '其他', hint: '还没想好' },
 ]
 
 export const MAX_COMPANIONS = 10
 /** 常用关系快捷项：避免每加一个人都要现打「伴侣 / 朋友」 */
 export const COMMON_RELATIONS = ['伴侣', '家人', '朋友', '同事', '同学'] as const
+
+/**
+ * 同行者角色构成（2026-10-13）。
+ *
+ * 用途：**多角色混合**出行的可见性 —— 聚会 / 团建往往是「朋友 + 家人 + 同事」
+ * 同团，只显示「5 位同行」看不出构成。这里按关系聚合，供表单与折叠摘要展示
+ * （如「朋友 3 · 家人 2」），让用户在提交前就能确认这次的人员构成对不对。
+ *
+ * 未填关系的归入「同行」；返回值按人数倒序，人数相同按关系名稳定排序，
+ * 保证同样的输入永远得到同样的展示顺序（避免每次渲染跳来跳去）。
+ */
+export function roleMixOf(companions: { name: string; relation: string }[]): { relation: string; count: number }[] {
+  const map = new Map<string, number>()
+  for (const c of companions) {
+    const key = c.relation?.trim() || '同行'
+    map.set(key, (map.get(key) ?? 0) + 1)
+  }
+  return Array.from(map, ([relation, count]) => ({ relation, count })).sort(
+    (a, b) => b.count - a.count || a.relation.localeCompare(b.relation),
+  )
+}
+
+/** 「朋友 3 · 家人 2」；无同行者时返回空串（调用方据此决定是否渲染） */
+export function formatRoleMix(companions: { name: string; relation: string }[]): string {
+  return roleMixOf(companions)
+    .map((r) => `${r.relation} ${r.count}`)
+    .join(' · ')
+}
 
 /* ------------------------------------------------------------------ */
 /* 日期：校验 + 天数回算                                                 */
@@ -250,7 +287,12 @@ export function moreSectionSummary(draft: TravelDraft): string {
   const parts: string[] = []
   const type = TRAVEL_TYPE_OPTIONS.find((t) => t.value === draft.travelType)
   if (type && type.value !== 'ALONE') parts.push(type.label)
-  if (draft.companions.length > 0) parts.push(`${draft.companions.length} 位同行`)
+  if (draft.companions.length > 0) {
+    // 折叠时也让人看到**构成**（「朋友 3 · 家人 2」），而不只是总数 ——
+    // 多角色混合出行（聚会/团建）最容易在这里发现"加错人了"。
+    const mix = formatRoleMix(draft.companions)
+    parts.push(mix ? `${draft.companions.length} 位同行 · ${mix}` : `${draft.companions.length} 位同行`)
+  }
   if (draft.description.trim()) parts.push('有描述')
   if (draft.visibility === 'PUBLIC') parts.push('公开')
   else if (draft.spaceId) parts.push('空间内分享')

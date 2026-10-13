@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-12",
-  "legacyTotal": 312,
-  "total": 404,
+  "generatedAt": "2026-10-13",
+  "legacyTotal": 309,
+  "total": 401,
   "rules": {
-    "hexColor": 76,
+    "hexColor": 75,
     "rgbaColor": 57,
     "lucideImport": 90,
-    "fontSize": 86,
+    "fontSize": 84,
     "charIcon": 3,
     "iconSize": 0,
     "magicRadius": 0,

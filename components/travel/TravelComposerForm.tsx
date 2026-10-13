@@ -14,6 +14,7 @@ import {
   formatCompactRange,
   formatRangeSubtitle,
   moreSectionSummary,
+  roleMixOf,
   suggestLocations,
 } from '@/lib/modules/travel/draft'
 
@@ -136,6 +137,8 @@ export default function TravelComposerForm({
   const compactRange = formatCompactRange(draft.startDate, draft.endDate)
   const moreSummary = moreSectionSummary(draft)
   const atCompanionLimit = draft.companions.length >= MAX_COMPANIONS
+  /** 同行者角色构成（朋友 2 · 家人 1）——聚会/团建这类多角色出行一眼看清 */
+  const roleMix = roleMixOf(draft.companions)
 
   const handleSubmit = async () => {
     const r = await submit()
@@ -385,25 +388,39 @@ export default function TravelComposerForm({
                   </div>
 
                   {draft.companions.length > 0 && (
-                    <div className="mt-2.5 flex flex-wrap gap-1.5">
-                      {draft.companions.map((c, i) => (
-                        <span
-                          key={`${c.name}-${i}`}
-                          className="inline-flex items-center gap-1 rounded-full border border-[var(--m-line)] px-3 py-1.5 text-[13px] text-[var(--m-text)]"
-                        >
-                          {c.name}
-                          {c.relation ? <span className="text-[var(--m-faint)]">· {c.relation}</span> : null}
-                          <button
-                            type="button"
-                            onClick={() => removeCompanion(i)}
-                            aria-label={`移除 ${c.name}`}
-                            className="ml-0.5 rounded-full p-0.5 text-[var(--m-faint)] active:scale-95"
+                    <>
+                      {/*
+                        角色构成一目了然：聚会 / 团建这类**多角色混合**出行，
+                        光看"5 位同行"不知道都是谁，这里按关系汇总。
+                      */}
+                      {roleMix.length > 0 && (
+                        <p className="mt-2.5 text-[12px] text-[var(--m-accent-strong)]">
+                          {roleMix.map((r) => `${r.relation} ${r.count}`).join(' · ')}
+                          {roleMix.length > 1 && (
+                            <span className="ml-1.5 text-[var(--m-faint)]">（多角色同行）</span>
+                          )}
+                        </p>
+                      )}
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {draft.companions.map((c, i) => (
+                          <span
+                            key={`${c.name}-${i}`}
+                            className="m-enter inline-flex items-center gap-1 rounded-full border border-[var(--m-line)] px-3 py-1.5 text-[13px] text-[var(--m-text)]"
                           >
-                            <Icon icon={X} size="sm" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
+                            {c.name}
+                            {c.relation ? <span className="text-[var(--m-faint)]">· {c.relation}</span> : null}
+                            <button
+                              type="button"
+                              onClick={() => removeCompanion(i)}
+                              aria-label={`移除 ${c.name}`}
+                              className="m-pressable ml-0.5 rounded-full p-0.5 text-[var(--m-faint)]"
+                            >
+                              <Icon icon={X} size="sm" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -524,14 +541,14 @@ export default function TravelComposerForm({
         </form>
       </main>
 
-      {showPicker && (
-        <DateRangePicker
-          startDate={draft.startDate}
-          endDate={draft.endDate}
-          onChange={({ startDate, endDate }) => patch({ startDate, endDate })}
-          onClose={() => setShowPicker(false)}
-        />
-      )}
+      {/* 保持挂载（用 open 控制）：BottomSheet 的退场弹簧动画需要组件在场 */}
+      <DateRangePicker
+        open={showPicker}
+        startDate={draft.startDate}
+        endDate={draft.endDate}
+        onChange={({ startDate, endDate }) => patch({ startDate, endDate })}
+        onClose={() => setShowPicker(false)}
+      />
     </div>
   )
 }

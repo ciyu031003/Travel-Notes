@@ -220,14 +220,14 @@ export default function TravelComposer({
         </button>
       </div>
 
-      {showPicker && (
-        <DateRangePicker
-          startDate={draft.startDate}
-          endDate={draft.endDate}
-          onChange={({ startDate, endDate }) => patch({ startDate, endDate })}
-          onClose={() => setShowPicker(false)}
-        />
-      )}
+      {/* 保持挂载（用 open 控制），BottomSheet 退场动画才播得完 */}
+      <DateRangePicker
+        open={showPicker}
+        startDate={draft.startDate}
+        endDate={draft.endDate}
+        onChange={({ startDate, endDate }) => patch({ startDate, endDate })}
+        onClose={() => setShowPicker(false)}
+      />
     </form>
   )
 }
