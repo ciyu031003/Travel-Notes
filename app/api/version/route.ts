@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '新建旅行精修：自绘时间滚轮（替代系统圆盘钟表）、日期选择器连续色带+快捷区间、品牌化下拉选择器、混合角色同行（聚会/团建）、按钮按压材质反馈',
+    changelog: process.env.APP_CHANGELOG || '修复：选择器层级(z-index)导致编辑页点不动、时间滚轮反馈环导致闪退、相对/api请求导致评论空白、inert残留导致全站点不动；花销日期改品牌化日历；评论抽屉半屏',
     forceUpdate,
   })
 }

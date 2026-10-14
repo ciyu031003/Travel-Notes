@@ -1,3 +1,41 @@
+## [1.24.1] - 2026-10-14
+
+> 修复 v1.24.0 的真机回归：闪退、点不动、评论空白、时间改不了。
+> tsc 0 错误 · lint 0 error · vitest **56 文件 / 525 用例全绿** · build 成功 ·
+> 设计 token 无新增回退。
+
+### Fixed
+
+- **选择器被渲染在编辑面板背后（「时间/日期/名字都改不了」）**：`BottomSheet` 此前是
+  `z-[95]`，而 5 个页面级全屏编辑器（`TravelInfoEditor` / `ItineraryEditor` /
+  `MemoryComposer` / `TravelTimeline` / `AddPhotoButton`）都在 `z-[130]`。于是从编辑器里
+  打开选择器（选日期 / 选时间 / 选行程）时，抽屉被渲染在编辑器**背后** —— 用户看到的是
+  "点了完全没反应"。已把 `BottomSheet` 提到 `z-[135]`、`Toast` 提到 `z-[150]`，
+  并把完整层级写进 `BottomSheet` 注释避免再次踩坑。
+- **时间选择器滚轮存在反馈环（真机卡死/闪退且时间选不准）**：第一版用 scroll-snap 滚轮
+  + 滚动监听回写值 + 程序化 `scrollTop` 定位，三者构成反馈环
+  （scroll → setState → effect 改 scrollTop → 再触发 scroll）。改为**纯点选网格**：
+  小时 24 格 + 分钟 12 档 + 常用快捷项 + 大号回显，无任何 scroll 监听、无程序化滚动，
+  结构上不可能成环；触达 44×44 也更好点。已删除随之废弃的 `.m-wheel*` CSS。
+- **相对 `/api` 请求打到本地壳（评论数 2 但列表全白）**：Capacitor 壳的页面源是
+  `https://localhost`，组件里 `fetch('/api/...')` 会打到手机本地壳。已全量收敛：
+  `components/` 与 `app/` 中 **33 处**裸 `/api` 请求改为 `apiUrl(...)`，补 18 个缺失 import；
+  评论读写另补 `credentials: 'include'`。Web 端 `apiUrl` 返回原相对路径，行为不变。
+- **`inert` 可能残留（全站点不动、输入框无法聚焦）**：`useModalLayer` 原按"打开时是否已
+  inert"决定是否移除，嵌套 / 异常卸载时会漏；残留在应用根上即导致所有点击无效、
+  输入框进不去。改为**引用计数**归还（计数归零无条件移除），且 `panel` 未就绪时不做 inert
+  （那会把弹层自己锁死）。另加兜底自愈 `clearStrayInert()`：路由切换时若无弹层在用 inert
+  就清掉残留。
+- 花销「日期」改用品牌化日历（新增 `DateField` + `DateRangePicker` 单日模式），不再用原生
+  `<input type="date">`。
+- 修掉 `DateRangePicker` 里局部变量 `single` 遮蔽 `single` prop 的隐患（改名 `isSingleDay`）。
+
+### Changed
+
+- 评论抽屉高度：此前只有 `max-h` 没有 `h`，内容少时缩成很小一条；改为 `h-[62dvh]` 约半屏。
+
+---
+
 ## [1.24.0] - 2026-10-13
 
 > 新建旅行体验精修：把三个原生控件换成品牌化自绘组件 + 混合角色同行。
