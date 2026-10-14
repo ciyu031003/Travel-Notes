@@ -5,6 +5,7 @@ import BrandLogo from "@/components/brand/BrandLogo"
 import { MapPin } from "lucide-react"
 import { Icon } from '@/components/mobile/Icon'
 import dynamicImport from 'next/dynamic'
+import { apiUrl } from '@/lib/api-base'
 
 // 门面地图按需加载：把 china-geo 全量地理数据 + d3-geo 拆出登录页首屏 chunk
 const DoorMap = dynamicImport(() => import('./DoorMap'), {
@@ -76,7 +77,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
   useEffect(() => {
     // 取最早的纪念日作为封条日期
     let cancelled = false
-    fetch('/api/anniversaries')
+    fetch(apiUrl('/api/anniversaries'))
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (cancelled || !json?.anniversaries?.length) return

@@ -8,6 +8,7 @@ import {
   CheckCircle2, XCircle, KeyRound
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { apiUrl } from '@/lib/api-base'
 
 type StepType = 'request' | 'verify' | 'reset'
 
@@ -71,7 +72,7 @@ export default function ForgotPasswordPage() {
 
     setSendingCode(true)
     try {
-      const res = await fetch('/api/forgot-password/send-code', {
+      const res = await fetch(apiUrl('/api/forgot-password/send-code'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
@@ -107,7 +108,7 @@ export default function ForgotPasswordPage() {
 
     setLoading(true)
     try {
-      const res = await fetch('/api/forgot-password/verify-code', {
+      const res = await fetch(apiUrl('/api/forgot-password/verify-code'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), code }),
@@ -143,7 +144,7 @@ export default function ForgotPasswordPage() {
 
     setLoading(true)
     try {
-      const res = await fetch('/api/forgot-password/reset', {
+      const res = await fetch(apiUrl('/api/forgot-password/reset'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

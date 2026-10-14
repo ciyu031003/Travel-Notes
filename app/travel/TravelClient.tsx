@@ -13,6 +13,7 @@ import TravelInfoPanel from '@/components/TravelInfoPanel'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { findCityByName } from '@/data/cities'
 import { useIsMobile } from '@/hooks/use-is-mobile'
+import { apiUrl } from '@/lib/api-base'
 
 // v3.1 M3-D2：ChinaMap 重组件按需加载（首屏不打包）
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
@@ -49,7 +50,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
   }, [isMobile])
 
   useEffect(() => {
-    fetch('/api/travel/settings')
+    fetch(apiUrl('/api/travel/settings'))
       .then((res) => res.json())
       .then((data) => {
         if (data.anniversaryStart) {

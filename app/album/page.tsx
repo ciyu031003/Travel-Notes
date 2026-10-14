@@ -29,6 +29,7 @@ import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentat
 import { readLocalAlbums } from '@/lib/modules/offline/album-read'
 import { useLocalMediaUrls } from '@/hooks/use-local-media-url'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
+import { apiUrl } from '@/lib/api-base'
 
 // v3.1 M3-D2：Canvas/WebGL 重组件按需加载（首屏不打包；渲染时才拉取）
 const DriftWall = dynamicImport(() => import('@/components/album/driftwall/DriftWall'), { ssr: false })
@@ -146,7 +147,7 @@ export default function AlbumPage() {
 
   const loadAlbumData = async () => {
     try {
-      const res = await fetch('/api/album')
+      const res = await fetch(apiUrl('/api/album'))
       if (res.ok) {
         const data = await res.json()
         setIsUnlocked(true)

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Settings, Save, Eye, EyeOff, Key, User, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { apiUrl } from '@/lib/api-base'
 
 export default function AccountSettings() {
   const [currentUsername, setCurrentUsername] = useState('')
@@ -22,7 +23,7 @@ export default function AccountSettings() {
 
   const loadCurrentSettings = async () => {
     try {
-      const res = await fetch('/api/admin/settings')
+      const res = await fetch(apiUrl('/api/admin/settings'))
       if (res.ok) {
         const data = await res.json()
         setCurrentUsername(data.username)
@@ -52,7 +53,7 @@ export default function AccountSettings() {
 
     setLoading(true)
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await fetch(apiUrl('/api/admin/settings'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

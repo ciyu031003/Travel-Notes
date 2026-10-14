@@ -49,6 +49,7 @@ export default function DateRangePicker({
   endDate,
   onChange,
   onClose,
+  single = false,
 }: {
   /** 由父级控制显隐：保持挂载才能播完 BottomSheet 的弹簧退场动画 */
   open: boolean
@@ -56,6 +57,12 @@ export default function DateRangePicker({
   endDate: string
   onChange: (next: { startDate: string; endDate: string }) => void
   onClose: () => void
+  /**
+   * 单日模式（2026-10-14）：花销「日期」这类只需一天的场景。
+   * 点一天即选中并回填（start = end），不显示区间色带与区间快捷项 ——
+   * 也因此不再使用原生 <input type="date">（Android 上同样是系统弹窗，与设计割裂）。
+   */
+  single?: boolean
 }) {
   const initial = parseLocalDate(startDate) ?? new Date()
   const [viewYear, setViewYear] = useState(initial.getFullYear())
@@ -68,9 +75,16 @@ export default function DateRangePicker({
     return toKey(new Date(t.getFullYear(), t.getMonth(), t.getDate()))
   }, [])
 
-  /** 常用区间：一次点击直接选好，省去翻月份 */
+  /** 常用入口：区间模式给区间；单日模式只给单日（花销基本就是今天/昨天） */
   const presets = useMemo(() => {
     const base = new Date()
+    if (single) {
+      return [
+        { label: "今天", start: toKey(base), end: toKey(base) },
+        { label: "昨天", start: toKey(addDays(base, -1)), end: toKey(addDays(base, -1)) },
+        { label: "前天", start: toKey(addDays(base, -2)), end: toKey(addDays(base, -2)) },
+      ]
+    }
     // 本周六：getDay() 0=周日；距离下一个周六的天数
     const dow = base.getDay()
     const toSat = (6 - dow + 7) % 7
@@ -82,7 +96,7 @@ export default function DateRangePicker({
       { label: "三天", start: toKey(base), end: toKey(addDays(base, 2)) },
       { label: "一周", start: toKey(base), end: toKey(addDays(base, 6)) },
     ]
-  }, [])
+  }, [single])
 
   const cells = useMemo(() => {
     const first = startOfMonthGrid(viewYear, viewMonth)
@@ -109,6 +123,11 @@ export default function DateRangePicker({
 
   const pick = (key: string) => {
     void hapticLight()
+    // 单日模式：点一天即完成，直接回填（start = end），不做两段式
+    if (single) {
+      onChange({ startDate: key, endDate: key })
+      return
+    }
     // 还没有开始 → 这次点击就是开始
     if (!pendingStart && !startDate) {
       setPendingStart(key)
@@ -160,7 +179,11 @@ export default function DateRangePicker({
         {/* 实时状态：天数 / 下一步提示 */}
         <div className="flex items-center gap-2 text-[13px]">
           <Icon icon={CalendarDays} size="sm" tone="accent" />
-          {info.error ? (
+          {single ? (
+            <span className={rangeStart ? "font-medium text-[var(--m-accent-strong)]" : "text-[var(--m-muted)]"}>
+              {rangeStart || "点一天作为日期"}
+            </span>
+          ) : info.error ? (
             <span className="text-[var(--m-danger)]">{info.error}</span>
           ) : rangeStart && rangeEnd ? (
             <span className="font-medium text-[var(--m-accent-strong)]">
@@ -238,8 +261,9 @@ export default function DateRangePicker({
             const isEnd = c.key === rangeEnd
             const inRange = isInRange(c.key)
             const isToday = c.key === today
-            const single = isStart && isEnd
-            const showBand = single || isStart || isEnd || inRange
+            // 注意：不要命名为 single —— 会遮蔽外层的 single prop（单日模式）。
+            const isSingleDay = isStart && isEnd
+            const showBand = isSingleDay || isStart || isEnd || inRange
             return (
               <button
                 key={c.key}
@@ -250,9 +274,9 @@ export default function DateRangePicker({
                 className={cn(
                   "relative flex h-11 items-center justify-center",
                   // 连续色带：起点右侧圆角收边、终点左侧收边、中间不留缝
-                  showBand && !single && inRange && "bg-[var(--m-accent-soft)]",
-                  showBand && !single && isStart && "rounded-l-full bg-[var(--m-accent-soft)]",
-                  showBand && !single && isEnd && "rounded-r-full bg-[var(--m-accent-soft)]",
+                  showBand && !isSingleDay && inRange && "bg-[var(--m-accent-soft)]",
+                  showBand && !isSingleDay && isStart && "rounded-l-full bg-[var(--m-accent-soft)]",
+                  showBand && !isSingleDay && isEnd && "rounded-r-full bg-[var(--m-accent-soft)]",
                 )}
               >
                 <span
@@ -292,5 +316,52 @@ export default function DateRangePicker({
         </div>
       </div>
     </BottomSheet>
+  )
+}
+/**
+ * 单日日期字段（2026-10-14）
+ *
+ * 用于花销「日期」这类只需要一天的场景：外观与 Field 一致，点击拉起品牌化日历
+ * （单日模式），**不再使用原生 <input type="date">** —— Android 上原生会弹出
+ * 系统日期对话框，与全站设计语言割裂。
+ */
+export function DateField({
+  label,
+  value,
+  onChange,
+  className,
+  placeholder = "选择日期",
+}: {
+  label?: string
+  value: string
+  onChange: (next: string) => void
+  className?: string
+  placeholder?: string
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div className={className}>
+        {label && <p className="m-field-label">{label}</p>}
+        <button
+          type="button"
+          onClick={() => { void hapticLight(); setOpen(true) }}
+          className="m-field-control m-pressable mt-2 flex min-h-[46px] w-full items-center gap-2 px-4 text-left"
+        >
+          <Icon icon={CalendarDays} size="sm" tone="muted" />
+          <span className={cn("m-body min-w-0 flex-1 truncate", value ? "text-[var(--m-text)]" : "text-[var(--m-faint)]")}>
+            {value || placeholder}
+          </span>
+        </button>
+      </div>
+      <DateRangePicker
+        open={open}
+        single
+        startDate={value}
+        endDate={value}
+        onChange={({ startDate }) => onChange(startDate)}
+        onClose={() => setOpen(false)}
+      />
+    </>
   )
 }

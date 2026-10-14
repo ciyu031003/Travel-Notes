@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { Upload, ZoomIn, ChevronUp, ChevronDown, Trash2, XCircle, ImageOff } from 'lucide-react'
+import { apiUrl } from '@/lib/api-base'
 
 export interface ImageUploaderProps {
   images: string[]
@@ -49,7 +50,7 @@ export default function ImageUploader({
         formUpload.append('postId', String(postId))
       }
 
-      const res = await fetch('/api/upload', {
+      const res = await fetch(apiUrl('/api/upload'), {
         method: 'POST',
         body: formUpload,
       })

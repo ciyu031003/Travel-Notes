@@ -6,6 +6,7 @@ import MermaidRenderer from '@/components/mdx/MermaidRenderer'
 // 编辑器预览渲染服务端 Markdown HTML（KaTeX / 代码高亮）所需样式
 import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/github-dark.css'
+import { apiUrl } from '@/lib/api-base'
 
 export interface MarkdownPreviewProps {
   content: string
@@ -29,7 +30,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
     debounceTimer.current = setTimeout(async () => {
       setLoading(true)
       try {
-        const res = await fetch('/api/admin/preview', {
+        const res = await fetch(apiUrl('/api/admin/preview'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content }),

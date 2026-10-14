@@ -11,6 +11,7 @@ import {
 import BrandLogo from '@/components/brand/BrandLogo'
 import { Icon } from '@/components/mobile/Icon'
 import type { LucideIcon } from 'lucide-react'
+import { apiUrl } from '@/lib/api-base'
 
 export interface AdminNavItem {
   href: string
@@ -71,7 +72,7 @@ export default function AdminShell({
   const [username, setUsername] = useState('')
 
   useEffect(() => {
-    fetch('/api/admin/check')
+    fetch(apiUrl('/api/admin/check'))
       .then((r) => r.json())
       .then((d) => {
         if (d.authenticated && d.username) setUsername(d.username)
@@ -96,7 +97,7 @@ export default function AdminShell({
 
   const handleLogout = async () => {
     close()
-    await fetch('/api/admin/logout', { method: 'POST' })
+    await fetch(apiUrl('/api/admin/logout'), { method: 'POST' })
     router.push('/admin/login')
   }
 

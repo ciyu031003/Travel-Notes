@@ -8,6 +8,7 @@ import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { cn } from '@/lib/utils'
 import { createComment } from '@/lib/modules/offline/social-write'
+import { apiUrl } from '@/lib/api-base'
 
 interface CommentAuthor { id: number; username: string; nickname?: string | null; avatarUrl?: string | null }
 interface Comment {
@@ -59,7 +60,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/social/posts/' + postId + '/comments')
+      const res = await fetch(apiUrl(`/api/social/posts/${postId}/comments`), { credentials: 'include' })
       if (res.ok) {
         const json = await res.json()
         setComments(Array.isArray(json.data) ? json.data : [])
@@ -134,8 +135,9 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
       // 回复暂不走离线队列（D2 仅一级评论离线写），直接在线提交
       setSubmitting(true); setError('')
       try {
-        const res = await fetch('/api/social/posts/' + postId + '/comments', {
+        const res = await fetch(apiUrl(`/api/social/posts/${postId}/comments`), {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content: text, parentId: replyTo.id }),
         })
@@ -190,7 +192,10 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
     <div className="fixed inset-0 z-[60]">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[80vh] max-w-2xl flex-col overflow-hidden rounded-t-[1.8rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)] transition-[bottom] duration-200 ease-out"
+        /* 半屏高度：此前只有 max-h 没有 h，内容少时面板会缩成很小一条
+           （真机反馈「评论抽屉太小」）。改为固定约半屏 62dvh，内容多了内部滚动。
+           用 dvh 而非 vh：地址栏收放时不跳。 */
+        className="absolute inset-x-0 bottom-0 mx-auto flex h-[62dvh] max-w-2xl flex-col overflow-hidden rounded-t-[1.8rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)] transition-[bottom] duration-200 ease-out"
         // 键盘弹出时整块上抬 keyboardInset 像素（键盘收起时 insets 为 0，样式不生效）
         style={keyboardInset ? { bottom: keyboardInset } : undefined}
       >

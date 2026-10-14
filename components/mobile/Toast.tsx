@@ -31,7 +31,12 @@ export function ToastHost() {
     <div
       role="status"
       aria-live="polite"
-      className="m-safe-inset-top-12 pointer-events-none fixed inset-x-0 z-[120] flex flex-col items-center gap-2 px-4"
+      /*
+        Toast 必须在所有弹层之上（z-[150]）：在抽屉/编辑器里触发的"已保存""失败"
+        提示若被弹层挡住，用户看到的就是"点了没反馈"。
+        完整层级见 components/mobile/BottomSheet.tsx 的 z-index 说明。
+      */
+      className="m-safe-inset-top-12 pointer-events-none fixed inset-x-0 z-[150] flex flex-col items-center gap-2 px-4"
     >
       {items.map((item) => {
         const ToastIcon = ICONS[item.kind]

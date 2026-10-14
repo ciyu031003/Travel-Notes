@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import BrandLogo from '@/components/brand/BrandLogo'
 import { cn } from '@/lib/utils'
+import { apiUrl } from '@/lib/api-base'
 
 interface NavbarProps {
   variant?: 'default' | 'transparent'
@@ -27,7 +28,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch('/api/check-auth')
+      const res = await fetch(apiUrl('/api/check-auth'))
       if (res.ok) {
         const data = await res.json()
         if (data.authenticated) {
@@ -39,7 +40,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', { method: 'POST' })
+      await fetch(apiUrl('/api/logout'), { method: 'POST' })
       router.push('/login')
     } catch {
       router.push('/login')

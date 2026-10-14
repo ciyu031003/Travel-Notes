@@ -22,6 +22,17 @@ import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/mot
  * - 下拉过半（>120px）或快速一甩（>500px/s）→ 关闭；不足 → 弹簧回弹；
  * - 进出场统一弹簧（AnimatePresence），关闭不再"瞬间消失"；
  * - MotionConfig reducedMotion="user"：系统减动效时 transform 直切、仅保留淡入淡出。
+ *
+ * z-index 层级（2026-10-14 修正，改动前必读）
+ * ---------------------------------------------------------------------------
+ * 此前本组件是 z-[95]，但页面级全屏编辑器（TravelInfoEditor / ItineraryEditor /
+ * MemoryComposer / TravelTimeline / AddPhotoButton）都在 z-[130]。于是**从编辑器里
+ * 打开本抽屉**（选日期 / 选时间 / 选行程）时，抽屉被渲染在编辑器背后 ——
+ * 用户看到的是"点了完全没反应"，真机反馈「点击时间、去哪儿、名字都没办法修改」正是此因。
+ * 本组件是设计系统的弹层原语，必须高于那些页面级编辑器。
+ *
+ * 当前层级：页面内容 < 90 < SideDrawer 115 < 页面级编辑器 130
+ *          < BottomSheet 135 < AppUpdatePrompt 140 < Toast 150 < 解锁弹窗 200
  */
 export function BottomSheet({
   open,
@@ -61,7 +72,7 @@ export function BottomSheet({
     <MotionConfig reducedMotion="user">
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-[95]" data-modal-layer="bottom-sheet">
+          <div className="fixed inset-0 z-[135]" data-modal-layer="bottom-sheet">
             <motion.button
               type="button"
               aria-label="关闭面板"

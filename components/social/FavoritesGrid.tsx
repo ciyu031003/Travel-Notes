@@ -9,6 +9,7 @@ import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { goBackOrHome } from '@/lib/navigation'
 import { circlePostHref } from '@/lib/routes'
+import { apiUrl } from '@/lib/api-base'
 
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const
 
@@ -18,7 +19,7 @@ export default function FavoritesGrid() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/social/me/favorites?page=1&pageSize=30').then((r) => r.json()).then((j) => setPosts(j.data || [])).catch(() => {}).finally(() => setLoading(false))
+    fetch(apiUrl('/api/social/me/favorites?page=1&pageSize=30')).then((r) => r.json()).then((j) => setPosts(j.data || [])).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   const cardProps = (p: any, frame: (typeof FRAMES)[number]) => ({

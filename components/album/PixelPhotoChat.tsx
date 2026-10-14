@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Send, Loader2, Clock, MessageCircle, ImageIcon, X, BookOpen } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import PixelDeskBackground from './PixelDeskBackground'
+import { apiUrl } from '@/lib/api-base'
 
 interface Message {
   id: number
@@ -50,7 +51,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
   const loadMessages = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/photo-messages?image=${encodeURIComponent(imageKey)}`)
+      const res = await fetch(apiUrl(`/api/photo-messages?image=${encodeURIComponent(imageKey)}`))
       if (res.ok) {
         const json = await res.json()
         setMessages(Array.isArray(json.data) ? json.data : [])
@@ -90,7 +91,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
     setSending(true)
     setError('')
     try {
-      const res = await fetch('/api/photo-messages', {
+      const res = await fetch(apiUrl('/api/photo-messages'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imageKey, content }),

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import LintReport, { LintIssue } from './LintReport'
 import MarkdownPreview from './MarkdownPreview'
+import { apiUrl } from '@/lib/api-base'
 
 export interface ImportedDocument {
   title: string
@@ -52,7 +53,7 @@ export default function DocumentImporter({
       const formData = new FormData()
       formData.append('file', file)
 
-      const res = await fetch('/api/admin/posts/import', {
+      const res = await fetch(apiUrl('/api/admin/posts/import'), {
         method: 'POST',
         body: formData,
       })
@@ -138,7 +139,7 @@ export default function DocumentImporter({
         published: true,
       }
 
-      const res = await fetch('/api/admin/posts/import/publish', {
+      const res = await fetch(apiUrl('/api/admin/posts/import/publish'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -12,6 +12,7 @@ import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { circlePostHref, circleUserHref } from '@/lib/routes'
+import { apiUrl } from '@/lib/api-base'
 
 /**
  * 我的通知（M5 · D6 修复）
@@ -31,7 +32,7 @@ export default function NotificationsList() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/social/notifications?page=1&pageSize=50')
+      const res = await fetch(apiUrl('/api/social/notifications?page=1&pageSize=50'))
       if (res.ok) {
         const j = await res.json()
         setData(j.data?.data || [])
@@ -51,7 +52,7 @@ export default function NotificationsList() {
   const markAll = async () => {
     setBusy(true)
     try {
-      await fetch('/api/social/notifications', {
+      await fetch(apiUrl('/api/social/notifications'), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),

@@ -7,6 +7,7 @@ import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { Field, FieldTextarea } from '@/components/mobile/Field'
 import { SelectField } from '@/components/mobile/SelectField'
+import { DateField } from '@/components/travel/DateRangePicker'
 import { Icon } from '@/components/mobile/Icon'
 import { Loader } from '@/components/mobile/Loader'
 import { apiUrl } from '@/lib/api-base'
@@ -373,7 +374,8 @@ function AddExpenseSheet({
           </div>
         </div>
 
-        <Field label="日期" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        {/* 日期走品牌化日历（单日模式）：原生 type="date" 在 Android 上会弹系统对话框 */}
+        <DateField label="日期" value={date} onChange={setDate} />
 
         {/*
           「选定行程」：把这笔花销挂到某个具体行程上（如 11/1 高铁 北京→上海）。

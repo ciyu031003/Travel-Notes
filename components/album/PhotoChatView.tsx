@@ -6,6 +6,7 @@ import { ArrowLeft, Send, Moon, Loader2, MessageCircle, Sparkles } from 'lucide-
 import ParticlePhotoBackground from './space/ParticlePhotoBackground'
 import StarfieldBackground from './StarfieldBackground'
 import { Icon } from '@/components/mobile/Icon'
+import { apiUrl } from '@/lib/api-base'
 
 interface Message {
   id: number
@@ -47,7 +48,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
   const loadMessages = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/photo-messages?image=${encodeURIComponent(imageKey)}`)
+      const res = await fetch(apiUrl(`/api/photo-messages?image=${encodeURIComponent(imageKey)}`))
       if (res.ok) {
         const json = await res.json()
         setMessages(Array.isArray(json.data) ? json.data : [])
@@ -84,7 +85,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
     setSending(true)
     setError('')
     try {
-      const res = await fetch('/api/photo-messages', {
+      const res = await fetch(apiUrl('/api/photo-messages'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imageKey, content }),

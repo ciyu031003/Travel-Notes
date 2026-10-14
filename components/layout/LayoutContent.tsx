@@ -8,6 +8,7 @@ import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import { MobilePageTransition } from '@/components/mobile/MobilePageTransition'
 import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { trackNavigation } from '@/lib/navigation'
+import { clearStrayInert } from '@/hooks/use-modal-layer'
 
 export default function LayoutContent({
   children,
@@ -24,6 +25,9 @@ export default function LayoutContent({
    */
   useEffect(() => {
     trackNavigation(pathname)
+    // 兜底自愈：路由切换时若没有任何弹层在用 inert，清掉可能残留的 inert。
+    // 残留在应用根上会让全站点不动、输入框无法编辑（真机出现过的严重症状）。
+    clearStrayInert()
   }, [pathname])
   const isTravelPage = pathname.startsWith('/travel')
   const isHomePage = pathname === '/'

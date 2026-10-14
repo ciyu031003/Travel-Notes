@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState, type CSSPropertie
 import { Pause, Play, Send, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { Modal } from '@/components/ui/Modal'
+import { apiUrl } from '@/lib/api-base'
 
 export interface Danmaku {
   id: string
@@ -60,7 +61,7 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/check-auth')
+        const res = await fetch(apiUrl('/api/check-auth'))
         if (res.ok) {
           const data = await res.json()
           if (data.authenticated) setUsername(data.username)
@@ -73,7 +74,7 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
   useEffect(() => {
     const fetchDanmakus = async () => {
       try {
-        const res = await fetch('/api/danmaku')
+        const res = await fetch(apiUrl('/api/danmaku'))
         if (res.ok) {
           const data = await res.json()
           if (data.success && data.data?.danmakus) {
@@ -89,7 +90,7 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
     if (!danmakuText.trim()) return
     const color = danmakuColors[Math.floor(Math.random() * danmakuColors.length)]
     try {
-      const res = await fetch('/api/danmaku', {
+      const res = await fetch(apiUrl('/api/danmaku'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: danmakuText.trim(), color }),
@@ -106,7 +107,7 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
 
   const removeDanmaku = async (id: string) => {
     try {
-      const res = await fetch(`/api/danmaku?id=${id}`, { method: 'DELETE' })
+      const res = await fetch(apiUrl(`/api/danmaku?id=${id}`), { method: 'DELETE' })
       if (res.ok) {
         setDanmakus((prev) => prev.filter((d) => d.id !== id))
       }

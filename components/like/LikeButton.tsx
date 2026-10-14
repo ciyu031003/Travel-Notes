@@ -5,6 +5,7 @@ import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getVisitorId } from '@/lib/visitor-id'
 import { hapticLight } from '@/lib/mobile/haptics'
+import { apiUrl } from '@/lib/api-base'
 
 interface LikeButtonProps {
   targetType: 'post' | 'moment'
@@ -33,7 +34,7 @@ export default function LikeButton({
     try {
       const query = new URLSearchParams({ targetType, targetId })
       if (visitorId) query.set('visitorId', visitorId)
-      const res = await fetch(`/api/likes?${query.toString()}`)
+      const res = await fetch(apiUrl(`/api/likes?${query.toString()}`))
       if (res.ok) {
         const json = await res.json()
         if (json.data) {
@@ -69,7 +70,7 @@ export default function LikeButton({
     }))
     try {
       const visitorId = getVisitorId()
-      const res = await fetch('/api/likes', {
+      const res = await fetch(apiUrl('/api/likes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetType, targetId, visitorId }),

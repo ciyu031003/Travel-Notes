@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Upload, Play, ChevronUp, ChevronDown, Trash2, Video, Eye } from 'lucide-react'
 import { uploadVideoResumable } from '@/lib/upload/resumable-upload'
+import { apiUrl } from '@/lib/api-base'
 
 export interface VideoItem {
   url: string
@@ -43,7 +44,7 @@ export default function VideoUploader({
     const started = Date.now()
     const timer = setInterval(async () => {
       try {
-        const res = await fetch('/api/admin/videos/resumable', {
+        const res = await fetch(apiUrl('/api/admin/videos/resumable'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'transcode-status', filename }),
