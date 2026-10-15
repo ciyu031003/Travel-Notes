@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复：选择器层级(z-index)导致编辑页点不动、时间滚轮反馈环导致闪退、相对/api请求导致评论空白、inert残留导致全站点不动；花销日期改品牌化日历；评论抽屉半屏',
+    changelog: process.env.APP_CHANGELOG || '修复我的页面抽屉点不动(拖拽吞点击)、时间改回滚轮并修不写入、评论区缓存加速+删除+长按菜单、导出记忆档案改居中弹窗并支持旅行卡片(HTML)',
     forceUpdate,
   })
 }
