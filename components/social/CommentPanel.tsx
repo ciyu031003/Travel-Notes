@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
-import { Send, X, CornerDownRight } from 'lucide-react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { Send, X, CornerDownRight, Heart, Trash2, Copy, Share2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import { useCloseOnBack } from '@/hooks/use-close-on-back'
@@ -9,6 +9,9 @@ import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { cn } from '@/lib/utils'
 import { createComment } from '@/lib/modules/offline/social-write'
 import { apiUrl } from '@/lib/api-base'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { hapticLight } from '@/lib/mobile/haptics'
+import { toast } from '@/lib/mobile/toast-store'
 
 interface CommentAuthor { id: number; username: string; nickname?: string | null; avatarUrl?: string | null }
 interface Comment {
@@ -20,7 +23,32 @@ interface Comment {
   author: CommentAuthor | null
   likeCount: number
   isLiked: boolean
+  /** 服务端判定是否本人所写（决定要不要给删除入口） */
+  isMine?: boolean
   replies: Comment[]
+}
+
+/**
+ * 评论的会话内缓存（2026-10-15）。
+ * 面板是"点开才挂载"的，每次都要等一次网络往返，真机反馈"要加载比较久"。
+ * 这里按 postId 记住上次结果：打开瞬间先用缓存渲染，同时后台再拉最新。
+ * 只存内存、只留最近若干条帖子，不落盘。
+ */
+const commentsCache = new Map<number, Comment[]>()
+const COMMENTS_CACHE_MAX = 20
+
+function readCommentsCache(postId: number): Comment[] | null {
+  return commentsCache.get(postId) ?? null
+}
+
+function writeCommentsCache(postId: number, list: Comment[]) {
+  commentsCache.delete(postId)
+  commentsCache.set(postId, list)
+  while (commentsCache.size > COMMENTS_CACHE_MAX) {
+    const oldest = commentsCache.keys().next().value
+    if (oldest === undefined) break
+    commentsCache.delete(oldest)
+  }
 }
 
 function timeAgo(iso: string): string {
@@ -63,12 +91,20 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
       const res = await fetch(apiUrl(`/api/social/posts/${postId}/comments`), { credentials: 'include' })
       if (res.ok) {
         const json = await res.json()
-        setComments(Array.isArray(json.data) ? json.data : [])
+        const list = Array.isArray(json.data) ? json.data : []
+        setComments(list)
+        writeCommentsCache(postId, list)
       }
     } catch {} finally { setLoading(false) }
   }, [postId])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    // 先用缓存立即出内容（有缓存就不再显示"加载中"）
+    const cached = readCommentsCache(postId)
+    if (cached) { setComments(cached); setLoading(false) } else { setLoading(true) }
+    // 无论有无缓存都再拉一次最新（stale-while-revalidate）
+    void load()
+  }, [load, postId])
 
   /**
    * 本地乐观插入一条评论（2026-10-12 新增）。
@@ -91,6 +127,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
       author: { id: -1, username: '我', nickname: '我', avatarUrl: null },
       likeCount: 0,
       isLiked: false,
+      isMine: true, // 本地乐观插入的必然是本人所写 → 立刻可删
       replies: [],
     }
     setPendingComments((prev) => [...prev, optimistic])
@@ -162,25 +199,139 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
     setSubmitting(false)
   }
 
+  /* ── 评论操作（长按 / 更多 / 删除）2026-10-15 ───────────────────────── */
+
+  /** 长按目标；非空即显示操作抽屉 */
+  const [actionTarget, setActionTarget] = useState<{ id: number; content: string; name: string; mine: boolean } | null>(null)
+  const longPressTimer = useRef<number | null>(null)
+
+  const openActions = useCallback((c: Comment, name: string) => {
+    setActionTarget({ id: c.id, content: c.content, name, mine: Boolean(c.isMine) })
+  }, [])
+
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current !== null) {
+      window.clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
+
+  /** 长按 480ms 弹出操作抽屉；一旦移动（用户在滚动）就取消，避免误触 */
+  const startLongPress = useCallback((c: Comment, name: string) => {
+    cancelLongPress()
+    longPressTimer.current = window.setTimeout(() => {
+      longPressTimer.current = null
+      void hapticLight()
+      openActions(c, name)
+    }, 480)
+  }, [cancelLongPress, openActions])
+
+  useEffect(() => cancelLongPress, [cancelLongPress])
+
+  const removeComment = useCallback(async (id: number) => {
+    if (!window.confirm('删除这条评论？删除后无法恢复')) return
+    try {
+      const res = await fetch(apiUrl(`/api/social/comments/${id}`), { method: 'DELETE', credentials: 'include' })
+      if (res.ok) {
+        toast.success('已删除')
+        setActionTarget(null)
+        await load()
+      } else {
+        const j = await res.json().catch(() => null)
+        toast.error(j?.error || '删除失败')
+      }
+    } catch {
+      toast.error('网络错误，请稍后重试')
+    }
+  }, [load])
+
+  const copyComment = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success('已复制评论内容')
+    } catch {
+      toast.error('复制失败，请长按正文手动复制')
+    }
+    setActionTarget(null)
+  }, [])
+
+  const shareComment = useCallback(async (text: string) => {
+    setActionTarget(null)
+    // 原生分享优先（Capacitor/现代浏览器）；不支持时退回复制
+    const nav = navigator as Navigator & { share?: (d: { text: string }) => Promise<void> }
+    if (typeof nav.share === 'function') {
+      try { await nav.share({ text }) } catch { /* 用户取消，静默 */ }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success('已复制，可直接粘贴分享')
+    } catch {
+      toast.error('分享失败')
+    }
+  }, [])
+
   // 计数与列表都走合并结果，保证"刚发出去那条"也算进去
   const total = mergedComments.reduce((n, c) => n + 1 + (c.replies?.length || 0), 0)
 
+  /**
+   * 单条评论（小红书 / 抖音 风格，2026-10-15 重做）
+   * 头像在左、昵称+时间在上、正文在下、动作行在底部；自己的评论多一个删除入口。
+   * 长按任意评论 → 弹出「分享 / 复制 / 删除」小抽屉（删除仅本人可见）。
+   */
   const renderComment = (c: Comment, isReply: boolean) => {
     const name = c.author?.nickname || c.author?.username || '匿名'
+    const mine = Boolean(c.isMine)
     return (
-      <div key={c.id} className={cn('py-4', isReply && 'ml-10 border-l border-[var(--social-line)] pl-3')}>
-        <div className="flex items-start gap-2.5">
-          <SocialAvatar name={name} avatarUrl={c.author?.avatarUrl} size={30} />
+      <div key={c.id} className={cn('py-3.5', isReply && 'ml-9 border-l border-[var(--social-line)] pl-3')}>
+        <div className="flex items-start gap-3">
+          <SocialAvatar name={name} avatarUrl={c.author?.avatarUrl} size={36} />
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-medium text-[var(--social-text)]">{name}</span>
-              <span className="text-xs text-[var(--social-faint)]">{timeAgo(c.createdAt)}</span>
+              <span className="text-xs font-semibold text-[var(--social-text)]">{name}</span>
+              {mine && (
+                <span className="rounded-full bg-[var(--social-bg)] px-1.5 py-0.5 text-[11px] text-[var(--social-accent)]">我</span>
+              )}
+              <span className="text-[11px] text-[var(--social-faint)]">{timeAgo(c.createdAt)}</span>
             </div>
-            <p className="mt-1 break-words text-sm leading-relaxed text-[var(--social-muted)]">{c.content}</p>
-            <button type="button" onClick={() => setReplyTo({ id: c.id, username: name })}
-              className="mt-1.5 inline-flex items-center gap-1 text-xs text-[var(--social-faint)] transition hover:text-[var(--social-accent)]">
-              <Icon icon={CornerDownRight} size="sm" /> 回复
-            </button>
+
+            {/* 长按触发操作抽屉；同时保留可见的删除按钮（可发现性比纯长按好） */}
+            <p
+              className="mt-1 break-words text-sm leading-relaxed text-[var(--social-text)]"
+              onContextMenu={(e) => { e.preventDefault(); openActions(c, name) }}
+              onTouchStart={() => startLongPress(c, name)}
+              onTouchEnd={cancelLongPress}
+              onTouchMove={cancelLongPress}
+            >
+              {c.content}
+            </p>
+
+            <div className="mt-1.5 flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setReplyTo({ id: c.id, username: name })}
+                className="inline-flex min-h-[32px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
+              >
+                <Icon icon={CornerDownRight} size="sm" /> 回复
+              </button>
+              <button
+                type="button"
+                onClick={() => openActions(c, name)}
+                aria-label="更多操作"
+                className="inline-flex min-h-[32px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
+              >
+                <Icon icon={Heart} size="sm" /> {c.likeCount > 0 ? c.likeCount : ''}
+              </button>
+              {mine && (
+                <button
+                  type="button"
+                  onClick={() => removeComment(c.id)}
+                  className="inline-flex min-h-[32px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
+                >
+                  <Icon icon={Trash2} size="sm" /> 删除
+                </button>
+              )}
+            </div>
           </div>
         </div>
         {c.replies?.length > 0 && c.replies.map((r) => renderComment(r, true))}
@@ -234,6 +385,43 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
           </div>
         </div>
       </div>
+
+      {/*
+        长按 / 点「更多」弹出的操作抽屉（2026-10-15）
+        对齐小红书、抖音的评论操作：分享、复制、删除；删除仅本人可见。
+      */}
+      <BottomSheet open={actionTarget !== null} onClose={() => setActionTarget(null)} title="评论操作">
+        {actionTarget && (
+          <div className="space-y-1.5 pb-1">
+            <button
+              type="button"
+              onClick={() => { void shareComment(actionTarget.content) }}
+              className="m-pressable flex min-h-[52px] w-full items-center gap-3 rounded-xl px-3.5 text-left"
+            >
+              <Icon icon={Share2} size="sm" tone="muted" />
+              <span className="text-sm text-[var(--social-text)]">分享</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { void copyComment(actionTarget.content) }}
+              className="m-pressable flex min-h-[52px] w-full items-center gap-3 rounded-xl px-3.5 text-left"
+            >
+              <Icon icon={Copy} size="sm" tone="muted" />
+              <span className="text-sm text-[var(--social-text)]">复制</span>
+            </button>
+            {actionTarget.mine && (
+              <button
+                type="button"
+                onClick={() => { void removeComment(actionTarget.id) }}
+                className="m-pressable flex min-h-[52px] w-full items-center gap-3 rounded-xl px-3.5 text-left"
+              >
+                <Icon icon={Trash2} size="sm" />
+                <span className="text-sm text-[var(--danger-soft)]">删除</span>
+              </button>
+            )}
+          </div>
+        )}
+      </BottomSheet>
     </div>
   )
 }

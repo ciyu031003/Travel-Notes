@@ -689,12 +689,28 @@ html.dark {
 }
 
 
-/* ── 已移除：时间选择器滚轮（.m-wheel / -item / -mask / -band）──────────
-   第一版时间选择器做成 scroll-snap 滚轮 + 滚动监听回写值 + 程序化 scrollTop
-   定位，三者构成反馈环（scroll → setState → effect 改 scrollTop → 再触发 scroll），
-   真机上表现为卡死/闪退且时间选不准。
-   现改为 components/mobile/TimePicker.tsx 的**纯点选网格**（无 scroll 监听、
-   无程序化滚动），这几个类因此不再需要，一并删除以免留下死代码。 */
+/* ── 时间滚轮（2026-10-15 重做，替换原生圆盘钟表）────────────────────────
+   为什么不用原生 <input type="time">：Android 会拉起系统圆盘钟表，与全站设计割裂。
+   为什么重做第二版：第一版把 onChange 绑在 onScroll 上、且每次值变化都程序化
+   改 scrollTop，构成反馈环（scroll → setState → effect 改 scrollTop → 再 scroll），
+   真机卡死/闪退。现在：滚动**停止后**才取值（防抖）+ 仅在必要时定位一次。 */
+.m-wheel {
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.m-wheel::-webkit-scrollbar { display: none; }
+.m-wheel-item { scroll-snap-align: center; }
+/* 上下渐隐：让滚轮不像"被裁断的列表" */
+.m-wheel-mask {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-wheel { scroll-snap-type: none; }
+}
 
 /* ── 底部抽屉入场（省份抽屉等）──────────────────────────────────
    从屏幕下沿滑入 + 遮罩淡入。此前这类抽屉只靠 `transition-[height]` 表达状态变化，

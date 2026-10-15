@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { AnimatePresence, MotionConfig, motion } from 'motion/react'
+import { AnimatePresence, MotionConfig, motion, useDragControls } from 'motion/react'
 import { X } from 'lucide-react'
 import { useModalLayer } from '@/hooks/use-modal-layer'
 import { cn } from '@/lib/utils'
@@ -30,6 +30,7 @@ export function SideDrawer({
   const panelRef = useRef<HTMLElement | null>(null)
   const titleId = useId()
   const [mounted, setMounted] = useState(false)
+  const dragControls = useDragControls()
 
   useEffect(() => {
     setMounted(true)
@@ -55,6 +56,14 @@ export function SideDrawer({
               exit={{ opacity: 0 }}
               transition={MOBILE_OVERLAY_TRANSITION}
             />
+            {/*
+              关键：dragListener={false} + 用 dragControls 从专用拖拽区起拖。
+              此前是默认 dragListener（整个面板都在监听拖拽），手指点击时的微小抖动
+              会被识别成"正在拖动"，**从而吞掉行内 <Link> 的点击** —— 真机反馈
+              「我的旅行 / 旅行画册 / 时间线 / 碎碎念 / 数据看板 / 我的收藏 / 旅行圈
+              点了都没有任何反应」正是此因（BottomSheet 早就是 dragListener={false}，
+              所以那边一直正常）。
+            */}
             <motion.aside
               ref={panelRef}
               role="dialog"
@@ -67,15 +76,20 @@ export function SideDrawer({
               exit={{ x: '100%' }}
               transition={MOBILE_PANEL_SPRING}
               drag="x"
+              dragListener={false}
+              dragControls={dragControls}
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={{ left: 0, right: 0.55 }}
               onDragEnd={(_, info) => {
                 if (info.offset.x > 90 || info.velocity.x > 500) onClose()
               }}
             >
+              {/* 专用拖拽区：只有标题栏能起拖（dragListener={false} 的配套），
+                  内容区的行因此不会被拖拽手势抢走点击。 */}
               <header
-                className="flex items-center gap-2 px-4 pb-2"
+                className="flex cursor-grab touch-none items-center gap-2 px-4 pb-2 active:cursor-grabbing"
                 style={{ paddingTop: 'var(--m-safe-top)' }}
+                onPointerDown={(e) => dragControls.start(e)}
               >
                 <h2 id={titleId} className="m-title-2 min-w-0 flex-1 truncate text-[var(--m-text)]">
                   {title}

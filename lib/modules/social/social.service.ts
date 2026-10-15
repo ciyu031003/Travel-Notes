@@ -500,7 +500,7 @@ export async function togglePostFavorite(postId: number, userId: number) {
   return setPostFavorite(postId, userId, !existing)
 }
 
-function serializeComment(row: any, likedIds: Set<number>) {
+function serializeComment(row: any, likedIds: Set<number>, viewerId?: number | null) {
   return {
     id: row.id,
     postId: row.postId,
@@ -513,6 +513,12 @@ function serializeComment(row: any, likedIds: Set<number>) {
     author: serializeAuthor(row.user),
     likeCount: row._count?.likes ?? 0,
     isLiked: likedIds.has(row.id),
+    /**
+     * 是否本人所写（2026-10-15）。
+     * 由服务端判定而不是客户端比对 userId —— 客户端要拿"我的 id"就得再发一次请求，
+     * 而且容易和真实登录态不一致。这里直接给结论，客户端据此决定要不要显示删除入口。
+     */
+    isMine: viewerId != null && row.userId === viewerId,
   }
 }
 
@@ -530,7 +536,7 @@ export async function listPostComments(postId: number, userId?: number | null) {
     const likes = await prisma.commentLike.findMany({ where: { userId, commentId: { in: ids } }, select: { commentId: true } })
     likedIds = new Set(likes.map((l) => l.commentId))
   }
-  const comments = rows.map((r) => serializeComment(r, likedIds))
+  const comments = rows.map((r) => serializeComment(r, likedIds, userId))
   const top = comments.filter((c) => !c.parentId)
   const byParent = new Map<number, any[]>()
   for (const c of comments) {
@@ -568,7 +574,8 @@ export async function createPostComment(input: { postId: number; userId: number;
   else await notify(post.authorId, input.userId, 'COMMENT', 'TravelPost', input.postId)
 
   const created = await prisma.comment.findUnique({ where: { id }, include: { user: { select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true } }, _count: { select: { likes: true } } } })
-  return serializeComment(created, new Set())
+  // 传 input.userId：刚发出去这条当然是本人所写，客户端要立刻显示删除入口
+  return serializeComment(created, new Set(), input.userId)
 }
 
 export async function deletePostComment(commentId: number, userId: number) {

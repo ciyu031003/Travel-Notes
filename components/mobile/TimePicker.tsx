@@ -1,38 +1,36 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Clock, Check } from 'lucide-react'
-import { BottomSheet } from './BottomSheet'
-import { Button } from './Button'
+import { useEffect, useRef, useState } from 'react'
+import { Clock } from 'lucide-react'
 import { Icon } from './Icon'
 import { hapticLight } from '@/lib/mobile/haptics'
 import { cn } from '@/lib/utils'
 
 /**
- * 时间选择器（2026-10-14 改为纯点选）
+ * 时间滚轮（2026-10-15 第二版）
  * ============================================================================
- * 为什么不用原生 <input type="time">：Android WebView 会拉起**系统圆盘钟表**，
- * 与全站暖陶土设计语言割裂，各 ROM 造型还不一致（真机反馈「这个圆形钟表挺丑的」）。
+ * 需求：行程的「开始 / 结束」用滚轮选时间（左边小时、右边分钟），不要方格。
  *
- * 为什么不做「滚动吸附滚轮」：第一版做成 scroll-snap 滚轮 + 滚动监听回写值 +
- * 程序化 scrollTop 定位，三者构成**反馈环**（scroll → setState → effect 改 scrollTop
- * → 再触发 scroll …）。真机表现为卡死/闪退，且时间选不准。
- * 现在改为**纯点选**：小时网格 + 分钟快捷档，没有任何 scroll 监听、没有程序化滚动，
- * 结构上不可能出现反馈环；触达 44×44，也比滚轮好点。
+ * 为什么会有第二版：第一版滚轮把 onChange 绑在 onScroll 上，并且每次值变化都在
+ * effect 里程序化改 scrollTop —— 两者构成反馈环
+ * （scroll → setState → effect 改 scrollTop → 再触发 scroll），真机上卡死/闪退、
+ * 值也选不准。第一版之后的方格版虽然稳，但不是想要的手感。
+ *
+ * 这一版的三个关键约束（改这段代码前请先读）：
+ *  ① **滚动停止后才取值**：onScroll 只做防抖，静止 140ms 才把选中项回写，
+ *     绝不在滚动过程中持续 setState；
+ *  ② **程序化滚动不参与回写**：定位期间用 programmaticRef 屏蔽取值，
+ *     且只在「当前位置与目标差 > 1px」时才滚动，静止后不会反复触发；
+ *  ③ **内联在表单里，不再是嵌套弹层**：此前时间选择器是抽屉里再开一层
+ *     BottomSheet，两个 modal 叠加会互相干扰（关内层把外层也带走 →
+ *     真机反馈「确定后直接回到总览、时间没写入」）。内联后没有第二层 modal。
  */
 
+const ITEM_H = 40 // 滚轮单行高度，需与下方 style 的 height 一致
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
-/** 分钟按 5 分钟一档：够用，且一屏放得下不用滚 */
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"))
-const QUICK = [
-  { label: "早上", value: "08:00" },
-  { label: "中午", value: "12:00" },
-  { label: "下午", value: "14:00" },
-  { label: "傍晚", value: "18:00" },
-  { label: "晚上", value: "20:00" },
-]
 
-/** 归一化为 HH:mm，并对齐到 5 分钟档（不会出现选不到的值） */
+/** 归一化为 HH:mm 并对齐 5 分钟档（保证滚轮里一定有这个值） */
 export function normalizeTime(v: string | null | undefined): string {
   const m = /^(\d{1,2}):(\d{2})/.exec(v || "")
   if (!m) return ""
@@ -41,7 +39,102 @@ export function normalizeTime(v: string | null | undefined): string {
   return String(h).padStart(2, "0") + ":" + String(min).padStart(2, "0")
 }
 
-/** 时间字段：外观与 Field 一致，点击拉起自绘面板（不触发原生钟表） */
+/**
+ * 单列滚轮。
+ * 注意这里**没有** onScroll → onChange 的直接绑定：滚动只做防抖计时，
+ * 静止后才读一次最终位置。这是避免反馈环的关键。
+ */
+function Wheel({
+  values,
+  value,
+  onChange,
+  label,
+}: {
+  values: string[]
+  value: string
+  onChange: (v: string) => void
+  label: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const settleTimer = useRef<number | null>(null)
+  const programmaticRef = useRef(false)
+  const idx = Math.max(0, values.indexOf(value))
+
+  // 只在「外部值与当前滚轮位置不一致」时定位一次；静止后不会反复滚动
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const target = idx * ITEM_H
+    if (Math.abs(el.scrollTop - target) <= 1) return
+    programmaticRef.current = true
+    el.scrollTop = target
+    const t = window.setTimeout(() => { programmaticRef.current = false }, 120)
+    return () => window.clearTimeout(t)
+  }, [idx])
+
+  useEffect(
+    () => () => { if (settleTimer.current) window.clearTimeout(settleTimer.current) },
+    [],
+  )
+
+  const handleScroll = () => {
+    if (programmaticRef.current) return
+    if (settleTimer.current) window.clearTimeout(settleTimer.current)
+    // 防抖：只有滚动停下来才取值并回写
+    settleTimer.current = window.setTimeout(() => {
+      const el = ref.current
+      if (!el) return
+      const i = Math.max(0, Math.min(values.length - 1, Math.round(el.scrollTop / ITEM_H)))
+      const next = values[i]
+      if (next && next !== value) {
+        void hapticLight()
+        onChange(next)
+      }
+    }, 140)
+  }
+
+  return (
+    <div className="relative flex-1" role="listbox" aria-label={label}>
+      {/* 中央选中带：纯视觉，不拦手势 */}
+      <div
+        className="pointer-events-none absolute inset-x-1 top-1/2 z-10 -translate-y-1/2 rounded-xl bg-[var(--m-accent-soft)]"
+        style={{ height: ITEM_H }}
+        aria-hidden="true"
+      />
+      <div
+        ref={ref}
+        onScroll={handleScroll}
+        className="m-wheel m-wheel-mask relative"
+        style={{ height: ITEM_H * 5 }}
+      >
+        {/* 上下各留 2 行，让首尾项也能滚到中间 */}
+        <div style={{ height: ITEM_H * 2 }} aria-hidden="true" />
+        {values.map((v) => (
+          <div
+            key={v}
+            role="option"
+            aria-selected={v === value}
+            className={cn(
+              "flex items-center justify-center tabular-nums transition-colors duration-150",
+              v === value
+                ? "text-[18px] font-semibold text-[var(--m-accent-strong)]"
+                : "text-[15px] text-[var(--m-faint)]",
+            )}
+            style={{ height: ITEM_H }}
+          >
+            {v}
+          </div>
+        ))}
+        <div style={{ height: ITEM_H * 2 }} aria-hidden="true" />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 时间字段：点击在**下方内联展开**滚轮（左小时 / 右分钟）。
+ * 值在选择过程中实时回写，不需要"确定"也不会丢。
+ */
 export function TimeField({
   label,
   value,
@@ -56,156 +149,55 @@ export function TimeField({
   placeholder?: string
 }) {
   const [open, setOpen] = useState(false)
+  const normalized = normalizeTime(value)
+  const hour = normalized ? normalized.slice(0, 2) : "09"
+  const minute = normalized ? normalized.slice(3, 5) : "00"
+
+  const setPart = (h: string, m: string) => onChange(h + ":" + m)
+
   return (
-    <>
-      <div className={className}>
-        {label && <p className="m-field-label">{label}</p>}
-        <button
-          type="button"
-          onClick={() => { void hapticLight(); setOpen(true) }}
-          className="m-field-control m-pressable mt-2 flex min-h-[46px] w-full items-center gap-2 px-4 text-left"
+    <div className={className}>
+      {label && <p className="m-field-label">{label}</p>}
+      <button
+        type="button"
+        onClick={() => { void hapticLight(); setOpen((v) => !v) }}
+        aria-expanded={open}
+        className="m-field-control m-pressable mt-2 flex min-h-[46px] w-full items-center gap-2 px-4 text-left"
+      >
+        <Icon icon={Clock} size="sm" tone="muted" />
+        <span
+          className={cn(
+            "m-body min-w-0 flex-1 truncate",
+            value ? "text-[var(--m-text)]" : "text-[var(--m-faint)]",
+          )}
         >
-          <Icon icon={Clock} size="sm" tone="muted" />
-          <span className={cn("m-body min-w-0 flex-1 truncate", value ? "text-[var(--m-text)]" : "text-[var(--m-faint)]")}>
-            {value || placeholder}
-          </span>
-        </button>
-      </div>
-      <TimeSheet
-        open={open}
-        title={label || "选择时间"}
-        value={value}
-        onClose={() => setOpen(false)}
-        onConfirm={(next) => { onChange(next); setOpen(false) }}
-      />
-    </>
+          {value || placeholder}
+        </span>
+      </button>
+
+      {open && (
+        <div className="m-enter mt-2 rounded-2xl bg-[var(--m-surface-2)] p-3">
+          <div className="flex items-center gap-3">
+            <Wheel label="小时" values={HOURS} value={hour} onChange={(h) => setPart(h, minute)} />
+            <span className="self-center text-[18px] font-semibold text-[var(--m-faint)]" aria-hidden="true">:</span>
+            <Wheel label="分钟" values={MINUTES} value={minute} onChange={(m) => setPart(hour, m)} />
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="m-caption text-[var(--m-muted)]">
+              选中 {hour}:{minute}
+            </span>
+            <button
+              type="button"
+              onClick={() => { void hapticLight(); setOpen(false) }}
+              className="m-press min-h-[36px] rounded-full bg-[var(--m-cta-bg)] px-4 text-[13px] font-semibold text-[var(--m-on-accent)]"
+            >
+              完成
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
-/** 时间选择面板（纯点选） */
-export function TimeSheet({
-  open,
-  title,
-  value,
-  onClose,
-  onConfirm,
-}: {
-  open: boolean
-  title?: string
-  value: string
-  onClose: () => void
-  onConfirm: (next: string) => void
-}) {
-  const initial = normalizeTime(value) || "09:00"
-  const [hour, setHour] = useState(initial.slice(0, 2))
-  const [minute, setMinute] = useState(initial.slice(3, 5))
-
-  // 每次打开与外部值对齐（上次取消后不残留）
-  useEffect(() => {
-    if (!open) return
-    const v = normalizeTime(value) || "09:00"
-    setHour(v.slice(0, 2))
-    setMinute(v.slice(3, 5))
-  }, [open, value])
-
-  const current = useMemo(() => hour + ":" + minute, [hour, minute])
-
-  const pickHour = (h: string) => { void hapticLight(); setHour(h) }
-  const pickMinute = (m: string) => { void hapticLight(); setMinute(m) }
-
-  return (
-    <BottomSheet open={open} onClose={onClose} title={title || "选择时间"}>
-      <div className="space-y-4">
-        {/* 常用时间：少点两下就能选中大多数场景 */}
-        <div className="flex flex-wrap gap-2">
-          {QUICK.map((q) => {
-            const active = current === q.value
-            return (
-              <button
-                key={q.value}
-                type="button"
-                onClick={() => {
-                  void hapticLight()
-                  setHour(q.value.slice(0, 2))
-                  setMinute(q.value.slice(3, 5))
-                }}
-                aria-pressed={active}
-                className={cn(
-                  "m-press min-h-[36px] rounded-full px-3.5 text-[13px] font-medium transition-colors",
-                  active
-                    ? "bg-[var(--m-cta-bg)] text-[var(--m-on-accent)]"
-                    : "bg-[var(--m-surface-2)] text-[var(--m-muted)]",
-                )}
-              >
-                {q.label} {q.value}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* 当前选择：大号回显，确认前一眼看清 */}
-        <div className="flex items-center justify-center rounded-2xl bg-[var(--m-surface-2)] py-3">
-          <span className="text-[24px] font-bold tabular-nums text-[var(--m-accent-strong)]">{current}</span>
-        </div>
-
-        {/* 小时网格：24 项 6 列，每格 44 触达；容器可滚但不监听 scroll */}
-        <div>
-          <p className="m-field-label">小时</p>
-          <div className="mt-2 grid max-h-[132px] grid-cols-6 gap-1.5 overflow-y-auto pr-1">
-            {HOURS.map((h) => {
-              const active = h === hour
-              return (
-                <button
-                  key={h}
-                  type="button"
-                  onClick={() => pickHour(h)}
-                  aria-pressed={active}
-                  className={cn(
-                    "m-press flex h-11 items-center justify-center rounded-xl text-[15px] tabular-nums transition-colors",
-                    active
-                      ? "bg-[var(--m-cta-bg)] font-semibold text-[var(--m-on-accent)]"
-                      : "bg-[var(--m-surface-2)] text-[var(--m-text)]",
-                  )}
-                >
-                  {h}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* 分钟快捷档 */}
-        <div>
-          <p className="m-field-label">分钟</p>
-          <div className="mt-2 grid grid-cols-6 gap-1.5">
-            {MINUTES.map((m) => {
-              const active = m === minute
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => pickMinute(m)}
-                  aria-pressed={active}
-                  className={cn(
-                    "m-press flex h-11 items-center justify-center rounded-xl text-[15px] tabular-nums transition-colors",
-                    active
-                      ? "bg-[var(--m-cta-bg)] font-semibold text-[var(--m-on-accent)]"
-                      : "bg-[var(--m-surface-2)] text-[var(--m-text)]",
-                  )}
-                >
-                  {m}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        <Button block size="lg" onClick={() => onConfirm(current)}>
-          确定 · {current}
-        </Button>
-      </div>
-    </BottomSheet>
-  )
-}
-
-export default TimeSheet
+export default TimeField

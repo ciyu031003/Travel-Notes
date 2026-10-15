@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-13",
-  "legacyTotal": 309,
-  "total": 401,
+  "generatedAt": "2026-10-15",
+  "legacyTotal": 310,
+  "total": 402,
   "rules": {
     "hexColor": 75,
     "rgbaColor": 57,
-    "lucideImport": 90,
+    "lucideImport": 91,
     "fontSize": 84,
     "charIcon": 3,
     "iconSize": 0,

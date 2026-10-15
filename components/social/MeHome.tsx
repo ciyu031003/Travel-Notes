@@ -34,6 +34,7 @@ import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDrawer'
 import VersionCheckRow from '@/components/mobile/VersionCheckRow'
+import ExportArchiveDialog from '@/components/me/ExportArchiveDialog'
 import { IconBadge } from '@/components/mobile/IconBadge'
 import { Icon } from '@/components/mobile/Icon'
 import { base64ToBytes, extFromMime } from '@/lib/media/pick-image'
@@ -238,31 +239,17 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     router.push('/login')
   }
 
-  // v3.1 M2-E1：导出记忆档案（JSON + Markdown + 原图 ZIP）
-  const [exporting, setExporting] = useState(false)
-  const exportArchive = async () => {
-    if (exporting) return
-    setExporting(true)
-    try {
-      const res = await fetch(apiUrl('/api/export/archive'), { credentials: 'include' })
-      if (!res.ok) {
-        setError('导出失败，请稍后重试')
-        return
-      }
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'travel-notes-archive.zip'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
-    } catch {
-      setError('导出失败，请稍后重试')
-    } finally {
-      setExporting(false)
-    }
+  /**
+   * 导出记忆档案（2026-10-15 重做）。
+   *
+   * 原先点一下就直接下载 zip：用户既不知道会导出什么、也没得选（不能只导某一次旅行，
+   * 也不能选保存位置）。现在改为**居中弹窗**，先选旅行与形式，再让用户选保存路径
+   * （见 ExportArchiveDialog）。
+   */
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportArchive = () => {
+    setDrawerOpen(false)
+    setExportOpen(true)
   }
 
   const heroData = {
@@ -511,8 +498,8 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           />
           <DrawerRow
             icon={Download}
-            title={exporting ? '正在导出…' : '导出记忆档案'}
-            description="旅行 / 回忆 / 碎碎念 / 照片打包下载"
+            title="导出记忆档案"
+            description="选一次旅行，导出成分享卡片或完整档案"
             onClick={exportArchive}
           />
           {/*
@@ -554,6 +541,9 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           <VersionCheckRow />
         </DrawerSection>
       </SideDrawer>
+
+      {/* 导出记忆档案：居中弹窗（选旅行 → 选形式 → 选保存位置） */}
+      {exportOpen && <ExportArchiveDialog onClose={() => setExportOpen(false)} />}
 
       <Modal
         open={showEdit}
