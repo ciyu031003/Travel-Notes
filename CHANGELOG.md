@@ -1,3 +1,57 @@
+## [1.24.5] - 2026-10-16
+
+> 改用 ui-ux-pro-max 的**正本**，按其 canonical `pro-rules.md` 清单逐条审计并修复。
+> tsc 0 错误 · lint 0 error · vitest **56 文件 / 525 用例全绿** · build 成功。
+
+### 重要更正：此前使用的是被裁剪的技能副本
+
+仓库 `https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git` 在本地是
+`F:\CodeFiles\Learn-Workbench\.local\skills\ui-ux-pro-max-skill`（git clone，提交 `56ea9cf` / 2026-10-15），
+**正本位于 `.claude/skills/ui-ux-pro-max/`**：
+
+- `SKILL.md` **16,183 B**（之前用的 vendored 副本只有 10,947 B，少约 48%）
+- 含 `references/quick-reference.md` 与 `references/pro-rules.md` —— `SKILL.md` 中**两次**明确要求
+  「交付 App UI 前必读 `pro-rules.md` 并过一遍它的 canonical Pre-Delivery Checklist」
+- 22 个技术栈（副本 12 个）、119 条 UX 规则（副本更少）
+
+之前使用的 `C:\Users\yuan\.workbuddy-ai\plugins\...\ui-ux-pro-max-skill` 是**无 `.git` 的裁剪快照**。
+因此上一轮虽修复了对比度等真实问题，但**未取得技能最核心的两份 reference**。本轮已改读正本。
+
+### Fixed
+
+- **图标控件缺少可访问名称**（canonical：*Icon controls have an accessible name*）：
+  `CommentPanel` 关闭按钮（`<Icon icon={X}>` 无 `aria-label`）与 `UserProfile` 返回按钮
+  （`<Icon icon={ArrowLeft}>` 无 `aria-label`）已补名称，并同时把命中区从约 28px / 36px 提升到 44×44。
+- **Touch Target Minimum**（iOS ≥44pt、Android ≥48dp，且「图标本身小的时候要扩大命中区」）：
+  关闭类按钮普遍写成 `rounded-full p-2`（约 36px），低于下限。新增设计系统类 **`.m-icon-btn`**
+  （44×44 命中盒，含按压 / 焦点 / 禁用态，图标仍走 `<Icon>` 三档不变），
+  已替换 `TravelInfoEditor` / `ItineraryEditor` / `MemoryComposer` / `TravelTimeline` 四处，
+  并登记到 `prefers-reduced-motion` 降级列表（遵循该文件既有的维护约定）。
+
+### Added
+
+- **`docs/design/AppUI交付前检查清单.md`**：把 canonical `pro-rules.md` 的检查清单转成**本项目可执行**形式，
+  每条标注状态（✅ 已修 / 🟡 部分 / 待续）、对应实现位置与未做原因；含本地路径与 Python 3.9 兼容说明，
+  避免后续再次误用裁剪副本。
+
+### 已审计达标、无需改动
+
+装饰性图标对读屏隐藏（`Icon.tsx` 无 `label` 即 `aria-hidden="true"`，与 pro-rules 一致）·
+按压反馈 100ms（要求在 80–150ms 内）· 按压只动 `transform`/`filter` 不改变布局边界 ·
+两主题正文对比度均 ≥4.5:1 · 分隔线双主题可见 · 安全区 · 内容不被固定栏遮挡 · 断点覆盖 ·
+`prefers-reduced-motion` · 骨架屏。
+
+### 已知未做项
+
+1. 仍有若干 `rounded-full p-2` 关闭按钮为约 36px（已提供 `.m-icon-btn`，继续替换即可）。
+2. 弹层遮罩不透明度散布在 40–70%，未收敛为单一 token。
+3. 未在真机验证 Dynamic Type / 最大字号下的布局（pro-rules 要求）。
+4. 未在横屏与平板尺寸实测。
+
+以上第 1–4 项均记录在 `docs/design/AppUI交付前检查清单.md` 的「已知未做项」。
+
+---
+
 ## [1.24.4] - 2026-10-16
 
 > 按 ui-ux-pro-max 技能系统性处理 UI/UX：对比度、cursor、焦点环、悬停反馈、骨架屏。

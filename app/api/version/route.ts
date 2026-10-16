@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '按 ui-ux-pro-max 技能：修复 faint/success 对比度不达标(2.24:1→4.53:1)、全站可点元素补 cursor 与焦点环、卡片补悬停抬升、新增骨架屏',
+    changelog: process.env.APP_CHANGELOG || '改用 ui-ux-pro-max 正本并按 canonical pro-rules 清单审计：修复图标控件缺可访问名称、新增 .m-icon-btn 统一 44x44 触达；新增交付前检查清单文档',
     forceUpdate,
   })
 }
