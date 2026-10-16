@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { createComment } from '@/lib/modules/offline/social-write'
 import { apiUrl } from '@/lib/api-base'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { SkeletonRows } from '@/components/mobile/SkeletonList'
 import { hapticLight, hapticSuccess } from '@/lib/mobile/haptics'
 import { toast } from '@/lib/mobile/toast-store'
 
@@ -393,7 +394,8 @@ export default function CommentPanel({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2">
           {loading ? (
-            <p className="py-10 text-center text-sm text-[var(--social-faint)]">加载中…</p>
+            // 骨架屏而非「加载中…」空文本：先给出结构，等待感更低且内容回来不跳高度
+            <SkeletonRows rows={3} />
           ) : mergedComments.length === 0 ? (
             <p className="py-10 text-center text-sm text-[var(--social-faint)]">还没有评论，来写下第一个旅行故事回应～</p>
           ) : (

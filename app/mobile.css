@@ -14,7 +14,11 @@
   --m-text: #3D2B20;
   /* 对比度：修复前 #9A8574 on #FFFBF7 = 3.36:1（不达标）；#7D6754 = 5.10:1 ✅ */
   --m-muted: #7D6754;
-  --m-faint: #B9A897;
+  /* 对比度（2026-10-16 · ui-ux-pro-max「Accessibility CRITICAL · 4.5:1」）：
+     原 #B9A897 on #FFFBF7 = **2.24:1**，远低于正文 4.5:1 的下限。
+     --m-faint 用在占位符、时间戳、说明文字等**真实内容**上（全站 65 处），
+     不是纯装饰，所以必须达标。改为 #867060 = 4.53:1（保持原暖褐色相）。 */
+  --m-faint: #867060;
 
   /* ── 强调层（唯一强调色：陶土）──────────────────────────── */
   --m-accent: #C67A4E;
@@ -43,7 +47,9 @@
   --m-tone-neutral-fg: #7D6754;
 
   /* ── 语义色（状态表达，不参与装饰）────────────────────── */
-  --m-success: #3F8F62;
+  /* #3F8F62 on #FFFBF7 = 3.84:1 —— 用作小号状态文字时低于 4.5:1，
+     加深到 #2F7C52 = 4.94:1（同色相）。 */
+  --m-success: #2F7C52;
   --m-warning: #B8801F;
   --m-danger: #C0453F;
 
@@ -148,7 +154,8 @@ html.dark {
   --m-surface-2: #211A16;
   --m-text: #F5F1EA;
   --m-muted: #A99B90;
-  --m-faint: #6E6259;
+  /* 深色同理：原 #6E6259 on #100C0A = 3.29:1（不达标）→ #8B8078 = 5.06:1 */
+  --m-faint: #8B8078;
   --m-accent: #E8B36A;
   --m-accent-strong: #F2C88A;
   --m-accent-soft: rgba(232, 179, 106, 0.16);
@@ -1542,6 +1549,27 @@ html.dark .m-toast {
   transform: scale(0.985);
   box-shadow: var(--m-elev-1);
   transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+}
+
+/* ── 悬停反馈（2026-10-16 · ui-ux-pro-max「Cards: hover feedback」Medium）──
+   技能清单：可点卡片必须有 hover 反馈（Do: hover:shadow / transition-shadow；
+   Don't: 可点却毫无反馈）。此前全站只有 4 处手写 hover:shadow。
+   统一在卡片层补上「抬升一档」，并用 @media (hover: hover) 限定 ——
+   触摸设备没有真正的悬停，不加限定会出现"点完还留着悬停态"的粘滞感。 */
+@media (hover: hover) and (pointer: fine) {
+  .m-card-pressable:hover {
+    box-shadow: var(--m-elev-2);
+  }
+  .m-btn:not(:disabled):not([aria-disabled='true']):hover {
+    filter: brightness(1.03);
+  }
+  .m-btn-secondary:hover,
+  .m-btn-ghost:hover {
+    background-color: var(--m-surface-2);
+  }
+  .m-action-item:hover {
+    background-color: var(--m-surface-2);
+  }
 }
 
 /* 减动效全量降级。
