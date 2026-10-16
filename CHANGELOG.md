@@ -1,3 +1,43 @@
+## [1.24.3] - 2026-10-16
+
+> 第三轮真机反馈修复：抽屉跳转、时间滚轮取值、删除确认框、可达性补强。
+> tsc 0 错误 · lint 0 error · vitest **56 文件 / 525 用例全绿** · build 成功。
+
+### Fixed
+
+- **抽屉项「点不动」的真根因**：读 Capacitor 安卓源码 `WebViewLocalServer.java:425` 确证 ——
+  `if (path.equals("/") || (!lastPathSegment.contains(".") && html5mode)) return basePath + "/index.html"`，
+  且 `CapConfig.java:36` 里 `html5mode` **默认 true**。本项目是**多页静态导出**（产物为
+  `moments.html` / `timeline.html` 等带扩展名的文件），不是 SPA 单壳，所以 `/moments`、
+  `/timeline`、`/dashboard`、`/me/favorites` 这些"末段不含点"的访问在原生壳里拿到的都是**首页**。
+  新增 `lib/mobile/app-href.ts`：在原生壳里把路径补成真实存在的 `.html`（末段含点 → 跳过
+  html5mode → 命中真实文件）；Web 端保持原路径。已核对 `www/` 下 13 个目标文件全部存在。
+- **`SideDrawer` 彻底去掉 `drag`**：此前两版都保留 drag（先默认、后 `dragListener={false}`），
+  抽屉内点击始终不可靠。抽屉本就有明确关闭方式（× 与点遮罩），横滑关闭不值得拿
+  「行内点击可靠」去换。
+- **时间滚轮「不管选什么都是 1 点到 5 点」**：第二版用 `Math.round(scrollTop / ITEM_H)`
+  **推算**选中项，依赖"行高恰为 ITEM_H / spacer 恰为整数倍 / scroll-snap 吸附点恰在 i×ITEM_H"
+  三个假设同时成立；真机上只要行高被字体、DPR 或安全区影响几像素就系统性偏移。
+  第三版改为**直接测量**（各行 `offsetTop` 与容器中心比距离，与行高解耦），并**去掉 scroll-snap**
+  （吸附会让停留位置与"用户以为选中的行"错位）、显式 `touch-action: pan-y`。
+  另加保底输入：每行可直接点选 + 右侧 ▲▼ 步进按钮。
+- **删除评论确认框**：此前 `window.confirm` 在 App 里是**安卓系统原生 alert**，与全站设计割裂；
+  改为自绘弹层（图标 + 标题 + 说明 + 取消/删除）。
+- **删除后数量不立即变化**：确认后**先从本地列表移除**（评论区标题与详情页评论数立即更新），
+  再发请求，失败回滚；新增 `onCountChange` 回调，新发评论也会立即 +1。
+
+### Changed
+
+- **可达性补强（参考 ui-ux-pro-max 技能清单）**：技能脚本在 Python 3.9 下无法运行
+  （`design_system.py` 用了 3.12+ 的 f-string 反斜杠语法），已改为直接按 `SKILL.md` 检查清单执行。
+  · 为 `.m-press` / `.m-pressable` / `.m-btn` / `.m-chip` / `.m-choice` / `.m-card-pressable` /
+  `.m-action-item` / `.m-seg-item` / `.m-tab` 统一补 `cursor: pointer`（禁用态 `not-allowed`）——
+  此前设计系统的按压类一个都没声明，桌面端鼠标移上去是普通箭头。
+  · 为上述类补统一 `:focus-visible` 焦点环（键盘可达性）。
+  · 触达尺寸：`AddPhotoButton` 的关闭按钮 `h-9 w-9`（36px）→ `h-11 w-11`（44px，技能硬性下限）。
+
+---
+
 ## [1.24.2] - 2026-10-15
 
 > 第二轮真机反馈修复：抽屉点不动、时间滚轮回归、评论区体验、导出弹窗。

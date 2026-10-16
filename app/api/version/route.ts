@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复我的页面抽屉点不动(拖拽吞点击)、时间改回滚轮并修不写入、评论区缓存加速+删除+长按菜单、导出记忆档案改居中弹窗并支持旅行卡片(HTML)',
+    changelog: process.env.APP_CHANGELOG || '修复抽屉跳转(Capacitor html5mode 回落首页,改为.html直链)、时间滚轮改为几何测量取值并加步进保底、删除评论改自绘确认框且数量立即变化；补 cursor/焦点环/触达尺寸',
     forceUpdate,
   })
 }
