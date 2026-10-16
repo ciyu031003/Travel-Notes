@@ -389,7 +389,16 @@ export default function CommentPanel({
       >
         <div className="flex items-center justify-between border-b border-[var(--social-line)] px-5 py-4">
           <h3 className="text-sm font-semibold text-[var(--social-text)]">评论 {total > 0 ? '(' + total + ')' : ''}</h3>
-          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[var(--social-muted)] hover:text-[var(--social-text)]"><Icon icon={X} size="sm" /></button>
+          {/* 图标按钮必须有可访问名称，且触达 ≥44px
+              （pro-rules：Icon controls have an accessible name / Touch target minimum） */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="关闭评论"
+            className="m-pressable -mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] hover:text-[var(--social-text)]"
+          >
+            <Icon icon={X} size="sm" />
+          </button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2">

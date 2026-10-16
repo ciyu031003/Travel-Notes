@@ -696,6 +696,38 @@ html.dark {
 }
 
 
+/* ── 图标按钮（2026-10-16 · pro-rules「Touch Target Minimum」）─────────────
+   pro-rules 明确：iOS ≥44pt、Android ≥48dp；**图标本身小的时候要扩大命中区**。
+   此前关闭类按钮普遍写成 `rounded-full p-2`（约 36px），低于下限 —— 手指容易点空。
+   统一为 44×44 的命中盒（图标仍保持 <Icon> 的 16/20/24 三档，视觉不变）。
+   负外边距抵消视觉上多出来的留白，避免顶栏间距被撑大。 */
+.m-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.4s var(--m-ease-spring);
+}
+.m-icon-btn:active {
+  background-color: var(--m-surface-2);
+  transform: scale(0.94);
+  transition: transform 0.1s ease-out, background-color 0.1s ease-out;
+}
+.m-icon-btn:disabled,
+.m-icon-btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.m-icon-btn:focus-visible {
+  outline: 2px solid var(--m-accent);
+  outline-offset: 2px;
+}
+
 /* ── 交互可达性（2026-10-16 · 参考 ui-ux-pro-max 规则 1/2）───────────────
    技能清单里两条最常被忽略的：①所有可点元素都要有 cursor: pointer；
    ②键盘用户必须看得到焦点环（focus-states）。此前全站只有少量手写
@@ -1584,7 +1616,8 @@ html.dark .m-toast {
   .m-seg-item, .m-switch-bare, .m-drawer-panel, .m-drawer-backdrop,
   .m-loader-dot, .m-loader-ring, .m-loader-ripple::before, .m-loader-ripple::after,
   .m-collapser, .m-space-collapser, .m-img-fade,
-  .m-tab-active-dot, .m-toast-bar, .m-chip, .m-card, .m-sheet-up, .m-fade-in {
+  .m-tab-active-dot, .m-toast-bar, .m-chip, .m-card, .m-sheet-up, .m-fade-in,
+  .m-icon-btn {
     animation: none !important;
     transition: none !important;
   }

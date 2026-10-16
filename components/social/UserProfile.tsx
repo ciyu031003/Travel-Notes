@@ -111,7 +111,15 @@ export default function UserProfile({ userId }: { userId: number }) {
       <div className="relative mx-auto max-w-5xl px-4 py-6">
         <header className="mb-8 flex items-center gap-3">
           <div className="ml-auto"><SocialThemeToggle /></div>
-          <button type="button" onClick={() => goBackOrHome(router)} className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></button>
+          {/* 图标按钮：补可访问名称 + 44px 触达（pro-rules 两条硬要求） */}
+          <button
+            type="button"
+            onClick={() => goBackOrHome(router)}
+            aria-label="返回"
+            className="m-pressable flex h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]"
+          >
+            <Icon icon={ArrowLeft} size="md" />
+          </button>
           <span className="text-sm text-[var(--social-muted)]">旅行者主页</span>
         </header>
 

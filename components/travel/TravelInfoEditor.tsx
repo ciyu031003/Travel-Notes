@@ -115,7 +115,7 @@ export default function TravelInfoEditor({
             <h3 className="text-[17px] font-semibold text-[var(--m-text)]">编辑旅行信息</h3>
             <p className="mt-0.5 text-[12px] text-[var(--m-muted)]">改完立即生效，已有的回忆与照片不会丢</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="关闭" className="rounded-full p-2 text-[var(--m-muted)] active:scale-95">
+          <button type="button" onClick={onClose} aria-label="关闭" className="m-icon-btn text-[var(--m-muted)]">
             <Icon icon={X} size="sm" />
           </button>
         </div>
