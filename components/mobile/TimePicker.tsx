@@ -1,32 +1,34 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { Clock } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Clock, ChevronUp, ChevronDown } from 'lucide-react'
 import { Icon } from './Icon'
 import { hapticLight } from '@/lib/mobile/haptics'
 import { cn } from '@/lib/utils'
 
 /**
- * 时间滚轮（2026-10-15 第二版）
+ * 时间选择器（2026-10-16 第三版）
  * ============================================================================
- * 需求：行程的「开始 / 结束」用滚轮选时间（左边小时、右边分钟），不要方格。
+ * 需求：行程的「开始 / 结束」用滚轮选时间（左小时、右分钟）。
  *
- * 为什么会有第二版：第一版滚轮把 onChange 绑在 onScroll 上，并且每次值变化都在
- * effect 里程序化改 scrollTop —— 两者构成反馈环
- * （scroll → setState → effect 改 scrollTop → 再触发 scroll），真机上卡死/闪退、
- * 值也选不准。第一版之后的方格版虽然稳，但不是想要的手感。
+ * 前两版为什么坏：
+ *  ① 第一版把 onChange 绑在 onScroll 上、且每次值变化都程序化改 scrollTop，
+ *     构成反馈环 → 真机卡死/闪退；
+ *  ② 第二版改用防抖取值，但**用 `Math.round(scrollTop / ITEM_H)` 推算选中项**。
+ *     这个推算依赖"每行高度恰好等于 ITEM_H""spacer 高度恰好是 ITEM_H 的整数倍"
+ *     "scroll-snap 吸附点恰好落在 i × ITEM_H" 三个假设同时成立；
+ *     真机上只要行高被字体/DPR/安全区影响几像素，或 scroll-snap 的吸附基准与假设
+ *     不同，取到的索引就会**系统性偏移**（真机反馈「不管选什么都是 1 点到 5 点」）。
  *
- * 这一版的三个关键约束（改这段代码前请先读）：
- *  ① **滚动停止后才取值**：onScroll 只做防抖，静止 140ms 才把选中项回写，
- *     绝不在滚动过程中持续 setState；
- *  ② **程序化滚动不参与回写**：定位期间用 programmaticRef 屏蔽取值，
- *     且只在「当前位置与目标差 > 1px」时才滚动，静止后不会反复触发；
- *  ③ **内联在表单里，不再是嵌套弹层**：此前时间选择器是抽屉里再开一层
- *     BottomSheet，两个 modal 叠加会互相干扰（关内层把外层也带走 →
- *     真机反馈「确定后直接回到总览、时间没写入」）。内联后没有第二层 modal。
+ * 这一版的做法：**不再推算，直接测量**。
+ *  · 选中项 = 各行 `offsetTop` 与容器中心距离最近的那一行（几何真值，与行高无关）；
+ *  · 不再使用 scroll-snap（吸附会让"读到的位置"与"用户看到的"错位）；
+ *  · 显式 `touch-action: pan-y`，保证纵向手势归本控件，不被外层抽屉抢走；
+ *  · **保底输入**：每一行可直接点选，另有 ▲▼ 步进按钮 —— 即使某些机型滚动异常，
+ *    用户依然能把时间设成任意值（不会再出现"怎么选都是同一个值"）。
  */
 
-const ITEM_H = 40 // 滚轮单行高度，需与下方 style 的 height 一致
+const ITEM_H = 40
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"))
 
@@ -41,8 +43,7 @@ export function normalizeTime(v: string | null | undefined): string {
 
 /**
  * 单列滚轮。
- * 注意这里**没有** onScroll → onChange 的直接绑定：滚动只做防抖计时，
- * 静止后才读一次最终位置。这是避免反馈环的关键。
+ * 关键：选中项靠**测量**得出（offsetTop 与容器中心比距离），不靠 scrollTop 除行高。
  */
 function Wheel({
   values,
@@ -56,48 +57,85 @@ function Wheel({
   label: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
   const settleTimer = useRef<number | null>(null)
   const programmaticRef = useRef(false)
   const idx = Math.max(0, values.indexOf(value))
 
-  // 只在「外部值与当前滚轮位置不一致」时定位一次；静止后不会反复滚动
-  useEffect(() => {
+  /** 当前中心行的索引：按每一行的真实 offsetTop 测距，与行高解耦 */
+  const measureIndex = useCallback(() => {
     const el = ref.current
-    if (!el) return
-    const target = idx * ITEM_H
-    if (Math.abs(el.scrollTop - target) <= 1) return
+    if (!el) return null
+    const center = el.scrollTop + el.clientHeight / 2
+    let best = 0
+    let bestDist = Number.POSITIVE_INFINITY
+    itemRefs.current.forEach((node, i) => {
+      if (!node) return
+      const c = node.offsetTop + node.offsetHeight / 2
+      const d = Math.abs(c - center)
+      if (d < bestDist) { bestDist = d; best = i }
+    })
+    return best
+  }, [])
+
+  /** 把第 i 行滚到中心 */
+  const scrollToIndex = useCallback((i: number, smooth = false) => {
+    const el = ref.current
+    const node = itemRefs.current[i]
+    if (!el || !node) return
+    const target = node.offsetTop + node.offsetHeight / 2 - el.clientHeight / 2
     programmaticRef.current = true
-    el.scrollTop = target
-    const t = window.setTimeout(() => { programmaticRef.current = false }, 120)
-    return () => window.clearTimeout(t)
-  }, [idx])
+    if (smooth && typeof el.scrollTo === "function") {
+      el.scrollTo({ top: target, behavior: "smooth" })
+      window.setTimeout(() => { programmaticRef.current = false }, 260)
+    } else {
+      el.scrollTop = target
+      window.setTimeout(() => { programmaticRef.current = false }, 80)
+    }
+  }, [])
+
+  // 外部值变化（含首次挂载）时对齐一次；已经对齐就不动，避免抖动
+  useEffect(() => {
+    const i = measureIndex()
+    if (i === null) return
+    if (values[i] === value) return
+    scrollToIndex(idx)
+    // 仅在 value/idx 变化时执行
+  }, [idx, value, measureIndex, scrollToIndex, values])
 
   useEffect(
     () => () => { if (settleTimer.current) window.clearTimeout(settleTimer.current) },
     [],
   )
 
+  /** 滚动停止后读取中心行（防抖 120ms），不在滚动过程中持续 setState */
   const handleScroll = () => {
     if (programmaticRef.current) return
     if (settleTimer.current) window.clearTimeout(settleTimer.current)
-    // 防抖：只有滚动停下来才取值并回写
     settleTimer.current = window.setTimeout(() => {
-      const el = ref.current
-      if (!el) return
-      const i = Math.max(0, Math.min(values.length - 1, Math.round(el.scrollTop / ITEM_H)))
+      const i = measureIndex()
+      if (i === null) return
       const next = values[i]
       if (next && next !== value) {
         void hapticLight()
         onChange(next)
       }
-    }, 140)
+    }, 120)
+  }
+
+  const step = (delta: number) => {
+    const next = Math.max(0, Math.min(values.length - 1, idx + delta))
+    if (next === idx) return
+    void hapticLight()
+    onChange(values[next])
+    scrollToIndex(next, true)
   }
 
   return (
     <div className="relative flex-1" role="listbox" aria-label={label}>
       {/* 中央选中带：纯视觉，不拦手势 */}
       <div
-        className="pointer-events-none absolute inset-x-1 top-1/2 z-10 -translate-y-1/2 rounded-xl bg-[var(--m-accent-soft)]"
+        className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 rounded-xl bg-[var(--m-accent-soft)] ring-1 ring-[var(--m-accent)]/25"
         style={{ height: ITEM_H }}
         aria-hidden="true"
       />
@@ -107,15 +145,18 @@ function Wheel({
         className="m-wheel m-wheel-mask relative"
         style={{ height: ITEM_H * 5 }}
       >
-        {/* 上下各留 2 行，让首尾项也能滚到中间 */}
+        {/* 上下留白：让首尾项也能停在中心 */}
         <div style={{ height: ITEM_H * 2 }} aria-hidden="true" />
-        {values.map((v) => (
-          <div
+        {values.map((v, i) => (
+          <button
             key={v}
+            type="button"
+            ref={(node) => { itemRefs.current[i] = node }}
             role="option"
             aria-selected={v === value}
+            onClick={() => { void hapticLight(); onChange(v); scrollToIndex(i, true) }}
             className={cn(
-              "flex items-center justify-center tabular-nums transition-colors duration-150",
+              "flex w-full items-center justify-center tabular-nums transition-colors duration-150",
               v === value
                 ? "text-[18px] font-semibold text-[var(--m-accent-strong)]"
                 : "text-[15px] text-[var(--m-faint)]",
@@ -123,16 +164,38 @@ function Wheel({
             style={{ height: ITEM_H }}
           >
             {v}
-          </div>
+          </button>
         ))}
         <div style={{ height: ITEM_H * 2 }} aria-hidden="true" />
+      </div>
+
+      {/* 步进按钮：滚动手势万一被外层抢走，用户仍能精确调整 */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex flex-col justify-between py-0.5">
+        <button
+          type="button"
+          onClick={() => step(-1)}
+          disabled={idx <= 0}
+          aria-label={label + "减小"}
+          className="m-pressable pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-[var(--m-surface-solid)] text-[var(--m-muted)] shadow-[var(--m-shadow-l2)] disabled:opacity-30"
+        >
+          <Icon icon={ChevronUp} size="sm" />
+        </button>
+        <button
+          type="button"
+          onClick={() => step(1)}
+          disabled={idx >= values.length - 1}
+          aria-label={label + "增大"}
+          className="m-pressable pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-[var(--m-surface-solid)] text-[var(--m-muted)] shadow-[var(--m-shadow-l2)] disabled:opacity-30"
+        >
+          <Icon icon={ChevronDown} size="sm" />
+        </button>
       </div>
     </div>
   )
 }
 
 /**
- * 时间字段：点击在**下方内联展开**滚轮（左小时 / 右分钟）。
+ * 时间字段：点击在下方内联展开滚轮（左小时 / 右分钟）。
  * 值在选择过程中实时回写，不需要"确定"也不会丢。
  */
 export function TimeField({
@@ -173,23 +236,26 @@ export function TimeField({
         >
           {value || placeholder}
         </span>
+        <span className={cn("shrink-0 text-[var(--m-faint)] transition-transform duration-200", open && "rotate-180")}>
+          <Icon icon={ChevronDown} size="sm" />
+        </span>
       </button>
 
       {open && (
         <div className="m-enter mt-2 rounded-2xl bg-[var(--m-surface-2)] p-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Wheel label="小时" values={HOURS} value={hour} onChange={(h) => setPart(h, minute)} />
             <span className="self-center text-[18px] font-semibold text-[var(--m-faint)]" aria-hidden="true">:</span>
             <Wheel label="分钟" values={MINUTES} value={minute} onChange={(m) => setPart(hour, m)} />
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span className="m-caption text-[var(--m-muted)]">
-              选中 {hour}:{minute}
+              选中 <b className="tabular-nums text-[var(--m-accent-strong)]">{hour}:{minute}</b>
             </span>
             <button
               type="button"
               onClick={() => { void hapticLight(); setOpen(false) }}
-              className="m-press min-h-[36px] rounded-full bg-[var(--m-cta-bg)] px-4 text-[13px] font-semibold text-[var(--m-on-accent)]"
+              className="m-press m-btn-primary min-h-[36px] rounded-full px-4 text-[13px] font-semibold"
             >
               完成
             </button>

@@ -689,6 +689,44 @@ html.dark {
 }
 
 
+/* ── 交互可达性（2026-10-16 · 参考 ui-ux-pro-max 规则 1/2）───────────────
+   技能清单里两条最常被忽略的：①所有可点元素都要有 cursor: pointer；
+   ②键盘用户必须看得到焦点环（focus-states）。此前全站只有少量手写
+   cursor-pointer，设计系统的按压类一个都没声明 —— 桌面端鼠标移上去是普通箭头，
+   读起来像"不可点"。统一在这里补，避免逐组件重复。
+   触摸设备上 cursor 无副作用；禁用态给 not-allowed，语义更准确。 */
+.m-press,
+.m-pressable,
+.m-btn,
+.m-chip,
+.m-choice,
+.m-card-pressable,
+.m-action-item,
+.m-seg-item,
+.m-tab,
+.m-tab-item {
+  cursor: pointer;
+}
+.m-press:disabled,
+.m-press[aria-disabled='true'],
+.m-pressable:disabled,
+.m-pressable[aria-disabled='true'],
+.m-btn:disabled,
+.m-btn[aria-disabled='true'],
+.m-choice:disabled {
+  cursor: not-allowed;
+}
+/* 统一焦点环：键盘 Tab 时清晰可见，鼠标点击不出现（:focus-visible 语义） */
+.m-press:focus-visible,
+.m-pressable:focus-visible,
+.m-chip:focus-visible,
+.m-choice:focus-visible,
+.m-card-pressable:focus-visible,
+.m-action-item:focus-visible {
+  outline: 2px solid var(--m-accent);
+  outline-offset: 2px;
+}
+
 /* ── 时间滚轮（2026-10-15 重做，替换原生圆盘钟表）────────────────────────
    为什么不用原生 <input type="time">：Android 会拉起系统圆盘钟表，与全站设计割裂。
    为什么重做第二版：第一版把 onChange 绑在 onScroll 上、且每次值变化都程序化
@@ -696,20 +734,20 @@ html.dark {
    真机卡死/闪退。现在：滚动**停止后**才取值（防抖）+ 仅在必要时定位一次。 */
 .m-wheel {
   overflow-y: auto;
-  scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* 纵向手势归本控件，不被外层抽屉抢走（真机滚不动/选不中的原因之一） */
+  touch-action: pan-y;
   overscroll-behavior: contain;
+  /* 刻意**不用** scroll-snap：吸附会让"实际停留的位置"与"用户以为选中的行"
+     错位，而选中项是按几何测距判定的 —— 两者不一致就会出现
+     「不管怎么滚都停在同一个值」（真机反馈「选什么都是 1 点到 5 点」）。 */
 }
 .m-wheel::-webkit-scrollbar { display: none; }
-.m-wheel-item { scroll-snap-align: center; }
 /* 上下渐隐：让滚轮不像"被裁断的列表" */
 .m-wheel-mask {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%);
-}
-@media (prefers-reduced-motion: reduce) {
-  .m-wheel { scroll-snap-type: none; }
 }
 
 /* ── 底部抽屉入场（省份抽屉等）──────────────────────────────────

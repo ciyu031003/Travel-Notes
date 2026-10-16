@@ -575,7 +575,16 @@ export default function PostDetail({ postId }: { postId: number }) {
           </div>
         </div>
       )}
-      {showComments && <CommentPanel postId={post.id} onClose={() => setShowComments(false)} />}
+      {showComments && (
+        <CommentPanel
+          postId={post.id}
+          onClose={() => setShowComments(false)}
+          // 删除评论后详情页的评论数立即跟着变（此前要重新进页面才更新）
+          onCountChange={(delta) =>
+            setPost((prev) => (prev ? { ...prev, commentCount: Math.max(0, prev.commentCount + delta) } : prev))
+          }
+        />
+      )}
       {viewerIndex !== null && post.photos.length > 0 && (
         <PhotoViewer images={gallery.map((src) => ({ src, alt: post.title }))} index={viewerIndex} onClose={() => setViewerIndex(null)} onIndexChange={setViewerIndex} />
       )}

@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { createComment } from '@/lib/modules/offline/social-write'
 import { apiUrl } from '@/lib/api-base'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { hapticLight } from '@/lib/mobile/haptics'
+import { hapticLight, hapticSuccess } from '@/lib/mobile/haptics'
 import { toast } from '@/lib/mobile/toast-store'
 
 interface CommentAuthor { id: number; username: string; nickname?: string | null; avatarUrl?: string | null }
@@ -65,7 +65,16 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('zh-CN')
 }
 
-export default function CommentPanel({ postId, onClose }: { postId: number; onClose?: () => void }) {
+export default function CommentPanel({
+  postId,
+  onClose,
+  onCountChange,
+}: {
+  postId: number
+  onClose?: () => void
+  /** 删除 / 新增评论时把数量变化告诉父级（详情页的评论数要立即跟着变） */
+  onCountChange?: (delta: number) => void
+}) {
   // 面板仅在打开期间挂载（PostDetail 条件渲染）；给了 onClose 就接管系统返回
   useCloseOnBack(Boolean(onClose), onClose ?? (() => {}), Boolean(onClose))
   const [comments, setComments] = useState<Comment[]>([])
@@ -182,6 +191,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
           const parentId = replyTo.id
           setContent(''); setReplyTo(null)
           insertLocal(text, parentId)
+          onCountChange?.(1)
           await load()
         }
         else { const json = await res.json().catch(() => null); setError(json?.error || '评论失败') }
@@ -194,6 +204,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
       setContent('')
       // 先本地可见（原生壳此刻只在本地队列里），再拉服务端覆盖
       insertLocal(text, null)
+      onCountChange?.(1)
       await load()
     } else setError(r.error || '评论失败')
     setSubmitting(false)
@@ -203,6 +214,8 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
 
   /** 长按目标；非空即显示操作抽屉 */
   const [actionTarget, setActionTarget] = useState<{ id: number; content: string; name: string; mine: boolean } | null>(null)
+  /** 自绘删除确认（替代安卓原生 confirm —— 原生弹窗与全站设计语言割裂） */
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number } | null>(null)
   const longPressTimer = useRef<number | null>(null)
 
   const openActions = useCallback((c: Comment, name: string) => {
@@ -228,22 +241,45 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
 
   useEffect(() => cancelLongPress, [cancelLongPress])
 
+  /**
+   * 删除评论（2026-10-16 重做）。
+   *
+   * 两个真机反馈：①确认框是安卓系统原生的 alert，和全站设计语言完全割裂；
+   * ②删完数量不变（原先等 load() 回来才刷新，网络慢时看着像没生效）。
+   * 现在：用自绘确认弹窗，并在确认后**先从本地列表移除**（数量立刻变化），
+   * 再发请求；失败则回滚并提示。
+   */
   const removeComment = useCallback(async (id: number) => {
-    if (!window.confirm('删除这条评论？删除后无法恢复')) return
+    setConfirmDelete(null)
+    setActionTarget(null)
+    // 记录原位置，失败时原样放回
+    const snapshot = comments
+    const drop = (list: Comment[]): Comment[] =>
+      list
+        .filter((c) => c.id !== id)
+        .map((c) => ({ ...c, replies: (c.replies ?? []).filter((r) => r.id !== id) }))
+    setComments(drop(snapshot))
+    setPendingComments((prev) => prev.filter((c) => c.id !== id))
+    onCountChange?.(-1)
     try {
       const res = await fetch(apiUrl(`/api/social/comments/${id}`), { method: 'DELETE', credentials: 'include' })
       if (res.ok) {
+        void hapticSuccess()
         toast.success('已删除')
-        setActionTarget(null)
-        await load()
-      } else {
-        const j = await res.json().catch(() => null)
-        toast.error(j?.error || '删除失败')
+        // 后台对齐一次服务端真值（不阻塞 UI）
+        void load()
+        return
       }
+      const j = await res.json().catch(() => null)
+      setComments(snapshot)
+      onCountChange?.(1)
+      toast.error(j?.error || '删除失败')
     } catch {
+      setComments(snapshot)
+      onCountChange?.(1)
       toast.error('网络错误，请稍后重试')
     }
-  }, [load])
+  }, [comments, load, onCountChange])
 
   const copyComment = useCallback(async (text: string) => {
     try {
@@ -325,7 +361,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
               {mine && (
                 <button
                   type="button"
-                  onClick={() => removeComment(c.id)}
+                  onClick={() => setConfirmDelete({ id: c.id })}
                   className="inline-flex min-h-[32px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
                 >
                   <Icon icon={Trash2} size="sm" /> 删除
@@ -412,7 +448,7 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
             {actionTarget.mine && (
               <button
                 type="button"
-                onClick={() => { void removeComment(actionTarget.id) }}
+                onClick={() => { setConfirmDelete({ id: actionTarget.id }); setActionTarget(null) }}
                 className="m-pressable flex min-h-[52px] w-full items-center gap-3 rounded-xl px-3.5 text-left"
               >
                 <Icon icon={Trash2} size="sm" />
@@ -422,6 +458,40 @@ export default function CommentPanel({ postId, onClose }: { postId: number; onCl
           </div>
         )}
       </BottomSheet>
+
+      {/*
+        自绘删除确认（2026-10-16）。
+        之前用 window.confirm —— 在 App 里是**安卓系统原生的确认框**，样式与全站
+        暖陶土设计语言完全割裂（真机反馈「那个页面特别丑」）。这里换成项目自己的弹层。
+      */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center px-8" role="alertdialog" aria-modal="true" aria-label="删除评论">
+          <div className="absolute inset-0 bg-black/45" onClick={() => setConfirmDelete(null)} />
+          <div className="relative w-full max-w-[300px] overflow-hidden rounded-3xl bg-[var(--social-surface)] p-5 text-center shadow-[var(--m-shadow-lg)]">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--social-bg)] text-[var(--danger-soft)]">
+              <Icon icon={Trash2} size="md" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-[var(--social-text)]">删除这条评论？</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-[var(--social-muted)]">删除后无法恢复</p>
+            <div className="mt-4 flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="m-pressable min-h-[44px] flex-1 rounded-2xl text-sm font-medium text-[var(--social-muted)] ring-1 ring-[var(--social-line)]"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => { void removeComment(confirmDelete.id) }}
+                className="m-press min-h-[44px] flex-1 rounded-2xl bg-[var(--danger-soft)] text-sm font-semibold text-white"
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

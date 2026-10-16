@@ -1,0 +1,15 @@
+﻿py : Traceback (most recent call last):
+所在位置 行:1 字符: 330
++ ... -Path $b)); py $b "travel journal photo diary" --design-system 2>&1 | ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\yuan\.workbuddy-ai\plugins\marketplaces\codebuddy-plugins-official\external_plugins\ui-ux-pro-max-skil
+l\skills\ui-ux-pro-max\scripts\search.py", line 19, in <module>
+    from design_system import generate_design_system, persist_design_system
+  File "C:\Users\yuan\.workbuddy-ai\plugins\marketplaces\codebuddy-plugins-official\external_plugins\ui-ux-pro-max-skil
+l\skills\ui-ux-pro-max\scripts\design_system.py", line 443
+    lines.append(f"- {anti_patterns.replace(' + ', '\n- ')}")
+                                                            ^
+SyntaxError: f-string expression part cannot include a backslash

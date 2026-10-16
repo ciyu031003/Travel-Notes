@@ -3,13 +3,14 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { AnimatePresence, MotionConfig, motion, useDragControls } from 'motion/react'
+import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { useModalLayer } from '@/hooks/use-modal-layer'
 import { cn } from '@/lib/utils'
 import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/motion'
 import { Icon } from './Icon'
 import { IconButton } from './IconButton'
+import { appHref } from '@/lib/mobile/app-href'
 
 export function SideDrawer({
   open,
@@ -30,7 +31,6 @@ export function SideDrawer({
   const panelRef = useRef<HTMLElement | null>(null)
   const titleId = useId()
   const [mounted, setMounted] = useState(false)
-  const dragControls = useDragControls()
 
   useEffect(() => {
     setMounted(true)
@@ -57,12 +57,12 @@ export function SideDrawer({
               transition={MOBILE_OVERLAY_TRANSITION}
             />
             {/*
-              关键：dragListener={false} + 用 dragControls 从专用拖拽区起拖。
-              此前是默认 dragListener（整个面板都在监听拖拽），手指点击时的微小抖动
-              会被识别成"正在拖动"，**从而吞掉行内 <Link> 的点击** —— 真机反馈
-              「我的旅行 / 旅行画册 / 时间线 / 碎碎念 / 数据看板 / 我的收藏 / 旅行圈
-              点了都没有任何反应」正是此因（BottomSheet 早就是 dragListener={false}，
-              所以那边一直正常）。
+              刻意**不再给面板加 drag**（2026-10-16）。
+              此前面板带 drag="x"：即使设了 dragListener={false}，motion 仍会在面板上
+              建立手势上下文，先后两版都没能真正解决"抽屉里点击无反应"。
+              抽屉本来就有明确的关闭方式（右上角 × 与点遮罩关闭），横滑关闭属锦上添花，
+              不值得拿"行内点击可靠"去换 —— 这是真机上最影响可用性的地方。
+              BottomSheet 保留 drag（它是从专用把手起拖，且不承载列表项点击）。
             */}
             <motion.aside
               ref={panelRef}
@@ -75,21 +75,10 @@ export function SideDrawer({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={MOBILE_PANEL_SPRING}
-              drag="x"
-              dragListener={false}
-              dragControls={dragControls}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={{ left: 0, right: 0.55 }}
-              onDragEnd={(_, info) => {
-                if (info.offset.x > 90 || info.velocity.x > 500) onClose()
-              }}
             >
-              {/* 专用拖拽区：只有标题栏能起拖（dragListener={false} 的配套），
-                  内容区的行因此不会被拖拽手势抢走点击。 */}
               <header
-                className="flex cursor-grab touch-none items-center gap-2 px-4 pb-2 active:cursor-grabbing"
+                className="flex items-center gap-2 px-4 pb-2"
                 style={{ paddingTop: 'var(--m-safe-top)' }}
-                onPointerDown={(e) => dragControls.start(e)}
               >
                 <h2 id={titleId} className="m-title-2 min-w-0 flex-1 truncate text-[var(--m-text)]">
                   {title}
@@ -160,8 +149,9 @@ export function DrawerRow({
   )
   const cls = 'm-pressable flex min-h-[56px] w-full items-center gap-3 px-4 py-2.5 text-left'
   if (href) {
+    // 原生壳里补成真实 .html（Capacitor html5mode 会把无扩展名路径回落成首页）
     return (
-      <Link href={href} className={cls} onClick={onClick}>
+      <Link href={appHref(href)} className={cls} onClick={onClick}>
         {body}
       </Link>
     )
