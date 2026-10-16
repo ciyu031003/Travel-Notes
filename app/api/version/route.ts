@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复抽屉跳转(Capacitor html5mode 回落首页,改为.html直链)、时间滚轮改为几何测量取值并加步进保底、删除评论改自绘确认框且数量立即变化；补 cursor/焦点环/触达尺寸',
+    changelog: process.env.APP_CHANGELOG || '按 ui-ux-pro-max 技能：修复 faint/success 对比度不达标(2.24:1→4.53:1)、全站可点元素补 cursor 与焦点环、卡片补悬停抬升、新增骨架屏',
     forceUpdate,
   })
 }

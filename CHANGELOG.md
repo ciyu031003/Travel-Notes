@@ -1,3 +1,50 @@
+## [1.24.4] - 2026-10-16
+
+> 按 ui-ux-pro-max 技能系统性处理 UI/UX：对比度、cursor、焦点环、悬停反馈、骨架屏。
+> tsc 0 错误 · lint 0 error · vitest **56 文件 / 525 用例全绿** · build 成功。
+
+### 关于技能
+
+技能脚本在 Python 3.9 下无法运行（`design_system.py:443` 用了 3.12+ 才支持的 f-string 内反斜杠），
+且 Windows 控制台为 GBK，输出 emoji 会 `UnicodeEncodeError`。已将 `scripts/`、`data/` 复制到临时目录
+打补丁后运行（**未改动下载的技能本体**），取得其设计系统建议与 UX 规则清单后逐条对照本项目审计。
+
+技能对「旅行手账 / 照片日记」类产品的推荐是 **Claymorphism**（软 3D、厚边、双重阴影、16-24px 圆角、
+soft press 200ms ease-out）—— 与本项目既有的暖陶土拟物质感一致，说明方向本就正确；
+本轮是补齐它列为 CRITICAL 的欠账。
+
+### Fixed
+
+- **对比度（Accessibility CRITICAL · 4.5:1）**：实测 token 后确认 `--m-faint`
+  （浅色 **2.24:1**、深色 **3.29:1**）与 `--m-success`（浅色 3.84:1）不达标。
+  `--m-faint` 用在占位符、时间戳、说明文字等**真实内容**上（全站 65 处），不是装饰，必须达标。
+  已调整（保持原暖褐色相）：`--m-faint` 浅色 `#B9A897 → #867060`（4.53:1）、
+  深色 `#6E6259 → #8B8078`（5.06:1）；`--m-success` 浅色 `#3F8F62 → #2F7C52`（4.94:1）。
+  这与项目既有做法一致（`--m-muted` 此前已因 3.36:1 不达标修过一次）。
+- **可点元素的 `cursor`（Interaction CRITICAL）**：全站此前只有 12 处手写 `cursor-pointer`，
+  设计系统的按压类一个都没声明 —— 桌面端鼠标移到按钮上是普通箭头，读起来像"不可点"。
+  已为 `.m-press` / `.m-pressable` / `.m-btn` / `.m-chip` / `.m-choice` / `.m-card-pressable` /
+  `.m-action-item` / `.m-seg-item` / `.m-tab` 统一补 `cursor: pointer`，禁用态 `not-allowed`。
+- **焦点环（`focus-states`）**：为上述类补统一 `:focus-visible` 轮廓（键盘可达；鼠标点击不出现）。
+- **悬停反馈（Cards: hover feedback）**：全站此前只有 4 处 `hover:shadow`。
+  已统一 `.m-card-pressable:hover` 抬升一档（`--m-elev-2`），按钮与操作行补亮度/底色反馈；
+  并用 `@media (hover: hover) and (pointer: fine)` 限定 —— 触摸设备没有真正悬停，
+  不加限定会出现"点完还留着悬停态"的粘滞感。
+
+### Added
+
+- **`components/mobile/SkeletonList.tsx`**（`SkeletonRows` / `SkeletonGrid`），复用既有 `.m-skeleton`
+  （含 shimmer，且已在 `prefers-reduced-motion` 降级列表内）。评论面板的「加载中…」空文本改为骨架屏 ——
+  先给出结构、等待感更低，内容回来时也不会跳高度（对应技能 `content-jumping`）。
+
+### 已审计通过、无需改动
+
+无 emoji 图标（统一 lucide + `<Icon>`）· `prefers-reduced-motion` 已覆盖 · `viewport-fit=cover`
+与安全区已处理 · 断点使用 142 处（375/768/1024/1440 均有覆盖）· 触达尺寸无 <44px 的可点元素 ·
+z-index 层级已在 `BottomSheet` 注释中固化。
+
+---
+
 ## [1.24.3] - 2026-10-16
 
 > 第三轮真机反馈修复：抽屉跳转、时间滚轮取值、删除确认框、可达性补强。
