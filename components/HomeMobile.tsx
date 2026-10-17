@@ -33,6 +33,7 @@ import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDr
 import { toast } from '@/lib/mobile/toast-store'
 import IcpLicense from '@/components/IcpLicense'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
+import { totalPhotoCount } from '@/lib/home/photo-count'
 
 /**
  * 首页 Hero 足迹地图：懒加载。
@@ -222,6 +223,8 @@ export default function HomeMobile({
 }) {
   const quote = dailyQuote()
   const recent = travelPosts.slice(0, 6)
+  // 与桌面 hero 统计行、地图标记同源（lib/home/photo-count）
+  const totalPhotos = totalPhotoCount(travelPosts)
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -284,10 +287,12 @@ export default function HomeMobile({
                 aria-label={`打开旅行地图，已点亮 ${provincesVisitedCount} 个省份`}
               >
                 <div className="relative h-[200px] bg-[linear-gradient(165deg,var(--m-bg-soft),var(--m-surface-2))]">
-                  <HeroFootprintMapLazy posts={travelPosts} />
+                  {/* countBadges=false：这块地图只有 200px 高（viewBox 860 → 缩放 0.23），
+                      标记文字会缩到 3px 完全读不清。参考站那种"标记自带张数"在移动端
+                      由下面的覆盖条承担，桌面端地图（440–470px 高）才画药丸。 */}
+                  <HeroFootprintMapLazy posts={travelPosts} countBadges={false} />
                   <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-[linear-gradient(to_top,var(--m-surface-solid)_55%,transparent)] px-4 pb-3 pt-10">
                     <span className="m-caption text-[var(--m-muted)]">
-                      已点亮
                       <b className="mx-1 text-[15px] font-bold tabular-nums text-[var(--m-accent-strong)]">
                         <CountUp value={provincesVisitedCount} />
                       </b>
@@ -296,6 +301,11 @@ export default function HomeMobile({
                         <CountUp value={travelPosts.length} />
                       </b>
                       篇旅行
+                      {' · '}
+                      <b className="mr-1 text-[15px] font-bold tabular-nums text-[var(--m-accent-strong)]">
+                        <CountUp value={totalPhotos} />
+                      </b>
+                      张照片
                     </span>
                     <span className="m-caption flex flex-none items-center gap-1 font-semibold text-[var(--m-accent-strong)]">
                       看地图

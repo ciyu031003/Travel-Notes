@@ -29,6 +29,7 @@ import { travelDetailHref } from '@/lib/routes'
 import { albumDeepLink } from '@/lib/album-deep-link'
 import IcpLicense from '@/components/IcpLicense'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
+import { totalPhotoCount } from '@/lib/home/photo-count'
 
 /**
  * 首页 Hero 足迹地图：懒加载（桌面端）。
@@ -308,6 +309,8 @@ export default function HomeClient({
   const danmakuRef = useRef<DanmakuSectionHandle | null>(null)
   const quote = getDailyQuote()
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
+  // 统计行里的「张照片」：口径与地图标记上的张数同源（lib/home/photo-count）
+  const totalPhotos = totalPhotoCount(travelPosts)
 
   /** 与 HomeMobile 同口径：归档后该旅行进入画册与最近旅行 */
   const confirmDraft = async (id: number) => {
@@ -387,6 +390,9 @@ export default function HomeClient({
                   <span className="mx-1 h-4 w-px bg-travel-line dark:bg-shell-line" />
                   <span className="font-medium text-travel-ink dark:text-shell-text">{travelPosts.length}</span>
                   篇旅行
+                  <span className="mx-1 h-4 w-px bg-travel-line dark:bg-shell-line" />
+                  <span className="font-medium tabular-nums text-travel-ink dark:text-shell-text">{totalPhotos}</span>
+                  张照片
                 </span>
               </div>
             </div>
