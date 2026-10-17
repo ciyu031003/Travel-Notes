@@ -64,6 +64,22 @@ export function circlePostHref(postId: number | string | null | undefined): stri
   return isMobileShell() ? `/circle/detail?postId=${n}` : `/circle/${n}`
 }
 
+/**
+ * 卡片上「评论数」的入口地址：打开帖子详情并**直接展开评论抽屉**。
+ *
+ * 为什么用查询参数而不是详情页内部状态：列表与详情是两个界面（在本地壳里甚至
+ * 是两个静态 HTML），只有 URL 能带着这个意图穿过导航 —— 点评论数字却要用户
+ * 落地后自己再找一次评论按钮，等于没做这个入口。
+ *
+ * 拼接要区分两种路由形状（`/circle/123` 与 `/circle/detail?postId=123`），
+ * 直接拼 `'?comments=1'` 会得到 `/circle/detail?postId=123?comments=1` 这种坏 URL。
+ */
+export function circlePostCommentsHref(postId: number | string | null | undefined): string | null {
+  const base = circlePostHref(postId)
+  if (!base) return null
+  return base.includes('?') ? `${base}&comments=1` : `${base}?comments=1`
+}
+
 /** 旅行圈「某位用户的主页」地址（本地壳同样需要查询参数版） */
 export function circleUserHref(userId: number | string | null | undefined): string | null {
   const n = Number(userId)

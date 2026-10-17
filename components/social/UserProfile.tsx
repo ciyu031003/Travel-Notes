@@ -10,7 +10,7 @@ import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
-import { circlePostHref } from '@/lib/routes'
+import { circlePostCommentsHref, circlePostHref } from '@/lib/routes'
 import { goBackOrHome } from '@/lib/navigation'
 
 interface Profile {
@@ -97,6 +97,14 @@ export default function UserProfile({ userId }: { userId: number }) {
     postId: p.id,
     liked: p.isLiked,
     likeCount: p.likeCount,
+    // 收藏与评论入口：与旅行圈列表口径一致（`/api/social/users/[id]` 走 attachViewerState，
+    // 已回填 isFavorited / favoriteCount；评论数点击直接展开评论抽屉）
+    favorited: p.isFavorited,
+    favoriteCount: p.favoriteCount,
+    onOpenComments: () => {
+      const href = circlePostCommentsHref(p.id)
+      if (href) router.push(href)
+    },
     stats: { comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
     onOpen: () => {

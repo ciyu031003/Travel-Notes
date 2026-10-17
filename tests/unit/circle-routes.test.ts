@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { circlePostHref, circleUserHref, resolveTravelStoryHref, travelDetailHref } from '@/lib/routes'
+import {
+  circlePostCommentsHref,
+  circlePostHref,
+  circleUserHref,
+  resolveTravelStoryHref,
+  travelDetailHref,
+} from '@/lib/routes'
 
 /**
  * 旅行圈跳转地址的单测（R2 + R3 修复）。
@@ -55,6 +61,26 @@ describe('circlePostHref · 本地壳（静态导出，必须走查询参数）'
     vi.resetModules()
     const mod = await import('@/lib/routes')
     expect(mod.travelDetailHref('dali-3')).toBe('/travel/detail?slug=dali-3')
+  })
+})
+
+describe('circlePostCommentsHref · 卡片评论数入口（带 ?comments=1）', () => {
+  it('Web：/circle/<id>?comments=1', () => {
+    expect(circlePostCommentsHref(12)).toBe('/circle/12?comments=1')
+  })
+
+  it('本地壳：查询参数路由要接着用 & 追加，不能拼出两个 ?', async () => {
+    process.env.NEXT_PUBLIC_APP_PLATFORM = 'mobile'
+    vi.resetModules()
+    const mod = await import('@/lib/routes')
+    // 曾经最容易写错的一种：`/circle/detail?postId=123?comments=1` —— postId 会变成 "123?comments=1"
+    expect(mod.circlePostCommentsHref(123)).toBe('/circle/detail?postId=123&comments=1')
+  })
+
+  it('非法 id → null（不生成 /circle/undefined?comments=1）', () => {
+    for (const bad of [null, undefined, '', 'abc', NaN, 0, -1, 0.5]) {
+      expect(circlePostCommentsHref(bad as unknown as number), `输入 ${String(bad)}`).toBeNull()
+    }
   })
 })
 

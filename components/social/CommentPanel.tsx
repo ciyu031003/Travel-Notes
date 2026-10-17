@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { Send, X, CornerDownRight, Heart, Trash2, Copy, Share2 } from 'lucide-react'
+import { Send, X, CornerDownRight, Heart, Trash2, Copy, Share2, MoreHorizontal } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import { useCloseOnBack } from '@/hooks/use-close-on-back'
@@ -50,6 +50,22 @@ function writeCommentsCache(postId: number, list: Comment[]) {
     if (oldest === undefined) break
     commentsCache.delete(oldest)
   }
+}
+
+/**
+ * 在「根评论 + 一层回复」的树里就地改一条评论（点赞态 / 点赞数），返回新数组。
+ *
+ * 为什么不改 `comments` 之外再存一份点赞状态：那会出现两个真相源，
+ * 删除评论、服务端刷新（`load()` 覆盖列表）时两份状态立刻打架 ——
+ * 点赞态就长在评论对象上，渲染与缓存都只认这一份。
+ */
+function patchComment(list: Comment[], id: number, patch: Partial<Comment>): Comment[] {
+  return list.map((c) => {
+    if (c.id === id) return { ...c, ...patch }
+    const replies = c.replies ?? []
+    if (!replies.some((r) => r.id === id)) return c
+    return { ...c, replies: replies.map((r) => (r.id === id ? { ...r, ...patch } : r)) }
+  })
 }
 
 function timeAgo(iso: string): string {
@@ -211,6 +227,78 @@ export default function CommentPanel({
     setSubmitting(false)
   }
 
+  /* ── 评论点赞（2026-10-17）─────────────────────────────────────────── */
+
+  /** 正在提交点赞的评论 id：防连点重复发请求 */
+  const [likeBusy, setLikeBusy] = useState<number | null>(null)
+  /** 刚点赞的那条：给心形重放一次 m-pop 弹跳 */
+  const [popId, setPopId] = useState<number | null>(null)
+
+  // 点赞态也进会话缓存，否则「点了赞 → 关面板 → 再打开」会先用缓存渲染回未赞态，闪一下
+  useEffect(() => {
+    if (comments.length > 0) writeCommentsCache(postId, comments)
+  }, [comments, postId])
+
+  /**
+   * 点赞 / 取消点赞一条评论。
+   *
+   * 【此前这条功能是假的】动作行里那个心形按钮的 onClick 是 `openActions()` ——
+   * 点它只会弹出「分享 / 复制 / 删除」抽屉，后面的数字是恒定的只读值。
+   * 服务端 `/api/social/comments/[id]/like` 一直存在，**缺的是客户端**：没人调用它。
+   *
+   * 【为什么乐观更新】点赞是高频低风险动作，等一次网络往返会明显"卡手"；
+   * 失败（未登录 / 网络）一律回滚并明确提示，绝不静默吞掉。
+   * 成功后再用服务端回传的 `likeCount` 对齐 —— 同一条评论可能被别人同时点赞。
+   */
+  const toggleCommentLike = useCallback(
+    async (c: Comment) => {
+      if (likeBusy === c.id) return
+      // 本地乐观插入的评论还没有服务端 id（负数），点它只会 404：先说清楚，别假装点上
+      if (c.id <= 0) {
+        toast.error('这条评论还在同步中，稍后再试')
+        return
+      }
+      void hapticLight()
+
+      const next = !c.isLiked
+      const prevState = { isLiked: c.isLiked, likeCount: c.likeCount }
+      const optimistic = { isLiked: next, likeCount: Math.max(0, c.likeCount + (next ? 1 : -1)) }
+      const apply = (patch: Partial<Comment>) =>
+        setComments((list) => patchComment(list, c.id, patch))
+
+      apply(optimistic)
+      if (next) setPopId(c.id)
+      setLikeBusy(c.id)
+      try {
+        const res = await fetch(apiUrl(`/api/social/comments/${c.id}/like`), {
+          method: next ? 'POST' : 'DELETE',
+          credentials: 'include',
+          cache: 'no-store',
+        })
+        if (res.status === 401 || res.status === 403) {
+          apply(prevState)
+          toast.error('登录后才能点赞')
+          return
+        }
+        const json = await res.json().catch(() => null)
+        const data = json?.data as { liked?: boolean; likeCount?: number } | undefined
+        if (!res.ok || json?.success === false || !data) {
+          apply(prevState)
+          toast.error(json?.error || '没有点上，请重试')
+          return
+        }
+        // 以服务端真值对齐（计数可能有别人的赞）
+        apply({ isLiked: Boolean(data.liked), likeCount: Number(data.likeCount ?? optimistic.likeCount) })
+      } catch {
+        apply(prevState)
+        toast.error('网络错误，请重试')
+      } finally {
+        setLikeBusy(null)
+      }
+    },
+    [likeBusy],
+  )
+
   /* ── 评论操作（长按 / 更多 / 删除）2026-10-15 ───────────────────────── */
 
   /** 长按目标；非空即显示操作抽屉 */
@@ -319,6 +407,7 @@ export default function CommentPanel({
   const renderComment = (c: Comment, isReply: boolean) => {
     const name = c.author?.nickname || c.author?.username || '匿名'
     const mine = Boolean(c.isMine)
+    const liked = Boolean(c.isLiked)
     return (
       <div key={c.id} className={cn('py-3.5', isReply && 'ml-9 border-l border-[var(--social-line)] pl-3')}>
         <div className="flex items-start gap-3">
@@ -343,11 +432,37 @@ export default function CommentPanel({
               {c.content}
             </p>
 
-            <div className="mt-1.5 flex items-center gap-4">
+            {/*
+              动作行（2026-10-17 重做）。
+              旧版这里只有一个心形按钮，它的 onClick 却是 `openActions()`（弹「更多」抽屉）
+              —— 既点不了赞，又把"更多"藏在心形图标后面：两个功能都不可发现。
+              现在拆成「点赞（真功能）+ 回复 + 更多 + 删除」四个各司其职的入口；
+              高度 40px 改善触达（原 32px 低于规范 §8 的 44px，这排字小、容易点偏）。
+            */}
+            <div className="mt-1 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => { void toggleCommentLike(c) }}
+                aria-pressed={liked}
+                aria-label={liked ? `取消点赞，当前 ${c.likeCount} 个赞` : `点赞，当前 ${c.likeCount} 个赞`}
+                className={cn(
+                  'm-pressable -ml-1 inline-flex min-h-[40px] items-center gap-1 rounded-full px-2 text-[13px] tabular-nums transition-colors',
+                  liked ? 'text-[var(--social-accent)]' : 'text-[var(--social-faint)] hover:text-[var(--social-accent)]',
+                )}
+              >
+                <Icon
+                  icon={Heart}
+                  size="sm"
+                  key={c.id === popId ? `pop-${popId}` : c.id}
+                  className={cn(liked && 'fill-current', c.id === popId && 'm-pop')}
+                />
+                <span>{c.likeCount > 0 ? c.likeCount : '赞'}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setReplyTo({ id: c.id, username: name })}
-                className="inline-flex min-h-[32px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
+                aria-label={`回复 ${name}`}
+                className="inline-flex min-h-[40px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
               >
                 <Icon icon={CornerDownRight} size="sm" /> 回复
               </button>
@@ -355,15 +470,15 @@ export default function CommentPanel({
                 type="button"
                 onClick={() => openActions(c, name)}
                 aria-label="更多操作"
-                className="inline-flex min-h-[32px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
+                className="m-pressable inline-flex min-h-[40px] items-center rounded-full px-1.5 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--social-text)]"
               >
-                <Icon icon={Heart} size="sm" /> {c.likeCount > 0 ? c.likeCount : ''}
+                <Icon icon={MoreHorizontal} size="sm" />
               </button>
               {mine && (
                 <button
                   type="button"
                   onClick={() => setConfirmDelete({ id: c.id })}
-                  className="inline-flex min-h-[32px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
+                  className="inline-flex min-h-[40px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
                 >
                   <Icon icon={Trash2} size="sm" /> 删除
                 </button>

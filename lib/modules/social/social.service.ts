@@ -591,16 +591,29 @@ export async function deletePostComment(commentId: number, userId: number) {
   return { deleted: true }
 }
 
-export async function toggleCommentLike(commentId: number, userId: number) {
+/**
+ * 评论点赞（幂等）：POST = 确保已赞，DELETE = 确保未赞。
+ *
+ * 为什么不做成 toggle：帖子收藏那边已经踩过同一个坑（见 `app/api/social/posts/[id]/favorite`
+ * 的注释）—— 「切换」语义在下一次重放/重试时会把用户的赞**撤销**。而评论点赞天然会重试
+ * （乐观更新失败回滚后用户再点、弱网重发），因此服务端只接受「设成目标状态」。
+ *
+ * 返回最新的 `likeCount`：客户端乐观更新后拿到服务端真值，不必再拉一次整个评论列表。
+ */
+export async function setCommentLike(commentId: number, userId: number, liked: boolean) {
   const c = await prisma.comment.findUnique({ where: { id: commentId }, select: { id: true } })
   if (!c) throw new Error('评论不存在')
-  const existing = await prisma.commentLike.findUnique({ where: { commentId_userId: { commentId, userId } } })
-  if (existing) {
-    await prisma.commentLike.delete({ where: { id: existing.id } })
-    return { liked: false }
+  if (liked) {
+    await prisma.commentLike.upsert({
+      where: { commentId_userId: { commentId, userId } },
+      update: {},
+      create: { commentId, userId },
+    })
+  } else {
+    await prisma.commentLike.deleteMany({ where: { commentId, userId } })
   }
-  await prisma.commentLike.create({ data: { commentId, userId } })
-  return { liked: true }
+  const likeCount = await prisma.commentLike.count({ where: { commentId } })
+  return { liked, likeCount }
 }
 
 export async function followUser(actorId: number, targetId: number) {

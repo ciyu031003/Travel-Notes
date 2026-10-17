@@ -9,7 +9,7 @@ import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
-import { circlePostHref } from '@/lib/routes'
+import { circlePostCommentsHref, circlePostHref } from '@/lib/routes'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialFeed } from '@/lib/modules/offline/social-read'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
@@ -73,6 +73,8 @@ interface Post {
   favoriteCount: number
   /** 服务端已按当前登录用户回填（social.service attachViewerState）—— 快捷点赞据此显示已赞态 */
   isLiked: boolean
+  /** 同上：收藏态也由服务端回填（`/api/social/posts` 走 attachViewerState） */
+  isFavorited: boolean
 }
 
 function dateRange(p: Post): string {
@@ -204,6 +206,15 @@ export default function TravelCircleFeed() {
     likeCount: p.likeCount,
     // 访客点击快捷点赞 → 引导登录，不发无效请求（与上方访客横幅同一规则）
     likeLoginHref: authChecked && !loggedIn ? '/login?redirect=%2Fcircle' : undefined,
+    // 收藏同理：列表上就能收藏（"稍后再看"的决定恰恰发生在浏览列表时）
+    favorited: p.isFavorited,
+    favoriteCount: p.favoriteCount,
+    favoriteLoginHref: authChecked && !loggedIn ? '/login?redirect=%2Fcircle' : undefined,
+    // 评论数是入口：直接打开详情页的评论抽屉（带 ?comments=1，详情页读它自动展开）
+    onOpenComments: () => {
+      const href = circlePostCommentsHref(p.id)
+      if (href) router.push(href)
+    },
     stats: { comments: p.commentCount, bookmarks: p.favoriteCount },
     frame,
     // 统一入口：id 缺失时不跳 `/circle/undefined`（R2 路由加固）

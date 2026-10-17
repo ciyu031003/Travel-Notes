@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CalendarDays, Loader2, Image as ImageIcon, Flag, Ban, Check, X, WifiOff, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays, ChevronRight, Loader2, Image as ImageIcon, Flag, Ban, Check, X, WifiOff, Pencil, Trash2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/mobile/toast-store'
@@ -131,6 +131,19 @@ export default function PostDetail({ postId }: { postId: number }) {
   useEffect(() => {
     void reload()
   }, [reload])
+
+  /**
+   * 列表上的「评论数」入口会带 `?comments=1` 进来（见 `lib/routes.circlePostCommentsHref`）：
+   * 落地即展开评论抽屉，用户不必落地后再找一次评论按钮。
+   *
+   * 为什么读 `window.location` 而不是 `useSearchParams()`：本地壳是 `output: 'export'`
+   * 的静态站，该 hook 在静态导出下要求包一层 Suspense 边界（否则构建期报错）；
+   * 这里只需要读一个只读参数，不该为它引入那个约束。
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (new URLSearchParams(window.location.search).get('comments') === '1') setShowComments(true)
+  }, [])
 
 
   const submitReport = async () => {
@@ -320,17 +333,20 @@ export default function PostDetail({ postId }: { postId: number }) {
   const gallery = post.coverUrl
     ? [post.coverUrl, ...(post.photos || []).filter((p) => p !== post.coverUrl)]
     : post.photos || []
+  /** 有没有可展示的封面 —— 决定桌面端走「左图右文」还是单栏（见下方版面注释） */
+  const hasGallery = gallery.length > 0
 
   return (
     <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%)]" />
+      <div className="circle-story-glow" aria-hidden="true" />
       {/*
         顶部安全区（2026-10-12 修复）：/circle/* 在 LayoutContent 里走的是
         「不挂 Navbar」分支（页面自带 header），因此**顶部安全区必须由本页自己负责**。
         此前只有 py-6，标题栏会与手机状态栏重叠 —— 返回键、编辑、深浅模式切换
         被状态栏压住一部分（真机反馈的 bug）。改用与其它移动页一致的 m-safe-top。
       */}
-      <div className="m-safe-top relative mx-auto max-w-3xl px-4 pb-6">
+      {/* 桌面端放宽到 max-w-5xl：正文改成「左图右文」的杂志式对开，窄容器放不下两栏 */}
+      <div className="m-safe-top relative mx-auto max-w-3xl px-4 pb-6 md:max-w-5xl">
         {offline && (
           <div className="mb-4 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
             <Icon icon={WifiOff} size="sm" />
@@ -367,88 +383,125 @@ export default function PostDetail({ postId }: { postId: number }) {
         </header>
 
         {/*
-          顶部图片：堆叠相册（2026-10-12 改造）。
-          此前是单张 16:10 封面（多图时其余照片要点进"旅行照片"九宫格才能看）。
-          现在改为堆叠卡组：左右滑动**或**上下滑动都能切图，点击当前卡打开全屏查看器。
+          顶部图片：堆叠相册（2026-10-12 改造）—— 单张 16:10 封面时，多图要进"旅行照片"
+          九宫格才看得到；现在左右滑动**或**上下滑动都能切图，点击当前卡打开全屏查看器，
           单图时退化为普通封面（组件内部处理）。
+
+          版面（2026-10-17 精修）：桌面端「左图右文」—— 照片是这类内容的主角，
+          让它独立占据左栏并给一层"纸面"底，右栏集中标题 / 元信息 / 作者 / 摘要 / 动作。
+          此前是单列 3xl：桌面上顶部一张 4:5 巨图，下面一长条窄文字，
+          页面像被拉长的手机截图，宽屏的横向空间完全浪费。
+          移动端仍是单列（图在上、文在下）——窄屏分栏只会两边都憋屈。
         */}
-        {gallery.length > 0 && (
-          <StackedGallery
-            images={gallery}
-            alt={post.title}
-            onOpen={(i) => setViewerIndex(i)}
-          />
-        )}
-
-        <div className="mt-8">
-          {post.location && <div className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">{post.location}</div>}
-          <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{post.title}</h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--social-muted)]">
-            {dateText && <span className="inline-flex items-center gap-1.5"><Icon icon={CalendarDays} size="sm" />{dateText}</span>}
-            <span className="inline-flex items-center gap-1.5"><Icon icon={ImageIcon} size="sm" />{post.photoCount} 张 · DAY {post.dayCount}</span>
-          </div>
-
-          {post.author && (
-            <Link href={circleUserHref(post.author.id) ?? '/circle'} className="mt-6 inline-flex items-center gap-2">
-              <SocialAvatar name={authorName} avatarUrl={post.author.avatarUrl} size={34} />
-              <span className="text-sm text-[var(--social-muted)]">{authorName}</span>
-            </Link>
+        {/* 只有**真有封面**时才分两栏：没有图的故事若仍按两栏排，正文会被塞进左半栏，
+            右半栏空着 —— 那种"半页空白"比单栏更难看，所以这里按有无图切换版面。 */}
+        <div className={cn(hasGallery && 'md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] md:items-start md:gap-10')}>
+          {gallery.length > 0 && (
+            <div className="circle-story-stack">
+              <StackedGallery
+                images={gallery}
+                alt={post.title}
+                onOpen={(i) => setViewerIndex(i)}
+              />
+            </div>
           )}
 
-          {post.summary && <p className="mt-6 whitespace-pre-line text-base leading-relaxed text-[var(--social-muted)]">{post.summary}</p>}
-        </div>
+          <div className={cn('mt-8', hasGallery && 'md:mt-1')}>
+            {post.location && <div className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">{post.location}</div>}
+            <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{post.title}</h1>
 
-        <SocialBar
-          postId={post.id}
-          likeCount={post.likeCount}
-          favoriteCount={post.favoriteCount}
-          commentCount={post.commentCount}
-          liked={post.isLiked}
-          favorited={post.isFavorited}
-          onOpenComments={() => setShowComments(true)}
-          className="mt-8"
-        />
-
-        <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-[var(--social-faint)]">
-          <button type="button" onClick={() => setShowReport(true)} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:text-[var(--social-text)]"><Icon icon={Flag} size="sm" />举报</button>
-          {post.author && (
-            <button
-              type="button"
-              onClick={toggleBlockAuthor}
-              disabled={blockBusy}
-              aria-pressed={blocked}
-              className={cn(
-                // 触达 ≥44px（规范 §8）：此前 py-1.5 只有约 28px 高
-                'm-pressable inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs transition-colors disabled:opacity-60',
-                blocked
-                  ? 'bg-[var(--social-accent-soft)] text-[var(--social-accent)]'
-                  : 'ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]',
+            {/* 元信息改胶囊：与旅行圈卡片上的 chip 语言一致，也比裸文字更好扫读 */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              {dateText && (
+                <span className="circle-story-pill"><Icon icon={CalendarDays} size="sm" />{dateText}</span>
               )}
-            >
-              <Icon icon={blocked ? Check : Ban} size="sm" />
-              {blocked ? '已屏蔽 · 点击取消' : '屏蔽作者'}
-            </button>
-          )}
+              {/* 张数与天数合成一枚：390px 下三枚胶囊会折成三行，两枚刚好排得下 */}
+              <span className="circle-story-pill">
+                <Icon icon={ImageIcon} size="sm" />
+                {post.photoCount} 张{post.dayCount > 0 ? ` · ${post.dayCount} 天` : ''}
+              </span>
+            </div>
+
+            {post.author && (
+              <Link
+                href={circleUserHref(post.author.id) ?? '/circle'}
+                className="circle-story-card mt-6 flex items-center gap-3 p-3 transition-colors hover:border-[var(--social-line-strong)]"
+              >
+                <SocialAvatar name={authorName} avatarUrl={post.author.avatarUrl} size={40} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-[var(--social-text)]">{authorName}</span>
+                  <span className="mt-0.5 block text-xs text-[var(--social-faint)]">公开的旅行故事</span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </Link>
+            )}
+
+            {post.summary && (
+              <p className="mt-6 whitespace-pre-line text-base leading-relaxed text-[var(--social-muted)]">{post.summary}</p>
+            )}
+
+            {/*
+              动作条装进一张"纸"里：点赞 / 评论 / 收藏 / 分享是本页唯一的一等操作，
+              此前四个胶囊裸贴在正文流里，读起来像正文的一部分。放在右栏底部，
+              让「图 - 标题 - 元信息 - 作者 - 摘要 - 操作」成为一个完整的阅读单元。
+            */}
+            <div className="circle-story-card mt-7 p-3">
+              <SocialBar
+                postId={post.id}
+                likeCount={post.likeCount}
+                favoriteCount={post.favoriteCount}
+                commentCount={post.commentCount}
+                liked={post.isLiked}
+                favorited={post.isFavorited}
+                onOpenComments={() => setShowComments(true)}
+              />
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[var(--social-faint)]">
+              <button type="button" onClick={() => setShowReport(true)} className="inline-flex min-h-11 items-center gap-1 rounded-full px-3 transition hover:text-[var(--social-text)]"><Icon icon={Flag} size="sm" />举报</button>
+              {post.author && (
+                <button
+                  type="button"
+                  onClick={toggleBlockAuthor}
+                  disabled={blockBusy}
+                  aria-pressed={blocked}
+                  className={cn(
+                    // 触达 ≥44px（规范 §8）：此前 py-1.5 只有约 28px 高
+                    'm-pressable inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs transition-colors disabled:opacity-60',
+                    blocked
+                      ? 'bg-[var(--social-accent-soft)] text-[var(--social-accent)]'
+                      : 'ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]',
+                  )}
+                >
+                  <Icon icon={blocked ? Check : Ban} size="sm" />
+                  {blocked ? '已屏蔽 · 点击取消' : '屏蔽作者'}
+                </button>
+              )}
+            </div>
+
+            {post.slug && (
+              <Link
+                href={travelDetailHref(post.slug)}
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--social-accent-soft)] px-4 py-2.5 text-sm font-medium text-[var(--social-accent)] transition-colors hover:bg-[var(--social-accent)] hover:text-[var(--social-on-accent)]"
+              >
+                <Icon icon={BookOpen} size="sm" />
+                查看完整旅行记录
+              </Link>
+            )}
+          </div>
         </div>
 
         {post.photos && post.photos.length > 1 && (
-          <div className="mt-12">
-            <div className="mb-4 flex items-center gap-3">
-              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">旅行照片</h2>
-              <div className="h-px flex-1 bg-[var(--social-line)]" />
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <section className="mt-14" aria-label="旅行照片">
+            <SectionHeading label="旅行照片" count={`共 ${post.photos.length} 张`} />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {post.photos.map((src, i) => (
                 <button key={i} type="button" onClick={() => setViewerIndex(i)} className="group relative aspect-square overflow-hidden rounded-xl bg-[var(--social-surface2)] ring-1 ring-[var(--social-line)]">
-                  <Image src={src} alt={post.title} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <Image src={src} alt={`${post.title} 第 ${i + 1} 张`} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 </button>
               ))}
             </div>
-          </div>
-        )}
-
-        {post.slug && (
-          <Link href={travelDetailHref(post.slug)} className="mt-10 inline-flex items-center gap-2 text-sm text-[var(--social-accent)] transition hover:text-[var(--social-accent-strong)]">查看完整旅行记录</Link>
+          </section>
         )}
 
         {/*
@@ -602,28 +655,47 @@ export default function PostDetail({ postId }: { postId: number }) {
  */
 function PostDetailSkeleton() {
   return (
+    // 骨架与真实布局同构（2026-10-17 随版面对齐）：桌面端也是「左图右文」两栏，
+    // 否则数据到达时正文会从一列跳成两列 —— 骨架屏的意义就是"不跳版"。
     <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] md:pb-28">
-      <div className="relative mx-auto max-w-3xl px-4 py-6">
+      <div className="relative mx-auto max-w-3xl px-4 py-6 md:max-w-5xl">
         <div className="mb-7 flex items-center gap-3">
-          <div className="h-9 w-9 animate-pulse rounded-full bg-[var(--social-surface2)]" />
+          <div className="h-11 w-11 animate-pulse rounded-full bg-[var(--social-surface2)]" />
           <div className="h-3 w-16 animate-pulse rounded bg-[var(--social-surface2)]" />
         </div>
-        <div className="aspect-[16/10] w-full animate-pulse rounded-[1.6rem] bg-[var(--social-surface2)]" />
-        <div className="mt-8 space-y-3">
-          <div className="h-3 w-20 animate-pulse rounded bg-[var(--social-surface2)]" />
-          <div className="h-7 w-3/4 animate-pulse rounded bg-[var(--social-surface2)]" />
-          <div className="h-3 w-1/2 animate-pulse rounded bg-[var(--social-surface2)]" />
-        </div>
-        <div className="mt-6 flex items-center gap-2">
-          <div className="h-8 w-8 animate-pulse rounded-full bg-[var(--social-surface2)]" />
-          <div className="h-3 w-24 animate-pulse rounded bg-[var(--social-surface2)]" />
-        </div>
-        <div className="mt-8 flex gap-2">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-10 w-20 animate-pulse rounded-full bg-[var(--social-surface2)]" />
-          ))}
+        <div className="md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] md:gap-10">
+          <div className="aspect-[4/5] w-full animate-pulse rounded-[24px] bg-[var(--social-surface2)]" />
+          <div className="mt-8 md:mt-1">
+            <div className="h-3 w-20 animate-pulse rounded bg-[var(--social-surface2)]" />
+            <div className="mt-3 h-7 w-3/4 animate-pulse rounded bg-[var(--social-surface2)]" />
+            <div className="mt-5 flex flex-wrap gap-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-8 w-24 animate-pulse rounded-full bg-[var(--social-surface2)]" />
+              ))}
+            </div>
+            <div className="mt-6 h-16 w-full animate-pulse rounded-2xl bg-[var(--social-surface2)]" />
+            <div className="mt-4 h-16 w-full animate-pulse rounded bg-[var(--social-surface2)]" />
+            <div className="mt-7 h-14 w-full animate-pulse rounded-2xl bg-[var(--social-surface2)]" />
+          </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * 分节标题（旅行照片 / 按天回顾共用）。
+ *
+ * 抽成组件而不是各写一遍：这两处原先一处是 `<h2>` + 一条 flex-1 细线，
+ * 另一处在同样结构后又补了个「N 天」，字距、线宽、计数位置都开始漂移 ——
+ * 同一页里的同级标题必须长得一模一样，否则"精致"是假的。
+ */
+function SectionHeading({ label, count }: { label: string; count?: string }) {
+  return (
+    <div className="circle-story-heading mb-5">
+      <h2 className="circle-story-heading-label">{label}</h2>
+      <span className="circle-story-heading-rule" aria-hidden="true" />
+      {count && <span className="circle-story-heading-count">{count}</span>}
     </div>
   )
 }
@@ -636,33 +708,31 @@ function PostDetailSkeleton() {
  * 数据由服务端按 `Memory.visibility = PUBLIC` 过滤，前端只管渲染。
  */
 function TripDayList({ days }: { days: TripDay[] }) {
+  /**
+   * 每天最多铺 8 张缩略图，多出来的用「+N」明确交代。
+   * 旧实现直接 `slice(0, 8)`：第 9 张起**静默消失**，读者会以为那天只有 8 张照片 ——
+   * 这是"少给信息"比"多给信息"更坏的一类缺陷（用户根本不知道自己漏看了）。
+   */
+  const PHOTOS_PER_DAY = 8
+
   return (
     <section className="mt-14" aria-label="按天回顾">
-      <div className="mb-6 flex items-center gap-3">
-        <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">按天回顾</h2>
-        <div className="h-px flex-1 bg-[var(--social-line)]" />
-        <span className="text-xs text-[var(--social-faint)]">{days.length} 天</span>
-      </div>
+      <SectionHeading label="按天回顾" count={`共 ${days.length} 天`} />
 
       <div className="relative">
-        <span
-          className="absolute left-[9px] top-2 bottom-2 w-px bg-gradient-to-b from-[var(--social-accent)]/40 via-[var(--social-line)] to-transparent"
-          aria-hidden="true"
-        />
-        <div className="space-y-6">
+        <span className="circle-story-rail absolute bottom-2 left-[9px] top-2 w-px" aria-hidden="true" />
+        <div className="space-y-5">
           {days.map((day, idx) => (
             <article key={`${day.date ?? 'day'}-${idx}`} className="relative pl-8">
-              <span className="absolute left-0 top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-[var(--social-accent)]/40 bg-[var(--social-bg)]">
-                <span className="h-2 w-2 rounded-full bg-[var(--social-accent)]" />
-              </span>
+              <span className="circle-story-dot absolute left-0 top-5" aria-hidden="true" />
 
-              <div className="rounded-2xl bg-[var(--social-surface-60)] p-5 ring-1 ring-[var(--social-line)]">
+              <div className="circle-story-day">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-sm font-semibold tabular-nums">DAY {String(idx + 1).padStart(2, '0')}</span>
-                  {day.date && <span className="font-mono text-xs text-[var(--social-muted)]">{formatDayDate(day.date)}</span>}
-                  {day.title && <span className="text-sm font-medium">· {day.title}</span>}
+                  <span className="circle-story-day-badge">DAY {String(idx + 1).padStart(2, '0')}</span>
+                  {day.date && <span className="text-xs tabular-nums text-[var(--social-muted)]">{formatDayDate(day.date)}</span>}
+                  {day.title && <span className="text-sm font-medium text-[var(--social-text)]">· {day.title}</span>}
                 </div>
-                {day.summary && <p className="mt-1.5 text-sm leading-relaxed text-[var(--social-muted)]">{day.summary}</p>}
+                {day.summary && <p className="mt-2 text-sm leading-relaxed text-[var(--social-muted)]">{day.summary}</p>}
 
                 {day.itinerary.length > 0 && (
                   <ul className="mt-3 flex flex-wrap gap-1.5">
@@ -685,9 +755,16 @@ function TripDayList({ days }: { days: TripDay[] }) {
 
                 {day.photos.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-4">
-                    {day.photos.slice(0, 8).map((p) => (
-                      // eslint-disable-next-line @next/next/no-img-element -- 服务端已给缩略图变体，无需 next/image 再处理
-                      <img key={p.id} src={p.url} alt="" loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
+                    {day.photos.slice(0, PHOTOS_PER_DAY).map((p, i) => (
+                      <div key={p.id} className="relative overflow-hidden rounded-lg bg-[var(--social-surface2)]">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- 服务端已给缩略图变体，无需 next/image 再处理 */}
+                        <img src={p.url} alt="" loading="lazy" className="aspect-square w-full object-cover" />
+                        {i === PHOTOS_PER_DAY - 1 && day.photos.length > PHOTOS_PER_DAY && (
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-medium tabular-nums text-white">
+                            +{day.photos.length - PHOTOS_PER_DAY}
+                          </span>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}
@@ -695,7 +772,7 @@ function TripDayList({ days }: { days: TripDay[] }) {
                 {day.memories.length > 0 && (
                   <div className="mt-3 space-y-2">
                     {day.memories.map((mem) => (
-                      <div key={mem.id} className="rounded-xl bg-[var(--social-surface-50)] px-3 py-2.5">
+                      <div key={mem.id} className="circle-story-quote">
                         <p className="text-sm font-medium">
                           {mem.title}
                           {mem.mood && <span className="ml-1.5 text-xs font-normal text-[var(--social-muted)]">· {mem.mood}</span>}
