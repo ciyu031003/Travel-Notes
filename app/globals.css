@@ -1893,7 +1893,14 @@ html.dark {
   box-shadow: 0 20px 30px rgba(29, 37, 21, 0.22);
 }
 .art-flipbook-container .art-flip-page {
-  position: relative;
+  /* 定位必须与库一致：page-flip 把这一层直接当作 `.stf__item` 用，靠它自己注入的
+     `.stf__item { display: none; position: absolute }` 决定「哪一叶可见、摆在哪」。
+     过去这里写的是 `position: relative`，而本选择器（0,2,0）比库的 `.stf__item`（0,1,0）
+     更具体 —— 于是库的绝对定位被顶掉。库只给渲染窗口内的叶写内联 `left/top`，
+     绝对定位一失效，页就退回**文档流**：对开里第二片叶（右页）被排在第一片叶正下方，
+     台面下方于是冒出一块带内容的矩形（相册 / 胶片 / 手册三个主题全中招）。
+     overflow / background 这类纯外观才归我们管，定位一律交给库。 */
+  position: absolute;
   overflow: hidden;
   background: var(--art-paper);
 }

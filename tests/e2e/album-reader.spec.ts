@@ -115,6 +115,55 @@ function visibleLeafIndexes(page: Page) {
   })
 }
 
+/** 翻页过程中逐帧采到的「可见叶」：库渲染出来的页在哪、用什么定位 */
+interface VisibleLeafSample {
+  theme: string
+  frame: number
+  index: number
+  position: string
+  top: number
+  bottom: number
+  containerBottom: number
+}
+
+/**
+ * 翻页动画期间**逐帧**采样可见叶的定位与盒子。
+ *
+ * 为什么必须逐帧：本文要防的缺陷**只在翻页那几百毫秒里存在** ——
+ * 库对被翻动的页只在动画期写内联样式，停稳后就把多余的页收回去/隐藏。
+ * 只断言静止态永远抓不到它（这正是它长期漏网的原因）。
+ * 每帧等两次 rAF 再读样式：确保读到的已经是**画完**的那一帧布局。
+ */
+async function sampleVisibleLeavesDuringFlip(
+  page: Page,
+  theme: string,
+  samples: VisibleLeafSample[],
+  frames = 8,
+) {
+  for (let frame = 0; frame < frames; frame += 1) {
+    await page.evaluate(
+      () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+    )
+    const snapshot = await page.evaluate(() => {
+      const container = document.querySelector('.art-flipbook-container')
+      if (!container) return null
+      const containerBottom = container.getBoundingClientRect().bottom
+      const visible: Array<{ index: number; position: string; top: number; bottom: number }> = []
+      document.querySelectorAll<HTMLElement>('.art-flipbook-container .art-flip-page').forEach((el, index) => {
+        const cs = getComputedStyle(el)
+        const rect = el.getBoundingClientRect()
+        if (cs.display === 'none' || rect.width === 0 || rect.height === 0) return
+        visible.push({ index, position: cs.position, top: rect.top, bottom: rect.bottom })
+      })
+      return { containerBottom, visible }
+    })
+    if (!snapshot) continue
+    for (const leaf of snapshot.visible) {
+      samples.push({ theme, frame, containerBottom: snapshot.containerBottom, ...leaf })
+    }
+  }
+}
+
 test('画册阅读器：打开 → page-flip 挂载 → 翻页页码前进/回退', async ({ page }) => {
   await openFixtureBook(page)
 
@@ -324,6 +373,75 @@ test('画册阅读器：台面投影不得按「内容 alpha」重画（翻页�
   })
   expect(paint.filter, '容器不得使用 filter: drop-shadow（翻页时会重画成重影）').toBe('none')
   expect(paint.boxShadow, '应改用静态 box-shadow 保留台面投影').not.toBe('none')
+
+  await expectPageHealthy(page)
+})
+
+test('画册阅读器：翻页全程（画报 / 胶片 / 手记）不得有页落到书本下方', async ({ page }) => {
+  /*
+   * 回归证据：`.art-flipbook-container .art-flip-page` 曾写 `position: relative`。
+   * page-flip 把这一层**直接当 `.stf__item` 用**，靠自己注入的
+   * `.stf__item { display: none; position: absolute }` 加上内联 `left/top` 摆位；
+   * 而我们的选择器（0,2,0）比库的（0,1,0）更具体，把绝对定位顶掉了 ——
+   * 页于是退回**文档流**：对开里第二片叶（右页）被排在第一片叶正下方，
+   * 台面下方于是冒出一块带内容的矩形。实测（浏览器）：该矩形整段翻页都停在
+   * 书本下方（top=659 = 书盒底边、高度整页），停稳后才被库隐藏。
+   * 相册 / 胶片 / 手册三个主题共用这段布局代码，所以三个主题一起中招 —— 用户报的
+   * 「翻页时下方有重影」正是它，与视觉档案 / 主题都无关。
+   *
+   * 断言只认 **DOM 真相**（库渲染出来后页的真实定位与盒子），不看截图：
+   *   ① 可见叶一律必须是绝对定位（退回文档流 = 重影的根因）；
+   *   ② 可见叶的**盒子顶边**不得落到书盒底边之下。
+   * 不写「盒子底边不得超过书盒底边」：正在翻转的那一叶被 3D 透视投影放大，
+   * 底边合法地会越过书盒（实测越界约 196px，属正常翻页观感，不是重影）——
+   * 把这条也写进断言只会制造假失败。
+   */
+  await openFixtureBook(page)
+  const reader = page.locator('.book-reader')
+  await expect(page.locator('.art-flipbook-container .art-flip-page').first()).toBeVisible({ timeout: 20_000 })
+
+  const menu = reader.locator('[role="menu"][aria-label="画册主题"]')
+  const next = reader.locator('footer button', { hasText: '下一页' })
+  const samples: VisibleLeafSample[] = []
+
+  for (const [theme, label] of [
+    ['editorial', /画报/],
+    ['film', /胶片/],
+    ['memory', /手记/],
+  ] as const) {
+    await reader.locator('button[aria-haspopup="menu"]').click()
+    await expect(menu).toBeVisible()
+    await menu.getByRole('menuitemradio', { name: label }).click()
+    await expect(reader).toHaveAttribute('data-book-theme', theme, { timeout: 15_000 })
+
+    for (let flip = 0; flip < 2; flip += 1) {
+      await next.click()
+      await sampleVisibleLeavesDuringFlip(page, theme, samples)
+      // 等这一翻停稳：下一翻才能从静止态起，采到的帧才覆盖完整动画
+      await page.waitForTimeout(600)
+    }
+  }
+
+  expect(samples.length, '必须真的采到翻页过程中的帧（否则这条用例是空跑）').toBeGreaterThan(0)
+
+  // ① 根因护栏
+  expect(
+    samples
+      .filter((s) => s.position !== 'absolute')
+      .map((s) => `${s.theme} 第${s.frame}帧 叶${s.index} position=${s.position}`),
+    '翻页中可见的叶必须是绝对定位（退回文档流会把右页排到书本下方）',
+  ).toEqual([])
+
+  // ② 症状护栏
+  expect(
+    samples
+      .filter((s) => s.top > s.containerBottom - 2)
+      .map(
+        (s) =>
+          `${s.theme} 第${s.frame}帧 叶${s.index} top=${Math.round(s.top)} 书盒底边=${Math.round(s.containerBottom)}`,
+      ),
+    '翻页中不得有页落到书本下方',
+  ).toEqual([])
 
   await expectPageHealthy(page)
 })
