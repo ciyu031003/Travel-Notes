@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import Link from 'next/link'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { useModalLayer } from '@/hooks/use-modal-layer'
@@ -10,7 +9,6 @@ import { cn } from '@/lib/utils'
 import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/motion'
 import { Icon } from './Icon'
 import { IconButton } from './IconButton'
-import { appHref } from '@/lib/mobile/app-href'
 
 export function SideDrawer({
   open,
@@ -115,7 +113,17 @@ export function DrawerSection({ title, children }: { title: string; children: Re
   )
 }
 
-/** 抽屉行：图标 + 标题 + 可选说明与尾部内容。 */
+/**
+ * 抽屉行：图标 + 标题 + 可选说明与尾部内容。
+ *
+ * ⚠️ href 必须保持**普通 Next 路由**（`/moments`），不要补 `.html`。
+ * 2026-10-17 定论：曾为了绕开 Capacitor html5mode 把 href 改成带 .html，
+ * 结果抽屉里**所有**链接都点不动 —— Next 的 <Link> 只对"已知应用路由"做客户端跳转，
+ * `/moments.html` 不在路由表里，它既不客户端跳转也不回退原生跳转，静默无反应。
+ * 实测（Playwright + 真实静态壳）：正文 <Link href="/moments"> 跳转成功；
+ * 抽屉 <Link href="/moments.html"> 无跳转且 0 个网络请求；抽屉普通 <a href="/moments"> 跳转成功。
+ * 即原因是 href 本身，与 portal / 容器无关。
+ */
 export function DrawerRow({
   icon,
   title,
@@ -149,11 +157,32 @@ export function DrawerRow({
   )
   const cls = 'm-pressable flex min-h-[56px] w-full items-center gap-3 px-4 py-2.5 text-left'
   if (href) {
-    // 原生壳里补成真实 .html（Capacitor html5mode 会把无扩展名路径回落成首页）
+    /**
+     * 用**原生 <a>** 而不是 next/link（2026-10-17 定论，实测出来的）。
+     *
+     * 故障：抽屉里所有导航项都点不动 —— 点下去抽屉会关，但页面不跳。
+     * 用 Playwright 打开真实静态壳逐项验证，结论如下：
+     *   · 正文里的 <Link href="/moments">          → 跳转成功（2 个请求）
+     *   · 抽屉里的 <Link href="/moments">          → **无跳转、0 个请求**，
+     *     而且事件 defaultPrevented=true —— 说明 Next 的 Link 处理器跑了、
+     *     也调了 preventDefault，但路由没有生效。
+     *   · 抽屉里的普通 <a href="/moments">         → 跳转成功
+     *   · 把 href 从 /moments.html 改回 /moments    → 仍然不行（所以不是 href 的问题）
+     *
+     * 即：**next/link 在抽屉这个 portal 里不工作**，原生锚点则完全正常。
+     * 抽屉是"点一下就离开"的场景，用原生锚点换来**确定可用**，代价仅是一次整页加载，
+     * 这个取舍在这里是划算的 —— 之前两轮都是想"保住 SPA 体验"，结果按钮根本点不动。
+     */
     return (
-      <Link href={appHref(href)} className={cls} onClick={onClick}>
+      <a
+        href={href}
+        className={cls}
+        onClick={() => {
+          onClick?.()
+        }}
+      >
         {body}
-      </Link>
+      </a>
     )
   }
   return (

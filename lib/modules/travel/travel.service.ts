@@ -863,13 +863,31 @@ export async function deleteDay(id: number): Promise<void> {
 const ITINERARY_TYPES = ['SPOT', 'RESTAURANT', 'HOTEL', 'TRANSPORT', 'ACTIVITY', 'OTHER']
 
 /** 兼容 "10:00" / "10:00:00" 时间串，转换为可解析的 Date */
+/**
+ * 解析行程时间（2026-10-17 修正时区语义）
+ * ============================================================================
+ * 行程的「开始 / 结束」是**墙上时间**（wall clock：行程表上写的 17:00），不是时间点。
+ * 之前用 `d.setHours()` 按**服务器时区**解释，客户端再用 `getHours()` 按**设备时区**
+ * 读回 —— 两边时区不一致时整体平移。
+ *
+ * 真实故障：UTC+8 的设备选了 17:00–21:00，服务端（容器 TZ=UTC）存成 17:00Z，
+ * 设备按 +8 渲染 → 显示成次日 01:00，21:00 → 05:00。这就是
+ * 「选下午5点到晚上9点，回头变成凌晨1点到5点」的根因；也是
+ * 「之前添加的行程时间全都乱了」的根因（每条都被平移了同样的量）。
+ *
+ * 修法：**写入与读取都用 UTC 字段承载墙上时间**（1970-01-01 基准日），与设备/服务器
+ * 时区完全解耦：存 17:00，任何时区读出来都是 17:00，确定且可预期。
+ * 附带效果：**历史数据自动修复** —— 库里那些 16:50Z / 20:30Z 的记录恰好就是
+ * 当初写入的墙上时间，改用 UTC 读取后即正确显示。
+ */
 function parseTimeOrDate(value: string | undefined | null): Date | null {
   if (!value) return null
   const m = value.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
   if (m) {
-    const d = new Date()
-    d.setHours(parseInt(m[1], 10), parseInt(m[2], 10), m[3] ? parseInt(m[3], 10) : 0, 0)
-    return d
+    const h = Math.min(23, Math.max(0, parseInt(m[1], 10)))
+    const min = Math.min(59, Math.max(0, parseInt(m[2], 10)))
+    const sec = m[3] ? Math.min(59, Math.max(0, parseInt(m[3], 10))) : 0
+    return new Date(Date.UTC(1970, 0, 1, h, min, sec))
   }
   const d = new Date(value)
   return isNaN(d.getTime()) ? null : d

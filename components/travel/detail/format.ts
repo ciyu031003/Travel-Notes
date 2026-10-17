@@ -34,6 +34,16 @@ export function dayFullLabel(date: string | null, index: number): string {
  * 此前用正则直接在 ISO 上匹配，会把 UTC 的 06:30 当成当地时间显示（东八区差 8 小时），
  * 表现是「行程时间凭空少 8 小时」。单测 tests/unit/travel-detail-format.test.ts 锁住了这条。
  */
+/**
+ * 行程时间显示（2026-10-17 修正时区语义）
+ *
+ * 行程的起止时间是**墙上时间**（行程表上写的 17:00），不是时间点。
+ * 服务端现在用 UTC 字段承载它（见 travel.service.parseTimeOrDate 的注释），
+ * 因此这里也必须用 **getUTCHours/getUTCMinutes** 读取，两边保持同一套语义。
+ *
+ * 之前的 bug：服务端按服务器时区（容器 TZ=UTC）写入，这里按设备时区读取
+ * —— UTC+8 设备上 17:00 会显示成次日 01:00，21:00 显示成 05:00。
+ */
 export function formatTime(value: string | null | undefined): string {
   if (!value) return ''
   const s = String(value)
@@ -41,7 +51,7 @@ export function formatTime(value: string | null | undefined): string {
   const d = new Date(s)
   if (Number.isNaN(d.getTime())) return ''
   const p = (n: number) => String(n).padStart(2, '0')
-  return `${p(d.getHours())}:${p(d.getMinutes())}`
+  return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`
 }
 
 /** `10.01 - 10.07`（同一天只显示一次） */

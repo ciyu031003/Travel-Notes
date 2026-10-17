@@ -31,9 +31,22 @@ describe('travel detail format', () => {
     expect(dayDateLabel(null, 2)).toBe('DAY 03')
   })
 
-  it('formatTime 支持 ISO 与 HH:mm:ss 两种形态', () => {
+  /**
+   * 行程时间是**墙上时间**（行程表上的 17:00），不是时间点。
+   * 服务端用 Date.UTC 写入、客户端用 getUTC* 读回（详见 travel.service.parseTimeOrDate
+   * 与 formatTime 的注释），因此这里必须用「UTC 字段即墙上时间」的输入来断言。
+   *
+   * 旧断言写的是 `new Date(2026, 9, 1, 14, 30).toISOString()`（本地时间构造），
+   * 它只在"测试机时区恰好与构造时区一致"时通过 —— 本身就依赖时区，
+   * 正是那个真机 bug（选 17:00 显示 01:00）在测试里的同构形态。
+   */
+  it('formatTime 支持 ISO 与 HH:mm:ss 两种形态（按墙上时间 / UTC 字段）', () => {
     expect(formatTime('14:30:00')).toBe('14:30')
-    expect(formatTime(new Date(2026, 9, 1, 14, 30).toISOString())).toBe('14:30')
+    // UTC 字段即墙上时间：14:30Z 在**任何时区**都渲染为 14:30
+    expect(formatTime('2026-10-01T14:30:00.000Z')).toBe('14:30')
+    // 真机故障回归：17:00 / 21:00 不得被平移成次日 01:00 / 05:00
+    expect(formatTime('2026-10-01T17:00:00.000Z')).toBe('17:00')
+    expect(formatTime('2026-10-01T21:00:00.000Z')).toBe('21:00')
     expect(formatTime(null)).toBe('')
   })
 
