@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复画册阅读器两个P0：开启系统「减弱动态效果」必白屏、低端机/切换视觉档后整本书空白；翻页台面改实测尺寸、补移动端安全区与首次翻页提示',
+    changelog: process.env.APP_CHANGELOG || '画册翻页更顺：一屏一个对开，并修掉翻页时书页下方的重影；旅行圈补齐评论点赞与列表收藏，点开别人的旅行版面重做；首页足迹地图显示每个省份的旅行张数。',
     forceUpdate,
   })
 }
