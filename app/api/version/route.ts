@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复行程时间时区错乱(墙上时间按 UTC 存取，历史数据自动修复)、抽屉导航全部点不动(next/link 在 portal 内失效，改用原生 a)；撤销 appHref 推断',
+    changelog: process.env.APP_CHANGELOG || '修复画册阅读器两个P0：开启系统「减弱动态效果」必白屏、低端机/切换视觉档后整本书空白；翻页台面改实测尺寸、补移动端安全区与首次翻页提示',
     forceUpdate,
   })
 }
