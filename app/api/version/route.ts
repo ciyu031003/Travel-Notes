@@ -17,7 +17,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '改用 ui-ux-pro-max 正本并按 canonical pro-rules 清单审计：修复图标控件缺可访问名称、新增 .m-icon-btn 统一 44x44 触达；新增交付前检查清单文档',
+    changelog: process.env.APP_CHANGELOG || '修复行程时间时区错乱(墙上时间按 UTC 存取，历史数据自动修复)、抽屉导航全部点不动(next/link 在 portal 内失效，改用原生 a)；撤销 appHref 推断',
     forceUpdate,
   })
 }
