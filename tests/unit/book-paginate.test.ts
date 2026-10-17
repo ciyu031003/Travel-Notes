@@ -121,3 +121,53 @@ describe('spreadIndexOfPage', () => {
     expect(spreadIndexOfPage(paginate([page('COVER')], 'single'), 'nope')).toBe(0)
   })
 })
+
+describe('与 page-flip 的分组契约（阅读器交付单叶的前提）', () => {
+  /**
+   * 复刻 vendored page-flip 2.0.7 `createSpread()` 在 landscape + showCover=false 下的配对：
+   * 从叶 0 起两两成对，落单的末页独占一屏。
+   *
+   * 阅读器交付的是**单叶**（一张物理页 = 一个页元素），一屏几个对开完全由这条规则决定。
+   * 它必须与 `paginate(pages, 'dual')` 的分组逐项一致 —— 否则库上报的对开序号
+   * 就不等于分页契约里的序号，页码指示与章节直达会整体错位。
+   */
+  function pageFlipLandscapeGroups(leafCount: number): number[][] {
+    const groups: number[][] = []
+    for (let i = 0; i < leafCount; i += 2) {
+      groups.push(i < leafCount - 1 ? [i, i + 1] : [i])
+    }
+    return groups
+  }
+
+  it('叶数与分组数逐项一致（含落单末页）', () => {
+    for (const n of [1, 2, 3, 4, 5, 19]) {
+      const pages = Array.from({ length: n }, () => page('PHOTO_CAPTION'))
+      const spreads = paginate(pages, 'dual')
+      expect(spreads, `${n} 叶`).toHaveLength(pageFlipLandscapeGroups(n).length)
+    }
+  })
+
+  it('同一屏里装的是同一批叶（分组集合逐项一致）', () => {
+    for (const n of [1, 2, 3, 4, 5, 19]) {
+      const pages = Array.from({ length: n }, () => page('PHOTO_CAPTION'))
+      const physical = expandPages(pages)
+      const groups = pageFlipLandscapeGroups(physical.length)
+      const spreadGroups = paginate(pages, 'dual').map((s) =>
+        [s.left, s.right].filter((p): p is BookPage => p !== null).map((p) => p.id).sort(),
+      )
+      const flipGroups = groups.map((g) => g.map((i) => physical[i].id).sort())
+      expect(spreadGroups, `${n} 叶`).toEqual(flipGroups)
+    }
+  })
+
+  it('落单页的左右归属按库的口径：末页归左，其余落单归右', () => {
+    // 库的 showSpread()：landscape 下单元素分组若正好是整本最后一页 → 画在左半，否则画在右半。
+    // 阅读器的书脊阴影按「下标奇偶」定位（偶=左、奇=右），与这条规则等价：
+    // 落单末页的下标恒为偶数（从 0 起步长 2），因此它落在左半。
+    const groups = pageFlipLandscapeGroups(5)
+    expect(groups).toEqual([[0, 1], [2, 3], [4]])
+    const lastGroup = groups[groups.length - 1]
+    expect(lastGroup).toHaveLength(1)
+    expect(lastGroup[0] % 2).toBe(0)
+  })
+})

@@ -25,6 +25,19 @@ import {
      3. 用 callback ref 而非 useEffect 建实例——这样 React StrictMode 的
         「挂载→卸载→再挂载」模拟不会重复创建，也不会留下被 destroy 过的脏容器。
 
+   【游标单一所有权】「当前停在哪一屏」由 **page-flip 自己拥有**，本组件只把库的
+   回报（`onPageChange`）转出去；外部要跳转一律走 `turnToSpread()`
+   （绝对定位到目标对开的第一片叶，见下方实现里的取舍说明）。
+
+   为什么不再接受声明式的「当前页」prop：库的 `getCurrentPageIndex()` 给的是**叶**索引
+   （双页展开下一屏 = 两片叶），而对开序号是**对开**索引。两者在单页模式（一屏一叶）
+   下恰好相等，所以旧实现用叶索引去「同步外部页码」时看不出问题；一旦交付单叶，
+   同步 effect 就把对开序号当叶索引喂给 `turnToPage()`（库内部是 `pages.show()`），
+   于是翻到 02 之后被打回封面：指示器说 02、书却停在 01。它还会与跳转用的相对步进
+   **抢步** —— 章节直达停在错误的对开，Home/End 完全不动（浏览器实测）。
+   结论：声明式与命令式两条路同时驱动同一个游标必然打架，只保留一条：
+   **命令式 `turnToSpread()` 跳转 + 库回报驱动页码**。
+
    【容器 key 不变式】容器元素的 `key` 必须覆盖「建实例 effect」的**全部**输入
    （mountKey / portrait / retryNonce）。原因在第 2 条：库的 `destroy()` 会连带
    移除整棵页元素 DOM，而 React 以为页元素还在原容器里。只要 effect 在一次
@@ -64,8 +77,6 @@ interface ArtFlipBookProps {
   portrait?: boolean
   /** 页面切换回调 */
   onPageChange?: (pageIndex: number, spreadIndex?: number, spreadTotal?: number) => void
-  /** 外部控制当前页 */
-  currentPage?: number
   /** 是否绘制翻页阴影（lite 档关掉以省 GPU） */
   drawShadow?: boolean
   /**
@@ -92,7 +103,13 @@ interface PageFlipInstance {
   loadFromHTML: (els: NodeListOf<HTMLElement>) => void
   on: (event: string, cb: () => void) => void
   destroy: () => void
-  /** 无动画定位到某页；对不在对开表里的索引会**静默放弃**，不要用于跨对开跳转 */
+  /** 翻页控制器状态：'read'（静止）/ 'flipping' / 'fold_corner' / 'user_fold' */
+  getState?: () => string
+  /**
+   * 无动画定位到某页（库内部 `pages.show(page)` → `getSpreadIndexByPage(page)` 反查对开）。
+   * 传进来的必须是**叶**索引：拿对开序号当页索引是最常见的错位来源。
+   * 索引不在当前对开表里时**静默放弃** —— 因此跳转要传「目标对开的第一片叶」。
+   */
   turnToPage: (page: number) => void
   flipNext: (corner?: string) => void
   flipPrev: (corner?: string) => void
@@ -160,7 +177,7 @@ function ensureRuntime(): Promise<PageFlipCtor> {
  * - 边缘点击、滑动翻页
  */
 const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function ArtFlipBook(
-  { pages, flippingTime = DEFAULT_FLIPPING_TIME_MS, portrait = true, drawShadow = true, onPageChange, currentPage, mountKey = 0, onRuntimeMount },
+  { pages, flippingTime = DEFAULT_FLIPPING_TIME_MS, portrait = true, drawShadow = true, onPageChange, mountKey = 0, onRuntimeMount },
   ref,
 ) {
   const pageFlipRef = useRef<PageFlipInstance | null>(null)
@@ -170,10 +187,9 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
   const [retryNonce, setRetryNonce] = useState(0)
   const onPageChangeRef = useRef(onPageChange)
   const onRuntimeMountRef = useRef(onRuntimeMount)
-  const syncingRef = useRef(false)
   const disposedRef = useRef(false)
-  /** 相对步进用到的定时器（卸载时清理，避免对已销毁的实例继续操作） */
-  const stepTimersRef = useRef<number[]>([])
+  /** 跳转重试用的定时器（卸载时清理，避免对已销毁的实例继续操作） */
+  const jumpTimersRef = useRef<number[]>([])
 
   onPageChangeRef.current = onPageChange
   onRuntimeMountRef.current = onRuntimeMount
@@ -219,7 +235,12 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
           startZIndex: 10,
           autoSize: true,
           maxShadowOpacity: resolveShadowOpacity(runtime.drawShadow),
-          showCover: true,
+          // showCover=false：让库的对开分组与 `paginate(pages, 'dual')` **完全一致**
+          // （都从 0 开始两两成对），于是「库报告的对开序号」就是分页契约里的对开序号。
+          // 这一点很要紧：showCover=true 时库会先把封面单独成一屏，同一份叶序列会
+          // 多出一屏、页码与章节直达全部错位。封面的"硬壳"观感由页元素上的
+          // data-density="hard" 保留（见下方 pages.map）。
+          showCover: false,
           mobileScrollSupport: false,
           clickEventForward: true,
           useMouseEvents: true,
@@ -249,10 +270,7 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
         instance.on('update', () => reportCurrent(instance as PageFlipInstance))
         // 横竖屏切换会重建对开分组，必须重新上报，否则页码会停在校准前的旧值
         instance.on('changeOrientation', () => reportCurrent(instance as PageFlipInstance))
-        instance.on('flip', () => {
-          if (syncingRef.current) return
-          reportCurrent(instance as PageFlipInstance)
-        })
+        instance.on('flip', () => reportCurrent(instance as PageFlipInstance))
 
         pageFlipRef.current = instance
         onRuntimeMountRef.current?.()
@@ -295,20 +313,9 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
   // 卸载标记：异步 ensureRuntime 回调里据此丢弃过期结果
   useEffect(() => () => {
     disposedRef.current = true
-    for (const t of stepTimersRef.current) window.clearTimeout(t)
-    stepTimersRef.current = []
+    for (const t of jumpTimersRef.current) window.clearTimeout(t)
+    jumpTimersRef.current = []
   }, [])
-
-  // 从外部同步当前页
-  useEffect(() => {
-    const pf = pageFlipRef.current
-    if (!pf || currentPage === undefined) return
-    if (pf.getCurrentPageIndex() === currentPage) return
-    syncingRef.current = true
-    pf.turnToPage(currentPage)
-    const timer = setTimeout(() => { syncingRef.current = false }, flippingTime + 100)
-    return () => clearTimeout(timer)
-  }, [currentPage, flippingTime, pendingEl, mountKey])
 
   useImperativeHandle(ref, () => ({
     flipNext: () => pageFlipRef.current?.flipNext('bottom'),
@@ -318,34 +325,43 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
       const pf = pageFlipRef.current
       if (!pf) return
       const col = pf.getPageCollection?.()
-      const current = col?.getCurrentSpreadIndex?.() ?? 0
-      const steps = spreadIndex - current
-      if (steps === 0) return
-      // 【为什么用相对步进而不是绝对定位】
-      // page-flip 的绝对跳转有两条路，都不可靠：
-      //   · turnToPage → pages.show()：目标索引不在对开表里时**静默放弃**；
-      //   · flip → flipController.flipToPage()：能跳，但库内部 currentPageIndex /
-      //     currentSpreadIndex 会在这之后漂移（实测 End 到末页后按 Home，指示停在 03）。
-      // 相对步进只依赖 flipNext/flipPrev 与库自己维护的 spread 游标，是唯一稳定的路径。
-      // 步数上限 200：画册对开数量级远小于此，超出说明状态异常，直接放弃避免卡死。
-      const dir = steps > 0 ? 'next' : 'prev'
-      const total = Math.min(Math.abs(steps), 200)
-      let done = 0
-      const step = () => {
-        if (disposedRef.current || done >= total) return
-        const before = col?.getCurrentSpreadIndex?.() ?? -1
-        if (dir === 'next') pf.flipNext('bottom')
-        else pf.flipPrev('bottom')
-        const after = col?.getCurrentSpreadIndex?.() ?? -1
-        if (after === before) {
-          // 上一次动画还在进行（库会丢弃重叠请求）：稍后重试，不计入已走步数
-          stepTimersRef.current.push(window.setTimeout(step, 120))
+      const spreads = col?.getSpread?.()
+      if (!col || !Array.isArray(spreads)) return
+      if (col.getCurrentSpreadIndex?.() === spreadIndex) return
+
+      /*
+       * 【为什么不再用相对步进】原实现靠连续 flipNext/flipPrev 走 steps 次，
+       * 并在「对开序号没变」时判定为「库丢弃了重叠请求」而重试了一次。
+       * 实际上库**不会丢弃**：`flip()` 先把进行中的动画 `finishAnimation()` 收尾
+       * （收尾即推进一格），再开新动画。于是每次重试都真的多翻一格 ——
+       * 实测：从封面跳到 DAY 02（对开 3）落到对开 4；End/Home 各自跑出一条
+       * 并行步进链互相抢步，最后完全不动。
+       *
+       * 稳定做法是**绝对定位**：`pages.show(叶索引)` 内部
+       * `getSpreadIndexByPage(叶) → currentSpreadIndex = 该对开 → showSpread()`
+       * 一步把库的三个游标（对开 / 页 / 渲染）设到同一处，没有动画、没有中间态。
+       * 唯一要传对的是索引：目标对开的**第一片叶**必然在当前的叶→对开表里
+       * （传对开序号当页索引才是那个经典的错位 bug）。
+       *
+       * 另一个必须处理的坑：动画是**收尾时才推进游标**的，若在动画进行中去 show()，
+       * 那段动画的收尾回调随后仍会把游标推回一格。所以先等动画收尾（state === 'read'）。
+       * 等待有上限：库若因异常停在非静止态，跳转照做，不能让按钮彻底失灵。
+       */
+      const MAX_SETTLE_RETRY = 8
+      let retry = 0
+      const jump = () => {
+        if (disposedRef.current) return
+        const state = pf.getState?.() ?? 'read'
+        if (state !== 'read' && retry < MAX_SETTLE_RETRY) {
+          retry += 1
+          jumpTimersRef.current.push(window.setTimeout(jump, 60))
           return
         }
-        done += 1
-        stepTimersRef.current.push(window.setTimeout(step, 40))
+        const target = spreads[spreadIndex]
+        if (!target || target.length === 0) return
+        pf.turnToPage(target[0])
       }
-      stepTimersRef.current.push(window.setTimeout(step, 0))
+      jump()
     },
     getCurrentSpread: () => pageFlipRef.current?.getPageCollection?.()?.getCurrentSpreadIndex?.() ?? 0,
     getCurrentPage: () => pageFlipRef.current?.getCurrentPageIndex() ?? 0,

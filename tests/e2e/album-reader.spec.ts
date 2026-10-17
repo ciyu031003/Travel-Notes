@@ -97,33 +97,58 @@ async function openFixtureBook(page: Page) {
 
 test.describe.configure({ mode: 'serial' })
 
+/**
+ * 库**真正显示出来**的叶的下标（DOM 顺序）。
+ *
+ * 为什么不能只看页码指示：指示器是 React 状态，可能领先于库（用户看到的书没动，
+ * 数字却变了）。这条断言直取 page-flip 渲染结果，是「书到底停在哪一屏」的唯一真相。
+ */
+function visibleLeafIndexes(page: Page) {
+  return page.evaluate(() => {
+    const all = Array.from(document.querySelectorAll('.art-flipbook-container .art-flip-page'))
+    return all.reduce<number[]>((acc, el, i) => {
+      const cs = getComputedStyle(el)
+      const rect = el.getBoundingClientRect()
+      if (cs.display !== 'none' && cs.visibility !== 'hidden' && rect.width > 0 && rect.height > 0) acc.push(i)
+      return acc
+    }, [])
+  })
+}
+
 test('画册阅读器：打开 → page-flip 挂载 → 翻页页码前进/回退', async ({ page }) => {
   await openFixtureBook(page)
 
-  // ① 运行时真实挂载：page-flip 生成了页元素
+  // ① 运行时真实挂载：page-flip 生成了页元素 —— **一页一叶**（不是对开 sheet）
   const pages = page.locator('.art-flipbook-container .art-flip-page')
   await expect(pages.first()).toBeVisible({ timeout: 20_000 })
   const pageCount = await pages.count()
 
-  // ② 页码指示：01 / NN。NN 就是**对开数**，也是 page-flip 的页元素数
-  //    （双页模式下每个 .art-flip-page 承载一个左右对开）
+  // ② 一屏一个对开：停稳后可见的页元素恰好 2 片（左页 + 右页）。
+  //    回归护栏：旧实现把「一个对开」做成一张内部再分左右半的 sheet 交给库，
+  //    库在 landscape 下又把这种页并排两片 → 一屏出现 **4 个逻辑页**，每片叶只有半页宽。
+  await expect(
+    page.locator('.art-flipbook-container .art-flip-page:visible'),
+    '双页模式一屏应恰好 2 片叶（一个对开 = 左页 + 右页）',
+  ).toHaveCount(2)
+
+  // ③ 页码指示：01 / NN。NN 是**对开数**（不是叶数）
   const indicator = page.locator('.book-reader footer span[aria-live="polite"]')
   await expect(indicator).toBeVisible()
   const first = (await indicator.textContent())?.trim() ?? ''
   const m = first.match(/^01 \/ (\d{2,})$/)
   expect(m, `页码指示格式应为 01 / NN，实际 ${first}`).not.toBeNull()
   const totalSpreads = Number(m![1])
-  expect(pageCount, 'page-flip 页元素数应等于对开数').toBe(totalSpreads)
 
   // fixture 是 19 逻辑页（封面+前言+3×(DAY_OPENING+PEAK+PAUSE+2×ECHO)+时间线+结尾），
-  // 双页模式两两成对 → 10 个对开。测试图 aspect=1.34 < 1.6，不触发出血展开。
+  // 测试图 aspect=1.34 < 1.6，不触发出血展开 → 19 片叶；双页模式两两成对 → 10 个对开。
+  expect(pageCount, '页元素数应等于物理叶数（一页一叶）').toBe(19)
   expect(totalSpreads, '19 逻辑页在双页模式下应为 10 个对开').toBe(10)
 
-  // ③ 下一页：页码前进
+  // ④ 下一页：页码前进
   await page.locator('.book-reader footer button', { hasText: '下一页' }).click()
   await expect(indicator).toHaveText(/^02 \//, { timeout: 20_000 })
 
-  // ④ 上一页回到封面
+  // ⑤ 上一页回到封面
   await page.locator('.book-reader footer button', { hasText: '上一页' }).click()
   await expect(indicator).toHaveText(first, { timeout: 20_000 })
 
@@ -240,6 +265,12 @@ test('画册阅读器：移动端单页模式无横向溢出', async ({ page }) 
   // 单页模式：rig 带 --single 修饰类
   await expect(reader.locator('.art-flip-rig--single')).toBeVisible({ timeout: 15_000 })
 
+  // 单页模式一屏恰好 1 片叶（一个逻辑页 = 一张照片）
+  await expect(
+    page.locator('.art-flipbook-container .art-flip-page:visible'),
+    '移动端一屏应恰好 1 片叶',
+  ).toHaveCount(1)
+
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   )
@@ -270,6 +301,79 @@ test('画册阅读器：系统「减弱动态效果」下仍是真书（不是�
   // ② 直切档位依然可以翻页
   await reader.locator('footer button', { hasText: '下一页' }).click()
   await expect(reader.locator('footer span[aria-live="polite"]')).toHaveText(/^02 \//, { timeout: 20_000 })
+
+  await expectPageHealthy(page)
+})
+
+test('画册阅读器：台面投影不得按「内容 alpha」重画（翻页时书页下方的重影）', async ({ page }) => {
+  /*
+   * 回归证据：容器原先用 `filter: drop-shadow(...)`。drop-shadow 取的是**内容 alpha**
+   * 的轮廓 —— 翻页时正在转动的那一页轮廓变了，投影就跟着被重画一遍，
+   * 于是在书页下方出现一片随翻页移动的模糊重影（用户报的「镜像重影」）。
+   * 实测证据：把该 filter 去掉，书页下缘那 11px 带内 **13.3% 的像素**发生变化；
+   * 而关掉章节条的 backdrop-blur / 整条章节目录，像素变化 **0**。
+   * 现在改用 box-shadow（只认元素盒子，翻页时纹丝不动）。
+   */
+  await openFixtureBook(page)
+  const container = page.locator('.art-flipbook-container')
+  await expect(container).toBeVisible({ timeout: 20_000 })
+
+  const paint = await container.evaluate((el) => {
+    const cs = getComputedStyle(el)
+    return { filter: cs.filter, boxShadow: cs.boxShadow }
+  })
+  expect(paint.filter, '容器不得使用 filter: drop-shadow（翻页时会重画成重影）').toBe('none')
+  expect(paint.boxShadow, '应改用静态 box-shadow 保留台面投影').not.toBe('none')
+
+  await expectPageHealthy(page)
+})
+
+test('画册阅读器：翻页与跳转后，书的真实落点与页码指示一致', async ({ page }) => {
+  /*
+   * 回归证据（reflex 测得的真实缺陷）：本组件曾用「声明式当前页」把**对开序号**
+   * 当**叶索引**递给库的 `turnToPage()`（库内部 `pages.show(page)`），于是：
+   *   · 点一次「下一页」后库被打回封面 —— 指示器说 02，书停在 01；
+   *   · 章节直达停在错误的对开；End / Home 与跳转抢步，完全不动。
+   * 单页模式/旧的一张 sheet 顶一个对开的实现里，叶索引恰好等于对开序号，所以一直没暴露。
+   *
+   * 这条用例只认**库真正渲染出来的叶**（DOM 真相），因为页码指示是 React 状态，
+   * 可能领先于库；只有「书停在哪一屏」能证明两者没有脱钩。
+   */
+  await openFixtureBook(page)
+  await expect(page.locator('.art-flipbook-container .art-flip-page').first()).toBeVisible({ timeout: 20_000 })
+
+  const reader = page.locator('.book-reader')
+  const indicator = reader.locator('footer span[aria-live="polite"]')
+
+  // ① 第一屏：封面 + 前言
+  await expect(indicator).toHaveText(/^01 \//)
+  await expect.poll(() => visibleLeafIndexes(page)).toEqual([0, 1])
+
+  // ② 下一页：书必须跟着走（曾经被打回封面）
+  await reader.locator('footer button', { hasText: '下一页' }).click()
+  await expect(indicator).toHaveText(/^02 \//, { timeout: 20_000 })
+  await expect.poll(() => visibleLeafIndexes(page)).toEqual([2, 3])
+
+  // ③ 上一页
+  await reader.locator('footer button', { hasText: '上一页' }).click()
+  await expect(indicator).toHaveText(/^01 \//, { timeout: 20_000 })
+  await expect.poll(() => visibleLeafIndexes(page)).toEqual([0, 1])
+
+  // ④ 章节直达：DAY 02 引导页 = 逻辑页 8 → 对开 3 → 叶 6/7
+  await reader.locator('[aria-label="章节直达"] button').nth(1).click()
+  await expect(indicator).toHaveText(/^04 \//, { timeout: 20_000 })
+  await expect.poll(() => visibleLeafIndexes(page)).toEqual([6, 7])
+
+  // ⑤ End / Home。先移开焦点：焦点在按钮上时阅读器**故意**不接管键盘（交还原生行为）
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+  await page.keyboard.press('End')
+  await expect(indicator).toHaveText(/^10 \//, { timeout: 20_000 })
+  // 末对开只有一片叶（19 片叶两两成对，落单片画在左半）
+  await expect.poll(() => visibleLeafIndexes(page)).toEqual([18])
+
+  await page.keyboard.press('Home')
+  await expect(indicator).toHaveText(/^01 \//, { timeout: 20_000 })
+  await expect.poll(() => visibleLeafIndexes(page)).toEqual([0, 1])
 
   await expectPageHealthy(page)
 })

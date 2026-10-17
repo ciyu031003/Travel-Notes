@@ -10,8 +10,7 @@ import { useBookTheme, useBookTier, themeStyle } from '../book/themes/runtime'
 import { BOOK_THEME_METAS } from '../book/themes/types'
 import { preloadAdjacentSpreads } from '@/lib/modules/album/book/preload'
 import { composeFromSourceBook } from '@/lib/modules/album/book/mapper'
-import { paginate } from '@/lib/modules/album/book/paginate'
-import type { BookSpread } from '@/lib/modules/album/book/types'
+import { expandPages, paginate } from '@/lib/modules/album/book/paginate'
 
 /**
  * 旅行画册阅读器（Album 2.0 M1/M2/M3）
@@ -23,6 +22,13 @@ import type { BookSpread } from '@/lib/modules/album/book/types'
  * 【性能契约】页面集合只随 (book, isWide) 变化——**图片加载不会改变它**。
  * page-flip 实例只在真实 DOM 挂载时创建一次，之后不再 updateFromHtml。
  * 布局模式切换（<768px ↔ ≥768px）走 mountKey，重建整本书（必要成本，且可观测）。
+ *
+ * 【一屏一个对开】交付给 page-flip 的是**单叶**（一张物理页 = 一个页元素），
+ * 由库自己在 landscape 下两两成对 ⇒ 一屏恰好一个对开（左页 + 右页）。
+ * 曾经交付的是「一张 sheet = 一个对开（内部再分左右半）」的复合页，而库在
+ * landscape 下会把这种页再并排两片 —— 一屏于是出现 **2 个对开（4 个逻辑页）**，
+ * 且每片叶只有半页宽（0.4 画幅），照片被压得很小。`paginate()` 仍然保留，
+ * 作为对开分组/页码/章节直达的**唯一契约**（它与库的分组逐项一致，见 art 单测）。
  *
  * 【主题契约】主题（画报/胶片/手记）与视觉档（standard/lite/reduced）**只影响视觉**：
  * 不改变 pages / spreads 的数量与顺序，因此**切换主题不重建整本书**（只重渲染页内容）。
@@ -86,22 +92,33 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
    */
   const pendingSpreadRef = useRef<{ index: number; at: number } | null>(null)
 
-  // 每个跨页渲染成一张「对开 sheet」：左页 + 右页（单页模式下右页即全部）
+  /**
+   * 交付给 page-flip 的**叶**序列（一张物理页 = 一个页元素）。
+   *  - dual：跨页出血的逻辑页展开成左半 + 右半（`expandPages`），与 `paginate('dual')`
+   *    的物理页序列逐项相同 —— 因此库的两两配对结果 == `spreads`，一屏一个对开；
+   *  - single：逻辑页即物理页（整幅照片在单页里 contain 完整展示，不腰斩）。
+   */
+  const leaves = useMemo(
+    () => (isWide ? expandPages(composed.pages) : composed.pages),
+    [composed.pages, isWide],
+  )
+
+  // 每片叶渲染成独立一页：左页 / 右页由库并排成对开。
+  // 叶的位置（书脊阴影画在相对的内侧边）用**下标奇偶**判断，而不是取 `paginate` 的
+  // left/right：库在 landscape 下从 0 起两两成对（showCover=false），**落单的末页画在左半**，
+  // 而 `paginate` 的落单页约定是「右页起排」。两者分组一致，只有这一片落单页的左右归属不同，
+  // 所以位置按库的口径算。单页模式不加位置类（书页铺满，不画书脊阴影）。
   // 依赖里含 themeKey：换主题只重渲染页内容，**不**触发 ArtFlipBook 重建（mountKey 未变）
-  const sheets = useMemo(
-    () => spreads.map((spread: BookSpread) => (
-      <div key={spread.id} className={`book-sheet${spread.left ? '' : ' book-sheet--single'}`}>
-        {spread.left && (
-          <div className="book-sheet-side book-sheet-side--left">
-            <BookPageBody page={spread.left} themeKey={themeKey} />
-          </div>
-        )}
-        <div className="book-sheet-side book-sheet-side--right">
-          <BookPageBody page={spread.right} themeKey={themeKey} />
+  const leafNodes = useMemo(
+    () => leaves.map((page, index) => {
+      const side = isWide ? (index % 2 === 0 ? 'left' : 'right') : undefined
+      return (
+        <div key={page.id} className={`art-flip-leaf${side ? ` art-flip-leaf--${side}` : ''}`}>
+          <BookPageBody page={page} themeKey={themeKey} />
         </div>
-      </div>
-    )),
-    [spreads, themeKey],
+      )
+    }),
+    [leaves, isWide, themeKey],
   )
 
   const handleRuntimeMount = useCallback(() => {
@@ -339,14 +356,17 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           className={`art-flip-rig${isWide ? '' : ' art-flip-rig--single'}`}
         >
           {/* mountKey 由 (bookKey, 布局模式) 组成：只有真正换了页面集合才重建整本书。
-              主题与视觉档都不在 mountKey 里 —— 换主题不重建。 */}
+              主题与视觉档都不在 mountKey 里 —— 换主题不重建。
+              pages 必须是**叶**序列（一页一个元素）：见文件头「一屏一个对开」。
+              这里**不传**「当前页」prop：游标由库自己拥有，跳转一律走 goToSpread →
+              turnToSpread（命令式），页码由 onPageChange 回报驱动。
+              声明式同步会在双页展开下把对开序号当叶索引用，与跳转抢步（见 ArtFlipBook 文件头）。 */}
           <ArtFlipBook
             key={`${book.bookKey || book.travelId}:${isWide ? 'dual' : 'single'}`}
             mountKey={`${book.bookKey || book.travelId}:${isWide ? 'dual' : 'single'}`}
             ref={artFlipRef}
-            pages={sheets}
+            pages={leafNodes}
             onPageChange={handlePageChange}
-            currentPage={spreadIndex}
             portrait={!isWide}
             flippingTime={profile.flippingTime}
             drawShadow={profile.drawShadow}

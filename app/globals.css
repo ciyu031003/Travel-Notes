@@ -1744,9 +1744,11 @@ html.dark {
   background: linear-gradient(to right, rgba(28,30,24,0.12), rgba(28,30,24,0.03) 40%, transparent);
 }
 
-/* ===== Book Sheet（Album 2.0 M1/M2：对开容器 + 页型扩展） =====
-   page-flip 的每个 .art-flip-page 承载一张 sheet。双页模式下 sheet 内左右并排；
-   单页模式下只剩右页（sheet--single），宽度自然铺满。 */
+/* ===== 画册叶（Album 2.0 reader pass：一页一元素） =====
+   page-flip 的每个 .art-flip-page 承载**一张物理页**（0.8 画幅）。
+   双页模式下由库把相邻两叶并排成一个对开 —— 一屏一个对开。
+   （旧实现把「一个对开」做成一张内部再分左右半的 sheet，库在 landscape 下
+   再把这种页并排两片，一屏于是出现 4 个逻辑页、每页只有半页宽。） */
 
 /* 阅读器根：锁住纵向滚动手势，避免翻页拖拽触发移动端下拉刷新 */
 .book-reader {
@@ -1763,26 +1765,19 @@ html.dark {
   width: 100%;
   height: 100%;
 }
-.book-sheet {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.art-flip-leaf {
+  position: relative;
   width: 100%;
   height: 100%;
-}
-.book-sheet--single {
-  grid-template-columns: 1fr;
-}
-.book-sheet-side {
-  position: relative;
   overflow: hidden;
 }
-.book-sheet-side > * {
+.art-flip-leaf > * {
   width: 100%;
   height: 100%;
 }
-/* 书脊：左页右缘 / 右页左缘的内阴影，营造装订感 */
-.book-sheet-side--left::after,
-.book-sheet:not(.book-sheet--single) .book-sheet-side--right::before {
+/* 书脊：左叶右缘 / 右叶左缘的内阴影，营造装订感（单页模式不加这两个类） */
+.art-flip-leaf--left::after,
+.art-flip-leaf--right::before {
   content: '';
   position: absolute;
   top: 0;
@@ -1791,11 +1786,11 @@ html.dark {
   pointer-events: none;
   z-index: 4;
 }
-.book-sheet-side--left::after {
+.art-flip-leaf--left::after {
   right: 0;
   background: linear-gradient(to left, rgba(28, 30, 24, 0.16), rgba(28, 30, 24, 0));
 }
-.book-sheet:not(.book-sheet--single) .book-sheet-side--right::before {
+.art-flip-leaf--right::before {
   left: 0;
   background: linear-gradient(to right, rgba(28, 30, 24, 0.16), rgba(28, 30, 24, 0));
 }
@@ -1892,7 +1887,10 @@ html.dark {
   isolation: isolate;
   position: relative;
   width: 100%;
-  filter: drop-shadow(0 20px 30px rgba(29, 37, 21, 0.2));
+  /* 台面下的投影用 box-shadow（跟着**元素盒子**）而不是 filter: drop-shadow（跟着**内容 alpha**）。
+     后者会把「正在翻转的那一页」的轮廓再模糊画一遍 —— 书页下方于是出现一片随翻页移动的
+     模糊重影（用户报的"镜像重影"）。box-shadow 只认元素盒子，翻页时纹丝不动。 */
+  box-shadow: 0 20px 30px rgba(29, 37, 21, 0.22);
 }
 .art-flipbook-container .art-flip-page {
   position: relative;
@@ -2030,34 +2028,28 @@ html.dark {
 .book-reader[data-book-theme='film'] .art-page::after {
   mix-blend-mode: overlay;
 }
-/* 单页模式（窄屏）下书页本来就该铺满，不显示书脊阴影 */
-.book-sheet--single .book-sheet-side--left::after,
-.book-sheet--single::before {
-  content: none;
-}
-
 /* ---------- 视觉档（与主题正交） ---------- */
 /* lite：降阴影、降模糊、去掉贵的效果 */
 .book-reader[data-book-tier='lite'] .art-flipbook-container {
-  filter: drop-shadow(0 10px 16px rgba(29, 37, 21, 0.14));
+  box-shadow: 0 10px 16px rgba(29, 37, 21, 0.14);
 }
 .book-reader[data-book-tier='lite'] .art-page .oil-edge {
   display: none;
 }
-.book-reader[data-book-tier='lite'] .book-sheet-side--left::after,
-.book-reader[data-book-tier='lite'] .book-sheet-side--right::before {
+.book-reader[data-book-tier='lite'] .art-flip-leaf--left::after,
+.book-reader[data-book-tier='lite'] .art-flip-leaf--right::before {
   width: 3%;
 }
 /* reduced：无翻页动效（直切），并停掉一切装饰性过渡 */
 .book-reader[data-book-tier='reduced'] .art-flipbook-container {
-  filter: none;
+  box-shadow: none;
 }
 .book-reader[data-book-tier='reduced'] .art-page .oil-edge {
   display: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .book-reader .art-flip-page,
-  .book-reader .book-sheet,
+  .book-reader .art-flip-leaf,
   .book-reader .photo-blur {
     transition: none !important;
     animation: none !important;
