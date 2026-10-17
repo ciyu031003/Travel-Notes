@@ -96,6 +96,23 @@
 
 **备份**：改动前 `cp -a index.html ~/backups/yuanabd-index-$(date +%Y%m%d%H%M%S).html`。
 
+## ⚠️ 当前线上状态（2026-10-17）
+
+主站 `/var/www/yuanabd/index.html` 曾被重写成 2026-10-07 版（124KB，不含弹窗），
+导致「桌面点下载弹二维码弹窗」一度消失。2026-10-17 已按本文件重新落地一次：
+
+- 备份：`~/backups/yuanabd-index-20261017110919.html`、`~/backups/yuanabd-app-download-20261017110919.js`
+- `index.html`（125,943 B）改动 **3 处**：主 `<style>` 后引入 `./css/app-download.css`；
+  甜途卡片的版本 chip → `<span class="chip" data-app-version-chip><span data-app-version>v1.24.7</span> · LIVE</span>`；
+  下载按钮 → `data-app-download` 触发器（文案「扫码下载甜途 App」，`href` 保留作移动端/无 JS 回退）；
+  `</body>` 前插入弹窗结构与 `<script src="./js/app-download.js" defer>`。
+- 线上实测（Playwright，1440×900 / 390×844）：桌面点击弹窗、版本 v1.24.7 与 changelog 来自 `/api/version`、
+  二维码图加载正常且**逐模块解码 = `https://travel-notes.yuanabd.cn/downloads/tiantu.apk`**、
+  Esc / 遮罩关闭后滚动锁成对释放且焦点回到触发器、Tab 焦点被限制在弹窗内；
+  移动端点击**不弹窗**，直接跳 `/downloads/tiantu.apk`；控制台无报错。
+
+> ⚠️ 主站 `index.html` 不在本仓库，仍是最易丢失的资产。若再有重写，请按本文件 §「6 处改动」重新落地并跑一遍上面的验证。
+
 ## 依赖：nginx 同源代理 `/api/version`
 
 主站需能同源读取应用版本号（否则跨域被拦）。在 `www.yuanabd.cn` 的 443 server 块内：
@@ -120,5 +137,8 @@ location = /api/version {
 |---|---|
 | 桌面（≥768px）点击下载 | 留在本页弹出二维码弹窗 |
 | 移动端点击下载 | 不弹窗，直接进入应用下载页（含直装与原生识别） |
-| 无 JS | 走 `href` 回退，进入应用下载页 |
-| 版本号 | 页面加载即从 `/api/version` 拉取，填充所有 `[data-app-version]`；失败保留静态回退值 |
+| 无 JS | 走 `href` 回退，直接下载 `/downloads/tiantu.apk` |
+| 版本号 | 页面加载即从 `/api/version` 拉取，填充所有 `[data-app-version]`；等待期间 chip 显示「检查更新中…」，失败还原静态回退值 |
+| 更新说明 | 弹窗内 `[data-app-changelog]` 显示 `/api/version` 的 changelog（无则隐藏），App 每次发版门户自动同步 |
+| 可访问性 | 弹窗 `role=dialog aria-modal=true`；打开时焦点进弹窗、Tab 在弹窗内循环；Esc / 遮罩关闭并把焦点还给触发器；滚动锁 `body.is-locked` 成对加删 |
+| 缓存 | `/js/*.js` 由 nginx 长缓存 30d：**改脚本后要换文件名或改引用加版本参数**，否则老访客拿到旧脚本 |

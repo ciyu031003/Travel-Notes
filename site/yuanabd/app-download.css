@@ -137,3 +137,29 @@
 @media (prefers-reduced-motion: reduce) {
   .dl-modal__scrim, .dl-modal__panel { animation: none !important; }
 }
+
+/* ---------- 页面滚动锁 ----------
+   主站 body 滚动锁类名是 .is-locked；弹窗打开时由 app-download.js 成对加/删。 */
+body.is-locked { overflow: hidden; }
+
+/* ---------- 版本 chip 加载态 ----------
+   首屏 chip 在 /api/version 返回前显示「检查更新中…」，避免白闪写死的旧版本号。 */
+[data-app-version-chip] { min-width: 5.6em; justify-content: center; }
+
+
+/* ---------- data-ripple 指针事件防护 ----------
+   门户主站有一段 pointerdown 涟漪动画（ui 脚本）。若按钮命中真实链接并被 preventDefault，
+   涟漪动画会一直停在展开态盖住按钮内容；这里显式声明不参与该动画。 */
+[data-app-download] { --ripple: none; }
+
+/* ---------- 弹窗内版本 chip ----------
+   .chip 的 letter-spacing: .18em 会把 "v1.24.7" 拉成视觉上很大的空隙，弹窗内改紧凑一些。 */
+.dl-modal__meta .chip { letter-spacing: .04em; }
+
+/* ---------- 弹窗在窄屏上的收边 ---------- */
+@media (max-width: 480px) {
+  .dl-modal { padding: 14px; }
+  .dl-modal__panel { padding: 26px 20px 22px; border-radius: 22px; }
+  .dl-modal__qr { width: 184px; height: 184px; }
+  .dl-modal__actions { flex-direction: column; }
+}
