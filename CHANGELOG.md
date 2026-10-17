@@ -1,9 +1,9 @@
-## [未发布] - 2026-10-17
+## [1.24.7] - 2026-10-17
 
-> 画册阅读器翻页体验优化（Album 2.0 reader pass）：修掉两个 P0 ——
+> 画册阅读器翻页体验优化（Album 2.0 reader pass）**发版**：修掉两个 P0 ——
 > **开启系统「减弱动态效果」必白屏**、**低端机切换视觉档后整本书空白**。
 > tsc 0 错误 · lint 0 error · vitest **58 文件 / 538 用例全绿** · build 成功 ·
-> 画册 E2E **6/6 通过**。本轮**只提交，不发版/不打 OTA 包**。
+> 画册 E2E **6/6 通过**。已出 APK（1.24.7 / build 53）并完成 OTA 推送与门户扫码下载更新。
 
 ### Fixed
 
@@ -57,12 +57,37 @@
   下再 2-up 一次。要符合技能「一张跨页 = 一次翻页」的模型，需把交付给库的页集合
   改成单叶（`2N + 2` 张）并同步调整分页、章节直达与 E2E 页数断言。
 
+### 发布（1.24.7 / build 53）
+
+- 版本递增 1.24.6/b52 → **1.24.7/b53**（`node scripts/bump-version.cjs 1.24.7 53 --changelog "…"`，
+  `node scripts/verify-version.cjs 1.24.7 53` 通过：版本四处一致 / 构建号三处一致）。
+  之所以递增版本号：若沿用 1.24.6/b52，已装 b52 的设备在 `isNewerVersion()` 与构建号比较上都不成立，
+  OTA 永远不会提示更新。
+- 构建链：`node scripts/build-mobile.cjs`（www/ 698 文件 / 21.5MB，壳内 `1.24.7` 命中 4 个 chunk、
+  `1.24.6` 0 命中）→ `npx cap sync android`（7 个插件）→ `gradlew.bat assembleRelease` **BUILD SUCCESSFUL**。
+- 产物 `android/app/build/outputs/apk/release/app-release.apk`：26,318,242 字节，
+  SHA-256 `0856f0f03c021d9c63b87c27c7d596fdd2172910d09a65f17d2d486532def9c5`；
+  `aapt2` 读出 `versionCode=53 versionName=1.24.7`，`apksigner` 证书 MD5 `f67e57f3…` 不变（与 App 备案登记一致）。
+- 分发：`publish-apk-nginx.sh` 发布到 `/var/www/travel-notes-downloads/` —— 别名 `tiantu.apk` 与
+  副本 `tiantu-20261017-v1.24.7-b53.apk` 大小 / SHA-256 一致；公网 `/downloads/tiantu.apk`
+  200 + `Content-Range: bytes 0-1023/26318242`，完整下载后 SHA-256 与本地产物一致。
+- 服务端：`.env` 先备份（`.env.bak-20261017104559`）再改 `APP_VERSION=1.24.7` / `APP_BUILD_NUMBER=53` /
+  `APP_CHANGELOG`；`server-rebuild.sh` Docker 重建 exit 0（构建 ~11 分钟）。
+- 线上校验：`/api/health` → `1.24.7 / 53`；`/api/version`（含门户同源代理 `www.yuanabd.cn/api/version`）
+  → `1.24.7 / 53` + 本轮 changelog，`downloadUrl` 指向固定 APK 路径。
+- OTA 链路实测：`OTA_LIVE=1 NEXT_PUBLIC_APP_VERSION=1.24.0 NEXT_PUBLIC_APP_BUILD_NUMBER=46 …
+  npx playwright test tests/e2e/ota-live.spec.ts` → **2/2 通过**（模拟 b46 旧壳打开会出现「发现新版本 v1.24.7」，
+  「立即更新」拿到原生下载桥 `https://travel-notes.yuanabd.cn/downloads/tiantu.apk`）。
+- 门户扫码下载：弹窗二维码固定指向 `/downloads/tiantu.apk`（**不变即指向新版**），
+  版本号由 `js/app-download.js` 从同源 `/api/version` 动态读取 → 门户自动显示 v1.24.7，无需改主站。
+
 ---
 
 ## [1.24.6] - 2026-10-17
 
 > 修复两个顽固缺陷：行程时间时区错乱、抽屉导航点不动（**均有实测证据**）。
 > tsc 0 错误 · lint 0 error · vitest **57 文件 / 530 用例全绿** · build 成功。
+> 已发版为 1.24.6 / build 52。
 
 ### Fixed
 
