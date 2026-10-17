@@ -1,10 +1,10 @@
-## [未发布] - 2026-10-17
+## [1.24.8] - 2026-10-17
 
 > 本批三件事：① **画册阅读器第二轮（reader pass 2）**；② **首页 Hero 叠加参考站
 > `mytravelmap.cn` 的「地图即索引」语言（暖色版）** —— 地图标记自带照片张数 +
 > hero 统计行补「张照片」；③ **旅行圈互动（点赞 / 评论 / 收藏）补齐 + 「点开别人的
 > 旅行」详情页精修**。
-> **本轮不发版**（不改版本号、不打包、不推 OTA）。
+> **已发版为 1.24.8 / build 54**：APK 已构建并发布到固定下载路径，OTA 链路实测通过。
 > 按 `create-photo-flipbook-ui` 技能对阅读器运行时的要求（**一张跨页 = 一次翻页**、
 > 保留书脊阴影与自适应版式、桌面与移动端都要复看）把交付给 `page-flip` 的页集合
 > 改成**单叶**，落地「一屏一个对开、一页一张照片」；顺带修掉**翻页时书页下方的镜像重影**，
@@ -144,6 +144,33 @@
   **幂等**语义（upsert / deleteMany / 回传真实计数 / 评论不存在时明确报错），
   防止有人把它改回「两边都 toggle」。
 - 新增 3 例 `circlePostCommentsHref` 单测：两种路由形状的参数拼接（`?` vs `&`）与非法 id。
+
+### 发布（1.24.8 / build 54）
+
+- 版本递增 1.24.7/b53 → **1.24.8/b54**（`node scripts/bump-version.cjs 1.24.8 54 --changelog "…"`，
+  `node scripts/verify-version.cjs 1.24.8 54`：版本四处一致 / 构建号三处一致 / 无 BOM）。
+  必须递增构建号：沿用 b53 的话，已装 b53 的设备在 `isNewerVersion()` 与构建号比较上都不成立，
+  OTA 永远不会提示更新。
+- 构建链：`NEXT_PUBLIC_API_BASE=https://travel-notes.yuanabd.cn node scripts/build-mobile.cjs`
+  （壳内 `1.24.8` 命中 **4** 个文件、`1.24.7` **0** 命中）→ `npx cap sync android`（7 个插件）
+  → `gradlew.bat assembleRelease` **BUILD SUCCESSFUL**（1m 8s）。
+- 产物 `android/app/build/outputs/apk/release/app-release.apk`：**26,327,901 字节**，
+  SHA-256 `3fd8e9f7caefdb45052adb66cbb4decf409661ab9d6cd4a6c2bd271e212a393d`；
+  `aapt2` 读出 `versionCode=54 versionName=1.24.8`（包名 `com.tiantu.app` / 甜途），
+  `apksigner` 证书 MD5 `f67e57f3f461346c59547f2e47c5c29d` **与历史版本一致**（App 备案登记的那把钥匙）。
+- 分发：`publish-apk-nginx.sh` → `/var/www/travel-notes-downloads/`：别名 `tiantu.apk` 与副本
+  `tiantu-20261017-v1.24.8-b54.apk` 大小 / SHA-256 一致；公网 `/downloads/tiantu.apk`
+  **200 + `Accept-Ranges: bytes`**，`Content-Length` 26,327,901 与本地产物相同。
+- 服务端：`.env` 先备份（`.env.bak-<时间戳>`）再改 `APP_VERSION=1.24.8` /
+  `APP_BUILD_NUMBER=54` / `APP_CHANGELOG`；`server-rebuild.sh` Docker 重建 exit 0（构建约 12 分钟）。
+- 线上校验：`/api/health` → **1.24.8 / 54**；`/api/version` → `1.24.8 / 54` + 本轮 changelog
+  （按 UTF-8 读回确认中文完好，73 字），`downloadUrl` 仍指向固定 APK 路径；
+  部署产物内 CSS 命中 `circle-story-pill` 与 `art-flip-page{position:absolute}`（本轮两项前端改动的产物级证据）。
+- OTA 链路实测：`OTA_LIVE=1 NEXT_PUBLIC_APP_VERSION=1.24.0 NEXT_PUBLIC_APP_BUILD_NUMBER=46
+  NEXT_PUBLIC_API_BASE=https://travel-notes.yuanabd.cn npx playwright test tests/e2e/ota-live.spec.ts`
+  → **2/2 通过**（模拟 b46 旧壳打开会出现「发现新版本 v1.24.8」，下载桥拿到 `…/downloads/tiantu.apk`）。
+- 线上冒烟：`/`、`/circle`、`/login` 均 200（`/circle` 游客可直接浏览、不再被弹去登录），
+  无 4xx/5xx、无控制台报错。
 
 ## [1.24.7] - 2026-10-17
 
