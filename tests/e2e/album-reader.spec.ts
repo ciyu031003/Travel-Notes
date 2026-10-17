@@ -247,3 +247,29 @@ test('画册阅读器：移动端单页模式无横向溢出', async ({ page }) 
 
   await expectPageHealthy(page)
 })
+
+test('画册阅读器：系统「减弱动态效果」下仍是真书（不是加载失败兜底）', async ({ page }) => {
+  /*
+   * 回归证据：视觉档 reduced 的语义是「直切」，BOOK_TIER_PROFILES.reduced.flippingTime = 0；
+   * 而 page-flip 的 getSettings() 会对 flippingTime <= 0 抛 "Invalid flipping time"，
+   * 构造失败 → 组件落到「翻页组件加载失败」兜底。也就是说：**任何开启了系统级
+   * 「减弱动态效果」的用户打开画册都是白屏**（连"重新加载"也救不回来）。
+   * 现在换成 resolveFlippingTime(0) = 1ms（一帧内走完，肉眼等同直切）。
+   */
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await openFixtureBook(page)
+
+  const reader = page.locator('.book-reader')
+  // 档位确实降到了 reduced（否则这条用例没测到目标路径）
+  await expect(reader).toHaveAttribute('data-book-tier', 'reduced', { timeout: 15_000 })
+
+  // ① 真书：页元素在，且没有兜底面板
+  await expect(page.locator('.art-flipbook-container .art-flip-page').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.locator('.art-flip-fallback')).toHaveCount(0)
+
+  // ② 直切档位依然可以翻页
+  await reader.locator('footer button', { hasText: '下一页' }).click()
+  await expect(reader.locator('footer span[aria-live="polite"]')).toHaveText(/^02 \//, { timeout: 20_000 })
+
+  await expectPageHealthy(page)
+})

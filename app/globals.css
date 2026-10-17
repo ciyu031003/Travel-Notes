@@ -1871,16 +1871,22 @@ html.dark {
 }
 
 /* ===== ArtFlipBook 容器（page-flip 库） ===== */
+/* 翻页台面：宽度由「台面高度」反推（双页 1.6 / 单页 0.8 画幅），高度铺满可用空间。
+   --book-stage-h 定义在此（同时就是 JS 落地前的兜底值），实测值由 BookReader
+   直接写到本元素的 inline style 上（inline 优先于这条声明）。
+   为什么不再用 calc(100dvh - 108px)：顶栏 / 底栏 / 刘海屏安全区一变，
+   那个魔术数字就会让书页被裁掉脚下。 */
 .art-flip-rig {
+  --book-stage-h: 520px;
   display: grid;
   place-items: center;
-  width: min(92vw, calc((100dvh - 108px) * 1.6), 1080px);
-  height: min(calc(100dvh - 108px), 720px);
-  min-height: 280px;
+  width: min(100%, calc(var(--book-stage-h) * 1.6), 1080px);
+  height: 100%;
+  min-height: 0;
 }
 /* 单页翻页（窄屏）模式：书页画幅 0.8，容器收窄避免单页被拉宽变形 */
 .art-flip-rig--single {
-  width: min(92vw, calc((100dvh - 108px) * 0.8), 640px);
+  width: min(100%, calc(var(--book-stage-h) * 0.8), 640px);
 }
 .art-flipbook-container {
   isolation: isolate;

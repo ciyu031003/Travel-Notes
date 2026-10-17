@@ -75,6 +75,8 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
 
   const artFlipRef = useRef<ArtFlipBookHandle>(null)
   const [spreadIndex, setSpreadIndex] = useState(0)
+  /** 是否已经翻过页：首次翻开提示只在「从未翻过」之前出现 */
+  const [hasTurned, setHasTurned] = useState(false)
   /** page-flip 实例创建次数：性能契约的可观测断言点（应为 1；仅布局模式切换时 +1） */
   const mountCountRef = useRef(0)
   /**
@@ -104,6 +106,9 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
 
   const handleRuntimeMount = useCallback(() => {
     mountCountRef.current += 1
+    // 实例建好后按**已量到的台面高度**再测量一次：首次挂载时 page-flip 可能在
+    // --book-stage-h 落地前就按兜底值定过尺寸（桌面端书页宽高会差一截）。
+    requestAnimationFrame(() => artFlipRef.current?.refresh())
   }, [])
 
   /**
@@ -143,31 +148,63 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
     preloadAdjacentSpreads(spreads, spreadIndex)
   }, [spreads, spreadIndex])
 
+  // 翻过任何一页后，首次翻开提示永久收起（本次阅读会话内）
+  useEffect(() => {
+    if (spreadIndex > 0) setHasTurned(true)
+  }, [spreadIndex])
+
   // 挂载：把阅读器顶到内容起点，避免从墙上点击后继续停在旧位置造成视觉错位
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior })
   }, [])
 
-  // 阅读器容器尺寸：iOS 工具栏收起/展开、横竖屏切换都会改变可用高度。
-  // CSS 用 100dvh 已经能跟上一部分，但 art-flip-rig 的 min/max 与 page-flip 的
-  // autoSize 重新测量需要一个显式信号 —— 用 ResizeObserver 同步一个 data 标记。
+  // 翻页台面尺寸：iOS 工具栏收起/展开、横竖屏切换、刘海屏安全区都会改变可用高度。
+  //
+  // 为什么必须**真实量**：page-flip 用 autoSize 按**宽度**自适应，而书页高度由宽度
+  // 推出（双页 1.6 / 单页 0.8 画幅）。所以「台面高度」决定书页宽度上限，靠
+  // `calc(100dvh - 108px)` 这类魔术数字估算顶/底栏高度，一遇安全区或顶栏改版就会
+  // 让书页被裁掉脚下。这里量的是 <main>（顶/底栏与安全区都已被 flex 布局扣掉）。
+  const stageRef = useRef<HTMLElement | null>(null)
   const rigRef = useRef<HTMLDivElement | null>(null)
+  const [stageH, setStageH] = useState(0)
+  /** 容器尺寸变化信号（同时进 data 属性，便于实测/诊断） */
   const [rigVersion, setRigVersion] = useState(0)
+
   useEffect(() => {
-    const el = rigRef.current
-    if (!el || typeof ResizeObserver === 'undefined') return
-    let last = { w: 0, h: 0 }
-    const ro = new ResizeObserver((entries) => {
-      const box = entries[0]?.contentRect
-      if (!box) return
+    const el = stageRef.current
+    if (!el) return
+    let last = 0
+    const sync = () => {
+      // 取**内容盒**高度：main 的 padding 是留给书页的呼吸位，
+      // 用 padding 盒会把书页顶到顶栏/底栏的边线上（书页高度正好等于台面高度）。
+      const cs = getComputedStyle(el)
+      const h = Math.max(
+        0,
+        Math.round(el.clientHeight - parseFloat(cs.paddingTop || '0') - parseFloat(cs.paddingBottom || '0')),
+      )
       // 忽略亚像素抖动，避免 page-flip 反复重排
-      if (Math.abs(box.width - last.w) < 2 && Math.abs(box.height - last.h) < 2) return
-      last = { w: box.width, h: box.height }
+      if (Math.abs(h - last) < 2) return
+      last = h
+      setStageH(h)
       setRigVersion((v) => v + 1)
-    })
+    }
+    sync()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', sync)
+      return () => window.removeEventListener('resize', sync)
+    }
+    const ro = new ResizeObserver(sync)
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // 台面高度写进 CSS 变量（`.art-flip-rig` 用它反推书页宽度上限），并催库重新测量。
+  // 用 setProperty 而不是 style 属性：自定义属性不在 React 的 CSSProperties 类型里。
+  useEffect(() => {
+    if (stageH <= 0) return
+    rigRef.current?.style.setProperty('--book-stage-h', `${stageH}px`)
+    artFlipRef.current?.refresh()
+  }, [stageH])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -206,6 +243,10 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
 
   const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/70 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20'
   const isCover = spreadIndex === 0
+  // 首次翻开提示：与 page-flip 的实际命中区域一致 —— 双页模式点右半页向前
+  // （左半页向后），单页模式左右滑动 / 点页面右侧向前。
+  const showFlipHint = isCover && !hasTurned
+  const flipHint = isWide ? '点击右半页或按 → 翻页' : '左右滑动翻页'
   const total = spreads.length
   const currentLabel = `${String(spreadIndex + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`
   const currentThemeMeta = BOOK_THEME_METAS.find((m) => m.key === themeKey) ?? BOOK_THEME_METAS[0]
@@ -217,7 +258,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
       data-book-theme={theme.key}
       data-book-tier={tier}
     >
-      <header className="flex items-center justify-between gap-2 border-b border-travel-dim/40 px-3 py-2.5 sm:px-4 dark:border-shell-line">
+      <header className="flex items-center justify-between gap-2 border-b border-travel-dim/40 px-3 pb-2.5 pt-[max(10px,env(safe-area-inset-top))] sm:px-4 dark:border-shell-line">
         <button
           type="button"
           onClick={onBack}
@@ -288,7 +329,10 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
         </div>
       </header>
 
-      <main className="relative flex flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-3">
+      <main
+        ref={stageRef}
+        className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-3"
+      >
         <div
           ref={rigRef}
           data-rig-version={rigVersion}
@@ -332,17 +376,28 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
         )}
       </main>
 
-      <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-3 py-2.5 sm:justify-center sm:px-4 dark:border-shell-line">
+      <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 sm:justify-center sm:px-4 dark:border-shell-line">
         <button type="button" onClick={() => artFlipRef.current?.flipPrev()} className={navBtn}>
           <Icon icon={ChevronLeft} size="sm" />上一页
         </button>
-        <div className="flex min-w-0 flex-1 items-center justify-center sm:flex-none sm:px-5">
+        <div className="flex min-w-0 flex-1 flex-col items-center justify-center sm:flex-none sm:px-5">
           <span
             aria-live="polite"
             aria-label={`第 ${spreadIndex + 1} 页，共 ${total} 页`}
             className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60 dark:text-shell-muted"
           >
             {currentLabel}
+          </span>
+          {/*
+            首次翻开提示：行高常驻固定高度，只在封面且从未翻页时填字。
+            这样提示出现/消失不会改变底栏高度 —— 否则台面高度会变，
+            书页要跟着重新丈量（视觉上抖一下）。
+          */}
+          <span
+            aria-hidden="true"
+            className="h-3 shrink-0 text-[11px] leading-3 text-travel-ink/45 dark:text-shell-faint"
+          >
+            {showFlipHint ? flipHint : ''}
           </span>
         </div>
         <button type="button" onClick={() => artFlipRef.current?.flipNext()} className={navBtn}>

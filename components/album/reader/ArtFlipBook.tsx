@@ -1,6 +1,11 @@
 'use client'
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import {
+  DEFAULT_FLIPPING_TIME_MS,
+  resolveFlippingTime,
+  resolveShadowOpacity,
+} from '@/lib/modules/album/book/flip-runtime'
 
 /* ==========================================================================
    ArtFlipBook — 基于 St.PageFlip 的 React 封装
@@ -19,6 +24,15 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
      2. 需要换页面集合时，改 `mountKey`，由 React 连容器 DOM 一起重建（显式、可计数）；
      3. 用 callback ref 而非 useEffect 建实例——这样 React StrictMode 的
         「挂载→卸载→再挂载」模拟不会重复创建，也不会留下被 destroy 过的脏容器。
+
+   【容器 key 不变式】容器元素的 `key` 必须覆盖「建实例 effect」的**全部**输入
+   （mountKey / portrait / retryNonce）。原因在第 2 条：库的 `destroy()` 会连带
+   移除整棵页元素 DOM，而 React 以为页元素还在原容器里。只要 effect 在一次
+   「容器没换」的情况下重跑，新实例就会 `loadFromHTML` 到 0 个页元素 ——
+   画册直接变空白。所以「会重建」的输入必须同时进 key。
+
+   【视觉档只在运行时同步】翻页时长 / 阴影属于视觉档，不是页面集合，
+   改它们走 `getSettings()` 活对象（见下方 sync effect），不进 key。
    ========================================================================== */
 
 /** 把「当前翻动单位」上报出去：landscape 双页展开下 spread 数才是总页数 */
@@ -33,6 +47,12 @@ export interface ArtFlipBookHandle {
   getCurrentSpread: () => number
   getCurrentPage: () => number
   getPageCount: () => number
+  /**
+   * 让库按**当前容器尺寸**重新测量（含横竖朝向重判）。
+   * 容器的宽高由外部「台面高度」推导，尺寸变化不一定伴随 window resize
+   * （首次量到台面高度、iOS 工具栏收放、安全区变化），此时必须显式催一次。
+   */
+  refresh: () => void
 }
 
 interface ArtFlipBookProps {
@@ -64,6 +84,10 @@ interface PageFlipCollection {
   getCurrentSpreadIndex?: () => number
   getSpreadIndexByPage?: (page: number) => number | null
 }
+interface PageFlipUI {
+  /** 重排入口：内部走 `render.update()`，会重算 bounds/朝向并按需上报 */
+  update?: () => void
+}
 interface PageFlipInstance {
   loadFromHTML: (els: NodeListOf<HTMLElement>) => void
   on: (event: string, cb: () => void) => void
@@ -75,8 +99,22 @@ interface PageFlipInstance {
   getCurrentPageIndex: () => number
   getPageCount: () => number
   getPageCollection?: () => PageFlipCollection
+  /**
+   * 运行时设置对象。库里的 `getSettings()` 返回的是**活对象**（`Object.assign`
+   * 到内部 default 上），改写字段即对后续动画生效。
+   */
+  getSettings?: () => PageFlipSettings
+  /** UI 层：暴露重新测量的入口 */
+  getUI?: () => PageFlipUI
 }
 type PageFlipCtor = new (el: HTMLElement, settings: Record<string, unknown>) => PageFlipInstance
+
+/** 本组件会运行时改写的设置字段（只列用到的那部分） */
+interface PageFlipSettings {
+  flippingTime: number
+  drawShadow: boolean
+  maxShadowOpacity: number
+}
 
 const SCRIPT_FLAG = 'artFlipbook'
 
@@ -122,7 +160,7 @@ function ensureRuntime(): Promise<PageFlipCtor> {
  * - 边缘点击、滑动翻页
  */
 const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function ArtFlipBook(
-  { pages, flippingTime = 760, portrait = true, drawShadow = true, onPageChange, currentPage, mountKey = 0, onRuntimeMount },
+  { pages, flippingTime = DEFAULT_FLIPPING_TIME_MS, portrait = true, drawShadow = true, onPageChange, currentPage, mountKey = 0, onRuntimeMount },
   ref,
 ) {
   const pageFlipRef = useRef<PageFlipInstance | null>(null)
@@ -140,6 +178,18 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
   onPageChangeRef.current = onPageChange
   onRuntimeMountRef.current = onRuntimeMount
 
+  /**
+   * 建实例时用到的运行时参数（已换算成库可接受值）。
+   *
+   * 走 ref 而不是 effect 依赖：视觉档变化必须**只改活实例的设置**，
+   * 不能让建实例的 effect 重跑 —— 重跑会在同一个容器上销毁旧实例
+   * （`destroy()` 会移除整棵页元素 DOM），新实例随即 `loadFromHTML` 到 0 页。
+   * `resolveFlippingTime` 同时保证 `flippingTime` 恒 > 0：库对
+   * `flippingTime <= 0` 直接抛 "Invalid flipping time"（reduced 档语义值就是 0）。
+   */
+  const runtimeSettingsRef = useRef({ flippingTime: resolveFlippingTime(flippingTime), drawShadow })
+  runtimeSettingsRef.current = { flippingTime: resolveFlippingTime(flippingTime), drawShadow }
+
   // callback ref：只在真实 DOM 挂载/卸载时触发，StrictMode 的模拟卸载不会让容器变脏
   const setContainer = useCallback((el: HTMLDivElement | null) => {
     setPendingEl(el)
@@ -154,6 +204,7 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
       .then((PageFlip) => {
         if (cancelled || disposedRef.current) return
 
+        const runtime = runtimeSettingsRef.current
         instance = new PageFlip(pendingEl, {
           width: 512,
           height: 640,
@@ -162,12 +213,12 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
           maxWidth: Math.max(1, Math.round(512 * 1.04)),
           minHeight: Math.max(1, Math.round(640 * 0.56)),
           maxHeight: Math.max(1, Math.round(640 * 1.04)),
-          drawShadow,
-          flippingTime,
+          drawShadow: runtime.drawShadow,
+          flippingTime: runtime.flippingTime,
           usePortrait: portrait,
           startZIndex: 10,
           autoSize: true,
-          maxShadowOpacity: 0.42,
+          maxShadowOpacity: resolveShadowOpacity(runtime.drawShadow),
           showCover: true,
           mobileScrollSupport: false,
           clickEventForward: true,
@@ -221,7 +272,25 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
       }
       if (pageFlipRef.current === instance) pageFlipRef.current = null
     }
-  }, [pendingEl, flippingTime, portrait, drawShadow, mountKey])
+    // 依赖只留「容器身份」：见文件头的容器 key 不变式。
+    // flippingTime / drawShadow 走 runtimeSettingsRef + 下面的 sync effect。
+  }, [pendingEl, portrait, mountKey])
+
+  /**
+   * 视觉档运行时同步（翻页时长 / 阴影）。
+   *
+   * 为什么不能靠重建实例：`destroy()` 会把整棵页元素 DOM 一起移除，而 React 认为
+   * 这些页元素还挂在容器里，于是重建后的新实例 `loadFromHTML` 拿到空 NodeList。
+   * 结果是「低端机 detectTier 落在 lite」或「系统开启 reduced-motion」的用户
+   * 打开画册时整本书消失。库的 settings 是活对象，直接改写即可生效。
+   */
+  useEffect(() => {
+    const settings = pageFlipRef.current?.getSettings?.()
+    if (!settings) return
+    settings.flippingTime = resolveFlippingTime(flippingTime)
+    settings.drawShadow = drawShadow
+    settings.maxShadowOpacity = resolveShadowOpacity(drawShadow)
+  }, [flippingTime, drawShadow, pendingEl, mountKey])
 
   // 卸载标记：异步 ensureRuntime 回调里据此丢弃过期结果
   useEffect(() => () => {
@@ -281,6 +350,7 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
     getCurrentSpread: () => pageFlipRef.current?.getPageCollection?.()?.getCurrentSpreadIndex?.() ?? 0,
     getCurrentPage: () => pageFlipRef.current?.getCurrentPageIndex() ?? 0,
     getPageCount: () => pageFlipRef.current?.getPageCount() ?? 0,
+    refresh: () => pageFlipRef.current?.getUI?.().update?.(),
   }), [pendingEl, mountKey])
 
   const retry = useCallback(() => {
@@ -291,8 +361,14 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
   }, [])
 
   return (
-    // key=retryNonce：重试时连 DOM 一起重建，避免复用被 destroy 过的脏容器
-    <div key={retryNonce} ref={setContainer} className="art-flipbook-container">
+    // 容器 key 覆盖建实例 effect 的全部输入（mountKey / portrait / retryNonce）：
+    // 任何会让 effect 重跑的输入都必须同时换掉容器 DOM，否则会在被 destroy 过的
+    // 脏容器上重建实例，页元素全丢（见文件头容器 key 不变式）。
+    <div
+      key={`${mountKey}:${portrait ? 'portrait' : 'landscape'}:${retryNonce}`}
+      ref={setContainer}
+      className="art-flipbook-container"
+    >
       {pages.map((page, i) => (
         <div
           key={i}

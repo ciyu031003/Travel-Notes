@@ -1,3 +1,64 @@
+## [未发布] - 2026-10-17
+
+> 画册阅读器翻页体验优化（Album 2.0 reader pass）：修掉两个 P0 ——
+> **开启系统「减弱动态效果」必白屏**、**低端机切换视觉档后整本书空白**。
+> tsc 0 错误 · lint 0 error · vitest **58 文件 / 538 用例全绿** · build 成功 ·
+> 画册 E2E **6/6 通过**。本轮**只提交，不发版/不打 OTA 包**。
+
+### Fixed
+
+- **系统「减弱动态效果」打开画册必白屏（P0）**
+  视觉档 `reduced` 的语义是「直切」，其 `flippingTime = 0`；而 vendored 的
+  `page-flip` 2.0.7 在 `getSettings()` 里对 `flippingTime <= 0` **直接抛
+  `Invalid flipping time`**。构造失败即落到「翻页组件加载失败」兜底 —— 连
+  「重新加载」也救不回来。`detectTier()` 在 `prefers-reduced-motion: reduce` 时
+  **强制**返回 reduced，因此 iOS「减弱动态效果」用户全部打不开画册。
+
+  修法：新增 `lib/modules/album/book/flip-runtime.ts` 收口「语义值 → 库可接受值」
+  （`resolveFlippingTime(0) = 1ms`，一帧内走完，肉眼等同直切）。
+
+- **低端机／切换视觉档后整本书空白（P0）**
+  建实例的 effect 依赖里含视觉档派生的 `flippingTime` / `drawShadow`，而真实档位在
+  挂载后才由 `detectTier()` 落定（低内存设备为 `lite`），effect 于是会在**同一个容器
+  DOM** 上重跑。`page-flip` 的 `destroy()` 会连同整棵页元素 DOM 一起移除，
+  React 却以为页元素还在容器里 —— 新实例 `loadFromHTML` 拿到 0 个页元素，画册空白。
+
+  修法：容器 `key` 覆盖建实例 effect 的全部输入（mountKey / portrait / retryNonce），
+  视觉档改为**运行时同步** `getSettings()` 活对象，切档位不再重建整本书
+  （延续 M2「主题/档位不重建」契约）。
+
+### Changed
+
+- **翻页台面尺寸改实测**：`BookReader` 用 `ResizeObserver` 实测 `<main>` 内容盒高度，
+  写 `--book-stage-h` 给 `.art-flip-rig` 反推书页宽度上限。原
+  `calc(100dvh - 108px)` 在安全区/顶栏变化时会裁到书页（实测旧值已外溢 2px）；
+  并为 `ArtFlipBook` 增加 `refresh()`，容器尺寸变化但不伴随 `window.resize` 时
+  显式催一次重新测量。
+- **移动端安全区**：画册顶栏 / 底栏补 `env(safe-area-inset-*)`，底栏「上一页 / 下一页」
+  不再压在 Home Indicator 上。
+- **首次翻开提示**：封面且未翻页时底栏显示一次「点击右半页 / 左右滑动」提示，
+  翻过一页即收起；提示行高度常驻，不触发台面重算。
+- **单页模式可用宽度**：`.art-flip-rig--single` 由 `92vw` 改为 `100%`（父级已有内边距），
+  390px 视口下课页宽度 359px → 374px。
+
+### 测试
+
+- 新增 `tests/unit/book-flip-runtime.test.ts`（8 例）：锁定「任何档位的
+  `flippingTime` 换算后恒 > 0」这条库契约，以及阴影档位换算。
+- 新增 E2E `画册阅读器：系统「减弱动态效果」下仍是真书（不是加载失败兜底）`。
+  **已双向验证**：把 `resolveFlippingTime` 临时还原为原样透传 0 后该例失败
+  （`.art-flip-fallback` 出现），确认它是缺陷的真回归护栏，而不是恰好通过的断言。
+- `tests/e2e/album-reader.spec.ts` 6/6 通过（原有 5 例不变）。
+
+### 说明
+
+- 遗留观察（本轮未改，建议单独排期）：桌面双页模式下一屏会同时出现 2 个对开，
+  因为本项目把「一张 sheet = 一个对开」交给 `page-flip`，而库自身在 landscape
+  下再 2-up 一次。要符合技能「一张跨页 = 一次翻页」的模型，需把交付给库的页集合
+  改成单叶（`2N + 2` 张）并同步调整分页、章节直达与 E2E 页数断言。
+
+---
+
 ## [1.24.6] - 2026-10-17
 
 > 修复两个顽固缺陷：行程时间时区错乱、抽屉导航点不动（**均有实测证据**）。
