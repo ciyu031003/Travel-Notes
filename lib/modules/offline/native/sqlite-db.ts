@@ -72,6 +72,11 @@ export const DESIRED_COLUMNS: Record<string, Array<[string, string]>> = {
     ['travelId', 'INTEGER'], ['visibility', 'TEXT'], ['isPublic', 'INTEGER'], ['updatedAt', 'INTEGER'],
     ['syncStatus', 'TEXT'], ['deleted', 'INTEGER'],
   ],
+  /**
+   * 首页快照（P2-29）：老库没有这张表时由 CREATE TABLE IF NOT EXISTS 建；
+   * 这里登记非主键列，保证"表已存在但缺列"的情况下自愈也能补齐。
+   */
+  home_snapshot: [['json', 'TEXT'], ['updatedAt', 'INTEGER']],
   album_media: [['mediaId', 'TEXT'], ['sortOrder', 'INTEGER']],
   memory_media: [['mediaId', 'TEXT'], ['sortOrder', 'INTEGER'], ['updatedAt', 'INTEGER']],
   media: [

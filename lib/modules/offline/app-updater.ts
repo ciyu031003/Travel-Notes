@@ -17,7 +17,7 @@ export interface AppUpdaterPlugin {
   canInstall(): Promise<{ allowed: boolean; sdkInt: number }>
   openInstallSettings(): Promise<void>
   /** 未授权安装未知应用时返回 { needsPermission: true }（不抛错，便于前端引导） */
-  downloadAndInstall(options: { url: string; fileName?: string }): Promise<{
+  downloadAndInstall(options: { url: string; fileName?: string; sha256?: string; size?: number }): Promise<{
     started?: boolean
     needsPermission?: boolean
   }>
@@ -54,9 +54,23 @@ export const appUpdater = {
     if (!isNativePlatform()) return
     await AppUpdater.openInstallSettings()
   },
-  async downloadAndInstall(url: string): Promise<{ started?: boolean; needsPermission?: boolean }> {
+  /**
+   * 下载并安装。
+   * sha256/size 来自 /api/version（P2-30）：原生侧下载完成后校验哈希，
+   * 不匹配就删掉临时文件并报错 —— 避免 CDN/中间环节返回损坏包时用户只看到
+   * 系统安装器的"解析包错误"。服务端未配置时传空，原生侧跳过校验（向后兼容）。
+   */
+  async downloadAndInstall(
+    url: string,
+    integrity?: { sha256?: string; size?: number },
+  ): Promise<{ started?: boolean; needsPermission?: boolean }> {
     if (!isNativePlatform()) return { started: false }
-    return AppUpdater.downloadAndInstall({ url, fileName: UPDATE_FILE_NAME })
+    return AppUpdater.downloadAndInstall({
+      url,
+      fileName: UPDATE_FILE_NAME,
+      sha256: integrity?.sha256 || '',
+      size: integrity?.size && integrity.size > 0 ? integrity.size : 0,
+    })
   },
   async installDownloaded(): Promise<{ needsPermission?: boolean }> {
     if (!isNativePlatform()) return {}

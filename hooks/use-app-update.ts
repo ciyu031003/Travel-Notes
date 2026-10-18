@@ -12,6 +12,37 @@ export interface VersionManifest {
   downloadUrl: string
   changelog?: string
   forceUpdate?: boolean
+  /** APK SHA-256（服务端未配置时为空字符串/缺省：跳过校验）—— P2-30 */
+  sha256?: string
+  /** APK 字节数（0/缺省=未知）：用于下载前展示体积 —— P2-30 */
+  size?: number
+  /** 低于该 buildNumber 必须更新（0/缺省=不强制）—— P2-30 */
+  minSupportedBuild?: number
+  /** 灰度比例 0-100（缺省=全量）—— P2-30 */
+  rolloutPercent?: number
+}
+
+/**
+ * 灰度判定（P2-30）：按"本机稳定随机数"取模。
+ *
+ * 为什么不用账号：/api/version 是匿名可访问的（登录前就要能更新），
+ * 没有账号维度可用；用 localStorage 里的一次性随机桶，保证同一台设备
+ * 在灰度期内表现稳定（不会这次提示、下次又不提示）。
+ */
+function inRollout(percent: number | undefined): boolean {
+  if (percent == null || percent >= 100) return true
+  if (percent <= 0) return false
+  try {
+    const KEY = 'app-rollout-bucket'
+    let bucket = Number(localStorage.getItem(KEY))
+    if (!Number.isFinite(bucket) || bucket < 0 || bucket >= 100) {
+      bucket = Math.floor(Math.random() * 100)
+      localStorage.setItem(KEY, String(bucket))
+    }
+    return bucket < percent
+  } catch {
+    return true // 存不了就按全量，宁可多提示也不漏更新
+  }
 }
 
 /**
@@ -41,9 +72,19 @@ export function useAppUpdate() {
     fetch(apiUrl('/api/version'), { credentials: 'include' })
       .then((r) => r.json())
       .then((m: VersionManifest) => {
-        const newerVersion = isNewerVersion(APP_VERSION, m?.version || '0.0.0')
-        const newerBuild = Number(m?.buildNumber || 0) > APP_BUILD_NUMBER
-        if (newerVersion || newerBuild) setManifest(m)
+        if (!m) return
+        const newerVersion = isNewerVersion(APP_VERSION, m.version || '0.0.0')
+        const newerBuild = Number(m.buildNumber || 0) > APP_BUILD_NUMBER
+        /**
+         * P2-30：低于 minSupportedBuild 的客户端**必须**更新（服务端用它封掉已知坏版本）；
+         * 其余情况仍按版本号/构建号判断，并受灰度比例约束。
+         */
+        const belowMin = Number(m.minSupportedBuild || 0) > APP_BUILD_NUMBER
+        if (belowMin) {
+          setManifest({ ...m, forceUpdate: true })
+          return
+        }
+        if ((newerVersion || newerBuild) && inRollout(m.rolloutPercent)) setManifest(m)
       })
       .catch(() => {})
   }, [])
@@ -99,7 +140,10 @@ export function useAppUpdate() {
         setStatus('needsPermission')
         return
       }
-      const r = await appUpdater.downloadAndInstall(manifest.downloadUrl)
+      const r = await appUpdater.downloadAndInstall(manifest.downloadUrl, {
+        sha256: manifest.sha256,
+        size: manifest.size,
+      })
       if (r?.needsPermission) {
         setStatus('needsPermission')
         return
@@ -160,6 +204,8 @@ export function useAppUpdate() {
   return {
     hasUpdate: manifest != null && !dismissed,
     manifest,
+    /** "12.3 MB" 形式的体积文案（manifest.size=0/缺省为 null）；UI 由 AppUpdatePrompt 展示 */
+    apkSizeLabel: manifest?.size && manifest.size > 0 ? (manifest.size / 1024 / 1024).toFixed(1) + ' MB' : null,
     dismiss,
     /** 兼容旧调用点 */
     download: startUpdate,

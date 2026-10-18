@@ -23,8 +23,16 @@ export type EntityType =
   | 'LIKE'
   | 'FAVORITE'
 
-/** 队列项状态 */
-export type QueueStatus = 'PENDING' | 'SYNCING' | 'FAILED'
+/**
+ * 队列项状态。
+ *
+ * DEAD = 永久失败，**不再自动重试**（P1-23）。两类来源：
+ *   · 服务端明确拒绝（4xx，除 408/429）—— 重试一万次结果也一样；
+ *   · 重试次数超过上限（MAX_SYNC_RETRY）。
+ * 之前只有 FAILED：任何 4xx 都会被无限重试，队列只增不减，用户永远看到"失败 N 项"。
+ * DEAD 项在同步中心单独展示（含服务端错误原文），由用户决定重试或删除。
+ */
+export type QueueStatus = 'PENDING' | 'SYNCING' | 'FAILED' | 'DEAD'
 
 /** 本地记录通用字段 */
 export interface LocalRecord {

@@ -1,10 +1,22 @@
 apply plugin: 'com.android.application'
 
-// Release 签名（本地 keystore.properties 提供，不入库；缺失时 release 构建使用默认调试签名）
+// Release 签名（本地 keystore.properties 提供，不入库）
 def keystorePropertiesFile = rootProject.file('keystore.properties')
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
+/**
+ * P2-6：release 构建缺 keystore 必须**失败**，不能静默回退调试签名。
+ *
+ * 之前的行为是"有就配、没有就算了"：在换机器/CI 上会产出一个 debug 签名的
+ * "release" 包 —— 老用户无法覆盖安装（签名冲突），只能卸载重装（本地数据全丢）。
+ * 只在本次构建包含 Release 任务时抛，避免影响 assembleDebug 与单测。
+ */
+def buildingRelease = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+if (buildingRelease && !keystorePropertiesFile.exists()) {
+    throw new GradleException('缺少 android/keystore.properties：release 包必须使用发布签名，禁止回退 debug 签名')
 }
 
 android {
@@ -17,6 +29,13 @@ android {
         versionCode 54
         versionName "1.24.8"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        /**
+         * P2-26：只打真机 ABI。之前 4 个 ABI 全打，libsqlcipher.so 的
+         * x86/x86_64 两份（约 4.3MB 压缩后）只有模拟器会用，对用户是纯体积。
+         */
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
@@ -35,8 +54,14 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            /**
+             * P2-26：开启 R8 代码裁剪 + 资源裁剪。
+             * 未裁剪时 classes.dex + classes2.dex 原始 14MB（压缩后 5.18MB）；
+             * 保留规则见 proguard-rules.pro（Capacitor/插件反射入口全部保住）。
+             */
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release
             }

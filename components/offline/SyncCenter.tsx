@@ -17,10 +17,10 @@ import { Switch } from '@/components/mobile/Switch'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Stagger } from '@/components/mobile/Stagger'
 
-type StatCounts = { PENDING: number; SYNCING: number; FAILED: number }
+type StatCounts = { PENDING: number; SYNCING: number; FAILED: number; DEAD: number }
 
 export default function SyncCenter() {
-  const [stats, setStats] = useState<StatCounts>({ PENDING: 0, SYNCING: 0, FAILED: 0 })
+  const [stats, setStats] = useState<StatCounts>({ PENDING: 0, SYNCING: 0, FAILED: 0, DEAD: 0 })
   const [failed, setFailed] = useState<SyncQueueItem[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -47,7 +47,11 @@ export default function SyncCenter() {
       const queue = new SyncQueue(getSyncQueueStorage())
       const [s, all] = await Promise.all([queue.stats(), queue.all()])
       setStats(s)
-      setFailed(all.filter((i) => i.status === 'FAILED'))
+      /**
+       * P1-23：DEAD（服务端明确拒绝/重试到顶）也要展示出来。
+       * 只展示 FAILED 的话，永久失败的项会"从界面上消失"，用户不知道自己的内容没上去。
+       */
+      setFailed(all.filter((i) => i.status === 'FAILED' || i.status === 'DEAD'))
       setError('')
     } catch (e) {
       setError(e instanceof Error ? e.message : '读取同步状态失败')
@@ -86,7 +90,7 @@ export default function SyncCenter() {
     }
   }
 
-  const total = stats.PENDING + stats.SYNCING + stats.FAILED
+  const total = stats.PENDING + stats.SYNCING + stats.FAILED + stats.DEAD
 
   return (
     <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
@@ -121,6 +125,7 @@ export default function SyncCenter() {
                 ['待上传', stats.PENDING],
                 ['上传中', stats.SYNCING],
                 ['失败', stats.FAILED],
+                ['无法同步', stats.DEAD],
               ] as Array<[string, number]>).map(([label, value]) => (
                 <div key={label} className="rounded-[1.4rem] bg-[var(--social-surface-80)] p-5 text-center ring-1 ring-[var(--social-line)]">
                   <CountUp value={value} mobileOnly className="text-2xl font-semibold tabular-nums" />
@@ -183,7 +188,10 @@ export default function SyncCenter() {
                     <div key={f.id} className="m-pressable flex items-center gap-3 rounded-[1.2rem] bg-[var(--social-surface-80)] px-4 py-3 ring-1 ring-[var(--social-line)]">
                       <div className="min-w-0 flex-1">
                         <div className="text-sm">{f.entityType} · {f.operation}</div>
-                        <div className="mt-0.5 truncate text-xs text-[var(--social-faint)]">{f.lastError || '同步失败'}</div>
+                        <div className="mt-0.5 truncate text-xs text-[var(--social-faint)]">
+                    {f.status === 'DEAD' ? '已停止自动重试 · ' : ''}
+                    {f.lastError || '同步失败'}
+                  </div>
                       </div>
                       <button type="button" onClick={() => retryOne(f.id)} disabled={busy} className="rounded-full bg-[var(--social-accent-soft)] px-3 py-1.5 text-xs text-[var(--social-accent)] transition hover:bg-[var(--social-accent)] hover:text-[var(--social-on-accent)] active:scale-95 disabled:opacity-50">重试</button>
                     </div>

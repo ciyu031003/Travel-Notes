@@ -60,6 +60,9 @@ export const CREATE_TABLES_SQL: string[] = [
     "memoryId TEXT NOT NULL, mediaId TEXT NOT NULL, sortOrder INTEGER NOT NULL DEFAULT 0, " +
     "updatedAt INTEGER NOT NULL, PRIMARY KEY (memoryId, mediaId))",
 
+  // 首页快照（P2-29：离线首屏兜底，由 home-snapshot.ts 写入）
+  "CREATE TABLE IF NOT EXISTS home_snapshot (key TEXT PRIMARY KEY, json TEXT NOT NULL, updatedAt INTEGER NOT NULL)",
+
   // 碎碎念
   "CREATE TABLE IF NOT EXISTS moment (" +
     "id TEXT PRIMARY KEY, remoteId INTEGER, content TEXT, tags TEXT, userId INTEGER, isPublic INTEGER, " +

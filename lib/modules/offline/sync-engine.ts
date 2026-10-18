@@ -1,18 +1,27 @@
 /**
- * 同步引擎（Stage 3.4）：
- * - 网络恢复/启动时自动触发 sync
- * - 失败项指数退避重试（30s 起，2^n 倍，上限 6 次≈32min）
- * - 逐条回放 PENDING 队列：成功移除、失败累加重试
+ * 同步引擎（Stage 3.4 / P1-23 收敛）：
+ * - 网络恢复/启动时自动触发 sync；启动首轮**只上传不拉取**（首屏不跟首页抢带宽）
+ * - 失败项指数退避重试（30s 起，2^n 倍，指数上限 6 ⇒ 最长 32min 一轮）
+ * - **重试次数有上限**：到 MAX_SYNC_RETRY(8) 进 DEAD；服务端 4xx 立即 DEAD
+ * - 逐条回放 PENDING 队列：成功移除、失败累加重试，单轮最多 MAX_UPLOAD_PER_ROUND 条
  */
 import { SyncQueue } from './sync-queue'
 import { onNetworkChange } from './native/network'
 import { isNativePlatform } from './platform'
+import { isPermanentSyncError } from './sync-dispatcher'
 import type { SyncDispatcher } from './sync-dispatcher'
 import type { PullDispatcher } from './pull-dispatcher'
 import { pullEntityTypes } from './pull'
 import { markEntitySynced } from './local-write'
+import { reconcileOfflineState } from './reconcile'
 
 const BASE_RETRY_MS = 30_000
+
+/**
+ * 单轮上传条数上限（P1-23）。
+ * 串行上传时一轮几十条会让这一轮长时间占着网络与锁；分批回放让 UI/其它请求有机会插入。
+ */
+const MAX_UPLOAD_PER_ROUND = 20
 
 /** 下载拉取的实体类型（D-4 首期离线读范围：碎碎念 / 旅行 / 相册 + D2 旅行圈 Feed） */
 const PULL_ENTITY_TYPES = ['MOMENT', 'TRAVEL', 'ALBUM', 'SOCIAL_POST'] as const
@@ -35,10 +44,16 @@ export class SyncEngine {
     private puller?: PullDispatcher,
   ) {}
 
-  /** 启动：订阅网络变化 + 立即同步一次 */
+  /** 启动：对账 → 订阅网络变化 → 首轮只上传（不拉取） */
   async start(): Promise<void> {
     if (this.running) return
     this.running = true
+    /**
+     * P1-24：启动先对账。
+     * 进程被杀可能留下两种脏状态：① 行已写但队列项没入（内容永远不上传）；
+     * ② 队列项卡在 SYNCING（上传中被杀）。这里一次性修掉，避免"永久待同步"。
+     */
+    await this.guard('reconcile', () => reconcileOfflineState(this.queue))
     if (isNativePlatform()) {
       const off = await onNetworkChange((state) => {
         if (state.connected) void this.sync()
@@ -51,7 +66,8 @@ export class SyncEngine {
     }
     // 新写入及失败退避不能只等 App 重启/网络变化；定期回放持久队列。
     this.retryTimer = setInterval(() => { void this.sync() }, BASE_RETRY_MS)
-    void this.sync()
+    // 首轮只上传：冷启动时首页还要拉 /api/home，4 个全量 pull 不该跟它抢同一条移动网络
+    void this.sync({ skipPull: true })
   }
 
   stop(): void {
@@ -76,14 +92,14 @@ export class SyncEngine {
    *       ② 每个阶段独立 try/catch，任一阶段失败不影响其他阶段；
    *       ③ 错误记录到 lastError，便于线上定位。
    */
-  async sync(): Promise<void> {
+  async sync(options?: { skipPull?: boolean }): Promise<void> {
     if (this.syncing) return
     this.syncing = true
     this.lastError = null
     try {
       await this.guard('uploadPending', () => this.uploadPending())
       await this.guard('requeueDue', () => this.requeueDue())
-      const written = (await this.guard('pullRemote', () => this.pullRemote())) ?? 0
+      const written = options?.skipPull ? 0 : ((await this.guard('pullRemote', () => this.pullRemote())) ?? 0)
       this.lastSyncStats = { at: Date.now(), written }
     } finally {
       this.syncing = false
@@ -121,16 +137,25 @@ export class SyncEngine {
     }
   }
 
-  /** 逐条回放 PENDING */
+  /** 逐条回放 PENDING（单轮最多 MAX_UPLOAD_PER_ROUND 条） */
   private async uploadPending(): Promise<void> {
-    const pending = await this.queue.pending()
+    const pending = (await this.queue.pending()).slice(0, MAX_UPLOAD_PER_ROUND)
     for (const item of pending) {
       let uploaded: { remoteId?: number | null; slug?: string } | null = null
       try {
         await this.queue.markSyncing(item.id)
         uploaded = await this.dispatcher.upload(item)
       } catch (e) {
-        await this.queue.markFailed(item.id, e instanceof Error ? e.message : '同步失败').catch(() => {})
+        const msg = e instanceof Error ? e.message : '同步失败'
+        if (isPermanentSyncError(e)) {
+          /**
+           * P1-23：服务端明确拒绝（4xx 校验/权限/已删除）→ 直接 DEAD。
+           * 这类错误重试不会自愈，留着重试只会让队列永远"失败 N 项"。
+           */
+          await this.queue.markDead(item.id, msg).catch(() => {})
+        } else {
+          await this.queue.markFailed(item.id, msg).catch(() => {})
+        }
         continue
       }
       /**

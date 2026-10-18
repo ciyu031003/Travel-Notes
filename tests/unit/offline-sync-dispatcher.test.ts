@@ -129,7 +129,9 @@ describe("社交互动同步（单次序列化 / 历史兼容 / 幂等取消）"
     const [item] = await queue.pending()
     expect(typeof item.payload).toBe("string")
     // 关键：parse 一次就必须拿到对象（旧实现这里得到的是 string）
-    expect(JSON.parse(item.payload)).toEqual({ postId: 42 })
+    // P1-23：队列项现在额外带幂等键 __clientMutationId（请求头用，发请求体时会被剥掉）
+    expect(JSON.parse(item.payload)).toMatchObject({ postId: 42 })
+    expect(typeof JSON.parse(item.payload).__clientMutationId).toBe("string")
 
     const fetchMock = mockJson({ success: true, liked: true, likeCount: 1 })
     vi.stubGlobal("fetch", fetchMock)

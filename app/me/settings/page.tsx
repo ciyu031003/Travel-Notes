@@ -25,6 +25,9 @@ import { toast } from '@/lib/mobile/toast-store'
 import { useSessionRedirect } from '@/hooks/use-session-redirect'
 import IcpLicense from '@/components/IcpLicense'
 import { APP_VERSION, APP_BUILD_NUMBER } from '@/lib/app-version'
+import { stopSyncEngine } from '@/lib/modules/offline/bootstrap'
+import { purgeOfflineForLogout } from '@/lib/modules/offline/reset'
+import { resetAccountScopeCache } from '@/lib/modules/offline/account-scope'
 
 /**
  * 「账号设置」独立页（R3）。
@@ -93,7 +96,24 @@ export default function MeSettingsPage() {
     }
   }
 
+  /**
+   * 退出登录（M-1 / P1-22）。
+   *
+   * 顺序刻意如此：**先清本地，再注销会话**。
+   *  - 本地 SQLite 是全局单库，不清就会出现"换账号后仍能看到上一个账号的旅行"；
+   *  - 待同步队列若留着，会带着**下一个账号的 Cookie** 上传（数据污染）；
+   *  - 每一步都包 try/catch：本地存储异常（插件坏、磁盘满）不能把用户困在登录态里。
+   */
   const logout = async () => {
+    try {
+      stopSyncEngine()
+    } catch {}
+    try {
+      await purgeOfflineForLogout()
+    } catch {}
+    try {
+      resetAccountScopeCache()
+    } catch {}
     try {
       await fetch(apiUrl('/api/logout'), { method: 'POST', credentials: 'include' })
     } catch {}

@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -89,6 +90,12 @@ public class AppUpdaterPlugin extends Plugin {
     public void downloadAndInstall(PluginCall call) {
         final String url = call.getString("url");
         final String fileName = call.getString("fileName", DEFAULT_FILE_NAME);
+        /**
+         * P2-30：APK 完整性校验值（/api/version 下发）。
+         * 为空表示服务端未配置（旧部署）→ 跳过校验，保持向后兼容；
+         * 非空则下载边算 SHA-256，不一致直接删包报错，不进安装器。
+         */
+        final String expectSha256 = call.getString("sha256", "");
         if (url == null || url.isEmpty()) {
             call.reject("缺少下载地址");
             return;
@@ -141,8 +148,11 @@ public class AppUpdaterPlugin extends Plugin {
                 long received = 0;
                 int lastPercent = -1;
                 int n;
+                final boolean verifySha = expectSha256 != null && !expectSha256.isEmpty();
+                final MessageDigest digest = verifySha ? MessageDigest.getInstance("SHA-256") : null;
                 while ((n = in.read(buf)) > 0) {
                     out.write(buf, 0, n);
+                    if (digest != null) digest.update(buf, 0, n);
                     received += n;
                     if (total > 0) {
                         int percent = (int) (received * 100 / total);
@@ -160,6 +170,14 @@ public class AppUpdaterPlugin extends Plugin {
                 out.close();
                 out = null;
                 in.close();
+
+                // 完整性校验：不一致说明传输损坏或被中间环节替换，绝不交给系统安装器
+                if (digest != null) {
+                    final String actual = toHex(digest.digest());
+                    if (!actual.equalsIgnoreCase(expectSha256.trim())) {
+                        throw new Exception("安装包校验失败（SHA-256 不匹配），请重试下载");
+                    }
+                }
 
                 if (target.exists() && !target.delete()) {
                     throw new Exception("无法覆盖旧的安装包");
@@ -242,6 +260,17 @@ public class AppUpdaterPlugin extends Plugin {
         JSObject err = new JSObject();
         err.put("message", message);
         notify("downloadFailed", err);
+    }
+
+    /** 字节数组 → 小写十六进制 */
+    private static String toHex(final byte[] bytes) {
+        final StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            final String hex = Integer.toHexString(b & 0xff);
+            if (hex.length() == 1) sb.append('0');
+            sb.append(hex);
+        }
+        return sb.toString();
     }
 
     private void runOnUi(Runnable action) {

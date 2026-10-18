@@ -5,6 +5,7 @@
 import { queryRows, tableColumnNames, type Row } from './dao'
 import { rowGet } from './native/sqlite-db'
 import { isNativePlatform } from './platform'
+import { ensureOfflineAccountScope } from './account-scope'
 import { makeTravelSlug } from '@/lib/modules/travel/slug'
 
 export interface LocalTravelPost {
@@ -54,6 +55,13 @@ const LOCAL_TRAVEL_SELECT =
 
 async function queryLocalTravelRows(): Promise<LocalTravelRow[] | null> {
   if (!isNativePlatform()) return null
+  /**
+   * M-1：读之前先确认本地库归属的账号与当前会话一致。
+   * 不一致时 ensureOfflineAccountScope 会清空本地数据，于是这里的 SELECT 自然为空，
+   * 也就不会把上一个账号的旅行通过 /travel 的"本地 merge"分支显示给新账号。
+   * （TTL 内是进程内缓存，热路径无额外网络请求。）
+   */
+  await ensureOfflineAccountScope()
   try {
     return await queryRows(LOCAL_TRAVEL_SELECT)
   } catch {

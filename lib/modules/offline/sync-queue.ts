@@ -5,6 +5,58 @@
  */
 import type { EntityType, SyncOperation, SyncQueueItem, QueueStatus } from './types'
 
+/**
+ * 失败重试上限（P1-23）。到顶后进 DEAD，不再自动重试。
+ *
+ * 指数退避在 retryCount=8 时已到 30s×2^6≈32min：再往后每 32 分钟骚扰一次服务端
+ * 既无意义（4xx 不会自愈）也掩盖了真正需要用户处理的问题。
+ */
+export const MAX_SYNC_RETRY = 8
+
+/**
+ * 幂等键在 payload JSON 里的保留键。
+ *
+ * 为什么不加一列：`sync_queue` 表在老设备上已存在且没有迁移框架（靠自愈补列），
+ * 加列要同时改 DESIRED_COLUMNS + INSERT + SELECT；而 payload 本来就是整条透传的
+ * JSON，塞一个保留键零成本。服务端暂不消费，客户端先带出去（Idempotency-Key 头）。
+ */
+export const CLIENT_MUTATION_ID_KEY = '__clientMutationId'
+
+function newMutationId(): string | null {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  } catch {
+    // 老 WebView 没有 randomUUID：退化为无幂等键（行为与改动前一致）
+  }
+  return null
+}
+
+/**
+ * 把 clientMutationId 写进 payload。
+ * 兼容两种历史形态：对象（常规）与**已 JSON 化的字符串**（媒体上传传的是字符串，
+ * 直接 JSON.stringify 会双重编码，decodeSyncPayload 就是为此存在的）。
+ */
+function withClientMutationId(payload: unknown): string {
+  let obj: Record<string, unknown>
+  if (typeof payload === 'string') {
+    try {
+      const parsed = JSON.parse(payload)
+      obj = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : { value: parsed }
+    } catch {
+      obj = { value: payload }
+    }
+  } else if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+    obj = { ...(payload as Record<string, unknown>) }
+  } else {
+    obj = { value: payload ?? null }
+  }
+  if (!obj[CLIENT_MUTATION_ID_KEY]) {
+    const id = newMutationId()
+    if (id) obj[CLIENT_MUTATION_ID_KEY] = id
+  }
+  return JSON.stringify(obj)
+}
+
 export interface EnqueueInput {
   entityType: EntityType
   entityId: string | null
@@ -31,7 +83,8 @@ export class SyncQueue {
       entityId: input.entityId,
       remoteId: input.remoteId,
       operation: input.operation,
-      payload: JSON.stringify(input.payload ?? {}),
+      // 入队即生成幂等键：之后无论重试多少轮，服务端看到的都是同一个 clientMutationId
+      payload: withClientMutationId(input.payload),
       retryCount: 0,
       status: 'PENDING',
       lastError: null,
@@ -76,20 +129,35 @@ export class SyncQueue {
     }
   }
 
-  /** 同步失败：累加重试次数 + 记录错误 */
-  async markFailed(id: number, error: string): Promise<void> {
+  /**
+   * 同步失败：累加重试次数；**达到上限直接进 DEAD**（不再无限重试）。
+   * 返回最终状态，供引擎决定是否还要继续这一轮。
+   */
+  async markFailed(id: number, error: string): Promise<QueueStatus | null> {
     const items = await this.storage.list()
     const item = items.find((i) => i.id === id)
-    if (!item) return
+    if (!item) return null
+    const retryCount = item.retryCount + 1
+    const dead = retryCount >= MAX_SYNC_RETRY
     await this.storage.update(id, {
-      status: 'FAILED',
-      retryCount: item.retryCount + 1,
+      status: dead ? 'DEAD' : 'FAILED',
+      retryCount,
+      lastError: dead ? error + '（已停止重试，可在同步中心手动重试）' : error,
+      updatedAt: Date.now(),
+    })
+    return dead ? 'DEAD' : 'FAILED'
+  }
+
+  /** 永久失败（服务端明确拒绝 / 重试到顶）：不再自动重试 */
+  async markDead(id: number, error: string): Promise<void> {
+    await this.storage.update(id, {
+      status: 'DEAD',
       lastError: error,
       updatedAt: Date.now(),
     })
   }
 
-  /** 一键重试：失败项回到 PENDING */
+  /** 一键重试：失败/永久失败项回到 PENDING（用户显式操作，重算退避） */
   async retry(id: number): Promise<void> {
     await this.storage.update(id, { status: 'PENDING', lastError: null, updatedAt: Date.now() })
   }
@@ -102,7 +170,7 @@ export class SyncQueue {
   /** 统计各状态数量（供同步中心 UI） */
   async stats(): Promise<Record<QueueStatus, number>> {
     const items = await this.storage.list()
-    const acc: Record<QueueStatus, number> = { PENDING: 0, SYNCING: 0, FAILED: 0 }
+    const acc: Record<QueueStatus, number> = { PENDING: 0, SYNCING: 0, FAILED: 0, DEAD: 0 }
     for (const item of items) acc[item.status] = (acc[item.status] || 0) + 1
     return acc
   }

@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server'
-import { APP_VERSION, APP_BUILD_NUMBER, APP_DOWNLOAD_URL } from '@/lib/app-version'
+import {
+  APP_VERSION,
+  APP_BUILD_NUMBER,
+  APP_DOWNLOAD_URL,
+  APP_APK_SHA256,
+  APP_APK_SIZE,
+  APP_MIN_SUPPORTED_BUILD,
+  APP_ROLLOUT_PERCENT,
+} from '@/lib/app-version'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,11 +21,21 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   // 部署时 APP_FORCE_UPDATE=1 开启强制更新（默认不强制）
   const forceUpdate = process.env.APP_FORCE_UPDATE === '1'
+  /**
+   * P2-30：新增字段全部**向后兼容**（旧客户端忽略未知字段即可）。
+   *  · sha256 / size：下载完整性与体积展示（原生侧下载后校验，见 AppUpdaterPlugin）；
+   *  · minSupportedBuild：低于它的客户端必须更新（封掉已知有问题的旧版本）；
+   *  · rolloutPercent：灰度比例（100 = 全量，缺省即全量，所以不配也不改变现有行为）。
+   */
   return NextResponse.json({
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
     changelog: process.env.APP_CHANGELOG || '画册翻页更顺：一屏一个对开，并修掉翻页时书页下方的重影；旅行圈补齐评论点赞与列表收藏，点开别人的旅行版面重做；首页足迹地图显示每个省份的旅行张数。',
     forceUpdate,
+    sha256: APP_APK_SHA256,
+    size: APP_APK_SIZE,
+    minSupportedBuild: APP_MIN_SUPPORTED_BUILD,
+    rolloutPercent: APP_ROLLOUT_PERCENT,
   })
 }

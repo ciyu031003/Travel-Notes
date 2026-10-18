@@ -20,6 +20,24 @@ export interface LocalWriteInput {
 export async function writeLocalEntity(input: LocalWriteInput, queue: SyncQueue): Promise<void> {
   if (!isNativePlatform()) return
 
+  /**
+   * P1-24（M-3）：**先入队，再写行**。
+   *
+   * 反过来的顺序有一个真实的失效窗口：行写成功、入队前进程被杀（低内存/用户强杀），
+   * 那条记录就变成"有行、无队列项"——SyncEngine 只读队列，于是它永远不上传；
+   * 而 pull 又对 PENDING_UPLOAD 永久跳过，所以它也永远不会被远端覆盖。
+   * 队列先行后，最坏情况只是"队列有项、行没写"：上传成功后由 markEntitySynced 回填，
+   * （行不存在时 UPDATE 无效果，但同步中心与远端都已有这份数据，不会丢内容）。
+   * write-through.ts 的注释里早已按"先入队、再写行"假设，这里把实现对齐。
+   */
+  await queue.enqueue({
+    entityType: input.entityType,
+    entityId: input.id,
+    remoteId: input.remoteId,
+    operation: input.operation,
+    payload: input.data,
+  })
+
   const db = await getOfflineDb()
   const now = Date.now()
 
@@ -48,14 +66,6 @@ export async function writeLocalEntity(input: LocalWriteInput, queue: SyncQueue)
     const sql = 'INSERT INTO ' + input.table + ' (' + cols.join(', ') + ') VALUES (' + placeholders + ') ON CONFLICT(id) DO UPDATE SET ' + updates
     await db.run(sql, cols.map((c) => full[c]))
   }
-
-  await queue.enqueue({
-    entityType: input.entityType,
-    entityId: input.id,
-    remoteId: input.remoteId,
-    operation: input.operation,
-    payload: input.data,
-  })
 }
 
 /** 实体类型 → 本地表名（离线写 + 同步回写共用） */

@@ -9,6 +9,7 @@
  */
 import { getOfflineDb, toRows, rowGet, tableColumns } from './native/sqlite-db'
 import { isNativePlatform } from './platform'
+import { setMeta, META_KEYS } from './meta'
 import type { PullDispatcher, PullEntity } from './pull-dispatcher'
 import type { EntityType } from './types'
 
@@ -101,11 +102,14 @@ export async function applyPullEntity(entity: PullEntity): Promise<boolean> {
 export async function pullEntityTypes(dispatcher: PullDispatcher, entityTypes: EntityType[]): Promise<number> {
   if (!isNativePlatform()) return 0
   let written = 0
+  /** 所有类型都成功才推进游标：否则下次 since 会跳过失败类型的增量（静默丢更新） */
+  let allTypesOk = true
   for (const type of entityTypes) {
     let entities: PullEntity[]
     try {
       entities = await dispatcher.pull(type)
     } catch {
+      allTypesOk = false
       continue // 该类型拉取失败（网络/服务端）：跳过，不影响其他类型
     }
     for (const entity of entities) {
@@ -115,6 +119,13 @@ export async function pullEntityTypes(dispatcher: PullDispatcher, entityTypes: E
         console.warn('[pull] 单条落地失败，已跳过：', entity?.table, e instanceof Error ? e.message : e)
       }
     }
+  }
+  /**
+   * 增量拉取游标（P2-29）：下一次 pull 带上 updatedSince，服务端支持后即变成增量同步。
+   * 服务端当前忽略该参数 → 行为与改动前完全一致（每次仍返回全量），所以是安全的兼容加法。
+   */
+  if (allTypesOk && entityTypes.length > 0) {
+    await setMeta(META_KEYS.lastSyncAt, Date.now())
   }
   return written
 }

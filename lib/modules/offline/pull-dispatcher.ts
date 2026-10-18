@@ -4,7 +4,26 @@
  * MEMORY / MEDIA / TRAVEL_DAY / ALBUM_MEDIA 需要 spaceId 作用域接口或详情扇出，留待后续子阶段。
  */
 import { apiUrl } from '@/lib/api-base'
+import { getMeta, META_KEYS } from './meta'
 import type { EntityType } from './types'
+
+/**
+ * 增量拉取游标（P2-29）。
+ *
+ * 客户端先带出去，服务端支持后即自动生效；**服务端未支持时行为不变**（多余 query 参数被忽略）。
+ * 时间用毫秒时间戳字符串，避免服务端/客户端时区与格式歧义。
+ */
+async function sinceParam(): Promise<string> {
+  const raw = await getMeta(META_KEYS.lastSyncAt)
+  const since = raw ? Number(raw) : 0
+  return Number.isFinite(since) && since > 0 ? 'updatedSince=' + Math.floor(since) : ''
+}
+
+function withQuery(url: string, ...parts: string[]): string {
+  const qs = parts.filter(Boolean).join('&')
+  if (!qs) return url
+  return url + (url.includes('?') ? '&' : '?') + qs
+}
 
 /** 一条待落地的远端记录（已映射为本地表列名 → 值） */
 export interface PullEntity {
@@ -46,7 +65,7 @@ export class HttpPullDispatcher implements PullDispatcher {
   }
 
   private async pullMoments(): Promise<PullEntity[]> {
-    const res = await fetch(apiUrl('/api/admin/moments?page=1&pageSize=200'), { credentials: 'include' })
+    const res = await fetch(apiUrl(withQuery('/api/admin/moments?page=1&pageSize=200', await sinceParam())), { credentials: 'include' })
     if (!res.ok) return []
     const json = await res.json()
     const rows = json?.data?.data ?? []
@@ -65,7 +84,7 @@ export class HttpPullDispatcher implements PullDispatcher {
   }
 
   private async pullTravels(): Promise<PullEntity[]> {
-    const res = await fetch(apiUrl('/api/admin/travels'), { credentials: 'include' })
+    const res = await fetch(apiUrl(withQuery('/api/admin/travels', await sinceParam())), { credentials: 'include' })
     if (!res.ok) return []
     const json = await res.json()
     const rows = json?.travels ?? []
@@ -92,7 +111,7 @@ export class HttpPullDispatcher implements PullDispatcher {
   }
 
   private async pullAlbums(): Promise<PullEntity[]> {
-    const res = await fetch(apiUrl('/api/admin/albums'), { credentials: 'include' })
+    const res = await fetch(apiUrl(withQuery('/api/admin/albums', await sinceParam())), { credentials: 'include' })
     if (!res.ok) return []
     const json = await res.json()
     const rows = json?.albums ?? []
@@ -118,7 +137,7 @@ export class HttpPullDispatcher implements PullDispatcher {
 
   /** 旅行圈 Feed 缓存（D2 社交离线读）：拉推荐 Feed 前若干条进本地 social_post */
   private async pullSocialPosts(): Promise<PullEntity[]> {
-    const res = await fetch(apiUrl('/api/social/posts?tab=recommended&page=1&pageSize=50'), { credentials: 'include' })
+    const res = await fetch(apiUrl(withQuery('/api/social/posts?tab=recommended&page=1&pageSize=50', await sinceParam())), { credentials: 'include' })
     if (!res.ok) return []
     const json = await res.json()
     const rows = json?.data ?? []

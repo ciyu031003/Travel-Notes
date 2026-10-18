@@ -151,6 +151,19 @@ export async function addPhotoToAlbum(input: AddPhotoInput): Promise<AddPhotoRes
     const localPath = `media/${photo.id}.${extFromMime(photo.mimeType)}`
     await writeLocalFile(localPath, photo.base64)
 
+    /**
+     * 先入队、再写 media 行（P1-24）：本地文件已经落盘，此刻进程被杀也只会
+     * 留下"待上传项 + 文件"，同步引擎仍能把它传到云端；反过来则会丢成孤儿文件。
+     */
+    const queue = new SyncQueue(getSyncQueueStorage())
+    await queue.enqueue({
+      entityType: 'MEDIA',
+      entityId: photo.id,
+      remoteId: null,
+      operation: 'UPLOAD_MEDIA',
+      payload: { albumId, localPath, mimeType: photo.mimeType },
+    })
+
     const hash = await sha256Hex(base64ToBytes(photo.base64))
     await db.run(
       'INSERT INTO media (id, remoteId, localPath, remoteUrl, sha256, mimeType, size, width, height, type, visibility, syncStatus, updatedAt, deleted) ' +
@@ -158,15 +171,6 @@ export async function addPhotoToAlbum(input: AddPhotoInput): Promise<AddPhotoRes
         'ON CONFLICT(id) DO UPDATE SET localPath = excluded.localPath, sha256 = excluded.sha256, syncStatus = ?, updatedAt = excluded.updatedAt',
       [photo.id, localPath, hash, photo.mimeType, photo.size, photo.width || null, photo.height || null, 'IMAGE', 'SPACE', 'PENDING_UPLOAD', Date.now(), 'PENDING_UPLOAD'],
     )
-
-    const queue = new SyncQueue(getSyncQueueStorage())
-    await queue.enqueue({
-      entityType: 'MEDIA',
-      entityId: photo.id,
-      remoteId: null,
-      operation: 'UPLOAD_MEDIA',
-      payload: JSON.stringify({ albumId, localPath, mimeType: photo.mimeType, thumbBase64: photo.thumbBase64 }),
-    })
     return { ok: true, local: true }
   }
 
