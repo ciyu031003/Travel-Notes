@@ -55,7 +55,7 @@ Next.js 15 App Router
 
 ### 环境要求
 
-- Node.js 18+（推荐 20 LTS），MySQL 8.0+ / MariaDB
+- Node.js 20–24（推荐 22 LTS，见 .nvmrc），MySQL 8.0+ / MariaDB
 - 可选：S3 兼容对象存储（配置 `STORAGE_*` 自动启用，否则使用本地 `public/uploads`）、SMTP（验证码 / 找回密码邮件）
 
 ### 本地开发
@@ -65,7 +65,7 @@ npm install
 cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
                             # 至少填写 DATABASE_URL 与 JWT_SECRET（openssl rand -hex 32）
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy     # 按 prisma/migrations 建库（不再用 db push）
 npm run dev                 # http://localhost:3000，首次访问 /admin/setup 初始化管理员
 ```
 

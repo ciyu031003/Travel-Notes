@@ -99,3 +99,41 @@
 - 能力模型「无空间成员 = OWNER」仍成立（新注册用户可读全站审计/治理他人内容）。
 - /api/upload 与 /api/images/[id] 的归属/可见性校验未加。
 - 相册解锁仍无限流（P1-13 的限流只做了通用登录/IP，未覆盖 verify-album-password）。
+
+
+---
+
+# 附：P0 整改（2026-10-18 第二批）
+
+> 响应「把 P0 也执行掉」。P0 条目见评审报告 §4 P0 表（1–9）。本批次提交后，评审中的两条账号接管链均已关闭。
+
+## P0 完成情况
+
+| # | 项 | 状态 | 关键落点 |
+|---|---|---|---|
+| 1 | 相册令牌不能当会话 | ✅（P1-10 已完成 + 本批回归测试） | requireAuth 强制 DB 会话（无 sid 即 401）；新增 tests/security/auth-regression.test.ts 5 例钉死 |
+| 2 | 改密端点（账号接管） | ✅ | 删除 app/api/admin/force-change-password 整目录；移除白名单与 auth.ts/repo/auth-service 中对应方法；admin/change-password 改走 /api/admin/settings/password（旧密码 + 本人） |
+| 3 | 权限默认值反转 | ✅ | User.siteRole（默认 USER）+ lib/site-owner.ts（CAS 幂等提升首个主人）；capabilities：social/settings/audit 仅站点主人、canManageSpace=主人或空间 OWNER、canManageContent 保持 true；bind-email 传 username；settings 自服务字段去掉主人能力位但保留旧密码/验证码校验；site-service 写路径严格按 username |
+| 4 | 上传/图片归属与可见性 | ✅ | imageService.upload/delete 增加 actor 归属校验；/api/images/[id] 按 Post.published/isPublic/作者/主人判定，私有图不再 immutable；/meta 可见性同口径 + EXIF 白名单（去掉 GPS/机型/曝光）；admin import/video 站点级路由仅站点主人 |
+| 5 | 相册解锁限流 | ✅ | /api/verify-album-password：IP 10/15min + 全局 30/15min + 失败指数退避（60s→30min）+ 成功清锁 |
+| 6 | 注册开关 | ✅ | REGISTRATION_ENABLED=false → /api/register 403 |
+| 7 | 发布门禁 | ✅ | Dockerfile builder 内 prisma generate → typecheck → lint（预算 486）→ test，失败即镜像失败；server-rebuild.sh：备份闸门（<26h）→ 记录 previous 镜像 → curl -fsS 轮询 60s → 失败打日志并 exit 1 |
+| 8 | 迁移基线 | ✅（未实跑 DB） | prisma/migrations 两条：20261018000000_init（P1 前 schema，34KB）+ 20261018120000_p1_indexes_and_site_role（siteRole + 6 索引）；migrate-bootstrap.cjs 三分支兼容存量库；entrypoint 改 migrate deploy（set -e）；CI 改 migrate deploy + drift 门禁（shadow DB 走 prisma.config.ts 的 SHADOW_DATABASE_URL） |
+| 9 | 备份与恢复 | ✅（未实跑 Docker） | scripts/backup-db.sh（mysqldump --single-transaction --routines → gzip -9 + gzip -t + 30 天 prune + 可选 rclone；--check/--verify/--list）；crontab 每日 02:30；server-rebuild 部署前检查最近备份 <26h |
+
+## 验证（P0 批次）
+
+- tsc --noEmit → exit 0
+- vitest run → 76 文件 / 679 用例全绿（+45）
+- lint --max-warnings=486 → 0 error
+- coverage 52.4/46.13/51.01/54.37（阈值 51/45/50/53）
+- prisma validate 通过；migration 重生成哈希一致；shellcheck 对 3 个 shell 脚本 0 findings
+- next build 与 Docker/E2E/备份恢复未实跑（本机无 MySQL/Docker；见下）
+
+## P0 遗留 / 上线前必须确认
+
+1. **存量生产库首次升级**：先跑 `npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` 核对漂移，再让 entrypoint 执行 bootstrap（resolve 基线）+ deploy（应用 siteRole/索引）。若历史 db push 已加过这些对象会失败，需人工核对。
+2. **CDN/浏览器缓存**：旧版对 /api/images/[id] 发过 1 年 immutable，已缓存的私有图需手动刷缓存。
+3. 站点主人提升：首个访问能力检查（或 /api/me/capabilities）时自动把 id 最小用户设为 SITE_OWNER；如需指定他人，手工 `UPDATE User SET siteRole='SITE_OWNER' WHERE ...` 并清理另一条。
+4. 管理员页面仍可被普通用户打开（API 已 403）；如需要页面级收口可后续加 layout 守卫。
+5. 本机未安装 bash/WSL：shell 脚本用 shellcheck 做语法级校验，未真实执行；Docker 镜像与 CI 是首次真实验证点。
