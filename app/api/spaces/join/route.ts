@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth-middleware'
+import { z } from 'zod'
 import { spaceService } from '@/lib/modules/space/space.service'
+import { ApiError } from '@/lib/api-response'
+import { withAuth, parseBody } from '@/lib/api/handler'
 
-export async function POST(request: NextRequest) {
-  const auth = await requireAuth(request)
-  if (!auth.authenticated || !auth.username) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+/** 加入空间：邀请码必填（P1-17 统一 body 校验） */
+const JoinSpaceSchema = z.object({
+  code: z.string().trim().min(1, '请输入邀请码').max(64, '邀请码格式无效'),
+})
+
+export const POST = withAuth(async (request, ctx) => {
+  const body = await parseBody(request, JoinSpaceSchema)
   try {
-    const body = await request.json()
-    const code = String(body?.code || '').trim()
-    const result = await spaceService.joinByInvite(auth.username, code)
+    const result = await spaceService.joinByInvite(ctx.username || '', body.code)
     return NextResponse.json({ success: true, ...result }, { status: 201 })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || '加入失败' }, { status: 400 })
+    throw new ApiError('JOIN_FAILED', error?.message || '加入失败', 400)
   }
-}
+})

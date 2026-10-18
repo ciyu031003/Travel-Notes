@@ -17,6 +17,16 @@ describe('middleware 公开白名单（段边界匹配）', () => {
     expect(isPublicPath('/_next/static/chunk.js')).toBe(true)
   })
 
+  it('崩溃上报端点 /api/diagnostics 匿名放行，但只放行精确路径（不做前缀泛化）', () => {
+    // D 的客户端崩溃上报：会话过期/未登录时也必须能上报
+    expect(isPublicPath('/api/diagnostics')).toBe(true)
+    expect(isPublicRequest('/api/diagnostics', 'POST')).toBe(true)
+    expect(isPublicRequest('/api/diagnostics', 'GET')).toBe(true)
+    // 只放行精确路径：同前缀的子路由不得被顺带公开
+    expect(isPublicPath('/api/diagnostics/anything')).toBe(false)
+    expect(isPublicRequest('/api/diagnostics/internal', 'POST')).toBe(false)
+  })
+
   it('段边界外的前缀不误放', () => {
     expect(isPublicPath('/api/login-xyz')).toBe(false)
     expect(isPublicPath('/uploads-evil/secret')).toBe(false)

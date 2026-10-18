@@ -4,6 +4,7 @@ import { UserRepository } from '../repositories/user-repository'
 import { TokenService } from '../services/token-service'
 import { PrismaSessionRepository } from '../repositories/session-repository'
 import { hashPassword, verifyPassword } from '../auth-utils'
+import { validatePassword } from '../validators/auth.validator'
 import { generateAccountIdForUser } from '../account-id'
 import { sendMail } from '../infrastructure/mailer'
 import {
@@ -39,7 +40,13 @@ export interface LoginMeta {
 
 export const DEFAULT_SESSION_SECONDS = 5 * 60 * 60 // 5 小时（Web 默认）
 export const REMEMBER_SESSION_SECONDS = 7 * 24 * 60 * 60 // 7 天（Web 记住我）
-export const APP_SESSION_SECONDS = 365 * 24 * 60 * 60 // 1 年（App 持久登录，免 5h 重验证）
+/**
+ * App 会话 90 天（P1-10：原 365 天过长，设备丢失/令牌泄露的窗口过大）。
+ * 客户端无需重新登录：GET /api/check-auth 会在剩余 < 30 天时静默续期（同一 sid 重签）。
+ */
+export const APP_SESSION_SECONDS = 90 * 24 * 60 * 60
+/** App 会话静默续期阈值：剩余有效期低于该值时续期 */
+export const APP_SESSION_RENEW_BEFORE_SECONDS = 30 * 24 * 60 * 60
 
 export function hashIp(ip: string | null | undefined): string | null {
   if (!ip) return null
@@ -118,8 +125,10 @@ export class AuthService {
     if (!/^[\w\u4e00-\u9fa5]{2,20}$/.test(name)) {
       return { success: false, error: '用户名需为 2-20 位中文/字母/数字/下划线' }
     }
-    if (!password || password.length < 6) {
-      return { success: false, error: '密码至少需要 6 位字符' }
+    // 密码策略统一（P1-12）：与 setup/重置/改密同一套规则（≥8 + 弱口令黑名单）
+    const passwordCheck = validatePassword(password)
+    if (!passwordCheck.valid) {
+      return { success: false, error: passwordCheck.message }
     }
 
     const exists = await prisma.user.findUnique({ where: { username: name } })
@@ -174,6 +183,30 @@ export class AuthService {
       requirePasswordChange: false,
       ttlSeconds,
     }
+  }
+
+  /**
+   * App 会话静默续期（P1-10）：同一 sid 重新签发 JWT，并同步延长数据库会话有效期。
+   * 返回 null 表示会话已失效/被撤销（调用方不应续期）。
+   * 只改有效期，**不新建 sid**：这样设备列表里仍是一条会话，撤销语义不变。
+   */
+  async renewSession(sid: string, ttlSeconds: number): Promise<string | null> {
+    const session = await this.sessionRepo.findById(sid)
+    if (!session) return null
+    if (session.revokedAt) return null
+    if (session.expiresAt.getTime() <= Date.now()) return null
+
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
+    await this.sessionRepo.extendExpiry(sid, expiresAt)
+    return this.tokenService.sign(
+      {
+        username: session.username,
+        role: 'admin',
+        ...(session.userId ? { userId: session.userId } : {}),
+        sid,
+      },
+      ttlSeconds,
+    )
   }
 
   async verifyToken(token: string): Promise<TokenPayload | null> {
@@ -281,8 +314,9 @@ export class AuthService {
       return { success: false, error: '参数错误' }
     }
 
-    if (!newPassword || newPassword.length < 6) {
-      return { success: false, error: '密码至少需要 6 位字符' }
+    const passwordCheck = validatePassword(newPassword)
+    if (!passwordCheck.valid) {
+      return { success: false, error: passwordCheck.message }
     }
 
     const settings = await this.userRepo.getSettings()

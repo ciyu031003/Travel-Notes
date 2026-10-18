@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-middleware'
 import { travelService } from '@/lib/modules/travel/space-travel.service'
+import { ApiError } from '@/lib/api-response'
+import { withAuth, parseBody } from '@/lib/api/handler'
+
+/** 前台编辑旅行的请求体（P1-17）：字段与 travelService.updateTravel 的入参对齐 */
+const UpdateTravelSchema = z.object({
+  title: z.string().trim().min(1, '旅行名称不能为空').max(255, '旅行名称过长').optional(),
+  slug: z.string().max(255).optional(),
+  description: z.string().max(50_000, '描述过长').nullable().optional(),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
+  status: z.enum(['PLANNED', 'ONGOING', 'COMPLETED'], { message: '旅行状态无效' }).optional(),
+  visibility: z.string().optional(),
+  travelType: z.string().optional(),
+  companions: z.array(z.unknown()).max(10, '同行者最多 10 人').optional(),
+})
+
+function parseTravelId(id: string): number {
+  const travelId = parseInt(id, 10)
+  if (isNaN(travelId)) throw new ApiError('INVALID_ID', '无效的旅行 ID', 400)
+  return travelId
+}
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(_request)
@@ -20,47 +42,36 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAuth(request)
-  if (!auth.authenticated || !auth.username) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+export const PATCH = withAuth(async (request, ctx, routeContext) => {
+  const { params } = routeContext as { params: Promise<{ id: string }> }
   const { id } = await params
-  const travelId = parseInt(id, 10)
-  if (isNaN(travelId)) {
-    return NextResponse.json({ error: '无效的旅行 ID' }, { status: 400 })
-  }
+  const travelId = parseTravelId(id)
+  const body = await parseBody(request, UpdateTravelSchema)
   try {
-    const body = await request.json()
-    const travel = await travelService.updateTravel(auth.username, travelId, {
-      title: body?.title,
-      slug: body?.slug,
-      description: body?.description,
-      startDate: body?.startDate,
-      endDate: body?.endDate,
-      status: body?.status,
-      visibility: body?.visibility,
-      travelType: body?.travelType,
-      companions: body?.companions,
+    const travel = await travelService.updateTravel(ctx.username || '', travelId, {
+      title: body.title,
+      slug: body.slug,
+      description: body.description ?? undefined,
+      startDate: body.startDate ?? undefined,
+      endDate: body.endDate ?? undefined,
+      status: body.status,
+      // service 入参是 Prisma 枚举；这里保持「非法值由 service 归一/忽略」的原行为
+      visibility: body.visibility as any,
+      travelType: body.travelType as any,
+      companions: body.companions,
     })
     return NextResponse.json({ success: true, travel })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || '更新失败' }, { status: 400 })
+    throw new ApiError('UPDATE_FAILED', error?.message || '更新失败', 400)
   }
-}
+})
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAuth(request)
-  if (!auth.authenticated || !auth.username) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+export const DELETE = withAuth(async (_request, ctx, routeContext) => {
+  const { params } = routeContext as { params: Promise<{ id: string }> }
   const { id } = await params
-  const travelId = parseInt(id, 10)
-  if (isNaN(travelId)) {
-    return NextResponse.json({ error: '无效的旅行 ID' }, { status: 400 })
-  }
+  const travelId = parseTravelId(id)
   try {
-    await travelService.deleteTravel(auth.username, travelId)
+    await travelService.deleteTravel(ctx.username || '', travelId)
     return NextResponse.json({ success: true })
   } catch (error: any) {
     const msg = error?.message || '删除失败'
@@ -72,6 +83,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
      * **"目标状态已达成"**处理并完成本地清理，而不是弹"删除失败"
      * 让用户反复点 —— 真机反馈「新建的几篇显示待同步、删除不了」即此。
      */
-    return NextResponse.json({ error: msg }, { status: msg.includes('不存在') ? 404 : 400 })
+    throw new ApiError(msg.includes('不存在') ? 'NOT_FOUND' : 'DELETE_FAILED', msg, msg.includes('不存在') ? 404 : 400)
   }
-}
+})

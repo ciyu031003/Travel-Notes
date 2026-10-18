@@ -390,6 +390,9 @@ model SpaceMember {
 
   @@unique([spaceId, username])
   @@index([spaceId, role])
+  // P1-16：鉴权路径（按用户查其成员身份/能力）与 username 回退查询的索引
+  @@index([userId, status])
+  @@index([username, status])
 }
 
 /// 空间邀请（保存 Token Hash 用于校验 + 明文 Code 用于再次查看/复制）
@@ -519,6 +522,8 @@ model Memory {
 
   @@index([spaceId, happenedAt])
   @@index([spaceId, travelId])
+  // P1-16：旅行详情页按 travelId 拉回忆
+  @@index([travelId])
 }
 
 /// 回忆-媒体 多对多关联（v3.1 M2-A2：一张照片可进多个回忆；memoryId 主关联兼容旧数据）
@@ -570,6 +575,8 @@ model Media {
 
   @@index([spaceId, type])
   @@index([memoryId])
+  // P1-16：按存储键回查媒体（变体/去重/删除链路）的索引
+  @@index([storageKey])
 }
 
 /// 媒体变体（Original/Thumbnail/Preview/Blur）
@@ -613,6 +620,8 @@ model Album {
   items AlbumMedia[]
 
   @@index([spaceId, createdAt])
+  // P1-16：旅行详情页按 travelId 拉相册（一个旅行对应一个相册）
+  @@index([travelId])
 }
 
 /// 相册-媒体关联

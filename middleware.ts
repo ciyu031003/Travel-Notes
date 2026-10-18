@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 import { isPublicRequest, isStaticAssetPath } from '@/lib/public-paths'
+import { resolveCorsOrigin, isUnverifiableCrossSiteRequest } from '@/lib/request-utils'
+import { resolveJwtSecret } from '@/lib/jwt-secret'
 
-function resolveJwtSecret(): string {
-  const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET
-  if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      // 生产环境缺失密钥时拒绝启动，避免使用不安全的默认密钥
-      throw new Error('[FATAL] JWT_SECRET 未配置：请设置 JWT_SECRET（可用 `openssl rand -hex 32` 生成）')
-    }
-    console.warn('[WARN] JWT_SECRET 未配置：使用开发环境默认密钥，切勿用于生产')
-    return 'dev-only-insecure-secret'
-  }
-  return secret
-}
-
-const JWT_SECRET = new TextEncoder().encode(resolveJwtSecret())
+const JWT_SECRET = new TextEncoder().encode(resolveJwtSecret('middleware'))
 
 /**
  * 安全响应头（Security Headers）：
@@ -67,32 +56,19 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 
 /**
  * 移动端本地壳（跨域）访问服务器 API：对允许的来源回显 Origin + 允许携带凭据。
- * App 壳 origin 通常是 http://localhost / capacitor://localhost，故放行 localhost 与站点域名。
- * 允许的站点域名收口在 CORS_ALLOWED_HOSTNAMES（逗号分隔，1.19.0 起不再硬编码，
- * 默认值保留历史域名与服务器 IP 以兼容存量部署；换域名/换 IP 只改环境变量）。
+ * 判定逻辑统一在 lib/request-utils.ts（resolveCorsOrigin）：Capacitor 本地壳
+ * （https://localhost / capacitor://localhost）始终放行（生产也是，否则线上 App 直接不可用）；
+ * 其余优先完整 origin 白名单 CORS_ALLOWED_ORIGINS，未配置时回落历史 hostname 行为；
+ * 浏览器侧普通 localhost/127.0.0.1 仅非生产放行。
  */
-function corsAllowedHostnames(): Set<string> {
-  const extra = (process.env.CORS_ALLOWED_HOSTNAMES || 'travel-notes.yuanabd.cn,106.55.2.197')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-  return new Set(['localhost', '127.0.0.1', ...extra])
-}
-
 function applyCorsHeaders(response: NextResponse, request: NextRequest): NextResponse {
-  const origin = request.headers.get('origin')
-  if (!origin) return response
-  let hostname = ''
-  try {
-    hostname = new URL(origin).hostname
-  } catch {
-    return response
-  }
-  if (hostname && corsAllowedHostnames().has(hostname)) {
-    response.headers.set('Access-Control-Allow-Origin', origin)
-    response.headers.set('Access-Control-Allow-Credentials', 'true')
-    response.headers.set('Vary', 'Origin')
-  }
+  const allowedOrigin = resolveCorsOrigin(request)
+  if (!allowedOrigin) return response
+  response.headers.set('Access-Control-Allow-Origin', allowedOrigin)
+  response.headers.set('Access-Control-Allow-Credentials', 'true')
+  // Vary: Origin 必须保留：缓存/CDN 不能把 A 源的 CORS 响应复用给 B 源
+  const vary = response.headers.get('Vary')
+  response.headers.set('Vary', vary && !/\borigin\b/i.test(vary) ? `${vary}, Origin` : 'Origin')
   return response
 }
 
@@ -121,10 +97,21 @@ async function verifyJWT(token: string): Promise<boolean> {
 }
 
 /**
- * CSRF 防护：非 GET/HEAD/OPTIONS 请求校验 Origin 与 Host 一致。
- * - 无 Origin 的请求（curl/服务器间调用/移动端）放行；SameSite=Lax 已阻止跨站带 Cookie。
- * - 跨站浏览器请求 Origin 与 Host 不一致时拒绝。
+ * 生产环境 Cookie 未启用 Secure 时的启动告警（P1-13）。
+ * 只 warn 一次（模块级标记），不 throw：直接拒绝启动会让存量部署升级即宕机，
+ * 但必须把风险显式记录到日志里（App 端已强制 Secure，Web 端仍需配置 COOKIE_SECURE=true）。
  */
+let warnedInsecureCookie = false
+function warnIfInsecureCookie(): void {
+  if (warnedInsecureCookie || process.env.NODE_ENV !== 'production') return
+  warnedInsecureCookie = true
+  if (process.env.COOKIE_SECURE === 'true') return
+  console.warn(
+    '[WARN] 生产环境未设置 COOKIE_SECURE=true：admin_session Cookie 缺少 Secure 标记，' +
+      '存在被明文网络窃取的风险，请配置 COOKIE_SECURE=true（HTTPS 部署）。'
+  )
+}
+
 function normalizeHostname(host: string): string {
   try {
     return new URL(host.includes('://') ? host : 'https://' + host).hostname
@@ -157,30 +144,49 @@ function allowedOriginHostnames(request: NextRequest): Set<string> {
   return result
 }
 
+/**
+ * CSRF 防护：非 GET/HEAD/OPTIONS 请求校验 Origin 与 Host 一致。
+ * - Origin 为 'null'/不可解析时（微信/WebView/透明代理），若浏览器标注了
+ *   `Sec-Fetch-Site: cross-site` 则 403（P1-13）；否则放行 —— Capacitor WebView 会发
+ *   Origin: null，硬拒绝会让 App 内写请求全部失败，此时仍由 SameSite Cookie 兜底。
+ * - 无 Origin 的请求（curl/服务器间调用/移动端）放行。
+ * - 跨站浏览器请求 Origin 与 Host 不一致时拒绝。
+ */
 function rejectCrossOrigin(request: NextRequest): NextResponse | null {
   if (request.method === 'GET' || request.method === 'HEAD' || request.method === 'OPTIONS') {
     return null
   }
+
+  if (isUnverifiableCrossSiteRequest(request)) {
+    return applySecurityHeaders(
+      NextResponse.json({ error: '跨站请求被拒绝', code: 'CROSS_SITE_ORIGIN' }, { status: 403 })
+    )
+  }
+
   const origin = request.headers.get('origin')
-  // 微信/部分 WebView 可能发送字符串 'null'，这类请求没有可校验的 Origin，交给 SameSite Cookie 兜底
+  // Origin 缺失或为字符串 'null'：没有可校验的来源，交给 SameSite Cookie 兜底（App 兼容）
   if (!origin || origin === 'null') return null
 
   let originHostname: string
   try {
     originHostname = new URL(origin).hostname
   } catch {
-    // 无法解析的 Origin 不拦截，避免误伤正常登录
+    // 无法解析的 Origin 不拦截（已在 Sec-Fetch-Site: cross-site 时上面拦过），避免误伤正常登录
     return null
   }
 
   if (!allowedOriginHostnames(request).has(originHostname)) {
-    return applySecurityHeaders(NextResponse.json({ error: '跨站请求被拒绝' }, { status: 403 }))
+    return applySecurityHeaders(
+      NextResponse.json({ error: '跨站请求被拒绝', code: 'CROSS_SITE_ORIGIN' }, { status: 403 })
+    )
   }
   return null
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  warnIfInsecureCookie()
 
   // 静态资源早放行（matcher 只排除 _next；带点动态段不再整条绕过登录门禁）
   if (isStaticAssetPath(pathname)) {
@@ -191,7 +197,7 @@ export async function middleware(request: NextRequest) {
   if (request.method === 'OPTIONS') {
     const res = new NextResponse(null, { status: 204 })
     res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
-    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Type')
     res.headers.set('Access-Control-Max-Age', '86400')
     return applyCorsHeaders(res, request)
   }

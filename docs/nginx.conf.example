@@ -1,4 +1,4 @@
-﻿# 个人博客 Nginx 配置
+# 个人博客 Nginx 配置
 # 将此文件复制到 /etc/nginx/conf.d/blog.conf
 
 server {
@@ -43,7 +43,10 @@ server {
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # 安全（评审 S-7）：必须用 $remote_addr **覆盖** X-Forwarded-For，而不是
+        # $proxy_add_x_forwarded_for 追加。追加会把客户端自带的伪造值保留在链首，
+        # 应用侧按「最后一段」取真实 IP 时才有意义（应用见 lib/request-utils.ts:getClientIp）。
+        proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
 
         # 超时设置

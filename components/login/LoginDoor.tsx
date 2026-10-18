@@ -19,11 +19,10 @@ interface LoginDoorProps {
   children: ReactNode
 }
 
-function formatSealDate(date: string): string {
-  const d = new Date(date)
-  if (Number.isNaN(d.getTime())) return '启程'
+// 封条只展示「月.日」，不展示年份（P1-14：公开端点不下发年份，避免推断关系起点）
+function formatSealDate(month: number, day: number): string {
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`
+  return `${pad(month)}.${pad(day)}`
 }
 
 /**
@@ -75,17 +74,15 @@ export default function LoginDoor({ children }: LoginDoorProps) {
   }, [phase])
 
   useEffect(() => {
-    // 取最早的纪念日作为封条日期
+    // 取最早公开纪念日的「月.日」作为封条日期（P1-14：不再拉取隐私的 /api/anniversaries 全量）
     let cancelled = false
-    fetch(apiUrl('/api/anniversaries'))
+    fetch(apiUrl('/api/anniversaries/seal'))
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
-        if (cancelled || !json?.anniversaries?.length) return
-        const dates = json.anniversaries
-          .map((a: { date: string }) => new Date(a.date).getTime())
-          .filter((t: number) => !Number.isNaN(t))
-          .sort((a: number, b: number) => a - b)
-        if (dates.length) setSealDate(formatSealDate(new Date(dates[0]).toISOString()))
+        if (cancelled || !json) return
+        if (typeof json.month === 'number' && typeof json.day === 'number') {
+          setSealDate(formatSealDate(json.month, json.day))
+        }
       })
       .catch(() => {})
     return () => {

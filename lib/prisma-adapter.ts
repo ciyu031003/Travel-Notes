@@ -130,31 +130,35 @@ export class PrismaMariaDB {
 
   constructor(options: { url: string } | { connectionString: string }) {
     this.url = 'url' in options ? options.url : options.connectionString
-    this.setupGracefulShutdown()
+    // P2-35：**不在构造期注册进程信号**，也不在这里 process.exit。
+    // 历史问题：任何 import lib/db 的脚本（迁移/回填/测试/next build 的收集阶段）
+    // 都会顺带装上 SIGTERM/SIGINT 处理器，收到信号直接 exit(0)，
+    // 于是「跑一个脚本被 Ctrl+C」也会静默吞掉其它清理逻辑与退出码。
+    // 现在由进程入口统一编排：instrumentation.ts（Next 服务）→ lib/db.ts:shutdownPrisma()。
   }
 
-  private setupGracefulShutdown(): void {
-    const shutdown = async () => {
-      if (this.isShuttingDown) return
-      this.isShuttingDown = true
-      logger.info('prisma-adapter', 'shutdown-start')
-      if (this.healthCheckTimer) {
-        clearInterval(this.healthCheckTimer)
-        this.healthCheckTimer = null
-      }
-      if (this.pool) {
-        try {
-          await this.pool.end()
-          logger.info('prisma-adapter', 'pool-closed')
-        } catch (err) {
-          console.error('[PrismaMariaDB] Error closing pool:', err)
-        }
-      }
-      process.exit(0)
+  /**
+   * 优雅关闭连接池（可重复调用）。供 lib/db.ts:shutdownPrisma() 调用；
+   * 成功返回后池内连接全部归还关闭，健康检查定时器停止。
+   */
+  async close(): Promise<void> {
+    if (this.isShuttingDown) return
+    this.isShuttingDown = true
+    logger.info('prisma-adapter', 'shutdown-start')
+    if (this.healthCheckTimer) {
+      clearInterval(this.healthCheckTimer)
+      this.healthCheckTimer = null
     }
-
-    process.on('SIGTERM', shutdown)
-    process.on('SIGINT', shutdown)
+    if (this.pool) {
+      try {
+        await this.pool.end()
+        logger.info('prisma-adapter', 'pool-closed')
+      } catch (err) {
+        console.error('[PrismaMariaDB] Error closing pool:', err)
+      } finally {
+        this.pool = null
+      }
+    }
   }
 
   async connect(): Promise<PrismaAdapter> {
@@ -265,6 +269,15 @@ export class PrismaMariaDB {
     }
   }
 
+  /**
+   * 自动重连（风险说明，P2-35：只加注释不改逻辑）。
+   *
+   * 已知风险（本次不重写，避免在无数据库环境里引入回归）：
+   *  1) 重连期间（pool=null）并发请求会各自触发 connect()，多条路径可能同时 createPool；
+   *  2) 新池替换旧池不做连接 drain，正在执行的查询在旧池被 end 后会抛错；
+   *  3) reconnect 失败只打日志，healthCheck 定时器下一轮再试，没有退避上限。
+   * 因此它只适合「单实例 + 偶发断连自愈」，多副本/强一致场景应改为显式探活 + 重启。
+   */
   private async reconnect(): Promise<void> {
     if (this.isShuttingDown) return
     console.warn('[PrismaMariaDB] Attempting reconnection...')

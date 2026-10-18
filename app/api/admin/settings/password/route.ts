@@ -4,6 +4,7 @@ import { requireCapability } from '@/lib/capability-guard'
 import { getSiteService } from '@/lib/container'
 import { prismaSessionRepository } from '@/lib/repositories/session-repository'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
+import { validatePassword } from '@/lib/validators/auth.validator'
 
 export async function POST(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -21,8 +22,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '请输入当前密码' }, { status: 400 })
     }
 
-    if (!newPassword || newPassword.length < 6) {
-      return NextResponse.json({ error: '新密码至少需要 6 位字符' }, { status: 400 })
+    // 密码策略统一（P1-12）：此前这里是 6 位下限，绕过注册/重置的 8 位 + 弱口令策略
+    const passwordCheck = validatePassword(newPassword)
+    if (!passwordCheck.valid) {
+      return NextResponse.json({ error: passwordCheck.message }, { status: 400 })
     }
 
     if (newPassword === currentPassword) {

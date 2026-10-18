@@ -46,8 +46,8 @@ export default function AccountSettings() {
       return
     }
 
-    if (newPassword && newPassword.length < 6) {
-      setMessage({ type: 'error', text: '新密码至少需要 6 位字符' })
+    if (newPassword && newPassword.length < 8) {
+      setMessage({ type: 'error', text: '新密码至少需要 8 位字符' })
       return
     }
 
@@ -149,7 +149,7 @@ export default function AccountSettings() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full px-4 py-2.5 pr-12 bg-travel-cream dark:bg-shell-surface2 border border-travel-line dark:border-shell-line rounded-lg text-travel-inkStrong dark:text-shell-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft"
-                  placeholder="至少 6 位字符（留空则不修改）"
+                  placeholder="至少 8 位字符（留空则不修改）"
                 />
                 <button
                   type="button"

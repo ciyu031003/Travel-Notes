@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers'
 import { verifyToken } from './services/token-service'
 import { prisma } from './db'
+import { skipDbOnBuild } from './db-guard'
+import { validateSession } from './session'
 
 export interface CurrentUser {
   id: number
@@ -16,6 +18,8 @@ export interface CurrentUser {
  * 登录用户高频访问时每请求 1 次 DB。这里按 userId 做 30s 短缓存，
  * 昵称/头像/账号等低频变化字段容忍 30s 滞后（自愈）。
  * 资料修改入口（profile/avatar/username/email）会显式 invalidateCurrentUserCache。
+ *
+ * 注意：缓存只缓存「用户资料」，**不缓存会话有效性** —— 会话撤销必须即时生效。
  */
 const USER_CACHE_TTL_MS = 30_000
 const userCache = new Map<number, { user: CurrentUser; expireAt: number }>()
@@ -41,15 +45,25 @@ function cacheSet(user: CurrentUser): void {
 
 /**
  * 服务端组件/路由读取当前登录用户（从 httpOnly 会话 Cookie 解析 JWT）。
- * 未登录返回 null；仅校验签名与有效期，并回查数据库获取昵称/头像/账号 ID。
+ *
+ * 与 requireAuth 共用 lib/session.ts 的数据库会话校验（P1-10）：
+ * 撤销/过期/fail-closed 语义必须与 API 鉴权一致，否则「API 401 但页面仍按登录态渲染」。
+ * 未登录/会话无效/数据库不可用一律返回 null（fail-closed）。
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   try {
+    // 构建期无数据库：直接按匿名处理（轻量壳），避免 next build 打 DB
+    if (skipDbOnBuild()) return null
+
     const store = await cookies()
     const token = store.get('admin_session')?.value
     if (!token) return null
     const payload = await verifyToken(token)
     if (!payload?.userId) return null
+
+    // 会话是唯一可信来源：注销/改密/踢设备后旧 JWT 立即失效
+    const session = await validateSession(payload.sid)
+    if (!session.valid) return null
 
     const cached = cacheGet(payload.userId)
     if (cached) return cached

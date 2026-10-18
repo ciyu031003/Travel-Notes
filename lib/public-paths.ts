@@ -29,6 +29,9 @@ export const PUBLIC_PATHS = [
   '/api/register',
   '/api/version',
   '/api/health',
+  // 客户端崩溃上报（D 新增，P1-25 配套）：会话过期/未登录时也必须能上报，
+  // 否则最需要诊断的崩溃场景恰好被中间件拦掉。仅放行精确路径，见 EXACT_ONLY_PUBLIC_PATHS。
+  '/api/diagnostics',
   '/api/uploads',
   '/uploads',
   '/_next',
@@ -74,9 +77,21 @@ export function isPublicCirclePage(pathname: string): boolean {
   return /^\/circle\/[^/]+$/.test(pathname)
 }
 
-/** 段边界匹配：/api/login 命中 /api/login 与 /api/login/x，但不误放 /api/login-xyz */
+/**
+ * 只允许精确匹配的公开路径（不做前缀泛化）。
+ * 为什么：`/api/diagnostics` 是崩溃上报端点，放行它是为了让未登录/会话过期时也能上报；
+ * 若按前缀放行 `/api/diagnostics/*`，以后该前缀下新增的敏感子路由会不知不觉变成匿名可访问。
+ */
+const EXACT_ONLY_PUBLIC_PATHS = new Set<string>(['/api/diagnostics'])
+
+/** 段边界匹配：/api/login 命中 /api/login 与 /api/login/x，但不误放 /api/login-xyz；精确路径见上 */
 export function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p.endsWith('/') ? p : p + '/'))
+  if (EXACT_ONLY_PUBLIC_PATHS.has(pathname)) return true
+  return PUBLIC_PATHS.some(
+    (p) =>
+      !EXACT_ONLY_PUBLIC_PATHS.has(p) &&
+      (pathname === p || pathname.startsWith(p.endsWith('/') ? p : p + '/')),
+  )
 }
 
 /**

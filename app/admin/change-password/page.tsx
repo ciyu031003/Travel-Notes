@@ -37,8 +37,8 @@ export default function ForceChangePasswordPage() {
     e.preventDefault()
     setError('')
 
-    if (newPassword.length < 6) {
-      setError('新密码至少 6 位')
+    if (newPassword.length < 8) {
+      setError('新密码至少 8 位')
       return
     }
     if (newPassword !== confirmPassword) {
@@ -118,7 +118,7 @@ export default function ForceChangePasswordPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-12 text-travel-ink transition-all placeholder-[#9A958F] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]"
-                  placeholder="至少 6 位"
+                  placeholder="至少 8 位"
                   required
                 />
                 <button

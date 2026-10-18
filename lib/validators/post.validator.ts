@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PasswordSchema } from './auth.validator'
 
 export const CreatePostSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/, 'Slug 只能包含小写字母、数字和连字符').max(255),
@@ -43,7 +44,8 @@ export const LoginSchema = z.object({
 
 export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, '当前密码不能为空'),
-  newPassword: z.string().min(6, '新密码至少 6 位'),
+  // 密码策略统一（P1-12）：复用 auth.validator 的 PasswordSchema（≥8 + 弱口令黑名单）
+  newPassword: PasswordSchema,
 })
 
 export const UpdateUsernameSchema = z.object({

@@ -3,6 +3,8 @@ import { prisma } from '../db'
 export interface SessionRecord {
   id: string
   username: string
+  /** 会话所属用户（续期时需要重新签进 JWT，避免续期后丢失 userId） */
+  userId: number | null
   expiresAt: Date
   createdAt: Date
   lastUsedAt: Date
@@ -75,6 +77,7 @@ export class PrismaSessionRepository {
     return {
       id: row.id,
       username: row.username,
+      userId: row.userId,
       expiresAt: row.expiresAt,
       createdAt: row.createdAt,
       lastUsedAt: row.lastUsedAt,
@@ -82,6 +85,18 @@ export class PrismaSessionRepository {
       ipHash: row.ipHash,
       revokedAt: row.revokedAt,
     }
+  }
+
+  /**
+   * 延长会话有效期（P1-10 App 静默续期）：只改 expiresAt，不改 sid。
+   * 必须同步更新数据库，否则 JWT 续期了、DB 记录仍按旧时间过期，
+   * 下一次 requireAuth 就会把刚续期的会话判为 expired。
+   */
+  async extendExpiry(id: string, expiresAt: Date): Promise<void> {
+    await prisma.session.updateMany({
+      where: { id, revokedAt: null },
+      data: { expiresAt },
+    })
   }
 
   /** 节流更新 lastUsedAt，避免每次请求都写库 */

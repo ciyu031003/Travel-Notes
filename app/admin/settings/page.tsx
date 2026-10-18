@@ -359,8 +359,8 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
       return
     }
 
-    if (!newPassword || newPassword.length < 6) {
-      onMessage({ type: 'error', text: '新密码至少需要 6 位字符' })
+    if (!newPassword || newPassword.length < 8) {
+      onMessage({ type: 'error', text: '新密码至少需要 8 位字符' })
       return
     }
 
@@ -447,7 +447,7 @@ function PasswordTab({ onMessage }: { onMessage: (msg: { type: 'success' | 'erro
               evaluatePassword(e.target.value)
             }}
             className="w-full pl-10 pr-12 py-2.5 bg-warm-50 dark:bg-warm-700 border border-warm-300 dark:border-warm-600 rounded-lg text-warm-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-            placeholder="至少 6 位字符"
+            placeholder="至少 8 位字符"
             required
           />
           <button

@@ -106,8 +106,8 @@ function LoginPageContent() {
       setError('两次输入的密码不一致')
       return
     }
-    if (password.length < 6) {
-      setError('密码至少需要 6 位字符')
+    if (password.length < 8) {
+      setError('密码至少需要 8 位字符')
       return
     }
     setIsRegistering(true)
