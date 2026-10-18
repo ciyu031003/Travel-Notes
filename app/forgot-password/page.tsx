@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
       return
     }
     let score = 0
-    if (password.length >= 6) score++
+    if (password.length >= 8) score++
     if (password.length >= 10) score++
     if (/[A-Z]/.test(password)) score++
     if (/[0-9]/.test(password)) score++
@@ -132,8 +132,9 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setMessage(null)
 
-    if (!newPassword || newPassword.length < 6) {
-      setMessage({ type: 'error', text: '密码至少需要 6 位字符' })
+    // 与服务端密码策略（≥8 + 弱口令黑名单，P1-12）保持一致，避免本地校验通过、服务端才报错
+    if (!newPassword || newPassword.length < 8) {
+      setMessage({ type: 'error', text: '密码至少需要 8 位字符' })
       return
     }
 
@@ -290,7 +291,7 @@ export default function ForgotPasswordPage() {
                       evaluatePassword(e.target.value)
                     }}
                     className="w-full pl-10 pr-12 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent"
-                    placeholder="至少 6 位字符"
+                    placeholder="至少 8 位字符"
                     required
                   />
                   <button
