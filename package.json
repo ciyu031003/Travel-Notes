@@ -78,10 +78,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
-    "@capacitor/cli": "^8.5.0",
+    "@axe-core/playwright": "^4.14.0",
+    "@capacitor/cli": "^8.5.3",
     "@lhci/cli": "^0.15.1",
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.1",
     "@types/archiver": "^6.0.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/d3-geo": "^3.1.1",
