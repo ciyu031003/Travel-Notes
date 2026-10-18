@@ -4,7 +4,9 @@ services:
     container_name: travel-notes-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Abd123456.}
+      # P2-33：原来默认密码 Abd123456. 是可直接登录的弱口令；改成明显无效的占位符。
+      # 必须在 .env 里显式设置 MYSQL_ROOT_PASSWORD（见 docs/DEPLOYMENT.md「升级注意」）。
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-__SET_MYSQL_ROOT_PASSWORD_IN_ENV__}
       MYSQL_DATABASE: travel_notes
       TZ: Asia/Shanghai
     command:
@@ -14,11 +16,16 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD:-Abd123456.}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD:-__SET_MYSQL_ROOT_PASSWORD_IN_ENV__}"]
       interval: 5s
       timeout: 5s
       retries: 30
       start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
 
   app:
     build:
@@ -31,9 +38,10 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD:-Abd123456.}@db:3306/travel_notes"
-      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-secret}
-      SESSION_SECRET: ${SESSION_SECRET:-change-me-to-a-long-random-secret}
+      DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD:-__SET_MYSQL_ROOT_PASSWORD_IN_ENV__}@db:3306/travel_notes"
+      # 与 db 相同：不再提供可直接使用的默认密钥，未配置时签名密钥是公开的占位串。
+      JWT_SECRET: ${JWT_SECRET:-__SET_JWT_SECRET_IN_ENV__}
+      SESSION_SECRET: ${SESSION_SECRET:-__SET_SESSION_SECRET_IN_ENV__}
       # App 端登录 Cookie 强制 SameSite=None+Secure（代码已固定），Web 端这里控制；HTTPS 部署建议 true
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
@@ -54,22 +62,37 @@ services:
       STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-}
       # 敏感配置(AES-256-GCM)解密主密钥, 仅服务端读取, 不进代码
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
-      # OTA 版本（/api/version 供 App 检查更新；每次发版递增 APP_BUILD_NUMBER）
-      APP_VERSION: ${APP_VERSION:-1.0.0}
-      APP_BUILD_NUMBER: ${APP_BUILD_NUMBER:-1}
+      # OTA 版本（/api/version 供 App 检查更新；默认值由 scripts/bump-version.cjs 同步，
+      # verify-version.cjs 会校验它和 package.json 一致，避免漏配 .env 时下发 1.0.0 触发误强更）
+      APP_VERSION: ${APP_VERSION:-1.24.8}
+      APP_BUILD_NUMBER: ${APP_BUILD_NUMBER:-54}
       APP_DOWNLOAD_URL: ${APP_DOWNLOAD_URL:-https://travel-notes.yuanabd.cn/downloads/tiantu.apk}
       # 更新弹窗文案（app/api/version/route.ts 支持 APP_CHANGELOG 覆盖）。
       # 此前 compose 没转发这个变量 → 每次改文案都被迫改代码、重新构建镜像。
       APP_CHANGELOG: ${APP_CHANGELOG:-}
     ports:
-      - "${APP_PORT:-3000}:3000"
+      # 只绑本机回环：Nginx 在同一台机器反代，无需把 3000 暴露到公网。
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
     volumes:
       # 媒体存储已迁移至 COS 存储桶（cosfs 挂载于宿主机 /data）。
       # 迁移日 2026-09-06：原 uploads-data 卷保留未删作为回滚备份（/var/lib/docker/volumes/travel-notes_uploads-data）。
+      # 容器以 node(1000:1000) 运行：宿主机目录需 chown 1000:1000，见 docs/DEPLOYMENT.md。
       - /data/travel-notes/uploads:/app/public/uploads
       # ffmpeg：宿主机静态二进制只读挂载（视频转码管线；镜像内不走 apt，5M 带宽拉不动 400MB 依赖）。
       # 缺失时转码模块自动降级跳过。二进制来源 @ffmpeg-installer/linux-x64（静态链接，glibc 兼容）。
       - /usr/local/bin/ffmpeg:/usr/local/bin/ffmpeg:ro
+    healthcheck:
+      # 镜像里没有 curl（node:22-bookworm-slim），用 node 自带的 fetch
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
 
 volumes:
   mysql-data:

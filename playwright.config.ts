@@ -12,8 +12,9 @@ export default defineConfig({
   expect: { timeout: 25_000 },
   fullyParallel: false,
   workers: 1,
-  // 本地 dev 编译抖动大（全套跑时中国地图/路由冷编译可达 15s+），保留 1 次重试
-  retries: 1,
+  // 本地保留 1 次重试：dev/生产构建冷编译时中国地图、相册路由可达 15s+，抖动来自机器而非产品。
+  // CI 一律 0 次：重试会把真实 flaky 掩盖成绿，冒烟 job 的职责就是把不稳定暴露出来（P1-25）。
+  retries: process.env.CI ? 0 : 1,
   reporter: [['list']],
   outputDir: './test-results/e2e',
   use: {

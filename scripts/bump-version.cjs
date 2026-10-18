@@ -66,6 +66,15 @@ const edits = [
       [`|| '${curBuild}'`, `|| '${targetBuild}'`],
     ],
   ],
+  // P2-34：compose 的默认版本是「漏配 .env 时线上实际下发的版本」。
+  // 之前它是硬编码的 1.0.0/1，和真实版本差 24 个版本，会让 OTA 误判强更。
+  [
+    'docker-compose.yml',
+    [
+      [`\${APP_VERSION:-${curVersion}}`, `\${APP_VERSION:-${targetVersion}}`],
+      [`\${APP_BUILD_NUMBER:-${curBuild}}`, `\${APP_BUILD_NUMBER:-${targetBuild}}`],
+    ],
+  ],
 ]
 
 if (changelog) {

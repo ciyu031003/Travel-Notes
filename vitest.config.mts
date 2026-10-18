@@ -15,5 +15,22 @@ export default defineConfig({
       // 测试专用 JWT 密钥（与生产无关）
       JWT_SECRET: 'vitest-only-secret-not-for-production',
     },
+    coverage: {
+      // P1-25：覆盖率进 CI 门禁。之前没有 provider 也没有阈值，覆盖率完全不可度量。
+      // 只有显式 --coverage（即 npm run test:coverage）时才生效，不影响日常 npm test。
+      provider: 'v8',
+      reporter: ['text-summary', 'lcov'],
+      reportsDirectory: 'coverage',
+      // 49/44/49/51 = 2026-10-18 实测存量（全量 68 文件 / 634 用例：statements 50.61% /
+      // branches 45.03% / functions 50.19% / lines 52.39%，向下取整再留 1pp 平台缓冲）。
+      // 只许上调（收紧），不允许为了「变绿」调低阈值；目标 60/50/55/60：
+      // 用 npx vitest run --coverage 的新实测值每次 +2pp 上调。
+      thresholds: {
+        statements: 49,
+        branches: 44,
+        functions: 49,
+        lines: 51,
+      },
+    },
   },
 })

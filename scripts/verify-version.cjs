@@ -55,6 +55,13 @@ const bGradle = Number(versionIn(gradle.text, /versionCode (\d+)/))
 const bMobile = Number(versionIn(mob.text, /NEXT_PUBLIC_APP_BUILD_NUMBER: process\.env\.NEXT_PUBLIC_APP_BUILD_NUMBER \|\| '(\d+)'/))
 check('构建号三处一致', new Set([bApp, bGradle, bMobile]).size === 1, `app=${bApp} gradle=${bGradle} mobile=${bMobile}`)
 
+// 5) docker-compose 的默认版本/构建号（漏配 .env 时 /api/version 实际下发它，必须跟 package.json 同步）
+const compose = readUtf8NoBom('docker-compose.yml')
+const vCompose = versionIn(compose.text, /\$\{APP_VERSION:-(\d+\.\d+\.\d+)\}/)
+const bCompose = Number(versionIn(compose.text, /\$\{APP_BUILD_NUMBER:-(\d+)\}/))
+check('compose 默认版本 == package version', vCompose === vPkg, `compose=${vCompose} pkg=${vPkg}`)
+check('compose 默认构建号 == app 构建号', bCompose === bApp, `compose=${bCompose} app=${bApp}`)
+
 // 4) 期望值（可选）
 if (expectVersion) check(`版本 == ${expectVersion}`, vPkg === expectVersion, `实际 ${vPkg}`)
 if (expectBuild !== null) check(`构建号 == ${expectBuild}`, bApp === expectBuild, `实际 ${bApp}`)

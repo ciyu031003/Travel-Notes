@@ -1,0 +1,54 @@
+version: 2
+
+# P2-36：依赖升级改为由 Dependabot 定期提 PR，而不是等 npm audit 红灯才动。
+# 大版本刻意忽略：next 16 / prisma 8 / tailwind 4 / react 20 都需要单独排期回归，
+# 让机器人开 PR 只会制造噪音（我们宁可手动升，也不想合并一堆未验证的 major）。
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    labels:
+      - dependencies
+    groups:
+      # 开发/测试工具链放一组：不碰生产运行时，patch/minor 一起合
+      dev-tooling:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      # 生产依赖只自动提 patch：minor 也可能带行为变化，人工看
+      prod-patch:
+        dependency-type: production
+        update-types:
+          - patch
+    ignore:
+      - dependency-name: next
+        update-types:
+          - version-update:semver-major
+      - dependency-name: prisma
+        update-types:
+          - version-update:semver-major
+      - dependency-name: '@prisma/client'
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react-dom
+        update-types:
+          - version-update:semver-major
+      - dependency-name: tailwindcss
+        update-types:
+          - version-update:semver-major
+      - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major

@@ -21,18 +21,35 @@
 ## 二、Docker 一键部署（推荐 · 当前方式）
 
 ```bash
-# 首次/更新部署
+# 首次/更新部署（.env 必须先准备好，见下方「升级注意」）
 cd /home/ubuntu/travel-notes
 docker compose up -d --build app
 ```
 
-首次启动会自动：
-1. 从 `.env.example` 生成 `.env`（若不存在）
-2. 生成 `JWT_SECRET` / `SESSION_SECRET` / `MYSQL_ROOT_PASSWORD`
-3. 构建应用镜像（`npm ci` + `prisma generate` + `next build`）
-4. 启动 MySQL 8.4 + 应用，容器内自动 `prisma db push` 建表
+首次启动会：
+1. 校验并读取 `.env`（**compose 不再提供可用的默认 DB 口令/会话密钥**，`__SET_..._IN_ENV__` 是占位符，不是可用值）
+2. 三阶段构建应用镜像（deps → builder → runner）：builder 里 `npx prisma generate` + `next build`（**构建期类型检查已恢复**，不再 `SKIP_TSC=1`），runner 只拷 `.next/public/prisma/scripts` 并 `npm prune --omit=dev`
+3. 启动 MySQL 8.4 + 应用（非 root，uid=1000），容器内自动 `prisma db push` 建表
 
 启动后访问 http://localhost:3000，前往 `/admin/setup` 初始化管理员。
+
+### 升级注意（P2-33 镜像与 compose 加固，2026-10）
+
+1. **`.env` 必设三件套（缺一不可）**：`MYSQL_ROOT_PASSWORD`、`JWT_SECRET`、`SESSION_SECRET`。compose 不再提供可用默认值，缺省时读到的是 `__SET_..._IN_ENV__` 占位串；**生产环境会拒绝含 `__SET_` 的密钥 → 启动失败 / 登录失败**，不要等到部署完才发现。生成并写入 `.env`（示例）：
+
+   ```bash
+   MYSQL_ROOT_PASSWORD=$(openssl rand -hex 16)   # 已有 mysql-data 卷的部署不要改：必须与卷内已有 root 密码一致
+   JWT_SECRET=$(openssl rand -hex 32)
+   SESSION_SECRET=$(openssl rand -hex 32)
+   ```
+
+   > 注意：**首次补齐 JWT_SECRET/SESSION_SECRET 会让当前所有登录会话失效**（Web 重新登录、App 重登一次），属预期；之后不要再随意轮换。
+   > 自检：`docker compose config | grep -n "__SET_"` 应无输出；`docker compose up -d` 后 `docker compose ps` 应显示 `healthy`。
+2. **容器改为非 root（uid=1000）**：媒体目录必须可写，升级前执行一次 `sudo chown -R 1000:1000 /data/travel-notes/uploads`；否则上传/转码会 EACCES。（`.next/cache` 等镜像内目录构建时已 chown 给 node，无需处理。）
+3. **端口只绑回环**：改为 `127.0.0.1:${APP_PORT:-3000}:3000`，公网入口仍由 Nginx 反代；直接访问 `IP:3000` 不再可用（本就不该暴露）。
+4. **日志轮转**：db/app 都配了 json-file `20m × 5`，`docker compose logs` 用法不变，但不会再无限增长占盘。
+5. **健康检查**：compose 每 30s 请求 `/api/health`（DB 挂 → 503 → unhealthy），`docker compose ps` 会显示 healthy/unhealthy；镜像内也有同款 `HEALTHCHECK`。
+6. **版本默认值单一来源**：compose 的 `APP_VERSION`/`APP_BUILD_NUMBER` 默认值由 `scripts/bump-version.cjs` 同步、`scripts/verify-version.cjs` 校验；发版只走这两个脚本，不要手改 compose。
 
 ### 常用命令
 
@@ -61,20 +78,29 @@ crontab -l                                              # 查看 cron
 | 变量 | 说明 | 默认 |
 |---|---|---|
 | `APP_PORT` | 宿主机映射端口 | 3000 |
-| `MYSQL_ROOT_PASSWORD` | MySQL root 密码 | 自动生成 |
-| `JWT_SECRET` / `SESSION_SECRET` | 会话签名密钥 | 自动生成 |
+| `MYSQL_ROOT_PASSWORD` | MySQL root 密码 | **必须设置**（无可用默认值） |
+| `JWT_SECRET` / `SESSION_SECRET` | 会话签名密钥 | **必须设置**（无可用默认值） |
 | `ADMIN_USERNAME` | 初始化管理员用户名 | admin |
 | `ADMIN_PASSWORD_HASH` | 预置管理员密码哈希（可选） | 空 |
 | `COOKIE_SECURE` | Cookie Secure（https 设 true；App 端登录已代码固定 SameSite=None+Secure） | false |
+| `CORS_ALLOWED_ORIGINS` | 额外允许的跨域来源（英文逗号分隔、必须带协议）。App 本地壳的 `https://localhost`(Android) / `capacitor://localhost`(iOS) 已默认放行；自定义域名/端口才需要追加完整 origin | 空 |
 | `NEXT_PUBLIC_SITE_URL` | 站点 URL | http://localhost:3000 |
 | `NEXT_PUBLIC_SITE_TITLE` | 站点标题 | 甜途 |
 | `APP_ENCRYPTION_KEY` | AppSecret 表（如 DASHSCOPE_API_KEY）的 AES-256-GCM 主密钥 | 空（未配置则敏感配置功能禁用） |
-| `APP_VERSION` / `APP_BUILD_NUMBER` | OTA 版本（/api/version 供 App 检查更新；每次发版递增构建号） | 3.0.1 / 6 |
+| `APP_VERSION` / `APP_BUILD_NUMBER` | OTA 版本（/api/version 供 App 检查更新；默认值由 `scripts/bump-version.cjs` 同步，`verify-version.cjs` 校验） | 1.24.8 / 54 |
 | `APP_DOWNLOAD_URL` | 新版 APK 下载地址（COS/CDN 公开地址，可用 scripts/publish-apk.cjs 发布；nginx /downloads/ 仅作回退） | https://travel-notes.yuanabd.cn/downloads/tiantu.apk |
 | `COS_ENDPOINT` / `COS_REGION` / `COS_BUCKET` / `COS_ACCESS_KEY_ID` / `COS_SECRET_ACCESS_KEY` / `COS_CDN_BASE_URL` | APK 上传腾讯云 COS 的发布配置（scripts/publish-apk.cjs） | 空 |
 | `OIL_PAINT_ENABLED` | 油画生成（通义 API，按张计费）总开关，需为 `true` 才启用 | false |
 | `SMTP_*` + `MAIL_FROM` | 邮件发送（可选） | 空 |
 | `STORAGE_*` | S3 兼容对象存储（可选） | 空 |
+
+> **CORS_ALLOWED_ORIGINS 怎么填（App 本地壳与自定义域名）**：App 本地壳（Capacitor）发出的请求带 `Origin: https://localhost`（Android WebView）或 `Origin: capacitor://localhost`（iOS）；新代码**默认始终放行这两个精确 origin**，不需要在 `.env` 里配置。只有当你用**自定义域名或非默认端口**访问 Web/App（例如 `https://photo.example.com:8443`）时，才需要把**完整 origin（协议 + 域名 + 端口）**写进 `CORS_ALLOWED_ORIGINS`，多个用英文逗号分隔：
+>
+> ```bash
+> CORS_ALLOWED_ORIGINS=https://photo.example.com,https://photo.example.com:8443
+> ```
+>
+> 注意：origin 是精确匹配，**不能写 `*`、也不能只写域名不带协议**；改完需重启 app 容器。
 
 > **APP_ENCRYPTION_KEY 强度要求**：至少 32 字节随机值（`openssl rand -hex 32`）。该值经 SHA-256 归一后直接作为 AES-256 密钥，弱口令会被无盐归一掩盖成"合法"密钥——务必使用随机值，且一旦投入使用不可更换（换钥后已有密文无法解密）。可用 `node scripts/seed-secret.cjs` 写入密钥类敏感配置。
 
@@ -98,7 +124,8 @@ server {
         proxy_pass http://127.0.0.1:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # 安全（S-7）：用 $remote_addr 覆盖，绝不追加客户端自带的 XFF（见下方说明）
+        proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
     client_max_body_size 100m;   # 上传大小限制
@@ -106,6 +133,9 @@ server {
 ```
 
 > **注意**：中间件 CSRF 校验基于 `request.nextUrl.hostname`，走 IP 直连（`106.55.2.197:8443`）需确认 Nginx 正确透传 `Host` 头；历史已修复"反代透传 Host"以支持 IP 直连登录。
+
+> **X-Forwarded-For 必须覆盖，不能追加**：应用侧限流/登录失败计数依赖 `getClientIp()`（`lib/request-utils.ts`）解析真实客户端 IP。若用 `$proxy_add_x_forwarded_for` 把客户端自带的 XFF 透传进来，攻击者每个请求伪造一个 IP 就能绕过按 IP 的限流（相册解锁爆破、登录爆破）；`X-Real-IP` 同理必须是 `$remote_addr`。
+> 正确写法：`proxy_set_header X-Forwarded-For $remote_addr;`（已同步到 `docs/nginx.conf.example`）。改完 `sudo nginx -t && sudo systemctl reload nginx`，并用 `curl -H 'X-Forwarded-For: 1.2.3.4'` 验证应用日志里记录的仍是真实来源 IP。
 
 ### 4.2 HTTPS 证书（Let's Encrypt）
 
@@ -171,7 +201,7 @@ rclone sync public/uploads remote:trip-media --checksum   # 异地增量同步�
 
 ## 七、监控与告警
 
-- **进程**：`docker compose ps` 确认两容器 Up/healthy；可接 Uptime Kuma 每 1 分钟 GET `/` 与 `/api/health`
+- **进程**：`docker compose ps` 确认两容器 Up/healthy（compose 已内置 app healthcheck，DB 挂会自动转 unhealthy）；可再接 Uptime Kuma 每 1 分钟 GET `/` 与 `/api/health`
 - **健康检查**：`/api/health` 返回 `{"status":"ok","db":"ok","version":...}`（含 DB ping）
 - **日志**：`docker compose logs -f app`；错误写 `console.error`
 - **告警阈值**：磁盘 >80%、备份连续失败、探活连续失败、登录失败率异常升高（`AuditLog` LOGIN 动作增多）
@@ -198,6 +228,7 @@ rclone sync public/uploads remote:trip-media --checksum   # 异地增量同步�
 
 ```bash
 # 1) 本地打包源码（git archive 只含已提交内容，最干净）
+#    有 tag 时优先 git archive <tag>（可追溯到具体发版，回滚同一 tag 即可）
 git archive --format=tar.gz -o /tmp/tn-deploy.tar.gz HEAD
 
 # 2) 上传

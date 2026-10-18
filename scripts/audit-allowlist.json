@@ -1,0 +1,384 @@
+{
+  "_comment": "npm audit 存量豁免清单（2026-10-18 生成，来源 npm audit --json 的 43 条）。 audit-gate.cjs 只对 high/critical 阻断：未列在这里的 high/critical、或已过 expires 的条目都会让 CI 失败。 处理方式：修掉 → 删除条目；暂时不能修 → 续期 expires 并在 reason 写清原因与计划。 scope 仅说明用途：runtime=进生产运行时；build=构建期；dev=仅开发/测试工具链。",
+  "generatedAt": "2026-10-18",
+  "entries": [
+    {
+      "package": "@capacitor/cli",
+      "severity": "moderate",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "@lhci/cli",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "@lhci/utils",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "@next/eslint-plugin-next",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "@prisma/config",
+      "severity": "high",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "prisma CLI 在部署/启动期使用（db push），传递依赖漏洞；随 prisma 大版本修复，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "@puppeteer/browsers",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "@tailwindcss/typography",
+      "severity": "moderate",
+      "scope": "build",
+      "advisories": [],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "argparse",
+      "severity": "moderate",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "basic-ftp",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [
+        "GHSA-c475-qrg2-pj4r"
+      ],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "braces",
+      "severity": "high",
+      "scope": "build",
+      "advisories": [
+        "GHSA-vfj7-8cjw-p6xm"
+      ],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "chokidar",
+      "severity": "high",
+      "scope": "build",
+      "advisories": [],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "deepmerge-ts",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [
+        "GHSA-ggr8-5vv4-36mx"
+      ],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "eslint-config-next",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "external-editor",
+      "severity": "low",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "extract-zip",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [
+        "GHSA-jmr9-qjv8-65gv",
+        "GHSA-7pqw-9j4j-h8q3"
+      ],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "fast-glob",
+      "severity": "high",
+      "scope": "build",
+      "advisories": [],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "get-uri",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "gray-matter",
+      "severity": "moderate",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "运行时 Markdown/文档解析依赖，漏洞在其传递依赖（js-yaml/argparse）；下一步评估 npm overrides 单独抬版",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "inquirer",
+      "severity": "low",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "js-yaml",
+      "severity": "moderate",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "katex",
+      "severity": "low",
+      "scope": "runtime",
+      "advisories": [
+        "GHSA-238p-pmpm-9mq7"
+      ],
+      "reason": "渲染期依赖，当前漏洞为 low/prototype pollution，随上游 patch 处理",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "lighthouse",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "mammoth",
+      "severity": "moderate",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "运行时 Markdown/文档解析依赖，漏洞在其传递依赖（js-yaml/argparse）；下一步评估 npm overrides 单独抬版",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "mermaid",
+      "severity": "low",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "渲染期依赖，当前漏洞为 low/prototype pollution，随上游 patch 处理",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "micromark-extension-math",
+      "severity": "low",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "渲染期依赖，当前漏洞为 low/prototype pollution，随上游 patch 处理",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "micromatch",
+      "severity": "high",
+      "scope": "build",
+      "advisories": [],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "mysql2",
+      "severity": "high",
+      "scope": "runtime",
+      "advisories": [
+        "GHSA-3f6p-5ww8-9rcr",
+        "GHSA-rgwj-5xj2-c3m3"
+      ],
+      "reason": "运行时数据库驱动：认证插件降级/解压炸弹。2026-10-18 已升到 3.24.6（minor）复核，两条 advisory 仍未修复（npm audit 仍报 high，说明上游补丁未发布）；与 prisma 7 自定义适配器绑定，继续等待上游 patch，到期前复评",
+      "expires": "2026-12-31"
+    },
+    {
+      "package": "next",
+      "severity": "moderate",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "next 15 间接依赖 postcss 漏洞，修复需 next 16（大版本），单独排期",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "nodemailer",
+      "severity": "high",
+      "scope": "runtime",
+      "advisories": [
+        "GHSA-6vj9-mwq6-2f5v",
+        "GHSA-8vvx-rff5-p5rq",
+        "GHSA-g57g-f23g-4646",
+        "GHSA-v53p-9fqp-m79j",
+        "GHSA-prgh-xp8r-p3m5"
+      ],
+      "reason": "运行时 SMTP 依赖：5 条 advisory 的修复版本是 nodemailer 10.x（semver-major），本次整改只允许 patch/minor，无法与现有调用面兼容升级；已列入后续单独升级项，到期前复评",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "pac-proxy-agent",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "postcss",
+      "severity": "high",
+      "scope": "build",
+      "advisories": [
+        "GHSA-qx2v-qp2m-jg93",
+        "GHSA-6g55-p6wh-862q",
+        "GHSA-fxqj-rqcc-2cmp",
+        "GHSA-r28c-9q8g-f849"
+      ],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "postcss-nested",
+      "severity": "moderate",
+      "scope": "build",
+      "advisories": [],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "postcss-selector-parser",
+      "severity": "moderate",
+      "scope": "build",
+      "advisories": [
+        "GHSA-rj75-hqrm-r3gf"
+      ],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "prisma",
+      "severity": "high",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "prisma CLI 在部署/启动期使用（db push），传递依赖漏洞；随 prisma 大版本修复，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "proxy-agent",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "puppeteer-core",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "rehype-katex",
+      "severity": "low",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "渲染期依赖，当前漏洞为 low/prototype pollution，随上游 patch 处理",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "remark-math",
+      "severity": "low",
+      "scope": "runtime",
+      "advisories": [],
+      "reason": "渲染期依赖，当前漏洞为 low/prototype pollution，随上游 patch 处理",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "sprintf-js",
+      "severity": "moderate",
+      "scope": "dev",
+      "advisories": [
+        "GHSA-hp3w-g68c-fv3c"
+      ],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "tailwindcss",
+      "severity": "high",
+      "scope": "build",
+      "advisories": [],
+      "reason": "构建期工具（tailwind/postcss 链路），不打包进运行时产物；升级需 tailwind 4 / next 16 大版本，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "tmp",
+      "severity": "high",
+      "scope": "dev",
+      "advisories": [
+        "GHSA-52f5-9888-hmc6",
+        "GHSA-ph9p-34f9-6g65"
+      ],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2026-11-30"
+    },
+    {
+      "package": "uuid",
+      "severity": "moderate",
+      "scope": "dev",
+      "advisories": [
+        "GHSA-w5hq-g745-h8pq"
+      ],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2027-03-31"
+    },
+    {
+      "package": "xcode",
+      "severity": "moderate",
+      "scope": "dev",
+      "advisories": [],
+      "reason": "仅开发期/构建期工具链（测试、lint、lhci、capacitor cli 等），不进生产运行时；升级需 semver-major，暂冻结",
+      "expires": "2027-03-31"
+    }
+  ]
+}

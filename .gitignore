@@ -67,6 +67,8 @@ tsconfig.tsbuildinfo
 # Playwright E2E
 test-results/
 playwright-report/
+# Vitest 覆盖率产物（npm run test:coverage 生成，CI 只上传 artifact，不入库）
+coverage/
 tests/e2e/.auth/
 # Review screenshots
 .review-shots/
