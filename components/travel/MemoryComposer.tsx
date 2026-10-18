@@ -218,7 +218,7 @@ export default function MemoryComposer({
               {photos.map((p, i) => (
                 <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`data:${p.mimeType};base64,${p.base64}`} alt="" className="h-full w-full object-cover" />
+                  <img src={`data:${p.mimeType};base64,${p.base64}`} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}

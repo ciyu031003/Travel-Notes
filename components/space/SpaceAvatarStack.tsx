@@ -80,6 +80,8 @@ export function SpaceAvatar({
       <img
         src={member.avatarUrl}
         alt={label}
+        loading="lazy"
+        decoding="async"
         className={cn('flex-none rounded-full object-cover ring-2 ring-[var(--social-surface)]', SIZE_CLASS[size], className)}
       />
     )

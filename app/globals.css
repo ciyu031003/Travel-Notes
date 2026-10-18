@@ -1,3 +1,4 @@
+@import './tokens.css';
 @import './mobile.css';
 
 /* Source Serif 4 — 摄影画册正文衬线体（Art Mode） */
@@ -15,7 +16,6 @@
   font-display: swap;
   src: url('/fonts/SourceSerif4-It.otf.woff2') format('woff2');
 }
-
 
 /* 自托管 latin 子集字体（D3：消除 Google Fonts 第三方阻塞，中文回退系统字体） */
 @font-face {
@@ -62,281 +62,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer base {
-  :root {
-    /* Travel Design Tokens (CSS 变量形式，供非 Tailwind 场景使用) */
-    --color-cream: #FAF6EE;
-    --color-ink: #585450;
-    --color-dim: #DAD5CB;
-    --color-sakura: #F3E4D5;
-    --color-bloom: #E4B478;
-    --color-sky: #A8C8DC;
-    --color-mist: #D6E8F0;
-    --color-travel-accent: #A85F3A;
-    --color-travel-accent-strong: #8A4A2B;
-    --color-travel-accent-soft: #C97E55;
-    --color-travel-sand: #8B7355;
-    --color-travel-sand-soft: #C2AF9A;
-    --color-travel-sand-light: #E4D6C4;
-    --color-travel-parchment: #FDF5ED;
-    --color-travel-parchment-dim: #F5EDE4;
-    --color-travel-ink-strong: #5A4A3A;
-    --color-travel-line: #E8DDD4;
-    /* Phase2：travel 语义色（与 tailwind travel-success/warning/danger 对齐） */
-    --color-travel-success: #22c55e;
-    --color-travel-warning: #f59e0b;
-    --color-travel-danger: #ef4444;
-
-    /* Album Dark Design Tokens（Stage 1 引入） */
-    --album-bg0: #050508;
-    --album-bg1: #0b0807;
-    --album-bg2: #14100e;
-    --album-surface: rgba(255,255,255,0.06);
-    --album-text1: rgba(245,247,255,0.92);
-    --album-text2: rgba(245,247,255,0.68);
-    --album-text3: rgba(245,247,255,0.45);
-    --album-warm: #a89f91;
-    --album-accent: #e8b06a;
-    --album-accent-strong: #f5c97e;
-    --album-accent-dim: rgba(232,176,106,0.16);
-    --album-ok: #6fcf97;
-    --album-sync: #f5c97e;
-    --album-wait: #9aa3b2;
-    --album-error: #e06c6c;
-
-    /* Pixel 木屋/纸面肤色（Stage 1 引入） */
-    --album-pixel-ink: #5a3b30;
-    --album-pixel-muted: #8a7662;
-    --album-pixel-faint: #8a8479;
-    --album-pixel-line: #3c2a1a;
-    --album-pixel-photo: #211713;
-    --album-pixel-panel: #1c110d;
-    --album-pixel-panel2: #2c1913;
-    --album-pixel-panel3: #231611;
-    --album-pixel-paper: #FDF5ED;
-    --album-pixel-online: #5b8731;
-    --album-pixel-bubble: #70b237;
-    --album-pixel-lineth: #d8c9a6;
-    --album-pixel-error: #a02a2a;
-    --album-pixel-goldlight: #fce268;
-    --album-pixel-goldpale: #f3d7a0;
-
-    /* 语义化阴影 */
-    --shadow-soft: 0 10px 28px rgba(90,102,112,0.08);
-    --shadow-card: 0 12px 40px -12px rgba(90,102,112,0.18);
-
-    /* Social / 旅行档案 / 旅行圈 亮色主题（默认） */
-    --social-bg: #F7F4EE;
-    --social-surface: #FFFFFF;
-    --social-surface-90: rgba(255, 255, 255, 0.90);
-    --social-surface-80: rgba(255, 255, 255, 0.80);
-    --social-surface-60: rgba(255, 255, 255, 0.60);
-    --social-surface-50: rgba(255, 255, 255, 0.50);
-    --social-surface2: #F3EEE6;
-    --social-surface3: #EAE3D9;
-    --social-text: #2B211B;
-    --social-muted: rgba(43, 33, 27, 0.70);
-    --social-faint: rgba(43, 33, 27, 0.46);
-    --social-accent: #A85F3A;
-    --social-accent-strong: #8A4A2B;
-    --social-accent-soft: rgba(168, 95, 58, 0.12);
-    --social-on-accent: #FFFFFF;
-    --social-line: rgba(90, 74, 58, 0.12);
-    --social-line-strong: rgba(90, 74, 58, 0.22);
-    /* 通用「错误红」：#E06C6C 原先散落在 social / offline / login 等 6 个组件里。
-       此值同时等于 album 体系的 --album-error，两者并存但归属不同体系，暂不强行合并。
-       1.20.0：浅底对比度 3.0:1 低于 AA → 浅色调深至 #B4535B（约 4.6:1）；
-       暗底（html.dark）保持 #E06C6C 不变——深底上原值对比度已达标。 */
-    --danger-soft: #B4535B;
-  }
-
-  html.dark {
-    /* Social / 旅行档案 / 旅行圈 暗色主题 */
-    --social-bg: #080808;
-    --social-surface: #111111;
-    --social-surface-90: rgba(17, 17, 17, 0.90);
-    --social-surface-80: rgba(17, 17, 17, 0.80);
-    --social-surface-60: rgba(17, 17, 17, 0.60);
-    --social-surface-50: rgba(17, 17, 17, 0.50);
-    --social-surface2: #171717;
-    --social-surface3: #1e1d1b;
-    --social-text: #F5F1EA;
-    --social-muted: rgba(245, 241, 234, 0.70);
-    --social-faint: rgba(245, 241, 234, 0.46);
-    --social-accent: #E8B36A;
-    --social-accent-strong: #F2C88A;
-    --social-accent-soft: rgba(232, 179, 106, 0.14);
-    --social-on-accent: #1A120A;
-    --social-line: rgba(245, 241, 234, 0.09);
-    --social-line-strong: rgba(245, 241, 234, 0.16);
-    --danger-soft: #E06C6C;
-  }
-
-  /* ══════════════════════════════════════════════════════════════════════
-     空间类型主题（P1 · 受控多主题，只作用于空间模块）
-
-     为什么需要：产品要求「情侣 / 家庭 / 朋友 / 独旅 / 其他」各有自己的清新淡雅
-     配色，而《移动端设计规范》§2.6 原本禁止「用彩色表达分类」、§2.2 规定唯一强调色。
-     这里按规范新增的 §2.8 落地：**只放行 7 个低彩度令牌**，中性层（--social-*）、
-     品牌赤陶（--social-accent #A85F3A）、间距 / 圆角 / 字号阶梯**全部保持共享**，
-     并用 [data-space] 作用域把影响面锁在组件树的一层里（见 SpaceThemeScope.tsx）。
-
-     色值来源：Radix Colors（MIT · @radix-ui/colors@3.0.0）12 级语义
-     —— 3/4 组件底、6 分隔线、9 实心、11 文本、12 强文本。
-     对比度逐项自算（WCAG 2.1 相对亮度）：
-       亮色 CTA = step 11 + #FFFFFF → 5.26–6.07 ✅
-       暗色 CTA = step 11 + #080808 → 9.53–11.10 ✅
-     ⚠️ step 9 **不能**当亮色 CTA（mint 9 对白字仅 1.43、sky 9 仅 1.48），只作装饰/大色块。
-     ⚠️ step 6 发丝线仅 1.4–1.6:1，不满足 WCAG 1.4.11 的 3:1 →
-        控件边界（输入框/按钮/tab）一律用共享 --social-line，空间色发丝线只作纯装饰；
-        聚焦环不随空间变色。
-     ══════════════════════════════════════════════════════════════════════ */
-
-  /* 兜底：未套 [data-space] 时用「其他 · 沙色」，组件永不缺变量 */
-  :root {
-    --space-accent: #8D8D86;
-    --space-accent-strong: #63635E;
-    --space-accent-soft: #F1F0EF;
-    --space-accent-text: #21201C;
-    --space-on-accent: #FFFFFF;
-    --space-hairline: #DAD9D6;
-    --space-hero-a: #F9F9F8;
-    --space-hero-b: #E9E8E6;
-  }
-  html.dark {
-    --space-accent: #6F6D66;
-    --space-accent-strong: #B5B3AD;
-    --space-accent-soft: #2A2A28;
-    --space-accent-text: #EEEEEC;
-    --space-on-accent: #080808;
-    --space-hairline: #3B3A37;
-    --space-hero-a: #31312E;
-    --space-hero-b: #222221;
-  }
-
-  /* ── COUPLE 情侣空间 · 薄荷（中文语境：长青 / 和睦，且避开正红与纯白两处文化雷区） ── */
-  [data-space='COUPLE'] {
-    --space-accent: #86EAD4;        /* mint 9  —— 仅装饰 / 大色块 */
-    --space-accent-strong: #027864; /* mint 11 —— CTA 填充 / 激活态 / 关键数字 */
-    --space-accent-soft: #DDF9F2;   /* mint 3  —— 淡染底 */
-    --space-accent-text: #16433C;   /* mint 12 —— 淡染底与渐变上的文字 */
-    --space-on-accent: #FFFFFF;
-    --space-hairline: #9CE0D0;      /* mint 6  —— 纯装饰 */
-    --space-hero-a: #F2FBF9;        /* mint 2 */
-    --space-hero-b: #C8F4E9;        /* mint 4 */
-  }
-  html.dark [data-space='COUPLE'] {
-    --space-accent: #86EAD4;
-    --space-accent-strong: #58D5BA;
-    --space-accent-soft: #003A38;
-    --space-accent-text: #C4F5E1;
-    --space-on-accent: #080808;     /* 暗色下 step 11 是浅色实心 → 标签必须转深字 */
-    --space-hairline: #105650;
-    --space-hero-a: #004744;
-    --space-hero-b: #092C2B;
-  }
-
-  /* ── FAMILY 家庭空间 · 鸢尾（紫气东来；比 plum 更沉稳，贴合家庭相册「可信/归档」） ── */
-  [data-space='FAMILY'] {
-    --space-accent: #5B5BD6;
-    --space-accent-strong: #5753C6;
-    --space-accent-soft: #F0F1FE;
-    --space-accent-text: #272962;
-    --space-on-accent: #FFFFFF;
-    --space-hairline: #CBCDFF;
-    --space-hero-a: #F8F8FF;
-    --space-hero-b: #E6E7FF;
-  }
-  html.dark [data-space='FAMILY'] {
-    --space-accent: #5B5BD6;
-    --space-accent-strong: #B1A9FF;
-    --space-accent-soft: #262A65;
-    --space-accent-text: #E0DFFE;
-    --space-on-accent: #080808;
-    --space-hairline: #3D3E82;
-    --space-hero-a: #303374;
-    --space-hero-b: #202248;
-  }
-
-  /* ── FRIENDS 朋友空间 · 天青（信任 / 开阔 / 旅途天空；社交场景最安全的色相） ── */
-  [data-space='FRIENDS'] {
-    --space-accent: #7CE2FE;
-    --space-accent-strong: #00749E;
-    --space-accent-soft: #E1F6FD;
-    --space-accent-text: #1D3E56;
-    --space-on-accent: #FFFFFF;
-    --space-hairline: #A9DAED;
-    --space-hero-a: #F1FAFD;
-    --space-hero-b: #D1F0FA;
-  }
-  html.dark [data-space='FRIENDS'] {
-    --space-accent: #7CE2FE;
-    --space-accent-strong: #75C7F0;
-    --space-accent-soft: #113555;
-    --space-accent-text: #C2F3FF;
-    --space-on-accent: #080808;
-    --space-hairline: #1B537B;
-    --space-hero-a: #154467;
-    --space-hero-b: #112840;
-  }
-
-  /* ── SOLO 独旅空间 · 梅（向内 / 黄昏 / 自我对话；五个色相里最「低语」的一支） ── */
-  [data-space='SOLO'] {
-    --space-accent: #AB4ABA;
-    --space-accent-strong: #953EA3;
-    --space-accent-soft: #FBEBFB;
-    --space-accent-text: #53195D;
-    --space-on-accent: #FFFFFF;
-    --space-hairline: #E9C2EC;
-    --space-hero-a: #FDF7FD;
-    --space-hero-b: #F7DEF8;
-  }
-  html.dark [data-space='SOLO'] {
-    --space-accent: #AB4ABA;
-    --space-accent-strong: #E796F3;
-    --space-accent-soft: #451D47;
-    --space-accent-text: #F4D4F4;
-    --space-on-accent: #080808;
-    --space-hairline: #5E3061;
-    --space-hero-a: #512454;
-    --space-hero-b: #351A35;
-  }
-
-  /* ── OTHER 其他 · 沙（fallback 的正确姿态：安静、不主张，彩度≈0，绝不与其他主题争抢） ── */
-  [data-space='OTHER'] {
-    --space-accent: #8D8D86;
-    --space-accent-strong: #63635E;
-    --space-accent-soft: #F1F0EF;
-    --space-accent-text: #21201C;
-    --space-on-accent: #FFFFFF;
-    --space-hairline: #DAD9D6;
-    --space-hero-a: #F9F9F8;
-    --space-hero-b: #E9E8E6;
-  }
-  html.dark [data-space='OTHER'] {
-    --space-accent: #6F6D66;
-    --space-accent-strong: #B5B3AD;
-    --space-accent-soft: #2A2A28;
-    --space-accent-text: #EEEEEC;
-    --space-on-accent: #080808;
-    --space-hairline: #3B3A37;
-    --space-hero-a: #31312E;
-    --space-hero-b: #222221;
-  }
-
-  body {
-    @apply bg-travel-cream text-travel-ink transition-colors duration-200;
-    color-scheme: light;
-  }
-
-  html.dark body {
-    /* 统一暗色底：与档案 --social-bg / night.bg 一致的极黑暖调，消除明暗切换的割裂感 */
-    background-color: #080808;
-    color: #E8E6E1;
-    color-scheme: dark;
-  }
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
    容器宽度：收敛为 2 档（P1-2）
@@ -518,7 +243,6 @@ html.dark {
   pointer-events: none;
 }
 
-
 /* 移动端：表格与代码块横向滚动，避免撑破布局 */
 @media (max-width: 768px) {
   .prose table {
@@ -542,17 +266,18 @@ html.dark {
   }
 }
 
-
 /* ==========================================================================
    ★ 像素风相册（SavePoint 风格）
    仅用于相册模块：拍立得照片墙 / 书卷聊天 / 木屋桌面 / Minecraft 按钮
    类名均带 pixel-/mc-/book-/polaroid- 前缀，避免污染其他页面
    ========================================================================== */
 
-/* Zpix 像素中文字体 */
+/* Zpix 像素中文字体（P2-27 子集化：7.18MB TTF → 287KB WOFF2，-96%）
+   子集字符集 = 仓库源码全量字符 + GB2312 全量（6763 字）+ ASCII/中文标点；
+   用户输入的生僻字回退 monospace 兜底（不出现豆腐块）。 */
 @font-face {
   font-family: 'Zpix';
-  src: url('/zpix.ttf') format('truetype');
+  src: url('/zpix.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -578,7 +303,7 @@ html.dark {
   background-color: #0d0604;
   background-image:
     radial-gradient(circle at center, rgba(62, 42, 33, 0.18) 0%, rgba(12, 6, 4, 0.92) 100%),
-    url('/pixel_bg_cabin.png');
+    url('/pixel_bg_cabin.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -1102,7 +827,6 @@ html.dark {
   mask-image: radial-gradient(ellipse at center, black 58%, rgba(0, 0, 0, 0.85) 74%, transparent 97%);
 }
 
-
 /* ============ 全局可访问性 ============ */
 :focus-visible {
   outline: 2px solid #c76e80;
@@ -1154,45 +878,6 @@ html.dark {
 
 /* ★ semantic.* 语义层变量（组件写 bg-semantic-* 即自动双主题，无需 dark: 变体）
    亮色 = travel 暖陶土色板；暗色 = shell 深色色板。 */
-:root {
-  --semantic-bg: #FAF6EE;
-  --semantic-surface: #FFFFFF;
-  --semantic-surface2: #FDF5ED;
-  --semantic-line: #E8DDD4;
-  /* P2-28 对比度修正（只改 token 值，不动 class）：
-     计算依据为 WCAG 相对亮度公式 (L1+0.05)/(L2+0.05)，背景取页面底 #FAF6EE（L=0.9142）：
-       text    #444140 → 9.38:1（原 #585450 6.96:1；其 /70 透明度合成 3.40:1 → 4.12:1）
-       muted   #75604E → 5.50:1（原 #8B7355 4.16:1；同时保持 muted 比 faint 更深，层级不反转）
-       faint   #7D6754 → 4.94:1（原 #C2AF9A 1.97:1）
-     白色卡片面 #FFFFFF 上三档分别为 9.85 / 5.93 / 5.33，均 ≥4.5。 */
-  --semantic-text: #444140;
-  --semantic-heading: #5A4A3A;
-  --semantic-muted: #75604E;
-  --semantic-faint: #7D6754;
-  --semantic-accent: #A85F3A;
-  --semantic-accent-strong: #8A4A2B;
-  --semantic-accent-soft: #C97E55;
-  --semantic-accent-weak: rgba(168, 95, 58, 0.10);
-  --semantic-on-accent: #FFFFFF;
-}
-
-html.dark {
-  --semantic-bg: #12161C;
-  --semantic-surface: #1B2128;
-  --semantic-surface2: #161B22;
-  --semantic-line: #2C343E;
-  --semantic-text: #E8E6E1;
-  --semantic-heading: #E8E6E1;
-  --semantic-muted: #9BA3AE;
-  /* P2-28：深色底 #12161C（L=0.0077）上 #6E6A64 仅 3.38:1，提亮为 #8E949C → 5.93:1；
-     深色卡片面 #1B2128 上 5.30:1。与 tailwind shell.faint 同值，保持两套 token 一致。 */
-  --semantic-faint: #8E949C;
-  --semantic-accent: #E4B478;
-  --semantic-accent-strong: #F0C68C;
-  --semantic-accent-soft: #C9A06A;
-  --semantic-accent-weak: rgba(228, 180, 120, 0.12);
-  --semantic-on-accent: #12161C;
-}
 
 /* 登录卡片弹出 */
 @keyframes card-pop {
@@ -1314,12 +999,7 @@ html.dark {
   to   { transform: rotateY(-180deg); }
 }
 /* ===== 摄影画册 · Art Mode（源自 create-photo-flipbook-ui skill） ===== */
-:root {
-  --art-paper: #f7f6f0;
-  --art-ink: #292c26;
-  --art-cloth: #7d8572;
-  --art-serif: 'Source Serif 4', 'Songti SC', 'Noto Serif CJK SC', Georgia, serif;
-}
+
 .art-page {
   container-type: inline-size;
   /* 容器查询单位变量：现代浏览器等同 1cqw；老内核由 @supports not 兜底为像素近似值 */

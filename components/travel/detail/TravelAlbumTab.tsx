@@ -152,7 +152,7 @@ export default function TravelAlbumTab({
                       className="relative aspect-square overflow-hidden rounded-xl bg-[var(--m-surface-2)]"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                      <img src={p.url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                       {coverMediaId === p.id && (
                         <span className="absolute left-1.5 top-1.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-md">
                           封面
@@ -182,7 +182,7 @@ export default function TravelAlbumTab({
                       className="relative aspect-square overflow-hidden rounded-xl bg-[var(--m-surface-2)]"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                      <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                     </button>
                   )
                 })}
@@ -220,7 +220,7 @@ export default function TravelAlbumTab({
             {picked.map((p, i) => (
               <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`data:${p.mimeType};base64,${p.base64}`} alt="" className="h-full w-full object-cover" />
+                <img src={`data:${p.mimeType};base64,${p.base64}`} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 <button
                   type="button"
                   aria-label="移除这张照片"

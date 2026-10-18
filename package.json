@@ -16,7 +16,8 @@
     "tokens:check": "node scripts/check-design-tokens.mjs --check-baseline",
     "typecheck": "tsc --noEmit",
     "test:coverage": "vitest run --coverage",
-    "audit:gate": "node scripts/audit-gate.cjs"
+    "audit:gate": "node scripts/audit-gate.cjs",
+    "tokens:parity": "node scripts/check-token-parity.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1109.0",

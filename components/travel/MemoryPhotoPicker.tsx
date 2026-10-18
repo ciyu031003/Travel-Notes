@@ -120,7 +120,7 @@ export default function MemoryPhotoPicker({
                       className={`relative aspect-square overflow-hidden rounded-lg transition ${selected.has(p.id) ? 'ring-2 ring-travel-bloom' : 'ring-1 ring-travel-line'}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                      <img src={p.url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                       {selected.has(p.id) && (
                         <span className="absolute inset-0 flex items-center justify-center bg-travel-bloom/40">
                           <Icon icon={Check} size="md" tone="inverse" />

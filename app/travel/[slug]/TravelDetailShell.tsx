@@ -347,7 +347,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
                     className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-travel-mist/40"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>
@@ -418,7 +418,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
                   className="relative aspect-square overflow-hidden rounded-xl bg-travel-mist/40"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>

@@ -43,6 +43,8 @@ module.exports = {
         //   值走 CSS 变量（globals.css :root 亮色 / html.dark 暗色），组件写 bg-semantic-surface
         //   即自动双主题，无需 dark: 变体。新页面/新组件一律用 semantic.*；存量 travel.*/shell.*
         //   逐步迁移（ui/ 组件库已试点）。
+        // P2-31：--semantic-* 已是 tokens.css 中 --ui-* 的别名（三层架构的 legacy 兼容层），
+        // 因此 bg-semantic-* 实际消费 --ui-* 语义层；无需改 class。
         semantic: {
           bg: 'var(--semantic-bg)',
           surface: 'var(--semantic-surface)',
@@ -58,6 +60,8 @@ module.exports = {
           accentWeak: 'var(--semantic-accent-weak)',
           onAccent: 'var(--semantic-on-accent)',
         },
+        // ⚠️ deprecated（P2-31）：与 travel.accent* 同值的历史数字阶（admin 存量）。
+        //   新代码请用 semantic-accent* / var(--ui-accent*)，本轮保留以维持视觉零变化。
         // ★ primary 语义色：对齐 travel 暖陶土（原为天蓝 #0ea5e9，与暖陶土品牌冲突）
         //   改为品牌主色后，admin 主按钮/聚焦环/上传态全局统一，一次性消除 primary 蓝残留
         primary: {
@@ -65,7 +69,9 @@ module.exports = {
           400: '#B08663', 500: '#A85F3A', 600: '#8A4A2B', 700: '#7A3F24',
           800: '#6A351E', 900: '#5A2C18',
         },
-        // ★ 新增 travel 暖色调系列（项目主色调）
+        // ⚠️ deprecated（P2-31）：值与 tokens.css 的 --ui-travel-* / --palette-* 同源；
+        //   含 775 处 /opacity 用法，直接改 var() 会破坏透明度修饰符，存量保留。
+        // ★ travel 暖色调系列（项目主色调）→ --ui-travel-*（CSS 变量侧唯一源）
         travel: {
           cream: '#FAF6EE',    // 主背景（暖米白）
           // P2-28：主文字由 #585450 调深为 #444140。
@@ -92,24 +98,30 @@ module.exports = {
           inkStrong: '#5A4A3A',    // 暖深棕标题
           line: '#E8DDD4',         // 暖浅边框
         },
-                        // ★ 像素风木屋/纸面肤色（Stage 1 引入）
+                        // ★ 像素风木屋/纸面肤色（P2-31：去重 —— 值统一由 app/tokens.css 的
+        //   --palette-pixel-*-rgb / --album-pixel-* 提供，这里只保留 Tailwind 入口。
+        //   rgb(var(...) / <alpha-value>) 形式同时支持 bg-pixel-panel/70 这类透明度修饰符，
+        //   渲染结果与原来的 hex 完全等值。）
         pixel: {
-          ink: '#5a3b30',
-          muted: '#8a7662',
-          faint: '#8a8479',
-          line: '#3c2a1a',
-          photo: '#211713',
-          panel: '#1c110d',
-          panel2: '#2c1913',
-          panel3: '#231611',
-          paper: '#FDF5ED',
-          online: '#5b8731',
-          bubble: '#70b237',
-          lineLight: '#d8c9a6',
-          error: '#a02a2a',
-          goldLight: '#fce268',
-          goldPale: '#f3d7a0',
+          ink: 'rgb(var(--ui-pixel-ink-rgb) / <alpha-value>)',
+          muted: 'rgb(var(--ui-pixel-muted-rgb) / <alpha-value>)',
+          faint: 'rgb(var(--ui-pixel-faint-rgb) / <alpha-value>)',
+          line: 'rgb(var(--ui-pixel-line-rgb) / <alpha-value>)',
+          photo: 'rgb(var(--ui-pixel-photo-rgb) / <alpha-value>)',
+          panel: 'rgb(var(--ui-pixel-panel-rgb) / <alpha-value>)',
+          panel2: 'rgb(var(--ui-pixel-panel2-rgb) / <alpha-value>)',
+          panel3: 'rgb(var(--ui-pixel-panel3-rgb) / <alpha-value>)',
+          paper: 'rgb(var(--ui-pixel-paper-rgb) / <alpha-value>)',
+          online: 'rgb(var(--ui-pixel-online-rgb) / <alpha-value>)',
+          bubble: 'rgb(var(--ui-pixel-bubble-rgb) / <alpha-value>)',
+          lineLight: 'rgb(var(--ui-pixel-linelight-rgb) / <alpha-value>)',
+          error: 'rgb(var(--ui-pixel-error-rgb) / <alpha-value>)',
+          goldLight: 'rgb(var(--ui-pixel-goldlight-rgb) / <alpha-value>)',
+          goldPale: 'rgb(var(--ui-pixel-goldpale-rgb) / <alpha-value>)',
         },
+        // ⚠️ deprecated（P2-31）：与 tokens.css 的 --album-* / --ui-album-* 同值。
+        //   保留仅为存量 class 兼容；新代码用 semantic-* 或 CSS 变量。含 rgba 与 /opacity
+        //   混用，直接改 var() 会破坏透明度修饰符，故本轮只标注、不迁移（见汇报 deferred）。
         // ★ 相册暗色视觉系统（Stage 1：Album Design Tokens）
         album: {
           bg0: '#050508',
@@ -128,38 +140,25 @@ module.exports = {
           wait: '#9aa3b2',
           error: '#e06c6c',
         },
-        // ★ 旅行记忆宇宙（Stage 3：个人主页 / 旅行圈统一暗色 Editorial）
-        night: {
-          bg: '#080808',
-          surface: '#111111',
-          surface2: '#171717',
-          surface3: '#1e1d1b',
-          text: '#F5F1EA',
-          muted: 'rgba(245,241,234,0.70)',
-          faint: 'rgba(245,241,234,0.46)',
-          gold: '#E8B36A',
-          goldStrong: '#F2C88A',
-          goldSoft: 'rgba(232,179,106,0.14)',
-          line: 'rgba(245,241,234,0.09)',
-          lineStrong: 'rgba(245,241,234,0.16)',
-        },
-        // ★ 标准壳暗色（首页/时间线/登录等冷灰蓝 dark 值归一为语义 token，视觉零变化，仅消除硬编码）
+        // ★ night.* 已于 P2-31 删除：13 个色值与 --social-* 暗色完全重复，且全仓 0 处
+        //   night-* class 引用（grep 校验）。social 暗色统一由 tokens.css 的 --ui-social-* 承担。
+        // ★ 标准壳暗色（P2-31：去重 —— 值与 tokens.css 的 --palette-shell-*-rgb 单一来源，
+        //   这里只保留 Tailwind 入口；rgb() + <alpha-value> 保证 bg-shell-bg/90 等透明度用法不变）
         shell: {
-          bg: '#12161C',        // 页面底（原 dark:bg-[#12161C]）
-          surface: '#1B2128',   // 卡片面（原 dark:bg-[#1B2128]）
-          surface2: '#161B22',  // 输入框/内嵌面（原 dark:bg-[#161B22]）
-          surface3: '#151A21',  // 底部导航（原 dark:bg-[#151A21]）
-          text: '#E8E6E1',      // 主文字（原 dark:text-[#E8E6E1]）
-          muted: '#9BA3AE',     // 次级文字（原 dark:text-[#9BA3AE]）
-          // P2-28：由 #6E6A64 提亮为 #8E949C —— 深色壳底 #12161C 上 3.38:1 → 5.93:1，
-          // 深色卡片面 #1B2128 上 5.30:1（35 处 dark:text-shell-faint 全部达标）。
-          faint: '#8E949C',     // 弱化文字（原 dark:text-[#6E6A64]）
-          line: '#2C343E',      // 边框（原 dark:border-[#2C343E]）
+          bg: 'rgb(var(--ui-shell-bg-rgb) / <alpha-value>)',
+          surface: 'rgb(var(--ui-shell-surface-rgb) / <alpha-value>)',
+          surface2: 'rgb(var(--ui-shell-surface2-rgb) / <alpha-value>)',
+          surface3: 'rgb(var(--ui-shell-surface3-rgb) / <alpha-value>)',
+          text: 'rgb(var(--ui-shell-text-rgb) / <alpha-value>)',
+          muted: 'rgb(var(--ui-shell-muted-rgb) / <alpha-value>)',
+          faint: 'rgb(var(--ui-shell-faint-rgb) / <alpha-value>)', // P2-28 提亮到 #8E949C（5.93:1）
+          line: 'rgb(var(--ui-shell-line-rgb) / <alpha-value>)',
         },
         // ★ 新增语义化颜色
         success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
         warning: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
         danger:  { 50: '#fef2f2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c' },
+        // ⚠️ deprecated（P2-31）：admin 存量数字阶，无对应 CSS 变量语义层，新代码不要再用。
         // ★ 暖灰数字阶（1.20.0）：admin 后台由 Tailwind 冷灰 gray-N 归一到项目 token。
         //   取 stone（暖灰）系，与 gray-N 亮度逐档对齐 —— 批量替换后视觉零跳变，
         //   但整体色温与全站暖陶土色板一致，且受 check-design-tokens 治理。

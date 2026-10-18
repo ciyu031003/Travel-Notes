@@ -187,7 +187,7 @@ export default function DownloadPage() {
               <div className="shrink-0 rounded-2xl bg-white p-3 shadow-inner ring-1 ring-travel-line/60 dark:ring-shell-line">
                 {qrDataUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={qrDataUrl} alt="甜途 App 下载二维码" width={220} height={220} className="h-44 w-44 md:h-52 md:w-52" />
+                  <img src={qrDataUrl} alt="甜途 App 下载二维码" width={220} height={220} loading="lazy" decoding="async" className="h-44 w-44 md:h-52 md:w-52" />
                 ) : (
                   <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/40 md:h-52 md:w-52">
                     二维码生成中…
@@ -253,7 +253,7 @@ export default function DownloadPage() {
                 <div className="rounded-2xl bg-white p-3 shadow-inner ring-1 ring-travel-line/60 dark:ring-shell-line">
                   {qrDataUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={qrDataUrl} alt="扫码下载甜途 App" width={184} height={184} className="h-44 w-44" />
+                    <img src={qrDataUrl} alt="扫码下载甜途 App" width={184} height={184} loading="lazy" decoding="async" className="h-44 w-44" />
                   ) : (
                     <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/40">
                       二维码生成中…

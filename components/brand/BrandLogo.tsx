@@ -23,6 +23,8 @@ export default function BrandLogo({
       alt="甜途标志"
       width={size}
       height={size}
+      loading="eager"
+      decoding="async"
       style={{ width: size, height: size }}
       draggable={false}
       className={cn('shrink-0 select-none object-cover', rounded, className)}

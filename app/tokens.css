@@ -1,0 +1,1216 @@
+/* ==========================================================================
+   设计 Token 三层架构（P2-31）
+
+   L1 Primitive（--palette-*）：唯一原始值层。组件/样式禁止直接引用；
+   L2 Semantic（--ui-*）：语义角色层，跨组件消费的唯一入口；
+      共享语义使用无域前缀名（--ui-bg / --ui-text / --ui-accent ...），
+      模块自有色板保留域前缀（--ui-mobile-* / --ui-social-* / --ui-space-* /
+      --ui-album-* / --ui-travel-*），因为它们的调色板是有意不同的。
+   L3 Skin（皮肤层）：暗色 html.dark、空间类型 [data-space]、以及显式
+      [data-skin="album"|"social"|"space"] 只重绑 --ui-*，不新增原始值。
+
+   Legacy 兼容层：--m-* / --album-* / --social-* / --space-* / --semantic-* /
+   --color-* / --shadow-* / --danger-soft / --art-* 全部改为 var(--ui-*) 别名，
+   组件 class 无需改动；视觉与改造前逐 token 相等（scripts/check-token-parity.mjs 校验）。
+   ========================================================================== */
+
+/* ── L1 · Primitive ─────────────────────────────────────────────────────── */
+:root {
+  --palette-mobile-bg: #FFFBF7;
+  --palette-mobile-bg-soft: #FFF3E9;
+  --palette-mobile-surface: rgba(255, 255, 255, 0.82);
+  --palette-mobile-surface-solid: #FFFFFF;
+  --palette-mobile-surface-2: #F7F3EF;
+  --palette-mobile-text: #3D2B20;
+  --palette-mobile-muted: #7D6754;
+  --palette-mobile-faint: #867060;
+  --palette-mobile-accent: #C67A4E;
+  --palette-mobile-accent-strong: #A85F3A;
+  --palette-mobile-accent-soft: rgba(198, 122, 78, 0.14);
+  --palette-mobile-sun: #E4B478;
+  --palette-mobile-blush: #F3C6B5;
+  --palette-mobile-clay: #B4705C;
+  --palette-mobile-sky: #A8C8DC;
+  --palette-mobile-mint: #9CC7B2;
+  --palette-mobile-tone-accent-bg: rgba(198, 122, 78, 0.12);
+  --palette-mobile-tone-sun-bg: rgba(228, 180, 120, 0.20);
+  --palette-mobile-tone-sun-fg: #A96C22;
+  --palette-mobile-tone-blush-bg: rgba(243, 198, 181, 0.30);
+  --palette-mobile-tone-blush-fg: #A85F4A;
+  --palette-mobile-tone-clay-bg: rgba(180, 112, 92, 0.14);
+  --palette-mobile-tone-clay-fg: #8A4A2B;
+  --palette-mobile-tone-neutral-bg: #F2EDE8;
+  --palette-mobile-success: #2F7C52;
+  --palette-mobile-warning: #B8801F;
+  --palette-mobile-danger: #C0453F;
+  --palette-mobile-line: rgba(168, 95, 58, 0.10);
+  --palette-mobile-line-strong: rgba(168, 95, 58, 0.22);
+  --palette-mobile-hairline: 0.5px solid var(--m-line-strong);
+  --palette-mobile-elev-1: 0 1px 2px rgba(61, 43, 32, 0.04), 0 8px 24px -16px rgba(61, 43, 32, 0.18);
+  --palette-mobile-elev-2: 0 8px 32px -12px rgba(61, 43, 32, 0.28);
+  --palette-mobile-elev-3: 0 -12px 40px -12px rgba(40, 24, 14, 0.35);
+  --palette-mobile-inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  --palette-mobile-inset-lo: inset 0 -1px 0 rgba(61, 43, 32, 0.06);
+  --palette-mobile-ring: 0 0 0 3px var(--m-accent-soft);
+  --palette-mobile-ring-danger: 0 0 0 3px rgba(192, 69, 63, 0.18);
+  --palette-mobile-dur-press: 120ms;
+  --palette-mobile-dur-enter: 320ms;
+  --palette-mobile-dur-page: 240ms;
+  --palette-mobile-dur-overlay: 220ms;
+  --palette-mobile-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --palette-mobile-ease-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
+  --palette-mobile-grad-hero: linear-gradient(165deg, var(--m-bg-soft), var(--m-surface-2));
+  --palette-mobile-grad-scrim: linear-gradient(to top, rgba(24, 15, 9, 0.68), rgba(24, 15, 9, 0) 62%);
+  --palette-mobile-grad-cta: linear-gradient(180deg, var(--m-accent), var(--m-accent-strong));
+  --palette-mobile-pattern-dot: radial-gradient(circle at 1px 1px, var(--m-line-strong) 1px, transparent 0);
+  --palette-mobile-pattern-grid: linear-gradient(var(--m-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--m-line) 1px, transparent 1px);
+  --palette-mobile-radius-card: 20px;
+  --palette-mobile-radius-control: 14px;
+  --palette-mobile-radius-sheet: 24px;
+  --palette-mobile-radius-pill: 999px;
+  --palette-mobile-radius-sm: 12px;
+  --palette-mobile-section-gap: 32px;
+  --palette-mobile-status-bar-height: 0px;
+  --palette-mobile-safe-top: max(20px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-safe-top-8: max(8px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-safe-top-10: max(10px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-safe-top-12: max(12px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-safe-top-16: max(16px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-safe-top-24: max(24px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-safe-top-26: max(26px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-safe-top-40: max(40px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-safe-top-48: max(48px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-icon-sm: 16px;
+  --palette-mobile-icon-stroke: 2;
+  --palette-mobile-icon-stroke-lg: 1.75;
+  --palette-mobile-tab-h: 60px;
+  --palette-mobile-fab-size: 56px;
+  --palette-travel-cream: #FAF6EE;
+  --palette-travel-ink: #585450;
+  --palette-travel-dim: #DAD5CB;
+  --palette-travel-sakura: #F3E4D5;
+  --palette-travel-mist: #D6E8F0;
+  --palette-travel-accent-soft: #C97E55;
+  --palette-travel-sand: #8B7355;
+  --palette-travel-sand-soft: #C2AF9A;
+  --palette-travel-sand-light: #E4D6C4;
+  --palette-travel-parchment: #FDF5ED;
+  --palette-travel-parchment-dim: #F5EDE4;
+  --palette-travel-ink-strong: #5A4A3A;
+  --palette-travel-line: #E8DDD4;
+  --palette-travel-success: #22c55e;
+  --palette-travel-warning: #f59e0b;
+  --palette-travel-danger: #ef4444;
+  --palette-album-bg0: #050508;
+  --palette-album-bg1: #0b0807;
+  --palette-album-bg2: #14100e;
+  --palette-album-surface: rgba(255,255,255,0.06);
+  --palette-album-text1: rgba(245,247,255,0.92);
+  --palette-album-text2: rgba(245,247,255,0.68);
+  --palette-album-text3: rgba(245,247,255,0.45);
+  --palette-album-warm: #a89f91;
+  --palette-album-accent: #e8b06a;
+  --palette-album-accent-strong: #f5c97e;
+  --palette-album-accent-dim: rgba(232,176,106,0.16);
+  --palette-album-ok: #6fcf97;
+  --palette-album-wait: #9aa3b2;
+  --palette-album-error: #e06c6c;
+  --palette-album-pixel-ink: #5a3b30;
+  --palette-album-pixel-muted: #8a7662;
+  --palette-album-pixel-faint: #8a8479;
+  --palette-album-pixel-line: #3c2a1a;
+  --palette-album-pixel-photo: #211713;
+  --palette-album-pixel-panel: #1c110d;
+  --palette-album-pixel-panel2: #2c1913;
+  --palette-album-pixel-panel3: #231611;
+  --palette-album-pixel-online: #5b8731;
+  --palette-album-pixel-bubble: #70b237;
+  --palette-album-pixel-lineth: #d8c9a6;
+  --palette-album-pixel-error: #a02a2a;
+  --palette-album-pixel-goldlight: #fce268;
+  --palette-album-pixel-goldpale: #f3d7a0;
+  --palette-shadow-soft: 0 10px 28px rgba(90,102,112,0.08);
+  --palette-shadow-card: 0 12px 40px -12px rgba(90,102,112,0.18);
+  --palette-social-bg: #F7F4EE;
+  --palette-social-surface-90: rgba(255, 255, 255, 0.90);
+  --palette-social-surface-80: rgba(255, 255, 255, 0.80);
+  --palette-social-surface-60: rgba(255, 255, 255, 0.60);
+  --palette-social-surface-50: rgba(255, 255, 255, 0.50);
+  --palette-social-surface2: #F3EEE6;
+  --palette-social-surface3: #EAE3D9;
+  --palette-social-text: #2B211B;
+  --palette-social-muted: rgba(43, 33, 27, 0.70);
+  --palette-social-faint: rgba(43, 33, 27, 0.46);
+  --palette-social-accent-soft: rgba(168, 95, 58, 0.12);
+  --palette-social-line: rgba(90, 74, 58, 0.12);
+  --palette-social-line-strong: rgba(90, 74, 58, 0.22);
+  --palette-danger-soft: #B4535B;
+  --palette-space-accent: #8D8D86;
+  --palette-space-accent-strong: #63635E;
+  --palette-space-accent-soft: #F1F0EF;
+  --palette-space-accent-text: #21201C;
+  --palette-space-hairline: #DAD9D6;
+  --palette-space-hero-a: #F9F9F8;
+  --palette-space-hero-b: #E9E8E6;
+  --palette-text: #444140;
+  --palette-muted: #75604E;
+  --palette-art-paper: #f7f6f0;
+  --palette-art-ink: #292c26;
+  --palette-art-cloth: #7d8572;
+  --palette-art-serif: 'Source Serif 4', 'Songti SC', 'Noto Serif CJK SC', Georgia, serif;
+  --palette-shell-bg-rgb: 18 22 28;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-shell-surface-rgb: 27 33 40;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-shell-surface2-rgb: 22 27 34;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-shell-surface3-rgb: 21 26 33;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-shell-text-rgb: 232 230 225;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-shell-muted-rgb: 155 163 174;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-shell-faint-rgb: 142 148 156;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-shell-line-rgb: 44 52 62;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-ink-rgb: 90 59 48;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-muted-rgb: 138 118 98;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-faint-rgb: 138 132 121;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-line-rgb: 60 42 26;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-photo-rgb: 33 23 19;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-panel-rgb: 28 17 13;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-panel2-rgb: 44 25 19;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-panel3-rgb: 35 22 17;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-paper-rgb: 253 245 237;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-online-rgb: 91 135 49;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-bubble-rgb: 112 178 55;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-linelight-rgb: 216 201 166;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-error-rgb: 160 42 42;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-goldlight-rgb: 252 226 104;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+  --palette-pixel-goldpale-rgb: 243 215 160;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+}
+
+html.dark {
+  --palette-dark-mobile-bg: #100C0A;
+  --palette-dark-mobile-bg-soft: #171210;
+  --palette-dark-mobile-surface: rgba(23, 18, 16, 0.82);
+  --palette-dark-mobile-surface-solid: #1B1512;
+  --palette-dark-mobile-surface-2: #211A16;
+  --palette-dark-mobile-text: #F5F1EA;
+  --palette-dark-mobile-muted: #A99B90;
+  --palette-dark-mobile-faint: #8B8078;
+  --palette-dark-mobile-accent: #E8B36A;
+  --palette-dark-mobile-accent-strong: #F2C88A;
+  --palette-dark-mobile-accent-soft: rgba(232, 179, 106, 0.16);
+  --palette-dark-mobile-blush: #C8897D;
+  --palette-dark-mobile-sky: #93B7CC;
+  --palette-dark-mobile-mint: #7FA996;
+  --palette-dark-mobile-tone-sun-bg: rgba(242, 200, 138, 0.16);
+  --palette-dark-mobile-tone-sun-fg: #F5D49B;
+  --palette-dark-mobile-tone-blush-bg: rgba(200, 137, 125, 0.20);
+  --palette-dark-mobile-tone-blush-fg: #E4A896;
+  --palette-dark-mobile-tone-clay-bg: rgba(200, 137, 125, 0.16);
+  --palette-dark-mobile-tone-clay-fg: #E0A88F;
+  --palette-dark-mobile-tone-neutral-bg: #241D19;
+  --palette-dark-mobile-success: #6FBF8F;
+  --palette-dark-mobile-warning: #E0B45C;
+  --palette-dark-mobile-danger: #E2706A;
+  --palette-dark-mobile-line: rgba(245, 241, 234, 0.10);
+  --palette-dark-mobile-line-strong: rgba(245, 241, 234, 0.18);
+  --palette-dark-mobile-elev-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 8px 24px -16px rgba(0, 0, 0, 0.50);
+  --palette-dark-mobile-elev-2: 0 8px 32px -12px rgba(0, 0, 0, 0.55);
+  --palette-dark-mobile-elev-3: 0 -12px 40px -12px rgba(0, 0, 0, 0.60);
+  --palette-dark-mobile-inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --palette-dark-mobile-inset-lo: inset 0 -1px 0 rgba(0, 0, 0, 0.24);
+  --palette-dark-mobile-on-accent: #1A120A;
+  --palette-dark-mobile-ring-danger: 0 0 0 3px rgba(226, 112, 106, 0.22);
+  --palette-dark-mobile-grad-scrim: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0) 62%);
+  --palette-dark-social-bg: #080808;
+  --palette-dark-social-surface: #111111;
+  --palette-dark-social-surface-90: rgba(17, 17, 17, 0.90);
+  --palette-dark-social-surface-80: rgba(17, 17, 17, 0.80);
+  --palette-dark-social-surface-60: rgba(17, 17, 17, 0.60);
+  --palette-dark-social-surface-50: rgba(17, 17, 17, 0.50);
+  --palette-dark-social-surface2: #171717;
+  --palette-dark-social-surface3: #1e1d1b;
+  --palette-dark-social-muted: rgba(245, 241, 234, 0.70);
+  --palette-dark-social-faint: rgba(245, 241, 234, 0.46);
+  --palette-dark-social-accent-soft: rgba(232, 179, 106, 0.14);
+  --palette-dark-social-line: rgba(245, 241, 234, 0.09);
+  --palette-dark-social-line-strong: rgba(245, 241, 234, 0.16);
+  --palette-dark-space-accent: #6F6D66;
+  --palette-dark-space-accent-strong: #B5B3AD;
+  --palette-dark-space-accent-soft: #2A2A28;
+  --palette-dark-space-accent-text: #EEEEEC;
+  --palette-dark-space-hairline: #3B3A37;
+  --palette-dark-space-hero-a: #31312E;
+  --palette-dark-space-hero-b: #222221;
+  --palette-dark-bg: #12161C;
+  --palette-dark-surface: #1B2128;
+  --palette-dark-surface2: #161B22;
+  --palette-dark-line: #2C343E;
+  --palette-dark-text: #E8E6E1;
+  --palette-dark-muted: #9BA3AE;
+  --palette-dark-faint: #8E949C;
+  --palette-dark-accent-strong: #F0C68C;
+  --palette-dark-accent-soft: #C9A06A;
+  --palette-dark-accent-weak: rgba(228, 180, 120, 0.12);
+}
+
+[data-space='COUPLE'] {
+  --palette-space-couple-accent: #86EAD4;
+  --palette-space-couple-accent-strong: #027864;
+  --palette-space-couple-accent-soft: #DDF9F2;
+  --palette-space-couple-accent-text: #16433C;
+  --palette-space-couple-hairline: #9CE0D0;
+  --palette-space-couple-hero-a: #F2FBF9;
+  --palette-space-couple-hero-b: #C8F4E9;
+}
+
+html.dark [data-space='COUPLE'] {
+  --palette-space-couple-dark-accent-strong: #58D5BA;
+  --palette-space-couple-dark-accent-soft: #003A38;
+  --palette-space-couple-dark-accent-text: #C4F5E1;
+  --palette-space-couple-dark-hairline: #105650;
+  --palette-space-couple-dark-hero-a: #004744;
+  --palette-space-couple-dark-hero-b: #092C2B;
+}
+
+[data-space='FAMILY'] {
+  --palette-space-family-accent: #5B5BD6;
+  --palette-space-family-accent-strong: #5753C6;
+  --palette-space-family-accent-soft: #F0F1FE;
+  --palette-space-family-accent-text: #272962;
+  --palette-space-family-hairline: #CBCDFF;
+  --palette-space-family-hero-a: #F8F8FF;
+  --palette-space-family-hero-b: #E6E7FF;
+}
+
+html.dark [data-space='FAMILY'] {
+  --palette-space-family-dark-accent-strong: #B1A9FF;
+  --palette-space-family-dark-accent-soft: #262A65;
+  --palette-space-family-dark-accent-text: #E0DFFE;
+  --palette-space-family-dark-hairline: #3D3E82;
+  --palette-space-family-dark-hero-a: #303374;
+  --palette-space-family-dark-hero-b: #202248;
+}
+
+[data-space='FRIENDS'] {
+  --palette-space-friends-accent: #7CE2FE;
+  --palette-space-friends-accent-strong: #00749E;
+  --palette-space-friends-accent-soft: #E1F6FD;
+  --palette-space-friends-accent-text: #1D3E56;
+  --palette-space-friends-hairline: #A9DAED;
+  --palette-space-friends-hero-a: #F1FAFD;
+  --palette-space-friends-hero-b: #D1F0FA;
+}
+
+html.dark [data-space='FRIENDS'] {
+  --palette-space-friends-dark-accent-strong: #75C7F0;
+  --palette-space-friends-dark-accent-soft: #113555;
+  --palette-space-friends-dark-accent-text: #C2F3FF;
+  --palette-space-friends-dark-hairline: #1B537B;
+  --palette-space-friends-dark-hero-a: #154467;
+  --palette-space-friends-dark-hero-b: #112840;
+}
+
+[data-space='SOLO'] {
+  --palette-space-solo-accent: #AB4ABA;
+  --palette-space-solo-accent-strong: #953EA3;
+  --palette-space-solo-accent-soft: #FBEBFB;
+  --palette-space-solo-accent-text: #53195D;
+  --palette-space-solo-hairline: #E9C2EC;
+  --palette-space-solo-hero-a: #FDF7FD;
+  --palette-space-solo-hero-b: #F7DEF8;
+}
+
+html.dark [data-space='SOLO'] {
+  --palette-space-solo-dark-accent-strong: #E796F3;
+  --palette-space-solo-dark-accent-soft: #451D47;
+  --palette-space-solo-dark-accent-text: #F4D4F4;
+  --palette-space-solo-dark-hairline: #5E3061;
+  --palette-space-solo-dark-hero-a: #512454;
+  --palette-space-solo-dark-hero-b: #351A35;
+}
+
+/* 来源：原 app/globals.css @layer base（P2-31 迁移至此）。空间类型皮肤的设计约束：
+   ══════════════════════════════════════════════════════════════════════
+   空间类型主题（P1 · 受控多主题，只作用于空间模块）
+
+   为什么需要：产品要求「情侣 / 家庭 / 朋友 / 独旅 / 其他」各有自己的清新淡雅
+   配色，而《移动端设计规范》§2.6 原本禁止「用彩色表达分类」、§2.2 规定唯一强调色。
+   这里按规范新增的 §2.8 落地：**只放行 7 个低彩度令牌**，中性层（--social-*）、
+   品牌赤陶（--social-accent #A85F3A）、间距 / 圆角 / 字号阶梯**全部保持共享**，
+   并用 [data-space] 作用域把影响面锁在组件树的一层里（见 SpaceThemeScope.tsx）。
+
+   色值来源：Radix Colors（MIT · @radix-ui/colors@3.0.0）12 级语义
+   —— 3/4 组件底、6 分隔线、9 实心、11 文本、12 强文本。
+   对比度逐项自算（WCAG 2.1 相对亮度）：
+   亮色 CTA = step 11 + #FFFFFF → 5.26–6.07 ✅
+   暗色 CTA = step 11 + #080808 → 9.53–11.10 ✅
+   ⚠️ step 9 **不能**当亮色 CTA（mint 9 对白字仅 1.43、sky 9 仅 1.48），只作装饰/大色块。
+   ⚠️ step 6 发丝线仅 1.4–1.6:1，不满足 WCAG 1.4.11 的 3:1 →
+   控件边界（输入框/按钮/tab）一律用共享 --social-line，空间色发丝线只作纯装饰；
+   聚焦环不随空间变色。
+   ══════════════════════════════════════════════════════════════════════
+*/
+
+/* ── L2 · Semantic ─────────────────────────────────────────────────────── */
+:root {
+  --ui-mobile-bg: var(--palette-mobile-bg);
+  --ui-mobile-bg-soft: var(--palette-mobile-bg-soft);
+  --ui-mobile-surface: var(--palette-mobile-surface);
+  --ui-mobile-surface-solid: var(--palette-mobile-surface-solid);
+  --ui-mobile-surface-2: var(--palette-mobile-surface-2);
+  --ui-mobile-text: var(--palette-mobile-text);
+  --ui-mobile-muted: var(--palette-mobile-muted);
+  --ui-mobile-faint: var(--palette-mobile-faint);
+  --ui-mobile-accent: var(--palette-mobile-accent);
+  --ui-mobile-accent-strong: var(--palette-mobile-accent-strong);
+  --ui-mobile-accent-soft: var(--palette-mobile-accent-soft);
+  --ui-mobile-sun: var(--palette-mobile-sun);
+  --ui-mobile-blush: var(--palette-mobile-blush);
+  --ui-mobile-clay: var(--palette-mobile-clay);
+  --ui-mobile-sky: var(--palette-mobile-sky);
+  --ui-mobile-mint: var(--palette-mobile-mint);
+  --ui-mobile-tone-accent-bg: var(--palette-mobile-tone-accent-bg);
+  --ui-mobile-tone-accent-fg: var(--palette-mobile-accent-strong);
+  --ui-mobile-tone-sun-bg: var(--palette-mobile-tone-sun-bg);
+  --ui-mobile-tone-sun-fg: var(--palette-mobile-tone-sun-fg);
+  --ui-mobile-tone-blush-bg: var(--palette-mobile-tone-blush-bg);
+  --ui-mobile-tone-blush-fg: var(--palette-mobile-tone-blush-fg);
+  --ui-mobile-tone-clay-bg: var(--palette-mobile-tone-clay-bg);
+  --ui-mobile-tone-clay-fg: var(--palette-mobile-tone-clay-fg);
+  --ui-mobile-tone-neutral-bg: var(--palette-mobile-tone-neutral-bg);
+  --ui-mobile-tone-neutral-fg: var(--palette-mobile-muted);
+  --ui-mobile-success: var(--palette-mobile-success);
+  --ui-mobile-warning: var(--palette-mobile-warning);
+  --ui-mobile-danger: var(--palette-mobile-danger);
+  --ui-mobile-line: var(--palette-mobile-line);
+  --ui-mobile-line-strong: var(--palette-mobile-line-strong);
+  --ui-mobile-hairline: var(--palette-mobile-hairline);
+  --ui-mobile-elev-1: var(--palette-mobile-elev-1);
+  --ui-mobile-elev-2: var(--palette-mobile-elev-2);
+  --ui-mobile-elev-3: var(--palette-mobile-elev-3);
+  --ui-mobile-inset-hi: var(--palette-mobile-inset-hi);
+  --ui-mobile-inset-lo: var(--palette-mobile-inset-lo);
+  --ui-mobile-shadow-l1: var(--ui-mobile-elev-1);
+  --ui-mobile-shadow-l2: var(--ui-mobile-elev-2);
+  --ui-mobile-shadow-lg: var(--ui-mobile-elev-3);
+  --ui-mobile-shadow-sm: var(--ui-mobile-elev-1);
+  --ui-mobile-shadow-md: var(--ui-mobile-elev-2);
+  --ui-mobile-on-accent: var(--palette-mobile-surface-solid);
+  --ui-mobile-cta-bg: var(--ui-mobile-accent-strong);
+  --ui-mobile-on-danger: var(--palette-mobile-surface-solid);
+  --ui-mobile-ring: var(--palette-mobile-ring);
+  --ui-mobile-ring-danger: var(--palette-mobile-ring-danger);
+  --ui-mobile-dur-press: var(--palette-mobile-dur-press);
+  --ui-mobile-dur-enter: var(--palette-mobile-dur-enter);
+  --ui-mobile-dur-page: var(--palette-mobile-dur-page);
+  --ui-mobile-dur-overlay: var(--palette-mobile-dur-overlay);
+  --ui-mobile-ease-out: var(--palette-mobile-ease-out);
+  --ui-mobile-ease-spring: var(--palette-mobile-ease-spring);
+  --ui-mobile-grad-hero: var(--palette-mobile-grad-hero);
+  --ui-mobile-grad-scrim: var(--palette-mobile-grad-scrim);
+  --ui-mobile-grad-cta: var(--palette-mobile-grad-cta);
+  --ui-mobile-pattern-dot: var(--palette-mobile-pattern-dot);
+  --ui-mobile-pattern-grid: var(--palette-mobile-pattern-grid);
+  --ui-mobile-radius-card: var(--palette-mobile-radius-card);
+  --ui-mobile-radius-control: var(--palette-mobile-radius-control);
+  --ui-mobile-radius-sheet: var(--palette-mobile-radius-sheet);
+  --ui-mobile-radius-pill: var(--palette-mobile-radius-pill);
+  --ui-mobile-radius-lg: var(--palette-mobile-radius-card);
+  --ui-mobile-radius-md: var(--palette-mobile-radius-control);
+  --ui-mobile-radius-sm: var(--palette-mobile-radius-sm);
+  --ui-mobile-gutter: var(--palette-mobile-radius-card);
+  --ui-mobile-section-gap: var(--palette-mobile-section-gap);
+  --ui-mobile-status-bar-height: var(--palette-mobile-status-bar-height);
+  --ui-mobile-safe-top: var(--palette-mobile-safe-top);
+  --ui-mobile-safe-top-8: var(--palette-mobile-safe-top-8);
+  --ui-mobile-safe-top-10: var(--palette-mobile-safe-top-10);
+  --ui-mobile-safe-top-12: var(--palette-mobile-safe-top-12);
+  --ui-mobile-safe-top-16: var(--palette-mobile-safe-top-16);
+  --ui-mobile-safe-top-24: var(--palette-mobile-safe-top-24);
+  --ui-mobile-safe-top-26: var(--palette-mobile-safe-top-26);
+  --ui-mobile-safe-top-40: var(--palette-mobile-safe-top-40);
+  --ui-mobile-safe-top-48: var(--palette-mobile-safe-top-48);
+  --ui-mobile-icon-sm: var(--palette-mobile-icon-sm);
+  --ui-mobile-icon-md: var(--palette-mobile-radius-card);
+  --ui-mobile-icon-lg: var(--palette-mobile-radius-sheet);
+  --ui-mobile-icon-stroke: var(--palette-mobile-icon-stroke);
+  --ui-mobile-icon-stroke-lg: var(--palette-mobile-icon-stroke-lg);
+  --ui-mobile-tab-h: var(--palette-mobile-tab-h);
+  --ui-mobile-fab-size: var(--palette-mobile-fab-size);
+  --ui-travel-cream: var(--palette-travel-cream);
+  --ui-travel-ink: var(--palette-travel-ink);
+  --ui-travel-dim: var(--palette-travel-dim);
+  --ui-travel-sakura: var(--palette-travel-sakura);
+  --ui-travel-bloom: var(--palette-mobile-sun);
+  --ui-travel-sky: var(--palette-mobile-sky);
+  --ui-travel-mist: var(--palette-travel-mist);
+  --ui-travel-accent: var(--palette-mobile-accent-strong);
+  --ui-travel-accent-strong: var(--palette-mobile-tone-clay-fg);
+  --ui-travel-accent-soft: var(--palette-travel-accent-soft);
+  --ui-travel-sand: var(--palette-travel-sand);
+  --ui-travel-sand-soft: var(--palette-travel-sand-soft);
+  --ui-travel-sand-light: var(--palette-travel-sand-light);
+  --ui-travel-parchment: var(--palette-travel-parchment);
+  --ui-travel-parchment-dim: var(--palette-travel-parchment-dim);
+  --ui-travel-ink-strong: var(--palette-travel-ink-strong);
+  --ui-travel-line: var(--palette-travel-line);
+  --ui-travel-success: var(--palette-travel-success);
+  --ui-travel-warning: var(--palette-travel-warning);
+  --ui-travel-danger: var(--palette-travel-danger);
+  --ui-album-bg0: var(--palette-album-bg0);
+  --ui-album-bg1: var(--palette-album-bg1);
+  --ui-album-bg2: var(--palette-album-bg2);
+  --ui-album-surface: var(--palette-album-surface);
+  --ui-album-text1: var(--palette-album-text1);
+  --ui-album-text2: var(--palette-album-text2);
+  --ui-album-text3: var(--palette-album-text3);
+  --ui-album-warm: var(--palette-album-warm);
+  --ui-album-accent: var(--palette-album-accent);
+  --ui-album-accent-strong: var(--palette-album-accent-strong);
+  --ui-album-accent-dim: var(--palette-album-accent-dim);
+  --ui-album-ok: var(--palette-album-ok);
+  --ui-album-sync: var(--palette-album-accent-strong);
+  --ui-album-wait: var(--palette-album-wait);
+  --ui-album-error: var(--palette-album-error);
+  --ui-album-pixel-ink: var(--palette-album-pixel-ink);
+  --ui-album-pixel-muted: var(--palette-album-pixel-muted);
+  --ui-album-pixel-faint: var(--palette-album-pixel-faint);
+  --ui-album-pixel-line: var(--palette-album-pixel-line);
+  --ui-album-pixel-photo: var(--palette-album-pixel-photo);
+  --ui-album-pixel-panel: var(--palette-album-pixel-panel);
+  --ui-album-pixel-panel2: var(--palette-album-pixel-panel2);
+  --ui-album-pixel-panel3: var(--palette-album-pixel-panel3);
+  --ui-album-pixel-paper: var(--palette-travel-parchment);
+  --ui-album-pixel-online: var(--palette-album-pixel-online);
+  --ui-album-pixel-bubble: var(--palette-album-pixel-bubble);
+  --ui-album-pixel-lineth: var(--palette-album-pixel-lineth);
+  --ui-album-pixel-error: var(--palette-album-pixel-error);
+  --ui-album-pixel-goldlight: var(--palette-album-pixel-goldlight);
+  --ui-album-pixel-goldpale: var(--palette-album-pixel-goldpale);
+  --ui-shadow-soft: var(--palette-shadow-soft);
+  --ui-shadow-card: var(--palette-shadow-card);
+  --ui-social-bg: var(--palette-social-bg);
+  --ui-social-surface: var(--palette-mobile-surface-solid);
+  --ui-social-surface-90: var(--palette-social-surface-90);
+  --ui-social-surface-80: var(--palette-social-surface-80);
+  --ui-social-surface-60: var(--palette-social-surface-60);
+  --ui-social-surface-50: var(--palette-social-surface-50);
+  --ui-social-surface2: var(--palette-social-surface2);
+  --ui-social-surface3: var(--palette-social-surface3);
+  --ui-social-text: var(--palette-social-text);
+  --ui-social-muted: var(--palette-social-muted);
+  --ui-social-faint: var(--palette-social-faint);
+  --ui-social-accent: var(--palette-mobile-accent-strong);
+  --ui-social-accent-strong: var(--palette-mobile-tone-clay-fg);
+  --ui-social-accent-soft: var(--palette-social-accent-soft);
+  --ui-social-on-accent: var(--palette-mobile-surface-solid);
+  --ui-social-line: var(--palette-social-line);
+  --ui-social-line-strong: var(--palette-social-line-strong);
+  --ui-danger-soft: var(--palette-danger-soft);
+  --ui-space-accent: var(--palette-space-accent);
+  --ui-space-accent-strong: var(--palette-space-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-accent-soft);
+  --ui-space-accent-text: var(--palette-space-accent-text);
+  --ui-space-on-accent: var(--palette-mobile-surface-solid);
+  --ui-space-hairline: var(--palette-space-hairline);
+  --ui-space-hero-a: var(--palette-space-hero-a);
+  --ui-space-hero-b: var(--palette-space-hero-b);
+  --ui-bg: var(--palette-travel-cream);
+  --ui-surface: var(--palette-mobile-surface-solid);
+  --ui-surface2: var(--palette-travel-parchment);
+  --ui-line: var(--palette-travel-line);
+  --ui-text: var(--palette-text);
+  --ui-heading: var(--palette-travel-ink-strong);
+  --ui-muted: var(--palette-muted);
+  --ui-faint: var(--palette-mobile-muted);
+  --ui-accent: var(--palette-mobile-accent-strong);
+  --ui-accent-strong: var(--palette-mobile-tone-clay-fg);
+  --ui-accent-soft: var(--palette-travel-accent-soft);
+  --ui-accent-weak: var(--palette-mobile-line);
+  --ui-on-accent: var(--palette-mobile-surface-solid);
+  --ui-art-paper: var(--palette-art-paper);
+  --ui-art-ink: var(--palette-art-ink);
+  --ui-art-cloth: var(--palette-art-cloth);
+  --ui-art-serif: var(--palette-art-serif);
+  /* Tailwind 颜色入口（rgb 通道，支持 /opacity 修饰符） */
+  --ui-shell-bg-rgb: var(--palette-shell-bg-rgb);
+  --ui-shell-surface-rgb: var(--palette-shell-surface-rgb);
+  --ui-shell-surface2-rgb: var(--palette-shell-surface2-rgb);
+  --ui-shell-surface3-rgb: var(--palette-shell-surface3-rgb);
+  --ui-shell-text-rgb: var(--palette-shell-text-rgb);
+  --ui-shell-muted-rgb: var(--palette-shell-muted-rgb);
+  --ui-shell-faint-rgb: var(--palette-shell-faint-rgb);
+  --ui-shell-line-rgb: var(--palette-shell-line-rgb);
+  --ui-pixel-ink-rgb: var(--palette-pixel-ink-rgb);
+  --ui-pixel-muted-rgb: var(--palette-pixel-muted-rgb);
+  --ui-pixel-faint-rgb: var(--palette-pixel-faint-rgb);
+  --ui-pixel-line-rgb: var(--palette-pixel-line-rgb);
+  --ui-pixel-photo-rgb: var(--palette-pixel-photo-rgb);
+  --ui-pixel-panel-rgb: var(--palette-pixel-panel-rgb);
+  --ui-pixel-panel2-rgb: var(--palette-pixel-panel2-rgb);
+  --ui-pixel-panel3-rgb: var(--palette-pixel-panel3-rgb);
+  --ui-pixel-paper-rgb: var(--palette-pixel-paper-rgb);
+  --ui-pixel-online-rgb: var(--palette-pixel-online-rgb);
+  --ui-pixel-bubble-rgb: var(--palette-pixel-bubble-rgb);
+  --ui-pixel-linelight-rgb: var(--palette-pixel-linelight-rgb);
+  --ui-pixel-error-rgb: var(--palette-pixel-error-rgb);
+  --ui-pixel-goldlight-rgb: var(--palette-pixel-goldlight-rgb);
+  --ui-pixel-goldpale-rgb: var(--palette-pixel-goldpale-rgb);
+}
+
+html.dark {
+  --ui-mobile-bg: var(--palette-dark-mobile-bg);
+  --ui-mobile-bg-soft: var(--palette-dark-mobile-bg-soft);
+  --ui-mobile-surface: var(--palette-dark-mobile-surface);
+  --ui-mobile-surface-solid: var(--palette-dark-mobile-surface-solid);
+  --ui-mobile-surface-2: var(--palette-dark-mobile-surface-2);
+  --ui-mobile-text: var(--palette-dark-mobile-text);
+  --ui-mobile-muted: var(--palette-dark-mobile-muted);
+  --ui-mobile-faint: var(--palette-dark-mobile-faint);
+  --ui-mobile-accent: var(--palette-dark-mobile-accent);
+  --ui-mobile-accent-strong: var(--palette-dark-mobile-accent-strong);
+  --ui-mobile-accent-soft: var(--palette-dark-mobile-accent-soft);
+  --ui-mobile-sun: var(--palette-dark-mobile-accent-strong);
+  --ui-mobile-blush: var(--palette-dark-mobile-blush);
+  --ui-mobile-clay: var(--palette-dark-mobile-blush);
+  --ui-mobile-sky: var(--palette-dark-mobile-sky);
+  --ui-mobile-mint: var(--palette-dark-mobile-mint);
+  --ui-mobile-tone-accent-bg: var(--palette-dark-mobile-accent-soft);
+  --ui-mobile-tone-accent-fg: var(--palette-dark-mobile-accent-strong);
+  --ui-mobile-tone-sun-bg: var(--palette-dark-mobile-tone-sun-bg);
+  --ui-mobile-tone-sun-fg: var(--palette-dark-mobile-tone-sun-fg);
+  --ui-mobile-tone-blush-bg: var(--palette-dark-mobile-tone-blush-bg);
+  --ui-mobile-tone-blush-fg: var(--palette-dark-mobile-tone-blush-fg);
+  --ui-mobile-tone-clay-bg: var(--palette-dark-mobile-tone-clay-bg);
+  --ui-mobile-tone-clay-fg: var(--palette-dark-mobile-tone-clay-fg);
+  --ui-mobile-tone-neutral-bg: var(--palette-dark-mobile-tone-neutral-bg);
+  --ui-mobile-tone-neutral-fg: var(--palette-dark-mobile-muted);
+  --ui-mobile-success: var(--palette-dark-mobile-success);
+  --ui-mobile-warning: var(--palette-dark-mobile-warning);
+  --ui-mobile-danger: var(--palette-dark-mobile-danger);
+  --ui-mobile-line: var(--palette-dark-mobile-line);
+  --ui-mobile-line-strong: var(--palette-dark-mobile-line-strong);
+  --ui-mobile-elev-1: var(--palette-dark-mobile-elev-1);
+  --ui-mobile-elev-2: var(--palette-dark-mobile-elev-2);
+  --ui-mobile-elev-3: var(--palette-dark-mobile-elev-3);
+  --ui-mobile-inset-hi: var(--palette-dark-mobile-inset-hi);
+  --ui-mobile-inset-lo: var(--palette-dark-mobile-inset-lo);
+  --ui-mobile-shadow-l1: var(--ui-mobile-elev-1);
+  --ui-mobile-shadow-l2: var(--ui-mobile-elev-2);
+  --ui-mobile-shadow-lg: var(--ui-mobile-elev-3);
+  --ui-mobile-shadow-sm: var(--ui-mobile-elev-1);
+  --ui-mobile-shadow-md: var(--ui-mobile-elev-2);
+  --ui-mobile-on-accent: var(--palette-dark-mobile-on-accent);
+  --ui-mobile-cta-bg: var(--ui-mobile-accent);
+  --ui-mobile-on-danger: var(--palette-dark-mobile-on-accent);
+  --ui-mobile-ring: var(--palette-mobile-ring);
+  --ui-mobile-ring-danger: var(--palette-dark-mobile-ring-danger);
+  --ui-mobile-grad-scrim: var(--palette-dark-mobile-grad-scrim);
+  --ui-social-bg: var(--palette-dark-social-bg);
+  --ui-social-surface: var(--palette-dark-social-surface);
+  --ui-social-surface-90: var(--palette-dark-social-surface-90);
+  --ui-social-surface-80: var(--palette-dark-social-surface-80);
+  --ui-social-surface-60: var(--palette-dark-social-surface-60);
+  --ui-social-surface-50: var(--palette-dark-social-surface-50);
+  --ui-social-surface2: var(--palette-dark-social-surface2);
+  --ui-social-surface3: var(--palette-dark-social-surface3);
+  --ui-social-text: var(--palette-dark-mobile-text);
+  --ui-social-muted: var(--palette-dark-social-muted);
+  --ui-social-faint: var(--palette-dark-social-faint);
+  --ui-social-accent: var(--palette-dark-mobile-accent);
+  --ui-social-accent-strong: var(--palette-dark-mobile-accent-strong);
+  --ui-social-accent-soft: var(--palette-dark-social-accent-soft);
+  --ui-social-on-accent: var(--palette-dark-mobile-on-accent);
+  --ui-social-line: var(--palette-dark-social-line);
+  --ui-social-line-strong: var(--palette-dark-social-line-strong);
+  --ui-danger-soft: var(--palette-album-error);
+  --ui-space-accent: var(--palette-dark-space-accent);
+  --ui-space-accent-strong: var(--palette-dark-space-accent-strong);
+  --ui-space-accent-soft: var(--palette-dark-space-accent-soft);
+  --ui-space-accent-text: var(--palette-dark-space-accent-text);
+  --ui-space-on-accent: var(--palette-dark-social-bg);
+  --ui-space-hairline: var(--palette-dark-space-hairline);
+  --ui-space-hero-a: var(--palette-dark-space-hero-a);
+  --ui-space-hero-b: var(--palette-dark-space-hero-b);
+  --ui-bg: var(--palette-dark-bg);
+  --ui-surface: var(--palette-dark-surface);
+  --ui-surface2: var(--palette-dark-surface2);
+  --ui-line: var(--palette-dark-line);
+  --ui-text: var(--palette-dark-text);
+  --ui-heading: var(--palette-dark-text);
+  --ui-muted: var(--palette-dark-muted);
+  --ui-faint: var(--palette-dark-faint);
+  --ui-accent: var(--palette-mobile-sun);
+  --ui-accent-strong: var(--palette-dark-accent-strong);
+  --ui-accent-soft: var(--palette-dark-accent-soft);
+  --ui-accent-weak: var(--palette-dark-accent-weak);
+  --ui-on-accent: var(--palette-dark-bg);
+}
+
+[data-space='COUPLE'] {
+  --ui-space-accent: var(--palette-space-couple-accent);
+  --ui-space-accent-strong: var(--palette-space-couple-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-couple-accent-soft);
+  --ui-space-accent-text: var(--palette-space-couple-accent-text);
+  --ui-space-on-accent: var(--palette-mobile-surface-solid);
+  --ui-space-hairline: var(--palette-space-couple-hairline);
+  --ui-space-hero-a: var(--palette-space-couple-hero-a);
+  --ui-space-hero-b: var(--palette-space-couple-hero-b);
+}
+
+html.dark [data-space='COUPLE'] {
+  --ui-space-accent: var(--palette-space-couple-accent);
+  --ui-space-accent-strong: var(--palette-space-couple-dark-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-couple-dark-accent-soft);
+  --ui-space-accent-text: var(--palette-space-couple-dark-accent-text);
+  --ui-space-on-accent: var(--palette-dark-social-bg);
+  --ui-space-hairline: var(--palette-space-couple-dark-hairline);
+  --ui-space-hero-a: var(--palette-space-couple-dark-hero-a);
+  --ui-space-hero-b: var(--palette-space-couple-dark-hero-b);
+}
+
+[data-space='FAMILY'] {
+  --ui-space-accent: var(--palette-space-family-accent);
+  --ui-space-accent-strong: var(--palette-space-family-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-family-accent-soft);
+  --ui-space-accent-text: var(--palette-space-family-accent-text);
+  --ui-space-on-accent: var(--palette-mobile-surface-solid);
+  --ui-space-hairline: var(--palette-space-family-hairline);
+  --ui-space-hero-a: var(--palette-space-family-hero-a);
+  --ui-space-hero-b: var(--palette-space-family-hero-b);
+}
+
+html.dark [data-space='FAMILY'] {
+  --ui-space-accent: var(--palette-space-family-accent);
+  --ui-space-accent-strong: var(--palette-space-family-dark-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-family-dark-accent-soft);
+  --ui-space-accent-text: var(--palette-space-family-dark-accent-text);
+  --ui-space-on-accent: var(--palette-dark-social-bg);
+  --ui-space-hairline: var(--palette-space-family-dark-hairline);
+  --ui-space-hero-a: var(--palette-space-family-dark-hero-a);
+  --ui-space-hero-b: var(--palette-space-family-dark-hero-b);
+}
+
+[data-space='FRIENDS'] {
+  --ui-space-accent: var(--palette-space-friends-accent);
+  --ui-space-accent-strong: var(--palette-space-friends-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-friends-accent-soft);
+  --ui-space-accent-text: var(--palette-space-friends-accent-text);
+  --ui-space-on-accent: var(--palette-mobile-surface-solid);
+  --ui-space-hairline: var(--palette-space-friends-hairline);
+  --ui-space-hero-a: var(--palette-space-friends-hero-a);
+  --ui-space-hero-b: var(--palette-space-friends-hero-b);
+}
+
+html.dark [data-space='FRIENDS'] {
+  --ui-space-accent: var(--palette-space-friends-accent);
+  --ui-space-accent-strong: var(--palette-space-friends-dark-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-friends-dark-accent-soft);
+  --ui-space-accent-text: var(--palette-space-friends-dark-accent-text);
+  --ui-space-on-accent: var(--palette-dark-social-bg);
+  --ui-space-hairline: var(--palette-space-friends-dark-hairline);
+  --ui-space-hero-a: var(--palette-space-friends-dark-hero-a);
+  --ui-space-hero-b: var(--palette-space-friends-dark-hero-b);
+}
+
+[data-space='SOLO'] {
+  --ui-space-accent: var(--palette-space-solo-accent);
+  --ui-space-accent-strong: var(--palette-space-solo-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-solo-accent-soft);
+  --ui-space-accent-text: var(--palette-space-solo-accent-text);
+  --ui-space-on-accent: var(--palette-mobile-surface-solid);
+  --ui-space-hairline: var(--palette-space-solo-hairline);
+  --ui-space-hero-a: var(--palette-space-solo-hero-a);
+  --ui-space-hero-b: var(--palette-space-solo-hero-b);
+}
+
+html.dark [data-space='SOLO'] {
+  --ui-space-accent: var(--palette-space-solo-accent);
+  --ui-space-accent-strong: var(--palette-space-solo-dark-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-solo-dark-accent-soft);
+  --ui-space-accent-text: var(--palette-space-solo-dark-accent-text);
+  --ui-space-on-accent: var(--palette-dark-social-bg);
+  --ui-space-hairline: var(--palette-space-solo-dark-hairline);
+  --ui-space-hero-a: var(--palette-space-solo-dark-hero-a);
+  --ui-space-hero-b: var(--palette-space-solo-dark-hero-b);
+}
+
+[data-space='OTHER'] {
+  --ui-space-accent: var(--palette-space-accent);
+  --ui-space-accent-strong: var(--palette-space-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-accent-soft);
+  --ui-space-accent-text: var(--palette-space-accent-text);
+  --ui-space-on-accent: var(--palette-mobile-surface-solid);
+  --ui-space-hairline: var(--palette-space-hairline);
+  --ui-space-hero-a: var(--palette-space-hero-a);
+  --ui-space-hero-b: var(--palette-space-hero-b);
+}
+
+html.dark [data-space='OTHER'] {
+  --ui-space-accent: var(--palette-dark-space-accent);
+  --ui-space-accent-strong: var(--palette-dark-space-accent-strong);
+  --ui-space-accent-soft: var(--palette-dark-space-accent-soft);
+  --ui-space-accent-text: var(--palette-dark-space-accent-text);
+  --ui-space-on-accent: var(--palette-dark-social-bg);
+  --ui-space-hairline: var(--palette-dark-space-hairline);
+  --ui-space-hero-a: var(--palette-dark-space-hero-a);
+  --ui-space-hero-b: var(--palette-dark-space-hero-b);
+}
+
+/* ── L3 · Skin API（显式 opt-in，当前无组件使用；只重绑 --ui-* + 共享别名）── */
+[data-skin='album'] {
+  --ui-bg: var(--ui-album-bg0);
+  --ui-surface: var(--ui-album-bg1);
+  --ui-surface2: var(--ui-album-bg2);
+  --ui-text: var(--ui-album-text1);
+  --ui-muted: var(--ui-album-text2);
+  --ui-faint: var(--ui-album-text3);
+  --ui-accent: var(--ui-album-accent);
+  --ui-accent-strong: var(--ui-album-accent-strong);
+  --ui-line: var(--ui-album-surface);
+  --ui-on-accent: var(--ui-album-bg0);
+  --semantic-bg: var(--ui-bg);
+  --semantic-surface: var(--ui-surface);
+  --semantic-surface2: var(--ui-surface2);
+  --semantic-line: var(--ui-line);
+  --semantic-text: var(--ui-text);
+  --semantic-heading: var(--ui-heading);
+  --semantic-muted: var(--ui-muted);
+  --semantic-faint: var(--ui-faint);
+  --semantic-accent: var(--ui-accent);
+  --semantic-accent-strong: var(--ui-accent-strong);
+  --semantic-accent-soft: var(--ui-accent-soft);
+  --semantic-accent-weak: var(--ui-accent-weak);
+  --semantic-on-accent: var(--ui-on-accent);
+}
+
+[data-skin='social'] {
+  --ui-bg: var(--ui-social-bg);
+  --ui-surface: var(--ui-social-surface);
+  --ui-surface2: var(--ui-social-surface2);
+  --ui-line: var(--ui-social-line);
+  --ui-text: var(--ui-social-text);
+  --ui-heading: var(--ui-social-text);
+  --ui-muted: var(--ui-social-muted);
+  --ui-faint: var(--ui-social-faint);
+  --ui-accent: var(--ui-social-accent);
+  --ui-accent-strong: var(--ui-social-accent-strong);
+  --ui-accent-soft: var(--ui-social-accent-soft);
+  --ui-on-accent: var(--ui-social-on-accent);
+  --semantic-bg: var(--ui-bg);
+  --semantic-surface: var(--ui-surface);
+  --semantic-surface2: var(--ui-surface2);
+  --semantic-line: var(--ui-line);
+  --semantic-text: var(--ui-text);
+  --semantic-heading: var(--ui-heading);
+  --semantic-muted: var(--ui-muted);
+  --semantic-faint: var(--ui-faint);
+  --semantic-accent: var(--ui-accent);
+  --semantic-accent-strong: var(--ui-accent-strong);
+  --semantic-accent-soft: var(--ui-accent-soft);
+  --semantic-accent-weak: var(--ui-accent-weak);
+  --semantic-on-accent: var(--ui-on-accent);
+}
+
+[data-skin='space'] {
+  --ui-accent: var(--ui-space-accent);
+  --ui-accent-strong: var(--ui-space-accent-strong);
+  --ui-accent-soft: var(--ui-space-accent-soft);
+  --ui-text: var(--ui-space-accent-text);
+  --ui-on-accent: var(--ui-space-on-accent);
+  --ui-line: var(--ui-space-hairline);
+  --semantic-bg: var(--ui-bg);
+  --semantic-surface: var(--ui-surface);
+  --semantic-surface2: var(--ui-surface2);
+  --semantic-line: var(--ui-line);
+  --semantic-text: var(--ui-text);
+  --semantic-heading: var(--ui-heading);
+  --semantic-muted: var(--ui-muted);
+  --semantic-faint: var(--ui-faint);
+  --semantic-accent: var(--ui-accent);
+  --semantic-accent-strong: var(--ui-accent-strong);
+  --semantic-accent-soft: var(--ui-accent-soft);
+  --semantic-accent-weak: var(--ui-accent-weak);
+  --semantic-on-accent: var(--ui-on-accent);
+}
+
+/* ── Legacy 兼容层（旧变量名 = var(--ui-*)；组件 class 无需改动）────────── */
+:root {
+  --m-bg: var(--ui-mobile-bg);
+  --m-bg-soft: var(--ui-mobile-bg-soft);
+  --m-surface: var(--ui-mobile-surface);
+  --m-surface-solid: var(--ui-mobile-surface-solid);
+  --m-surface-2: var(--ui-mobile-surface-2);
+  --m-text: var(--ui-mobile-text);
+  --m-muted: var(--ui-mobile-muted);
+  --m-faint: var(--ui-mobile-faint);
+  --m-accent: var(--ui-mobile-accent);
+  --m-accent-strong: var(--ui-mobile-accent-strong);
+  --m-accent-soft: var(--ui-mobile-accent-soft);
+  --m-sun: var(--ui-mobile-sun);
+  --m-blush: var(--ui-mobile-blush);
+  --m-clay: var(--ui-mobile-clay);
+  --m-sky: var(--ui-mobile-sky);
+  --m-mint: var(--ui-mobile-mint);
+  --m-tone-accent-bg: var(--ui-mobile-tone-accent-bg);
+  --m-tone-accent-fg: var(--ui-mobile-tone-accent-fg);
+  --m-tone-sun-bg: var(--ui-mobile-tone-sun-bg);
+  --m-tone-sun-fg: var(--ui-mobile-tone-sun-fg);
+  --m-tone-blush-bg: var(--ui-mobile-tone-blush-bg);
+  --m-tone-blush-fg: var(--ui-mobile-tone-blush-fg);
+  --m-tone-clay-bg: var(--ui-mobile-tone-clay-bg);
+  --m-tone-clay-fg: var(--ui-mobile-tone-clay-fg);
+  --m-tone-neutral-bg: var(--ui-mobile-tone-neutral-bg);
+  --m-tone-neutral-fg: var(--ui-mobile-tone-neutral-fg);
+  --m-success: var(--ui-mobile-success);
+  --m-warning: var(--ui-mobile-warning);
+  --m-danger: var(--ui-mobile-danger);
+  --m-line: var(--ui-mobile-line);
+  --m-line-strong: var(--ui-mobile-line-strong);
+  --m-hairline: var(--ui-mobile-hairline);
+  --m-elev-1: var(--ui-mobile-elev-1);
+  --m-elev-2: var(--ui-mobile-elev-2);
+  --m-elev-3: var(--ui-mobile-elev-3);
+  --m-inset-hi: var(--ui-mobile-inset-hi);
+  --m-inset-lo: var(--ui-mobile-inset-lo);
+  --m-shadow-l1: var(--ui-mobile-shadow-l1);
+  --m-shadow-l2: var(--ui-mobile-shadow-l2);
+  --m-shadow-lg: var(--ui-mobile-shadow-lg);
+  --m-shadow-sm: var(--ui-mobile-shadow-sm);
+  --m-shadow-md: var(--ui-mobile-shadow-md);
+  --m-on-accent: var(--ui-mobile-on-accent);
+  --m-cta-bg: var(--ui-mobile-cta-bg);
+  --m-on-danger: var(--ui-mobile-on-danger);
+  --m-ring: var(--ui-mobile-ring);
+  --m-ring-danger: var(--ui-mobile-ring-danger);
+  --m-dur-press: var(--ui-mobile-dur-press);
+  --m-dur-enter: var(--ui-mobile-dur-enter);
+  --m-dur-page: var(--ui-mobile-dur-page);
+  --m-dur-overlay: var(--ui-mobile-dur-overlay);
+  --m-ease-out: var(--ui-mobile-ease-out);
+  --m-ease-spring: var(--ui-mobile-ease-spring);
+  --m-grad-hero: var(--ui-mobile-grad-hero);
+  --m-grad-scrim: var(--ui-mobile-grad-scrim);
+  --m-grad-cta: var(--ui-mobile-grad-cta);
+  --m-pattern-dot: var(--ui-mobile-pattern-dot);
+  --m-pattern-grid: var(--ui-mobile-pattern-grid);
+  --m-radius-card: var(--ui-mobile-radius-card);
+  --m-radius-control: var(--ui-mobile-radius-control);
+  --m-radius-sheet: var(--ui-mobile-radius-sheet);
+  --m-radius-pill: var(--ui-mobile-radius-pill);
+  --m-radius-lg: var(--ui-mobile-radius-lg);
+  --m-radius-md: var(--ui-mobile-radius-md);
+  --m-radius-sm: var(--ui-mobile-radius-sm);
+  --m-gutter: var(--ui-mobile-gutter);
+  --m-section-gap: var(--ui-mobile-section-gap);
+  --m-status-bar-height: var(--ui-mobile-status-bar-height);
+  --m-safe-top: var(--ui-mobile-safe-top);
+  --m-safe-top-8: var(--ui-mobile-safe-top-8);
+  --m-safe-top-10: var(--ui-mobile-safe-top-10);
+  --m-safe-top-12: var(--ui-mobile-safe-top-12);
+  --m-safe-top-16: var(--ui-mobile-safe-top-16);
+  --m-safe-top-24: var(--ui-mobile-safe-top-24);
+  --m-safe-top-26: var(--ui-mobile-safe-top-26);
+  --m-safe-top-40: var(--ui-mobile-safe-top-40);
+  --m-safe-top-48: var(--ui-mobile-safe-top-48);
+  --m-icon-sm: var(--ui-mobile-icon-sm);
+  --m-icon-md: var(--ui-mobile-icon-md);
+  --m-icon-lg: var(--ui-mobile-icon-lg);
+  --m-icon-stroke: var(--ui-mobile-icon-stroke);
+  --m-icon-stroke-lg: var(--ui-mobile-icon-stroke-lg);
+  --m-tab-h: var(--ui-mobile-tab-h);
+  --m-fab-size: var(--ui-mobile-fab-size);
+  --color-cream: var(--ui-travel-cream);
+  --color-ink: var(--ui-travel-ink);
+  --color-dim: var(--ui-travel-dim);
+  --color-sakura: var(--ui-travel-sakura);
+  --color-bloom: var(--ui-travel-bloom);
+  --color-sky: var(--ui-travel-sky);
+  --color-mist: var(--ui-travel-mist);
+  --color-travel-accent: var(--ui-travel-accent);
+  --color-travel-accent-strong: var(--ui-travel-accent-strong);
+  --color-travel-accent-soft: var(--ui-travel-accent-soft);
+  --color-travel-sand: var(--ui-travel-sand);
+  --color-travel-sand-soft: var(--ui-travel-sand-soft);
+  --color-travel-sand-light: var(--ui-travel-sand-light);
+  --color-travel-parchment: var(--ui-travel-parchment);
+  --color-travel-parchment-dim: var(--ui-travel-parchment-dim);
+  --color-travel-ink-strong: var(--ui-travel-ink-strong);
+  --color-travel-line: var(--ui-travel-line);
+  --color-travel-success: var(--ui-travel-success);
+  --color-travel-warning: var(--ui-travel-warning);
+  --color-travel-danger: var(--ui-travel-danger);
+  --album-bg0: var(--ui-album-bg0);
+  --album-bg1: var(--ui-album-bg1);
+  --album-bg2: var(--ui-album-bg2);
+  --album-surface: var(--ui-album-surface);
+  --album-text1: var(--ui-album-text1);
+  --album-text2: var(--ui-album-text2);
+  --album-text3: var(--ui-album-text3);
+  --album-warm: var(--ui-album-warm);
+  --album-accent: var(--ui-album-accent);
+  --album-accent-strong: var(--ui-album-accent-strong);
+  --album-accent-dim: var(--ui-album-accent-dim);
+  --album-ok: var(--ui-album-ok);
+  --album-sync: var(--ui-album-sync);
+  --album-wait: var(--ui-album-wait);
+  --album-error: var(--ui-album-error);
+  --album-pixel-ink: var(--ui-album-pixel-ink);
+  --album-pixel-muted: var(--ui-album-pixel-muted);
+  --album-pixel-faint: var(--ui-album-pixel-faint);
+  --album-pixel-line: var(--ui-album-pixel-line);
+  --album-pixel-photo: var(--ui-album-pixel-photo);
+  --album-pixel-panel: var(--ui-album-pixel-panel);
+  --album-pixel-panel2: var(--ui-album-pixel-panel2);
+  --album-pixel-panel3: var(--ui-album-pixel-panel3);
+  --album-pixel-paper: var(--ui-album-pixel-paper);
+  --album-pixel-online: var(--ui-album-pixel-online);
+  --album-pixel-bubble: var(--ui-album-pixel-bubble);
+  --album-pixel-lineth: var(--ui-album-pixel-lineth);
+  --album-pixel-error: var(--ui-album-pixel-error);
+  --album-pixel-goldlight: var(--ui-album-pixel-goldlight);
+  --album-pixel-goldpale: var(--ui-album-pixel-goldpale);
+  --shadow-soft: var(--ui-shadow-soft);
+  --shadow-card: var(--ui-shadow-card);
+  --social-bg: var(--ui-social-bg);
+  --social-surface: var(--ui-social-surface);
+  --social-surface-90: var(--ui-social-surface-90);
+  --social-surface-80: var(--ui-social-surface-80);
+  --social-surface-60: var(--ui-social-surface-60);
+  --social-surface-50: var(--ui-social-surface-50);
+  --social-surface2: var(--ui-social-surface2);
+  --social-surface3: var(--ui-social-surface3);
+  --social-text: var(--ui-social-text);
+  --social-muted: var(--ui-social-muted);
+  --social-faint: var(--ui-social-faint);
+  --social-accent: var(--ui-social-accent);
+  --social-accent-strong: var(--ui-social-accent-strong);
+  --social-accent-soft: var(--ui-social-accent-soft);
+  --social-on-accent: var(--ui-social-on-accent);
+  --social-line: var(--ui-social-line);
+  --social-line-strong: var(--ui-social-line-strong);
+  --danger-soft: var(--ui-danger-soft);
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+  --semantic-bg: var(--ui-bg);
+  --semantic-surface: var(--ui-surface);
+  --semantic-surface2: var(--ui-surface2);
+  --semantic-line: var(--ui-line);
+  --semantic-text: var(--ui-text);
+  --semantic-heading: var(--ui-heading);
+  --semantic-muted: var(--ui-muted);
+  --semantic-faint: var(--ui-faint);
+  --semantic-accent: var(--ui-accent);
+  --semantic-accent-strong: var(--ui-accent-strong);
+  --semantic-accent-soft: var(--ui-accent-soft);
+  --semantic-accent-weak: var(--ui-accent-weak);
+  --semantic-on-accent: var(--ui-on-accent);
+  --art-paper: var(--ui-art-paper);
+  --art-ink: var(--ui-art-ink);
+  --art-cloth: var(--ui-art-cloth);
+  --art-serif: var(--ui-art-serif);
+}
+
+html.dark {
+  --m-bg: var(--ui-mobile-bg);
+  --m-bg-soft: var(--ui-mobile-bg-soft);
+  --m-surface: var(--ui-mobile-surface);
+  --m-surface-solid: var(--ui-mobile-surface-solid);
+  --m-surface-2: var(--ui-mobile-surface-2);
+  --m-text: var(--ui-mobile-text);
+  --m-muted: var(--ui-mobile-muted);
+  --m-faint: var(--ui-mobile-faint);
+  --m-accent: var(--ui-mobile-accent);
+  --m-accent-strong: var(--ui-mobile-accent-strong);
+  --m-accent-soft: var(--ui-mobile-accent-soft);
+  --m-sun: var(--ui-mobile-sun);
+  --m-blush: var(--ui-mobile-blush);
+  --m-clay: var(--ui-mobile-clay);
+  --m-sky: var(--ui-mobile-sky);
+  --m-mint: var(--ui-mobile-mint);
+  --m-tone-accent-bg: var(--ui-mobile-tone-accent-bg);
+  --m-tone-accent-fg: var(--ui-mobile-tone-accent-fg);
+  --m-tone-sun-bg: var(--ui-mobile-tone-sun-bg);
+  --m-tone-sun-fg: var(--ui-mobile-tone-sun-fg);
+  --m-tone-blush-bg: var(--ui-mobile-tone-blush-bg);
+  --m-tone-blush-fg: var(--ui-mobile-tone-blush-fg);
+  --m-tone-clay-bg: var(--ui-mobile-tone-clay-bg);
+  --m-tone-clay-fg: var(--ui-mobile-tone-clay-fg);
+  --m-tone-neutral-bg: var(--ui-mobile-tone-neutral-bg);
+  --m-tone-neutral-fg: var(--ui-mobile-tone-neutral-fg);
+  --m-success: var(--ui-mobile-success);
+  --m-warning: var(--ui-mobile-warning);
+  --m-danger: var(--ui-mobile-danger);
+  --m-line: var(--ui-mobile-line);
+  --m-line-strong: var(--ui-mobile-line-strong);
+  --m-elev-1: var(--ui-mobile-elev-1);
+  --m-elev-2: var(--ui-mobile-elev-2);
+  --m-elev-3: var(--ui-mobile-elev-3);
+  --m-inset-hi: var(--ui-mobile-inset-hi);
+  --m-inset-lo: var(--ui-mobile-inset-lo);
+  --m-shadow-l1: var(--ui-mobile-shadow-l1);
+  --m-shadow-l2: var(--ui-mobile-shadow-l2);
+  --m-shadow-lg: var(--ui-mobile-shadow-lg);
+  --m-shadow-sm: var(--ui-mobile-shadow-sm);
+  --m-shadow-md: var(--ui-mobile-shadow-md);
+  --m-on-accent: var(--ui-mobile-on-accent);
+  --m-cta-bg: var(--ui-mobile-cta-bg);
+  --m-on-danger: var(--ui-mobile-on-danger);
+  --m-ring: var(--ui-mobile-ring);
+  --m-ring-danger: var(--ui-mobile-ring-danger);
+  --m-grad-scrim: var(--ui-mobile-grad-scrim);
+  --social-bg: var(--ui-social-bg);
+  --social-surface: var(--ui-social-surface);
+  --social-surface-90: var(--ui-social-surface-90);
+  --social-surface-80: var(--ui-social-surface-80);
+  --social-surface-60: var(--ui-social-surface-60);
+  --social-surface-50: var(--ui-social-surface-50);
+  --social-surface2: var(--ui-social-surface2);
+  --social-surface3: var(--ui-social-surface3);
+  --social-text: var(--ui-social-text);
+  --social-muted: var(--ui-social-muted);
+  --social-faint: var(--ui-social-faint);
+  --social-accent: var(--ui-social-accent);
+  --social-accent-strong: var(--ui-social-accent-strong);
+  --social-accent-soft: var(--ui-social-accent-soft);
+  --social-on-accent: var(--ui-social-on-accent);
+  --social-line: var(--ui-social-line);
+  --social-line-strong: var(--ui-social-line-strong);
+  --danger-soft: var(--ui-danger-soft);
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+  --semantic-bg: var(--ui-bg);
+  --semantic-surface: var(--ui-surface);
+  --semantic-surface2: var(--ui-surface2);
+  --semantic-line: var(--ui-line);
+  --semantic-text: var(--ui-text);
+  --semantic-heading: var(--ui-heading);
+  --semantic-muted: var(--ui-muted);
+  --semantic-faint: var(--ui-faint);
+  --semantic-accent: var(--ui-accent);
+  --semantic-accent-strong: var(--ui-accent-strong);
+  --semantic-accent-soft: var(--ui-accent-soft);
+  --semantic-accent-weak: var(--ui-accent-weak);
+  --semantic-on-accent: var(--ui-on-accent);
+}
+
+[data-space='COUPLE'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+html.dark [data-space='COUPLE'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+[data-space='FAMILY'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+html.dark [data-space='FAMILY'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+[data-space='FRIENDS'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+html.dark [data-space='FRIENDS'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+[data-space='SOLO'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+html.dark [data-space='SOLO'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+[data-space='OTHER'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+
+html.dark [data-space='OTHER'] {
+  --space-accent: var(--ui-space-accent);
+  --space-accent-strong: var(--ui-space-accent-strong);
+  --space-accent-soft: var(--ui-space-accent-soft);
+  --space-accent-text: var(--ui-space-accent-text);
+  --space-on-accent: var(--ui-space-on-accent);
+  --space-hairline: var(--ui-space-hairline);
+  --space-hero-a: var(--ui-space-hero-a);
+  --space-hero-b: var(--ui-space-hero-b);
+}
+

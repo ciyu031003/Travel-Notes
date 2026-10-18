@@ -98,6 +98,10 @@ jobs:
       - name: Design tokens (baseline gate)
         run: npm run tokens:check
 
+      # P2-31：三层 token 重构的「视觉零变化」守卫：legacy 变量最终字面值必须与改造前逐条相等
+      - name: Design token parity (visual no-change)
+        run: npm run tokens:parity
+
       # 报告模式：给出存量欠债的全貌，便于分批收敛（不阻塞）
       - name: Design token report
         run: npm run tokens

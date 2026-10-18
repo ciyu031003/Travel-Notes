@@ -122,7 +122,7 @@ export default function TravelOverviewTab({
                 className="relative h-28 w-28 flex-none overflow-hidden rounded-2xl bg-[var(--m-surface-2)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                <img src={p.url} alt="" width={112} height={112} loading="lazy" decoding="async" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>

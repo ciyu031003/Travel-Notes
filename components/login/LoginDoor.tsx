@@ -116,6 +116,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
           loop
           playsInline
           preload="none"
+          poster="/videos/clover-poster.jpg"
           className="absolute inset-0 h-full w-full object-cover"
           src="/videos/clover.mp4"
         />

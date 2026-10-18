@@ -585,7 +585,7 @@ export default function PostDetail({ postId }: { postId: number }) {
                   <div className="grid grid-cols-3 gap-2">
                     {post.photos.map((src) => (
                       <div key={src} className="group relative aspect-square overflow-hidden rounded-xl bg-[var(--social-surface2)] ring-1 ring-[var(--social-line)]">
-                        <img src={src} alt="" className="h-full w-full object-cover" />
+                        <img src={src} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                         <button
                           type="button"
                           onClick={() => deleteImage(src)}
@@ -758,7 +758,7 @@ function TripDayList({ days }: { days: TripDay[] }) {
                     {day.photos.slice(0, PHOTOS_PER_DAY).map((p, i) => (
                       <div key={p.id} className="relative overflow-hidden rounded-lg bg-[var(--social-surface2)]">
                         {/* eslint-disable-next-line @next/next/no-img-element -- 服务端已给缩略图变体，无需 next/image 再处理 */}
-                        <img src={p.url} alt="" loading="lazy" className="aspect-square w-full object-cover" />
+                        <img src={p.url} alt="" loading="lazy" decoding="async" className="aspect-square w-full object-cover" />
                         {i === PHOTOS_PER_DAY - 1 && day.photos.length > PHOTOS_PER_DAY && (
                           <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-medium tabular-nums text-white">
                             +{day.photos.length - PHOTOS_PER_DAY}
@@ -784,7 +784,7 @@ function TripDayList({ days }: { days: TripDay[] }) {
                           <div className="mt-1.5 flex gap-1">
                             {mem.photos.slice(0, 3).map((p) => (
                               // eslint-disable-next-line @next/next/no-img-element -- 同上
-                              <img key={p.id} src={p.url} alt="" loading="lazy" className="h-12 w-12 rounded-md object-cover" />
+                              <img key={p.id} src={p.url} alt="" width={48} height={48} loading="lazy" decoding="async" className="h-12 w-12 rounded-md object-cover" />
                             ))}
                           </div>
                         )}

@@ -303,7 +303,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                   <div className="mt-3 grid grid-cols-4 gap-1.5">
                     {day.photos.slice(0, 8).map((p) => (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img key={p.id} src={p.url} alt="" className="aspect-square w-full rounded-lg object-cover" loading="lazy" />
+                      <img key={p.id} src={p.url} alt="" loading="lazy" decoding="async" className="aspect-square w-full rounded-lg object-cover" />
                     ))}
                     {day.photos.length > 8 && (
                       <div className="flex aspect-square items-center justify-center rounded-lg bg-travel-sakura/50 text-xs text-travel-ink/70">
@@ -329,7 +329,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                             <div className="mt-1.5 flex gap-1">
                               {mem.photos.slice(0, 3).map((p) => (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img key={p.id} src={p.url} alt="" className="h-12 w-12 rounded-md object-cover" loading="lazy" />
+                                <img key={p.id} src={p.url} alt="" width={48} height={48} loading="lazy" decoding="async" className="h-12 w-12 rounded-md object-cover" />
                               ))}
                             </div>
                           )}

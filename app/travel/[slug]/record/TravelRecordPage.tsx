@@ -223,7 +223,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
                 {photos.map((p, i) => (
                   <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={'data:' + p.mimeType + ';base64,' + p.base64} alt="" className="h-full w-full object-cover" />
+                    <img src={'data:' + p.mimeType + ';base64,' + p.base64} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     <button
                       type="button"
                       aria-label="移除这张照片"

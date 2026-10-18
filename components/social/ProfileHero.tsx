@@ -98,6 +98,8 @@ export default function ProfileHero({
             src={data.coverUrl as string}
             alt=""
             aria-hidden="true"
+            loading="eager"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition }}
           />
@@ -159,6 +161,10 @@ export default function ProfileHero({
                   data-testid="profile-avatar"
                   src={data.avatarUrl}
                   alt={data.displayName}
+                  width={88}
+                  height={88}
+                  loading="eager"
+                  decoding="async"
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -320,6 +326,8 @@ function FocusGrid({
         <img
           src={coverUrl}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="aspect-[16/10] w-full object-cover"
           style={{ objectPosition }}
         />

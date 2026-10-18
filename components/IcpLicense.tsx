@@ -67,6 +67,8 @@ export default function IcpLicense({
               alt="公安备案"
               width={12}
               height={13}
+              loading="lazy"
+              decoding="async"
               className="mr-1 inline-block h-[13px] w-3 align-[-2px]"
             />
           )}

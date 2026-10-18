@@ -46,6 +46,15 @@ const UPDATE_BASELINE = process.argv.includes('--update-baseline')
 const BASELINE_PATH = 'scripts/design-token-baseline.json'
 
 /**
+ * 设计 token 的 CSS 单一事实源（P2-31 三层化后）：
+ *   app/tokens.css   —— 三层架构本体（--palette-* / --ui-* / legacy 别名）
+ *   app/globals.css  —— 仅剩组件样式（不再声明 legacy token）
+ *   app/mobile.css   —— 仅剩移动端组件样式（不再声明 --m-*）
+ * 规则 8「未定义变量」与 hex 归类都必须同时索引这三个文件，否则 token 会被误判为未定义。
+ */
+const CSS_TOKEN_FILES = ['app/tokens.css', 'app/globals.css', 'app/mobile.css']
+
+/**
  * 豁免清单：这些文件属于「刻意保留自有视觉」的主题实现，
  * 不计入违规（但仍会以 info 形式提示）。
  */
@@ -94,6 +103,15 @@ const SPACE_THEME_ALLOWLIST = [
 ]
 
 /**
+ * 第 12 条规则（legacyTokenNewUsage）的合法范围：
+ * P2-31 只是把 token **声明**收敛到三层，模块自有色板的消费方仍在组件里；
+ * 相册模块是「自有暗色视觉体系」的受控主题实现（Album 2.0 重写中），
+ * 其 --album-* 消费属于设计内用法，不计入「新增回退」；其他模块的新代码
+ * 仍必须消费 --ui-* / semantic-*，不得新增 --album-/--social-/--space- 引用。
+ */
+const LEGACY_TOKEN_MODULE_ALLOWLIST = ['components/album/']
+
+/**
  * 允许的字号（对应 .m-display / title-1 / title-2 / body / caption / label / stat / tab-label）
  *
  * 16 的来历：iOS Safari / WKWebView 在**表单控件字号 < 16px** 时会强制放大整页，
@@ -131,7 +149,7 @@ const RENDER_VALUE_FILES = [
  *   · unmatched       —— 未匹配任何 token ⇒ 多为渲染参数或缺失的新色，需人工判断
  */
 function buildTokenIndex() {
-  const cssFiles = ['app/globals.css', 'app/mobile.css']
+  const cssFiles = CSS_TOKEN_FILES
   const byValue = new Map()
   for (const rel of cssFiles) {
     let css
@@ -160,7 +178,7 @@ function buildTokenIndex() {
  * 前者让面板阴影消失，后者让 9 处强调底按钮的文字退化为继承色（约 1.9:1，几乎不可见）。
  */
 function buildDefinedTokenNames() {
-  const cssFiles = ['app/globals.css', 'app/mobile.css']
+  const cssFiles = CSS_TOKEN_FILES
   const names = new Set()
   for (const rel of cssFiles) {
     let css
@@ -265,6 +283,8 @@ const findings = {
   importantOverride: [],
   // P1 新增（空间模块受控多主题）
   spaceTokenLeak: [],
+  // P2-31 新增（三层 token 收敛：新代码必须消费 --ui-* 语义层）
+  legacyTokenNewUsage: [],
 }
 
 /** 原有 7 条规则（用于与历史基线对比，避免新增规则的欠债混入 KPI） */
@@ -278,7 +298,7 @@ const LEGACY_BUCKETS = [
   'magicRadius',
 ]
 /** M5 新增 4 条规则 */
-const NEW_BUCKETS = ['rawGradient', 'undefinedToken', 'scatteredColor', 'importantOverride', 'spaceTokenLeak']
+const NEW_BUCKETS = ['rawGradient', 'undefinedToken', 'scatteredColor', 'importantOverride', 'spaceTokenLeak', 'legacyTokenNewUsage']
 const infoFindings = []
 
 const files = SCAN_DIRS.flatMap((d) => walk(join(ROOT, d)))
@@ -373,6 +393,17 @@ for (const file of files) {
       if (name.startsWith('--space-') && !isSpaceThemeAllowed(rel)) {
         push('spaceTokenLeak', name)
       }
+
+      /* ── P2-31 新增规则（第 12 条）：三层 token 收敛 ──
+         app/tokens.css 之后，新增代码应消费 --ui-* 语义层（或 semantic-* class），
+         而不是继续引用模块 legacy 变量（--album-* / --social-* / --space-*）。
+         存量已固化进基线，此规则只拦新增回退（--check-baseline 生效）。 */
+      if (
+        /^--(?:album|social|space)-/.test(name) &&
+        !LEGACY_TOKEN_MODULE_ALLOWLIST.some((a) => rel.startsWith(a))
+      ) {
+        push('legacyTokenNewUsage', name)
+      }
     }
 
     const scattered = line.match(SCATTERED_COLOR_RE)
@@ -402,6 +433,9 @@ const LABELS = {
   importantOverride: 'Tailwind !important 覆盖（「缺组件」的症状）',
   // P1 新增
   spaceTokenLeak: '空间主题令牌泄漏到空间模块之外（受控多主题只允许在 components/space 等范围内使用）',
+  // P2-31 新增
+  legacyTokenNewUsage:
+    '新增代码引用 legacy 模块变量（--album-* / --social-* / --space-*）——三层化后应改用 --ui-* 语义层',
 }
 
 const summary = Object.fromEntries(
