@@ -2,7 +2,9 @@ import { NextRequest } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { getMomentService } from '@/lib/container'
-import { ok, fail, serverError, unauthorized } from '@/lib/api-response'
+import { ok, serverError, unauthorized, ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { MomentCreateSchema, PaginationQuerySchema } from '@/lib/api/schemas/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,9 +13,14 @@ export async function GET(request: NextRequest) {
   if (!auth.authenticated) return unauthorized()
 
   try {
+    // P1-17：分页 query 用 zod（coerce 正整数，上限由 schema 约束）
     const { searchParams } = new URL(request.url)
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '50')))
+    const parsedQuery = PaginationQuerySchema.safeParse(Object.fromEntries(searchParams))
+    if (!parsedQuery.success) {
+      return errorResponse(new ApiError('INVALID_QUERY', '分页参数不合法', 400), getRequestId(request))
+    }
+    const page = parsedQuery.data.page ?? 1
+    const pageSize = parsedQuery.data.pageSize ?? 50
     const momentService = getMomentService()
     const result = await momentService.getMoments(page, pageSize, auth.payload?.userId)
     return ok(result)
@@ -30,25 +37,16 @@ export async function POST(request: NextRequest) {
   if (denied) return denied
 
   try {
-    const body = await request.json().catch(() => ({}))
-    const content = typeof body.content === 'string' ? body.content.trim() : ''
-    if (!content) {
-      return fail('内容不能为空')
-    }
-    if (content.length > 2000) {
-      return fail('内容过长（最多 2000 字）')
-    }
-
-    const rawTags: string[] = Array.isArray(body.tags) ? body.tags.map(String) : []
-    const tags = rawTags
-      .map((t) => t.trim())
-      .filter(Boolean)
-      .slice(0, 10)
+    // P1-17：body 统一 zod（内容非空/≤2000、标签 ≤10 个）
+    const body = await parseBody(request, MomentCreateSchema)
+    const content = body.content
+    const tags = (body.tags || []).map((t) => t.trim()).filter(Boolean).slice(0, 10)
 
     const momentService = getMomentService()
-    const result = await momentService.createMoment(content, tags.length > 0 ? tags : null, auth.payload?.userId, Boolean(body?.isPublic))
+    const result = await momentService.createMoment(content, tags.length > 0 ? tags : null, auth.payload?.userId, Boolean(body.isPublic))
     return ok(result, '发布成功')
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     console.error('[POST /api/admin/moments] Error:', error?.message || error)
     return serverError()
   }

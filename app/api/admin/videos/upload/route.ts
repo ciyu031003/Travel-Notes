@@ -17,6 +17,22 @@ import { getClientIp } from '@/lib/request-utils'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { enqueueTranscode, sweepAndEnqueue } from '@/lib/infrastructure/video-transcode'
 import { TRANSCODE_MIN_SIZE } from '@/lib/infrastructure/video-upload-shared'
+import { z } from 'zod'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+
+/** 批量视频上传：multipart 表单，只校验 files 形状（魔数/大小由 media-validation 校验） */
+const VideoUploadSchema = z.object({
+  files: z
+    .array(z.custom<File>((v) => v instanceof File, { message: '文件格式无效' }))
+    .min(1, '未上传任何文件')
+    .max(MAX_VIDEO_COUNT, `单次最多上传 ${MAX_VIDEO_COUNT} 个视频`),
+})
+
+/** 删除视频：只接受本地上传目录下的路径 */
+const VideoDeleteSchema = z.object({
+  url: z.string().min(1, '无效的文件路径').regex(/^\/uploads\/videos\//, '无效的文件路径'),
+})
 
 function getVideoDir(): string {
   const cwd = process.cwd()
@@ -61,15 +77,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // P1-17：multipart 不套 parseBody(JSON)，按字段形状做 zod 校验
     const formData = await request.formData()
-    const files = formData.getAll('files') as File[]
-
-    if (!files || files.length === 0) {
-      return NextResponse.json({ error: '未上传任何文件' }, { status: 400 })
+    const parsedForm = VideoUploadSchema.safeParse({ files: formData.getAll('files') })
+    if (!parsedForm.success) {
+      return errorResponse(
+        new ApiError('VALIDATION_ERROR', parsedForm.error.issues[0]?.message || '未上传任何文件', 400),
+        getRequestId(request),
+      )
     }
-    if (files.length > MAX_VIDEO_COUNT) {
-      return NextResponse.json({ error: `单次最多上传 ${MAX_VIDEO_COUNT} 个视频` }, { status: 400 })
-    }
+    const files = parsedForm.data.files
 
     const videoDir = getVideoDir()
     if (!fs.existsSync(videoDir)) {
@@ -183,12 +200,8 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const body = await request.json()
-    const { url } = body
-
-    if (!url || !url.startsWith('/uploads/videos/')) {
-      return NextResponse.json({ error: '无效的文件路径' }, { status: 400 })
-    }
+    // P1-17：body 用 zod（只接受 /uploads/videos/ 前缀，防路径穿越/任意删文件）
+    const { url } = await parseBody(request, VideoDeleteSchema)
 
     const videoDir = getVideoDir()
     const filePath = path.join(videoDir, path.basename(url))
@@ -204,6 +217,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     logger.error('video-upload', 'delete-error', { message: error?.message })
     return NextResponse.json(
       { error: error.message || '删除失败' },

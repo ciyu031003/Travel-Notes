@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getSiteService } from '@/lib/container'
 import { verifyVerificationCode, consumeVerificationCode } from '@/lib/verification'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { BindEmailSchema } from '@/lib/api/schemas/admin'
 
 export async function POST(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -10,16 +13,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json()
-    const { email, code } = body
-
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: '请输入有效的邮箱地址' }, { status: 400 })
-    }
-
-    if (!code || code.length !== 6) {
-      return NextResponse.json({ error: '请输入 6 位验证码' }, { status: 400 })
-    }
+    // P1-17：body 统一 zod（邮箱格式、6 位数字验证码）
+    const { email, code } = await parseBody(request, BindEmailSchema)
 
     const valid = await verifyVerificationCode(email, code)
     if (!valid) {
@@ -41,7 +36,8 @@ export async function POST(request: Request) {
       email,
       emailVerified: true,
     })
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: '绑定失败' }, { status: 500 })
   }
 }

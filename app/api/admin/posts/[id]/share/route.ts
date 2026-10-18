@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { getPostService } from '@/lib/container'
-import { ok, fail, unauthorized } from '@/lib/api-response'
+import { ok, fail, unauthorized, ApiError, errorResponse } from '@/lib/api-response'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { ShareToCircleSchema } from '@/lib/api/schemas/admin'
 
 /**
  * 内容管理 2.0：文章卡片显式「分享到旅行圈 / 取消分享」。
@@ -20,11 +22,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { id } = await params
   try {
-    const body = await request.json().catch(() => ({}))
-    const travelId = body?.travelId !== undefined && body?.travelId !== null && body?.travelId !== ''
-      ? Number(body.travelId) || null
-      : null
-    const visibility = body?.visibility === 'SPACE' ? 'SPACE' : 'PUBLIC'
+    // P1-17：分享 body 用 zod（travelId 正整数或 null、visibility 枚举）
+    const body = await parseBody(request, ShareToCircleSchema)
+    const travelId = body.travelId != null ? Number(body.travelId) : null
+    const visibility = body.visibility === 'SPACE' ? 'SPACE' : 'PUBLIC'
 
     const result = await getPostService().shareToCircle(parseInt(id), { travelId, visibility })
     if (auth.username) {
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
     return ok({ result })
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     console.error('[POST /api/admin/posts/:id/share] Error:', error?.message)
     return fail(error.message || '分享失败', 400)
   }
@@ -51,6 +53,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
   if (denied) return denied
 
+  // reviewed-no-body-input: DELETE 取消分享无请求体（只读路径参数）
   const { id } = await params
   try {
     await getPostService().unshareToCircle(parseInt(id))

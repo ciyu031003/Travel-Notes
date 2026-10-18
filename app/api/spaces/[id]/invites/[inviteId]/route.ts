@@ -1,22 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth-middleware'
+import { NextResponse } from 'next/server'
+import { withAuth } from '@/lib/api/handler'
 import { spaceService } from '@/lib/modules/space/space.service'
+import { parseIdParam, toApiError } from '@/lib/api/schemas/common'
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string; inviteId: string }> }) {
-  const auth = await requireAuth(request)
-  if (!auth.authenticated || !auth.username) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+/** P1-17：两个路径 id 都用 zod 正整数校验；无请求体（reviewed-no-body-input）。 */
+export const DELETE = withAuth(async (_request, ctx, routeContext) => {
+  const { params } = routeContext as { params: Promise<{ id: string; inviteId: string }> }
   const { id, inviteId } = await params
-  const spaceId = parseInt(id, 10)
-  const invId = parseInt(inviteId, 10)
-  if (isNaN(spaceId) || isNaN(invId)) {
-    return NextResponse.json({ error: '无效的参数' }, { status: 400 })
-  }
+  // reviewed-no-body-input：DELETE 仅路径参数，没有 JSON body
+  const spaceId = parseIdParam(id, '空间 ID')
+  const invId = parseIdParam(inviteId, '邀请 ID')
   try {
-    await spaceService.revokeInvite(auth.username, spaceId, invId)
+    await spaceService.revokeInvite(ctx.username || '', spaceId, invId)
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || '撤销失败' }, { status: 403 })
+  } catch (error) {
+    throw toApiError(error, '撤销失败', 403)
   }
-}
+})

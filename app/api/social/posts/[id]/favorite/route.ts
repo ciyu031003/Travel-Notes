@@ -1,7 +1,8 @@
-import { NextRequest } from 'next/server'
-import { requireUserId } from '@/lib/modules/social/social-route-utils'
+import { NextResponse } from 'next/server'
+import { ApiError } from '@/lib/api-response'
+import { withAuth } from '@/lib/api/handler'
 import { setPostFavorite } from '@/lib/modules/social/social.service'
-import { ok, fail, unauthorized } from '@/lib/api-response'
+import { parseIdParam, toApiError } from '@/lib/api/schemas/common'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,23 +11,31 @@ export const dynamic = 'force-dynamic'
  *
  * 为什么不能两边都调 toggle：离线队列会重放（网络失败入队、恢复回放、失败退避重试），
  * 切换语义下一次重放就把用户的收藏撤销了。幂等语义可安全重放。
+ *
+ * P1-17：路径 id 走 zod 校验；POST/DELETE 无 JSON body（reviewed-no-body-input）。
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const userId = await requireUserId(request)
-  if (!userId) return unauthorized()
+export const POST = withAuth(async (_request, ctx, routeContext) => {
+  const { params } = routeContext as { params: Promise<{ id: string }> }
+  if (!ctx.userId) throw new ApiError('UNAUTHORIZED', '未授权', 401)
   const { id } = await params
-  const postId = parseInt(id, 10)
-  if (isNaN(postId)) return fail('无效 ID', 400)
-  try { return ok(await setPostFavorite(postId, userId, true)) }
-  catch (e: any) { return fail(e.message || '操作失败', 400) }
-}
+  // reviewed-no-body-input：收藏只有路径参数，没有 JSON body
+  const postId = parseIdParam(id, '帖子 ID')
+  try {
+    return NextResponse.json({ success: true, data: await setPostFavorite(postId, ctx.userId, true) })
+  } catch (error) {
+    throw toApiError(error, '操作失败')
+  }
+})
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const userId = await requireUserId(request)
-  if (!userId) return unauthorized()
+export const DELETE = withAuth(async (_request, ctx, routeContext) => {
+  const { params } = routeContext as { params: Promise<{ id: string }> }
+  if (!ctx.userId) throw new ApiError('UNAUTHORIZED', '未授权', 401)
   const { id } = await params
-  const postId = parseInt(id, 10)
-  if (isNaN(postId)) return fail('无效 ID', 400)
-  try { return ok(await setPostFavorite(postId, userId, false)) }
-  catch (e: any) { return fail(e.message || '操作失败', 400) }
-}
+  // reviewed-no-body-input：取消收藏只有路径参数，没有 JSON body
+  const postId = parseIdParam(id, '帖子 ID')
+  try {
+    return NextResponse.json({ success: true, data: await setPostFavorite(postId, ctx.userId, false) })
+  } catch (error) {
+    throw toApiError(error, '操作失败')
+  }
+})

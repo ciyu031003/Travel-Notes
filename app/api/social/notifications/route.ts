@@ -1,7 +1,10 @@
 import { NextRequest } from 'next/server'
+import { ApiError, ok, unauthorized, serverError, getPaginationFromSearchParams } from '@/lib/api-response'
+import { withAuth } from '@/lib/api/handler'
+import { parseOptionalBody } from '@/lib/api/schemas/common'
 import { requireUserId } from '@/lib/modules/social/social-route-utils'
 import { listNotifications, markNotificationsRead } from '@/lib/modules/social/social.service'
-import { ok, unauthorized, serverError, getPaginationFromSearchParams } from '@/lib/api-response'
+import { MarkNotificationsReadSchema } from '@/lib/api/schemas/social'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,15 +21,16 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
-  const userId = await requireUserId(request)
-  if (!userId) return unauthorized()
+/**
+ * 标记通知已读：body 可省略（= 全部标记已读）。
+ * P1-17：ids 由 zod 校验（正整数数组、最多 500 条），无 body 时保持"全部已读"原语义。
+ */
+export const PATCH = withAuth(async (request, ctx) => {
+  if (!ctx.userId) throw new ApiError('UNAUTHORIZED', '未授权', 401)
+  const body = await parseOptionalBody(request, MarkNotificationsReadSchema)
   try {
-    const body = await request.json()
-    const ids = Array.isArray(body?.ids) ? body.ids.map(Number).filter((n: number) => Number.isFinite(n)) : undefined
-    return ok(await markNotificationsRead(userId, ids))
-  } catch (e: any) {
-    console.error('[PATCH /api/social/notifications]', e?.message || e)
-    return serverError()
+    return ok(await markNotificationsRead(ctx.userId, body?.ids))
+  } catch {
+    throw new ApiError('UPDATE_FAILED', '标记失败', 400)
   }
-}
+})

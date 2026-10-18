@@ -17,6 +17,34 @@ import {
 } from '@/lib/infrastructure/video-upload-shared'
 import { enqueueTranscode, sweepAndEnqueue } from '@/lib/infrastructure/video-transcode'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
+import { z } from 'zod'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+
+/** uploadId 仅接受 UUID 形态（防路径穿越）；与 video-upload-shared.isValidUploadId 同一判定 */
+const UploadIdSchema = z.string().refine(isValidUploadId, { message: '无效 uploadId' })
+
+/** 分片上传（multipart）：只校验字段形状，范围（< totalChunks）在读 meta 后判定 */
+const ResumableChunkFormSchema = z.object({
+  uploadId: UploadIdSchema,
+  index: z.coerce.number().int('分片索引越界').min(0, '分片索引越界'),
+  chunk: z.custom<File>((v) => v instanceof File, { message: '分片为空' }).refine((f) => f.size > 0, { message: '分片为空' }),
+})
+
+/** JSON 动作：action 判别联合（init/status/complete/abort/transcode-status） */
+const ResumableJsonSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('init'),
+    filename: z.string().max(255).optional(),
+    // size 由路由内按字节范围校验（需保留中文文案），这里只要求是数字/数字字符串
+    size: z.union([z.number(), z.string()]).optional(),
+    mimeType: z.string().max(100).optional(),
+  }),
+  z.object({ action: z.literal('status'), uploadId: UploadIdSchema }),
+  z.object({ action: z.literal('complete'), uploadId: UploadIdSchema }),
+  z.object({ action: z.literal('abort'), uploadId: UploadIdSchema }),
+  z.object({ action: z.literal('transcode-status'), filename: z.string().max(255).optional() }),
+])
 
 export const dynamic = 'force-dynamic'
 
@@ -112,13 +140,22 @@ export async function POST(request: NextRequest) {
       if (!limit.ok) {
         return NextResponse.json({ error: '上传过于频繁，请稍后再试' }, { status: 429 })
       }
+      // P1-17：multipart 不套 parseBody(JSON)，按字段形状做 zod 校验
       const form = await request.formData()
-      const uploadId = form.get('uploadId')
-      const index = parseInt(String(form.get('index')), 10)
-      const chunk = form.get('chunk') as File | null
-      if (!isValidUploadId(uploadId)) {
-        return NextResponse.json({ error: '无效 uploadId' }, { status: 400 })
+      const parsedForm = ResumableChunkFormSchema.safeParse({
+        uploadId: form.get('uploadId'),
+        index: form.get('index'),
+        chunk: form.get('chunk'),
+      })
+      if (!parsedForm.success) {
+        return errorResponse(
+          new ApiError('VALIDATION_ERROR', parsedForm.error.issues[0]?.message || '无效 uploadId', 400),
+          getRequestId(request),
+        )
       }
+      const uploadId = parsedForm.data.uploadId
+      const index = parsedForm.data.index
+      const chunk = parsedForm.data.chunk
       const meta = readMeta(uploadId)
       if (!meta) return NextResponse.json({ error: '会话不存在或已过期，请重新上传' }, { status: 404 })
       if (!Number.isInteger(index) || index < 0 || index >= meta.totalChunks) {
@@ -133,16 +170,17 @@ export async function POST(request: NextRequest) {
     }
 
     // ---------- JSON 动作 ----------
-    const body = await request.json().catch(() => ({}))
-    const action = String(body.action || '')
+    // P1-17：action 用 zod 判别联合统一校验（uploadId 必须是合法 UUID）
+    const body = await parseBody(request, ResumableJsonSchema)
+    const action = body.action
 
     if (action === 'init') {
       const limit = rateLimit({ prefix: 'vinit:ip', key: ip || 'unknown', limit: 60, windowMs: 15 * 60 * 1000 })
       if (!limit.ok) {
         return NextResponse.json({ error: '上传过于频繁，请稍后再试' }, { status: 429 })
       }
-      const size = Number(body.size)
-      const filename = sanitizeBase(String(body.filename || 'video'))
+      const size = Number(body.action === 'init' ? body.size : NaN)
+      const filename = sanitizeBase(String(body.action === 'init' ? body.filename || 'video' : 'video'))
       if (!Number.isFinite(size) || size <= 0 || size > MAX_VIDEO_SIZE) {
         return NextResponse.json(
           { error: `视频大小非法（需 0 < size ≤ ${Math.round(MAX_VIDEO_SIZE / 1024 / 1024)}MB）` },
@@ -168,9 +206,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'status') {
-      if (!isValidUploadId(body.uploadId)) {
-        return NextResponse.json({ error: '无效 uploadId' }, { status: 400 })
-      }
+      if (body.action !== 'status') return NextResponse.json({ error: '未知 action' }, { status: 400 })
       const meta = readMeta(body.uploadId)
       if (!meta) return NextResponse.json({ exists: false })
       return NextResponse.json({
@@ -181,9 +217,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'complete') {
-      if (!isValidUploadId(body.uploadId)) {
-        return NextResponse.json({ error: '无效 uploadId' }, { status: 400 })
-      }
+      if (body.action !== 'complete') return NextResponse.json({ error: '未知 action' }, { status: 400 })
       const meta = readMeta(body.uploadId)
       if (!meta) return NextResponse.json({ error: '会话不存在或已过期' }, { status: 404 })
       const dir = tmpDirOf(body.uploadId)
@@ -258,15 +292,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'abort') {
-      if (!isValidUploadId(body.uploadId)) {
-        return NextResponse.json({ error: '无效 uploadId' }, { status: 400 })
-      }
+      if (body.action !== 'abort') return NextResponse.json({ error: '未知 action' }, { status: 400 })
       fs.rmSync(tmpDirOf(body.uploadId), { recursive: true, force: true })
       return NextResponse.json({ aborted: true })
     }
 
     if (action === 'transcode-status') {
-      const filename = path.basename(String(body.filename || ''))
+      const filename = path.basename(String(body.action === 'transcode-status' ? body.filename || '' : ''))
       if (!filename) return NextResponse.json({ status: 'none' })
       // 直接复用 transcode 模块的状态判定
       const { getTranscodeStatus } = await import('@/lib/infrastructure/video-transcode')
@@ -275,6 +307,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: '未知 action' }, { status: 400 })
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     console.error('[Video Resumable] Error:', error?.message, error?.stack)
     return NextResponse.json({ error: error.message || '上传失败' }, { status: 500 })
   }

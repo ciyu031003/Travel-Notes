@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getSiteService } from '@/lib/container'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { SettingsUpdateSchema } from '@/lib/api/schemas/admin'
 
 export async function GET(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -23,12 +26,8 @@ export async function POST(request: Request) {
   }
   // P0-3：这里只改「本人」的用户名/密码（均已校验当前密码），不要求站点主能力位
   try {
-    const body = await request.json()
-    const { currentPassword, newUsername, newPassword } = body
-
-    if (!currentPassword) {
-      return NextResponse.json({ error: '请输入当前密码' }, { status: 400 })
-    }
+    // P1-17：body 统一 zod（currentPassword 必填，新用户名/新密码形状校验）
+    const { currentPassword, newUsername, newPassword } = await parseBody(request, SettingsUpdateSchema)
 
     const siteService = getSiteService()
 
@@ -48,7 +47,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true })
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: '更新失败' }, { status: 500 })
   }
 }

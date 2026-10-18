@@ -3,7 +3,11 @@ import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { listAlbums, createAlbum } from '@/lib/modules/album/album.service'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { AlbumCreateSchema } from '@/lib/api/schemas/admin'
 
+// reviewed-no-body-input: GET 只读相册列表，无请求体
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) {
@@ -25,18 +29,16 @@ export async function POST(request: NextRequest) {
   const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
   if (denied) return denied
   try {
-    const body = await request.json()
-    const title = String(body?.title || '').trim()
-    if (!title) {
-      return NextResponse.json({ error: '请输入相册名称' }, { status: 400 })
-    }
+    // P1-17：body 统一 zod 校验（标题必填/长度、可选字段类型），失败统一 VALIDATION_ERROR
+    const body = await parseBody(request, AlbumCreateSchema)
+    const title = body.title
     const result = await createAlbum({
       title,
-      description: body?.description ? String(body.description) : undefined,
-      date: body?.date || undefined,
+      description: body.description ? String(body.description) : undefined,
+      date: body.date || undefined,
       userId: auth.payload?.userId,
-      isPublic: Boolean(body?.isPublic),
-      travelId: body?.travelId != null ? Number(body.travelId) : undefined,
+      isPublic: Boolean(body.isPublic),
+      travelId: body.travelId != null ? Number(body.travelId) : undefined,
     })
     writeAuditLog({
       username: auth.username,
@@ -47,6 +49,7 @@ export async function POST(request: NextRequest) {
     }).catch(() => {})
     return NextResponse.json({ success: true, id: result.id }, { status: 201 })
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: error.message || '创建失败' }, { status: 400 })
   }
 }

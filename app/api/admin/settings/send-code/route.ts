@@ -10,6 +10,9 @@ import { rateLimit } from '@/lib/infrastructure/rate-limit'
 import { sendMail } from '@/lib/infrastructure/mailer'
 import { getClientIp } from '@/lib/request-utils'
 import { logger } from '@/lib/infrastructure/logger'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { SendCodeSchema } from '@/lib/api/schemas/admin'
 
 export async function POST(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -28,12 +31,8 @@ export async function POST(request: Request) {
       )
     }
 
-    const body = await request.json()
-    const { email } = body
-
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: '请输入有效的邮箱地址' }, { status: 400 })
-    }
+    // P1-17：body 统一 zod（邮箱格式）
+    const { email } = await parseBody(request, SendCodeSchema)
 
     const status = await getVerificationCodeStatus(email)
     if (!status.canSend) {
@@ -47,7 +46,7 @@ export async function POST(request: Request) {
     await storeVerificationCode(email, code)
 
     // 日志脱敏：不输出完整邮箱与验证码明文（验证码仅本地开发时输出）
-    const maskedEmail = (email as string).replace(/^(.).*(@.*)$/, '$1***$2')
+    const maskedEmail = email.replace(/^(.).*(@.*)$/, '$1***$2')
     if (isEmailDeliveryConfigured()) {
       // TODO: 接入真实邮件服务（nodemailer/Resend/阿里云邮件等）后在此发送
       logger.info('admin-email', 'send-code', { to: maskedEmail })
@@ -69,7 +68,8 @@ export async function POST(request: Request) {
         ? '验证码已发送'
         : '邮件服务未配置：开发环境请查看服务器日志获取验证码',
     })
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: '发送失败' }, { status: 500 })
   }
 }

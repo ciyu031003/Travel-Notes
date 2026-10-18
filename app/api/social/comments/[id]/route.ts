@@ -1,16 +1,24 @@
-import { NextRequest } from 'next/server'
-import { requireUserId } from '@/lib/modules/social/social-route-utils'
+import { NextResponse } from 'next/server'
+import { ApiError } from '@/lib/api-response'
+import { withAuth } from '@/lib/api/handler'
 import { deletePostComment } from '@/lib/modules/social/social.service'
-import { ok, fail, unauthorized } from '@/lib/api-response'
+import { parseIdParam, toApiError } from '@/lib/api/schemas/common'
 
 export const dynamic = 'force-dynamic'
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const userId = await requireUserId(request)
-  if (!userId) return unauthorized()
+/**
+ * 删除评论（本人）。
+ * P1-17：路径 id 走 zod 校验；DELETE 无请求体（reviewed-no-body-input）。
+ */
+export const DELETE = withAuth(async (_request, ctx, routeContext) => {
+  const { params } = routeContext as { params: Promise<{ id: string }> }
+  if (!ctx.userId) throw new ApiError('UNAUTHORIZED', '未授权', 401)
   const { id } = await params
-  const commentId = parseInt(id, 10)
-  if (isNaN(commentId)) return fail('无效 ID', 400)
-  try { return ok(await deletePostComment(commentId, userId)) }
-  catch (e: any) { return fail(e.message || '删除失败', 400) }
-}
+  // reviewed-no-body-input：DELETE 仅路径参数，没有 JSON body
+  const commentId = parseIdParam(id, '评论 ID')
+  try {
+    return NextResponse.json({ success: true, data: await deletePostComment(commentId, ctx.userId) })
+  } catch (error) {
+    throw toApiError(error, '删除失败')
+  }
+})

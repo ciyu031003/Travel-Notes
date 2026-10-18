@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { handleReport, listReportsForAdmin, type ReportAction } from '@/lib/modules/social/moderation.service'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { ReportActionSchema, ReportListQuerySchema } from '@/lib/api/schemas/admin'
 
 export const dynamic = 'force-dynamic'
-
-const ACTIONS: ReportAction[] = ['DISMISS', 'TAKEDOWN_POST', 'HIDE_COMMENT', 'BAN_USER']
 
 /**
  * v3.1 M3-B2：举报治理处理。
@@ -18,10 +19,15 @@ export async function GET(request: NextRequest) {
   const denied = await requireCapability(auth.payload?.userId, 'canManageSocial')
   if (denied) return denied
   try {
+    // P1-17：query 用 zod（status 枚举、page/pageSize coerce 正整数）
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status') || undefined
-    const page = parseInt(searchParams.get('page') || '1', 10) || 1
-    const pageSize = parseInt(searchParams.get('pageSize') || '20', 10) || 20
+    const parsedQuery = ReportListQuerySchema.safeParse(Object.fromEntries(searchParams))
+    if (!parsedQuery.success) {
+      return errorResponse(new ApiError('INVALID_QUERY', '查询参数不合法', 400), getRequestId(request))
+    }
+    const status = parsedQuery.data.status
+    const page = parsedQuery.data.page ?? 1
+    const pageSize = parsedQuery.data.pageSize ?? 20
     const result = await listReportsForAdmin(status, page, pageSize)
     return NextResponse.json({ success: true, ...result })
   } catch (e) {
@@ -36,16 +42,12 @@ export async function POST(request: NextRequest) {
   const denied = await requireCapability(auth.payload?.userId, 'canManageSocial')
   if (denied) return denied
   try {
-    const body = await request.json()
-    const reportId = parseInt(body?.reportId, 10)
-    if (isNaN(reportId)) return NextResponse.json({ error: '无效的举报 ID' }, { status: 400 })
-    const action = String(body?.action || '')
-    if (!ACTIONS.includes(action as ReportAction)) {
-      return NextResponse.json({ error: '无效的处理动作' }, { status: 400 })
-    }
+    // P1-17：body 用 zod（reportId 正整数、action 枚举）
+    const { reportId, action } = await parseBody(request, ReportActionSchema)
     const result = await handleReport(action as ReportAction, reportId)
     return NextResponse.json({ success: true, ...result })
   } catch (e: any) {
+    if (e instanceof ApiError) return errorResponse(e, getRequestId(request))
     const msg = e?.message || '处理失败'
     return NextResponse.json({ error: msg }, { status: msg.includes('已处理') ? 409 : 500 })
   }

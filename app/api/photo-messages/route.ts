@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server'
 import { getPhotoMessageService } from '@/lib/container'
-import { ok, fail, serverError } from '@/lib/api-response'
+import { ApiError, ok, fail, serverError } from '@/lib/api-response'
+import { parseBody, withAuth } from '@/lib/api/handler'
+import { toApiError } from '@/lib/api/schemas/common'
+import { AddPhotoMessageSchema } from '@/lib/api/schemas/social'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,27 +25,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+/**
+ * 给照片留言。
+ * P1-17：body 由 zod 校验（image 必填、content 1-500 字）；业务错误（过长/为空）保持 400。
+ */
+export const POST = withAuth(async (request, ctx) => {
+  const body = await parseBody(request, AddPhotoMessageSchema)
+  const service = getPhotoMessageService()
   try {
-    const body = await request.json().catch(() => ({}))
-    const image = typeof body.image === 'string' ? body.image : ''
-    const content = typeof body.content === 'string' ? body.content : ''
-    if (!image) {
-      return fail('缺少图片标识')
-    }
-    if (!content.trim()) {
-      return fail('留言内容不能为空')
-    }
-    const { getCurrentUserId } = await import('@/lib/current-user')
-    const userId = await getCurrentUserId()
-    const service = getPhotoMessageService()
-    const message = await service.addMessage(image, content, userId)
+    const message = await service.addMessage(body.image, body.content, ctx.userId)
     return ok(message, '留言成功')
-  } catch (error: any) {
-    console.error('[POST /api/photo-messages] Error:', error?.message || error)
-    if (error?.message?.includes('过长') || error?.message?.includes('不能为空') || error?.message?.includes('图片标识')) {
-      return fail(error.message)
-    }
-    return serverError()
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : ''
+    if (/过长|不能为空|图片标识/.test(msg)) throw toApiError(error, '留言失败')
+    // 非业务异常：交给 withAuth 统一按 500 脱敏（不泄漏内部信息）
+    throw error instanceof ApiError ? error : new Error('留言失败')
   }
-}
+})

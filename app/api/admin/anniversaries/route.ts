@@ -3,7 +3,11 @@ import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { listAnniversaries, createAnniversary } from '@/lib/modules/anniversary/anniversary.service'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { AnniversaryCreateSchema } from '@/lib/api/schemas/admin'
 
+// reviewed-no-body-input: GET 只读纪念日列表，无请求体
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) {
@@ -25,21 +29,18 @@ export async function POST(request: NextRequest) {
   const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
   if (denied) return denied
   try {
-    const body = await request.json()
-    const title = String(body?.title || '').trim()
-    if (!title) {
-      return NextResponse.json({ error: '请输入纪念日名称' }, { status: 400 })
-    }
-    const date = new Date(body?.date)
+    // P1-17：body 统一 zod；日期字符串可解析性仍在此校验（zod 只保证类型/长度）
+    const body = await parseBody(request, AnniversaryCreateSchema)
+    const date = new Date(body.date)
     if (isNaN(date.getTime())) {
-      return NextResponse.json({ error: '请输入有效日期' }, { status: 400 })
+      throw new ApiError('INVALID_DATE', '请输入有效日期', 400)
     }
 
     const result = await createAnniversary({
-      title,
+      title: body.title,
       date,
-      recurring: body?.recurring !== false,
-      description: body?.description ? String(body.description) : undefined,
+      recurring: body.recurring !== false,
+      description: body.description ? String(body.description) : undefined,
       userId: auth.payload?.userId,
     })
     writeAuditLog({
@@ -47,10 +48,11 @@ export async function POST(request: NextRequest) {
       action: 'CREATE',
       resourceType: 'Anniversary',
       resourceId: String(result.id),
-      metadata: { title },
+      metadata: { title: body.title },
     }).catch(() => {})
     return NextResponse.json({ success: true, id: result.id }, { status: 201 })
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: error.message || '创建失败' }, { status: 400 })
   }
 }

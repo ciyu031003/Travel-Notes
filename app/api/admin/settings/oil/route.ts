@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getSecret, setSecret, hasSecret, deleteSecret } from '@/lib/modules/secret/secret.service'
 import { isSecretEncryptionConfigured } from '@/lib/infrastructure/secret-crypto'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { OilSettingsSchema } from '@/lib/api/schemas/admin'
 
 /**
  * 油画生成设置（后台）：总开关 + 通义 API key 管理。
@@ -63,18 +66,14 @@ export async function PUT(request: Request) {
       )
     }
 
-    const body = await request.json().catch(() => ({}))
-    const { enabled, apiKey, clearKey } = body as { enabled?: boolean; apiKey?: string; clearKey?: boolean }
+    // P1-17：body 统一 zod（enabled 布尔、apiKey 8-200、clearKey 布尔）
+    const { enabled, apiKey, clearKey } = await parseBody(request, OilSettingsSchema)
 
     if (typeof enabled === 'boolean') {
       await setSecret(ENABLED_KEY, enabled ? 'true' : 'false')
     }
     if (typeof apiKey === 'string' && apiKey.trim()) {
-      const key = apiKey.trim()
-      if (key.length < 8 || key.length > 200) {
-        return NextResponse.json({ error: 'API key 长度不合法' }, { status: 400 })
-      }
-      await setSecret(API_KEY_NAME, key)
+      await setSecret(API_KEY_NAME, apiKey.trim())
     }
     if (clearKey === true) {
       await deleteSecret(API_KEY_NAME)
@@ -82,6 +81,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(await statusPayload())
   } catch (error) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     console.error('[OilSettings] 保存失败:', (error as Error)?.message || error)
     return NextResponse.json({ error: '保存失败' }, { status: 500 })
   }

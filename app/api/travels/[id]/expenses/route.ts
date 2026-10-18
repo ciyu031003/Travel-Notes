@@ -5,6 +5,9 @@ import { canViewResourceById } from '@/lib/modules/access'
 import { addExpense, getTravelExpenses } from '@/lib/modules/travel/travel.service'
 import { normalizeExpenseCategory } from '@/lib/modules/travel/expense-categories'
 import { guardTravelWrite } from '@/lib/modules/travel/api-guard'
+import { parseBody } from '@/lib/api/handler'
+import { asApiErrorFromResponse, parseIdParam, toApiError, withRouteErrors } from '@/lib/api/schemas/common'
+import { AddExpenseSchema } from '@/lib/api/schemas/travel'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +20,8 @@ export const dynamic = 'force-dynamic'
  * 既缺 UI 也缺接口，这里是接口那一半。
  *
  * 权限口径与 `days` / `itinerary` / `memories` 完全一致（`guardTravelWrite`）。
+ *
+ * P1-17：POST body 由 zod 校验（金额/分类/绑定行程等），金额的业务上限仍是服务层兜底。
  */
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -37,46 +42,31 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withRouteErrors(async (request, routeContext) => {
+  const { params } = routeContext as { params: Promise<{ id: string }> }
   const { id } = await params
-  const travelId = parseInt(id, 10)
+  const travelId = parseIdParam(id, '旅行 ID')
+
   const guard = await guardTravelWrite(request, travelId)
-  if (!guard.ok) return guard.response
+  if (!guard.ok) throw await asApiErrorFromResponse(guard.response)
 
+  const body = await parseBody(request, AddExpenseSchema)
   try {
-    const body = await request.json()
-    const amount = Number(body?.amount)
-    // 金额必须是有限正数：NaN/0/负数会让合计与进度条直接失真
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return NextResponse.json({ error: '请输入有效金额' }, { status: 400 })
-    }
-    if (amount > 100_000_000) {
-      return NextResponse.json({ error: '金额数值过大' }, { status: 400 })
-    }
-    /**
-     * 可选绑定行程（2026-10-13）：选定后该笔花销会出现在对应行程与总览里。
-     * 只做"是不是正整数"的形态校验；**归属校验在服务层**
-     * （addExpense 会确认该行程确实属于本旅行，跨旅行/已删除则退化为不绑定）。
-     */
-    const rawItinerary = body?.itineraryItemId
-    const itineraryItemId =
-      rawItinerary === null || rawItinerary === undefined || rawItinerary === ''
-        ? null
-        : Number.isFinite(Number(rawItinerary)) && Number(rawItinerary) > 0
-          ? Number(rawItinerary)
-          : null
-
     const result = await addExpense(travelId, {
-      amount,
-      currency: body?.currency ? String(body.currency).slice(0, 10) : 'CNY',
-      category: normalizeExpenseCategory(body?.category),
-      payer: body?.payer ? String(body.payer).slice(0, 60) : undefined,
-      note: body?.note ? String(body.note).slice(0, 200) : undefined,
-      happenedAt: body?.happenedAt ? String(body.happenedAt) : undefined,
-      itineraryItemId,
+      amount: body.amount,
+      currency: body.currency || 'CNY',
+      category: normalizeExpenseCategory(body.category),
+      payer: body.payer ?? undefined,
+      note: body.note ?? undefined,
+      happenedAt: body.happenedAt ? body.happenedAt : undefined,
+      /**
+       * 可选绑定行程：只做形态校验；**归属校验在服务层**
+       * （addExpense 会确认该行程确实属于本旅行，跨旅行/已删除则退化为不绑定）。
+       */
+      itineraryItemId: body.itineraryItemId ?? null,
     })
     return NextResponse.json({ success: true, id: result.id }, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: (error as Error)?.message || '添加失败' }, { status: 400 })
+    throw toApiError(error, '添加失败')
   }
-}
+})

@@ -5,6 +5,19 @@ import { getSiteService } from '@/lib/container'
 import { generateAlbumToken, ALBUM_COOKIE } from '@/lib/album-auth'
 import { rateLimit, checkLoginLock, recordLoginFailure, clearLoginFailures } from '@/lib/infrastructure/rate-limit'
 import { getClientIp } from '@/lib/request-utils'
+import { z } from 'zod'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { getRequestId } from '@/lib/api/handler'
+
+/** 相册解锁 body：日期口令（长度上限）或显式 skip；两者至少一个 */
+const AlbumUnlockSchema = z
+  .object({
+    date: z.string().max(64, '日期格式不合法').optional(),
+    skip: z.boolean().optional(),
+  })
+  .refine((v) => (typeof v.date === 'string' && v.date.trim().length > 0) || v.skip === true, {
+    message: '请输入日期',
+  })
 
 /**
  * 相册口令解锁（P0-5：补限流 + 失败指数退避）。
@@ -56,13 +69,15 @@ export async function POST(request: Request) {
     const lock = checkLoginLock(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
     if (lock.locked) return tooManyRequests(lock.retryAfterSeconds, '失败次数过多，请稍后再试')
 
-    const body = await request.json()
-    const inputDate = (body.date || '').trim()
-    const skipRequested = body.skip === true
-
-    if (!inputDate && !skipRequested) {
-      return NextResponse.json({ success: false, error: '请输入日期' }, { status: 400 })
+    // P1-17：body 用 zod（date 长度上限 / skip 布尔；两者至少一个）
+    const parsedBody = AlbumUnlockSchema.safeParse(await request.json().catch(() => null))
+    if (!parsedBody.success) {
+      return errorResponse(
+        new ApiError('VALIDATION_ERROR', parsedBody.error.issues[0]?.message || '请输入日期', 400),
+        getRequestId(request),
+      )
     }
+    const inputDate = (parsedBody.data.date || '').trim()
 
     // 读取「当前登录用户」的纪念日（多用户：每个用户各自设置）
     // 未登录时（如登录页的相册解锁）回退到首个用户的纪念日
@@ -132,7 +147,8 @@ export async function POST(request: Request) {
       { success: false, error: '日期不正确', retryAfterSeconds: failure.retryAfterSeconds },
       { status: 401 },
     )
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ success: false, error: '验证失败' }, { status: 500 })
   }
 }

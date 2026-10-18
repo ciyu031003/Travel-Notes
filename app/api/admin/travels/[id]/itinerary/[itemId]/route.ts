@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { deleteItineraryItem, findTravelIdByItineraryItemId, canManageTravel } from '@/lib/modules/travel/travel.service'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { getRequestId } from '@/lib/api/handler'
+import { IdSchema } from '@/lib/api/schemas/admin'
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string; itemId: string }> }) {
   const auth = await requireAuth(request)
@@ -10,9 +13,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   }
   const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
   if (denied) return denied
+  // reviewed-no-body-input: DELETE 无请求体，只校验路径 ID（zod coerce 正整数）
   const { itemId } = await params
-  const id = parseInt(itemId, 10)
-  if (isNaN(id)) return NextResponse.json({ error: '无效 ID' }, { status: 400 })
+  const idParsed = IdSchema.safeParse(itemId)
+  if (!idParsed.success) return errorResponse(new ApiError('INVALID_ID', '无效 ID', 400), getRequestId(request))
+  const id = idParsed.data
   const travelId = await findTravelIdByItineraryItemId(id)
   if (!travelId || !(await canManageTravel(travelId, auth.payload?.userId))) {
     return NextResponse.json({ error: '旅行不存在或无权操作' }, { status: 404 })
@@ -21,6 +26,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     await deleteItineraryItem(id)
     return NextResponse.json({ success: true })
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: error.message || '删除失败' }, { status: 400 })
   }
 }

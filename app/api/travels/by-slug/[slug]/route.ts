@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth-middleware'
+import { ApiError } from '@/lib/api-response'
+import { parseBody, withAuth } from '@/lib/api/handler'
 import { canManageTravel, updateTravelInfo } from '@/lib/modules/travel/travel.service'
+import { toApiError } from '@/lib/api/schemas/common'
+import { UpdateTravelInfoSchema } from '@/lib/api/schemas/travel'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,43 +27,36 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
  *
  * 权限与其它前台写接口一致：owner 或空间成员（`canManageTravel`）。
  * 标题变更会重算 slug，响应里回传新 slug，前台据此 replace 地址。
+ *
+ * P1-17：body 由 zod 校验（标题长度/日期格式/预算范围/封面 id）；空串仍按旧语义当 null。
  */
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const auth = await requireAuth(request)
-  if (!auth.authenticated || !auth.username) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
-
+export const PUT = withAuth(async (request, _ctx, routeContext) => {
+  const { params } = routeContext as { params: Promise<{ slug: string }> }
   const { slug: rawSlug } = await params
   const slug = decodeURIComponent(rawSlug)
+  const body = await parseBody(request, UpdateTravelInfoSchema)
 
   try {
     const travel = await prisma.travel.findFirst({ where: { slug }, select: { id: true } })
-    if (!travel) return NextResponse.json({ error: '旅行不存在' }, { status: 404 })
-    if (!(await canManageTravel(travel.id, auth.payload?.userId))) {
-      return NextResponse.json({ error: '无权编辑该旅行' }, { status: 403 })
+    if (!travel) throw new ApiError('NOT_FOUND', '旅行不存在', 404)
+    if (!(await canManageTravel(travel.id, _ctx.userId))) {
+      throw new ApiError('FORBIDDEN', '无权编辑该旅行', 403)
     }
 
-    const body = await request.json()
     const result = await updateTravelInfo(travel.id, {
-      title: body?.title !== undefined ? String(body.title) : undefined,
-      location: body?.location !== undefined ? String(body.location) : undefined,
-      description: body?.description !== undefined ? String(body.description ?? '') : undefined,
-      startDate: body?.startDate !== undefined ? (body.startDate ? String(body.startDate) : null) : undefined,
-      endDate: body?.endDate !== undefined ? (body.endDate ? String(body.endDate) : null) : undefined,
+      title: body.title,
+      location: body.location,
+      description: body.description === undefined ? undefined : body.description ?? '',
+      startDate: body.startDate === undefined ? undefined : body.startDate ? String(body.startDate) : null,
+      endDate: body.endDate === undefined ? undefined : body.endDate ? String(body.endDate) : null,
       // 花销 tab 的预算：null 表示清空；缺省表示不改
-      budget: body?.budget !== undefined ? (body.budget === null || body.budget === '' ? null : Number(body.budget)) : undefined,
+      budget: body.budget === undefined ? undefined : body.budget === null ? null : Number(body.budget),
       // 相册 tab 的「设为封面」：null 表示恢复默认（第一张）
-      coverMediaId:
-        body?.coverMediaId !== undefined
-          ? body.coverMediaId === null || body.coverMediaId === ''
-            ? null
-            : Number(body.coverMediaId)
-          : undefined,
+      coverMediaId: body.coverMediaId === undefined ? undefined : body.coverMediaId === null ? null : Number(body.coverMediaId),
     })
 
     return NextResponse.json({ success: true, slug: result.slug, daysChanged: result.daysChanged })
   } catch (error) {
-    return NextResponse.json({ error: (error as Error)?.message || '保存失败' }, { status: 400 })
+    throw toApiError(error, '保存失败')
   }
-}
+})

@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { getAuthService } from '@/lib/container'
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
 import { getClientIp } from '@/lib/request-utils'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { SendCodeSchema } from '@/lib/api/schemas/admin'
 
 /** 防邮箱枚举（P1-12）：无论邮箱是否存在/是否验证，对外只有这一句话 */
 const GENERIC_MESSAGE = '如果该邮箱已绑定账号，验证码将发送'
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(request: Request) {
   try {
@@ -20,13 +21,8 @@ export async function POST(request: Request) {
       )
     }
 
-    const body = await request.json().catch(() => ({}))
-    const email = String(body?.email || '').trim()
-
-    // 格式校验不属于「账号是否存在」的信息泄露，可以如实返回 400（前端此前已先行校验）
-    if (!EMAIL_RE.test(email)) {
-      return NextResponse.json({ error: '请输入有效的邮箱地址' }, { status: 400 })
-    }
+    // P1-17：body 用 zod（邮箱格式；格式非法不属于账号枚举，可如实 400）
+    const { email } = await parseBody(request, SendCodeSchema)
 
     const emailLimit = rateLimit({ prefix: 'reset-code:email', key: email, limit: 3, windowMs: 15 * 60 * 1000 })
     if (!emailLimit.ok) {
@@ -55,8 +51,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, message: GENERIC_MESSAGE })
   } catch (error) {
+    // 非法请求体应如实 400（不属于账号枚举）；其它异常保持通用响应，避免通过 500/400 差异探测账号
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     console.error('[forgot-password/send-code] 失败:', (error as Error)?.message || error)
-    // 异常也保持通用响应，避免通过 500/400 差异探测账号
     return NextResponse.json({ success: true, message: GENERIC_MESSAGE })
   }
 }

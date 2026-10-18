@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getSiteService } from '@/lib/container'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { AnniversaryStartSchema } from '@/lib/api/schemas/admin'
 
 export async function GET(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -22,22 +25,14 @@ export async function POST(request: Request) {
   }
   // P0-3：纪念日起点是「作用于本人」的配置（旧密码校验），不要求站点主能力位
   try {
-    const body = await request.json()
-    const { anniversaryStart, currentPassword } = body
-
-    if (!currentPassword) {
-      return NextResponse.json({ error: '请输入当前密码以验证身份' }, { status: 400 })
-    }
+    // P1-17：body 统一 zod（日期 YYYY-MM-DD、当前密码必填）
+    const { anniversaryStart, currentPassword } = await parseBody(request, AnniversaryStartSchema)
 
     const siteService = getSiteService()
 
     const verifyResult = await siteService.verifyPassword(currentPassword, authResult.username)
     if (!verifyResult.success) {
       return NextResponse.json({ error: '当前密码错误' }, { status: 401 })
-    }
-
-    if (anniversaryStart && !/^\d{4}-\d{2}-\d{2}$/.test(anniversaryStart)) {
-      return NextResponse.json({ error: '日期格式不正确' }, { status: 400 })
     }
 
     // 严格按当前登录用户名定位（P0-3：无 username 时 service 返回失败，不再写错人）
@@ -50,7 +45,8 @@ export async function POST(request: Request) {
       success: true,
       anniversaryStart: anniversaryStart || null,
     })
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: '更新失败' }, { status: 500 })
   }
 }

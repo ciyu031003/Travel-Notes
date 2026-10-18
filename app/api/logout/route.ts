@@ -3,6 +3,7 @@ import { getAuthService } from '@/lib/container'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { getClientIp } from '@/lib/request-utils'
 
+// reviewed-no-body-input: 注销只读取 Cookie 与 UA/IP，无请求体（重复注销幂等）
 export async function POST(request: NextRequest) {
   const sessionCookie = request.cookies.get('admin_session')
   const ip = getClientIp(request)

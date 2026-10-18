@@ -5,25 +5,36 @@ import sharp from 'sharp'
 import { getCurrentUserId } from '@/lib/current-user'
 import { updateMyAvatar, getMyProfile } from '@/lib/modules/social/profile.service'
 import { avatarFilePaths } from '@/lib/modules/social/avatar-variants'
-import { ok, unauthorized, fail, serverError } from '@/lib/api-response'
+import { ok, unauthorized, serverError, ApiError, errorResponse } from '@/lib/api-response'
+import { getRequestId } from '@/lib/api/handler'
+import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024
+
+/** 头像上传：multipart 表单，只校验文件形状/类型/大小（内容由 sharp 重编码） */
+const AvatarFormSchema = z.object({
+  avatar: z
+    .custom<File>((v) => v instanceof File, { message: '请选择头像图片' })
+    .refine((f) => f.type.startsWith('image/'), { message: '仅支持图片文件' })
+    .refine((f) => f.size > 0, { message: '图片为空' })
+    .refine((f) => f.size <= MAX_AVATAR_BYTES, { message: '头像图片不能超过 5MB' }),
+})
 
 export async function POST(request: NextRequest) {
   const userId = await getCurrentUserId()
   if (!userId) return unauthorized()
 
   try {
+    // P1-17：multipart 不套 parseBody(JSON)，按字段形状做 zod 校验（类型/大小）
     const formData = await request.formData()
-    const file = formData.get('avatar')
-    if (!(file instanceof File)) return fail('请选择头像图片', 400)
-    if (!file.type.startsWith('image/')) return fail('仅支持图片文件', 400)
-
+    const parsedForm = AvatarFormSchema.safeParse({ avatar: formData.get('avatar') })
+    if (!parsedForm.success) {
+      throw new ApiError('VALIDATION_ERROR', parsedForm.error.issues[0]?.message || '请选择头像图片', 400)
+    }
+    const file = parsedForm.data.avatar
     const buffer = Buffer.from(await file.arrayBuffer())
-    if (buffer.length === 0) return fail('图片为空', 400)
-    if (buffer.length > MAX_AVATAR_BYTES) return fail('头像图片不能超过 5MB', 400)
 
     const dir = path.join(process.cwd(), 'public', 'uploads', 'avatars')
     await mkdir(dir, { recursive: true })
@@ -67,6 +78,7 @@ export async function POST(request: NextRequest) {
     const data = await updateMyAvatar(userId, avatarUrl)
     return ok(data)
   } catch (e: any) {
+    if (e instanceof ApiError) return errorResponse(e, getRequestId(request))
     console.error('[POST /api/me/avatar]', e?.message || e)
     return serverError()
   }

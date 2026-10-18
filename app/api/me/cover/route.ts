@@ -5,11 +5,23 @@ import sharp from 'sharp'
 import { getCurrentUserId } from '@/lib/current-user'
 import { getMyProfile, updateMyCover, updateMyCoverFocus } from '@/lib/modules/social/profile.service'
 import { COVER_SIZES, coverFilePaths, coverObjectPosition } from '@/lib/modules/social/profile-cover'
-import { ok, unauthorized, fail, serverError } from '@/lib/api-response'
+import { ok, unauthorized, fail, serverError, ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { z } from 'zod'
+import { CoverFocusSchema } from '@/lib/api/schemas/me'
 
 export const dynamic = 'force-dynamic'
 
 const MAX_COVER_BYTES = 12 * 1024 * 1024
+
+/** 头图上传：multipart 表单，只校验文件形状/类型/大小（内容由 sharp 重编码） */
+const CoverFormSchema = z.object({
+  cover: z
+    .custom<File>((v) => v instanceof File, { message: '请选择头图图片' })
+    .refine((f) => f.type.startsWith('image/'), { message: '仅支持图片文件' })
+    .refine((f) => f.size > 0, { message: '图片为空' })
+    .refine((f) => f.size <= MAX_COVER_BYTES, { message: '头图不能超过 12MB' }),
+})
 
 /**
  * 档案头图（个人主页封面）上传。
@@ -28,14 +40,14 @@ export async function POST(request: NextRequest) {
   if (!userId) return unauthorized()
 
   try {
+    // P1-17：multipart 不套 parseBody(JSON)，按字段形状做 zod 校验（类型/大小）
     const formData = await request.formData()
-    const file = formData.get('cover')
-    if (!(file instanceof File)) return fail('请选择头图图片', 400)
-    if (!file.type.startsWith('image/')) return fail('仅支持图片文件', 400)
-
+    const parsedForm = CoverFormSchema.safeParse({ cover: formData.get('cover') })
+    if (!parsedForm.success) {
+      throw new ApiError('VALIDATION_ERROR', parsedForm.error.issues[0]?.message || '请选择头图图片', 400)
+    }
+    const file = parsedForm.data.cover
     const buffer = Buffer.from(await file.arrayBuffer())
-    if (buffer.length === 0) return fail('图片为空', 400)
-    if (buffer.length > MAX_COVER_BYTES) return fail('头图不能超过 12MB', 400)
 
     const focus = parseFocus(formData.get('focusX'), formData.get('focusY'))
     if (focus === 'invalid') return fail('焦点参数不合法（应为 0-1 之间的数字）', 400)
@@ -83,6 +95,7 @@ export async function POST(request: NextRequest) {
     const data = await updateMyCover(userId, coverUrl, focus === 'none' ? undefined : focus)
     return ok({ ...data, objectPosition: coverObjectPosition(data.coverFocusX, data.coverFocusY) })
   } catch (e: unknown) {
+    if (e instanceof ApiError) return errorResponse(e, getRequestId(request))
     console.error('[POST /api/me/cover]', (e as Error)?.message || e)
     return serverError()
   }
@@ -94,11 +107,9 @@ export async function PUT(request: NextRequest) {
   if (!userId) return unauthorized()
 
   try {
-    const body = await request.json().catch(() => ({}))
-    const rawX = body?.focusX
-    const rawY = body?.focusY
-
-    const focus = parseFocus(rawX, rawY)
+    // P1-17：body 用 zod（focusX/focusY 0-1，必须成对给/缺省）
+    const body = await parseBody(request, CoverFocusSchema)
+    const focus = parseFocus(body.focusX, body.focusY)
     if (focus === 'invalid') return fail('焦点参数不合法（应为 0-1 之间的数字）', 400)
 
     const profile = await getMyProfile(userId)
@@ -108,6 +119,7 @@ export async function PUT(request: NextRequest) {
     const data = await updateMyCoverFocus(userId, next)
     return ok({ ...data, objectPosition: coverObjectPosition(data.coverFocusX, data.coverFocusY) })
   } catch (e: unknown) {
+    if (e instanceof ApiError) return errorResponse(e, getRequestId(request))
     console.error('[PUT /api/me/cover]', (e as Error)?.message || e)
     return serverError()
   }

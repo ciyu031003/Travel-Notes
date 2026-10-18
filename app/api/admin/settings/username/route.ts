@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getSiteService } from '@/lib/container'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { UsernameUpdateSchema } from '@/lib/api/schemas/admin'
 
 export async function POST(request: Request) {
   const authResult = await requireAuth(request as any)
@@ -9,25 +12,18 @@ export async function POST(request: Request) {
   }
   // P0-3：改用户名是「作用于本人」的操作（旧密码校验），不要求站点主能力位
   try {
-    const body = await request.json()
-    const { newUsername, currentPassword } = body
-
-    if (!newUsername || !newUsername.trim()) {
-      return NextResponse.json({ error: '用户名不能为空' }, { status: 400 })
-    }
-
-    if (!currentPassword) {
-      return NextResponse.json({ error: '请输入当前密码' }, { status: 400 })
-    }
+    // P1-17：body 统一 zod（用户名长度/字符集、当前密码必填）
+    const { newUsername, currentPassword } = await parseBody(request, UsernameUpdateSchema)
 
     const siteService = getSiteService()
-    const result = await siteService.updateUsername(newUsername.trim(), currentPassword, authResult?.username)
+    const result = await siteService.updateUsername(newUsername, currentPassword, authResult?.username)
     if (!result.success) {
       return NextResponse.json({ error: result.error || '更新失败' }, { status: 401 })
     }
 
-    return NextResponse.json({ success: true, username: newUsername.trim() })
-  } catch {
+    return NextResponse.json({ success: true, username: newUsername })
+  } catch (error) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: '更新失败' }, { status: 500 })
   }
 }

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { addExpense, canManageTravel } from '@/lib/modules/travel/travel.service'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { ExpenseCreateSchema } from '@/lib/api/schemas/admin'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request)
@@ -16,21 +19,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const owned = await canManageTravel(travelId, auth.payload?.userId)
   if (!owned) return NextResponse.json({ error: '旅行不存在或无权操作' }, { status: 404 })
   try {
-    const body = await request.json()
-    const amount = parseFloat(body?.amount)
-    if (isNaN(amount) || amount <= 0) {
-      return NextResponse.json({ error: '请输入有效金额' }, { status: 400 })
-    }
+    // P1-17：body 统一 zod（amount coerce 正数、currency/category/payer/note 长度）
+    const body = await parseBody(request, ExpenseCreateSchema)
     const result = await addExpense(travelId, {
-      amount,
-      currency: body?.currency || 'CNY',
-      category: body?.category || 'OTHER',
-      payer: body?.payer ? String(body.payer) : undefined,
-      note: body?.note ? String(body.note) : undefined,
-      happenedAt: body?.happenedAt || undefined,
+      amount: body.amount,
+      currency: body.currency || 'CNY',
+      category: body.category || 'OTHER',
+      payer: body.payer ? String(body.payer) : undefined,
+      note: body.note ? String(body.note) : undefined,
+      happenedAt: body.happenedAt || undefined,
     })
     return NextResponse.json({ success: true, id: result.id }, { status: 201 })
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: error.message || '添加失败' }, { status: 400 })
   }
 }

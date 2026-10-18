@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { addDay, canManageTravel } from '@/lib/modules/travel/travel.service'
+import { ApiError, errorResponse } from '@/lib/api-response'
+import { parseBody, getRequestId } from '@/lib/api/handler'
+import { TravelDayCreateSchema } from '@/lib/api/schemas/admin'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request)
@@ -16,14 +19,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const owned = await canManageTravel(travelId, auth.payload?.userId)
   if (!owned) return NextResponse.json({ error: '旅行不存在或无权操作' }, { status: 404 })
   try {
-    const body = await request.json()
+    // P1-17：body 统一 zod（date/title/summary 可选，长度上限）
+    const body = await parseBody(request, TravelDayCreateSchema)
     const result = await addDay(travelId, {
-      date: body?.date || undefined,
-      title: body?.title ? String(body.title) : undefined,
-      summary: body?.summary ? String(body.summary) : undefined,
+      date: body.date || undefined,
+      title: body.title ? String(body.title) : undefined,
+      summary: body.summary ? String(body.summary) : undefined,
     })
     return NextResponse.json({ success: true, id: result.id }, { status: 201 })
   } catch (error: any) {
+    if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     return NextResponse.json({ error: error.message || '添加失败' }, { status: 400 })
   }
 }
