@@ -11,8 +11,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
  *   ③ 没有开始日 → 至少补出 1 天，保证详情页有可下手的章节。
  */
 
-const { prismaMock } = vi.hoisted(() => ({
-  prismaMock: {
+const { prismaMock } = vi.hoisted(() => {
+  const mock: any = {
     travel: { findUnique: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
     travelDay: {
       findMany: vi.fn(),
@@ -21,10 +21,19 @@ const { prismaMock } = vi.hoisted(() => ({
       createMany: vi.fn(),
       count: vi.fn(),
     },
-  },
-}))
+  }
+  // P1-15：updateTravelInfo 等写路径现在走 prisma.$transaction(...)。
+  // 测试里把 tx 直接交给同一个 mock 对象 —— 断言仍然落在同一组 spy 上；
+  // 「写入是否真的都在同一个事务里」由 travel-write-transaction.test.ts 单独验证。
+  mock.$transaction = vi.fn(async (fn: (tx: any) => Promise<unknown>) => fn(mock))
+  return { prismaMock: mock }
+})
 
 vi.mock('@/lib/db', () => ({ prisma: prismaMock }))
+vi.mock('@/lib/modules/social/travel-post.service', () => ({
+  syncTravelPost: vi.fn(async () => null),
+  unpublishTravelPost: vi.fn(async () => {}),
+}))
 
 import { syncTravelDayDates, makeUniqueTravelSlug, updateTravelInfo } from '@/lib/modules/travel/travel.service'
 
@@ -66,7 +75,7 @@ describe('syncTravelDayDates', () => {
     ])
     const changed = await syncTravelDayDates(7, d(2026, 7, 27), d(2026, 7, 29))
     expect(changed).toBe(3)
-    const dates = prismaMock.travelDay.update.mock.calls.map((c) => (c[0] as any).data.date)
+    const dates = prismaMock.travelDay.update.mock.calls.map((c: any[]) => (c[0] as any).data.date)
     expect(dates.map((x: Date) => x.toDateString())).toEqual([
       d(2026, 7, 27).toDateString(),
       d(2026, 7, 28).toDateString(),

@@ -1,105 +1,68 @@
 /**
  * Travel 规划：管理新数据模型下的旅行 → 天数 → 行程项 → 花费。
  * （面向 P2 的行程与花费管理；公开的旅行详情展示属于 P5）
+ *
+ * P2-32 拆分说明：读模型映射在 travel.mapper.ts，写路径规则/日期计划在
+ * travel.policy.ts，本文件只保留「查询 + 写入编排」。对外导出签名（含类型）
+ * 保持不变 —— 类型在此再导出，调用方无需改 import。
  */
 import { prisma } from '../../db'
-import { scopedWhere } from '../../visibility'
+import type { Prisma } from '@prisma/client'
 import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
-import { makeTravelSlug } from './slug'
-import { yuanToCents, centsToYuan } from './money'
+import { yuanToCents } from './money'
 import { unifiedMarkdownRenderer } from '../../infrastructure/markdown'
 import { skipDbOnBuild } from '../../db-guard'
-import { absoluteMediaUrl, storageKeyToUrl } from '../../media-url'
+import { storageKeyToUrl } from '../../media-url'
 // P0 收敛：空间成员关系的唯一查询入口（同时按 userId + username 两种键查）
 import { myActiveSpaceIds as sharedMyActiveSpaceIds, spaceScopedWhere, isSpaceContentEditor } from '../access/space-scope'
 import { writeAuditLog } from '../audit/audit-log.service'
+import type {
+  ExpenseRecord,
+  ItineraryItemRecord,
+  TravelDayRecord,
+  TravelDayTimelineItem,
+  TravelDetail,
+  TravelPublicDetail,
+  TravelSummary,
+} from './travel.types'
+import {
+  mapExpenseList,
+  mapTravelDetail,
+  mapTravelList,
+  mapTravelPublicDetail,
+  mapTravelTimelineDays,
+} from './travel.mapper'
+import {
+  ITINERARY_TYPES,
+  assertCoverMediaBelongs,
+  canManageTravel,
+  dayTitle,
+  findTravelIdByDayId,
+  findTravelIdByExpenseId,
+  findTravelIdByItineraryItemId,
+  makeUniqueTravelSlug,
+  normalizeBudgetLoose,
+  normalizeBudgetStrict,
+  normalizeItineraryType,
+  normalizeTravelTitle,
+  parseTimeOrDate,
+  planDayAlignment,
+  planTravelDayDates,
+  travelSlugBase,
+} from './travel.policy'
 
-export interface TravelSummary {
-  id: number
-  title: string
-  slug: string
-  description: string | null
-  startDate: string | null
-  endDate: string | null
-  status: string
-  dayCount: number
-  expenseTotal: number
-  cover: string | null
-  coverMediaId: number | null
-  /** 旅行内回忆照片（缩略图优先），用于旅行地图左侧照片轮播 */
-  photos: string[]
-  tags: string[] | null
-  location: string | null
-  updatedAt: string | null
-  visibility: string
-  spaceId: number | null
-  ownerId: number | null
-  /** 归档时刻；null = 进行中草稿（首页大入口继续补内容，不进最近旅行与画册） */
-  confirmedAt: string | null
-}
+/** 事务客户端：Prisma 交互式事务回调的 tx；内部函数用它透传，缺省走全局 prisma */
+export type TravelTx = Prisma.TransactionClient
 
-export interface ItineraryItemRecord {
-  id: number
-  title: string
-  startTime: string | null
-  endTime: string | null
-  type: string
-  notes: string | null
-  locationName: string | null
-}
-
-export interface TravelDayRecord {
-  id: number
-  date: string | null
-  title: string | null
-  summary: string | null
-  sortOrder: number
-  itinerary: ItineraryItemRecord[]
-}
-
-export interface ExpenseRecord {
-  id: number
-  amount: number
-  currency: string
-  category: string
-  payer: string | null
-  note: string | null
-  happenedAt: string | null
-  /** 绑定的行程项 id（null = 未绑定任何行程） */
-  itineraryItemId?: number | null
-}
-
-export interface TravelDetail {
-  id: number
-  title: string
-  slug: string
-  description: string | null
-  startDate: string | null
-  endDate: string | null
-  status: string
-  days: TravelDayRecord[]
-  expenses: ExpenseRecord[]
-  updatedAt: string | null
-  visibility: string
-  spaceId: number | null
-  ownerId: number | null
-}
-
-function safeParseTags(raw: string | null | undefined): string[] | null {
-  if (!raw) return null
-  try {
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === 'string') : null
-  } catch {
-    // 旧数据可能为逗号分隔
-    return raw.split(',').map((v) => v.trim()).filter(Boolean)
-  }
-}
-
-function iso(v: Date | null | undefined): string | null {
-  if (!v) return null
-  const d = v instanceof Date ? v : new Date(v)
-  return isNaN(d.getTime()) ? null : d.toISOString()
+// 读模型类型统一放在 travel.types.ts；这里再导出，既有 import 路径不变
+export type {
+  ExpenseRecord,
+  ItineraryItemRecord,
+  TravelDayRecord,
+  TravelDayTimelineItem,
+  TravelDetail,
+  TravelPublicDetail,
+  TravelSummary,
 }
 
 /**
@@ -150,57 +113,7 @@ export async function listTravels(
     },
   })
 
-  /** 单条 media → 优先缩略图，无变体回退原图（减流量，用于旅行地图左侧照片画廊） */
-  const thumbOf = (m: any): string | null => {
-    const thumb = m?.variants?.find((v: any) => v.variant === 'THUMBNAIL')
-    return storageKeyToUrl(thumb?.storageKey ?? m?.storageKey ?? null)
-  }
-
-  return rows.map((t: any) => {
-    // 收集该旅行的回忆照片（去重），用于旅行地图左侧照片轮播
-    const seen = new Set<string>()
-    const photos: string[] = []
-    for (const day of t.days || []) {
-      for (const mem of day.memories || []) {
-        for (const m of mem.media || []) {
-          const url = thumbOf(m)
-          if (url && !seen.has(url)) {
-            seen.add(url)
-            photos.push(url)
-          }
-        }
-      }
-    }
-
-    // 封面：优先 coverMedia（缩略图→原图），回退 legacy cover 字段（统一绝对化）
-    const coverThumb = t.coverMedia?.variants?.find((v: any) => v.variant === 'THUMBNAIL')?.storageKey
-    const coverMediaKey = t.coverMedia?.storageKey
-    const coverUrl =
-      storageKeyToUrl(coverThumb ?? coverMediaKey ?? null) ?? absoluteMediaUrl(t.cover ?? null)
-
-    return {
-      id: t.id,
-      title: t.title,
-      slug: t.slug,
-      description: t.description,
-      startDate: iso(t.startDate),
-      endDate: iso(t.endDate),
-      status: t.status,
-      dayCount: t._count.days,
-      // 花费合计：整数分求和（无浮点误差），出边界时转回元
-      expenseTotal: centsToYuan(t.expenses.reduce((s: number, e: { amountCents?: number | null }) => s + (e.amountCents ?? 0), 0)),
-      cover: coverUrl ?? t.cover ?? null,
-      coverMediaId: t.coverMediaId ?? null,
-      photos,
-      tags: t.tags ? safeParseTags(t.tags) : null,
-      location: t.location ?? null,
-      updatedAt: iso(t.updatedAt),
-      visibility: t.visibility ?? 'SPACE',
-      spaceId: t.spaceId ?? null,
-      ownerId: t.ownerId ?? null,
-      confirmedAt: iso(t.confirmedAt),
-    }
-  })
+  return mapTravelList(rows)
 }
 
 export async function getTravelDetail(
@@ -226,83 +139,7 @@ export async function getTravelDetail(
     },
   })
   if (!travel) return null
-  return {
-    id: travel.id,
-    title: travel.title,
-    slug: travel.slug,
-    description: travel.description,
-    startDate: iso(travel.startDate),
-    endDate: iso(travel.endDate),
-    status: travel.status,
-    days: travel.days.map((d: any) => ({
-      id: d.id,
-      date: iso(d.date),
-      title: d.title,
-      summary: d.summary,
-      sortOrder: d.sortOrder,
-      itinerary: d.itineraryItems.map((it: any) => ({
-        id: it.id,
-        title: it.title,
-        startTime: iso(it.startTime),
-        endTime: iso(it.endTime),
-        type: it.type,
-        notes: it.notes,
-        locationName: it.location?.name ?? null,
-      })),
-    })),
-    expenses: travel.expenses.map((e: { id: number; amountCents: number; currency: string; category: string; payer: string | null; note: string | null; happenedAt: Date | null }) => ({
-      id: e.id,
-      amount: centsToYuan(e.amountCents),
-      currency: e.currency,
-      category: e.category,
-      payer: e.payer,
-      note: e.note,
-      happenedAt: iso(e.happenedAt),
-    })),
-    updatedAt: iso(travel.updatedAt),
-    visibility: travel.visibility ?? 'SPACE',
-    spaceId: travel.spaceId ?? null,
-    ownerId: travel.ownerId ?? null,
-  }
-}
-
-
-export interface TravelDayTimelineItem {
-  id: number
-  date: string | null
-  title: string | null
-  summary: string | null
-  sortOrder: number
-  itinerary: {
-    id: number
-    title: string
-    startTime: string | null
-    endTime: string | null
-    type: string
-    notes: string | null
-    locationName: string | null
-    /** 绑定到本条行程的花销（记一笔时选定行程）；未绑定则为空数组 */
-    expenses: {
-      id: number
-      amount: number
-      currency: string
-      category: string
-      payer: string | null
-      note: string | null
-      happenedAt: string | null
-    }[]
-  }[]
-  /** 当天的回忆（含其照片） */
-  memories: {
-    id: number
-    title: string
-    content: string | null
-    mood: string | null
-    happenedAt: string | null
-    photos: { id: number; url: string }[]
-  }[]
-  /** 当天照片（由当天回忆的照片去重汇总，v3.1 M1-A4） */
-  photos: { id: number; url: string }[]
+  return mapTravelDetail(travel)
 }
 
 /** v3.1 M1-A4：按天叙事时间线（旅行 → 每一天 → 行程 → 回忆 → 照片） */
@@ -335,91 +172,7 @@ export async function getTravelTimeline(id: number, userId?: number | null): Pro
     },
   })
 
-  /**
-   * 媒体 URL 统一走 storageKeyToUrl（**不要在这里手拼 /uploads/**）。
-   *
-   * 手拼会漏掉 absoluteMediaUrl：原生壳页面源是 https://localhost，
-   * 相对地址 /uploads/xxx 会被解析到本地壳 → 照片永远只显示占位图标。
-   * 该函数同时处理对象存储/CDN 分支与本地分支的绝对化，是唯一事实源。
-   */
-  const mediaUrl = (m: any) => storageKeyToUrl(m?.storageKey ?? null)
-
-  /** v3.1 M3-D1：照片优先缩略图（减流量），无变体回退原图 */
-  const thumbUrl = (m: any) =>
-    storageKeyToUrl(m?.variants?.[0]?.storageKey ?? m?.storageKey ?? null)
-
-  const items: TravelDayTimelineItem[] = days.map((d: any) => {
-    const memories = (d.memories || []).map((mem: any) => {
-      const primary = (mem.media || []).map((m: any) => ({ id: m.id, url: thumbUrl(m) }))
-      const linked = (mem.mediaLinks || []).map((l: any) => ({ id: l.media.id, url: thumbUrl(l.media) }))
-      const seen = new Set<number>()
-      const photos = [...primary, ...linked].filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
-      return {
-        id: mem.id,
-        title: mem.title,
-        content: mem.content ?? null,
-        mood: mem.mood ?? null,
-        happenedAt: iso(mem.happenedAt),
-        photos,
-      }
-    })
-    const seen = new Set<number>()
-    const photos = memories
-      .flatMap((mem: any) => mem.photos)
-      .filter((p: any) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
-    return {
-      id: d.id,
-      date: iso(d.date),
-      title: d.title,
-      summary: d.summary,
-      sortOrder: d.sortOrder,
-      itinerary: (d.itineraryItems || []).map((it: any) => ({
-        id: it.id,
-        title: it.title,
-        startTime: iso(it.startTime),
-        endTime: iso(it.endTime),
-        type: it.type,
-        notes: it.notes,
-        locationName: it.location?.name ?? null,
-        expenses: (it.expenses || []).map((e: any) => ({
-          id: e.id,
-          amount: centsToYuan(e.amountCents),
-          currency: e.currency,
-          category: e.category,
-          payer: e.payer ?? null,
-          note: e.note ?? null,
-          happenedAt: iso(e.happenedAt),
-        })),
-      })),
-      memories,
-      photos,
-    }
-  })
-
-  return { id: travel.id, title: travel.title, days: items }
-}
-
-export interface TravelPublicDetail {
-  id: number
-  title: string
-  slug: string
-  description: string | null
-  startDate: string | null
-  endDate: string | null
-  status: string
-  contentHtml: string
-  tags: string[] | null
-  location: string | null
-  cover: string | null
-  /** 由 coverMedia 规范化出来的封面 URL（缩略图优先）；前台「设为封面」后据此即时可见 */
-  coverUrl: string | null
-  coverMediaId: number | null
-  travelType: string | null
-  companions: unknown
-  /** 旅行预算（元）；未填为空 → 花销 tab 只显示已花合计 */
-  budget: number | null
-  /** 归档时刻；null = 进行中草稿 */
-  confirmedAt: string | null
+  return { id: travel.id, title: travel.title, days: mapTravelTimelineDays(days) }
 }
 
 /**
@@ -448,7 +201,7 @@ export async function getTravelMemoryPhotos(travelId: number, limit = 60): Promi
     },
   })
 
-  /** 与上面 mediaUrl/thumbUrl 同一约定：统一走 storageKeyToUrl，避免漏绝对化。 */
+  /** 与其他读路径同一约定：统一走 storageKeyToUrl，避免漏绝对化。 */
   const urlOf = (m: { storageKey: string; variants: { storageKey: string }[] }) =>
     storageKeyToUrl(m.variants?.[0]?.storageKey || m.storageKey) ?? ''
 
@@ -490,38 +243,13 @@ export async function getTravelBySlug(
   const contentHtml = await unifiedMarkdownRenderer
     .render(t.content || '')
     .then((r) => r.html)
-    .catch(() => '')
+    .catch((err) => {
+      // 渲染失败不阻断详情页（宁可正文空白也不能 500），但要留下可观测线索
+      console.error('[travel.getTravelBySlug] Markdown 渲染失败', { travelId: t.id, err })
+      return ''
+    })
 
-  const coverThumb = (t as any).coverMedia?.variants?.find((v: any) => v.variant === 'THUMBNAIL')?.storageKey
-  const coverKey = (t as any).coverMedia?.storageKey
-  const coverUrl = storageKeyToUrl(coverThumb ?? coverKey ?? null) ?? absoluteMediaUrl(t.cover ?? null)
-
-  return {
-    id: t.id,
-    title: t.title,
-    slug: t.slug,
-    description: t.description,
-    startDate: iso(t.startDate),
-    endDate: iso(t.endDate),
-    status: t.status,
-    contentHtml,
-    tags: t.tags ? safeParseTags(t.tags) : null,
-    location: t.location,
-    cover: t.cover,
-    coverUrl: coverUrl ?? null,
-    coverMediaId: (t as any).coverMediaId ?? null,
-    travelType: t.travelType ?? 'ALONE',
-    companions: t.companions ?? null,
-    budget: isoBudget((t as any).budget),
-    confirmedAt: iso((t as any).confirmedAt),
-  }
-}
-
-/** 预算归一：非有限数或负数一律视为"未设置" */
-function isoBudget(v: unknown): number | null {
-  const n = Number(v)
-  if (!Number.isFinite(n) || n < 0) return null
-  return n
+  return mapTravelPublicDetail(t, contentHtml)
 }
 
 export async function createTravel(input: {
@@ -553,59 +281,68 @@ export async function createTravel(input: {
   // slug 走共享生成器，并做唯一化重试：
   // 早先直接拿 makeTravelSlug 的结果写库，同一标题建两次就撞 Travel.slug 唯一约束（P2002），
   // 前台表现为"点了开始记录没反应"。同名旅行是常态（"南京之行"人人都可能建），必须能共存。
-  const slug = await makeUniqueTravelSlug(makeTravelSlug(input.title))
+  const slug = await makeUniqueTravelSlug(travelSlugBase(input.title))
   const visibility = input.visibility ?? 'SPACE'
-  const row = await prisma.travel.create({
-    data: {
-      title: input.title.trim(),
-      slug,
-      description: input.description || null,
-      location: input.location?.trim() || null,
-      startDate: input.startDate ? new Date(input.startDate) : null,
-      endDate: input.endDate ? new Date(input.endDate) : null,
-      status: 'PLANNED',
-      ownerId: input.ownerId ?? null,
-      // isPublic 与 visibility 保持一致，避免两个字段各说各话
-      isPublic: input.isPublic ?? visibility === 'PUBLIC',
-      visibility: visibility as never,
-      spaceId: input.spaceId ?? null,
-      travelType: (input.travelType ?? 'ALONE') as any,
-      companions: input.companions ?? undefined,
-    },
-    // 只回读 id：避免引擎 select-back 整行时对 Json 列（companions）二次序列化（配合 jsonStrings 双保险）
-    select: { id: true },
-  })
-  await syncTravelPost(row.id).catch(() => {})
-  // 按日期区间自动生成「天」。
-  // 为什么必须做：详情页的按天时间线（TravelTimeline）在 0 天时 `return null`，
-  // 于是新旅行既看不到分天结构、也点不到「添加行程」——用户建完旅行无处可动手。
-  await ensureTravelDays(row.id, input.startDate, input.endDate).catch(() => {})
-  // 回传 slug：前台「新建旅行 → 直接进该旅行详情页」需要它（详情路由是 /travel/[slug]）
-  return { id: row.id, slug }
-}
 
-/**
- * slug 唯一化：`南京之行` 第二次创建时追加 `-2`、`-3`…（最多试 50 次）。
- *
- * 为什么必须做：`Travel.slug` 有唯一约束，而标题是用户自由输入的天然重复项。
- * 早先重复标题会让 prisma.create 抛 P2002，接口 500，前台只看到"创建失败"。
- * @param excludeId 编辑场景下排除自己，避免"只改了日期也被判为重复"
- */
-export async function makeUniqueTravelSlug(base: string, excludeId?: number): Promise<string> {
-  const taken = async (slug: string) => {
-    const found = await prisma.travel.findFirst({
-      where: excludeId ? { slug, id: { not: excludeId } } : { slug },
+  /**
+   * P1-15：Travel 行 + 自动生成的「天」+ 公开帖投影必须在**同一个事务**里完成。
+   *
+   * 老实现三步各自 await、后两步还套了 `.catch(() => {})`，于是天生成失败时
+   * 用户拿到一本 0 天的旅行：详情页时间线在 0 天时 `return null`，既看不到分天结构
+   * 也加不了行程，而接口照样返回成功 —— 最坏的"半写数据 + 静默失败"组合。
+   *
+   * 失败语义（有意分层，避免把可用性一起锁死）：
+   *  · `ensureTravelDays` 失败 → 这是主操作的**用户可见结果**（0 天 = 不可用），
+   *    整体回滚并抛错，让调用方拿到失败而不是一本空壳旅行；
+   *  · `syncTravelPost` 失败 → TravelPost 只是 Travel 的派生投影，可重算
+   *    （再保存/改可见性都会重新同步），失败仅记日志，不让建旅行失败。
+   */
+  // 显式放宽事务超时：默认 5s 在多天行程（最多 60 天 createMany）与同步帖时偶发不够；
+  // 这里只有一次用户点击，放宽不会放大锁竞争，但能避免"慢一点就整体回滚"的假失败。
+  const row = await prisma.$transaction(
+    async (tx) => {
+    const created = await tx.travel.create({
+      data: {
+        title: input.title.trim(),
+        slug,
+        description: input.description || null,
+        location: input.location?.trim() || null,
+        startDate: input.startDate ? new Date(input.startDate) : null,
+        endDate: input.endDate ? new Date(input.endDate) : null,
+        status: 'PLANNED',
+        ownerId: input.ownerId ?? null,
+        // isPublic 与 visibility 保持一致，避免两个字段各说各话
+        isPublic: input.isPublic ?? visibility === 'PUBLIC',
+        visibility: visibility as never,
+        spaceId: input.spaceId ?? null,
+        travelType: (input.travelType ?? 'ALONE') as any,
+        companions: input.companions ?? undefined,
+      },
+      // 只回读 id：避免引擎 select-back 整行时对 Json 列（companions）二次序列化（配合 jsonStrings 双保险）
       select: { id: true },
     })
-    return !!found
-  }
-  if (!(await taken(base))) return base
-  for (let i = 2; i <= 50; i++) {
-    const candidate = `${base}-${i}`
-    if (!(await taken(candidate))) return candidate
-  }
-  // 极端情况兜底：加时间戳，几乎不可能再撞
-  return `${base}-${Date.now()}`
+
+    try {
+      await syncTravelPost(created.id, tx)
+    } catch (err) {
+      console.error('[travel.createTravel] TravelPost 同步失败（派生投影，可重算）', {
+        travelId: created.id,
+        err,
+      })
+    }
+
+    // 按日期区间自动生成「天」。
+    // 为什么必须做：详情页的按天时间线（TravelTimeline）在 0 天时 `return null`，
+    // 于是新旅行既看不到分天结构、也点不到「添加行程」——用户建完旅行无处可动手。
+    await ensureTravelDays(created.id, input.startDate, input.endDate, tx)
+
+    return created
+    },
+    { timeout: 15_000 },
+  )
+
+  // 回传 slug：前台「新建旅行 → 直接进该旅行详情页」需要它（详情路由是 /travel/[slug]）
+  return { id: row.id, slug }
 }
 
 /**
@@ -635,9 +372,7 @@ export async function updateTravelInfo(
   })
   if (!current) throw new Error('旅行不存在')
 
-  const title = input.title !== undefined ? input.title.trim() : undefined
-  if (title !== undefined && !title) throw new Error('旅行名称不能为空')
-  if (title !== undefined && title.length > 120) throw new Error('旅行名称过长（最多 120 字）')
+  const title = input.title !== undefined ? normalizeTravelTitle(input.title) : undefined
 
   const data: Record<string, unknown> = {}
   if (title !== undefined) data.title = title
@@ -645,17 +380,7 @@ export async function updateTravelInfo(
   if (input.description !== undefined) data.description = input.description?.trim() || null
   if (input.startDate !== undefined) data.startDate = input.startDate ? new Date(input.startDate) : null
   if (input.endDate !== undefined) data.endDate = input.endDate ? new Date(input.endDate) : null
-  if (input.budget !== undefined) {
-    if (input.budget === null) {
-      data.budget = null
-    } else {
-      const n = Number(input.budget)
-      // 负预算/NaN 直接拒绝：进度条会算出负百分比，比"没填"更糟
-      if (!Number.isFinite(n) || n < 0) throw new Error('预算需为不小于 0 的数字')
-      if (n > 100_000_000) throw new Error('预算数值过大')
-      data.budget = n
-    }
-  }
+  if (input.budget !== undefined) data.budget = normalizeBudgetStrict(input.budget)
   if (input.coverMediaId !== undefined) {
     if (input.coverMediaId === null) {
       data.coverMediaId = null
@@ -674,18 +399,49 @@ export async function updateTravelInfo(
   // 改标题 → 重算 slug（保持"地址跟着名字走"），旧链接由前台 replace 掉
   let slug = current.slug
   if (title !== undefined && title !== current.title) {
-    slug = await makeUniqueTravelSlug(makeTravelSlug(title), id)
+    slug = await makeUniqueTravelSlug(travelSlugBase(title), id)
     data.slug = slug
   }
 
-  await prisma.travel.update({ where: { id }, data, select: { id: true } })
-  await syncTravelPost(id).catch(() => {})
+  /**
+   * P1-15：主表 + 公开帖投影 + 「天」日期对齐放进同一个事务。
+   *
+   * 老实现是三次独立写、后两步 `.catch(() => {})`：改完标题/日期后哪天同步失败，
+   * 前台看到的是"改名成功了，但列表里还是旧名字 / 时间线还停在旧日期"，且日志毫无痕迹。
+   *
+   * 失败语义：
+   *  · 主表更新失败 → 整体回滚抛错（用户可见失败，保持原语义）；
+   *  · post / day 同步失败 → 记录上下文日志后继续提交（它们是派生/对齐操作，
+   *    不该让"改个标题"因为次要写入失败而整体失败）。
+   */
+  // 日期对齐会逐天 UPDATE（最多 60 条），默认 5s 事务超时在慢库上会假失败，显式放宽
+  const daysChanged = await prisma.$transaction(
+    async (tx) => {
+    await tx.travel.update({ where: { id }, data, select: { id: true } })
 
-  // 日期变了 → 已存在的「天」要跟着对齐，否则时间线还停在旧日期上
-  const daysChanged =
-    input.startDate !== undefined || input.endDate !== undefined
-      ? await syncTravelDayDates(id, s, e).catch(() => 0)
-      : 0
+    try {
+      await syncTravelPost(id, tx)
+    } catch (err) {
+      console.error('[travel.updateTravelInfo] TravelPost 同步失败（派生投影，可重算）', {
+        travelId: id,
+        err,
+      })
+    }
+
+    // 日期变了 → 已存在的「天」要跟着对齐，否则时间线还停在旧日期上
+    if (input.startDate === undefined && input.endDate === undefined) return 0
+    try {
+      return await syncTravelDayDates(id, s, e, tx)
+    } catch (err) {
+      console.error('[travel.updateTravelInfo] TravelDay 日期对齐失败（可重存触发重试）', {
+        travelId: id,
+        err,
+      })
+      return 0
+    }
+    },
+    { timeout: 15_000 },
+  )
 
   return { slug, daysChanged }
 }
@@ -700,8 +456,14 @@ export async function updateTravelInfo(
  *  · 原来没有天的旅行（未填日期就建了）→ 至少补出 1 天，保证详情页有可下手的地方。
  * 返回实际被改动的天数。
  */
-export async function syncTravelDayDates(travelId: number, startDate: Date | null, endDate: Date | null): Promise<number> {
-  const days = await prisma.travelDay.findMany({
+export async function syncTravelDayDates(
+  travelId: number,
+  startDate: Date | null,
+  endDate: Date | null,
+  tx?: TravelTx,
+): Promise<number> {
+  const db = tx ?? prisma
+  const days = await db.travelDay.findMany({
     where: { travelId },
     orderBy: { sortOrder: 'asc' },
     select: { id: true, date: true, sortOrder: true },
@@ -710,43 +472,31 @@ export async function syncTravelDayDates(travelId: number, startDate: Date | nul
   // 没有开始日 → 无法对齐，但至少要保证有 1 天可写
   if (!startDate || Number.isNaN(startDate.getTime())) {
     if (days.length > 0) return 0
-    return (await ensureTravelDays(travelId, null, null)).created
+    return (await ensureTravelDays(travelId, null, null, tx)).created
   }
 
-  const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
-  const end =
-    endDate && !Number.isNaN(endDate.getTime())
-      ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
-      : start
-  const span = Math.max(0, Math.min(Math.round((end.getTime() - start.getTime()) / 86_400_000), 59)) + 1
-
+  // 先算后写：计划是纯函数（travel.policy.planDayAlignment），
+  // 区间变长补天、变短保留多出来的天、日期没变的天不发无意义的 UPDATE
+  const plan = planDayAlignment(days, startDate, endDate)
   let changed = 0
-  for (let i = 0; i < Math.min(days.length, span); i++) {
-    const target = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
-    const day = days[i]
-    const same = day.date && new Date(day.date).toDateString() === target.toDateString()
-    if (same) continue
-    await prisma.travelDay.update({ where: { id: day.id }, data: { date: target } })
+  for (const { id, date } of plan.updates) {
+    await db.travelDay.update({ where: { id }, data: { date } })
     changed++
   }
 
   // 区间比现有天数长 → 补齐（沿用 ensureTravelDays 的天数上限语义）
-  if (span > days.length) {
-    const maxOrder = await prisma.travelDay.aggregate({ where: { travelId }, _max: { sortOrder: true } })
+  if (plan.extraDates.length > 0) {
+    const maxOrder = await db.travelDay.aggregate({ where: { travelId }, _max: { sortOrder: true } })
     const base = (maxOrder._max.sortOrder ?? days.length - 1) + 1
-    const extra: { travelId: number; date: Date; title: string; sortOrder: number }[] = []
-    for (let i = days.length; i < span; i++) {
-      extra.push({
+    await db.travelDay.createMany({
+      data: plan.extraDates.map((date, j) => ({
         travelId,
-        date: new Date(start.getFullYear(), start.getMonth(), start.getDate() + i),
-        title: `DAY ${String(i + 1).padStart(2, '0')}`,
-        sortOrder: base + (i - days.length),
-      })
-    }
-    if (extra.length > 0) {
-      await prisma.travelDay.createMany({ data: extra })
-      changed += extra.length
-    }
+        date,
+        title: dayTitle(days.length + j),
+        sortOrder: base + j,
+      })),
+    })
+    changed += plan.extraDates.length
   }
 
   return changed
@@ -760,31 +510,22 @@ export async function ensureTravelDays(
   travelId: number,
   startDate?: string | null,
   endDate?: string | null,
+  tx?: TravelTx,
 ): Promise<{ created: number }> {
-  const existing = await prisma.travelDay.count({ where: { travelId } })
+  const db = tx ?? prisma
+  const existing = await db.travelDay.count({ where: { travelId } })
   if (existing > 0) return { created: 0 }
 
-  const dates: Date[] = []
-  const s = startDate ? new Date(startDate) : null
-  const e = endDate ? new Date(endDate) : null
-  if (s && !Number.isNaN(s.getTime())) {
-    const start = new Date(s.getFullYear(), s.getMonth(), s.getDate())
-    const end = e && !Number.isNaN(e.getTime()) ? new Date(e.getFullYear(), e.getMonth(), e.getDate()) : start
-    const days = Math.round((end.getTime() - start.getTime()) / 86_400_000)
-    if (days >= 0) {
-      // 上限 60 天：避免误填超长区间产生海量空天
-      for (let i = 0; i <= Math.min(days, 59); i++) {
-        dates.push(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i))
-      }
-    }
-  }
+  // 日期计划是纯函数（travel.policy.planTravelDayDates）：上限 60 天；
+  // 未填/倒置 → 空数组，这里兜底成「今天」，保证详情页至少有一天可下手
+  const dates = planTravelDayDates(startDate, endDate)
   if (dates.length === 0) dates.push(new Date())
 
-  await prisma.travelDay.createMany({
+  await db.travelDay.createMany({
     data: dates.map((d, i) => ({
       travelId,
       date: d,
-      title: `DAY ${String(i + 1).padStart(2, '0')}`,
+      title: dayTitle(i),
       sortOrder: i,
     })),
   })
@@ -815,22 +556,42 @@ export async function updateTravel(id: number, input: any): Promise<void> {
     }
   }
   // 预算：同步队列（原生壳）与后台都可能带上来；非法值静默丢弃而不是把脏值写进库
+  // （与 updateTravelInfo 的严格校验区分：那是用户直接编辑，这里是重放/兼容路径）
   if (input.budget !== undefined) {
-    if (input.budget === null) data.budget = null
-    else {
-      const n = Number(input.budget)
-      if (Number.isFinite(n) && n >= 0 && n <= 100_000_000) data.budget = n
-    }
+    const n = normalizeBudgetLoose(input.budget)
+    if (n !== 'invalid') data.budget = n
   }
   if (input.travelType !== undefined) data.travelType = input.travelType
   if (input.companions !== undefined) data.companions = input.companions
-  await prisma.travel.update({ where: { id }, data, select: { id: true } })
-  await syncTravelPost(id).catch(() => {})
+  // P1-15：主表与公开帖投影同事务；post 是派生投影，失败只记日志不阻断（见 createTravel 注释）
+  await prisma.$transaction(async (tx) => {
+    await tx.travel.update({ where: { id }, data, select: { id: true } })
+    try {
+      await syncTravelPost(id, tx)
+    } catch (err) {
+      console.error('[travel.updateTravel] TravelPost 同步失败（派生投影，可重算）', { travelId: id, err })
+    }
+  })
 }
 
+/**
+ * 删除旅行：公开帖清理与旅行删除同事务。
+ *
+ * 老实现先 `unpublishTravelPost().catch(() => {})` 再删旅行：清理失败被吞掉，
+ * 而旅行删除本身又会级联 TravelPost（schema onDelete: Cascade）—— 相当于
+ * 一次无意义的两次写。现在放进同一事务：要么都成功，要么都不生效。
+ */
 export async function deleteTravel(id: number): Promise<void> {
-  await unpublishTravelPost(id).catch(() => {})
-  await prisma.travel.delete({ where: { id } })
+  await prisma.$transaction(async (tx) => {
+    // TravelPost 有级联删除兜底，这里显式清理只是让"取消公开"语义可读；
+    // 即便它失败，tx.travel.delete 的级联仍会移除帖子行。
+    try {
+      await unpublishTravelPost(id, tx)
+    } catch (err) {
+      console.error('[travel.deleteTravel] TravelPost 清理失败（将依赖级联删除）', { travelId: id, err })
+    }
+    await tx.travel.delete({ where: { id } })
+  })
 }
 
 export async function addDay(travelId: number, input: { date?: string; title?: string; summary?: string }): Promise<{ id: number }> {
@@ -860,39 +621,6 @@ export async function deleteDay(id: number): Promise<void> {
   await prisma.travelDay.delete({ where: { id } })
 }
 
-const ITINERARY_TYPES = ['SPOT', 'RESTAURANT', 'HOTEL', 'TRANSPORT', 'ACTIVITY', 'OTHER']
-
-/** 兼容 "10:00" / "10:00:00" 时间串，转换为可解析的 Date */
-/**
- * 解析行程时间（2026-10-17 修正时区语义）
- * ============================================================================
- * 行程的「开始 / 结束」是**墙上时间**（wall clock：行程表上写的 17:00），不是时间点。
- * 之前用 `d.setHours()` 按**服务器时区**解释，客户端再用 `getHours()` 按**设备时区**
- * 读回 —— 两边时区不一致时整体平移。
- *
- * 真实故障：UTC+8 的设备选了 17:00–21:00，服务端（容器 TZ=UTC）存成 17:00Z，
- * 设备按 +8 渲染 → 显示成次日 01:00，21:00 → 05:00。这就是
- * 「选下午5点到晚上9点，回头变成凌晨1点到5点」的根因；也是
- * 「之前添加的行程时间全都乱了」的根因（每条都被平移了同样的量）。
- *
- * 修法：**写入与读取都用 UTC 字段承载墙上时间**（1970-01-01 基准日），与设备/服务器
- * 时区完全解耦：存 17:00，任何时区读出来都是 17:00，确定且可预期。
- * 附带效果：**历史数据自动修复** —— 库里那些 16:50Z / 20:30Z 的记录恰好就是
- * 当初写入的墙上时间，改用 UTC 读取后即正确显示。
- */
-function parseTimeOrDate(value: string | undefined | null): Date | null {
-  if (!value) return null
-  const m = value.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
-  if (m) {
-    const h = Math.min(23, Math.max(0, parseInt(m[1], 10)))
-    const min = Math.min(59, Math.max(0, parseInt(m[2], 10)))
-    const sec = m[3] ? Math.min(59, Math.max(0, parseInt(m[3], 10))) : 0
-    return new Date(Date.UTC(1970, 0, 1, h, min, sec))
-  }
-  const d = new Date(value)
-  return isNaN(d.getTime()) ? null : d
-}
-
 export async function addItineraryItem(dayId: number, input: {
   title: string
   startTime?: string
@@ -907,7 +635,7 @@ export async function addItineraryItem(dayId: number, input: {
       title: input.title.trim(),
       startTime: parseTimeOrDate(input.startTime),
       endTime: parseTimeOrDate(input.endTime),
-      type: ITINERARY_TYPES.includes(input.type || '') ? input.type! : 'SPOT',
+      type: normalizeItineraryType(input.type),
       notes: input.notes || null,
       sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
     },
@@ -975,39 +703,8 @@ export async function getTravelExpenses(travelId: number): Promise<{
     where: { travelId },
     orderBy: [{ happenedAt: 'asc' }, { id: 'asc' }],
   })
-  const expenses = rows.map((e: { id: number; amountCents: number; currency: string; category: string; payer: string | null; note: string | null; happenedAt: Date | null; itineraryItemId: number | null }) => ({
-    id: e.id,
-    amount: centsToYuan(e.amountCents),
-    currency: e.currency,
-    category: e.category,
-    payer: e.payer,
-    note: e.note,
-    happenedAt: iso(e.happenedAt),
-    /** 绑定的行程项（null = 未绑定）；前端据此在行程行下展示费用 */
-    itineraryItemId: e.itineraryItemId ?? null,
-  }))
-  // 合计在整数分上求和（永不丢精度），出边界时转回元
-  return { expenses, total: centsToYuan(rows.reduce((s: number, e: { amountCents: number }) => s + e.amountCents, 0)) }
-}
-
-/**
- * 封面媒体必须属于这本旅行。
- * Media 表本身没有 travelId，只能顺着「回忆 → 旅行」反查（主照片与多对多关联两条路径）。
- */
-export async function assertCoverMediaBelongs(travelId: number, mediaId: number): Promise<void> {
-  const media: any = await prisma.media.findUnique({
-    where: { id: mediaId },
-    select: {
-      memory: { select: { travelId: true } },
-      memoryLinks: { select: { memory: { select: { travelId: true } } } },
-    },
-  })
-  if (!media) throw new Error('照片不存在')
-  const owners: (number | null)[] = [
-    media.memory?.travelId ?? null,
-    ...(media.memoryLinks || []).map((l: any) => l.memory?.travelId ?? null),
-  ]
-  if (!owners.includes(travelId)) throw new Error('这张照片不属于该旅行')
+  // 行 → DTO（金额「分」→「元」、合计在整数分上求和）由 mapper 统一处理
+  return mapExpenseList(rows)
 }
 
 /** 修改一个行程项（此前前台只能加、不能改：加错了只能删掉整段旅行重建） */
@@ -1024,57 +721,22 @@ export async function updateItineraryItem(
   }
   if (input.startTime !== undefined) data.startTime = parseTimeOrDate(input.startTime)
   if (input.endTime !== undefined) data.endTime = parseTimeOrDate(input.endTime)
-  if (input.type !== undefined) data.type = ITINERARY_TYPES.includes(input.type) ? input.type : 'SPOT'
+  if (input.type !== undefined) data.type = normalizeItineraryType(input.type)
   if (input.notes !== undefined) data.notes = input.notes ? String(input.notes).slice(0, 500) : null
   if (Object.keys(data).length === 0) return
   await prisma.itineraryItem.update({ where: { id }, data })
 }
 
-// ============================================================
-// 3.6 子资源所有权校验：判断用户是否可管理该旅行。
-// 规则：直接归属（ownerId）或所属空间（spaceId）的活跃 OWNER/MEMBER。
-// 与 requireCapability（角色）分层：requireCapability 拦 VIEWER，这里拦「别的空间/别人名下的内容」（IDOR）。
-// ============================================================
-export async function canManageTravel(travelId: number, userId: number | null | undefined): Promise<boolean> {
-  if (!userId) return false
-  const travel = await prisma.travel.findUnique({
-    where: { id: travelId },
-    select: { ownerId: true, spaceId: true },
-  })
-  if (!travel) return false
-  if (travel.ownerId === userId) return true
-  if (travel.spaceId) {
-    const member = await prisma.spaceMember.findFirst({
-      where: { spaceId: travel.spaceId, userId, status: 'ACTIVE', role: { in: ['OWNER', 'MEMBER'] } },
-      select: { id: true },
-    })
-    if (member) return true
-  }
-  return false
+// P2-32：以下符号的实现已迁到 travel.policy.ts，这里**原样再导出**，调用方 import 路径不变
+export {
+  ITINERARY_TYPES,
+  assertCoverMediaBelongs,
+  canManageTravel,
+  findTravelIdByDayId,
+  findTravelIdByExpenseId,
+  findTravelIdByItineraryItemId,
+  makeUniqueTravelSlug,
 }
-
-/** 由天反查所属旅行 ID（子资源所有权校验用） */
-export async function findTravelIdByDayId(dayId: number): Promise<number | null> {
-  const day = await prisma.travelDay.findUnique({ where: { id: dayId }, select: { travelId: true } })
-  return day?.travelId ?? null
-}
-
-/** 由行程项反查所属旅行 ID（子资源所有权校验用） */
-export async function findTravelIdByItineraryItemId(itemId: number): Promise<number | null> {
-  const item = await prisma.itineraryItem.findUnique({
-    where: { id: itemId },
-    select: { travelDay: { select: { travelId: true } } },
-  })
-  return item?.travelDay?.travelId ?? null
-}
-
-/** 由花费反查所属旅行 ID（子资源所有权校验用） */
-export async function findTravelIdByExpenseId(expenseId: number): Promise<number | null> {
-  const expense = await prisma.expense.findUnique({ where: { id: expenseId }, select: { travelId: true } })
-  return expense?.travelId ?? null
-}
-
-export { ITINERARY_TYPES }
 
 // ============================================================
 // 旅行归属空间（个人 ↔ 空间）
@@ -1149,14 +811,19 @@ export async function setTravelSpace(
     data: { spaceId, visibility: nextVisibility as never },
   })
 
-  await writeAuditLog({
-    username: username || String(userId),
-    action: 'UPDATE',
-    resourceType: 'Travel',
-    resourceId: String(travelId),
-    spaceId,
-    metadata: { title: travel.title, from: travel.spaceId ?? null, to: spaceId },
-  }).catch(() => {})
+  try {
+    await writeAuditLog({
+      username: username || String(userId),
+      action: 'UPDATE',
+      resourceType: 'Travel',
+      resourceId: String(travelId),
+      spaceId,
+      metadata: { title: travel.title, from: travel.spaceId ?? null, to: spaceId },
+    })
+  } catch (err) {
+    // 审计是旁路：失败不能让"改归属"失败，但必须留痕，不能再静默吞掉
+    console.error('[travel.setTravelSpace] 审计写入失败', { travelId, spaceId, err })
+  }
 
   return { spaceId, visibility: nextVisibility }
 }

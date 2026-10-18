@@ -5,8 +5,16 @@
  * - syncTravelPost 幂等：公开则 upsert，非公开则删除。
  */
 import { prisma } from '../../db'
+import type { Prisma } from '@prisma/client'
 import { isPublishedToCircle } from './social-permissions'
 import { storageKeyToUrl, absoluteMediaUrl } from '../../media-url'
+
+/**
+ * 事务客户端（P1-15）：travel.service 的 create/update/delete 会把
+ * `prisma.$transaction` 的 tx 透传进来，使「Travel 行 + TravelPost 投影」同事务。
+ * 所有导出函数保持向后兼容：不传 tx 时行为与拆分前完全一致（走全局 prisma）。
+ */
+type TxClient = Prisma.TransactionClient
 
 function toIso(v: Date | null | undefined): string | null {
   if (!v) return null
@@ -15,16 +23,20 @@ function toIso(v: Date | null | undefined): string | null {
 }
 
 /** 解析 TravelPost 的作者 ID：优先 Travel.ownerId，其次 Space 的 OWNER 成员，最后首个用户 */
-async function resolveAuthorId(spaceId: number | null, ownerId: number | null): Promise<number | null> {
+async function resolveAuthorId(
+  spaceId: number | null,
+  ownerId: number | null,
+  db: TxClient | typeof prisma = prisma,
+): Promise<number | null> {
   if (ownerId) return ownerId
   if (spaceId) {
-    const owner = await prisma.spaceMember.findFirst({
+    const owner = await db.spaceMember.findFirst({
       where: { spaceId, role: 'OWNER', status: 'ACTIVE' },
       select: { userId: true },
     })
     if (owner?.userId) return owner.userId
   }
-  const first = await prisma.user.findFirst({ orderBy: { id: 'asc' }, select: { id: true } })
+  const first = await db.user.findFirst({ orderBy: { id: 'asc' }, select: { id: true } })
   return first?.id ?? null
 }
 
@@ -33,9 +45,10 @@ export interface TravelPostSyncResult {
   published: boolean
 }
 
-/** 幂等同步：根据当前 Travel 可见性决定创建/更新/删除 TravelPost */
-export async function syncTravelPost(travelId: number): Promise<TravelPostSyncResult | null> {
-  const travel = await prisma.travel.findUnique({
+/** 幂等同步：根据当前 Travel 可见性决定创建/更新/删除 TravelPost（可传入事务客户端） */
+export async function syncTravelPost(travelId: number, tx?: TxClient): Promise<TravelPostSyncResult | null> {
+  const db = tx ?? prisma
+  const travel = await db.travel.findUnique({
     where: { id: travelId },
     select: {
       id: true,
@@ -51,17 +64,18 @@ export async function syncTravelPost(travelId: number): Promise<TravelPostSyncRe
   if (!travel) return null
 
   if (!isPublishedToCircle(travel)) {
-    await prisma.travelPost.deleteMany({ where: { travelId } }).catch(() => {})
+    // 取消公开：失败必须让事务回滚（老实现 .catch(() => {}) 会留下"帖子还在但旅行已私密"的不一致）
+    await db.travelPost.deleteMany({ where: { travelId } })
     return null
   }
 
-  const authorId = await resolveAuthorId(travel.spaceId, travel.ownerId)
+  const authorId = await resolveAuthorId(travel.spaceId, travel.ownerId, db)
   const summary = travel.description ?? null
   const coverMediaId = travel.coverMediaId ?? null
 
-  const existing = await prisma.travelPost.findUnique({ where: { travelId } })
+  const existing = await db.travelPost.findUnique({ where: { travelId } })
   if (existing) {
-    await prisma.travelPost.update({
+    await db.travelPost.update({
       where: { travelId },
       data: {
         title: travel.title,
@@ -75,7 +89,7 @@ export async function syncTravelPost(travelId: number): Promise<TravelPostSyncRe
   }
 
   if (!authorId) return null
-  const created = await prisma.travelPost.create({
+  const created = await db.travelPost.create({
     data: {
       travelId,
       authorId,
@@ -89,13 +103,14 @@ export async function syncTravelPost(travelId: number): Promise<TravelPostSyncRe
 }
 
 /** 公开到旅行圈 */
-export async function publishTravelPost(travelId: number): Promise<TravelPostSyncResult | null> {
-  return syncTravelPost(travelId)
+export async function publishTravelPost(travelId: number, tx?: TxClient): Promise<TravelPostSyncResult | null> {
+  return syncTravelPost(travelId, tx)
 }
 
-/** 取消公开（移除旅行圈） */
-export async function unpublishTravelPost(travelId: number): Promise<void> {
-  await prisma.travelPost.deleteMany({ where: { travelId } }).catch(() => {})
+/** 取消公开（移除旅行圈）；失败向上抛，由调用方决定是否阻断（P1-15 去静默） */
+export async function unpublishTravelPost(travelId: number, tx?: TxClient): Promise<void> {
+  const db = tx ?? prisma
+  await db.travelPost.deleteMany({ where: { travelId } })
 }
 
 /** 按 Travel ID 取公开帖子 */
@@ -153,7 +168,12 @@ export async function syncPublicPostToCircle(postId: number): Promise<TravelPost
   if (!post) return null
 
   if (post.type !== 'travel' || !post.published || !post.isPublic) {
-    await prisma.travelPost.deleteMany({ where: { postId } }).catch(() => {})
+    // 历史上这里静默吞错：清理失败没有日志，帖子会一直挂在旅行圈里
+    try {
+      await prisma.travelPost.deleteMany({ where: { postId } })
+    } catch (err) {
+      console.error('[travel-post.syncPublicPostToCircle] TravelPost 清理失败', { postId, err })
+    }
     return null
   }
 
@@ -185,7 +205,11 @@ export async function syncPublicPostToCircle(postId: number): Promise<TravelPost
 }
 
 export async function unpublishPublicPost(postId: number): Promise<void> {
-  await prisma.travelPost.deleteMany({ where: { postId } }).catch(() => {})
+  try {
+    await prisma.travelPost.deleteMany({ where: { postId } })
+  } catch (err) {
+    console.error('[travel-post.unpublishPublicPost] TravelPost 清理失败', { postId, err })
+  }
 }
 
 // ============================================================
@@ -256,5 +280,9 @@ export async function sharePostToCircle(
 
 /** 取消分享（移除旅行圈），保留文章本身 */
 export async function unsharePost(postId: number): Promise<void> {
-  await prisma.travelPost.deleteMany({ where: { postId } }).catch(() => {})
+  try {
+    await prisma.travelPost.deleteMany({ where: { postId } })
+  } catch (err) {
+    console.error('[travel-post.unsharePost] TravelPost 清理失败', { postId, err })
+  }
 }

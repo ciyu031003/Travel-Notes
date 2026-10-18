@@ -9,6 +9,19 @@ import { writeAuditLog } from '../audit/audit-log.service'
 import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
 import { prisma } from '../../db'
 
+/**
+ * 旁路写入（审计 / TravelPost 投影）的失败处理（P1-15 去静默）：
+ * 主流程是旅行本身的增删改，这些只是旁路；失败不能让主操作失败，
+ * 但也**不能静默** —— 老实现一律 `.catch(() => {})`，出问题时日志里毫无痕迹。
+ */
+async function bestEffort(label: string, fn: () => Promise<unknown>): Promise<void> {
+  try {
+    await fn()
+  } catch (err) {
+    console.error(`[space-travel] ${label}`, err)
+  }
+}
+
 const SLUG_RE = /^[a-z0-9-]{2,80}$/
 const TITLE_MAX = 255
 const STATUSES: TravelStatus[] = ['PLANNED', 'ONGOING', 'COMPLETED']
@@ -86,15 +99,17 @@ export class TravelService {
       travelType: input.travelType ?? 'ALONE',
       companions: input.companions ?? null,
     })
-    await writeAuditLog({
-      username,
-      action: 'CREATE',
-      resourceType: 'Travel',
-      resourceId: String(id),
-      spaceId,
-      metadata: { title, slug },
-    }).catch(() => {})
-    await syncTravelPost(id).catch(() => {})
+    await bestEffort('审计写入失败（CREATE）', () =>
+      writeAuditLog({
+        username,
+        action: 'CREATE',
+        resourceType: 'Travel',
+        resourceId: String(id),
+        spaceId,
+        metadata: { title, slug },
+      }),
+    )
+    await bestEffort('TravelPost 同步失败（创建）', () => syncTravelPost(id))
     return { id }
   }
 
@@ -130,15 +145,17 @@ export class TravelService {
     if (patch.visibility !== undefined && !VISIBILITIES.includes(patch.visibility)) throw new Error('可见性无效')
     if (patch.travelType !== undefined && !TRAVEL_TYPES.includes(patch.travelType)) throw new Error('旅行类型无效')
     const updated = await this.repo.update(travelId, patch)
-    await syncTravelPost(travelId).catch(() => {})
-    await writeAuditLog({
-      username,
-      action: 'UPDATE',
-      resourceType: 'Travel',
-      resourceId: String(travelId),
-      spaceId: t.spaceId,
-      metadata: { fields: Object.keys(patch) },
-    }).catch(() => {})
+    await bestEffort('TravelPost 同步失败（更新）', () => syncTravelPost(travelId))
+    await bestEffort('审计写入失败（UPDATE）', () =>
+      writeAuditLog({
+        username,
+        action: 'UPDATE',
+        resourceType: 'Travel',
+        resourceId: String(travelId),
+        spaceId: t.spaceId,
+        metadata: { fields: Object.keys(patch) },
+      }),
+    )
     return updated
   }
 
@@ -147,15 +164,18 @@ export class TravelService {
     if (!t) throw new Error('旅行不存在')
     // 关键修复：个人旅行（spaceId=NULL）此前在这里被判「无权访问该空间」而删不掉
     await this.requireTravelAccess(username, travelId, ['OWNER', 'MEMBER'])
-    await unpublishTravelPost(travelId).catch(() => {})
+    // 行删除本身会级联 TravelPost（schema onDelete: Cascade），这里只是显式取消公开
+    await bestEffort('TravelPost 清理失败（删除）', () => unpublishTravelPost(travelId))
     await this.repo.remove(travelId)
-    await writeAuditLog({
-      username,
-      action: 'DELETE',
-      resourceType: 'Travel',
-      resourceId: String(travelId),
-      spaceId: t.spaceId,
-    }).catch(() => {})
+    await bestEffort('审计写入失败（DELETE）', () =>
+      writeAuditLog({
+        username,
+        action: 'DELETE',
+        resourceType: 'Travel',
+        resourceId: String(travelId),
+        spaceId: t.spaceId,
+      }),
+    )
   }
 }
 

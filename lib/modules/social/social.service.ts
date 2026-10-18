@@ -408,28 +408,42 @@ export async function updateSocialPost(
   if (summary !== undefined) data.summary = summary || null
   if (Object.keys(data).length === 0) return getSocialPost(id, userId)
 
-  await prisma.travelPost.update({ where: { id }, data })
+  /**
+   * P1-15：TravelPost / Post / Travel 三表写必须同事务。
+   *
+   * 老实现是三次独立 update、后两次各套 `.catch(() => {})`：任一步失败就留下
+   * 「feed 标题已改、详情页还是旧标题」的长期不一致，且日志里毫无痕迹 ——
+   * 这正是用户能看到的不一致，所以这里选择**全成功或全失败**（不再吞错）。
+   */
+  await prisma.$transaction(async (tx) => {
+    await tx.travelPost.update({ where: { id }, data })
 
-  // 同步底层数据源，保证后续 feed / 详情刷新后仍一致。
-  if (row.postId) {
-    const postData: { title?: string; summary?: string | null } = {}
-    if (title !== undefined) postData.title = title
-    if (summary !== undefined) postData.summary = summary || null
-    await prisma.post.update({ where: { id: row.postId }, data: postData }).catch(() => {})
-  }
-  if (row.travelId) {
-    const travelData: { title?: string; description?: string | null } = {}
-    if (title !== undefined) travelData.title = title
-    if (summary !== undefined) travelData.description = summary || null
-    await prisma.travel.update({ where: { id: row.travelId }, data: travelData }).catch(() => {})
-  }
+    // 同步底层数据源，保证后续 feed / 详情刷新后仍一致。
+    if (row.postId) {
+      const postData: { title?: string; summary?: string | null } = {}
+      if (title !== undefined) postData.title = title
+      if (summary !== undefined) postData.summary = summary || null
+      await tx.post.update({ where: { id: row.postId }, data: postData })
+    }
+    if (row.travelId) {
+      const travelData: { title?: string; description?: string | null } = {}
+      if (title !== undefined) travelData.title = title
+      if (summary !== undefined) travelData.description = summary || null
+      await tx.travel.update({ where: { id: row.travelId }, data: travelData })
+    }
+  })
 
   return getSocialPost(id, userId)
 }
 
 async function notify(recipientId: number | null, actorId: number, type: NotificationTypeName, refType: string, refId: number) {
   if (!recipientId || recipientId === actorId) return
-  await prisma.notification.create({ data: { userId: recipientId, actorId, type, refType, refId } }).catch(() => {})
+  // 通知是旁路：失败不能让点赞/评论失败，但也不能静默（P1-15）
+  try {
+    await prisma.notification.create({ data: { userId: recipientId, actorId, type, refType, refId } })
+  } catch (err) {
+    console.error('[social.notify] 通知写入失败', { recipientId, actorId, type, refType, refId, err })
+  }
 }
 
 /**
