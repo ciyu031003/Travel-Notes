@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { requireCapability } from '@/lib/capability-guard'
 import { getSiteService } from '@/lib/container'
 
 export async function GET(request: Request) {
@@ -21,9 +20,7 @@ export async function POST(request: Request) {
   if (!authResult.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
-  const denied = await requireCapability(authResult.payload?.userId, 'canManageSettings')
-  if (denied) return denied
-
+  // P0-3：纪念日起点是「作用于本人」的配置（旧密码校验），不要求站点主能力位
   try {
     const body = await request.json()
     const { anniversaryStart, currentPassword } = body
@@ -43,7 +40,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '日期格式不正确' }, { status: 400 })
     }
 
-    await siteService.updateAnniversaryStart(anniversaryStart || null, authResult.username)
+    // 严格按当前登录用户名定位（P0-3：无 username 时 service 返回失败，不再写错人）
+    const updateResult = await siteService.updateAnniversaryStart(anniversaryStart || null, authResult.username)
+    if (!updateResult.success) {
+      return NextResponse.json({ error: updateResult.error || '更新失败' }, { status: 401 })
+    }
 
     return NextResponse.json({
       success: true,

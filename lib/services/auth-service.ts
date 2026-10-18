@@ -225,6 +225,11 @@ export class AuthService {
     await this.tokenService.blacklistToken(token)
   }
 
+  /**
+   * @deprecated 单管理员时代的「改第一个用户密码」路径，已无调用方（改密走
+   * app/api/admin/settings/password → siteService.updatePassword(username)）。
+   * 保留它是因为删除会牵动 repository 接口；**不要在新路由里使用**（会改错人，评审 A-1）。
+   */
   async changePassword(
     currentPassword: string,
     newPassword: string,
@@ -244,20 +249,6 @@ export class AuthService {
     await this.sessionRepo.revokeAllForUser(settings.username, currentSid ?? undefined)
 
     return { success: true }
-  }
-
-  async adminChangePassword(newPassword: string, currentSid?: string | null): Promise<boolean> {
-    const ok = await this.userRepo.forceChangePassword(newPassword)
-    if (ok) {
-      const settings = await this.userRepo.getSettings()
-      await this.sessionRepo.revokeAllForUser(settings.username, currentSid ?? undefined)
-    }
-    return ok
-  }
-
-  async adminGetConfig(): Promise<{ requirePasswordChange: boolean }> {
-    const settings = await this.userRepo.getSettings()
-    return { requirePasswordChange: settings.requirePasswordChange }
   }
 
   async sendResetCode(email: string, ip?: string | null): Promise<{ success: boolean; error?: string; remainingSeconds?: number; delivered?: boolean }> {

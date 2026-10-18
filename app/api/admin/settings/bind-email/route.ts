@@ -29,7 +29,12 @@ export async function POST(request: Request) {
     await consumeVerificationCode(email)
 
     const siteService = getSiteService()
-    await siteService.updateEmail(email, undefined, true)
+    // P0-3：必须传当前登录用户名 —— 不传时旧实现会回退「首个用户」，
+    // 导致任意登录用户可以把邮箱绑到站长账号上（进而走忘记密码改站长密码）。
+    const updateResult = await siteService.updateEmail(email, undefined, true, authResult.username)
+    if (!updateResult.success) {
+      return NextResponse.json({ error: updateResult.error || '绑定失败' }, { status: 401 })
+    }
 
     return NextResponse.json({
       success: true,

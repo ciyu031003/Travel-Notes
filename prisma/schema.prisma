@@ -118,6 +118,9 @@ model User {
   preferences            Json?
   /// 问卷完成或跳过的时刻；**非空即表示不再弹出**（幂等锚点）
   preferencesCompletedAt DateTime? @db.Timestamp(3)
+  /// 站点角色（P0-3）：'SITE_OWNER' | 'USER'。刻意用 String 而非 enum —— 避免一次迁移引入
+  /// enum 类型变更；老用户默认 USER，首个用户由 lib/site-owner.ts 幂等提升为 SITE_OWNER。
+  siteRole               String    @default("USER") @db.VarChar(20)
   createdAt              DateTime  @default(now()) @db.Timestamp(3)
   updatedAt              DateTime  @updatedAt @db.Timestamp(3)
 
@@ -147,6 +150,8 @@ model User {
   blockedUsers      UserBlock[]    @relation("UserBlocked")
 
   @@index([email])
+  /// P0-3：站点主人判定（WHERE siteRole = 'SITE_OWNER'）的索引
+  @@index([siteRole])
 }
 
 model Repo {

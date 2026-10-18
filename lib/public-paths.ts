@@ -24,7 +24,7 @@ export const PUBLIC_PATHS = [
   '/api/admin/logout',
   '/api/admin/setup',
   // '/api/admin/settings' 有意不在公开列表：全部子路由各自 requireAuth（不应整段公开）
-  '/api/admin/force-change-password',
+  // P0-2：旧的管理员强改密端点已删除（账号接管链），不要再加回白名单。
   '/api/forgot-password',
   '/api/register',
   '/api/version',

@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { prismaMock } = vi.hoisted(() => ({
+const { prismaMock, getSiteOwnerIdMock } = vi.hoisted(() => ({
   prismaMock: {
     $transaction: vi.fn(),
     user: { findUnique: vi.fn() },
@@ -17,9 +17,12 @@ const { prismaMock } = vi.hoisted(() => ({
     space: { findUnique: vi.fn() },
     album: { findMany: vi.fn(), findFirst: vi.fn() },
   },
+  getSiteOwnerIdMock: vi.fn(),
 }))
 
 vi.mock('@/lib/db', () => ({ prisma: prismaMock }))
+// P0-3：站点主人改为 User.siteRole 显式判定，能力推导依赖 lib/site-owner
+vi.mock('@/lib/site-owner', () => ({ getSiteOwnerId: getSiteOwnerIdMock }))
 
 import { getUserCapabilities } from '@/lib/modules/space/permissions'
 import { myActiveSpaceIds, isSpaceContentEditor, spaceScopedWhere } from '@/lib/modules/access/space-scope'
@@ -28,6 +31,8 @@ import { slugifySpaceName } from '@/lib/modules/space/space.service'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // 默认「没有站点主人」：能力应 fail-closed 到普通用户
+  getSiteOwnerIdMock.mockResolvedValue(null)
 })
 
 describe('① SpaceMember.userId 必须被写入（否则协作完全不通）', () => {
@@ -110,22 +115,44 @@ describe('② getUserCapabilities 不能把成员当成 OWNER', () => {
     expect(where.OR).toEqual([{ userId: 11 }, { username: 'member1' }])
   })
 
-  it('确实没有任何空间成员身份 = 单用户模式，仍是 OWNER', async () => {
+  it('没有任何空间成员身份**不再是** OWNER（P0-3 反转：新注册用户不能越权）', async () => {
     prismaMock.user.findUnique.mockResolvedValue({ username: 'solo' })
     prismaMock.spaceMember.findMany.mockResolvedValue([])
 
     const caps = await getUserCapabilities(1)
-    expect(caps.isOwner).toBe(true)
-    expect(caps.canManageSettings).toBe(true)
+    expect(caps.isOwner).toBe(false)
+    expect(caps.canManageSettings).toBe(false)
+    expect(caps.canManageSocial).toBe(false)
+    expect(caps.canViewAudit).toBe(false)
+    // 登录用户仍然可以管理自己的内容（归属由 service 层校验）
+    expect(caps.canManageContent).toBe(true)
   })
 
-  it('OWNER 成员照旧拿到全部能力', async () => {
+  it('站点主人（User.siteRole=SITE_OWNER）拿到全部能力', async () => {
+    getSiteOwnerIdMock.mockResolvedValue(1)
     prismaMock.user.findUnique.mockResolvedValue({ username: 'boss' })
+    prismaMock.spaceMember.findMany.mockResolvedValue([])
+
+    const caps = await getUserCapabilities(1)
+    expect(caps.isOwner).toBe(true)
+    expect(caps.canManageContent).toBe(true)
+    expect(caps.canManageSocial).toBe(true)
+    expect(caps.canManageSettings).toBe(true)
+    expect(caps.canManageSpace).toBe(true)
+    expect(caps.canViewAudit).toBe(true)
+  })
+
+  it('空间 OWNER 只拿到 canManageSpace，不拿到站点级能力', async () => {
+    getSiteOwnerIdMock.mockResolvedValue(1)
+    prismaMock.user.findUnique.mockResolvedValue({ username: 'spaceboss' })
     prismaMock.spaceMember.findMany.mockResolvedValue([{ role: 'OWNER' }])
 
     const caps = await getUserCapabilities(2)
-    expect(caps.isOwner).toBe(true)
-    expect(caps.canViewAudit).toBe(true)
+    expect(caps.isOwner).toBe(false)
+    expect(caps.canManageSpace).toBe(true)
+    expect(caps.canManageSettings).toBe(false)
+    expect(caps.canManageSocial).toBe(false)
+    expect(caps.canViewAudit).toBe(false)
   })
 })
 

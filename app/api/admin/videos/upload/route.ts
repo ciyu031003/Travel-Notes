@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { requireAuth } from '@/lib/auth-middleware'
+import { isSiteOwner } from '@/lib/site-owner'
 import { logger } from '@/lib/infrastructure/logger'
 import fs from 'fs'
 import path from 'path'
@@ -43,6 +44,10 @@ export async function POST(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
+  }
+  // P0：站点级视频上传只允许站点主人（普通用户的旅行视频走 travel 媒体管线）
+  if (!(await isSiteOwner(auth.payload?.userId))) {
+    return NextResponse.json({ error: '当前角色无权执行该操作' }, { status: 403 })
   }
 
   try {
@@ -171,6 +176,10 @@ export async function DELETE(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
+  }
+  // P0：站点级视频上传只允许站点主人（普通用户的旅行视频走 travel 媒体管线）
+  if (!(await isSiteOwner(auth.payload?.userId))) {
+    return NextResponse.json({ error: '当前角色无权执行该操作' }, { status: 403 })
   }
 
   try {

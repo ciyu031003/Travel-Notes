@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
+import { isSiteOwner } from '@/lib/site-owner'
 import { getPostService, getImageService } from '@/lib/container'
 import { CreatePostSchema } from '@/lib/validators/post.validator'
 import { ok, fail, unauthorized } from '@/lib/api-response'
@@ -22,6 +23,8 @@ const PublishImportSchema = CreatePostSchema.extend({
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) return unauthorized()
+  // P0：站点级内容导入只允许站点主人（此前任何登录用户都能借此创建公开文章/上传图片）
+  if (!(await isSiteOwner(auth.payload?.userId))) return fail('当前角色无权执行该操作', 403)
 
   try {
     const body = await request.json()
@@ -40,6 +43,7 @@ export async function POST(request: NextRequest) {
     const postService = getPostService()
     const createResult = await postService.createPost({
       ...postInput,
+      userId: auth.payload?.userId,
       date: postInput.date ? new Date(postInput.date) : new Date(),
     })
 
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest) {
         buffer: Buffer.from(img.buffer, 'base64'),
         mimeType: img.mimeType,
       }))
-      await imageService.upload(postId, images)
+      await imageService.upload(postId, images, { userId: auth.payload?.userId as number, isSiteOwner: true })
     }
 
     return ok({ id: postId }, '发布成功')

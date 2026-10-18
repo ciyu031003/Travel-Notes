@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { requireCapability } from '@/lib/capability-guard'
 import { getSiteService } from '@/lib/container'
 import { prismaSessionRepository } from '@/lib/repositories/session-repository'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
@@ -11,9 +10,8 @@ export async function POST(request: Request) {
   if (!authResult.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
-  const denied = await requireCapability(authResult.payload?.userId, 'canManageSettings')
-  if (denied) return denied
-
+  // P0-3：改密是「作用于本人」的操作（旧密码 + 登录会话即可），
+  // 不能要求 canManageSettings —— 否则普通用户永远改不了自己的密码。
   try {
     const body = await request.json()
     const { currentPassword, newPassword } = body

@@ -5,7 +5,6 @@ import {
   updateAnniversaryStart,
   updateEmail,
   setEmailVerified,
-  forceChangePassword,
   generateResetToken,
   verifyResetToken,
   resetPasswordWithToken,
@@ -20,7 +19,6 @@ export interface UserRepository {
   updateAnniversaryStart(date: string | null): Promise<void>
   updateEmail(email: string | null, verified?: boolean): Promise<void>
   setEmailVerified(): Promise<void>
-  forceChangePassword(newPassword: string): Promise<boolean>
   generateResetToken(): Promise<{ token: string; exp: Date } | null>
   verifyResetToken(token: string): Promise<boolean>
   resetPasswordWithToken(token: string, newPassword: string): Promise<boolean>
@@ -52,10 +50,6 @@ export class PrismaUserRepository implements UserRepository {
 
   async setEmailVerified(): Promise<void> {
     await setEmailVerified()
-  }
-
-  async forceChangePassword(newPassword: string): Promise<boolean> {
-    return forceChangePassword(newPassword)
   }
 
   async generateResetToken(): Promise<{ token: string; exp: Date } | null> {

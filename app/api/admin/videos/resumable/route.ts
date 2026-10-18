@@ -4,6 +4,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { requireAuth } from '@/lib/auth-middleware'
+import { isSiteOwner } from '@/lib/site-owner'
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
 import { getClientIp } from '@/lib/request-utils'
 import { validateVideoBuffer, MAX_VIDEO_SIZE } from '@/lib/infrastructure/media-validation'
@@ -95,6 +96,10 @@ export async function POST(request: NextRequest) {
   const auth = await requireAuth(request)
   if (!auth.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
+  }
+  // P0：站点级视频上传只允许站点主人
+  if (!(await isSiteOwner(auth.payload?.userId))) {
+    return NextResponse.json({ error: '当前角色无权执行该操作' }, { status: 403 })
   }
 
   const ip = getClientIp(request)

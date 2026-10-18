@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { getAuthService } from '@/lib/container'
+import { getSiteService } from '@/lib/container'
 import { getSiteSettings } from '@/lib/auth'
 
 export async function GET(request: Request) {
@@ -15,12 +15,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ authenticated: false, needsSetup }, { status: 200 })
   }
 
-  const authService = getAuthService()
-  const settings = await authService.adminGetConfig()
+  /**
+   * P0-2/P0-3：`requirePasswordChange` 必须是**当前登录用户**的配置。
+   * 旧实现走 authService.adminGetConfig() → userRepo.getSettings() → findFirst(id asc)，
+   * 取的是全站第一个用户（站长）：普通用户登录后会被错误地要求改密，
+   * 而站长自己的首登改密状态又可能被忽略。现在按 username 精确取本人配置。
+   */
+  const siteService = getSiteService()
+  const config = await siteService.getSiteConfig(result.username)
 
   return NextResponse.json({
     authenticated: true,
     username: result.username,
-    requirePasswordChange: settings.requirePasswordChange,
+    requirePasswordChange: config.requirePasswordChange,
   })
 }

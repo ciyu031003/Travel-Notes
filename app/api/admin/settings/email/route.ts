@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { requireCapability } from '@/lib/capability-guard'
 import { getSiteService } from '@/lib/container'
 
 export async function GET(request: Request) {
@@ -22,9 +21,7 @@ export async function DELETE(request: Request) {
   if (!authResult.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
-  const denied = await requireCapability(authResult.payload?.userId, 'canManageSettings')
-  if (denied) return denied
-
+  // P0-3：解绑邮箱是「作用于本人」的操作（旧密码校验），不要求站点主能力位
   try {
     const body = await request.json()
     const { currentPassword } = body

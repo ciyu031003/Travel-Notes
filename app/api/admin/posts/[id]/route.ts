@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
+import { isSiteOwner } from '@/lib/site-owner'
 import { getPostService } from '@/lib/container'
 import { ok, fail, notFound, unauthorized } from '@/lib/api-response'
 import { validateUpdatePost } from '@/lib/validators/post.validator'
@@ -31,6 +32,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
   const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
   if (denied) return denied
+  // P0：站点级博客内容只允许站点主人修改
+  if (!(await isSiteOwner(auth.payload?.userId))) return fail('当前角色无权执行该操作', 403)
 
   const { id } = await params
   try {
@@ -60,6 +63,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   }
   const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
   if (denied) return denied
+  // P0：站点级博客内容只允许站点主人删除
+  if (!(await isSiteOwner(auth.payload?.userId))) return fail('当前角色无权执行该操作', 403)
 
   const { id } = await params
   try {

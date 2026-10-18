@@ -198,28 +198,6 @@ export async function updateCredentials(
   }
 }
 
-export async function forceChangePassword(newPassword: string): Promise<boolean> {
-  try {
-    await migrateSiteSettingToUser()
-    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
-    if (!user) return false
-
-    const passwordHash = await hashPassword(newPassword)
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordHash,
-        requirePasswordChange: false,
-        updatedAt: new Date(),
-      },
-    })
-    invalidateSiteSettingsCache()
-    return true
-  } catch {
-    return false
-  }
-}
-
 export async function isRequirePasswordChange(): Promise<boolean> {
   try {
     const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })

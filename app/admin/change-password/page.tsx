@@ -4,8 +4,18 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react'
 
+/**
+ * 首登强制改密页（P0-2 迁移）。
+ *
+ * 旧实现调用已删除的管理员强改密端点 —— 该端点「只校验登录、不校验旧密码」，
+ * 任意登录用户（包括新注册用户、甚至相册令牌）都能改掉 id 最小用户（站长）的密码，
+ * 是账号接管链的一环，已整体删除。
+ * 现在改走 /api/admin/settings/password：要求「当前密码 + 新密码」，
+ * 且 siteService 严格按当前登录用户名定位（P0-3），只可能改到自己。
+ */
 export default function ForceChangePasswordPage() {
   const router = useRouter()
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -37,6 +47,10 @@ export default function ForceChangePasswordPage() {
     e.preventDefault()
     setError('')
 
+    if (!currentPassword) {
+      setError('请输入当前密码')
+      return
+    }
     if (newPassword.length < 8) {
       setError('新密码至少 8 位')
       return
@@ -47,10 +61,10 @@ export default function ForceChangePasswordPage() {
     }
     setLoading(true)
     try {
-      const res = await fetch('/api/admin/force-change-password', {
+      const res = await fetch('/api/admin/settings/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword }),
+        body: JSON.stringify({ currentPassword, newPassword }),
       })
 
       if (res.ok) {
@@ -59,7 +73,7 @@ export default function ForceChangePasswordPage() {
           router.push('/admin')
         }, 1500)
       } else {
-        const data = await res.json()
+        const data = await res.json().catch(() => ({}))
         setError(data.error || '修改失败')
       }
     } catch {
@@ -110,6 +124,22 @@ export default function ForceChangePasswordPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
+              <label className="block mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">当前密码</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9A958F]" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-travel-ink transition-all placeholder-[#9A958F] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]"
+                  placeholder="请输入当前密码"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
               <label className="block mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">新密码</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9A958F]" />
@@ -119,6 +149,7 @@ export default function ForceChangePasswordPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-12 text-travel-ink transition-all placeholder-[#9A958F] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]"
                   placeholder="至少 8 位"
+                  autoComplete="new-password"
                   required
                 />
                 <button
@@ -141,6 +172,7 @@ export default function ForceChangePasswordPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-4 text-travel-ink transition-all placeholder-[#9A958F] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]"
                   placeholder="再次输入新密码"
+                  autoComplete="new-password"
                   required
                 />
               </div>

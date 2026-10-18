@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
-import { requireCapability } from '@/lib/capability-guard'
 import { getSiteService } from '@/lib/container'
 
 export async function GET(request: Request) {
@@ -22,9 +21,7 @@ export async function POST(request: Request) {
   if (!authResult.authenticated) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
-  const denied = await requireCapability(authResult.payload?.userId, 'canManageSettings')
-  if (denied) return denied
-
+  // P0-3：这里只改「本人」的用户名/密码（均已校验当前密码），不要求站点主能力位
   try {
     const body = await request.json()
     const { currentPassword, newUsername, newPassword } = body

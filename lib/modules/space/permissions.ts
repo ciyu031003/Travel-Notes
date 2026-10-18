@@ -4,6 +4,7 @@
  * 所有资源访问必须经过这里，避免不同 API 各自实现权限逻辑（IDOR 防护）。
  */
 import { prisma } from '../../db'
+import { getSiteOwnerId } from '../../site-owner'
 
 export class SpaceAccessError extends Error {
   constructor(message: string) {
@@ -103,33 +104,39 @@ export async function canDeleteMedia(username: string, mediaId: number): Promise
 // ============================================================
 // 3.6 后台能力模块化：用户能力（capabilities）
 // 移动端不设 /admin，管理入口按能力下沉到各功能模块。
-// 规则：无 Space 成员身份 = 单用户 = OWNER；否则按 Space 角色推导。
+//
+// **P0 修复（评审 S-3 / A-1，账号接管链之一）**：
+// 旧规则是「无 Space 成员身份 = 单用户 = OWNER」，而 /api/register 公开 ——
+// 新注册用户天然没有任何空间成员身份，于是被判成 OWNER，可读全站审计、治理他人内容、
+// 改站点设置。现在主人身份只认数据库显式字段 User.siteRole='SITE_OWNER'
+// （lib/site-owner.ts），其余用户一律 USER；空间内的 OWNER 只影响 canManageSpace。
 // ============================================================
 export interface UserCapabilities {
+  /** 站点主人（唯一，User.siteRole='SITE_OWNER'） */
   isOwner: boolean
-  /** 旅行/相册/碎碎念/留言 的增删改（OWNER / MEMBER） */
+  /**
+   * 旅行/相册/碎碎念/留言 的增删改：任何登录用户都可以管理**自己的**内容，
+   * 归属/可见性由 service 层逐条校验（P0 保持功能不回归：此前 OWNER/MEMBER 才有）。
+   */
   canManageContent: boolean
-  /** 举报审核/评论隐藏/屏蔽（仅 OWNER） */
+  /** 举报审核/评论隐藏/屏蔽（仅站点主人） */
   canManageSocial: boolean
-  /** 账号/密码/邮箱/账号名/纪念日系统设置（仅 OWNER） */
+  /** 站点级设置：管理员治理、他人内容处置等（仅站点主人） */
   canManageSettings: boolean
-  /** 邀请/移除成员/角色调整（仅 OWNER） */
+  /** 空间治理（邀请/移除成员/角色调整）：站点主人，或在该空间里是 OWNER */
   canManageSpace: boolean
-  /** 审计日志（仅 OWNER） */
+  /** 审计日志（仅站点主人） */
   canViewAudit: boolean
 }
 
 /**
  * 取用户能力（3.6 后台能力模块化）。
  *
- * **P0 修复**：原先只按 `userId` 查 `SpaceMember`，且用 `memberships.length === 0`
- * 反推「没有空间 = 单用户 = OWNER」。而「加入空间」的写入路径长期没有写
- * `SpaceMember.userId`（见 `space.repository.ts#addMember`），于是**被邀请进来的成员
- * 在这条查询里查不到任何成员身份 → 被判成 OWNER**，拿到 `canManageSettings /
- * canManageSocial / canViewAudit` 这些主人专属能力。
- *
- * 现在同时按两种键查（`SpaceMember` 的规范键是 `(spaceId, username)`），
- * 并保留「确实毫无空间成员身份 = 单用户模式 = OWNER」这一产品语义。
+ * 规则（P0 反转）：
+ * - isOwner = User.siteRole === 'SITE_OWNER'（显式主人，不再用「无空间成员」推导）；
+ * - canManageContent = true（登录即可管理自己的内容，归属由 service 层校验）；
+ * - canManageSocial / canManageSettings / canViewAudit = isOwner；
+ * - canManageSpace = isOwner 或该用户在某空间是 OWNER（memberships 查询保留）。
  */
 export async function getUserCapabilities(
   userId: number,
@@ -143,6 +150,10 @@ export async function getUserCapabilities(
       .then((u) => u?.username ?? null)
       .catch(() => null))
 
+  // 站点主人：DB 异常时 getSiteOwnerId 返回 null → isOwner=false（fail-closed 到普通用户）
+  const ownerId = await getSiteOwnerId()
+  const isOwner = ownerId !== null && ownerId === userId
+
   const memberships = await prisma.spaceMember.findMany({
     where: {
       status: 'ACTIVE',
@@ -150,14 +161,14 @@ export async function getUserCapabilities(
     },
     select: { role: true },
   })
-  const isOwner = memberships.length === 0 || memberships.some((m) => m.role === 'OWNER')
-  const canManageContent = isOwner || memberships.some((m) => m.role === 'MEMBER')
+  const isSpaceOwner = memberships.some((m) => m.role === 'OWNER')
+
   return {
     isOwner,
-    canManageContent,
+    canManageContent: true,
     canManageSocial: isOwner,
     canManageSettings: isOwner,
-    canManageSpace: isOwner,
+    canManageSpace: isOwner || isSpaceOwner,
     canViewAudit: isOwner,
   }
 }

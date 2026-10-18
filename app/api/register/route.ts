@@ -15,6 +15,19 @@ const IP_LIMIT = 10
 
 export async function POST(request: NextRequest) {
   const requestId = getRequestId(request)
+
+  /**
+   * 注册开关（P0-6）：REGISTRATION_ENABLED='false' 时直接 403。
+   * 为什么需要：公开注册是「账号接管链」的前置条件之一（P0 期间线上可先关注册止血），
+   * 不必等发版删除路由。默认开启，保持现有产品行为。
+   */
+  if (process.env.REGISTRATION_ENABLED === 'false') {
+    return NextResponse.json(
+      { success: false, error: '注册暂未开放', code: 'REGISTRATION_CLOSED', requestId },
+      { status: 403 },
+    )
+  }
+
   try {
     const ip = getClientIp(request)
     const limit = rateLimit({ prefix: 'register:ip', key: ip || 'unknown', limit: IP_LIMIT, windowMs: IP_WINDOW_MS })

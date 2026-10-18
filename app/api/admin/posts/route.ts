@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
+import { isSiteOwner } from '@/lib/site-owner'
 import { getPostService } from '@/lib/container'
 import { ok, fail, unauthorized } from '@/lib/api-response'
 import { validateCreatePost, validateUpdatePost } from '@/lib/validators/post.validator'
@@ -30,6 +31,8 @@ export async function POST(request: NextRequest) {
   }
   const denied = await requireCapability(auth.payload?.userId, 'canManageContent')
   if (denied) return denied
+  // P0：博客文章是站点级公开内容，只允许站点主人创建（此前任何登录用户都能写）
+  if (!(await isSiteOwner(auth.payload?.userId))) return fail('当前角色无权执行该操作', 403)
 
   try {
     const body = await request.json()
