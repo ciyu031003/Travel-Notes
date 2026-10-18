@@ -7,6 +7,7 @@ import { ArrowLeft, BookOpen, Lock, MapPin, Sparkles, Rocket, Orbit, Settings2, 
 import ManageEntry from '@/components/layout/ManageEntry'
 import { Icon } from '@/components/mobile/Icon'
 import { albumModeOf } from '@/lib/album-modes'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 /** 模式文案/图标统一取自 lib/album-modes */
 const BOOK_MODE = albumModeOf('book')
@@ -21,7 +22,6 @@ import TravelBook from '@/components/album/travel-book/TravelBook'
 import { findCityByName } from '@/data/cities'
 import PixelPhotoChat from '@/components/album/PixelPhotoChat'
 import PixelUnlockModal from '@/components/album/PixelUnlockModal'
-import PhotoChatView from '@/components/album/PhotoChatView'
 import SpaceUnlockModal from '@/components/album/space/SpaceUnlockModal'
 import AlbumComposer from '@/components/album/AlbumComposer'
 import AddPhotoButton from '@/components/album/AddPhotoButton'
@@ -36,6 +36,9 @@ const DriftWall = dynamicImport(() => import('@/components/album/driftwall/Drift
 const PhotoMorphViewer = dynamicImport(() => import('@/components/album/PhotoMorphViewer'), { ssr: false })
 const TravelStarMap = dynamicImport(() => import('@/components/album/TravelStarMap'), { ssr: false })
 const GalaxyAlbumScene = dynamicImport(() => import('@/components/album/space/GalaxyAlbumScene'), { ssr: false })
+// P1-19：PhotoChatView 静态引入 ParticlePhotoBackground → THREE，首屏白付 81+50KB gz。
+// 它只在点开「照片留言」时用，改为 dynamic 后 three 只在该视图打开时下载。
+const PhotoChatView = dynamicImport(() => import('@/components/album/PhotoChatView'), { ssr: false })
 
 interface CityDay {
   date: string
@@ -411,25 +414,30 @@ export default function AlbumPage() {
   if (viewMode === 'space') {
     return (
       <div key="mode-space" className="motion-safe:animate-[fadeIn_.2s_ease-out]">
-        <GalaxyAlbumScene
-          cities={cities}
-          onTogglePixel={toggleViewMode}
-          onOpenChat={(photo) => {
-            setChatPhoto(photo)
-            setView('chat')
-          }}
-          onWebGLFail={handleWebGLFail}
-        />
-        {view === 'chat' && chatPhoto && (
-          <PhotoChatView
-            image={chatPhoto.url}
-            imageKey={chatPhoto.key}
-            cityName={chatPhoto.cityName}
-            onBack={() => {
-              setView('gallery')
-              setChatPhoto(null)
+        {/* P1-20：WebGL 场景单独包错误边界 —— 上下文丢失/几何异常时只降级这块，不白屏 */}
+        <ErrorBoundary label="GalaxyAlbumScene">
+          <GalaxyAlbumScene
+            cities={cities}
+            onTogglePixel={toggleViewMode}
+            onOpenChat={(photo) => {
+              setChatPhoto(photo)
+              setView('chat')
             }}
+            onWebGLFail={handleWebGLFail}
           />
+        </ErrorBoundary>
+        {view === 'chat' && chatPhoto && (
+          <ErrorBoundary label="PhotoChatView">
+            <PhotoChatView
+              image={chatPhoto.url}
+              imageKey={chatPhoto.key}
+              cityName={chatPhoto.cityName}
+              onBack={() => {
+                setView('gallery')
+                setChatPhoto(null)
+              }}
+            />
+          </ErrorBoundary>
         )}
       </div>
     )
@@ -715,6 +723,7 @@ export default function AlbumPage() {
 
                 {/* 移动端也用显式高度（min-h 不触发 .drift-wall 的 height:100%，曾致整面照片墙零高不可见） */}
                 <div className="h-[440px] lg:h-[calc(100vh-230px)]">
+                  <ErrorBoundary label="DriftWall">
                   <DriftWall
                     items={selectedCity.images.map((src, i) => ({
                       image: src,
@@ -737,6 +746,7 @@ export default function AlbumPage() {
                     fade={0.6}
                     dim={0.55}
                   />
+                  </ErrorBoundary>
                 </div>
               </>
             ) : (
@@ -869,21 +879,25 @@ export default function AlbumPage() {
               </button>
             </div>
             <main className="mx-auto w-full max-w-3xl px-4 py-5">
-              <TravelStarMap cities={starCities} stats={{ cities: starCities.length, days: totalDays, photos: totalPhotos }} onSelectCity={handleStarMapSelect} />
+              <ErrorBoundary label="TravelStarMap">
+                <TravelStarMap cities={starCities} stats={{ cities: starCities.length, days: totalDays, photos: totalPhotos }} onSelectCity={handleStarMapSelect} />
+              </ErrorBoundary>
             </main>
           </div>
         )}
         {viewerIndex !== null && selectedCity && (
-          <PhotoMorphViewer
-            images={selectedCity.images}
-            initialIndex={viewerIndex}
-            onClose={() => setViewerIndex(null)}
-            cityName={selectedCity.name}
-            onChat={(url, index) => {
-              setChatPhoto({ url, key: url, cityName: selectedCity.name, date: formatDate(selectedCity.date) })
-              setView('chat')
-            }}
-          />
+          <ErrorBoundary label="PhotoMorphViewer">
+            <PhotoMorphViewer
+              images={selectedCity.images}
+              initialIndex={viewerIndex}
+              onClose={() => setViewerIndex(null)}
+              cityName={selectedCity.name}
+              onChat={(url, index) => {
+                setChatPhoto({ url, key: url, cityName: selectedCity.name, date: formatDate(selectedCity.date) })
+                setView('chat')
+              }}
+            />
+          </ErrorBoundary>
         )}
       </div>
     </div>

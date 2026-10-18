@@ -14,10 +14,6 @@ import {
   BookOpen,
   PenLine,
   Menu,
-  NotebookPen,
-  ChartColumn,
-  Bookmark,
-  Settings,
 } from 'lucide-react'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
@@ -29,9 +25,7 @@ import { CountUp } from '@/components/mobile/CountUp'
 import { Icon } from '@/components/mobile/Icon'
 import { IconBadge } from '@/components/mobile/IconBadge'
 import { IconButton } from '@/components/mobile/IconButton'
-import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDrawer'
 import { toast } from '@/lib/mobile/toast-store'
-import IcpLicense from '@/components/IcpLicense'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 import { totalPhotoCount } from '@/lib/home/photo-count'
 
@@ -44,6 +38,14 @@ import { totalPhotoCount } from '@/lib/home/photo-count'
 const HeroFootprintMapLazy = dynamicImport(() => import('@/components/home/HeroFootprintMap'), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
+})
+
+/**
+ * 功能菜单抽屉懒加载（P1-19）：它依赖 motion/react。首页自 P1-18 起走服务端渲染，
+ * 静态引用会把 motion 拉回首屏脚本；改为 dynamic 后只在点开菜单时下载。
+ */
+const HomeMobileDrawer = dynamicImport(() => import('@/components/home/HomeMobileDrawer'), {
+  ssr: false,
 })
 
 interface PostMeta {
@@ -528,43 +530,7 @@ export default function HomeMobile({
         </div>
       </PullToRefresh>
 
-      <SideDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title="功能菜单"
-        footer={
-          <IcpLicense
-            className="m-caption leading-relaxed text-[var(--m-muted)]"
-            numberClassName="text-[var(--m-muted)] hover:text-[var(--m-accent-strong)]"
-            linkClassName="text-[var(--m-faint)] hover:text-[var(--m-accent-strong)]"
-          />
-        }
-      >
-        <DrawerSection title="记录">
-          <DrawerRow icon={Images} title="旅行画册" href="/album" onClick={() => setDrawerOpen(false)} />
-          <DrawerRow icon={CalendarDays} title="时间线" href="/timeline" onClick={() => setDrawerOpen(false)} />
-          <DrawerRow icon={NotebookPen} title="碎碎念" href="/moments" onClick={() => setDrawerOpen(false)} />
-          <DrawerRow icon={ChartColumn} title="数据看板" href="/dashboard" onClick={() => setDrawerOpen(false)} />
-          <DrawerRow icon={Bookmark} title="我的收藏" href="/me/favorites" onClick={() => setDrawerOpen(false)} />
-        </DrawerSection>
-
-        <DrawerSection title="设置">
-          <DrawerRow
-            icon={Settings}
-            title="账号设置"
-            description="密码、邮箱与账号信息"
-            href="/me/settings"
-            onClick={() => setDrawerOpen(false)}
-          />
-          <DrawerRow
-            icon={Sparkles}
-            title="数据与同步"
-            description="离线内容与同步状态"
-            href="/sync"
-            onClick={() => setDrawerOpen(false)}
-          />
-        </DrawerSection>
-      </SideDrawer>
+      <HomeMobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </div>
   )
 }

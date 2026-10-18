@@ -3,10 +3,19 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Image from 'next/image'
 import { ArrowLeft, Send, Moon, Loader2, MessageCircle, Sparkles } from 'lucide-react'
-import ParticlePhotoBackground from './space/ParticlePhotoBackground'
+import dynamicImport from 'next/dynamic'
 import StarfieldBackground from './StarfieldBackground'
 import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
+
+/**
+ * P1-19：ParticlePhotoBackground 静态 import 会把 three.js 打进 /album 首屏 chunk
+ * （PhotoChatView 此前被 album/page.tsx 静态引用，绕过同页已用 dynamic 的其他渲染器）。
+ * 这里再收一道：three 只在本视图真正挂载时才下载；ssr:false 也避开 WebGL 相关的不确定性。
+ */
+const ParticlePhotoBackground = dynamicImport(() => import('./space/ParticlePhotoBackground'), {
+  ssr: false,
+})
 
 interface Message {
   id: number

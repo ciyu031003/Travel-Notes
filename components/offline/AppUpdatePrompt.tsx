@@ -22,6 +22,7 @@ export default function AppUpdatePrompt() {
   const {
     hasUpdate, manifest, dismiss,
     status, percent, error,
+    apkSizeLabel,
     startUpdate, openInstallSettings, installDownloaded,
   } = useAppUpdate()
   const forced = manifest?.forceUpdate === true
@@ -43,6 +44,10 @@ export default function AppUpdatePrompt() {
   /** 状态区：下载进度 / 需要授权 / 安装中 / 失败 */
   const body = (
     <>
+      {/* P2-30（D 交接）：下载前告知安装包体积，用户能预估流量 */}
+      {apkSizeLabel && status === 'idle' && (
+        <p className="mt-3 text-[13px] text-[var(--m-muted)]">安装包体积约 {apkSizeLabel}</p>
+      )}
       {status === 'downloading' && (
         <div className="mt-4">
           <div className="flex items-center justify-between text-[13px] text-[var(--m-muted)]">

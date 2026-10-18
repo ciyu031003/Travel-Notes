@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
-import { useCloseOnBack } from '@/hooks/use-close-on-back'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 import { cn } from '@/lib/utils'
 
 interface ModalProps {
@@ -22,8 +22,11 @@ interface ModalProps {
 }
 
 /**
- * 统一弹窗（UI-V3 P2-6）：createPortal 挂 body + 滚动锁 + ESC 关闭 + 焦点收拢 + scale-in 动画。
- * 无障碍：role=dialog + aria-modal + aria-labelledby；`prefers-reduced-motion` 下禁用动画。
+ * 统一弹窗（UI-V3 P2-6）：createPortal 挂 body + scale-in 动画。
+ *
+ * P2-28：焦点圈定/恢复、背景 inert、滚动锁、ESC 与 Android 返回统一交给
+ * hooks/use-modal-layer（此前这里只做 panel.focus()，Tab 会跑到遮罩下的背景控件）。
+ * 与 BottomSheet/SideDrawer 走同一套实现，避免双层焦点陷阱。
  */
 export function Modal({
   open,
@@ -37,33 +40,8 @@ export function Modal({
 }: ModalProps) {
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement | null>(null)
-  const lastFocused = useRef<HTMLElement | null>(null)
 
-  // Android 物理返回 / 浏览器返回：先关弹层而不是离开页面
-  useCloseOnBack(open, onClose)
-
-  // 打开：记录焦点 + 滚动锁；关闭：恢复焦点
-  useEffect(() => {
-    if (!open) return
-    lastFocused.current = document.activeElement as HTMLElement | null
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    panelRef.current?.focus()
-    return () => {
-      document.body.style.overflow = prevOverflow
-      lastFocused.current?.focus?.()
-    }
-  }, [open])
-
-  // ESC 关闭
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  useModalLayer({ open, onClose, panelRef })
 
   if (!open) return null
 

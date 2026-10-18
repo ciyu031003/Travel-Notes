@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import dynamicImport from 'next/dynamic'
 import Link from 'next/link'
 import {
   MapPin,
@@ -12,8 +13,19 @@ import {
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
-import ChinaMap from '@/components/ChinaMap'
 import { formatDate } from '@/lib/utils'
+
+/**
+ * P1-19：ChinaMap 静态引入 lib/geo → 570KB 中国 GeoJSON（193KB gz），
+ * 而看板只展示「点亮省份数」。与 app/travel/TravelClient.tsx 的策略统一：
+ * 动态加载 + 骨架占位，首屏不再下载整份地理数据。
+ */
+const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[260px] w-full animate-pulse rounded-2xl bg-travel-sakura/30 dark:bg-shell-surface2 md:h-[360px]" aria-hidden="true" />
+  ),
+})
 
 const TRAVEL_TYPE_LABELS: Record<string, string> = {
   ALONE: '独旅', COUPLE: '情侣', FAMILY: '家庭', FRIENDS: '朋友', BFF: '闺蜜/兄弟', GROUP: '结伴', OTHER: '其他',

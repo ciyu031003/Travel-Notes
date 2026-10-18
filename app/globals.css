@@ -1159,10 +1159,16 @@ html.dark {
   --semantic-surface: #FFFFFF;
   --semantic-surface2: #FDF5ED;
   --semantic-line: #E8DDD4;
-  --semantic-text: #585450;
+  /* P2-28 对比度修正（只改 token 值，不动 class）：
+     计算依据为 WCAG 相对亮度公式 (L1+0.05)/(L2+0.05)，背景取页面底 #FAF6EE（L=0.9142）：
+       text    #444140 → 9.38:1（原 #585450 6.96:1；其 /70 透明度合成 3.40:1 → 4.12:1）
+       muted   #75604E → 5.50:1（原 #8B7355 4.16:1；同时保持 muted 比 faint 更深，层级不反转）
+       faint   #7D6754 → 4.94:1（原 #C2AF9A 1.97:1）
+     白色卡片面 #FFFFFF 上三档分别为 9.85 / 5.93 / 5.33，均 ≥4.5。 */
+  --semantic-text: #444140;
   --semantic-heading: #5A4A3A;
-  --semantic-muted: #8B7355;
-  --semantic-faint: #C2AF9A;
+  --semantic-muted: #75604E;
+  --semantic-faint: #7D6754;
   --semantic-accent: #A85F3A;
   --semantic-accent-strong: #8A4A2B;
   --semantic-accent-soft: #C97E55;
@@ -1178,7 +1184,9 @@ html.dark {
   --semantic-text: #E8E6E1;
   --semantic-heading: #E8E6E1;
   --semantic-muted: #9BA3AE;
-  --semantic-faint: #6E6A64;
+  /* P2-28：深色底 #12161C（L=0.0077）上 #6E6A64 仅 3.38:1，提亮为 #8E949C → 5.93:1；
+     深色卡片面 #1B2128 上 5.30:1。与 tailwind shell.faint 同值，保持两套 token 一致。 */
+  --semantic-faint: #8E949C;
   --semantic-accent: #E4B478;
   --semantic-accent-strong: #F0C68C;
   --semantic-accent-soft: #C9A06A;

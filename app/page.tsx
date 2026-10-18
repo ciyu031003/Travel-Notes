@@ -1,88 +1,28 @@
-'use client'
+import { getCurrentUserId } from '@/lib/current-user'
+import { getHomeData, type HomeData } from '@/lib/home/home-data'
+import HomePageClient from '@/components/HomePageClient'
 
-import dynamic from 'next/dynamic'
-import AsyncState from '@/components/AsyncState'
-import { HomeMobileError } from '@/components/HomeMobileStates'
-import { HomeLoading, HomeDesktopLoading } from '@/components/HomeLoading'
-import { useApi } from '@/lib/client/use-api'
-import { apiUrl } from '@/lib/api-base'
-import { useIsMobile } from '@/hooks/use-is-mobile'
-import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
+/**
+ * 首页（P1-18）：服务端取数 → 首帧 HTML 直接含真实内容。
+ *
+ * 为什么要 force-dynamic：getCurrentUserId() 读 httpOnly 会话 Cookie，首页内容与
+ * 登录态相关（用户私有数据不能进公共缓存），因此这里按请求渲染、不做静态预渲染。
+ * 代价是构建期不再产出 .next/server/app/index.html（旧版是纯客户端静态壳），
+ * 但换来的是请求首包即含内容 —— 这正是 P-1 要解决的"服务端 HTML 无内容"。
+ *
+ * 取数失败（如数据库不可用）时**不白屏**：交给客户端壳回退到 /api/home 的旧路径，
+ * 由 error.tsx / 首页错误态兜底，不把 DB 依赖硬编码放行（见布局级 error.tsx）。
+ */
+export const dynamic = 'force-dynamic'
 
-// P1-5：加载态统一走「复刻真实版面的骨架」，不再用居中转圈 ——
-// 转圈之后整页跳变成完全不同结构，是 CLS 与"感知慢"的主因。
-const HomeClient = dynamic(() => import('@/components/HomeClient'), {
-  ssr: false,
-  loading: () => <HomeDesktopLoading />,
-})
-
-const HomeMobile = dynamic(() => import('@/components/HomeMobile'), {
-  ssr: false,
-  loading: () => <HomeLoading />,
-})
-
-interface DraftTravel {
-  id: number
-  slug: string
-  title: string
-  location: string | null
-  startDate: string | null
-  endDate: string | null
-  dayCount: number
-  photoCount: number
-  cover: string | null
-  createdAt: string | null
-}
-
-interface HomeData {
-  travelPosts: unknown[]
-  /** 进行中（未归档）的旅行：首页大入口继续补内容 */
-  draftTravels?: DraftTravel[]
-  anniversaries: unknown[]
-  provincesVisitedCount: number
-  books?: HomeBookSummary[]
-  recentMoments?: HomeMoment[]
-}
-
-export default function HomePage() {
-  // 阶段 A · A2：统一取数层（去重/取消/统一错误），服务端 Cache-Control 兜底浏览器缓存
-  const { data, error, loading, reload } = useApi<HomeData>(apiUrl('/api/home'))
-  const isMobile = useIsMobile()
-
-  if (error) {
-    // P1-5：错误态**必须带重试**。此前三处 AsyncState 都没传 onAction，
-    // 用户看到"加载失败"却无路可走，只能手动刷新整页。
-    if (isMobile === null) {
-      return <AsyncState variant="error" message={error} title="首页加载失败" actionLabel="重试" onAction={reload} />
-    }
-    return isMobile ? (
-      <HomeMobileError message={error} onRetry={reload} />
-    ) : (
-      <AsyncState variant="error" message={error} title="首页加载失败" actionLabel="重试" onAction={reload} />
-    )
+export default async function HomePage() {
+  let initialData: HomeData | null = null
+  try {
+    const userId = await getCurrentUserId()
+    initialData = await getHomeData(userId)
+  } catch (e) {
+    // 服务端取数失败时降级：记录真实原因，客户端壳会再试一次 /api/home
+    console.error('[home] 服务端取数失败，回退客户端取数:', e)
   }
-  if (loading || !data || isMobile === null) {
-    return <HomeLoading />
-  }
-  return isMobile ? (
-    <HomeMobile
-      travelPosts={data.travelPosts as never[]}
-      draftTravels={data.draftTravels ?? []}
-      provincesVisitedCount={data.provincesVisitedCount}
-      anniversaries={data.anniversaries as never[]}
-      books={data.books ?? []}
-      recentMoments={data.recentMoments ?? []}
-      onRefresh={reload}
-    />
-  ) : (
-    <HomeClient
-      travelPosts={data.travelPosts as never[]}
-      provincesVisitedCount={data.provincesVisitedCount}
-      anniversaries={data.anniversaries as never[]}
-      draftTravels={data.draftTravels ?? []}
-      books={data.books ?? []}
-      recentMoments={data.recentMoments ?? []}
-      onRefresh={reload}
-    />
-  )
+  return <HomePageClient initialData={initialData} />
 }

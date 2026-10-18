@@ -197,7 +197,7 @@ export default function AdminDashboard() {
   })
 
   const glassInput =
-    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-travel-ink dark:text-shell-text placeholder-[#9A958F] shadow-sm backdrop-blur-xl transition-all focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50'
+    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-travel-ink dark:text-shell-text placeholder-warm-400 shadow-sm backdrop-blur-xl transition-all focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50'
 
   return (
     <AdminShell title="文章管理">
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
             <Sparkles className="h-3 w-3" />
             甜途内容中心
           </div>
-          <h1 className="mt-3 text-2xl font-bold text-[#2D3842] dark:text-shell-text sm:text-3xl">文章管理</h1>
+          <h1 className="mt-3 text-2xl font-bold text-warm-800 dark:text-shell-text sm:text-3xl">文章管理</h1>
           <p className="mt-1 text-sm text-travel-ink/70 dark:text-shell-muted">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>
         </div>
         <Link
@@ -223,7 +223,7 @@ export default function AdminDashboard() {
       {/* 工具栏 */}
       <div className="mb-8 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1 sm:max-w-md">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9A958F]" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-warm-400" />
           <input
             type="text"
             value={searchQuery}
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
           />
         </div>
         <div className="relative">
-          <Filter className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9A958F]" />
+          <Filter className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-warm-400" />
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -254,7 +254,7 @@ export default function AdminDashboard() {
         </div>
       ) : filteredPosts.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-shell-line dark:bg-white/5">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom/60 dark:from-[#32261D] dark:to-[#4A3427]">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom/60 dark:from-warm-800 dark:to-warm-700">
             <FileText className="h-8 w-8 text-travel-accent dark:text-travel-bloom" />
           </div>
           <h3 className="text-lg font-semibold text-travel-ink dark:text-shell-text">
@@ -291,7 +291,7 @@ export default function AdminDashboard() {
                 className="group mb-5 break-inside-avoid overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[0_12px_40px_-12px_rgba(90,102,112,0.18)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-16px_rgba(167,78,97,0.35)] dark:border-white/10 dark:bg-shell-bg/90"
               >
                 {/* 封面 */}
-                <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-travel-sakura via-travel-bloom/30 to-travel-sakura dark:from-[#32261D] dark:via-[#3A2B21] dark:to-[#241B15]">
+                <Link href={`/${post.type}/${post.slug}`} target="_blank" className="relative block aspect-video w-full overflow-hidden bg-gradient-to-br from-travel-sakura via-travel-bloom/30 to-travel-sakura dark:from-warm-800 dark:via-warm-700 dark:to-warm-900">
                   {post.cover ? (
                     <Image
                       src={post.cover}
@@ -325,7 +325,7 @@ export default function AdminDashboard() {
                 {/* 内容 */}
                 <div className="p-5">
                   <Link href={`/${post.type}/${post.slug}`} target="_blank" className="block">
-                    <h3 className="text-base font-bold leading-snug text-[#2D3842] transition-colors group-hover:text-travel-accent dark:text-shell-text dark:group-hover:text-travel-bloom">
+                    <h3 className="text-base font-bold leading-snug text-warm-800 transition-colors group-hover:text-travel-accent dark:text-shell-text dark:group-hover:text-travel-bloom">
                       {post.title}
                     </h3>
                   </Link>
@@ -334,7 +334,7 @@ export default function AdminDashboard() {
                   </p>
 
                   {/* 元信息 */}
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#9A958F]">
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-warm-400">
                     <span className="inline-flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
                       {new Date(post.date).toLocaleDateString('zh-CN')}
@@ -393,21 +393,21 @@ export default function AdminDashboard() {
                         href={`/${post.type}/${post.slug}`}
                         target="_blank"
                         title="查看"
-                        className="rounded-lg p-2 text-[#9A958F] transition-all hover:bg-travel-sakura/60 hover:text-travel-accent active:scale-90"
+                        className="rounded-lg p-2 text-warm-400 transition-all hover:bg-travel-sakura/60 hover:text-travel-accent active:scale-90"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                       <Link
                         href={`/admin/edit/${post.id}`}
                         title="编辑"
-                        className="rounded-lg p-2 text-[#9A958F] transition-all hover:bg-travel-mist/60 hover:text-[#2E6E8E] active:scale-90"
+                        className="rounded-lg p-2 text-warm-400 transition-all hover:bg-travel-mist/60 hover:text-travel-accentStrong active:scale-90"
                       >
                         <Edit2 className="h-4 w-4" />
                       </Link>
                       <button
                         onClick={() => setDeleteId(post.id)}
                         title="删除"
-                        className="rounded-lg p-2 text-[#9A958F] transition-all hover:bg-red-50 hover:text-red-500 active:scale-90 dark:hover:bg-red-500/10"
+                        className="rounded-lg p-2 text-warm-400 transition-all hover:bg-red-50 hover:text-red-500 active:scale-90 dark:hover:bg-red-500/10"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -434,7 +434,7 @@ export default function AdminDashboard() {
                       )}
                       {post.circleShared ? '已分享到旅行圈' : '分享到旅行圈'}
                     </button>
-                    <span className="text-xs text-[#9A958F]">
+                    <span className="text-xs text-warm-400">
                       {post.circleShared ? '可在旅行圈浏览' : '尚未分享到旅行圈'}
                     </span>
                   </div>
@@ -469,7 +469,7 @@ export default function AdminDashboard() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-500/10">
                   <Trash2 className="h-5 w-5 text-red-500" />
                 </div>
-                <h3 className="text-base font-semibold text-[#2D3842] dark:text-shell-text">删除这篇文章？</h3>
+                <h3 className="text-base font-semibold text-warm-800 dark:text-shell-text">删除这篇文章？</h3>
               </div>
               <button onClick={() => setDeleteId(null)} className="rounded-lg p-1.5 text-warm-400 hover:bg-black/5 dark:hover:bg-white/10" aria-label="关闭">
                 <X className="h-4 w-4" />

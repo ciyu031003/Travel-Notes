@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 export interface PhotoViewerItem {
   src: string
@@ -28,8 +29,14 @@ interface PhotoViewerProps {
 export default function PhotoViewer({ images, index, onClose, onIndexChange }: PhotoViewerProps) {
   const [scale, setScale] = useState(1)
   const touchStartX = useRef<number | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
 
   const current = images[index]
+
+  // P2-28：全屏查看器此前没有焦点圈定（Tab 会跑到遮罩下的页面控件），ESC 由自身
+  // 局部监听处理。改走 useModalLayer 后：焦点圈定/恢复、背景 inert、滚动锁、
+  // ESC 与 Android 返回键与 BottomSheet/SideDrawer 完全一致，且只存在一层处理。
+  useModalLayer({ open: Boolean(current), onClose, panelRef })
 
   const go = useCallback(
     (next: number) => {
@@ -43,19 +50,20 @@ export default function PhotoViewer({ images, index, onClose, onIndexChange }: P
 
   useEffect(() => {
     if (!current) return
+    // 只管左右切换：ESC/返回键已由 useModalLayer 统一接管（避免双层监听重复触发关闭）
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
       if (e.key === 'ArrowLeft') go(index - 1)
       if (e.key === 'ArrowRight') go(index + 1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [current, index, onClose, go])
+  }, [current, index, go])
 
   if (!current) return null
 
   return (
     <div
+      ref={panelRef}
       className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-3 sm:p-6"
       role="dialog"
       aria-modal="true"

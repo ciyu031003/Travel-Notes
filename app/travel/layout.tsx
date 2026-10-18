@@ -1,5 +1,7 @@
 export const metadata = {
-  title: '旅行 | 甜途',
+  // P1-21：root layout 已有 title.template（'%s | 甜途'），这里不能再带品牌后缀，
+  // 否则 travel/placeholder.html 会渲染成「旅行 | 甜途 | 甜途」。
+  title: '旅行',
   description: '管理你的旅行足迹与记忆。',
 }
 

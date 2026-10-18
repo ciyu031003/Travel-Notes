@@ -1,12 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { X, FileDown, Image as ImageIcon, type LucideIcon } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
 import { hapticLight } from '@/lib/mobile/haptics'
 import { cn } from '@/lib/utils'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 /**
  * 导出记忆档案（2026-10-15 重做）
@@ -38,6 +39,11 @@ export default function ExportArchiveDialog({ onClose }: { onClose: () => void }
   const [slug, setSlug] = useState<string>("")
   const [format, setFormat] = useState<"card" | "zip">("card")
   const [busy, setBusy] = useState(false)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+
+  // P2-28：保持原有视觉，只补焦点圈定/恢复、背景 inert、滚动锁与 ESC/返回键关闭。
+  // busy（导出中）时不允许关闭（dismissible=false），与原有「导出中禁用取消」一致。
+  useModalLayer({ open: true, onClose, dismissible: !busy, panelRef })
 
   useEffect(() => {
     let alive = true
@@ -134,7 +140,11 @@ export default function ExportArchiveDialog({ onClose }: { onClose: () => void }
   return (
     <div className="fixed inset-0 z-[135] flex items-center justify-center px-5" role="dialog" aria-modal="true" aria-label="导出记忆档案">
       <div className="absolute inset-0 bg-black/45" onClick={busy ? undefined : onClose} />
-      <div className="relative flex max-h-[82dvh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-[var(--m-surface-solid)] shadow-[var(--m-shadow-lg)]">
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="relative flex max-h-[82dvh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-[var(--m-surface-solid)] shadow-[var(--m-shadow-lg)]"
+      >
         <div className="flex items-center justify-between px-5 pb-3 pt-5">
           <h3 className="m-title-2 font-semibold text-[var(--m-text)]">导出记忆档案</h3>
           <button type="button" onClick={onClose} disabled={busy} aria-label="关闭" className="m-pressable rounded-full p-2 text-[var(--m-muted)] disabled:opacity-40">
