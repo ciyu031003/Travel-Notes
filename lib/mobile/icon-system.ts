@@ -84,6 +84,22 @@ import {
   ShieldCheck,
   ShieldAlert,
   LogOut,
+  // 后台设置页（P2-32 拆分）用到的界面图标：统一从本文件转出，
+  // 避免 components/settings/* 各自 import lucide（图标唯一入口约定 + token 门禁）。
+  Mail,
+  Save,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  // 相册页（P2-32 拆分）用到的界面图标：同样从本文件转出，避免 components/album/*
+  // 直接 import lucide-react（图标唯一入口 + token 门禁 lucideImport 计数）。
+  ArrowLeft,
+  Lock,
+  Menu,
+  Orbit,
+  Rocket,
   // 类型
   type LucideIcon,
 } from 'lucide-react'
@@ -398,4 +414,19 @@ export {
   Sparkles,
   CalendarDays,
   MountainSnow,
+  // 后台设置页（P2-32）
+  Mail,
+  Save,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  // 相册页（P2-32）
+  BookOpen,
+  ArrowLeft,
+  Lock,
+  Menu,
+  Orbit,
+  Rocket,
 }
