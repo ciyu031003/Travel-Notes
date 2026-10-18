@@ -3,3 +3,5 @@
 # 属于其他项目，勿在此文件维护，也勿用本文件直接覆盖服务器 crontab。
 # travel-notes：每周日 04:30 docker 磁盘清理，防构建缓存打满
 30 4 * * 0 bash /home/ubuntu/travel-notes/scripts/disk-clean.sh >> /home/ubuntu/travel-notes/logs/disk-clean-cron.log 2>&1
+# travel-notes：每日 02:30 数据库备份（gzip -t 校验 + 30 天保留；部署前由 server-rebuild.sh --check 校验 <26h）
+30 2 * * * cd /home/ubuntu/travel-notes && bash scripts/backup-db.sh >> /home/ubuntu/travel-notes/logs/backup.log 2>&1

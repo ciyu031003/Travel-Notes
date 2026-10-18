@@ -10,5 +10,9 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // P0-8：Prisma 7 的 migrate diff --from-migrations 要求 shadowDatabaseUrl 来自配置。
+    // 仅 CI 漂移门禁使用（CI 指向独立的 travel_notes_shadow）；本地/生产不设置 → undefined，
+    // migrate deploy / 运行时均不受影响。
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });

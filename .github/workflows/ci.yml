@@ -26,6 +26,9 @@ jobs:
 
     env:
       DATABASE_URL: mysql://root:root@127.0.0.1:3306/travel_notes_ci
+      # P0-8：migrate diff --from-migrations 的影子库（与 DATABASE_URL 不同库，避免互相污染）；
+      # 由下面 "Create shadow database" 步骤创建，prisma.config.ts 的 datasource.shadowDatabaseUrl 读取它。
+      SHADOW_DATABASE_URL: mysql://root:root@127.0.0.1:3306/travel_notes_shadow
       # next build 阶段 NODE_ENV=production，lib/jwt-secret.ts 会拒绝缺失/占位/弱密钥；
       # CI 不需要真实密钥（只构建、不签发会话），用足够长且不含占位词的构建专用值。
       JWT_SECRET: ci-build-only-secret-0123456789abcdef
@@ -43,11 +46,11 @@ jobs:
         run: npm ci
 
       # P1-25：lint 从「0 error 即通过」改成 warning 预算。
-      # 488 = 2026-10-18 实测存量（0 errors / 488 warnings），只许下调：
+      # 486 = 2026-10-18 P0 阶段实测存量（0 errors / 486 warnings），只许下调：
       # 清掉一批就同步改小（建议每两周 -30），最终目标 --max-warnings=0。
       # 只允许调小，不允许为了「变绿」调大预算。
       - name: Lint (warning budget)
-        run: npm run lint -- --max-warnings=488
+        run: npm run lint -- --max-warnings=486
 
       - name: Type check
         run: npm run typecheck
@@ -68,8 +71,23 @@ jobs:
       - name: Prepare Prisma Client
         run: npx prisma generate
 
-      - name: Push database schema
-        run: npx prisma db push --skip-generate
+      # P0-8：schema 变更只走 Prisma Migrate（prisma/migrations/ 为唯一真相），不再 db push。
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+
+      # P0-8 drift 门禁：把 prisma/migrations 重放到影子库后，结果必须与 schema.prisma 完全一致。
+      # Prisma 7 的 --exit-code 语义：0 = 无漂移，2 = 有漂移（红灯），1 = 命令本身出错。
+      # 任一非 0 都让 CI 失败；下面先建影子库（root 有建库权限），避免依赖 mysql 客户端。
+      - name: Create shadow database for drift gate
+        run: >-
+          node -e "const mysql=require('mysql2/promise');(async()=>{const c=await mysql.createConnection('mysql://root:root@127.0.0.1:3306/');await c.query('CREATE DATABASE IF NOT EXISTS travel_notes_shadow');await c.end()})()"
+
+      - name: Migration drift gate
+        run: >-
+          npx prisma migrate diff
+          --from-migrations prisma/migrations
+          --to-schema prisma/schema.prisma
+          --exit-code
 
       - name: Build
         run: npm run build
@@ -117,6 +135,8 @@ jobs:
 
     env:
       DATABASE_URL: mysql://root:root@127.0.0.1:3306/travel_notes_ci
+      # P0-8：与 ci job 保持一致（本 job 不跑 drift diff，但环境变量统一，便于排查）
+      SHADOW_DATABASE_URL: mysql://root:root@127.0.0.1:3306/travel_notes_shadow
       # E2E 只在本机跑，密钥只求可用；不要复用生产值
       JWT_SECRET: ci-e2e-secret-not-for-production
       SESSION_SECRET: ci-e2e-secret-not-for-production
@@ -136,8 +156,9 @@ jobs:
       - name: Prepare Prisma Client
         run: npx prisma generate
 
-      - name: Push database schema
-        run: npx prisma db push --skip-generate
+      # P0-8：E2E 也用 migrate deploy 建表（空库从基线开始跑）
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium

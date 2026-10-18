@@ -14,6 +14,8 @@
 #   TARBALL=/tmp/tn-deploy.tar.gz   部署包路径
 #   SKIP_CLEAN=1                    跳过清盘（不推荐）
 #   MIN_FREE_MB=8000                构建前要求的最小可用空间（MB），不足则中止
+#   SKIP_BACKUP_CHECK=1             跳过「最近数据库备份 <26h」检查（不推荐）
+#   BACKUP_MAX_AGE_HOURS=26         备份最大允许年龄（小时）
 # ============================================================================
 set -euo pipefail
 
@@ -21,6 +23,8 @@ PROJECT_DIR="/home/ubuntu/travel-notes"
 TARBALL="${TARBALL:-/tmp/tn-deploy.tar.gz}"
 MIN_FREE_MB="${MIN_FREE_MB:-8000}"
 SKIP_CLEAN="${SKIP_CLEAN:-0}"
+SKIP_BACKUP_CHECK="${SKIP_BACKUP_CHECK:-0}"
+BACKUP_MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
 
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 step() { echo; echo "===== $* ====="; }
@@ -44,7 +48,20 @@ if [ "$FREE" -lt "$MIN_FREE_MB" ]; then
   exit 1
 fi
 
-step "[$(ts)] ③ 解包部署内容"
+step "[$(ts)] ③ 部署前检查最近数据库备份（<${BACKUP_MAX_AGE_HOURS}h）"
+# P0-9：没有可用备份就不允许发布 —— 回滚镜像容易，回滚数据不可能。
+if [ "$SKIP_BACKUP_CHECK" = "1" ]; then
+  echo "⚠️  已按 SKIP_BACKUP_CHECK=1 跳过备份检查（不推荐，风险自负）"
+elif [ ! -f scripts/backup-db.sh ]; then
+  echo "❌ 找不到 scripts/backup-db.sh（本次是首次上线该脚本？）。" >&2
+  echo "   请先手动备份：docker compose exec -T -e MYSQL_PWD=\"\$MYSQL_ROOT_PASSWORD\" db mysqldump -uroot --single-transaction travel_notes | gzip > backups/db/manual-\$(date +%Y%m%d-%H%M%S).sql.gz" >&2
+  echo "   或确认风险后用 SKIP_BACKUP_CHECK=1 跳过本次检查。" >&2
+  exit 1
+else
+  BACKUP_MAX_AGE_HOURS="$BACKUP_MAX_AGE_HOURS" bash scripts/backup-db.sh --check
+fi
+
+step "[$(ts)] ④ 解包部署内容"
 if [ ! -f "$TARBALL" ]; then
   echo "❌ 找不到部署包: $TARBALL" >&2
   exit 1
@@ -80,15 +97,57 @@ rm -f "$MANIFEST" "$PRESENT" "$STALE"
 tar -xzf "$TARBALL" -C "$PROJECT_DIR"
 echo "解包完成: $TARBALL"
 
-step "[$(ts)] ④ 重建应用容器（不影响 db 与其他项目）"
-sudo docker compose up -d --build app 2>&1 | tail -8
+step "[$(ts)] ⑤ 重建应用容器（不影响 db 与其他项目）"
+# 记录部署前镜像：健康检查失败时唯一的回滚依据（compose build 会覆盖同名镜像 tag）
+PREV_IMAGE_ID="$(sudo docker inspect --format '{{.Image}}' travel-notes-app 2>/dev/null || true)"
+PREV_IMAGE_TAG="$(sudo docker inspect --format '{{.Config.Image}}' travel-notes-app 2>/dev/null || true)"
+if [ -n "$PREV_IMAGE_ID" ]; then
+  sudo docker tag "$PREV_IMAGE_ID" travel-notes-app:previous 2>/dev/null || true
+  echo "部署前镜像: $PREV_IMAGE_ID（tag: ${PREV_IMAGE_TAG:-<未知>}，已另存为 travel-notes-app:previous）"
+  echo "手工回滚命令: sudo docker tag travel-notes-app:previous ${PREV_IMAGE_TAG:-travel-notes_app} && sudo docker compose up -d --no-build --force-recreate app"
+else
+  echo "部署前镜像: <未找到，可能是首次部署>"
+fi
 
-step "[$(ts)] ⑤ 健康检查"
-sleep 8
-curl -s -H "Host: travel-notes.yuanabd.cn" "https://127.0.0.1/api/health" || true
+sudo docker compose up -d --build app 2>&1 | tail -8
+echo "部署后镜像: $(sudo docker inspect --format '{{.Image}}' travel-notes-app 2>/dev/null || echo '<未找到>')"
+
+step "[$(ts)] ⑥ 健康检查（失败即中止，不再打印「完成」）"
+sleep 5
+HEALTH_OK=0
+i=1
+while [ "$i" -le 12 ]; do
+  if curl -fsS -H "Host: travel-notes.yuanabd.cn" "https://127.0.0.1/api/health" -o /dev/null -w "health: HTTP %{http_code}\n"; then
+    HEALTH_OK=1
+    break
+  fi
+  echo "  第 $i 次健康检查未通过，5s 后重试..." >&2
+  i=$((i + 1))
+  sleep 5
+done
+
 echo
 echo "容器状态:"
 sudo docker ps --format '{{.Names}}\t{{.Status}}' | grep -E 'travel-notes|learn-workbench' || true
 
+if [ "$HEALTH_OK" != "1" ]; then
+  echo "" >&2
+  echo "❌ 健康检查失败：60s 内 /api/health 未返回 2xx，部署中止（镜像已构建，但服务未确认可用）。" >&2
+  echo "--- docker compose logs --tail 80 app ---" >&2
+  sudo docker compose logs --tail 80 app >&2 || true
+  if [ -n "${PREV_IMAGE_ID:-}" ]; then
+    echo "" >&2
+    echo "--- 回滚到部署前镜像 ---" >&2
+    echo "sudo docker tag travel-notes-app:previous ${PREV_IMAGE_TAG:-travel-notes_app}" >&2
+    echo "sudo docker compose up -d --no-build --force-recreate app" >&2
+    echo "或一键：sudo docker tag travel-notes-app:previous ${PREV_IMAGE_TAG:-travel-notes_app} && sudo docker compose up -d --no-build --force-recreate app" >&2
+  else
+    echo "没有部署前镜像可回滚（首次部署），请修复问题后重新执行部署。" >&2
+  fi
+  exit 1
+fi
+
+echo
+echo "✅ 健康检查通过（/api/health 2xx）"
 step "[$(ts)] 完成"
 df -h / | tail -1

@@ -21,8 +21,19 @@ COPY . .
 # 构建期占位密钥：仅用于 next build 的静态求值，不进运行时（compose 会用真实值覆盖）
 ENV JWT_SECRET=build-placeholder-not-for-runtime
 ENV SESSION_SECRET=build-placeholder-not-for-runtime
-RUN npx prisma generate \
- && SKIP_DB_ON_BUILD=1 npm run build
+
+# 先生成 Prisma Client：deps 阶段 npm ci 时仓库里还没有 schema.prisma，postinstall 不会生成；
+# 而下面的门禁（typecheck/test）会 import @prisma/client 的类型与运行时，必须先有 .prisma/client。
+RUN npx prisma generate
+
+# P0-7 发布门禁：镜像构建即门禁 —— 类型检查 / lint 预算 / 全量单测任一失败都让 docker build 失败。
+# 之前 builder 是 SKIP_TSC=1 且完全跳过 lint/test，导致「本地改完直接打包 scp 上线」可以绕过 CI。
+# lint 预算与 .github/workflows/ci.yml 保持一致（486 = 2026-10-18 P0 阶段实测存量，只许下调，不许为了过而放大）。
+RUN npm run typecheck \
+ && npm run lint -- --max-warnings=486 \
+ && npm test
+
+RUN SKIP_DB_ON_BUILD=1 npm run build
 
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app

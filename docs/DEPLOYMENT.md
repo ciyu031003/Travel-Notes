@@ -28,8 +28,8 @@ docker compose up -d --build app
 
 首次启动会：
 1. 校验并读取 `.env`（**compose 不再提供可用的默认 DB 口令/会话密钥**，`__SET_..._IN_ENV__` 是占位符，不是可用值）
-2. 三阶段构建应用镜像（deps → builder → runner）：builder 里 `npx prisma generate` + `next build`（**构建期类型检查已恢复**，不再 `SKIP_TSC=1`），runner 只拷 `.next/public/prisma/scripts` 并 `npm prune --omit=dev`
-3. 启动 MySQL 8.4 + 应用（非 root，uid=1000），容器内自动 `prisma db push` 建表
+2. 三阶段构建应用镜像（deps → builder → runner）：builder 里先跑**构建门禁**（`npm run typecheck` + lint 预算 + `npm test`，任一失败镜像构建失败），再 `npx prisma generate` + `next build`；runner 只拷 `.next/public/prisma/scripts` 并 `npm prune --omit=dev`
+3. 启动 MySQL 8.4 + 应用（非 root，uid=1000），容器 entrypoint 依次执行 `wait-for-db` → `migrate-bootstrap` → **`prisma migrate deploy`**（失败即退出，不再 `prisma db push`）
 
 启动后访问 http://localhost:3000，前往 `/admin/setup` 初始化管理员。
 
@@ -50,6 +50,46 @@ docker compose up -d --build app
 4. **日志轮转**：db/app 都配了 json-file `20m × 5`，`docker compose logs` 用法不变，但不会再无限增长占盘。
 5. **健康检查**：compose 每 30s 请求 `/api/health`（DB 挂 → 503 → unhealthy），`docker compose ps` 会显示 healthy/unhealthy；镜像内也有同款 `HEALTHCHECK`。
 6. **版本默认值单一来源**：compose 的 `APP_VERSION`/`APP_BUILD_NUMBER` 默认值由 `scripts/bump-version.cjs` 同步、`scripts/verify-version.cjs` 校验；发版只走这两个脚本，不要手改 compose。
+
+### 数据库迁移（Prisma Migrate，P0-8）
+
+**唯一真相是 `prisma/migrations/`，禁止再用 `prisma db push`。** 目前有两条迁移：
+
+| 迁移 | 内容 | 谁用 |
+|---|---|---|
+| `20261018000000_init` | 存量库基线 = P1 之前的 schema（`CREATE TABLE` 全量） | 存量库由 bootstrap 标记为已应用；全新库直接执行 |
+| `20261018120000_p1_indexes_and_site_role` | P1 新增索引 + P0 `User.siteRole` 列（`ALTER TABLE` / `CREATE INDEX`） | 所有库都会执行 |
+
+**容器启动流程**（`scripts/docker-entrypoint.sh`，已无任何 `|| echo [warn]` 吞错）：
+
+```text
+wait-for-db → node scripts/migrate-bootstrap.cjs → npx prisma migrate deploy → npm run start
+```
+
+`migrate-bootstrap.cjs` 的三分支：
+1. 已有 `_prisma_migrations` 表 → 跳过（Migrate 已接管）；
+2. 无 `_prisma_migrations` 但有 `User` 表 → **存量库**：`prisma migrate resolve --applied 20261018000000_init` 把基线标记为已应用，随后 `migrate deploy` 只跑增量迁移；
+3. 两者都没有 → 全新库：bootstrap 跳过，`migrate deploy` 从基线开始建表。
+
+> ⚠️ **存量库首次升级前必须先核对漂移**：如果该库此前用 `db push`/手工 DDL 已经加过 P1 索引或 `siteRole`，增量迁移会因「列/索引已存在」失败。升级前在能连生产库的环境执行：
+>
+> ```bash
+> npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script
+> ```
+>
+> 输出为空才可直接升级；非空则先按差异手工对齐（或把对应语句从增量迁移中排除并记录），否则 `migrate deploy` 会中途失败，entrypoint 会中止启动（这是有意的 fail-fast）。
+
+**开发/CI 的漂移门禁**：
+
+```bash
+# 影子库必须先存在（CI 里由步骤 CREATE DATABASE IF NOT EXISTS 创建）
+export SHADOW_DATABASE_URL="mysql://root:root@127.0.0.1:3306/travel_notes_shadow"
+npx prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code
+```
+
+Prisma 7 的 `--exit-code`：0 = 无漂移，2 = 有漂移（CI 红灯），1 = 命令本身出错。改了 `schema.prisma` 却忘了生成迁移，这个门禁会挡住。
+
+> 注意：Prisma 7 的 `migrate diff --from-migrations` 不再接受 `--shadow-database-url` 参数，影子库地址由 `prisma.config.ts` 的 `datasource.shadowDatabaseUrl`（读 `SHADOW_DATABASE_URL` 环境变量）提供；本地不设该变量时普通 `migrate deploy` 不受影响。
 
 ### 常用命令
 
@@ -167,15 +207,28 @@ sudo certbot renew --dry-run          # 测试自动续期
 
 ## 六、备份与恢复
 
-### 6.1 数据库备份（cron）
+### 6.1 数据库备份（cron，P0-9）
+
+备份脚本：`scripts/backup-db.sh`（走 `docker compose exec -T db mysqldump --single-transaction --routines --triggers --events` → `backups/db/travel_notes-<时间戳>.sql.gz`，写完立刻 `gzip -t` 校验，默认保留 30 天）。
 
 ```bash
 crontab -e
-# 每天凌晨 2:30 备份（SQL 输出到 backups/db/）
-30 2 * * * cd /home/ubuntu/travel-notes && ./scripts/migrate-database.sh backup >> logs/backup.log 2>&1
+# 每天凌晨 2:30 备份（已写入 scripts/crontab.travel-notes）
+30 2 * * * cd /home/ubuntu/travel-notes && bash scripts/backup-db.sh >> /home/ubuntu/travel-notes/logs/backup.log 2>&1
 ```
 
-保留策略：近 7 天每日、近 4 周每周、之后按月。
+常用模式：
+
+```bash
+bash scripts/backup-db.sh                 # 立即备份
+bash scripts/backup-db.sh --check         # 最近备份是否 <26h（部署脚本会调用）
+bash scripts/backup-db.sh --list          # 列出备份
+BACKUP_VERIFY_DB=travel_notes_verify bash scripts/backup-db.sh --verify   # 恢复演练
+```
+
+可选环境变量：`BACKUP_REMOTE=cos:bucket/travel-notes-db`（备份后 `rclone copy` 到远端，需先装 rclone）、`RETENTION_DAYS`（默认 30）、`MAX_AGE_HOURS`（默认 26）。
+
+> 密码从 `.env` 的 `MYSQL_ROOT_PASSWORD` 读取；cron 环境的 PATH 要能找到 `docker`（默认 root crontab 有 `/usr/bin`，如用 ubuntu 用户请确认 docker 权限）。
 
 ### 6.2 媒体备份
 
@@ -190,12 +243,22 @@ rclone sync public/uploads remote:trip-media --checksum   # 异地增量同步�
 
 `.env` 含密钥，用密码管理器保存或 `gpg -c .env` 加密异地保存，**不要明文提交 Git**。
 
-### 6.4 恢复演练（每季度一次）
+### 6.4 恢复演练（每季度一次，P0-9）
 
 ```bash
-./scripts/migrate-database.sh restore backups/db/xxx.sql
-# 恢复媒体后 docker compose up -d，校验登录/列表/详情/相册/时间线正常
+# 1) 把最近备份恢复到一个临时库（绝不指向生产库 travel_notes）
+BACKUP_VERIFY_DB=travel_notes_verify bash scripts/backup-db.sh --verify
+# 输出形如：verify_result=travel_notes_verify User=<行数>
+
+# 2) 人工核对几组关键行数（User/Travel/Memory/Media 与生产对比量级）
+docker compose exec -T db mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e \
+  "SELECT (SELECT COUNT(*) FROM travel_notes.User) AS prod_users, (SELECT COUNT(*) FROM travel_notes_verify.User) AS verify_users;"
+
+# 3) 确认后清理临时库
+docker compose exec -T db mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e 'DROP DATABASE travel_notes_verify'
 ```
+
+> 恢复演练失败（解压/导入/行数异常）必须当作真实故障处理：说明现有备份不可用，立即排查备份链路。
 
 ---
 
@@ -234,16 +297,26 @@ git archive --format=tar.gz -o /tmp/tn-deploy.tar.gz HEAD
 # 2) 上传
 scp /tmp/tn-deploy.tar.gz ubuntu@106.55.2.197:/tmp/
 
-# 3) 一键：清盘 → 空间校验 → 解包 → 重建 → 健康检查
+# 3) 一键：清盘 → 空间校验 → 备份检查 → 解包 → 重建（镜像内跑 typecheck/lint/test） → 健康检查
 ssh ubuntu@106.55.2.197 "bash /home/ubuntu/travel-notes/scripts/server-rebuild.sh"
 ```
 
-`server-rebuild.sh` 的关键保障：
+`server-rebuild.sh` 的关键保障（P0-7/P0-9）：
 - **① 先清盘**：调用 `scripts/disk-clean.sh`（只清 docker 构建缓存、dangling 镜像、
   `/tmp` 本项目历史部署包、containerd 泄漏挂载点、apt/journal），
   **不含 `docker volume prune`**，不使用 `docker image prune -a` —— 绝不触碰数据卷与其他项目的镜像。
 - **② 空间闸门**：可用空间 < `MIN_FREE_MB`（默认 8000MB）直接中止，避免重现「磁盘打满 → 构建失败 → 波及同机项目」。
-- **③④⑤**：解包 → 只重建 `app` 容器（`db` 与其他项目不动）→ 健康检查并打印所有容器状态。
+- **③ 备份闸门**：最近数据库备份必须 < 26h，否则中止并提示先跑 `bash scripts/backup-db.sh`；紧急情况可 `SKIP_BACKUP_CHECK=1` 显式跳过（会打印警告）。
+- **④ 解包**：只清理归档中已不存在的源码，再覆盖解包。
+- **⑤ 重建**：先记录部署前镜像 id 并另存为 `travel-notes-app:previous`，再 `docker compose up -d --build app`（镜像构建门禁失败则整个部署失败，旧容器继续跑）。
+- **⑥ 健康检查**：`curl -fsS`（保留 Host 头）轮询 `/api/health` 最多 60s；失败时打印 `docker compose logs --tail 80 app`、打印回滚命令并 `exit 1`，**不会再打印「完成」**。
+
+**回滚**（健康检查失败时脚本会直接打印这两条）：
+
+```bash
+sudo docker tag travel-notes-app:previous <部署前镜像 tag>   # 脚本输出里有具体 tag
+sudo docker compose up -d --no-build --force-recreate app
+```
 
 > 服务器源码目录非 git 仓库，用「打包 → scp → 解包覆盖」方式同步。
 > 若手工打包，**务必排除 `.env`/`data`/`content` 以免覆盖生产数据**；用 `git archive` 则自动只含已提交内容。

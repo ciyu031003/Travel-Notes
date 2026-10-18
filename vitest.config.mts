@@ -21,15 +21,15 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       reportsDirectory: 'coverage',
-      // 49/44/49/51 = 2026-10-18 实测存量（全量 68 文件 / 634 用例：statements 50.61% /
-      // branches 45.03% / functions 50.19% / lines 52.39%，向下取整再留 1pp 平台缓冲）。
+      // 51/45/50/53 = 2026-10-18 P0 阶段实测存量（全量 76 文件 / 679 用例：statements 52.4% /
+      // branches 46.13% / functions 51.01% / lines 54.37%，向下取整再留 1pp 平台缓冲）。
       // 只许上调（收紧），不允许为了「变绿」调低阈值；目标 60/50/55/60：
       // 用 npx vitest run --coverage 的新实测值每次 +2pp 上调。
       thresholds: {
-        statements: 49,
-        branches: 44,
-        functions: 49,
-        lines: 51,
+        statements: 51,
+        branches: 45,
+        functions: 50,
+        lines: 53,
       },
     },
   },
