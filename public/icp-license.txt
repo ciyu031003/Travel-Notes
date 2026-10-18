@@ -1,4 +1,4 @@
-行迹 / 甜途 —— 备案信息（网站 + App）
+甜途 —— 备案信息（网站 + App）
 ======================================
 
 【网站】www.yuanabd.cn 及子域名 travel-notes.yuanabd.cn / learn.yuanabd.cn
@@ -8,7 +8,7 @@
   工信部备案系统：https://beian.miit.gov.cn/
   全国互联网安全管理服务平台：https://beian.mps.gov.cn/#/query/webSearch?code=44010602017246
 
-【App】甜途（行迹 · 旅行记忆空间）· Android 包名 com.tiantu.app
+【App】甜途 · 旅行记忆空间· Android 包名 com.tiantu.app
   App ICP 备案号（移动互联网应用程序备案）：赣ICP备2024031528号-4A
   工信部备案系统：https://beian.miit.gov.cn/
 

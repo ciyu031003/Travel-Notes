@@ -67,7 +67,7 @@ crontab -l                                              # 查看 cron
 | `ADMIN_PASSWORD_HASH` | 预置管理员密码哈希（可选） | 空 |
 | `COOKIE_SECURE` | Cookie Secure（https 设 true；App 端登录已代码固定 SameSite=None+Secure） | false |
 | `NEXT_PUBLIC_SITE_URL` | 站点 URL | http://localhost:3000 |
-| `NEXT_PUBLIC_SITE_TITLE` | 站点标题 | Travel-Notes |
+| `NEXT_PUBLIC_SITE_TITLE` | 站点标题 | 甜途 |
 | `APP_ENCRYPTION_KEY` | AppSecret 表（如 DASHSCOPE_API_KEY）的 AES-256-GCM 主密钥 | 空（未配置则敏感配置功能禁用） |
 | `APP_VERSION` / `APP_BUILD_NUMBER` | OTA 版本（/api/version 供 App 检查更新；每次发版递增构建号） | 3.0.1 / 6 |
 | `APP_DOWNLOAD_URL` | 新版 APK 下载地址（COS/CDN 公开地址，可用 scripts/publish-apk.cjs 发布；nginx /downloads/ 仅作回退） | https://travel-notes.yuanabd.cn/downloads/tiantu.apk |

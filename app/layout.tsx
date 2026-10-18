@@ -11,7 +11,7 @@ import ThemeColorSync from '@/components/mobile/ThemeColorSync'
 import NativeBackHandler from '@/components/mobile/NativeBackHandler'
 
 export const metadata: Metadata = {
-  title: '行迹 | 旅行记忆空间',
+  title: '甜途 | 旅行记忆空间',
   description: '记录每一次出发与归来，沉淀属于你的旅行记忆。',
 }
 

@@ -11,7 +11,7 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-lg mb-4 text-travel-inkStrong flex items-center gap-2">
               <Icon icon={MapPin} size="md" className="text-travel-accent" />
-              行迹
+              甜途
             </h3>
             <p className="text-travel-ink text-sm">
               记录每一次出发与归来，沉淀属于你的旅行记忆。<br />
@@ -43,7 +43,7 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-6 border-t border-travel-line/60 dark:border-shell-line text-center text-sm text-travel-ink/60 dark:text-shell-muted">
           <p className="flex items-center justify-center gap-1">
-            Made with <Icon icon={Heart} size="sm" className="text-travel-accent fill-travel-accent" /> by 行迹
+            Made with <Icon icon={Heart} size="sm" className="text-travel-accent fill-travel-accent" /> by 甜途
           </p>
           <p className="mt-1">© {new Date().getFullYear()} All rights reserved.</p>
           {/* 备案号：移动互联网应用程序备案要求站点/应用内显著位置展示，编号可跳转工信部备案系统查询 */}

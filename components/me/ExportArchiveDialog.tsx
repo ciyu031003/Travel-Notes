@@ -119,7 +119,7 @@ export default function ExportArchiveDialog({ onClose }: { onClose: () => void }
       const res = await fetch(apiUrl("/api/export/archive"), { credentials: "include" })
       if (!res.ok) throw new Error("导出失败")
       const blob = await res.blob()
-      const filename = "travel-notes-archive.zip"
+      const filename = "tiantu-archive.zip"
       const saved = await saveWithPicker(blob, filename, "application/zip", ".zip")
       if (!saved) { download(blob, filename); toast.success('已开始下载，请选择保存位置') }
       else toast.success('已保存完整档案')

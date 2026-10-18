@@ -1,5 +1,5 @@
 export const metadata = {
-  title: '旅行 | 行迹',
+  title: '旅行 | 甜途',
   description: '管理你的旅行足迹与记忆。',
 }
 

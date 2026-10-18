@@ -176,7 +176,7 @@ export default function DownloadPage() {
                 <Icon icon={Info} size="sm" className="mr-1 inline align-[-2px]" />
                 iOS 暂不支持安装 APK，可直接使用网页版
                 <Link href="/" className="mx-1 font-medium text-travel-accent underline-offset-2 hover:underline dark:text-travel-bloom">
-                  行迹网页版
+                  甜途网页版
                 </Link>
                 ，或后续关注 iOS 版本。
               </p>

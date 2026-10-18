@@ -142,7 +142,7 @@ export async function exportMemoryArchive(username: string): Promise<ExportResul
   // === 结构化 JSON（含相对路径映射，可再导入） ===
   const dataJson = {
     exportedAt: new Date().toISOString(),
-    app: 'Travel-Notes',
+    app: '甜途',
     version: '3.1-M2',
     travels: travels.map((t: any) => ({
       id: t.id,
@@ -189,7 +189,7 @@ export async function exportMemoryArchive(username: string): Promise<ExportResul
 
   return {
     buffer,
-    filename: `travel-notes-archive-${username}-${new Date().toISOString().slice(0, 10)}.zip`,
+    filename: `tiantu-archive-${username}-${new Date().toISOString().slice(0, 10)}.zip`,
     stats: { travels: travels.length, memories: memories.length, moments: moments.length, photos: photoCache.size },
   }
 }

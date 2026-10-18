@@ -256,7 +256,7 @@ export default function HomeMobile({
             <div className="m-enter relative flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="m-caption font-semibold text-[var(--m-accent-strong)]">{greeting()}</p>
-                <p className="m-label mt-3 text-[var(--m-accent-strong)]">TRAVEL DIARY · 行迹</p>
+                <p className="m-label mt-3 text-[var(--m-accent-strong)]">TRAVEL DIARY · 甜途</p>
               </div>
               <IconButton
                 icon={Menu}

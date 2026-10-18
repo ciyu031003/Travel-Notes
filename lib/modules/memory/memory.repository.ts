@@ -1,5 +1,5 @@
 /**
- * Memory 数据访问（Repository）—— 回忆是 Travel-Notes 的核心实体（§31）
+ * Memory 数据访问（Repository）—— 回忆是 甜途 的核心实体（§31）
  */
 import { prisma } from '../../db'
 

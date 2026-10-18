@@ -75,7 +75,7 @@ export default function SocialBar({
     void hapticLight()
     const path = circlePostHref(postId) ?? `/circle/${postId}`
     const url = typeof window !== 'undefined' ? new URL(path, window.location.origin).toString() : path
-    const payload = { title: '行迹 · 旅行故事', text: '看看这趟旅行', url }
+    const payload = { title: '甜途 · 旅行故事', text: '看看这趟旅行', url }
 
     try {
       const nav = typeof navigator !== 'undefined' ? (navigator as Navigator) : undefined

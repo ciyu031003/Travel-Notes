@@ -200,7 +200,7 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
           // 封面：跨页书目信息（书名/地点/日期），压在图片上方成书封
           const overlay = div('sk-cover')
           overlay.innerHTML =
-            '<div class="sk-cover-kicker">Travel Notes · 旅行画册</div>' +
+            '<div class="sk-cover-kicker">Tiantu · 旅行画册</div>' +
             '<div class="sk-cover-title"></div>' +
             '<div class="sk-cover-sub"></div>'
           overlay.querySelector('.sk-cover-title')!.textContent = book.title

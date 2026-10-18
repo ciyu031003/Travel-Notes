@@ -28,7 +28,7 @@ for (const { path, marker } of PAGES) {
   })
 }
 
-test('核心页面登录态下可见品牌「行迹」', async ({ page }) => {
+test('核心页面登录态下可见品牌「甜途」', async ({ page }) => {
   await page.goto('/timeline')
-  await expect(page.getByText('行迹').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText('甜途').first()).toBeVisible({ timeout: 20_000 })
 })

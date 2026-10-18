@@ -182,7 +182,7 @@ export default function MeSettingsPage() {
                     const url = URL.createObjectURL(blob)
                     const a = document.createElement('a')
                     a.href = url
-                    a.download = 'travel-notes-archive.zip'
+                    a.download = 'tiantu-archive.zip'
                     document.body.appendChild(a)
                     a.click()
                     a.remove()

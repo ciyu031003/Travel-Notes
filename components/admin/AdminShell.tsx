@@ -154,7 +154,7 @@ export default function AdminShell({
         <div className="flex h-16 items-center gap-3 border-b border-travel-line/50 dark:border-white/5 px-5">
           <BrandLogo size={36} />
           <div className="leading-tight">
-            <p className="text-sm font-bold text-travel-inkStrong dark:text-white">行迹</p>
+            <p className="text-sm font-bold text-travel-inkStrong dark:text-white">甜途</p>
             <p className="text-xs text-travel-ink/50 dark:text-warm-500">旅行记忆空间</p>
           </div>
         </div>
@@ -231,7 +231,7 @@ export default function AdminShell({
                 <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${accent}`}>
                   <Compass className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-semibold text-travel-ink dark:text-white">行迹 · {pageTitle}</span>
+                <span className="font-semibold text-travel-ink dark:text-white">甜途 · {pageTitle}</span>
               </div>
               <button
                 type="button"

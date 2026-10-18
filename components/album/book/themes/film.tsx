@@ -45,7 +45,7 @@ function FilmCover({ page }: PageBodyProps) {
         )}
       </div>
       <div className="film-cover-meta">
-        <p className="film-cover-roll">ROLL 01 · {page.subtitle || 'TRAVEL NOTES'}</p>
+        <p className="film-cover-roll">ROLL 01 · {page.subtitle || 'TIANTU'}</p>
         <h2 className="film-cover-title">{page.title}</h2>
         <FilmDateStamp iso={page.takenAt} />
       </div>

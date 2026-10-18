@@ -13,7 +13,7 @@ function escapeXml(value: string): string {
 
 export async function GET() {
   try {
-    const siteTitle = process.env.NEXT_PUBLIC_SITE_TITLE || 'Travel-Notes'
+    const siteTitle = process.env.NEXT_PUBLIC_SITE_TITLE || '甜途'
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     const siteDescription = `${siteTitle} 旅行记录订阅`
 

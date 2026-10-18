@@ -306,7 +306,7 @@ export default function AdminSpacesPage() {
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
               <Heart className="w-3.5 h-3.5" />
-              行迹
+              甜途
             </div>
             <h1 className="mt-3 text-2xl sm:text-3xl font-bold">空间管理</h1>
             <p className="mt-2 text-sm text-white/85 max-w-xl leading-relaxed">

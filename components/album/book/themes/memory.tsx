@@ -41,7 +41,7 @@ function MemoryCover({ page }: PageBodyProps) {
         {page.takenAt && <p className="mem-cover-date">{formatDay(page.takenAt)}</p>}
       </div>
       <span className="mem-stamp" aria-hidden="true">
-        <span>行迹</span>
+        <span>甜途</span>
       </span>
     </div>
   )
@@ -153,7 +153,7 @@ function MemoryReceipt({ page }: PageBodyProps) {
   return (
     <div className="art-page mem-receipt">
       <div className="mem-receipt-inner">
-        <p className="mem-receipt-head">行迹 · TRAVEL NOTES</p>
+        <p className="mem-receipt-head">甜途 · TRAVEL NOTES</p>
         <h2 className="mem-receipt-title">{page.title}</h2>
         {page.subtitle && <p className="mem-receipt-sub">{page.subtitle}</p>}
         <div className="mem-receipt-line" aria-hidden="true" />

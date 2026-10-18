@@ -1,5 +1,5 @@
 /**
- * 行迹品牌图标生成器 —— 源文件 public/brand/logo.png（甜途 logo，2026-09-05 定稿，永久不变更）。
+ * 甜途品牌图标生成器 —— 源文件 public/brand/logo.png（甜途 logo，2026-09-05 定稿，永久不变更）。
  * 产物：
  *  - public/favicon.png / app/icon.png / app/apple-icon.png（Web 站点图标）
  *  - android 各密度 ic_launcher 系列 PNG（legacy + 自适应前景）

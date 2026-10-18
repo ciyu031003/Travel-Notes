@@ -66,7 +66,7 @@ export default function AppUpdatePrompt() {
             需要先允许安装应用
           </p>
           <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--m-accent-strong)]">
-            安卓要求为「行迹」单独开启「安装未知应用」。点下面的按钮去开启，返回后会自动继续下载。
+            安卓要求为「甜途」单独开启「安装未知应用」。点下面的按钮去开启，返回后会自动继续下载。
           </p>
         </div>
       )}

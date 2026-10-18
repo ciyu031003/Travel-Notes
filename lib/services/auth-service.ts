@@ -252,7 +252,7 @@ export class AuthService {
     // 验证码不回显给客户端；未配置 SMTP 时仅写入服务端日志
     const delivered = await sendMail(
       email,
-      '【Travel-Notes】密码重置验证码',
+      '【甜途】密码重置验证码',
       `您的验证码是 ${code}，5 分钟内有效。`
     )
     return { success: true, delivered }

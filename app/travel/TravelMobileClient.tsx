@@ -250,7 +250,7 @@ export default function TravelMobileClient({
         </section>
 
         <footer className="px-5 pb-3 pt-10 text-center text-xs text-[var(--m-faint)]">
-          行迹 · 用足迹丈量中国
+          甜途 · 用足迹丈量中国
         </footer>
 
         <MobileProvinceDrawer

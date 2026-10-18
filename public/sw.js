@@ -1,4 +1,4 @@
-// Travel-Notes Service Worker（Stage 3.0b PWA 壳缓存）
+// 甜途 Service Worker（Stage 3.0b PWA 壳缓存）
 // 策略：
 //  - 页面导航：网络优先，失败回退缓存（断网可开已缓存的首页）
 //  - 静态资源（_next/ 与图片/字体）：缓存优先 + 后台更新

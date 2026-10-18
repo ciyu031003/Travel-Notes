@@ -446,7 +446,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
           <p className="mt-4 text-center text-[11px] text-[var(--social-faint)]">
             <Sparkles className="mr-1 inline align-[-2px]" size={11} />
-            行迹 · 把走过的路，变成值得记住的故事
+            甜途 · 把走过的路，变成值得记住的故事
           </p>
         </PullToRefresh>
       </div>

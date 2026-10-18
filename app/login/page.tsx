@@ -184,7 +184,7 @@ function LoginPageContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BrandLogo size={36} rounded="rounded-lg" />
-                  <span className="font-bold text-travel-ink dark:text-shell-text">行迹</span>
+                  <span className="font-bold text-travel-ink dark:text-shell-text">甜途</span>
                 </div>
                 {isAuthed && (
                   <Link
@@ -197,7 +197,7 @@ function LoginPageContent() {
               </div>
 
               <h1 className="mt-5 font-display text-[26px] font-bold leading-snug text-balance text-[#2D3842] dark:text-shell-text sm:text-3xl md:mt-7 md:text-4xl">
-                {mode === 'login' ? '登录你的旅行记忆空间' : '注册一个新的行迹账号'}
+                {mode === 'login' ? '登录你的旅行记忆空间' : '注册一个新的甜途账号'}
               </h1>
               <p className="mt-2.5 text-sm leading-relaxed text-travel-ink dark:text-shell-muted md:mt-3">
                 {mode === 'login'
@@ -357,7 +357,7 @@ function LoginPageContent() {
             </div>
 
             <p className="mt-5 text-center text-xs text-white/85 drop-shadow">
-              Made with ♥ by 行迹
+              Made with ♥ by 甜途
             </p>
 
             {/*

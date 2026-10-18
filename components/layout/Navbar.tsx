@@ -123,7 +123,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
           )}
         >
           <BrandLogo size={32} />
-          <span>行迹</span>
+          <span>甜途</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-1">

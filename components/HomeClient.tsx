@@ -361,7 +361,7 @@ export default function HomeClient({
                 </span>
               </h1>
               <p className="mt-7 text-sm tracking-[0.2em] text-travel-accent dark:text-travel-bloom md:text-base">
-                行迹 · 记录每一段旅行时光
+                甜途 · 记录每一段旅行时光
               </p>
               <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-travel-ink dark:text-shell-muted md:mx-0 md:text-lg">
                 每个城市一本画册，照片铺满书页 —— 把走过的路，变成自己的故事
@@ -654,7 +654,7 @@ export default function HomeClient({
         <footer className="border-t border-travel-line/60 dark:border-shell-line px-3 py-10 md:px-5">
           <div className="container-page text-center">
             <p className="flex items-center justify-center gap-1.5 text-sm text-travel-ink dark:text-shell-muted">
-              Made with <Icon icon={Heart} size="sm" className="fill-travel-accentSoft text-travel-accentSoft" /> by 行迹
+              Made with <Icon icon={Heart} size="sm" className="fill-travel-accentSoft text-travel-accentSoft" /> by 甜途
             </p>
             <p className="mt-2 text-xs text-travel-ink dark:text-shell-muted">
               © {new Date().getFullYear()} All rights reserved.

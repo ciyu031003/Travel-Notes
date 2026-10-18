@@ -32,7 +32,7 @@ function CoverPage({ page }: { page: BookPage }) {
           />
         </figure>
       )}
-      <p className="cover-foot">{page.takenAt ? formatDay(page.takenAt) : 'Travel Notes'}</p>
+      <p className="cover-foot">{page.takenAt ? formatDay(page.takenAt) : 'Tiantu'}</p>
     </div>
   )
 }
@@ -49,7 +49,7 @@ function TextPage({ page }: { page: BookPage }) {
         {page.subtitle && <p className="chapter-date">{page.subtitle}</p>}
         {page.body && <p className="chapter-summary">{page.body}</p>}
       </div>
-      {isEnd && <span className="back-mark">Travel Notes</span>}
+      {isEnd && <span className="back-mark">Tiantu</span>}
     </div>
   )
 }

@@ -206,7 +206,7 @@ export default function AdminDashboard() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-travel-sakura/70 px-3 py-1 text-xs font-medium text-travel-accent dark:bg-shell-surface/70 dark:text-travel-bloom">
             <Sparkles className="h-3 w-3" />
-            行迹内容中心
+            甜途内容中心
           </div>
           <h1 className="mt-3 text-2xl font-bold text-[#2D3842] dark:text-shell-text sm:text-3xl">文章管理</h1>
           <p className="mt-1 text-sm text-travel-ink/70 dark:text-shell-muted">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>

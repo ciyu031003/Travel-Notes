@@ -108,8 +108,8 @@ export default function AdminLoginPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-accent to-travel-bloom shadow-lg shadow-travel-accent/25">
               <Heart className="h-8 w-8 text-white" fill="currentColor" />
             </div>
-            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-shell-text">行迹 · 后台管理</h1>
-            <p className="mt-2 text-sm text-travel-ink dark:text-shell-muted">行迹 · 从这里开始打理</p>
+            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-shell-text">甜途 · 后台管理</h1>
+            <p className="mt-2 text-sm text-travel-ink dark:text-shell-muted">甜途 · 从这里开始打理</p>
           </motion.div>
 
           <motion.form variants={item} onSubmit={handleSubmit} className="space-y-5">
@@ -192,7 +192,7 @@ export default function AdminLoginPage() {
         </motion.div>
 
         <motion.p variants={item} className="mt-6 text-center text-xs text-travel-sand/50 dark:text-shell-faint">
-          Made with ♥ by 行迹
+          Made with ♥ by 甜途
         </motion.p>
       </motion.div>
     </div>

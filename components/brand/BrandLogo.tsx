@@ -20,7 +20,7 @@ export default function BrandLogo({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src="/brand/logo-512.png"
-      alt="行迹标志"
+      alt="甜途标志"
       width={size}
       height={size}
       style={{ width: size, height: size }}

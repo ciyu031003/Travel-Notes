@@ -375,7 +375,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <p className="text-center text-travel-ink/40 text-xs mt-6">
-          © {new Date().getFullYear()} 行迹
+          © {new Date().getFullYear()} 甜途
         </p>
       </div>
     </div>

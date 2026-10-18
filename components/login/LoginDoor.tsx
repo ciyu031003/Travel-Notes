@@ -154,7 +154,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
             </div>
             <div className="absolute left-6 top-6 flex items-center gap-2 md:left-10 md:top-10">
               <BrandLogo size={36} rounded="rounded-lg" />
-              <span className="font-bold text-travel-ink dark:text-shell-text">行迹</span>
+              <span className="font-bold text-travel-ink dark:text-shell-text">甜途</span>
             </div>
             <div className="absolute bottom-8 left-8 hidden max-w-[240px] md:block">
               <p className="font-display text-2xl font-bold leading-snug text-[#2D3842] dark:text-shell-text">
