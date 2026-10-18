@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getImageService } from '@/lib/container'
 import { rateLimit } from '@/lib/infrastructure/rate-limit'
@@ -6,6 +6,8 @@ import { getClientIp } from '@/lib/request-utils'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { ApiError } from '@/lib/api-response'
 import { withAuth, parseBody } from '@/lib/api/handler'
+import { MediaAccessError } from '@/lib/services/image-service'
+import { isSiteOwner } from '@/lib/site-owner'
 
 /** 删除图片请求体（P1-17） */
 const DeleteImageSchema = z.object({
@@ -39,6 +41,14 @@ export const POST = withAuth(async (request, ctx) => {
     throw new ApiError('INVALID_POST_ID', '无效的文章 ID', 400)
   }
 
+  /**
+   * P0-4：归属校验所需的执行者身份。
+   *
+   * 站点主人（站长）可管理全站图片；普通用户只能管理**自己文章**下的图片。
+   * 判定放在服务层（image-service），这里只负责把身份传下去 —— 避免"路由忘了判权"重演。
+   */
+  const actor = { userId: ctx.userId ?? null, isSiteOwner: await isSiteOwner(ctx.userId) }
+
   const imageFiles = await Promise.all(
     files.map(async (file) => ({
       name: file.name,
@@ -49,33 +59,48 @@ export const POST = withAuth(async (request, ctx) => {
 
   try {
     const imageService = getImageService()
-    const result = await imageService.upload(postId, imageFiles)
-    writeAuditLog({
-      username: ctx.username || 'unknown',
-      action: 'UPLOAD_MEDIA',
-      resourceType: 'PostImage',
-      resourceId: String(postId),
-      ip,
-      metadata: { count: imageFiles.length },
-    }).catch(() => {})
+    const result = await imageService.upload(postId, imageFiles, actor)
+    // 审计是旁路：失败要留痕，但不能让上传失败
+    try {
+      await writeAuditLog({
+        username: ctx.username || 'unknown',
+        action: 'UPLOAD_MEDIA',
+        resourceType: 'PostImage',
+        resourceId: String(postId),
+        ip,
+        metadata: { count: imageFiles.length },
+      })
+    } catch (auditError) {
+      console.error('[Upload] 审计写入失败', { postId, auditError })
+    }
     return NextResponse.json(result)
   } catch (error: any) {
     console.error('[Upload] Error:', error?.message)
+    if (error instanceof MediaAccessError) {
+      // 无权与不存在同文案：403 + 统一提示，不给存在性探测
+      throw new ApiError('FORBIDDEN', error.message, 403)
+    }
     // 上传失败原因（格式不支持/过大等）是用户可据此修正的提示，保留原文
     throw new ApiError('UPLOAD_FAILED', error?.message || '上传失败', 500)
   }
 })
 
-export const DELETE = withAuth(async (request) => {
+export const DELETE = withAuth(async (request, ctx) => {
   const body = await parseBody(request, DeleteImageSchema)
+  // P0-4：删除同样要判归属（原先任意登录用户可凭 URL 删任何人的图）
+  const actor = { userId: ctx.userId ?? null, isSiteOwner: await isSiteOwner(ctx.userId) }
   try {
     const imageService = getImageService()
-    await imageService.delete(body.url)
+    await imageService.delete(body.url, actor)
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('[Upload DELETE] Error:', error?.message)
     if (error?.message === '无效的资源路径' || error?.message === '无效的图片 ID') {
       throw new ApiError('INVALID_PATH', error.message, 400)
+    }
+    if (error instanceof MediaAccessError) {
+      // 无权与不存在统一 404：两账号互删时互相探测不到
+      throw new ApiError('NOT_FOUND', '图片不存在', 404)
     }
     if (error?.message === '图片不存在') {
       throw new ApiError('NOT_FOUND', error.message, 404)

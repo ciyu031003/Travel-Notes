@@ -11,6 +11,35 @@ export interface ExifData {
   dateTaken?: string
   width?: number
   height?: number
+  /** EXIF Orientation（1-8）：前端据此旋转显示，避免"手机拍的照片躺着" */
+  orientation?: number
+}
+
+/**
+ * 对外可返回的 EXIF 白名单（P0-4 / S-5）。
+ *
+ * 为什么必须白名单而不是黑名单：GPS（0x8825 GPS IFD）、设备序列号（0xA431 BodySerialNumber）、
+ * 镜头序列号等字段一旦随 /meta 下发，等于公开"这张照片在哪拍的、用什么机器拍的"。
+ * 黑名单永远漏字段（新 EXIF 标签每年都在加），所以只保留排版/显示必需的安全字段。
+ */
+export interface PublicExifData {
+  width?: number
+  height?: number
+  orientation?: number
+  dateTaken?: string
+}
+
+/** ExifData → 对外安全子集；没有任何可返回字段时返回 null（前端按"无 EXIF"处理） */
+export function toPublicExif(exif: ExifData | null | undefined): PublicExifData | null {
+  if (!exif) return null
+  const out: PublicExifData = {}
+  if (typeof exif.width === 'number' && exif.width > 0) out.width = exif.width
+  if (typeof exif.height === 'number' && exif.height > 0) out.height = exif.height
+  if (typeof exif.orientation === 'number' && exif.orientation >= 1 && exif.orientation <= 8) {
+    out.orientation = exif.orientation
+  }
+  if (typeof exif.dateTaken === 'string' && exif.dateTaken) out.dateTaken = exif.dateTaken
+  return Object.keys(out).length > 0 ? out : null
 }
 
 /**
@@ -207,6 +236,7 @@ export function parseExif(buffer: Buffer): ExifData | null {  if (!buffer || buf
   const ifd0 = parseIfd(buffer, ifd0Offset, byteOrder, {
     0x010f: 'make',
     0x0110: 'model',
+    0x0112: 'orientation',
   })
 
   const exifIfdPointer = little
@@ -221,6 +251,7 @@ export function parseExif(buffer: Buffer): ExifData | null {  if (!buffer || buf
     make: (ifd0.make as string) || undefined,
     model: (ifd0.model as string) || undefined,
   }
+  if (ifd0.orientation !== undefined) result.orientation = Number(ifd0.orientation) || undefined
 
   if (exifIfd.fNumber !== undefined) result.fNumber = Number(exifIfd.fNumber) || undefined
   if (exifIfd.exposureTime !== undefined) {
@@ -258,6 +289,7 @@ function parseWebpExif(buffer: Buffer): ExifData | null {
         const ifd0 = parseIfd(buffer, ifd0Offset, byteOrder, {
           0x010f: 'make',
           0x0110: 'model',
+          0x0112: 'orientation',
         })
         const exifIfdPointer = little
           ? buffer.readUInt32LE(ifd0Offset + 8)
@@ -269,6 +301,7 @@ function parseWebpExif(buffer: Buffer): ExifData | null {
           make: (ifd0.make as string) || undefined,
           model: (ifd0.model as string) || undefined,
         }
+        if (ifd0.orientation !== undefined) result.orientation = Number(ifd0.orientation) || undefined
         if (exifIfd.fNumber !== undefined) result.fNumber = Number(exifIfd.fNumber) || undefined
         if (exifIfd.exposureTime !== undefined) {
           const t = formatExposureTime(Number(exifIfd.exposureTime))
