@@ -137,3 +137,70 @@
 3. 站点主人提升：首个访问能力检查（或 /api/me/capabilities）时自动把 id 最小用户设为 SITE_OWNER；如需指定他人，手工 `UPDATE User SET siteRole='SITE_OWNER' WHERE ...` 并清理另一条。
 4. 管理员页面仍可被普通用户打开（API 已 403）；如需要页面级收口可后续加 layout 守卫。
 5. 本机未安装 bash/WSL：shell 脚本用 shellcheck 做语法级校验，未真实执行；Docker 镜像与 CI 是首次真实验证点。
+
+
+---
+
+# 附二：最后一批 deferred 收口（2026-10-19）
+
+> 响应「P1-17 其余 API 的 zod 化；P2-27 字体子集化/裸 img/public 瘦身；P2-31 token 三层化；P2-32 后台/相册页面拆分 都完成掉」。
+
+## P1-17 zod 化：全量收口
+
+- 写路由覆盖：**107/107 个写 handler**（POST/PUT/PATCH/DELETE）均有 schema 校验或显式 reviewed-no-body-input；残留 0。
+- 本批新增：`lib/api/schemas/{common,travel,space,memory,social,admin,me}.ts`；35+29 个 route 文件改造（A 线 37 个方法、B 线 41 个方法）。
+- 统一规则：数字 id/page 用 `z.coerce.number().int().positive()`；失败统一 `{success:false,error,code,requestId}`；multipart 路由按表单字段校验（不套 JSON parseBody）；无 body 的 DELETE 用路径/query schema + `reviewed-no-body-input` 注释。
+- 兼容：成功响应/状态码不变；update 类不加「至少一字段」refine；邀请 role/有效期等原有归一语义保留。
+- 新增测试：`write-routes-zod.test.ts`（14 例）、`api-write-routes-zod-b.test.ts`（21 例）。
+
+## P2-27 字体 / 裸 img / public 瘦身
+
+| 资产 | 前 | 后 | 变化 |
+|---|---|---|---|
+| zpix 字体 | 7,179,288 B TTF | **287,164 B WOFF2** | **-96.0%** |
+| logo.png | 2,054,864 B | 923,139 B | -55.1% |
+| logo-512.png | 264,291 B | 75,360 B | -71.5% |
+| pixel_bg_cabin（实为 JPEG） | 770,371 B | 99,892 B WebP | -87.0% |
+| 登录视频 poster | — | 4,777 B 新增 | preload=none 保留 |
+| public 合计 | 77.10 MB | **68.67 MB** | **-8.43 MB** |
+
+- 字体子集 = 仓库源码全量字符 + GB2312 6763 字 + ASCII/标点（7538 字形），`font-display:swap` 保留；`public/zpix.ttf` 删除。
+- 21 处裸 `<img>` 补 `loading/decoding/width/height`（object-cover 填充型不猜尺寸）。
+- 登录视频用 sharp 生成品牌 poster，蜂窝网络不再直接黑屏。
+
+## P2-31 设计 token 三层化（视觉零变化）
+
+- 新增 `app/tokens.css`（1217 行）：L1 `--palette-*` 281 条 → L2 `--ui-*` 397 条 → L3 `html.dark` / `[data-space]` / `[data-skin]` → legacy 别名 345 条；`globals.css` 2634→2314 行、`mobile.css` 1625→1420 行，**组件 class 零改动**。
+- `tailwind.config.js`：shell/pixel 改 RGB 通道变量（保住 72 处 /opacity）、删除与 `--social-*` 暗色完全重复且 0 引用的 `night.*`、其余标 deprecated。
+- **视觉零变化证据**：`scripts/check-token-parity.mjs` 逐条比对 legacy 变量最终字面值，**345/345 相等、0 不等**（root 179、dark 86、space 5 类 ×8×2）。
+- checker 新增第 12 条 `legacyTokenNewUsage`（只拦新增），基线 308/399 → 307/798（400 处存量冻结）；`tokens:check` exit 0。
+- 新增 `npm run tokens:parity` 并接入 CI（视觉回归守卫）。
+- 代价（如实记录）：三层声明使全站 CSS gzip 43.4→46.8KB（+3.4KB），可用构建期生成别名层回收，列为后续优化。
+
+## P2-32 后台 / 相册页面拆分
+
+| 文件 | 前 | 后 |
+|---|---|---|
+| `app/admin/settings/page.tsx` | 1091 行 | **120 行** |
+| `app/album/page.tsx` | 920 行 | **276 行** |
+
+- 后台：拆出 `components/settings/{ProfileTab,PasswordTab,EmailTab,TravelTab,OilTab,fields,EmailStatusCard,types}` + `hooks/use-settings-auth.ts`；`evaluatePassword` 抽到 `lib/validators/password.ts` 并复用服务端 `validatePassword`（强度提示与服务端同源，不做前置拦截）。
+- 相册：拆出 `hooks/use-album-data.ts` + 10 个子组件（Header/Bookshelf/UnlockScreen/SpaceMode/PhotoWall/ModeSwitch/GalleryGrid/CoverBanner/StarMapOverlay/筛选纯函数）；5 个渲染器保留 dynamic + ErrorBoundary，book/space/pixel 分支与 URL/localStorage 行为逐项保持。
+- 纯重构：请求路径/参数/文案/状态机不变；新增 `password-strength.test.ts`（9 例）、`album-gallery-filters.test.ts`（6 例）。
+- 图标统一走 `@/lib/mobile/icon-system`（追加 13 个 re-export），lucideImport 91→90。
+
+## 本批验证（最终共享树，实跑）
+
+- `tsc --noEmit --incremental false` → exit 0
+- `vitest run` → **80 文件 / 729 用例全绿**
+- `lint --max-warnings=486` → 0 error / 451 warning（低于预算）
+- `tokens:check` → exit 0（307/798）
+- `tokens:parity` → PASS 345/345
+- `audit-gate` → exit 0；`verify-version` → 通过
+- `SKIP_DB_ON_BUILD=1 next build`（清空 .next 后重建）→ exit 0，84/84 静态页
+
+## 说明
+
+- 根路由 `/` 在共享树 build 中为 Dynamic：这是 P1-18 首页 SSR（cookies()）的预期结果，不是本批回归。
+- `components/album/**` 在 token checker 第 12 条规则中豁免（Album 2.0 自有受控暗色主题）。
+- 剩余未迁移：legacy 消费端 400 处 `--album-*/--social-*/--space-*`（已冻结基线只拦新增）、Tailwind travel/album/warm/primary 仍 hex（需 RGB 通道方案）、移动端旧 `www/` 与 Android assets 内的旧字体副本（下次移动端构建清除）。
