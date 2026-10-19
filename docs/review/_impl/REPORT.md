@@ -400,3 +400,24 @@
 ## ⑥ 部署脚本端到端 + 1.26.0 发版
 - 本轮以 1.26.0 真实走完 server-rebuild（磁盘/空间/备份门禁/清理/解包/重建/健康检查）与镜像构建；部署后验证见下方「发布记录」。
 - APK：15,306,490 B，versionCode 57 / 1.26.0，签名 MD5 f67e57f3…（与历史一致）。
+
+
+## 1.26.0 发布与 CI 收口记录（2026-10-19 23:20）
+
+- 镜像构建：8fcb5e2895bb（Next 16.4.2 / Turbopack），容器 healthy；/api/health 200（db/migrations/storage 全 ok），/api/version = 1.26.0/build 57 且 sha256/size/minSupportedBuild 正确。
+- APK 已发布：tiantu.apk = 15,306,490 B，sha256 46a6bf93…，公网下载 200 且哈希一致。
+- 部署踩坑（已修）：服务器残留旧根文件 middleware.ts，Next16 构建报「Both middleware and proxy detected」→ server-rebuild 新增根目录源码按归档同步（middleware.ts/proxy.ts/next.config.js/eslint.config.mjs 等）；同时 tests/ 已纳入 stale 清理。
+- CI e2e 首跑失败根因（已修）：新库 e2e 账号首次登录会弹「偏好问卷」全屏 dialog（B2 接入 useModalLayer 后具备点击拦截），挡住 mobile-drawer 用例；global-setup 现通过 PATCH /api/me/preferences {skipped:true} 落库 + storageState 预置 onboard localStorage，用例从「老用户」状态开始。CI 同款环境本地复跑 17/17 通过。
+
+## 六项最终状态
+
+| 项 | 状态 | 证据 |
+|---|---|---|
+| 存量库迁移自动修复 | ✅ | 16 单测 + 4 真实 MySQL 集成；DEPLOYMENT.md 自动修复章节 |
+| 多副本准备 | ✅ | Redis 缓存/限流/降级、MEDIA_TMP_DIR、compose profile、14 项单例清单；tsc/vitest 978 |
+| 真机验证 | ⛔ 环境阻塞 | 无 hypervisor/真机；静态 APK 证据 + debug 包已构建；报告 §6 待真机清单 |
+| a11y axe | ✅ 18/18 | 真实 MySQL+Playwright；0 未登记 critical/serious |
+| Next16/ESLint10 | ✅ 已合并 | Turbopack 84/84、flat config、lint 460 预算；proxy.ts 迁移 |
+| Tailwind 4 | ❌ 回滚 | @apply 变体/typography 插件/无视觉基线；评估文档 |
+| Prisma 8 | ⏸ 阻塞 | 仅 RC、无 8.x client；engines 与 adapter 耦合 |
+| 部署脚本端到端 | ✅ | 1.26.0 真实 deploy；根文件同步修复已验证 |
