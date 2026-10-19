@@ -79,7 +79,9 @@ PRESENT=$(mktemp)
 STALE=$(mktemp)
 tar -tzf "$TARBALL" | sed 's#^\./##' | grep -v '/$' | sort > "$MANIFEST"
 
-for dir in app components lib hooks prisma types; do
+# tests 也必须清理：Docker 构建会把 tests/ 一起 COPY 进 builder 并跑 tsc，
+# 服务器上残留的旧测试（引用已删除的 app/api 路由）会让镜像构建在 typecheck 阶段失败。
+for dir in app components lib hooks prisma types tests; do
   [ -d "$PROJECT_DIR/$dir" ] || continue
   ( cd "$PROJECT_DIR" && find "$dir" -type f \
       \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.cjs' -o -name '*.mjs' \

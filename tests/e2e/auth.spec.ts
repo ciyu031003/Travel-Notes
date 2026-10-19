@@ -22,7 +22,10 @@ test('登录页 UI 登录 → 进入应用 → 退出登录', async ({ page }) =
 
   // 退出登录：R4 起「我的」页只留旅行档案，退出按钮在右上角 ≡ 的抽屉底部
   await page.goto('/me')
-  await page.getByRole('button', { name: '设置与记录入口' }).click()
+  // 首屏/水合可能较慢：先等抽屉入口出现再点，避免 CI(retries=0) 因瞬时未就绪而红
+  const drawerTrigger = page.getByRole('button', { name: '设置与记录入口' })
+  await expect(drawerTrigger).toBeVisible({ timeout: 30_000 })
+  await drawerTrigger.click()
   await expect(page.getByRole('dialog', { name: '记录与设置' })).toBeVisible({ timeout: 15_000 })
   const logout = page.getByRole('button', { name: /退出登录/ })
   await expect(logout).toBeVisible({ timeout: 20_000 })
