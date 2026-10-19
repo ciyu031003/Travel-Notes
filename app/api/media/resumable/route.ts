@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import fs from 'fs'
-import os from 'os'
 import path from 'path'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { canManageAlbum, addMediaToAlbum } from '@/lib/modules/album/album.service'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+// 多副本准备 · B：共享限流（未配置 REDIS_URL 时与同步内存版等价，行为不变）
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { ApiError, errorResponse } from '@/lib/api-response'
 import { parseBody, getRequestId } from '@/lib/api/handler'
 import { RESUMABLE_CHUNK_BYTES, totalChunksForBytes } from '@/lib/media/upload-policy'
+import { mediaTmpDir } from '@/lib/media/tmp-dir'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,7 +33,14 @@ export const dynamic = 'force-dynamic'
 
 const IMAGE_MAX_BYTES = 20 * 1024 * 1024
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000
-const TMP_ROOT = path.join(os.tmpdir(), 'tn-iuploads')
+/**
+ * 分片临时根目录（多副本准备 · B）：MEDIA_TMP_DIR 可配，默认 os.tmpdir()。
+ * 多副本时指向共享卷，否则「init 在 A、chunk 到 B」会找不到会话目录。
+ * 用函数而不是模块级常量：环境变量在测试/运行时可能晚于模块加载。
+ */
+function tmpRoot(): string {
+  return mediaTmpDir('tn-iuploads')
+}
 
 const UploadIdSchema = z.string().uuid('无效 uploadId')
 
@@ -69,7 +77,7 @@ interface SessionMeta {
 }
 
 function tmpDirOf(uploadId: string): string {
-  return path.join(TMP_ROOT, uploadId)
+  return path.join(tmpRoot(), uploadId)
 }
 
 function readMeta(uploadId: string): SessionMeta | null {
@@ -95,12 +103,12 @@ function uploadedChunks(uploadId: string, totalChunks: number): number[] {
 
 function cleanupStaleSessions(): void {
   try {
-    if (!fs.existsSync(TMP_ROOT)) return
+    if (!fs.existsSync(tmpRoot())) return
     const now = Date.now()
-    for (const dir of fs.readdirSync(TMP_ROOT)) {
+    for (const dir of fs.readdirSync(tmpRoot())) {
       const meta = readMeta(dir)
       if (meta && now - meta.createdAt > SESSION_TTL_MS) {
-        fs.rmSync(path.join(TMP_ROOT, dir), { recursive: true, force: true })
+        fs.rmSync(path.join(tmpRoot(), dir), { recursive: true, force: true })
       }
     }
   } catch {
@@ -138,7 +146,7 @@ export async function POST(request: NextRequest) {
   try {
     // ---------- 分片（multipart） ----------
     if (contentType.includes('multipart/form-data')) {
-      const limit = rateLimit({ prefix: 'ichunk:ip', key: ip || 'unknown', limit: 900, windowMs: 15 * 60 * 1000 })
+      const limit = await rateLimitShared({ prefix: 'ichunk:ip', key: ip || 'unknown', limit: 900, windowMs: 15 * 60 * 1000 })
       if (!limit.ok) return NextResponse.json({ error: '上传过于频繁，请稍后再试' }, { status: 429 })
 
       const form = await request.formData()
@@ -167,7 +175,7 @@ export async function POST(request: NextRequest) {
     const body = await parseBody(request, JsonSchema)
 
     if (body.action === 'init') {
-      const limit = rateLimit({ prefix: 'iinit:ip', key: ip || 'unknown', limit: 120, windowMs: 15 * 60 * 1000 })
+      const limit = await rateLimitShared({ prefix: 'iinit:ip', key: ip || 'unknown', limit: 120, windowMs: 15 * 60 * 1000 })
       if (!limit.ok) return NextResponse.json({ error: '上传过于频繁，请稍后再试' }, { status: 429 })
 
       if (body.size > IMAGE_MAX_BYTES) {
@@ -184,7 +192,7 @@ export async function POST(request: NextRequest) {
       }
 
       cleanupStaleSessions()
-      fs.mkdirSync(TMP_ROOT, { recursive: true })
+      fs.mkdirSync(tmpRoot(), { recursive: true })
       const uploadId = randomUUID()
       const meta: SessionMeta = {
         filename: sanitizeBase(body.filename || 'photo.jpg'),

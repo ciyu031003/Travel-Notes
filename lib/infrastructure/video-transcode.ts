@@ -11,9 +11,9 @@
 import { spawn } from 'child_process'
 import { logger } from './logger'
 import fs from 'fs'
-import os from 'os'
 import path from 'path'
 import { variantFilenameFor, TRANSCODE_MIN_SIZE } from './video-upload-shared'
+import { mediaTmpBaseDir } from '../media/tmp-dir'
 
 const VIDEO_DIR = path.join(process.cwd(), 'public', 'uploads', 'videos')
 const MARKER_SUFFIX = '.transcoding'
@@ -80,7 +80,7 @@ async function processQueue(): Promise<void> {
     const marker = src + MARKER_SUFFIX
     // COSFS（对象存储语义）不友好于 ffmpeg 的渐进写 + faststart 二次重写——
     // 先转码到容器本地盘，成功后整文件落到媒体目录。
-    const tmpDst = path.join(os.tmpdir(), 'tn-transcode-' + variant)
+    const tmpDst = path.join(mediaTmpBaseDir(), 'tn-transcode-' + variant)
     try {
       if (!fs.existsSync(src) || fs.existsSync(dst)) continue
       if (!isFfmpegAvailable()) continue

@@ -111,3 +111,45 @@ export function recordLoginFailure(lockKey: string, options: LoginLockOptions): 
 export function clearLoginFailures(lockKey: string): void {
   failures.delete(lockKey)
 }
+
+// ============================================================
+// 多副本准备（B）：共享限流抽象
+//
+// 上面两个函数是**进程内**固定窗口实现，默认行为保持不变（未配置 REDIS_URL 时
+// 所有调用点继续走它们）。下面这层接口 + MemoryRateLimiter 提供统一的异步形态，
+// 由 rate-limit-factory.ts 在配置 REDIS_URL 时切换成 Redis 实现（跨副本共享）。
+// ============================================================
+
+export interface LoginLockState {
+  locked: boolean
+  retryAfterSeconds: number
+}
+
+/** 限流器接口：内存实现与 Redis 实现共同遵守；调用方使用 rateLimitShared 即可 */
+export interface RateLimiter {
+  consume(options: RateLimitOptions): Promise<RateLimitResult>
+  checkLock(lockKey: string, options: LoginLockOptions): Promise<LoginLockState>
+  recordFailure(lockKey: string, options: LoginLockOptions): Promise<LoginLockState>
+  clearFailures(lockKey: string): Promise<void>
+}
+
+/** 内存实现：直接复用上面的同步函数，保证「未配置 Redis 时行为与改造前完全一致」 */
+export class MemoryRateLimiter implements RateLimiter {
+  async consume(options: RateLimitOptions): Promise<RateLimitResult> {
+    return rateLimit(options)
+  }
+
+  async checkLock(lockKey: string, options: LoginLockOptions): Promise<LoginLockState> {
+    return checkLoginLock(lockKey, options)
+  }
+
+  async recordFailure(lockKey: string, options: LoginLockOptions): Promise<LoginLockState> {
+    return recordLoginFailure(lockKey, options)
+  }
+
+  async clearFailures(lockKey: string): Promise<void> {
+    clearLoginFailures(lockKey)
+  }
+}
+
+export const memoryRateLimiter = new MemoryRateLimiter()

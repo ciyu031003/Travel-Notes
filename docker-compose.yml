@@ -27,6 +27,42 @@ services:
         max-size: "20m"
         max-file: "5"
 
+  # ===== 可选：Redis（多副本共享限流/缓存）=====
+  # 默认**不启动**（profiles: ["redis"]），单实例部署完全不受影响。
+  # 开启方式：docker compose --profile redis up -d --build
+  # 开启后在 .env 里设置 REDIS_URL=redis://redis:6379，app 会自动切到 Redis 实现；
+  # REDIS_URL 未配置时一律走进程内存实现（与改造前行为一致）。
+  redis:
+    image: redis:7-alpine
+    container_name: travel-notes-redis
+    profiles: ["redis"]
+    restart: unless-stopped
+    # 只做限流/缓存，不做持久化：重启即清空（限流窗口/缓存丢失可接受，避免 AOF/RDB 拖慢写）
+    command:
+      - redis-server
+      - --appendonly
+      - "no"
+      - --save
+      - ""
+      - --maxmemory
+      - 128mb
+      - --maxmemory-policy
+      - allkeys-lru
+    # 只绑回环：不对外暴露；多副本在同一台机器经 docker 网络互访
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   app:
     build:
       context: .
@@ -76,6 +112,13 @@ services:
       # 更新弹窗文案（app/api/version/route.ts 支持 APP_CHANGELOG 覆盖）。
       # 此前 compose 没转发这个变量 → 每次改文案都被迫改代码、重新构建镜像。
       APP_CHANGELOG: ${APP_CHANGELOG:-}
+      # ===== 多副本准备（默认空 = 纯内存，与改造前完全一致）=====
+      # 配置后限流/缓存切到 Redis（docker compose --profile redis up -d，再设
+      # REDIS_URL=redis://redis:6379）；连接失败/超时 500ms 自动降级内存并告警一次。
+      REDIS_URL: ${REDIS_URL:-}
+      # 媒体分片/转码临时目录根（默认 os.tmpdir()）。多副本时指向共享卷，
+      # 否则「init 在副本 A、chunk 落到副本 B」会找不到会话目录。
+      MEDIA_TMP_DIR: ${MEDIA_TMP_DIR:-}
     ports:
       # 只绑本机回环：Nginx 在同一台机器反代，无需把 3000 暴露到公网。
       - "127.0.0.1:${APP_PORT:-3000}:3000"

@@ -13,7 +13,7 @@ import { PrismaLikeRepository } from './repositories/like-repository'
 import { PhotoMessageService } from './services/photo-message-service'
 import { PrismaPhotoMessageRepository } from './repositories/photo-message-repository'
 import { UnifiedMarkdownRenderer } from './infrastructure/markdown'
-import { MemoryCacheService } from './infrastructure/cache'
+import { getCacheService, __resetCacheServiceForTest } from './infrastructure/cache-factory'
 import { tokenService } from './services/token-service'
 import { prismaTokenBlacklistRepository } from './repositories/token-blacklist-repository'
 import { prismaSessionRepository } from './repositories/session-repository'
@@ -30,14 +30,10 @@ let documentImportServiceInstance: DocumentImportService | null = null
 let momentServiceInstance: MomentService | null = null
 let likeServiceInstance: LikeService | null = null
 let photoMessageServiceInstance: PhotoMessageService | null = null
-let cacheServiceInstance: MemoryCacheService | null = null
 
-function getCacheService(): MemoryCacheService {
-  if (!cacheServiceInstance) {
-    cacheServiceInstance = new MemoryCacheService()
-  }
-  return cacheServiceInstance
-}
+// 缓存服务由 cache-factory 决定实现（多副本准备 · B）：
+// 未配置 REDIS_URL → 与改造前同一个 MemoryCacheService 实例（行为完全一致）；
+// 配置 REDIS_URL → Redis 实现，跨副本共享 tag 失效，失败自动回退内存。
 
 export function getPostService(): PostService {
   if (!postServiceInstance) {
@@ -127,6 +123,7 @@ export function resetServices(): void {
   momentServiceInstance = null
   likeServiceInstance = null
   photoMessageServiceInstance = null
-  cacheServiceInstance = null
+  // 缓存单例在 cache-factory 内（可能是内存或 Redis 实现），由它自己重置
+  __resetCacheServiceForTest()
 }
 
