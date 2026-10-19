@@ -7,6 +7,7 @@ import { isNativePlatform } from '@/lib/modules/offline/platform'
 import { ensureOfflineAccountScope } from '@/lib/modules/offline/account-scope'
 import { saveHomeSnapshot } from '@/lib/modules/offline/home-snapshot'
 import { installClientErrorReporter } from '@/lib/modules/offline/diagnostics'
+import { runMediaMaintenance } from '@/lib/media/local-files'
 
 /**
  * 原生壳启动引导。
@@ -36,6 +37,12 @@ export default function OfflineBootstrap() {
           // 校验失败按"未知"处理，不清库
         }
         if (cancelled) return
+        try {
+          // B5：启动时做一次媒体维护（先收尾已上传原图，再按 400MB 配额 LRU）
+          void runMediaMaintenance().catch(() => {})
+        } catch {
+          // 维护失败不影响启动
+        }
         try {
           await startSyncEngine()
         } catch {

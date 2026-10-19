@@ -4,7 +4,8 @@
  * - UPLOAD_MEDIA：读本地照片 base64 → multipart 上传相册媒体接口。
  */
 import type { SyncQueueItem } from './types'
-import { readLocalPhotoBase64 } from './media-upload'
+import { uploadMediaFromLocalFile } from './media-upload'
+import { finalizeUploadedMedia } from '@/lib/media/local-files'
 import { findRemoteIdByLocalId } from './dao'
 import { apiUrl } from '@/lib/api-base'
 import { decodeSyncPayload } from './sync-payload'
@@ -238,59 +239,47 @@ export class HttpSyncDispatcher implements SyncDispatcher {
     return { remoteId: pickRemoteId(json), slug: pickSlug(json) }
   }
 
-  /** 媒体上传：读本地照片 → multipart → POST /api/admin/albums/{albumId}/media */
+  /**
+   * 媒体上传（B5）：读本地照片 → >2MB 走分片续传、失败回退整图 → 成功后收尾本地文件。
+   *
+   * 具体上传细节收敛在 media-upload.uploadMediaFromLocalFile（那边知道压缩策略、
+   * 分片协议与回退顺序）；这里只做两件事：把结果翻译成同步语义、成功后删本地原图。
+   */
   private async uploadMedia(item: SyncQueueItem): Promise<UploadResult> {
     const payload = decodeSyncPayload(item.payload)
     // decodeSyncPayload 返回 unknown 值（它要兼容历史双重编码），这里显式收窄
     const albumRaw = payload.albumId
     const localPathRaw = payload.localPath
     const mimeRaw = payload.mimeType
-    if (albumRaw == null) throw new Error('UPLOAD_MEDIA 缺少 albumId')
-    if (localPathRaw == null || localPathRaw === '') throw new Error('UPLOAD_MEDIA 缺少 localPath')
-    const albumId = String(albumRaw)
+    if (albumRaw == null) throw new SyncPermanentError('UPLOAD_MEDIA 缺少 albumId')
+    if (localPathRaw == null || localPathRaw === '') throw new SyncPermanentError('UPLOAD_MEDIA 缺少 localPath')
     const localPath = String(localPathRaw)
     const mimeType = typeof mimeRaw === 'string' && mimeRaw ? mimeRaw : 'image/jpeg'
 
-    const base64 = await readLocalPhotoBase64(localPath)
-    if (!base64) throw new Error('本地照片读取失败')
-
-    const bytes = base64ToBytes(base64)
-    const form = new FormData()
-    const ext = extFromMime(mimeType)
-    form.append('files', new Blob([bytes], { type: mimeType }), 'photo-' + Date.now() + '.' + ext)
-
-    const res = await syncFetch(apiUrl('/api/admin/albums/' + albumId + '/media'), {
-      method: 'POST',
-      credentials: 'include',
-      // 媒体上传也要幂等键：弱网下"服务端已收、响应丢失"重传会生成重复照片
-      headers: idempotencyHeaders(payload),
-      body: form,
+    const mutationId = payload[CLIENT_MUTATION_ID_KEY]
+    const outcome = await uploadMediaFromLocalFile({
+      albumId: String(albumRaw),
+      localPath,
+      mimeType,
+      idempotencyKey: typeof mutationId === 'string' && mutationId ? mutationId : undefined,
     })
-    await assertSyncOk(res)
-    const json = await res.json()
-    if (json?.success === false || json?.error) throw new Error(json.error || '同步未保存')
-    const media = json && typeof json === 'object' ? (json as { media?: Array<{ id?: unknown }> }).media : undefined
-    const remoteId = Array.isArray(media) && media[0] && media[0].id != null ? Number(media[0].id) : undefined
-    return { remoteId: Number.isFinite(remoteId as number) ? (remoteId as number) : pickRemoteId(json) }
+    if (!outcome.ok) {
+      // 4xx 是永久失败（重试不会自愈），交给引擎标 DEAD；5xx/网络错误继续退避重试
+      throw outcome.permanent ? new SyncPermanentError(outcome.error) : new Error(outcome.error)
+    }
+
+    /**
+     * 上传成功后立即收尾：删本地原图、localPath 指向 320px 缩略图。
+     * 失败只记日志（不能因为"删文件失败"把已成功的上传判成失败 → 重复上传）。
+     */
+    try {
+      await finalizeUploadedMedia(String(item.entityId ?? ''))
+    } catch (e) {
+      console.warn('[sync] 上传成功但本地原图收尾失败（不影响同步结果）:', e instanceof Error ? e.message : e)
+    }
+
+    return { remoteId: outcome.remoteId }
   }
 }
 
-function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
-  if (typeof atob === 'function') {
-    const bin = atob(b64)
-    const bytes = new Uint8Array(bin.length)
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
-    return bytes
-  }
-  return new Uint8Array(0)
-}
-
-function extFromMime(mimeType: string): string {
-  const map: Record<string, string> = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp',
-    'image/gif': 'gif',
-  }
-  return map[mimeType] || 'jpg'
-}
+/* B5：base64/mime 工具随媒体上传迁到 media-upload.ts / lib/media/*，这里不再重复实现。 */

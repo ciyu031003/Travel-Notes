@@ -8,20 +8,28 @@
  * 并把两端归一成同一个 `PickedPhoto` 形状（base64 + 元数据）。
  */
 import { pickPhotoFromCamera } from '@/lib/modules/offline/media-upload'
+import { compressImageBase64 } from '@/lib/media/compress'
 
 export interface PickedImage {
   /** 本地唯一 id（原生壳直接用 Capacitor 的；Web 用随机 id） */
   id: string
-  /** 不含 data: 前缀的 base64 */
+  /** 不含 data: 前缀的 base64（已压缩） */
   base64: string
   mimeType: string
   size: number
   width: number | null
   height: number | null
+  /** 压缩前字节数（诊断/展示"节省了多少"） */
+  originalBytes?: number
 }
 
-/** Web：读 file input 选中的文件并压到合理尺寸，避免上传好几 MB 的原图 */
-async function readFileAsImage(file: File): Promise<PickedImage | null> {
+/**
+ * Web：读 file input 选中的文件并**真正压缩**（长边 1600 / q0.82，高清模式 4096 / q0.9）。
+ *
+ * 上一版注释写着"压到合理尺寸"但实现只读了原始 base64 —— 于是 Web 端每次都在传
+ * 好几 MB 的原图。B5 起统一走 lib/media/compress（与原生壳同一套策略）。
+ */
+async function readFileAsImage(file: File, options?: { preferHd?: boolean }): Promise<PickedImage | null> {
   const dataUrl: string = await new Promise((resolve, reject) => {
     const fr = new FileReader()
     fr.onload = () => resolve(String(fr.result || ''))
@@ -40,24 +48,35 @@ async function readFileAsImage(file: File): Promise<PickedImage | null> {
     img.src = dataUrl
   })
 
-  return {
-    id: `w_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+  const compressed = await compressImageBase64({
     base64,
     mimeType: file.type || 'image/jpeg',
-    size: file.size,
-    width: dims.w || null,
-    height: dims.h || null,
+    preferHd: options?.preferHd,
+  })
+
+  return {
+    id: `w_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+    base64: compressed.base64,
+    mimeType: compressed.mimeType,
+    size: compressed.compressedBytes,
+    width: compressed.width || dims.w || null,
+    height: compressed.height || dims.h || null,
+    originalBytes: compressed.originalBytes || file.size,
   }
 }
 
 /**
- * 打开选择器并返回一张照片。
- * @param prefer 来源偏好；Web 端忽略该参数（统一走文件选择）
+ * 打开选择器并返回一张照片（两端都已完成压缩）。
+ * @param prefer    来源偏好；Web 端忽略该参数（统一走文件选择）
+ * @param options.preferHd 用户显式选择高清（默认压缩到长边 1600）
  */
-export async function pickImage(prefer: 'photos' | 'camera' = 'photos'): Promise<PickedImage | null> {
+export async function pickImage(
+  prefer: 'photos' | 'camera' = 'photos',
+  options?: { preferHd?: boolean },
+): Promise<PickedImage | null> {
   const { isNativePlatform } = await import('@/lib/modules/offline/platform')
   if (isNativePlatform()) {
-    const p = await pickPhotoFromCamera(prefer as 'camera' | 'photos')
+    const p = await pickPhotoFromCamera(prefer as 'camera' | 'photos', options)
     if (!p) return null
     return {
       id: p.id,
@@ -66,6 +85,7 @@ export async function pickImage(prefer: 'photos' | 'camera' = 'photos'): Promise
       size: p.size,
       width: p.width ?? null,
       height: p.height ?? null,
+      originalBytes: p.originalBytes,
     }
   }
 
@@ -80,7 +100,7 @@ export async function pickImage(prefer: 'photos' | 'camera' = 'photos'): Promise
       input.remove()
       if (!file) return resolve(null)
       try {
-        resolve(await readFileAsImage(file))
+        resolve(await readFileAsImage(file, options))
       } catch {
         resolve(null)
       }

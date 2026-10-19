@@ -73,6 +73,28 @@ export async function readTextFile(path: string, dir: FsDir = 'Data'): Promise<s
   }
 }
 
+/**
+ * 文件体积与最后修改时间（B5：LRU 清理依据）。
+ * 不存在 / 插件异常返回 null（调用方按"未知"跳过，绝不因此中断清理）。
+ */
+export async function statLocalFile(
+  path: string,
+  dir: FsDir = 'Data',
+): Promise<{ size: number; mtime: number } | null> {
+  if (!isNativePlatform()) {
+    const data = webStore.get(dir + '/' + path) ?? webStore.get('text:' + dir + '/' + path)
+    if (data == null) return null
+    return { size: data.length, mtime: 0 }
+  }
+  const { Filesystem, Directory } = await import('@capacitor/filesystem')
+  try {
+    const res = await Filesystem.stat({ path, directory: Directory[dir] })
+    return { size: Number(res.size) || 0, mtime: Number(res.mtime) || 0 }
+  } catch {
+    return null
+  }
+}
+
 /** 列出目录下的文件名（不存在/插件异常返回空数组，供清理逻辑使用） */
 export async function listLocalFiles(path: string, dir: FsDir = 'Data'): Promise<string[]> {
   if (!isNativePlatform()) {
