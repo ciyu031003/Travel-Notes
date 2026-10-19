@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { NextRequest } from 'next/server'
-import { middleware } from '../../middleware'
+import proxy from '../../proxy'
 
-describe('middleware CSRF 防护', () => {
+describe('proxy（原 middleware）CSRF 防护', () => {
   it('跨站 POST（Origin 与 Host 不一致）返回 403', async () => {
     const req = new NextRequest('http://example.com/api/admin/posts', {
       method: 'POST',
@@ -11,7 +11,7 @@ describe('middleware CSRF 防护', () => {
         host: 'example.com',
       },
     })
-    const res = await middleware(req)
+    const res = await proxy(req)
     expect(res.status).toBe(403)
   })
 
@@ -23,7 +23,7 @@ describe('middleware CSRF 防护', () => {
         host: 'example.com',
       },
     })
-    const res = await middleware(req)
+    const res = await proxy(req)
     expect(res.status).not.toBe(403)
   })
 
@@ -32,7 +32,7 @@ describe('middleware CSRF 防护', () => {
       method: 'POST',
       headers: { host: 'example.com' },
     })
-    const res = await middleware(req)
+    const res = await proxy(req)
     expect(res.status).not.toBe(403)
   })
   it('生产模式下 App 壳预检（Origin=https://localhost）回显 ACAO + 凭据（P1-13 兼容）', async () => {
@@ -42,7 +42,7 @@ describe('middleware CSRF 防护', () => {
         method: 'OPTIONS',
         headers: { origin: 'https://localhost', host: 'example.com' },
       })
-      const res = await middleware(req)
+      const res = await proxy(req)
       expect(res.headers.get('access-control-allow-origin')).toBe('https://localhost')
       expect(res.headers.get('access-control-allow-credentials')).toBe('true')
       expect(res.headers.get('vary')).toMatch(/origin/i)
@@ -60,7 +60,7 @@ describe('middleware CSRF 防护', () => {
         host: 'example.com',
       },
     })
-    const res = await middleware(req)
+    const res = await proxy(req)
     expect(res.status).toBe(403)
   })
 
@@ -73,7 +73,7 @@ describe('middleware CSRF 防护', () => {
         host: 'example.com',
       },
     })
-    expect((await middleware(req)).status).toBe(403)
+    expect((await proxy(req)).status).toBe(403)
   })
 
   it("Origin 为 'null' 但没有 cross-site 标记 → 放行（Capacitor WebView 兼容）", async () => {
@@ -84,6 +84,6 @@ describe('middleware CSRF 防护', () => {
         host: 'example.com',
       },
     })
-    expect((await middleware(req)).status).not.toBe(403)
+    expect((await proxy(req)).status).not.toBe(403)
   })
 })

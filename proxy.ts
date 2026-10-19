@@ -183,7 +183,8 @@ function rejectCrossOrigin(request: NextRequest): NextResponse | null {
   return null
 }
 
-export async function middleware(request: NextRequest) {
+// Next 16：middleware 文件约定已弃用，改为 proxy.ts + default export proxy（语义/顺序不变）。
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   warnIfInsecureCookie()
