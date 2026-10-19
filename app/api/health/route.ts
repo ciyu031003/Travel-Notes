@@ -38,14 +38,22 @@ async function checkDb(): Promise<DbStatus> {
  * 迁移状态（B10）：_prisma_migrations 里不能存在「未完成」或「已回滚」的迁移。
  *
  * Prisma 的语义：finished_at IS NULL = 应用到一半/失败；rolled_back_at IS NOT NULL = 已回滚。
- * 这两类都意味着「库结构与代码期望不一致」，必须让监控/部署看到（返回 503）。
+ * 注意「回滚后重新 resolve 成功」会留下两行同名记录（旧的 rolled_back + 新的 finished），
+ * 这不是未就绪；只有「没有任何一次成功应用」的迁移才算 pending。
+ * 判定：finished_at IS NULL 且不存在同名 finished_at IS NOT NULL 的记录。
  * 表不存在（历史 db push 库）或查询异常 → unavailable：同样算未就绪，
  * 因为此时无法证明库结构是对的（部署流程 entrypoint 会先做 migrate bootstrap，正常不会长期处于该状态）。
  */
 async function checkMigrations(): Promise<{ status: MigrationStatus; pendingCount: number }> {
   try {
     const rows = await prisma.$queryRawUnsafe<Array<{ migration_name: string }>>(
-      'SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL OR rolled_back_at IS NOT NULL LIMIT 5',
+      `SELECT m.migration_name FROM _prisma_migrations m
+        WHERE m.finished_at IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM _prisma_migrations a
+            WHERE a.migration_name = m.migration_name AND a.finished_at IS NOT NULL
+          )
+        LIMIT 5`,
     )
     const pendingCount = Array.isArray(rows) ? rows.length : 0
     if (pendingCount > 0) {
