@@ -5,6 +5,7 @@ import { Send, Loader2, Clock, MessageCircle, ImageIcon, X, BookOpen } from 'luc
 import { Icon } from '@/components/mobile/Icon'
 import PixelDeskBackground from './PixelDeskBackground'
 import { apiUrl } from '@/lib/api-base'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface Message {
   id: number
@@ -73,13 +74,14 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
     }
   }, [messages])
 
-  // Esc：先关大图，再返回相册
+  // P2-B2：大图预览是弹层，ESC / 焦点 / 滚动锁由 useModalLayer 处理；
+  // 未打开大图时 ESC 仍等于「返回相册」。
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({ open: previewOpen, onClose: () => setPreviewOpen(false), panelRef })
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (previewOpen) setPreviewOpen(false)
-        else onBack()
-      }
+      if (e.key === 'Escape' && !previewOpen) onBack()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -190,7 +192,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                   onClick={() => setPreviewOpen(true)}
                   title="点击预览大图"
                 >
-                  <img src={image} alt={cityName || '照片'} loading="lazy" decoding="async" className="w-full aspect-[4/3] object-cover border border-black/70" />
+                  <img src={image} alt={cityName || '照片'} width={400} height={300} loading="lazy" decoding="async" className="w-full aspect-[4/3] object-cover border border-black/70" />
                   <div className="pt-1.5 text-center">
                     <span className="text-xs text-pixel-ink font-bold truncate block">{cityName || '记忆'}</span>
                     {date && <span className="text-xs text-pixel-muted mt-0.5 block">{date}</span>}
@@ -303,7 +305,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                   title="点击预览大图"
                 >
                   <div className="photo-negative-tag">寄照底片</div>
-                  <img src={image} alt="记忆底片" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  <img src={image} alt="记忆底片" width={112} height={112} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
 
                 <p className="text-xs text-album-warm mt-3 font-bold">
@@ -346,6 +348,8 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
         <div
           className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4"
           onClick={() => setPreviewOpen(false)}
+          ref={panelRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-label="照片大图预览"
@@ -362,6 +366,8 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
             <img
               src={image}
               alt={`${cityName || '旅行记忆'} 大图预览`}
+              loading="eager"
+              decoding="async"
               className="w-full max-h-[85vh] object-contain border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,0.6)]"
             />
             <p className="text-center text-xs text-album-warm mt-3 font-bold select-none">

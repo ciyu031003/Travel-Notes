@@ -8,6 +8,7 @@ import DateRangePicker from './DateRangePicker'
 import { toast } from '@/lib/mobile/toast-store'
 import { updateTravelInfo } from '@/lib/modules/offline/travel-edit'
 import { evaluateDateRange, formatCompactRange, formatRangeSubtitle, suggestLocations } from '@/lib/modules/travel/draft'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 /**
  * 「编辑旅行信息」抽屉：改标题 / 目的地 / 日期区间 / 一句话描述。
@@ -58,6 +59,14 @@ export default function TravelInfoEditor({
   const [locFocus, setLocFocus] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: true,
+    onClose: onClose,
+    panelRef,
+  })
   const locationRef = useRef<HTMLDivElement>(null)
 
   const range = evaluateDateRange(startDate, endDate)
@@ -107,7 +116,7 @@ export default function TravelInfoEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-[130] flex items-end justify-center" role="dialog" aria-modal="true" aria-label="编辑旅行信息">
+    <div className="fixed inset-0 z-[130] flex items-end justify-center" ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="编辑旅行信息">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-[var(--m-surface-solid)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 shadow-[var(--m-shadow-lg)]">
         <div className="flex items-start justify-between">

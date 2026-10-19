@@ -128,7 +128,10 @@ export default function PostcardCard({
               <img
                 src={cover}
                 alt={book.title}
+                width={300}
+                height={400}
                 loading="lazy"
+                decoding="async"
                 className={imgLoaded ? 'is-img-loaded' : ''}
                 onLoad={() => setImgLoaded(true)}
                 onError={() => setImgLoaded(true)}

@@ -254,7 +254,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                   href="/admin/travels"
                   label="管理旅行"
                   icon={<Icon icon={Settings2} size="sm" />}
-                  className="text-sm text-travel-ink/70 hover:text-travel-accent transition-colors inline-flex items-center gap-1.5"
+                  className="text-sm text-travel-ink/80 hover:text-travel-accent transition-colors inline-flex items-center gap-1.5"
                 />
               </div>
             </div>

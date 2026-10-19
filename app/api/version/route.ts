@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复半屏抽屉入口全部回首页；移动端安全加固（禁明文/禁备份/SQLite 加密/隐私锁）；字体与包体瘦身',
+    changelog: process.env.APP_CHANGELOG || '离线增量同步与幂等、媒体管线与隐私锁加固、token 三层收敛、可访问性与包体优化',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

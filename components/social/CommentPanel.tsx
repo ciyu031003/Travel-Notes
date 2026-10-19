@@ -13,6 +13,7 @@ import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { SkeletonRows } from '@/components/mobile/SkeletonList'
 import { hapticLight, hapticSuccess } from '@/lib/mobile/haptics'
 import { toast } from '@/lib/mobile/toast-store'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface CommentAuthor { id: number; username: string; nickname?: string | null; avatarUrl?: string | null }
 interface Comment {
@@ -305,6 +306,14 @@ export default function CommentPanel({
   const [actionTarget, setActionTarget] = useState<{ id: number; content: string; name: string; mine: boolean } | null>(null)
   /** 自绘删除确认（替代安卓原生 confirm —— 原生弹窗与全站设计语言割裂） */
   const [confirmDelete, setConfirmDelete] = useState<{ id: number } | null>(null)
+
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: Boolean(confirmDelete),
+    onClose: () => setConfirmDelete(null),
+    panelRef,
+  })
   const longPressTimer = useRef<number | null>(null)
 
   const openActions = useCallback((c: Comment, name: string) => {
@@ -409,21 +418,21 @@ export default function CommentPanel({
     const mine = Boolean(c.isMine)
     const liked = Boolean(c.isLiked)
     return (
-      <div key={c.id} className={cn('py-3.5', isReply && 'ml-9 border-l border-[var(--social-line)] pl-3')}>
+      <div key={c.id} className={cn('py-3.5', isReply && 'ml-9 border-l border-[var(--ui-social-line)] pl-3')}>
         <div className="flex items-start gap-3">
           <SocialAvatar name={name} avatarUrl={c.author?.avatarUrl} size={36} />
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-semibold text-[var(--social-text)]">{name}</span>
+              <span className="text-xs font-semibold text-[var(--ui-social-text)]">{name}</span>
               {mine && (
-                <span className="rounded-full bg-[var(--social-bg)] px-1.5 py-0.5 text-[11px] text-[var(--social-accent)]">我</span>
+                <span className="rounded-full bg-[var(--ui-social-bg)] px-1.5 py-0.5 text-[11px] text-[var(--ui-social-accent)]">我</span>
               )}
-              <span className="text-[11px] text-[var(--social-faint)]">{timeAgo(c.createdAt)}</span>
+              <span className="text-[11px] text-[var(--ui-social-faint)]">{timeAgo(c.createdAt)}</span>
             </div>
 
             {/* 长按触发操作抽屉；同时保留可见的删除按钮（可发现性比纯长按好） */}
             <p
-              className="mt-1 break-words text-sm leading-relaxed text-[var(--social-text)]"
+              className="mt-1 break-words text-sm leading-relaxed text-[var(--ui-social-text)]"
               onContextMenu={(e) => { e.preventDefault(); openActions(c, name) }}
               onTouchStart={() => startLongPress(c, name)}
               onTouchEnd={cancelLongPress}
@@ -447,7 +456,7 @@ export default function CommentPanel({
                 aria-label={liked ? `取消点赞，当前 ${c.likeCount} 个赞` : `点赞，当前 ${c.likeCount} 个赞`}
                 className={cn(
                   'm-pressable -ml-1 inline-flex min-h-[40px] items-center gap-1 rounded-full px-2 text-[13px] tabular-nums transition-colors',
-                  liked ? 'text-[var(--social-accent)]' : 'text-[var(--social-faint)] hover:text-[var(--social-accent)]',
+                  liked ? 'text-[var(--ui-social-accent)]' : 'text-[var(--ui-social-faint)] hover:text-[var(--ui-social-accent)]',
                 )}
               >
                 <Icon
@@ -462,7 +471,7 @@ export default function CommentPanel({
                 type="button"
                 onClick={() => setReplyTo({ id: c.id, username: name })}
                 aria-label={`回复 ${name}`}
-                className="inline-flex min-h-[40px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--social-accent)]"
+                className="inline-flex min-h-[40px] items-center gap-1 text-[13px] text-[var(--ui-social-faint)] transition hover:text-[var(--ui-social-accent)]"
               >
                 <Icon icon={CornerDownRight} size="sm" /> 回复
               </button>
@@ -470,7 +479,7 @@ export default function CommentPanel({
                 type="button"
                 onClick={() => openActions(c, name)}
                 aria-label="更多操作"
-                className="m-pressable inline-flex min-h-[40px] items-center rounded-full px-1.5 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--social-text)]"
+                className="m-pressable inline-flex min-h-[40px] items-center rounded-full px-1.5 text-[13px] text-[var(--ui-social-faint)] transition hover:text-[var(--ui-social-text)]"
               >
                 <Icon icon={MoreHorizontal} size="sm" />
               </button>
@@ -478,7 +487,7 @@ export default function CommentPanel({
                 <button
                   type="button"
                   onClick={() => setConfirmDelete({ id: c.id })}
-                  className="inline-flex min-h-[40px] items-center gap-1 text-[13px] text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
+                  className="inline-flex min-h-[40px] items-center gap-1 text-[13px] text-[var(--ui-social-faint)] transition hover:text-[var(--danger-soft)]"
                 >
                   <Icon icon={Trash2} size="sm" /> 删除
                 </button>
@@ -498,19 +507,19 @@ export default function CommentPanel({
         /* 半屏高度：此前只有 max-h 没有 h，内容少时面板会缩成很小一条
            （真机反馈「评论抽屉太小」）。改为固定约半屏 62dvh，内容多了内部滚动。
            用 dvh 而非 vh：地址栏收放时不跳。 */
-        className="absolute inset-x-0 bottom-0 mx-auto flex h-[62dvh] max-w-2xl flex-col overflow-hidden rounded-t-[1.8rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)] transition-[bottom] duration-200 ease-out"
+        className="absolute inset-x-0 bottom-0 mx-auto flex h-[62dvh] max-w-2xl flex-col overflow-hidden rounded-t-[1.8rem] bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)] transition-[bottom] duration-200 ease-out"
         // 键盘弹出时整块上抬 keyboardInset 像素（键盘收起时 insets 为 0，样式不生效）
         style={keyboardInset ? { bottom: keyboardInset } : undefined}
       >
-        <div className="flex items-center justify-between border-b border-[var(--social-line)] px-5 py-4">
-          <h3 className="text-sm font-semibold text-[var(--social-text)]">评论 {total > 0 ? '(' + total + ')' : ''}</h3>
+        <div className="flex items-center justify-between border-b border-[var(--ui-social-line)] px-5 py-4">
+          <h3 className="text-sm font-semibold text-[var(--ui-social-text)]">评论 {total > 0 ? '(' + total + ')' : ''}</h3>
           {/* 图标按钮必须有可访问名称，且触达 ≥44px
               （pro-rules：Icon controls have an accessible name / Touch target minimum） */}
           <button
             type="button"
             onClick={onClose}
             aria-label="关闭评论"
-            className="m-pressable -mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] hover:text-[var(--social-text)]"
+            className="m-pressable -mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--ui-social-muted)] hover:text-[var(--ui-social-text)]"
           >
             <Icon icon={X} size="sm" />
           </button>
@@ -521,17 +530,17 @@ export default function CommentPanel({
             // 骨架屏而非「加载中…」空文本：先给出结构，等待感更低且内容回来不跳高度
             <SkeletonRows rows={3} />
           ) : mergedComments.length === 0 ? (
-            <p className="py-10 text-center text-sm text-[var(--social-faint)]">还没有评论，来写下第一个旅行故事回应～</p>
+            <p className="py-10 text-center text-sm text-[var(--ui-social-faint)]">还没有评论，来写下第一个旅行故事回应～</p>
           ) : (
             mergedComments.map((c) => renderComment(c, false))
           )}
         </div>
 
-        <div className="border-t border-[var(--social-line)] bg-[var(--social-bg)] px-5 py-3">
+        <div className="border-t border-[var(--ui-social-line)] bg-[var(--ui-social-bg)] px-5 py-3">
           {replyTo && (
-            <div className="mb-2 flex items-center gap-2 text-xs text-[var(--social-muted)]">
+            <div className="mb-2 flex items-center gap-2 text-xs text-[var(--ui-social-muted)]">
               <span>回复 @{replyTo.username}</span>
-              <button type="button" onClick={() => setReplyTo(null)} className="text-[var(--social-faint)] hover:text-[var(--social-text)]">取消</button>
+              <button type="button" onClick={() => setReplyTo(null)} className="text-[var(--ui-social-faint)] hover:text-[var(--ui-social-text)]">取消</button>
             </div>
           )}
           {error && <p className="mb-2 text-xs text-[var(--danger-soft)]">{error}</p>}
@@ -539,9 +548,9 @@ export default function CommentPanel({
             <input value={content} onChange={(e) => setContent(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
               placeholder={replyTo ? '回复 ' + replyTo.username + '…' : '写下你的评论…'}
-              className="h-11 min-w-0 flex-1 rounded-full bg-[var(--social-bg)] px-4 text-[16px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] placeholder:text-[var(--social-faint)] focus-visible:ring-[var(--social-accent)]" />
+              className="h-11 min-w-0 flex-1 rounded-full bg-[var(--ui-social-bg)] px-4 text-[16px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] placeholder:text-[var(--ui-social-faint)] focus-visible:ring-[var(--ui-social-accent)]" />
             <button type="button" onClick={submit} disabled={submitting || !content.trim()}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)] transition active:scale-90 disabled:opacity-40">
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-accent)] text-[var(--ui-social-on-accent)] transition active:scale-90 disabled:opacity-40">
               <Icon icon={Send} size="sm" tone="inverse" />
             </button>
           </div>
@@ -561,7 +570,7 @@ export default function CommentPanel({
               className="m-pressable flex min-h-[52px] w-full items-center gap-3 rounded-xl px-3.5 text-left"
             >
               <Icon icon={Share2} size="sm" tone="muted" />
-              <span className="text-sm text-[var(--social-text)]">分享</span>
+              <span className="text-sm text-[var(--ui-social-text)]">分享</span>
             </button>
             <button
               type="button"
@@ -569,7 +578,7 @@ export default function CommentPanel({
               className="m-pressable flex min-h-[52px] w-full items-center gap-3 rounded-xl px-3.5 text-left"
             >
               <Icon icon={Copy} size="sm" tone="muted" />
-              <span className="text-sm text-[var(--social-text)]">复制</span>
+              <span className="text-sm text-[var(--ui-social-text)]">复制</span>
             </button>
             {actionTarget.mine && (
               <button
@@ -591,19 +600,19 @@ export default function CommentPanel({
         暖陶土设计语言完全割裂（真机反馈「那个页面特别丑」）。这里换成项目自己的弹层。
       */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center px-8" role="alertdialog" aria-modal="true" aria-label="删除评论">
+        <div className="fixed inset-0 z-[140] flex items-center justify-center px-8" ref={panelRef} tabIndex={-1} role="alertdialog" aria-modal="true" aria-label="删除评论">
           <div className="absolute inset-0 bg-black/45" onClick={() => setConfirmDelete(null)} />
-          <div className="relative w-full max-w-[300px] overflow-hidden rounded-3xl bg-[var(--social-surface)] p-5 text-center shadow-[var(--m-shadow-lg)]">
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--social-bg)] text-[var(--danger-soft)]">
+          <div className="relative w-full max-w-[300px] overflow-hidden rounded-3xl bg-[var(--ui-social-surface)] p-5 text-center shadow-[var(--m-shadow-lg)]">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ui-social-bg)] text-[var(--danger-soft)]">
               <Icon icon={Trash2} size="md" />
             </div>
-            <p className="mt-3 text-sm font-semibold text-[var(--social-text)]">删除这条评论？</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-[var(--social-muted)]">删除后无法恢复</p>
+            <p className="mt-3 text-sm font-semibold text-[var(--ui-social-text)]">删除这条评论？</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-[var(--ui-social-muted)]">删除后无法恢复</p>
             <div className="mt-4 flex gap-2.5">
               <button
                 type="button"
                 onClick={() => setConfirmDelete(null)}
-                className="m-pressable min-h-[44px] flex-1 rounded-2xl text-sm font-medium text-[var(--social-muted)] ring-1 ring-[var(--social-line)]"
+                className="m-pressable min-h-[44px] flex-1 rounded-2xl text-sm font-medium text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
               >
                 取消
               </button>

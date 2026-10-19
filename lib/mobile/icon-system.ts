@@ -97,6 +97,7 @@ import {
   // 直接 import lucide-react（图标唯一入口 + token 门禁 lucideImport 计数）。
   ArrowLeft,
   Lock,
+  Delete,
   Menu,
   Orbit,
   Rocket,
@@ -426,6 +427,7 @@ export {
   BookOpen,
   ArrowLeft,
   Lock,
+  Delete,
   Menu,
   Orbit,
   Rocket,

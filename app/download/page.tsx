@@ -6,7 +6,7 @@
  * - 展示版本 / 更新日志 / 安装说明 / 二维码（扫码下载）
  * - 已在 App 内（原生壳）时展示「已安装」状态
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
 import {
@@ -25,6 +25,7 @@ import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 import { APP_DOWNLOAD_URL } from '@/lib/app-version'
 import IcpLicense from '@/components/IcpLicense'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface VersionManifest {
   version: string
@@ -48,6 +49,14 @@ export default function DownloadPage() {
   /** APK 实际体积（MB 整数）。原先页面写死「约 91MB」，实际包已降到 ~25MB，
       写死值会随每次发版失真；改为 HEAD 请求同源 APK 取 content-length。 */
   const [apkSizeMb, setApkSizeMb] = useState<number | null>(null)
+
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: modalOpen,
+    onClose: () => setModalOpen(false),
+    panelRef,
+  })
 
   const downloadUrl = manifest?.downloadUrl || APP_DOWNLOAD_URL
   const version = manifest?.version || '1.0.0'
@@ -118,7 +127,7 @@ export default function DownloadPage() {
           <Icon icon={ArrowLeft} size="sm" />
           返回
         </Link>
-        <span className="text-sm text-travel-ink/70 dark:text-shell-muted">甜途 · 移动端</span>
+        <span className="text-sm text-travel-ink/80 dark:text-shell-muted">甜途 · 移动端</span>
       </header>
 
       <main className="mx-auto w-full max-w-3xl px-4 py-8 md:py-12">
@@ -130,7 +139,7 @@ export default function DownloadPage() {
           <h1 className="mt-4 text-3xl font-bold text-travel-inkStrong dark:text-shell-text md:text-4xl">
             甜途 App
           </h1>
-          <p className="mt-2 text-sm text-travel-ink/70 dark:text-shell-muted md:text-base">
+          <p className="mt-2 text-sm text-travel-ink/80 dark:text-shell-muted md:text-base">
             把每一次出发与归来，都装进口袋。
           </p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-travel-bloom/40 bg-white/70 px-4 py-1.5 text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface dark:text-travel-bloom">
@@ -147,7 +156,7 @@ export default function DownloadPage() {
             <h2 className="mt-3 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">
               你正在使用甜途 App
             </h2>
-            <p className="mt-2 text-sm text-travel-ink/70 dark:text-shell-muted">
+            <p className="mt-2 text-sm text-travel-ink/80 dark:text-shell-muted">
               当前版本 v{version}（build {buildNumber}）。新版本会通过 OTA 自动提示更新。
             </p>
           </section>
@@ -166,13 +175,13 @@ export default function DownloadPage() {
               <button
                 type="button"
                 onClick={copyLink}
-                className="mt-3 w-full rounded-xl border border-travel-line bg-white/60 py-2.5 text-sm text-travel-ink/70 transition hover:bg-white dark:border-shell-line dark:bg-shell-surface/60 dark:text-shell-muted dark:hover:bg-shell-surface"
+                className="mt-3 w-full rounded-xl border border-travel-line bg-white/60 py-2.5 text-sm text-travel-ink/80 transition hover:bg-white dark:border-shell-line dark:bg-shell-surface/60 dark:text-shell-muted dark:hover:bg-shell-surface"
               >
                 {copied ? '已复制链接 ✓' : '复制下载链接'}
               </button>
 
               {/* iOS 提示 */}
-              <p className="mt-4 rounded-2xl border border-travel-sky/40 bg-travel-mist/40 px-4 py-3 text-center text-xs leading-relaxed text-travel-ink/70 dark:border-shell-line dark:bg-shell-surface/60 dark:text-shell-muted">
+              <p className="mt-4 rounded-2xl border border-travel-sky/40 bg-travel-mist/40 px-4 py-3 text-center text-xs leading-relaxed text-travel-ink/80 dark:border-shell-line dark:bg-shell-surface/60 dark:text-shell-muted">
                 <Icon icon={Info} size="sm" className="mr-1 inline align-[-2px]" />
                 iOS 暂不支持安装 APK，可直接使用网页版
                 <Link href="/" className="mx-1 font-medium text-travel-accent underline-offset-2 hover:underline dark:text-travel-bloom">
@@ -196,7 +205,7 @@ export default function DownloadPage() {
               </div>
               <div className="mt-5 text-center md:mt-0 md:text-left">
                 <h2 className="text-lg font-semibold text-travel-inkStrong dark:text-shell-text">扫码下载</h2>
-                <p className="mt-2 text-sm leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+                <p className="mt-2 text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
                   用手机浏览器扫码即可下载安装包；
                   <br className="hidden md:block" />
                   电脑上打开本页，手机扫码最方便。
@@ -222,7 +231,7 @@ export default function DownloadPage() {
           <div
             className="fixed inset-0 z-50 flex items-end justify-center bg-travel-ink/40 backdrop-blur-sm sm:items-center sm:p-4"
             onClick={() => setModalOpen(false)}
-            role="dialog"
+            ref={panelRef} tabIndex={-1} role="dialog"
             aria-modal="true"
             aria-label="下载甜途 App"
           >
@@ -272,7 +281,7 @@ export default function DownloadPage() {
 
               <div className="mt-4 rounded-2xl border border-travel-line bg-white/70 p-4 dark:border-shell-line dark:bg-shell-surface/70">
                 <p className="text-xs font-medium text-travel-inkStrong dark:text-shell-text">本次更新</p>
-                <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+                <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-travel-ink/80 dark:text-shell-muted">
                   {changelog}
                 </p>
               </div>
@@ -306,7 +315,7 @@ export default function DownloadPage() {
                 </span>
                 <div>
                   <p className="text-sm font-medium text-travel-inkStrong dark:text-shell-text">{s.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/80 dark:text-shell-muted">
                     {i === 0 ? `${s.desc}，${sizeText}。` : s.desc}
                   </p>
                 </div>

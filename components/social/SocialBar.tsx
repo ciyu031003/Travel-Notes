@@ -101,8 +101,8 @@ export default function SocialBar({
   }
 
   const btn = 'inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3 py-2 text-sm tabular-nums transition-all active:scale-90 select-none'
-  const idle = dark ? 'text-[var(--social-muted)] hover:text-[var(--social-text)]' : 'text-travel-ink/60 hover:text-travel-ink'
-  const chip = dark ? 'bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]' : 'bg-white border border-travel-line'
+  const idle = dark ? 'text-[var(--ui-social-muted)] hover:text-[var(--ui-social-text)]' : 'text-travel-ink/60 hover:text-travel-ink'
+  const chip = dark ? 'bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]' : 'bg-white border border-travel-line'
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>

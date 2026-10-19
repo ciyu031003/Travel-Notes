@@ -103,13 +103,14 @@ const SPACE_THEME_ALLOWLIST = [
 ]
 
 /**
- * 第 12 条规则（legacyTokenNewUsage）的合法范围：
- * P2-31 只是把 token **声明**收敛到三层，模块自有色板的消费方仍在组件里；
- * 相册模块是「自有暗色视觉体系」的受控主题实现（Album 2.0 重写中），
- * 其 --album-* 消费属于设计内用法，不计入「新增回退」；其他模块的新代码
- * 仍必须消费 --ui-* / semantic-*，不得新增 --album-/--social-/--space- 引用。
+ * 第 12 条规则（legacyTokenNewUsage）的合法范围。
+ *
+ * P2-31 B3 已完成**消费端**迁移：全仓 658 处 var(--album-* / --social-* / --space-*)
+ * 改为 --ui-*（tokens.css 的 legacy 别名仅保留给三层架构兼容层/parity 校验，
+ * 不再作为组件消费入口）。因此 allowlist 清空：任何模块（含相册）新增 legacy
+ * 变量消费都会被 --check-baseline 拦住，基线已收紧为 0。
  */
-const LEGACY_TOKEN_MODULE_ALLOWLIST = ['components/album/']
+const LEGACY_TOKEN_MODULE_ALLOWLIST = []
 
 /**
  * 允许的字号（对应 .m-display / title-1 / title-2 / body / caption / label / stat / tab-label）
@@ -395,9 +396,9 @@ for (const file of files) {
       }
 
       /* ── P2-31 新增规则（第 12 条）：三层 token 收敛 ──
-         app/tokens.css 之后，新增代码应消费 --ui-* 语义层（或 semantic-* class），
-         而不是继续引用模块 legacy 变量（--album-* / --social-* / --space-*）。
-         存量已固化进基线，此规则只拦新增回退（--check-baseline 生效）。 */
+         消费端已全量迁移到 --ui-* 语义层（B3：658 处），存量清 0；
+         tokens.css 里的 legacy 别名只服务兼容层与 parity 校验。
+         新代码继续引用 --album-* / --social-* / --space-* 会被基线门禁拦截。 */
       if (
         /^--(?:album|social|space)-/.test(name) &&
         !LEGACY_TOKEN_MODULE_ALLOWLIST.some((a) => rel.startsWith(a))

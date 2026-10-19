@@ -25,7 +25,7 @@ export default function CircleUserQueryPage() {
 
   if (!userId) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-[var(--social-bg)] px-6 text-center text-sm text-[var(--social-muted)]">
+      <div className="flex min-h-dvh items-center justify-center bg-[var(--ui-social-bg)] px-6 text-center text-sm text-[var(--ui-social-muted)]">
         正在打开这位旅行者的主页…
       </div>
     )

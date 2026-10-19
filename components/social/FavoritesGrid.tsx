@@ -44,7 +44,7 @@ export default function FavoritesGrid() {
   })
 
   return (
-    <div className="min-h-dvh bg-[var(--social-bg)] pb-28 text-[var(--social-text)]">
+    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-28 text-[var(--ui-social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       {/* m-safe-top：/me/* 走「不挂 Navbar」分支，顶部安全区必须由页面自己负责，
           否则标题栏会被手机状态栏压住（与旅行圈详情同类问题）。 */}
@@ -55,20 +55,20 @@ export default function FavoritesGrid() {
             type="button"
             onClick={() => goBackOrHome(router, '/me')}
             aria-label="返回上一级"
-            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition-colors hover:text-[var(--social-text)]"
+            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition-colors hover:text-[var(--ui-social-text)]"
           >
             <Icon icon={ArrowLeft} size="md" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Memories</p>
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">Memories</p>
             <h1 className="text-xl font-semibold">我的收藏</h1>
           </div>
           <SocialThemeToggle />
         </header>
         {loading ? (
-          <div className="py-20 text-center text-[var(--social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
+          <div className="py-20 text-center text-[var(--ui-social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : posts.length === 0 ? (
-          <p className="py-20 text-center text-sm text-[var(--social-faint)]">还没有收藏任何旅行。</p>
+          <p className="py-20 text-center text-sm text-[var(--ui-social-faint)]">还没有收藏任何旅行。</p>
         ) : (
           <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
             {posts.map((p, i) => <SocialFilmCard key={p.id} {...cardProps(p, FRAMES[i % FRAMES.length])} className="mb-5 break-inside-avoid" />)}

@@ -3,6 +3,8 @@
 import { Lock, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { useAlbumUnlock } from '@/hooks/use-album-unlock'
+import { useRef } from 'react'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface PixelUnlockModalProps {
   isOpen: boolean
@@ -16,6 +18,14 @@ interface PixelUnlockModalProps {
  * 解锁状态机走 useAlbumUnlock（1.21.0 收敛），视觉保留像素主题。
  */
 export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUnlockModalProps) {
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: isOpen,
+    onClose: onClose,
+    panelRef,
+  })
+
   const { password, setPassword, error, verifying, submit, close } = useAlbumUnlock({
     onClose,
     onSuccess,
@@ -24,7 +34,7 @@ export default function PixelUnlockModal({ isOpen, onClose, onSuccess }: PixelUn
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="相册已上锁">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4" ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="相册已上锁">
       <div className="relative w-full max-w-sm pixel-book-container rounded-sm p-6">
         <div className="pixel-corner-gold-tl" />
         <div className="pixel-corner-gold-tr" />

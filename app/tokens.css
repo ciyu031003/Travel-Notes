@@ -182,6 +182,68 @@
   --palette-pixel-error-rgb: 160 42 42;  /* RGB 通道形式（Tailwind 透明度修饰符） */
   --palette-pixel-goldlight-rgb: 252 226 104;  /* RGB 通道形式（Tailwind 透明度修饰符） */
   --palette-pixel-goldpale-rgb: 243 215 160;  /* RGB 通道形式（Tailwind 透明度修饰符） */
+
+  /* ── Tailwind 色板 RGB 通道（P2-31 B3）────────────────────────────────
+     travel / album / warm / primary 此前在 tailwind.config.js 是十六进制/rgba 字面值，
+     无法支持 /opacity 修饰符。这里提供 RGB 通道（L1 原始值），config 侧用
+     rgb(var(--ui-tw-<palette>-<key>-rgb) / <alpha-value>) 引用：
+       · 不透明色：/opacity 与旧 class 行为一致（默认 1）；
+       · 含内建 alpha 的 album 色（surface / text1-3 / accentDim）：config 用
+         calc(<alpha-value> * a) 保留原 alpha，默认渲染值与旧 rgba 字面值逐字节相等。
+     命名加 tw- 前缀：travel.ink / travel.sand 的 Tailwind 值与 --ui-travel-* 不同
+     （P2-28 对比度调深只作用于 Tailwind 消费面），避免与语义层变量混淆。 */
+  --palette-tw-travel-cream-rgb: 250 246 238;
+  --palette-tw-travel-ink-rgb: 68 65 64;
+  --palette-tw-travel-dim-rgb: 218 213 203;
+  --palette-tw-travel-sakura-rgb: 243 228 213;
+  --palette-tw-travel-bloom-rgb: 228 180 120;
+  --palette-tw-travel-sky-rgb: 168 200 220;
+  --palette-tw-travel-mist-rgb: 214 232 240;
+  --palette-tw-travel-accent-rgb: 168 95 58;
+  --palette-tw-travel-accent-strong-rgb: 138 74 43;
+  --palette-tw-travel-accent-soft-rgb: 201 126 85;
+  --palette-tw-travel-sand-rgb: 125 103 84;
+  --palette-tw-travel-sand-soft-rgb: 194 175 154;
+  --palette-tw-travel-sand-light-rgb: 228 214 196;
+  --palette-tw-travel-parchment-rgb: 253 245 237;
+  --palette-tw-travel-parchment-dim-rgb: 245 237 228;
+  --palette-tw-travel-ink-strong-rgb: 90 74 58;
+  --palette-tw-travel-line-rgb: 232 221 212;
+  --palette-tw-album-bg0-rgb: 5 5 8;
+  --palette-tw-album-bg1-rgb: 11 8 7;
+  --palette-tw-album-bg2-rgb: 20 16 14;
+  --palette-tw-album-surface-rgb: 255 255 255;
+  --palette-tw-album-text1-rgb: 245 247 255;
+  --palette-tw-album-text2-rgb: 245 247 255;
+  --palette-tw-album-text3-rgb: 245 247 255;
+  --palette-tw-album-warm-rgb: 168 159 145;
+  --palette-tw-album-accent-rgb: 232 176 106;
+  --palette-tw-album-accent-strong-rgb: 245 201 126;
+  --palette-tw-album-accent-dim-rgb: 232 176 106;
+  --palette-tw-album-ok-rgb: 111 207 151;
+  --palette-tw-album-sync-rgb: 245 201 126;
+  --palette-tw-album-wait-rgb: 154 163 178;
+  --palette-tw-album-error-rgb: 224 108 108;
+  --palette-tw-warm-50-rgb: 250 250 249;
+  --palette-tw-warm-100-rgb: 245 245 244;
+  --palette-tw-warm-200-rgb: 231 229 228;
+  --palette-tw-warm-300-rgb: 214 211 209;
+  --palette-tw-warm-400-rgb: 168 162 158;
+  --palette-tw-warm-500-rgb: 120 113 108;
+  --palette-tw-warm-600-rgb: 87 83 78;
+  --palette-tw-warm-700-rgb: 68 64 60;
+  --palette-tw-warm-800-rgb: 41 37 36;
+  --palette-tw-warm-900-rgb: 28 25 23;
+  --palette-tw-primary-50-rgb: 243 228 213;
+  --palette-tw-primary-100-rgb: 232 213 192;
+  --palette-tw-primary-200-rgb: 212 185 160;
+  --palette-tw-primary-300-rgb: 194 160 130;
+  --palette-tw-primary-400-rgb: 176 134 99;
+  --palette-tw-primary-500-rgb: 168 95 58;
+  --palette-tw-primary-600-rgb: 138 74 43;
+  --palette-tw-primary-700-rgb: 122 63 36;
+  --palette-tw-primary-800-rgb: 106 53 30;
+  --palette-tw-primary-900-rgb: 90 44 24;
 }
 
 html.dark {
@@ -554,6 +616,59 @@ html.dark [data-space='SOLO'] {
   --ui-pixel-error-rgb: var(--palette-pixel-error-rgb);
   --ui-pixel-goldlight-rgb: var(--palette-pixel-goldlight-rgb);
   --ui-pixel-goldpale-rgb: var(--palette-pixel-goldpale-rgb);
+  /* Tailwind 色板通道（L2 别名；命名说明见 L1 同名 block） */
+  --ui-tw-travel-cream-rgb: var(--palette-tw-travel-cream-rgb);
+  --ui-tw-travel-ink-rgb: var(--palette-tw-travel-ink-rgb);
+  --ui-tw-travel-dim-rgb: var(--palette-tw-travel-dim-rgb);
+  --ui-tw-travel-sakura-rgb: var(--palette-tw-travel-sakura-rgb);
+  --ui-tw-travel-bloom-rgb: var(--palette-tw-travel-bloom-rgb);
+  --ui-tw-travel-sky-rgb: var(--palette-tw-travel-sky-rgb);
+  --ui-tw-travel-mist-rgb: var(--palette-tw-travel-mist-rgb);
+  --ui-tw-travel-accent-rgb: var(--palette-tw-travel-accent-rgb);
+  --ui-tw-travel-accent-strong-rgb: var(--palette-tw-travel-accent-strong-rgb);
+  --ui-tw-travel-accent-soft-rgb: var(--palette-tw-travel-accent-soft-rgb);
+  --ui-tw-travel-sand-rgb: var(--palette-tw-travel-sand-rgb);
+  --ui-tw-travel-sand-soft-rgb: var(--palette-tw-travel-sand-soft-rgb);
+  --ui-tw-travel-sand-light-rgb: var(--palette-tw-travel-sand-light-rgb);
+  --ui-tw-travel-parchment-rgb: var(--palette-tw-travel-parchment-rgb);
+  --ui-tw-travel-parchment-dim-rgb: var(--palette-tw-travel-parchment-dim-rgb);
+  --ui-tw-travel-ink-strong-rgb: var(--palette-tw-travel-ink-strong-rgb);
+  --ui-tw-travel-line-rgb: var(--palette-tw-travel-line-rgb);
+  --ui-tw-album-bg0-rgb: var(--palette-tw-album-bg0-rgb);
+  --ui-tw-album-bg1-rgb: var(--palette-tw-album-bg1-rgb);
+  --ui-tw-album-bg2-rgb: var(--palette-tw-album-bg2-rgb);
+  --ui-tw-album-surface-rgb: var(--palette-tw-album-surface-rgb);
+  --ui-tw-album-text1-rgb: var(--palette-tw-album-text1-rgb);
+  --ui-tw-album-text2-rgb: var(--palette-tw-album-text2-rgb);
+  --ui-tw-album-text3-rgb: var(--palette-tw-album-text3-rgb);
+  --ui-tw-album-warm-rgb: var(--palette-tw-album-warm-rgb);
+  --ui-tw-album-accent-rgb: var(--palette-tw-album-accent-rgb);
+  --ui-tw-album-accent-strong-rgb: var(--palette-tw-album-accent-strong-rgb);
+  --ui-tw-album-accent-dim-rgb: var(--palette-tw-album-accent-dim-rgb);
+  --ui-tw-album-ok-rgb: var(--palette-tw-album-ok-rgb);
+  --ui-tw-album-sync-rgb: var(--palette-tw-album-sync-rgb);
+  --ui-tw-album-wait-rgb: var(--palette-tw-album-wait-rgb);
+  --ui-tw-album-error-rgb: var(--palette-tw-album-error-rgb);
+  --ui-tw-warm-50-rgb: var(--palette-tw-warm-50-rgb);
+  --ui-tw-warm-100-rgb: var(--palette-tw-warm-100-rgb);
+  --ui-tw-warm-200-rgb: var(--palette-tw-warm-200-rgb);
+  --ui-tw-warm-300-rgb: var(--palette-tw-warm-300-rgb);
+  --ui-tw-warm-400-rgb: var(--palette-tw-warm-400-rgb);
+  --ui-tw-warm-500-rgb: var(--palette-tw-warm-500-rgb);
+  --ui-tw-warm-600-rgb: var(--palette-tw-warm-600-rgb);
+  --ui-tw-warm-700-rgb: var(--palette-tw-warm-700-rgb);
+  --ui-tw-warm-800-rgb: var(--palette-tw-warm-800-rgb);
+  --ui-tw-warm-900-rgb: var(--palette-tw-warm-900-rgb);
+  --ui-tw-primary-50-rgb: var(--palette-tw-primary-50-rgb);
+  --ui-tw-primary-100-rgb: var(--palette-tw-primary-100-rgb);
+  --ui-tw-primary-200-rgb: var(--palette-tw-primary-200-rgb);
+  --ui-tw-primary-300-rgb: var(--palette-tw-primary-300-rgb);
+  --ui-tw-primary-400-rgb: var(--palette-tw-primary-400-rgb);
+  --ui-tw-primary-500-rgb: var(--palette-tw-primary-500-rgb);
+  --ui-tw-primary-600-rgb: var(--palette-tw-primary-600-rgb);
+  --ui-tw-primary-700-rgb: var(--palette-tw-primary-700-rgb);
+  --ui-tw-primary-800-rgb: var(--palette-tw-primary-800-rgb);
+  --ui-tw-primary-900-rgb: var(--palette-tw-primary-900-rgb);
 }
 
 html.dark {

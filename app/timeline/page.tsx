@@ -59,7 +59,7 @@ export default function TimelinePage() {
           <h1 className="text-3xl font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-5xl">走过的时光</h1>
           <div className="mx-auto mt-4 flex items-center justify-center gap-3">
             <span className="h-px w-10 bg-travel-bloom/60" />
-            <span className="text-sm text-travel-ink/70 dark:text-shell-muted">按年份回顾每一段旅行与回忆</span>
+            <span className="text-sm text-travel-ink/80 dark:text-shell-muted">按年份回顾每一段旅行与回忆</span>
             <span className="h-px w-10 bg-travel-bloom/60" />
           </div>
           <p className="mt-3 text-xs tracking-[0.28em] text-travel-accent/80 dark:text-travel-bloom/80">
@@ -214,16 +214,16 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
           {!isTravel && entry.travelTitle && <span className="text-xs text-travel-ink/50 dark:text-shell-muted">· {entry.travelTitle}</span>}
         </div>
         <h3 className="text-base font-semibold text-travel-inkStrong dark:text-shell-text group-hover:text-travel-accent transition-colors">{entry.title}</h3>
-        {entry.description && <p className="text-sm text-travel-ink/70 dark:text-shell-muted mt-1 line-clamp-2">{entry.description}</p>}
+        {entry.description && <p className="text-sm text-travel-ink/80 dark:text-shell-muted mt-1 line-clamp-2">{entry.description}</p>}
         {(entry.location || entry.mood) && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {entry.location && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/80 dark:text-shell-muted">
                 <Icon icon={MapPin} size="sm" />
                 {entry.location}
               </span>
             )}
-            {entry.mood && <span className="text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/70 dark:text-shell-muted">{entry.mood}</span>}
+            {entry.mood && <span className="text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/80 dark:text-shell-muted">{entry.mood}</span>}
           </div>
         )}
       </div>

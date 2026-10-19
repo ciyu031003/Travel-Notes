@@ -38,13 +38,19 @@ export async function generateMetadata({
         title,
         description,
         url: `/circle/${id}`,
-        ...(image ? { images: [{ url: image, alt: title }] } : {}),
+        // B12：子页面 openGraph 会整体覆盖根 layout，因此无封面时必须显式回退，
+        // 否则分享卡退化成无图（此前就是这个问题）。
+        images: [
+          image
+            ? { url: image, alt: title }
+            : { url: '/brand/og-1200x630.png', width: 1200, height: 630, alt: '甜途 · 旅行记忆空间' },
+        ],
       },
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        ...(image ? { images: [image] } : {}),
+        images: [image || '/brand/og-1200x630.png'],
       },
     }
   } catch (e) {

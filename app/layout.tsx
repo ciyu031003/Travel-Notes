@@ -20,8 +20,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'http://localhost:30
  *  · metadataBase：让子页面用相对路径写 canonical/og:image（Next 会拼成绝对 URL）；
  *  · title.template：各页 generateMetadata 只写自己的标题，后缀由这里统一拼；
  *  · openGraph/twitter：分享到微信/Telegram 不再是"无标题裸链接"。
- * 图片用现有品牌图 /brand/logo-512.png（512×512，仓库内唯一成规模的品牌图；
- * 1200×630 专用 OG 图素材未入库，尺寸按真实文件标注，避免声明与实际不符）。
+ * 图片用专用 1200×630 OG 图 /brand/og-1200x630.png（B12 用 sharp 从品牌 logo
+ * + 品牌色板生成，约 82KB；尺寸与真实文件一致，避免声明与实际不符）。
  */
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -41,10 +41,10 @@ export const metadata: Metadata = {
     description: '记录每一次出发与归来，沉淀属于你的旅行记忆。',
     images: [
       {
-        url: '/brand/logo-512.png',
-        width: 512,
-        height: 512,
-        alt: '甜途',
+        url: '/brand/og-1200x630.png',
+        width: 1200,
+        height: 630,
+        alt: '甜途 · 旅行记忆空间',
       },
     ],
   },
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '甜途 | 旅行记忆空间',
     description: '记录每一次出发与归来，沉淀属于你的旅行记忆。',
-    images: ['/brand/logo-512.png'],
+    images: ['/brand/og-1200x630.png'],
   },
 }
 

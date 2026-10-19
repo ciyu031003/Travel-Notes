@@ -51,7 +51,7 @@ export function SpaceAvatarStack({
       {rest > 0 && (
         <span
           className={cn(
-            'flex flex-none items-center justify-center rounded-full bg-[var(--space-accent-soft)] font-semibold text-[var(--space-accent-text)] ring-2 ring-[var(--social-surface)]',
+            'flex flex-none items-center justify-center rounded-full bg-[var(--ui-space-accent-soft)] font-semibold text-[var(--ui-space-accent-text)] ring-2 ring-[var(--ui-social-surface)]',
             SIZE_CLASS[size],
           )}
         >
@@ -82,7 +82,7 @@ export function SpaceAvatar({
         alt={label}
         loading="lazy"
         decoding="async"
-        className={cn('flex-none rounded-full object-cover ring-2 ring-[var(--social-surface)]', SIZE_CLASS[size], className)}
+        className={cn('flex-none rounded-full object-cover ring-2 ring-[var(--ui-social-surface)]', SIZE_CLASS[size], className)}
       />
     )
   }
@@ -90,7 +90,7 @@ export function SpaceAvatar({
     <span
       title={label}
       className={cn(
-        'flex flex-none items-center justify-center rounded-full bg-[var(--space-accent-soft)] font-semibold text-[var(--space-accent-text)] ring-2 ring-[var(--social-surface)]',
+        'flex flex-none items-center justify-center rounded-full bg-[var(--ui-space-accent-soft)] font-semibold text-[var(--ui-space-accent-text)] ring-2 ring-[var(--ui-social-surface)]',
         SIZE_CLASS[size],
         className,
       )}

@@ -159,7 +159,7 @@ export default function AdminMomentsPage() {
         ) : moments.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-travel-bloom/50 bg-white/50 p-14 text-center dark:border-shell-line dark:bg-white/5">
             <Inbox className="mx-auto mb-4 h-12 w-12 opacity-30 text-travel-accentSoft" />
-            <p className="text-travel-ink/70 dark:text-warm-400">还没有碎碎念，发布第一条吧~</p>
+            <p className="text-travel-ink/80 dark:text-warm-400">还没有碎碎念，发布第一条吧~</p>
           </div>
         ) : (
           <div className="space-y-3">

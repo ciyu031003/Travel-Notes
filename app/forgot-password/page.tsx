@@ -187,7 +187,7 @@ export default function ForgotPasswordPage() {
               {step === 'reset' && <Icon icon={Lock} size="lg" className="text-travel-ink" />}
             </div>
             <h1 className="text-2xl font-bold text-travel-ink">找回密码</h1>
-            <p className="text-travel-ink/70 text-sm mt-2">
+            <p className="text-travel-ink/80 text-sm mt-2">
               {step === 'request' && '输入绑定的邮箱，发送验证码重置密码'}
               {step === 'verify' && '请查看邮箱中的验证码'}
               {step === 'reset' && '设置您的新密码'}
@@ -367,7 +367,7 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/login"
-              className="inline-flex items-center gap-1 text-travel-ink/70 hover:text-travel-ink text-sm transition-colors"
+              className="inline-flex items-center gap-1 text-travel-ink/80 hover:text-travel-ink text-sm transition-colors"
             >
               <Icon icon={ArrowLeft} size="sm" />
               返回登录

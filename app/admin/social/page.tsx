@@ -83,7 +83,7 @@ export default function AdminSocialPage() {
             <div className="flex gap-2">
               {tabs.map((t) => (
                 <button key={t.key} onClick={() => setTab(t.key)}
-                  className={tab === t.key ? 'rounded-full bg-travel-accent px-4 py-1.5 text-sm font-medium text-white shadow-sm shadow-travel-accent/25' : 'rounded-full bg-white/70 px-4 py-1.5 text-sm text-travel-ink/70 hover:bg-travel-sakura/40 dark:bg-white/5 dark:text-warm-300'}>
+                  className={tab === t.key ? 'rounded-full bg-travel-accent px-4 py-1.5 text-sm font-medium text-white shadow-sm shadow-travel-accent/25' : 'rounded-full bg-white/70 px-4 py-1.5 text-sm text-travel-ink/80 hover:bg-travel-sakura/40 dark:bg-white/5 dark:text-warm-300'}>
                   {t.label}
                 </button>
               ))}
@@ -101,7 +101,7 @@ export default function AdminSocialPage() {
                   // 而不是把卡片撑破（审计页已有此处理，此处补齐保持一致）。
                   <div className="overflow-x-auto">
                   <table className="w-full min-w-[560px] text-left text-sm">
-                    <thead className="bg-travel-sakura/40 text-xs text-travel-ink/70 dark:bg-white/5 dark:text-warm-400">
+                    <thead className="bg-travel-sakura/40 text-xs text-travel-ink/80 dark:bg-white/5 dark:text-warm-400">
                       <tr><th className="px-4 py-2.5">标题</th><th className="px-4 py-2.5">作者</th><th className="px-4 py-2.5">点赞/评论/收藏</th><th className="px-4 py-2.5">发布时间</th></tr>
                     </thead>
                     <tbody className="divide-y divide-travel-line/40 dark:divide-white/5">
@@ -162,7 +162,7 @@ export default function AdminSocialPage() {
                             disabled={processing === r.id}
                             className={`rounded-full px-3 py-1 text-xs transition disabled:opacity-50 ${
                               action === 'DISMISS'
-                                ? 'bg-white/70 text-travel-ink/70 hover:bg-travel-sakura/40 dark:bg-white/5 dark:text-warm-300'
+                                ? 'bg-white/70 text-travel-ink/80 hover:bg-travel-sakura/40 dark:bg-white/5 dark:text-warm-300'
                                 : action === 'BAN_USER'
                                   ? 'bg-travel-danger/10 text-travel-danger hover:bg-travel-danger/20 dark:bg-red-500/10 dark:text-red-300'
                                   : 'bg-travel-sakura/60 text-travel-accent hover:bg-travel-sakura dark:bg-travel-accent/15'

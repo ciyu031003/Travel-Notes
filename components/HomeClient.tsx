@@ -535,7 +535,7 @@ export default function HomeClient({
                               进行中
                             </span>
                           </div>
-                          <p className="mt-1 text-xs text-travel-ink/70 dark:text-shell-muted">
+                          <p className="mt-1 text-xs text-travel-ink/80 dark:text-shell-muted">
                             {d.location || '还没填目的地'} · {d.dayCount} 天 · 已有 {d.photoCount} 张照片
                           </p>
                           <div className="mt-3 flex flex-wrap gap-2">
@@ -660,7 +660,7 @@ export default function HomeClient({
               © {new Date().getFullYear()} All rights reserved.
             </p>
             <IcpLicense
-              className="mt-3 text-center text-[11px] text-travel-ink/70 dark:text-shell-muted"
+              className="mt-3 text-center text-[11px] text-travel-ink/80 dark:text-shell-muted"
               numberClassName="hover:text-travel-accent dark:hover:text-travel-bloom"
             />
             <Link

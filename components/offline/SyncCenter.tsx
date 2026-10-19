@@ -28,11 +28,21 @@ import { Field } from '@/components/mobile/Field'
 import { Button } from '@/components/mobile/Button'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Stagger } from '@/components/mobile/Stagger'
+import { getMediaStorageStats } from '@/lib/media/local-files'
 
 type StatCounts = { PENDING: number; SYNCING: number; FAILED: number; DEAD: number }
 
+type MediaUsage = Awaited<ReturnType<typeof getMediaStorageStats>>
+
+/** 字节 → MB（保留 1 位；用于「本地媒体占用」一行说明） */
+function formatMb(bytes: number): string {
+  return (bytes / 1048576).toFixed(1) + ' MB'
+}
+
 export default function SyncCenter() {
   const [stats, setStats] = useState<StatCounts>({ PENDING: 0, SYNCING: 0, FAILED: 0, DEAD: 0 })
+  // B5：本地媒体配额占用（启动维护与上传收尾后会变化，进入页面时读一次）
+  const [mediaUsage, setMediaUsage] = useState<MediaUsage | null>(null)
   const [failed, setFailed] = useState<SyncQueueItem[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -56,6 +66,12 @@ export default function SyncCenter() {
   const [engineError, setEngineError] = useState<string | null>(null)
   // 离线库初始化失败（连接/表结构/插件）：表现为"本地读全空、离线写失败"，必须能看见
   const [offlineInitError, setOfflineInitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    void getMediaStorageStats()
+      .then(setMediaUsage)
+      .catch(() => setMediaUsage(null))
+  }, [])
 
   useEffect(() => {
     /**
@@ -208,15 +224,15 @@ export default function SyncCenter() {
   const total = stats.PENDING + stats.SYNCING + stats.FAILED + stats.DEAD
 
   return (
-    <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
+    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)] md:pb-28">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-2xl px-4 py-6">
         <PullToRefresh onRefresh={load}>
         <header className="mb-8 hidden items-center gap-3 md:flex">
           <div className="ml-auto"><SocialThemeToggle /></div>
-          <Link href="/me" className="rounded-full p-2 text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
+          <Link href="/me" className="rounded-full p-2 text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">Sync</p>
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">Sync</p>
             <h1 className="text-xl font-semibold">数据与同步</h1>
           </div>
         </header>
@@ -232,7 +248,7 @@ export default function SyncCenter() {
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-[var(--social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
+          <div className="py-20 text-center text-[var(--ui-social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3">
@@ -242,12 +258,18 @@ export default function SyncCenter() {
                 ['失败', stats.FAILED],
                 ['无法同步', stats.DEAD],
               ] as Array<[string, number]>).map(([label, value]) => (
-                <div key={label} className="rounded-[1.4rem] bg-[var(--social-surface-80)] p-5 text-center ring-1 ring-[var(--social-line)]">
+                <div key={label} className="rounded-[1.4rem] bg-[var(--ui-social-surface-80)] p-5 text-center ring-1 ring-[var(--ui-social-line)]">
                   <CountUp value={value} mobileOnly className="text-2xl font-semibold tabular-nums" />
-                  <div className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--social-accent)]">{label}</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--ui-social-accent)]">{label}</div>
                 </div>
               ))}
             </div>
+
+            {mediaUsage && (
+              <p className="mt-3 px-1 text-xs text-[var(--ui-social-muted)]">
+                本地媒体占用 {formatMb(mediaUsage.usedBytes)} / {formatMb(mediaUsage.quotaBytes)} · 缩略图 {mediaUsage.thumbCount} 张
+              </p>
+            )}
 
             {/*
               引擎内部被隔离的阶段错误。
@@ -259,8 +281,8 @@ export default function SyncCenter() {
               把它显式说出来，用户与我都不会再把它误判成"网络问题"。
             */}
             {offlineInitError && (
-              <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--social-surface-50)] px-4 py-3 text-[12px] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]">
-                <Icon icon={AlertCircle} size="sm" className="mt-0.5 shrink-0 text-[var(--social-accent)]" />
+              <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--ui-social-surface-50)] px-4 py-3 text-[12px] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]">
+                <Icon icon={AlertCircle} size="sm" className="mt-0.5 shrink-0 text-[var(--ui-social-accent)]" />
                 <span>
                   离线存储不可用（离线查看与离线记录会失效，联网时不受影响）：
                   <code className="break-all">{offlineInitError}</code>
@@ -269,8 +291,8 @@ export default function SyncCenter() {
             )}
 
             {engineError && (
-              <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--social-surface-50)] px-4 py-3 text-[12px] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]">
-                <Icon icon={AlertCircle} size="sm" className="mt-0.5 shrink-0 text-[var(--social-accent)]" />
+              <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--ui-social-surface-50)] px-4 py-3 text-[12px] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]">
+                <Icon icon={AlertCircle} size="sm" className="mt-0.5 shrink-0 text-[var(--ui-social-accent)]" />
                 <span>
                   部分同步步骤失败（已自动隔离，不影响上传）：<code className="break-all">{engineError}</code>
                 </span>
@@ -278,11 +300,11 @@ export default function SyncCenter() {
             )}
 
             {total === 0 && (
-              <div className="mt-6 rounded-[2rem] bg-[var(--social-surface-50)] px-6 py-14 text-center ring-1 ring-[var(--social-line)]">
-                <Icon icon={CheckCheck} size="lg" className="mx-auto text-[var(--social-accent)]" />
-                <p className="mt-4 text-sm text-[var(--social-muted)]">所有改动都已同步。</p>                <p className="mt-1 text-xs leading-relaxed text-[var(--social-faint)]">离线写的照片、留言、碎碎念会进入队列，联网后自动上传。</p>
+              <div className="mt-6 rounded-[2rem] bg-[var(--ui-social-surface-50)] px-6 py-14 text-center ring-1 ring-[var(--ui-social-line)]">
+                <Icon icon={CheckCheck} size="lg" className="mx-auto text-[var(--ui-social-accent)]" />
+                <p className="mt-4 text-sm text-[var(--ui-social-muted)]">所有改动都已同步。</p>                <p className="mt-1 text-xs leading-relaxed text-[var(--ui-social-faint)]">离线写的照片、留言、碎碎念会进入队列，联网后自动上传。</p>
                 {lastSync && (
-                  <p className="mt-3 text-xs text-[var(--social-faint)]">
+                  <p className="mt-3 text-xs text-[var(--ui-social-faint)]">
                     最近同步：{new Date(lastSync.at).toLocaleTimeString('zh-CN')} · 更新 {lastSync.written} 条本地缓存
                   </p>
                 )}
@@ -292,23 +314,23 @@ export default function SyncCenter() {
             {failed.length > 0 && (
               <section className="mt-8">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">失败项</h2>
-                  <div className="h-px flex-1 bg-[var(--social-line)]" />
-                  <button type="button" onClick={retryAll} disabled={busy} className="m-pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-1.5 text-xs text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] active:scale-95 disabled:opacity-50">
+                  <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent)]">失败项</h2>
+                  <div className="h-px flex-1 bg-[var(--ui-social-line)]" />
+                  <button type="button" onClick={retryAll} disabled={busy} className="m-pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface)] px-4 py-1.5 text-xs text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)] active:scale-95 disabled:opacity-50">
                     <Icon icon={RefreshCw} size="sm" />全部重试
                   </button>
                 </div>
                 <Stagger className="mt-4 space-y-2" delayBase={60} step={30}>
                   {failed.map((f) => (
-                    <div key={f.id} className="m-pressable flex items-center gap-3 rounded-[1.2rem] bg-[var(--social-surface-80)] px-4 py-3 ring-1 ring-[var(--social-line)]">
+                    <div key={f.id} className="m-pressable flex items-center gap-3 rounded-[1.2rem] bg-[var(--ui-social-surface-80)] px-4 py-3 ring-1 ring-[var(--ui-social-line)]">
                       <div className="min-w-0 flex-1">
                         <div className="text-sm">{f.entityType} · {f.operation}</div>
-                        <div className="mt-0.5 truncate text-xs text-[var(--social-faint)]">
+                        <div className="mt-0.5 truncate text-xs text-[var(--ui-social-faint)]">
                     {f.status === 'DEAD' ? '已停止自动重试 · ' : ''}
                     {f.lastError || '同步失败'}
                   </div>
                       </div>
-                      <button type="button" onClick={() => retryOne(f.id)} disabled={busy} className="rounded-full bg-[var(--social-accent-soft)] px-3 py-1.5 text-xs text-[var(--social-accent)] transition hover:bg-[var(--social-accent)] hover:text-[var(--social-on-accent)] active:scale-95 disabled:opacity-50">重试</button>
+                      <button type="button" onClick={() => retryOne(f.id)} disabled={busy} className="rounded-full bg-[var(--ui-social-accent-soft)] px-3 py-1.5 text-xs text-[var(--ui-social-accent)] transition hover:bg-[var(--ui-social-accent)] hover:text-[var(--ui-social-on-accent)] active:scale-95 disabled:opacity-50">重试</button>
                     </div>
                   ))}
                 </Stagger>
@@ -325,7 +347,7 @@ export default function SyncCenter() {
                 label="本地隐私锁"
                 description="开启需设置 4–8 位数字 PIN；之后每次冷启动进入 App 都要先解锁（Web 端不启用）。"
               />
-              <p className="mt-3 px-1 text-xs leading-relaxed text-[var(--social-faint)]">
+              <p className="mt-3 px-1 text-xs leading-relaxed text-[var(--ui-social-faint)]">
                 本地数据库：
                 {encryption.encrypted ? (
                   <span className="text-[var(--m-success)]">已加密（密钥存于 Android Keystore）</span>
@@ -345,7 +367,7 @@ export default function SyncCenter() {
               title={pinSheet === 'verify' ? '关闭隐私锁' : '设置隐私锁 PIN'}
             >
               <div className="px-1 pb-4">
-                <p className="mb-4 text-sm leading-relaxed text-[var(--social-muted)]">
+                <p className="mb-4 text-sm leading-relaxed text-[var(--ui-social-muted)]">
                   {pinSheet === 'verify'
                     ? '输入当前 PIN 以关闭隐私锁（关闭后将清除 PIN）。'
                     : 'PIN 为 4–8 位数字。忘记 PIN 只能清除应用数据，请设置一个记得住的。'}

@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, useRef } from 'react'
 import { X, MessageCircle, MapPin } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import MorphSlider from './morphslider/MorphSlider'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface PhotoMorphViewerProps {
   images: string[]
@@ -29,6 +30,14 @@ export default function PhotoMorphViewer({
 }: PhotoMorphViewerProps) {
   const [current, setCurrent] = useState(initialIndex)
 
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: true,
+    onClose: onClose,
+    panelRef,
+  })
+
   // 稳定 items，避免 MorphSlider 在 index 变化时重建 WebGL 引擎
   const items = useMemo(
     () => images.map((image, i) => ({ image, caption: `${cityName || '相册'} · ${i + 1}` })),
@@ -43,7 +52,7 @@ export default function PhotoMorphViewer({
   return (
     <div
       className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-3 sm:p-6"
-      role="dialog"
+      ref={panelRef} tabIndex={-1} role="dialog"
       aria-modal="true"
       aria-label={cityName ? `${cityName} 照片查看器` : '照片查看器'}
       onClick={onClose}

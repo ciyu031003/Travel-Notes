@@ -209,7 +209,7 @@ export default function AdminDashboard() {
             甜途内容中心
           </div>
           <h1 className="mt-3 text-2xl font-bold text-warm-800 dark:text-shell-text sm:text-3xl">文章管理</h1>
-          <p className="mt-1 text-sm text-travel-ink/70 dark:text-shell-muted">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>
+          <p className="mt-1 text-sm text-travel-ink/80 dark:text-shell-muted">共 {posts.length} 篇文章，像明信片一样整理你们的回忆</p>
         </div>
         <Link
           href="/admin/new"
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
           <h3 className="text-lg font-semibold text-travel-ink dark:text-shell-text">
             {posts.length === 0 ? '还没有文章' : '没有匹配的文章'}
           </h3>
-          <p className="mt-1 text-sm text-travel-ink/70 dark:text-shell-muted">
+          <p className="mt-1 text-sm text-travel-ink/80 dark:text-shell-muted">
             {posts.length === 0 ? '从第一篇游记开始，收藏你们的旅程' : '换个关键词试试吧'}
           </p>
           {posts.length === 0 && (
@@ -539,7 +539,7 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             <div className="rounded-2xl bg-travel-sakura/30 p-4">
               <p className="text-sm font-semibold text-travel-ink">{sharePost.title}</p>
-              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-travel-ink/70">
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-travel-ink/80">
                 {sharePost.summary || '这篇旅行记录即将分享给其他旅行者。'}
               </p>
             </div>

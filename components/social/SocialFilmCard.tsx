@@ -214,9 +214,9 @@ export default function SocialFilmCard({
    * （rgba(43,33,27,.70)），压在近黑遮罩上几乎看不见（实测对比度远低于 3:1）。
    */
   const statsNode = (onMedia = false) => {
-    const tone = onMedia ? 'text-white/75' : 'text-[var(--social-muted)]'
+    const tone = onMedia ? 'text-white/75' : 'text-[var(--ui-social-muted)]'
     // 深色遮罩上不能 hover 成陶土色（浅色主题下它是深棕砖色，压在近黑底上看不见）
-    const hoverTone = onMedia ? 'hover:text-white' : 'hover:text-[var(--social-accent)]'
+    const hoverTone = onMedia ? 'hover:text-white' : 'hover:text-[var(--ui-social-accent)]'
     return (
       <div className={cn('flex items-center gap-3', tone)}>
         {stats?.comments !== undefined &&
@@ -287,12 +287,12 @@ export default function SocialFilmCard({
       type="button"
       onClick={onOpen}
       aria-label={title ? `打开旅行故事：${title}` : '打开旅行故事'}
-      className="absolute inset-0 z-[1] cursor-pointer rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--social-accent)]"
+      className="absolute inset-0 z-[1] cursor-pointer rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ui-social-accent)]"
     />
   ) : null
 
   const cover = (aspectClass: string, overlay?: React.ReactNode) => (
-    <div className={cn('relative w-full overflow-hidden bg-[var(--social-surface2)]', aspectClass)}>
+    <div className={cn('relative w-full overflow-hidden bg-[var(--ui-social-surface2)]', aspectClass)}>
       {coverUrl ? (
         <Image
           src={coverUrl}
@@ -303,7 +303,7 @@ export default function SocialFilmCard({
           className="m-img-fade object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-[var(--social-faint)]"><Icon icon={ImageIcon} size="lg" /></div>
+        <div className="absolute inset-0 flex items-center justify-center text-[var(--ui-social-faint)]"><Icon icon={ImageIcon} size="lg" /></div>
       )}
       {overlay}
     </div>
@@ -311,7 +311,7 @@ export default function SocialFilmCard({
 
   if (variant === 'hero') {
     return (
-      <div className={cn('group relative block w-full overflow-hidden rounded-[2rem] bg-[var(--social-surface)] text-left ring-1 ring-[var(--social-line)]', className)}>
+      <div className={cn('group relative block w-full overflow-hidden rounded-[2rem] bg-[var(--ui-social-surface)] text-left ring-1 ring-[var(--ui-social-line)]', className)}>
         {openLayer}
         {cover('aspect-[16/10]')}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/15 to-transparent" />
@@ -342,8 +342,8 @@ export default function SocialFilmCard({
 
   return (
     <div
-      className={cn('m-card-pressable group relative block w-full overflow-hidden rounded-[1.4rem] bg-[var(--social-surface-90)] text-left ring-1 ring-[var(--social-line)] transition-colors duration-300',
-        onOpen && 'hover:-translate-y-0.5 hover:bg-[var(--social-surface)] hover:ring-[var(--social-line-strong)]', className)}>
+      className={cn('m-card-pressable group relative block w-full overflow-hidden rounded-[1.4rem] bg-[var(--ui-social-surface-90)] text-left ring-1 ring-[var(--ui-social-line)] transition-colors duration-300',
+        onOpen && 'hover:-translate-y-0.5 hover:bg-[var(--ui-social-surface)] hover:ring-[var(--ui-social-line-strong)]', className)}>
       {openLayer}
       {cover(
         FRAME[frame],
@@ -352,17 +352,17 @@ export default function SocialFilmCard({
         ),
       )}
       <div className="space-y-2 p-4">
-        {cityName && <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--social-accent)]"><Icon icon={MapPin} size="sm" />{cityName}</div>}
-        {title && <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--social-text)]">{title}</h3>}
-        {summary && <p className="line-clamp-2 text-sm leading-relaxed text-[var(--social-muted)]">{summary}</p>}
-        <div className="flex items-center gap-x-2 gap-y-1 text-xs text-[var(--social-faint)]">
-          {travelRelation && <span className="text-[var(--social-accent)]">{travelRelation}</span>}
+        {cityName && <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--ui-social-accent)]"><Icon icon={MapPin} size="sm" />{cityName}</div>}
+        {title && <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--ui-social-text)]">{title}</h3>}
+        {summary && <p className="line-clamp-2 text-sm leading-relaxed text-[var(--ui-social-muted)]">{summary}</p>}
+        <div className="flex items-center gap-x-2 gap-y-1 text-xs text-[var(--ui-social-faint)]">
+          {travelRelation && <span className="text-[var(--ui-social-accent)]">{travelRelation}</span>}
           {dateRange && <span>{dateRange}</span>}
           {dayCount !== undefined && <span>· {dayCount} 天</span>}
           {photoCount !== undefined && <span>· {photoCount} 张</span>}
         </div>
-        <div className="flex items-center justify-between gap-2 border-t border-[var(--social-line)] pt-3">
-          {author ? <div className="flex min-w-0 items-center gap-2"><SocialAvatar name={author.name} avatarUrl={author.avatar} size={24} /><span className="truncate text-xs text-[var(--social-muted)]">{author.name}</span></div> : <span />}
+        <div className="flex items-center justify-between gap-2 border-t border-[var(--ui-social-line)] pt-3">
+          {author ? <div className="flex min-w-0 items-center gap-2"><SocialAvatar name={author.name} avatarUrl={author.avatar} size={24} /><span className="truncate text-xs text-[var(--ui-social-muted)]">{author.name}</span></div> : <span />}
           {statsNode()}
         </div>
       </div>

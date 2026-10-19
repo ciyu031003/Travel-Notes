@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Camera, Check, Images, Loader2, PenLine, Route } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { CountUp } from '@/components/mobile/CountUp'
 import { apiUrl } from '@/lib/api-base'
 import { coverObjectPosition } from '@/lib/modules/social/profile-cover'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 /**
  * 「我的」页档案头图区（R1 重写）。
@@ -66,6 +67,14 @@ export default function ProfileHero({
   })
   const [savingFocus, setSavingFocus] = useState(false)
 
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: Boolean(sheet),
+    onClose: () => setSheet(null),
+    panelRef,
+  })
+
   const hasCover = !!data.coverUrl
   const objectPosition = coverObjectPosition(focus.x, focus.y)
 
@@ -88,9 +97,9 @@ export default function ProfileHero({
   }
 
   return (
-    <section className="overflow-hidden rounded-[1.6rem] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
+    <section className="overflow-hidden rounded-[1.6rem] bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]">
       {/* ── 头图 ───────────────────────────────────────────── */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[var(--social-surface2)]">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[var(--ui-social-surface2)]">
         {hasCover ? (
           // eslint-disable-next-line @next/next/no-img-element -- 头图由本项目的上传接口生成固定尺寸变体，无需 next/image 再优化
           <img
@@ -104,7 +113,7 @@ export default function ProfileHero({
             style={{ objectPosition }}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[linear-gradient(160deg,var(--social-surface2),var(--social-surface))] text-[var(--social-faint)]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[linear-gradient(160deg,var(--ui-social-surface2),var(--ui-social-surface))] text-[var(--ui-social-faint)]">
             <Icon icon={Images} size="lg" />
             <p className="px-8 text-center text-xs">上传一张风景照，作为你的旅行档案封面</p>
           </div>
@@ -153,7 +162,7 @@ export default function ProfileHero({
               type="button"
               onClick={() => (hasCover || data.avatarUrl ? setSheet('avatar') : onPickAvatar())}
               aria-label="更换头像"
-              className="block h-[88px] w-[88px] overflow-hidden rounded-full bg-[var(--social-accent-soft)] ring-4 ring-[var(--social-surface)] transition active:scale-95"
+              className="block h-[88px] w-[88px] overflow-hidden rounded-full bg-[var(--ui-social-accent-soft)] ring-4 ring-[var(--ui-social-surface)] transition active:scale-95"
             >
               {data.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- 头像已由 /api/me/avatar 生成 256px 变体
@@ -168,7 +177,7 @@ export default function ProfileHero({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="flex h-full w-full items-center justify-center text-[30px] font-semibold text-[var(--social-accent)]">
+                <span className="flex h-full w-full items-center justify-center text-[30px] font-semibold text-[var(--ui-social-accent)]">
                   {data.displayName.slice(0, 1)}
                 </span>
               )}
@@ -178,7 +187,7 @@ export default function ProfileHero({
               onClick={onPickAvatar}
               disabled={uploadingAvatar}
               aria-label="上传头像"
-              className="absolute -bottom-0.5 -right-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)] ring-2 ring-[var(--social-surface)] transition active:scale-95 disabled:opacity-60"
+              className="absolute -bottom-0.5 -right-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--ui-social-accent)] text-[var(--ui-social-on-accent)] ring-2 ring-[var(--ui-social-surface)] transition active:scale-95 disabled:opacity-60"
             >
               {uploadingAvatar ? (
                 <Icon icon={Loader2} size="sm" className="animate-spin" />
@@ -190,10 +199,10 @@ export default function ProfileHero({
 
           <div className="min-w-0 flex-1 pb-1">
             <h2 className="truncate text-[24px] font-semibold leading-tight tracking-tight">{data.displayName}</h2>
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--social-muted)]">
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--ui-social-muted)]">
               <span>@{data.username}</span>
               {data.accountId && (
-                <span className="rounded-full bg-[var(--social-accent-soft)] px-2 py-0.5 text-[var(--social-accent)]">
+                <span className="rounded-full bg-[var(--ui-social-accent-soft)] px-2 py-0.5 text-[var(--ui-social-accent)]">
                   ID {data.accountId}
                 </span>
               )}
@@ -201,10 +210,10 @@ export default function ProfileHero({
           </div>
         </div>
 
-        <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-[var(--social-muted)]">「{data.bio}」</p>
+        <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-[var(--ui-social-muted)]">「{data.bio}」</p>
 
         {/* ── 三统计（唯一指标：次旅行 / 个地方 / 张照片） ──── */}
-        <div className="mt-5 grid grid-cols-3 divide-x divide-[var(--social-line)] rounded-[1.2rem] bg-[var(--social-surface-50)] py-4 ring-1 ring-[var(--social-line)]">
+        <div className="mt-5 grid grid-cols-3 divide-x divide-[var(--ui-social-line)] rounded-[1.2rem] bg-[var(--ui-social-surface-50)] py-4 ring-1 ring-[var(--ui-social-line)]">
           {(
             [
               ['次旅行', data.stats.travelCount],
@@ -214,12 +223,12 @@ export default function ProfileHero({
           ).map(([label, value]) => (
             <div key={label} className="text-center">
               <CountUp value={value} className="text-[26px] font-semibold tabular-nums tracking-tight" />
-              <div className="mt-0.5 text-xs text-[var(--social-muted)]">{label}</div>
+              <div className="mt-0.5 text-xs text-[var(--ui-social-muted)]">{label}</div>
             </div>
           ))}
         </div>
         {data.provinceCount > 0 && (
-          <p className="mt-2 text-center text-[11px] text-[var(--social-faint)]">
+          <p className="mt-2 text-center text-[11px] text-[var(--ui-social-faint)]">
             足迹点亮 {data.provinceCount} 个省份
           </p>
         )}
@@ -229,7 +238,7 @@ export default function ProfileHero({
           <button
             type="button"
             onClick={onRecordTravel}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--social-accent)] text-sm font-semibold text-[var(--social-on-accent)] transition active:scale-[0.98]"
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--ui-social-accent)] text-sm font-semibold text-[var(--ui-social-on-accent)] transition active:scale-[0.98]"
           >
             <Icon icon={Route} size="sm" />
             记录一次旅行
@@ -237,7 +246,7 @@ export default function ProfileHero({
           <button
             type="button"
             onClick={onOpenAlbum}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--social-surface)] text-sm font-semibold ring-1 ring-[var(--social-line)] transition active:scale-[0.98]"
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--ui-social-surface)] text-sm font-semibold ring-1 ring-[var(--ui-social-line)] transition active:scale-[0.98]"
           >
             <Icon icon={Images} size="sm" tone="accent" />
             旅行画册
@@ -249,12 +258,12 @@ export default function ProfileHero({
       {sheet && (
         <div
           className="fixed inset-0 z-[96] flex items-end justify-center"
-          role="dialog"
+          ref={panelRef} tabIndex={-1} role="dialog"
           aria-modal="true"
           aria-label={sheet === 'cover' ? '档案头图' : '头像'}
         >
           <div className="absolute inset-0 bg-black/45" onClick={() => setSheet(null)} />
-          <div className="relative max-h-[86dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-[var(--social-surface)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4">
+          <div className="relative max-h-[86dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-[var(--ui-social-surface)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4">
             <h3 className="text-[16px] font-semibold">{sheet === 'cover' ? '档案头图' : '头像'}</h3>
 
             <button
@@ -265,7 +274,7 @@ export default function ProfileHero({
                 if (target === 'cover') onPickCover()
                 else onPickAvatar()
               }}
-              className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-[var(--social-surface-50)] px-4 py-3.5 text-left ring-1 ring-[var(--social-line)] active:scale-[0.99]"
+              className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-[var(--ui-social-surface-50)] px-4 py-3.5 text-left ring-1 ring-[var(--ui-social-line)] active:scale-[0.99]"
             >
               <Icon icon={Camera} size="md" tone="accent" />
               <span className="text-sm font-medium">换一张图片</span>
@@ -285,7 +294,7 @@ export default function ProfileHero({
             <button
               type="button"
               onClick={() => setSheet(null)}
-              className="mt-4 h-11 w-full rounded-full text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)]"
+              className="mt-4 h-11 w-full rounded-full text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
             >
               取消
             </button>
@@ -312,13 +321,13 @@ function FocusGrid({
   onPick: (x: number, y: number) => void
   onReset: () => void
 }) {  return (
-    <div className="mt-2 rounded-2xl bg-[var(--social-surface-50)] p-3 ring-1 ring-[var(--social-line)]">
+    <div className="mt-2 rounded-2xl bg-[var(--ui-social-surface-50)] p-3 ring-1 ring-[var(--ui-social-line)]">
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-[13px] font-medium">画面重点在哪？</p>
-          <p className="mt-0.5 text-[11px] text-[var(--social-faint)]">点一格，头图会跟着调整裁切位置</p>
+          <p className="mt-0.5 text-[11px] text-[var(--ui-social-faint)]">点一格，头图会跟着调整裁切位置</p>
         </div>
-        {saving && <Icon icon={Loader2} size="sm" className="animate-spin text-[var(--social-faint)]" />}
+        {saving && <Icon icon={Loader2} size="sm" className="animate-spin text-[var(--ui-social-faint)]" />}
       </div>
 
       <div className="relative mt-2 overflow-hidden rounded-xl">
@@ -347,7 +356,7 @@ function FocusGrid({
                   className="flex items-center justify-center border border-white/25 transition active:bg-white/25"
                 >
                   {active && (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--social-accent)] text-[var(--social-on-accent)]">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ui-social-accent)] text-[var(--ui-social-on-accent)]">
                       <Icon icon={Check} size="sm" />
                     </span>
                   )}
@@ -361,7 +370,7 @@ function FocusGrid({
       <button
         type="button"
         onClick={onReset}
-        className="mt-2 text-[11px] text-[var(--social-faint)] underline-offset-2 hover:underline"
+        className="mt-2 text-[11px] text-[var(--ui-social-faint)] underline-offset-2 hover:underline"
       >
         恢复居中
       </button>

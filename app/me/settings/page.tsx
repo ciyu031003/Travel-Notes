@@ -121,50 +121,50 @@ export default function MeSettingsPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
+    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)]">
       <EdgeSwipeBack />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="m-safe-top-16 relative mx-auto max-w-2xl px-4 pb-8 sm:px-6 sm:py-8">
         <LargeTitle title="账号设置" subtitle="资料、安全与账号" back="/me" />
 
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-[var(--social-faint)]">
+          <div className="flex items-center justify-center gap-2 py-20 text-[var(--ui-social-faint)]">
             <Icon icon={Loader2} size="md" className="animate-spin" />
             <span className="text-sm">加载中…</span>
           </div>
         ) : (
           <>
             {/* 资料 */}
-            <section className="mt-6 rounded-[1.4rem] bg-[var(--social-surface)] p-5 ring-1 ring-[var(--social-line)]">
+            <section className="mt-6 rounded-[1.4rem] bg-[var(--ui-social-surface)] p-5 ring-1 ring-[var(--ui-social-line)]">
               <div className="flex items-center gap-2">
                 <Icon icon={User} size="sm" tone="accent" />
                 <h2 className="text-sm font-semibold">资料</h2>
               </div>
 
               <div className="mt-4 space-y-1">
-                <p className="text-xs text-[var(--social-muted)]">账号名（不可在此修改）</p>
+                <p className="text-xs text-[var(--ui-social-muted)]">账号名（不可在此修改）</p>
                 <p className="text-sm">@{info?.username}</p>
                 {info?.accountId && (
-                  <p className="text-xs text-[var(--social-faint)]">ID {info.accountId}</p>
+                  <p className="text-xs text-[var(--ui-social-faint)]">ID {info.accountId}</p>
                 )}
               </div>
 
-              <label className="mt-4 block text-xs text-[var(--social-muted)]">昵称</label>
+              <label className="mt-4 block text-xs text-[var(--ui-social-muted)]">昵称</label>
               <input
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 maxLength={24}
                 placeholder="输入 1-24 位昵称"
-                className="mt-1.5 w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--social-accent)]"
+                className="mt-1.5 w-full rounded-xl bg-[var(--ui-social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-social-accent)]"
               />
 
-              <label className="mt-4 block text-xs text-[var(--social-muted)]">个性签名</label>
+              <label className="mt-4 block text-xs text-[var(--ui-social-muted)]">个性签名</label>
               <input
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={120}
                 placeholder="写一句话，成为你的旅行签名"
-                className="mt-1.5 w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--social-accent)]"
+                className="mt-1.5 w-full rounded-xl bg-[var(--ui-social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-social-accent)]"
               />
 
               {error && <p className="mt-3 text-sm text-[var(--danger-soft)]">{error}</p>}
@@ -173,7 +173,7 @@ export default function MeSettingsPage() {
                 type="button"
                 onClick={save}
                 disabled={saving || !nickname.trim()}
-                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--social-accent)] text-sm font-semibold text-[var(--social-on-accent)] transition active:scale-[0.98] disabled:opacity-50"
+                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--ui-social-accent)] text-sm font-semibold text-[var(--ui-social-on-accent)] transition active:scale-[0.98] disabled:opacity-50"
               >
                 {saving ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Save} size="sm" />}
                 {saving ? '保存中…' : '保存资料'}
@@ -225,14 +225,14 @@ export default function MeSettingsPage() {
             <ListSection title="关于" className="mt-6">
               <div className="px-4 py-3.5">
                 <div className="flex items-center justify-between gap-4 text-sm">
-                  <span className="text-[var(--social-muted)]">版本</span>
+                  <span className="text-[var(--ui-social-muted)]">版本</span>
                   <span className="font-medium">甜途 v{APP_VERSION}（build {APP_BUILD_NUMBER}）</span>
                 </div>
-                <div className="mt-3 border-t border-[var(--social-line)] pt-3">
+                <div className="mt-3 border-t border-[var(--ui-social-line)] pt-3">
                   <IcpLicense
-                    className="text-xs text-[var(--social-faint)]"
-                    numberClassName="text-[var(--social-muted)] hover:text-[var(--social-accent)]"
-                    linkClassName="text-[var(--social-faint)] hover:text-[var(--social-accent)]"
+                    className="text-xs text-[var(--ui-social-faint)]"
+                    numberClassName="text-[var(--ui-social-muted)] hover:text-[var(--ui-social-accent)]"
+                    linkClassName="text-[var(--ui-social-faint)] hover:text-[var(--ui-social-accent)]"
                   />
                 </div>
               </div>
@@ -241,13 +241,13 @@ export default function MeSettingsPage() {
             <button
               type="button"
               onClick={logout}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-[1.4rem] bg-[var(--social-surface)] py-3.5 text-sm font-medium text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition active:scale-[0.99]"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-[1.4rem] bg-[var(--ui-social-surface)] py-3.5 text-sm font-medium text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition active:scale-[0.99]"
             >
               <Icon icon={LogOut} size="sm" />
               退出登录
             </button>
 
-            <p className="mt-4 text-center text-[11px] text-[var(--social-faint)]">
+            <p className="mt-4 text-center text-[11px] text-[var(--ui-social-faint)]">
               想改头像与档案头图？回<Link href="/me" className="mx-1 underline underline-offset-2">我的</Link>页直接点即可
             </p>
           </>

@@ -21,15 +21,17 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       reportsDirectory: 'coverage',
-      // 51/45/50/53 = 2026-10-18 P0 阶段实测存量（全量 76 文件 / 679 用例：statements 52.4% /
-      // branches 46.13% / functions 51.01% / lines 54.37%，向下取整再留 1pp 平台缓冲）。
-      // 只许上调（收紧），不允许为了「变绿」调低阈值；目标 60/50/55/60：
-      // 用 npx vitest run --coverage 的新实测值每次 +2pp 上调。
+      // P3-39（2026-10-19）：补 lib 纯函数/契约测试后，最终共享树实测 103 文件 / 938 用例：
+      //   statements 58.11%（4405/7580）、branches 49.32%（3046/6175）、
+      //   functions 57.64%（773/1341）、lines 60.45%（3885/6426）
+      // 阈值 = 实测**向下取整**（57/49/57/59），低于实测约 0.3-1pp 作为并发/平台抖动缓冲；
+      // statements 已达成 55+ 目标（本轮起点 52.38% → 58.11%）。只许上调（收紧），
+      // 不允许为了「变绿」调低阈值；目标 60/50/60/62，后续每次实测 +2pp 上调。
       thresholds: {
-        statements: 51,
-        branches: 45,
-        functions: 50,
-        lines: 53,
+        statements: 57,
+        branches: 49,
+        functions: 57,
+        lines: 59,
       },
     },
   },

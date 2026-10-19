@@ -287,7 +287,7 @@ export default function AdminTravelsPage() {
                     className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
                       createTravelType === t.value
                         ? 'bg-travel-accent text-white'
-                        : 'bg-travel-dim/40 text-travel-ink/70 hover:bg-travel-dim/70 dark:bg-white/10 dark:text-warm-300'
+                        : 'bg-travel-dim/40 text-travel-ink/80 hover:bg-travel-dim/70 dark:bg-white/10 dark:text-warm-300'
                     }`}
                   >
                     {t.label}
@@ -320,7 +320,7 @@ export default function AdminTravelsPage() {
                   type="button"
                   onClick={addCompanion}
                   disabled={!companionName.trim() || createCompanions.length >= MAX_COMPANIONS}
-                  className="shrink-0 rounded-lg border border-travel-line/70 px-2.5 py-1.5 text-xs font-medium text-travel-ink/70 transition hover:bg-travel-dim/50 disabled:opacity-40 dark:border-shell-line dark:text-warm-300"
+                  className="shrink-0 rounded-lg border border-travel-line/70 px-2.5 py-1.5 text-xs font-medium text-travel-ink/80 transition hover:bg-travel-dim/50 disabled:opacity-40 dark:border-shell-line dark:text-warm-300"
                 >
                   + 添加
                 </button>

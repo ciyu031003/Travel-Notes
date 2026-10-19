@@ -225,19 +225,19 @@ export default function TravelCircleFeed() {
   })
 
   return (
-    <div className="m-mobile-page m-bottom-nav-safe bg-[var(--social-bg)] text-[var(--social-text)]">
+    <div className="m-mobile-page m-bottom-nav-safe bg-[var(--ui-social-bg)] text-[var(--ui-social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.06),transparent_60%)]" />
       <div className="m-safe-top-26 relative mx-auto max-w-6xl px-4 pb-8 sm:px-6 sm:pt-8">
         <PullToRefresh onRefresh={() => load(tab, 1, false)}>
         <header className="m-enter mb-7 hidden items-start justify-between gap-4 md:flex">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--social-accent)]">Travel Circle</p>
-            <h1 className="mt-1.5 text-[30px] font-semibold leading-none tracking-tight text-[var(--social-text)]">旅行圈</h1>
-            <p className="mt-2 max-w-md text-sm leading-6 text-[var(--social-muted)]">看看别人眼中的世界，发现正在发生的旅途。</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">Travel Circle</p>
+            <h1 className="mt-1.5 text-[30px] font-semibold leading-none tracking-tight text-[var(--ui-social-text)]">旅行圈</h1>
+            <p className="mt-2 max-w-md text-sm leading-6 text-[var(--ui-social-muted)]">看看别人眼中的世界，发现正在发生的旅途。</p>
           </div>
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
             <SocialThemeToggle />
-            <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-4 py-2 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)]">
+            <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface)] px-4 py-2 text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)] hover:ring-[var(--ui-social-line-strong)]">
               <Icon icon={Home} size="sm" />返回首页
             </Link>
           </div>
@@ -253,7 +253,7 @@ export default function TravelCircleFeed() {
         </div>
 
         {offline && (
-          <div className="mb-6 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
+          <div className="mb-6 flex items-center justify-center gap-1.5 rounded-full bg-[var(--ui-social-accent-soft)] px-4 py-1.5 text-xs text-[var(--ui-social-accent)]">
             <Icon icon={WifiOff} size="sm" />
             离线模式：显示已缓存的旅行圈内容
           </div>
@@ -271,7 +271,7 @@ export default function TravelCircleFeed() {
           {TABS.map((t) => (
             <button key={t.key} type="button" onClick={() => switchTab(t.key)}
               className={cn('shrink-0 rounded-full px-4 py-2 text-sm transition active:scale-95',
-                tab === t.key ? 'bg-[var(--social-accent)] text-[var(--social-on-accent)] shadow-[0_8px_18px_-8px_var(--social-accent)]' : 'bg-[var(--social-surface)] text-[var(--social-muted)] ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]')}>
+                tab === t.key ? 'bg-[var(--ui-social-accent)] text-[var(--ui-social-on-accent)] shadow-[0_8px_18px_-8px_var(--ui-social-accent)]' : 'bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] hover:text-[var(--ui-social-text)]')}>
               {t.label}
             </button>
           ))}
@@ -301,14 +301,14 @@ export default function TravelCircleFeed() {
 
         {/* 访客提示：能看，但互动要登录 —— 先说清楚，而不是让用户点了才发现 */}
         {!authChecked ? null : !loggedIn ? (
-          <div className="mb-5 flex items-center gap-2.5 rounded-2xl bg-[var(--social-accent-soft)] px-4 py-3">
-            <Icon icon={Compass} size="sm" className="shrink-0 text-[var(--social-accent)]" />
-            <p className="min-w-0 flex-1 text-xs leading-relaxed text-[var(--social-accent)]">
+          <div className="mb-5 flex items-center gap-2.5 rounded-2xl bg-[var(--ui-social-accent-soft)] px-4 py-3">
+            <Icon icon={Compass} size="sm" className="shrink-0 text-[var(--ui-social-accent)]" />
+            <p className="min-w-0 flex-1 text-xs leading-relaxed text-[var(--ui-social-accent)]">
               你现在是访客，可以随意翻看公开的旅行。登录后能点赞、评论，也能分享自己的旅途。
             </p>
             <Link
               href="/login?redirect=%2Fcircle"
-              className="shrink-0 rounded-full bg-[var(--social-accent)] px-3.5 py-1.5 text-xs font-medium text-[var(--social-on-accent)]"
+              className="shrink-0 rounded-full bg-[var(--ui-social-accent)] px-3.5 py-1.5 text-xs font-medium text-[var(--ui-social-on-accent)]"
             >
               去登录
             </Link>
@@ -317,7 +317,7 @@ export default function TravelCircleFeed() {
 
         {loading ? (
           <>
-            <div className="hidden flex-col items-center gap-3 py-28 text-[var(--social-faint)] md:flex"><Icon icon={Loader2} size="lg" tone="accent" className="animate-spin" /><span className="text-sm">正在翻阅旅行相册…</span></div>
+            <div className="hidden flex-col items-center gap-3 py-28 text-[var(--ui-social-faint)] md:flex"><Icon icon={Loader2} size="lg" tone="accent" className="animate-spin" /><span className="text-sm">正在翻阅旅行相册…</span></div>
             <div className="space-y-4 md:hidden">
               <Skeleton className="h-72 w-full" style={{ borderRadius: 26 }} />
               <SkeletonCard />
@@ -326,7 +326,7 @@ export default function TravelCircleFeed() {
           </>
         ) : error ? (
           <>
-            <div className="hidden py-20 text-center text-sm text-[var(--social-muted)] md:block">{error}</div>
+            <div className="hidden py-20 text-center text-sm text-[var(--ui-social-muted)] md:block">{error}</div>
             <div className="md:hidden">
               <EmptyState
                 icon={WifiOff}
@@ -342,13 +342,13 @@ export default function TravelCircleFeed() {
           </>
         ) : posts.length === 0 ? (
           <>
-          <div className="relative hidden overflow-hidden rounded-[2rem] bg-[var(--social-surface-60)] px-6 py-28 text-center ring-1 ring-[var(--social-line)] md:block">
+          <div className="relative hidden overflow-hidden rounded-[2rem] bg-[var(--ui-social-surface-60)] px-6 py-28 text-center ring-1 ring-[var(--ui-social-line)] md:block">
             <div className="absolute inset-0 bg-[radial-gradient(40%_50%_at_50%_30%,rgba(232,179,106,0.08),transparent_70%)]" />
             <div className="relative">
               <Icon icon={Compass} size="lg" tone="accent" className="mx-auto" />
-              <p className="mt-4 text-base text-[var(--social-text)]">这里还没有故事。</p>
-              <p className="mt-2 text-sm text-[var(--social-muted)]">去看看自己的旅途，也许下一段故事就从那里开始。</p>
-              <button type="button" onClick={() => router.push('/travel')} className="mt-6 rounded-full bg-[var(--social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--social-on-accent)]">去我的旅行</button>
+              <p className="mt-4 text-base text-[var(--ui-social-text)]">这里还没有故事。</p>
+              <p className="mt-2 text-sm text-[var(--ui-social-muted)]">去看看自己的旅途，也许下一段故事就从那里开始。</p>
+              <button type="button" onClick={() => router.push('/travel')} className="mt-6 rounded-full bg-[var(--ui-social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)]">去我的旅行</button>
             </div>
           </div>
           <div className="md:hidden">
@@ -386,11 +386,11 @@ export default function TravelCircleFeed() {
               （mb-8 → mb-5），手机上一屏能看到 hero + 半张卡，滚动意图更明确。
             */}
             <div className="mb-4 flex items-center gap-3">
-              <span className="text-sm font-semibold tracking-wide text-[var(--social-text)]">
+              <span className="text-sm font-semibold tracking-wide text-[var(--ui-social-text)]">
                 {tab === 'following' ? '关注的旅途' : '最新旅途'}
               </span>
-              <span className="h-px flex-1 bg-[var(--social-line)]" />
-              {total > 0 && <span className="text-xs tabular-nums text-[var(--social-faint)]">共 {total} 篇</span>}
+              <span className="h-px flex-1 bg-[var(--ui-social-line)]" />
+              {total > 0 && <span className="text-xs tabular-nums text-[var(--ui-social-faint)]">共 {total} 篇</span>}
             </div>
 
             {/* 移动端：保留紧凑 hero 大图叙事（桌面端走瀑布流，避免全宽巨卡） */}
@@ -406,18 +406,18 @@ export default function TravelCircleFeed() {
             </Stagger>
             <div ref={sentinelRef} className="mt-6 flex justify-center">
               {loadingMore ? (
-                <span className="flex items-center gap-1.5 text-xs text-[var(--social-faint)]">
+                <span className="flex items-center gap-1.5 text-xs text-[var(--ui-social-faint)]">
                   <Icon icon={Loader2} size="sm" className="animate-spin" />
                   正在加载更多…
                 </span>
               ) : hasMore ? (
                 <button type="button" onClick={loadMore}
-                  className="m-pressable rounded-full bg-[var(--social-surface)] px-6 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition-colors hover:text-[var(--social-text)] hover:ring-[var(--social-line-strong)]">
+                  className="m-pressable rounded-full bg-[var(--ui-social-surface)] px-6 py-2.5 text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition-colors hover:text-[var(--ui-social-text)] hover:ring-[var(--ui-social-line-strong)]">
                   加载更多
                 </button>
               ) : (
                 posts.length > 0 && (
-                  <span className="text-xs text-[var(--social-faint)]">看到这里就是全部了 · 共 {posts.length} 篇</span>
+                  <span className="text-xs text-[var(--ui-social-faint)]">看到这里就是全部了 · 共 {posts.length} 篇</span>
                 )
               )}
             </div>

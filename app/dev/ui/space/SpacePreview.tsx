@@ -133,8 +133,8 @@ function Section({ title, note, children }: { title: string; note?: string; chil
   return (
     <section className="mb-10">
       <div className="mb-3">
-        <h2 className="text-[15px] font-semibold text-[var(--social-text)]">{title}</h2>
-        {note && <p className="mt-1 text-[13px] leading-5 text-[var(--social-muted)]">{note}</p>}
+        <h2 className="text-[15px] font-semibold text-[var(--ui-social-text)]">{title}</h2>
+        {note && <p className="mt-1 text-[13px] leading-5 text-[var(--ui-social-muted)]">{note}</p>}
       </div>
       {children}
     </section>
@@ -144,42 +144,42 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 /** 色板条：把某个空间的 7 个令牌全部摊开，便于逐项核对 */
 function ThemeSwatch({ type }: { type: string }) {
   const cells: Array<[string, string]> = [
-    ['9', 'bg-[var(--space-accent)]'],
-    ['11', 'bg-[var(--space-accent-strong)]'],
-    ['3/4', 'bg-[var(--space-accent-soft)]'],
-    ['6', 'bg-[var(--space-hairline)]'],
-    ['a', 'bg-[var(--space-hero-a)]'],
-    ['b', 'bg-[var(--space-hero-b)]'],
+    ['9', 'bg-[var(--ui-space-accent)]'],
+    ['11', 'bg-[var(--ui-space-accent-strong)]'],
+    ['3/4', 'bg-[var(--ui-space-accent-soft)]'],
+    ['6', 'bg-[var(--ui-space-hairline)]'],
+    ['a', 'bg-[var(--ui-space-hero-a)]'],
+    ['b', 'bg-[var(--ui-space-hero-b)]'],
   ]
   return (
     <SpaceThemeScope type={type}>
-      <div className="rounded-[var(--m-radius-card)] bg-[var(--social-surface)] p-3 ring-1 ring-[var(--social-line)]">
+      <div className="rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface)] p-3 ring-1 ring-[var(--ui-social-line)]">
         <div className="flex items-center gap-2">
-          <Icon icon={spaceTypeIconOf(type)} size="sm" tone="inherit" className="text-[var(--space-accent-strong)]" />
-          <span className="text-[13px] font-semibold text-[var(--space-accent-text)]">{spaceTypeLabelOf(type)}</span>
-          <code className="ml-auto text-[11px] text-[var(--social-faint)]">data-space={type}</code>
+          <Icon icon={spaceTypeIconOf(type)} size="sm" tone="inherit" className="text-[var(--ui-space-accent-strong)]" />
+          <span className="text-[13px] font-semibold text-[var(--ui-space-accent-text)]">{spaceTypeLabelOf(type)}</span>
+          <code className="ml-auto text-[11px] text-[var(--ui-social-faint)]">data-space={type}</code>
         </div>
         <div className="mt-2.5 grid grid-cols-6 gap-1">
           {cells.map(([label, cls]) => (
             <div key={label}>
-              <div className={`h-9 rounded-[10px] ring-1 ring-[var(--social-line)] ${cls}`} />
-              <p className="mt-1 text-center text-[11px] text-[var(--social-faint)]">{label}</p>
+              <div className={`h-9 rounded-[10px] ring-1 ring-[var(--ui-social-line)] ${cls}`} />
+              <p className="mt-1 text-center text-[11px] text-[var(--ui-social-faint)]">{label}</p>
             </div>
           ))}
         </div>
         {/* 列序与令牌一一对应，避免小标签被截断成 "acc.." */}
-        <p className="mt-1.5 text-[11px] leading-4 text-[var(--social-faint)]">
+        <p className="mt-1.5 text-[11px] leading-4 text-[var(--ui-social-faint)]">
           accent-9 · accent-strong-11 · accent-soft-3/4 · hairline-6 · hero-a · hero-b
         </p>
         {/* 实测：CTA 填充 + 标签文字（对比度见研究报告，亮色 5.26–6.07 / 暗色 9.53–11.10） */}
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <span className="whitespace-nowrap rounded-full bg-[var(--space-accent-strong)] px-3 py-1.5 text-[13px] font-semibold text-[var(--space-on-accent)]">
+          <span className="whitespace-nowrap rounded-full bg-[var(--ui-space-accent-strong)] px-3 py-1.5 text-[13px] font-semibold text-[var(--ui-space-on-accent)]">
             主 CTA
           </span>
-          <span className="whitespace-nowrap rounded-full bg-[var(--space-accent-soft)] px-2.5 py-1 text-[13px] font-medium text-[var(--space-accent-text)]">
+          <span className="whitespace-nowrap rounded-full bg-[var(--ui-space-accent-soft)] px-2.5 py-1 text-[13px] font-medium text-[var(--ui-space-accent-text)]">
             淡染标签
           </span>
-          <span className="text-[11px] text-[var(--social-faint)]">on-accent 已按明暗反转</span>
+          <span className="text-[11px] text-[var(--ui-social-faint)]">on-accent 已按明暗反转</span>
         </div>
       </div>
     </SpaceThemeScope>
@@ -196,26 +196,26 @@ function DetailSnippet({ type, name, description, stats, members }: {
 }) {
   return (
     <SpaceThemeScope type={type}>
-      <article className="overflow-hidden rounded-[var(--m-radius-card)] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]">
+      <article className="overflow-hidden rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]">
         {/* 头图 */}
         <div className="space-hero px-4 pb-4 pt-4">
           <div className="flex items-start justify-between">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface-90)]/70 px-2.5 py-1 text-[11px] font-semibold text-[var(--space-accent-text)] backdrop-blur">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface-90)]/70 px-2.5 py-1 text-[11px] font-semibold text-[var(--ui-space-accent-text)] backdrop-blur">
               <Icon icon={spaceTypeIconOf(type)} size="sm" />
               {spaceTypeLabelOf(type)}
             </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--social-surface-90)]/60 text-[var(--space-accent-text)]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--ui-social-surface-90)]/60 text-[var(--ui-space-accent-text)]">
               <Icon icon={Settings2} size="sm" />
             </span>
           </div>
-          <h3 className="mt-4 text-[18px] font-bold leading-6 text-[var(--space-accent-text)]">{name}</h3>
+          <h3 className="mt-4 text-[18px] font-bold leading-6 text-[var(--ui-space-accent-text)]">{name}</h3>
           {description && (
-            <p className="mt-1 text-[13px] leading-4 text-[var(--space-accent-text)] opacity-85">{description}</p>
+            <p className="mt-1 text-[13px] leading-4 text-[var(--ui-space-accent-text)] opacity-85">{description}</p>
           )}
           <div className="mt-3 flex items-center gap-2">
             <SpaceAvatarStack members={members} max={5} size="sm" />
-            <span className="text-[11px] text-[var(--space-accent-text)] opacity-85">{members.length} 位成员</span>
-            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[var(--space-accent-strong)] px-3 py-1.5 text-[11px] font-semibold text-[var(--space-on-accent)]">
+            <span className="text-[11px] text-[var(--ui-space-accent-text)] opacity-85">{members.length} 位成员</span>
+            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[var(--ui-space-accent-strong)] px-3 py-1.5 text-[11px] font-semibold text-[var(--ui-space-on-accent)]">
               <Icon icon={UserPlus} size="sm" />
               邀请
             </span>
@@ -225,10 +225,10 @@ function DetailSnippet({ type, name, description, stats, members }: {
         {/* 统计 */}
         <div className="grid grid-cols-4 gap-1.5 px-4 pt-3">
           {stats.map(([label, value, icon]) => (
-            <div key={label} className="rounded-[12px] bg-[var(--social-surface-60)] py-2 text-center">
-              <Icon icon={icon} size="sm" className="mx-auto text-[var(--space-accent-strong)]" />
-              <div className="mt-0.5 text-[15px] font-semibold leading-5 tabular-nums text-[var(--social-text)]">{value}</div>
-              <div className="text-[11px] text-[var(--social-faint)]">{label}</div>
+            <div key={label} className="rounded-[12px] bg-[var(--ui-social-surface-60)] py-2 text-center">
+              <Icon icon={icon} size="sm" className="mx-auto text-[var(--ui-space-accent-strong)]" />
+              <div className="mt-0.5 text-[15px] font-semibold leading-5 tabular-nums text-[var(--ui-social-text)]">{value}</div>
+              <div className="text-[11px] text-[var(--ui-social-faint)]">{label}</div>
             </div>
           ))}
         </div>
@@ -239,13 +239,13 @@ function DetailSnippet({ type, name, description, stats, members }: {
             ['大理 5 天', '2026/3/12 · 情侣 · 小鱼 创建'],
             ['洱海骑行', '2026/3/13 · 阿远 最近修改'],
           ].map(([title, meta]) => (
-            <div key={title} className="flex items-center gap-2.5 rounded-[12px] bg-[var(--social-surface-60)] px-3 py-2.5">
-              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[12px] bg-[var(--space-accent-soft)] text-[var(--space-accent-strong)]">
+            <div key={title} className="flex items-center gap-2.5 rounded-[12px] bg-[var(--ui-social-surface-60)] px-3 py-2.5">
+              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[12px] bg-[var(--ui-space-accent-soft)] text-[var(--ui-space-accent-strong)]">
                 <Icon icon={MapPin} size="sm" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-medium text-[var(--social-text)]">{title}</span>
-                <span className="block truncate text-[11px] text-[var(--social-faint)]">{meta}</span>
+                <span className="block truncate text-[13px] font-medium text-[var(--ui-social-text)]">{title}</span>
+                <span className="block truncate text-[11px] text-[var(--ui-social-faint)]">{meta}</span>
               </span>
               <Icon icon={ChevronRight} size="sm" tone="faint" />
             </div>
@@ -269,15 +269,15 @@ export default function SpacePreview() {
   }
 
   return (
-    <div className="min-h-dvh bg-[var(--social-bg)] pb-20">
+    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-20">
       <div className="mx-auto max-w-[1180px] px-5 py-8">
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.08em] text-[var(--social-muted)]">DEV · PREVIEW</p>
-            <h1 className="mt-1 text-[24px] font-bold text-[var(--social-text)]">空间模块 · 五套主题预览</h1>
-            <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[var(--social-muted)]">
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-[var(--ui-social-muted)]">DEV · PREVIEW</p>
+            <h1 className="mt-1 text-[24px] font-bold text-[var(--ui-social-text)]">空间模块 · 五套主题预览</h1>
+            <p className="mt-2 max-w-2xl text-[13px] leading-6 text-[var(--ui-social-muted)]">
               五类空间各一套低彩度主题（色源 Radix Colors · MIT）。中性层、间距、圆角、字号、
-              品牌赤陶全部共享，<strong className="text-[var(--social-text)]">只有 7 个令牌随空间变化</strong>
+              品牌赤陶全部共享，<strong className="text-[var(--ui-social-text)]">只有 7 个令牌随空间变化</strong>
               —— 这是「五种空间配色不同、但仍是同一个 App」的全部机制。
               色值与环境对比度见 <code className="text-[11px]">docs/design/空间类型配色系统-研究报告.md</code>。
             </p>
@@ -359,8 +359,8 @@ export default function SpacePreview() {
                 onClick={() => setActiveType(t)}
                 className={
                   activeType === t
-                    ? 'rounded-full bg-[var(--social-text)] px-3 py-1.5 text-[13px] font-medium text-[var(--social-bg)]'
-                    : 'rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-[13px] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]'
+                    ? 'rounded-full bg-[var(--ui-social-text)] px-3 py-1.5 text-[13px] font-medium text-[var(--ui-social-bg)]'
+                    : 'rounded-full bg-[var(--ui-social-surface)] px-3 py-1.5 text-[13px] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]'
                 }
               >
                 {spaceTypeLabelOf(t)}
@@ -383,8 +383,8 @@ export default function SpacePreview() {
                 ]}
               />
             ))}
-            <div className="rounded-[var(--m-radius-card)] bg-[var(--social-surface)] p-4 ring-1 ring-[var(--social-line)]">
-              <p className="mb-3 text-[13px] font-semibold text-[var(--social-text)]">空间动态（读 AuditLog，零改库）</p>
+            <div className="rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-social-line)]">
+              <p className="mb-3 text-[13px] font-semibold text-[var(--ui-social-text)]">空间动态（读 AuditLog，零改库）</p>
               <SpaceActivityFeed items={ACTIVITY} />
             </div>
           </div>
@@ -407,8 +407,8 @@ export default function SpacePreview() {
               <IconBadge key={i} icon={ic} tone={(['blush', 'sun', 'accent', 'clay', 'neutral'] as const)[i]} size="lg" />
             ))}
           </div>
-          <div className="mt-4 max-w-[420px] rounded-[var(--m-radius-card)] bg-[var(--social-surface)] p-4 ring-1 ring-[var(--social-line)]">
-            <p className="mb-3 text-[13px] font-semibold text-[var(--social-text)]">一屏只有一个实心 CTA</p>
+          <div className="mt-4 max-w-[420px] rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-social-line)]">
+            <p className="mb-3 text-[13px] font-semibold text-[var(--ui-social-text)]">一屏只有一个实心 CTA</p>
             <div className="flex gap-2">
               <Button icon={Plus} block>创建空间</Button>
               <Button variant="secondary" icon={Check}>已完成</Button>
@@ -418,7 +418,7 @@ export default function SpacePreview() {
 
         {/* ⑥ 约束自检 */}
         <Section title="⑥ 用色纪律（每套主题上线前逐条自查）">
-          <ul className="space-y-1.5 text-[13px] leading-5 text-[var(--social-muted)]">
+          <ul className="space-y-1.5 text-[13px] leading-5 text-[var(--ui-social-muted)]">
             {[
               '单屏内 --space-accent* 像素和 ≤ 屏面积 15%',
               '彩色只出现在：主 CTA / 激活态 / 关键数字 / 内容图；不用于页面底、卡片底、分隔线、正文',
@@ -429,14 +429,14 @@ export default function SpacePreview() {
               '控件边界用共享 --social-line；空间色发丝线只作纯装饰；聚焦环不随空间变色',
             ].map((t) => (
               <li key={t} className="flex items-start gap-1.5">
-                <Icon icon={Check} size="sm" className="mt-0.5 shrink-0 text-[var(--social-muted)]" />
+                <Icon icon={Check} size="sm" className="mt-0.5 shrink-0 text-[var(--ui-social-muted)]" />
                 <span>{t}</span>
               </li>
             ))}
           </ul>
         </Section>
 
-        <p className="text-center text-[11px] text-[var(--social-faint)]">
+        <p className="text-center text-[11px] text-[var(--ui-social-faint)]">
           演示数据为虚构，仅用于视觉评审 · 本页生产构建下一律 404
         </p>
       </div>

@@ -323,8 +323,8 @@
   align-items: center;
   padding: 4px 10px 6px;
   padding-top: calc(var(--m-safe-top) + 2px);
-  background: var(--space-hero-a);
-  border-bottom: 0.5px solid var(--space-hairline);
+  background: var(--ui-space-hero-a);
+  border-bottom: 0.5px solid var(--ui-space-hairline);
   opacity: 0;
   transform: translateY(-8px);
   pointer-events: none;
@@ -333,7 +333,7 @@
 /* 支持色混则用半透明底 + 毛玻璃（iOS 质感），不支持保持实色兜底 */
 @supports (background: color-mix(in srgb, red 50%, transparent)) {
   .m-space-collapser {
-    background: color-mix(in srgb, var(--space-hero-a) 86%, transparent);
+    background: color-mix(in srgb, var(--ui-space-hero-a) 86%, transparent);
     backdrop-filter: blur(18px) saturate(1.4);
     -webkit-backdrop-filter: blur(18px) saturate(1.4);
   }
@@ -348,7 +348,7 @@
   font-size: 16px;
   line-height: 22px;
   font-weight: 600;
-  color: var(--space-accent-text);
+  color: var(--ui-space-accent-text);
 }
 
 /* ── 图片加载淡入 ─────────────────────────────────────────

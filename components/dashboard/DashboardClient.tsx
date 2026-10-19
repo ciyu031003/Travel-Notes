@@ -62,7 +62,7 @@ function BigStat({
       <div className="mt-2 text-2xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text tabular-nums md:mt-3 md:text-3xl">
         {value}
       </div>
-      <div className="mt-1 text-xs text-travel-ink/70 dark:text-shell-muted">{label}</div>
+      <div className="mt-1 text-xs text-travel-ink/80 dark:text-shell-muted">{label}</div>
     </div>
   )
   return href ? <Link href={href} className="transition group-hover:opacity-90">{inner}</Link> : inner
@@ -95,7 +95,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-4xl">
             我的旅行记忆空间
           </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
             走过的省份、写下的文字、拍下的照片——这里是你旅行的全部沉淀。
           </p>
         </header>
@@ -133,7 +133,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               省份打卡
             </h2>
             {data.provinceStats.length === 0 ? (
-              <p className="py-10 text-center text-sm text-travel-ink/70 dark:text-shell-muted">
+              <p className="py-10 text-center text-sm text-travel-ink/80 dark:text-shell-muted">
                 还没有旅行记录，去点亮第一个省份吧
               </p>
             ) : (
@@ -183,7 +183,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                   <div className="space-y-2">
                     {stats.slice(0, 5).map((s) => (
                       <div key={s.type} className="flex items-center gap-2">
-                        <span className="w-14 shrink-0 text-xs text-travel-ink/70 dark:text-shell-muted">
+                        <span className="w-14 shrink-0 text-xs text-travel-ink/80 dark:text-shell-muted">
                           {TRAVEL_TYPE_LABELS[s.type] || s.type}
                         </span>
                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-travel-sakura/40 dark:bg-white/5">

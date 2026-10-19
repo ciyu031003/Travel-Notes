@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Check, ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react'
 import { Button } from './Button'
@@ -18,6 +18,7 @@ import {
   shouldShowPreferenceSurvey,
   type CompanionStyle,
 } from '@/lib/modules/user/preferences'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 /**
  * 新用户偏好问卷（3 屏，可跳过）
@@ -46,6 +47,14 @@ export function PreferenceSurvey() {
   const [vetoes, setVetoes] = useState<string[]>([])
   const [cautions, setCautions] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
+
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: visible,
+    onClose: () => void submit(true),
+    panelRef,
+  })
 
   const isHome = pathname === '/'
 
@@ -127,7 +136,7 @@ export function PreferenceSurvey() {
   return (
     <div
       className="fixed inset-0 z-[70] flex flex-col bg-[var(--m-bg)] text-[var(--m-text)] md:hidden"
-      role="dialog"
+      ref={panelRef} tabIndex={-1} role="dialog"
       aria-modal="true"
       aria-label="偏好问卷"
     >

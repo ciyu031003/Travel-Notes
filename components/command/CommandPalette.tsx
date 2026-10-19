@@ -21,6 +21,7 @@ import { Icon } from '@/components/mobile/Icon'
 import { formatDate } from '@/lib/utils'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface SearchResult {
   id: number
@@ -108,9 +109,7 @@ export default function CommandPalette() {
         e.preventDefault()
         setOpen((prev) => !prev)
       }
-      if (e.key === 'Escape') {
-        setOpen(false)
-      }
+      // ESC 由 useModalLayer 统一处理（打开时才生效），这里只保留 Cmd/Ctrl+K
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
@@ -119,12 +118,7 @@ export default function CommandPalette() {
   useEffect(() => {
     if (!open) return
     const timer = setTimeout(() => inputRef.current?.focus(), 30)
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      clearTimeout(timer)
-      document.body.style.overflow = originalOverflow
-    }
+    return () => clearTimeout(timer)
   }, [open])
 
   const close = useCallback(() => {
@@ -133,6 +127,10 @@ export default function CommandPalette() {
     setResults([])
     setActiveIndex(0)
   }, [])
+
+  // P2-B2：弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({ open, onClose: close, panelRef })
 
   const totalItems = query.trim() ? results.length : QUICK_LINKS.length
 
@@ -166,6 +164,8 @@ export default function CommandPalette() {
     <div
       className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[12vh] px-4"
       onClick={close}
+      ref={panelRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
     >

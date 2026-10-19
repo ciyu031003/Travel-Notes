@@ -9,7 +9,7 @@
  *    类型 → 主题的映射必须有唯一出口，否则组件会各自拼字符串。
  *
  * 颜色**不在这里声明**：色值全部在 `app/globals.css` 的 `[data-space='X']` 块里，
- * 组件只写 `bg-[var(--space-accent-strong)]` 这类 token 引用（禁止裸 hex）。
+ * 组件只写 `bg-[var(--ui-space-accent-strong)]` 这类 token 引用（禁止裸 hex；P2-31 B3 后消费端统一 --ui-*）。
  */
 import type { LucideIcon } from 'lucide-react'
 import {

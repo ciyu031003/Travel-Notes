@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
 import { TimeField } from '@/components/mobile/TimePicker'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 /**
  * 「添加行程」抽屉：给某一天加一个景点 / 餐厅 / 住宿 / 交通 / 活动。
@@ -48,6 +49,14 @@ export default function ItineraryEditor({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: true,
+    onClose: onClose,
+    panelRef,
+  })
+
   const submit = async () => {
     if (!title.trim()) {
       setError('写个名字吧，比如「喀纳斯湖」')
@@ -82,7 +91,7 @@ export default function ItineraryEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-[130] flex items-end justify-center" role="dialog" aria-modal="true" aria-label="添加行程">
+    <div className="fixed inset-0 z-[130] flex items-end justify-center" ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="添加行程">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-[var(--m-surface-solid)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 shadow-[var(--m-shadow-lg)]">
         <div className="flex items-start justify-between">

@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { Lock, X, Heart } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { useAlbumUnlock } from '@/hooks/use-album-unlock'
+import { useRef } from 'react'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface AlbumUnlockModalProps {
   isOpen: boolean
@@ -13,6 +15,14 @@ interface AlbumUnlockModalProps {
 }
 
 export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectToAlbum = true }: AlbumUnlockModalProps) {
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: isOpen,
+    onClose: onClose,
+    panelRef,
+  })
+
   const router = useRouter()
   const { password, setPassword, error, verifying, submit, skip, close } = useAlbumUnlock({
     onClose,
@@ -25,7 +35,7 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-label="相册已上锁">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="相册已上锁">
       <div className="w-full max-w-sm bg-white/95 dark:bg-shell-surface/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/80 dark:border-shell-line overflow-hidden animate-[fadeIn_0.2s_ease-out]">
         <style>{`
           @keyframes fadeIn {

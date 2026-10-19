@@ -17,7 +17,7 @@ export default function NotFound() {
           404
         </p>
         <h1 className="mt-2 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">这段旅程不存在</h1>
-        <p className="mt-2 text-sm leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+        <p className="mt-2 text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
           链接可能已失效，或者内容已被作者删除。回到首页继续看看别的旅行吧。
         </p>
         <Link

@@ -97,7 +97,7 @@ export default function QuickLike({
         'backdrop-blur-md transition-colors',
         variant === 'on-media'
           ? 'bg-black/45 text-white ring-1 ring-white/25'
-          : 'bg-[var(--social-surface)] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]',
+          : 'bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]',
         isLiked && 'text-travel-bloom',
         pending && 'opacity-80',
         className,

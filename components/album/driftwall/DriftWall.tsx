@@ -290,7 +290,7 @@ const DriftWall = ({
   const renderTile = (item: DriftWallItem, id: string, colIndex: number) => {
     const inner = (
       <span className="drift-wall__inner">
-        <img src={item.image} alt={item.title ?? ''} loading="lazy" decoding="async" draggable={false} />
+        <img src={item.image} alt={item.title ?? ''} width={400} height={500} loading="lazy" decoding="async" draggable={false} />
         <span className="drift-wall__overlay" aria-hidden="true" />
       </span>
     );

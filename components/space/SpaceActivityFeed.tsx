@@ -51,24 +51,24 @@ export function SpaceActivityFeed({ items }: { items: SpaceActivityItem[] }) {
               className="mt-0.5"
             />
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] leading-5 text-[var(--social-text)]">
+              <p className="text-[13px] leading-5 text-[var(--ui-social-text)]">
                 <span className="font-medium">{it.username}</span>
-                <span className="text-[var(--social-muted)]"> {verb}</span>
+                <span className="text-[var(--ui-social-muted)]"> {verb}</span>
                 {subject &&
                   (isQuoted ? (
                     <>
-                      <span className="text-[var(--social-muted)]">「</span>
+                      <span className="text-[var(--ui-social-muted)]">「</span>
                       <span className="font-medium">{subject}</span>
-                      <span className="text-[var(--social-muted)]">」</span>
+                      <span className="text-[var(--ui-social-muted)]">」</span>
                     </>
                   ) : (
-                    <span className="text-[var(--social-muted)]">{subject}</span>
+                    <span className="text-[var(--ui-social-muted)]">{subject}</span>
                   ))}
                 {isQuoted && it.action === 'UPDATE_PERMISSIONS' && (
-                  <span className="text-[var(--social-muted)]">的权限</span>
+                  <span className="text-[var(--ui-social-muted)]">的权限</span>
                 )}
               </p>
-              <p className="mt-0.5 flex items-center gap-1 text-[11px] text-[var(--social-faint)]">
+              <p className="mt-0.5 flex items-center gap-1 text-[11px] text-[var(--ui-social-faint)]">
                 <Icon icon={activityResourceIconOf(it.resourceType)} size="sm" />
                 {relativeTime(it.createdAt)}
               </p>

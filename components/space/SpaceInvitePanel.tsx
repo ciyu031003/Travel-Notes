@@ -113,7 +113,7 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
           value={role}
           onChange={(e) => setRole(e.target.value)}
           aria-label="邀请角色"
-          className="h-11 flex-1 rounded-[var(--m-radius-control)] bg-[var(--social-surface)] px-3 text-[13px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--space-accent)]"
+          className="h-11 flex-1 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface)] px-3 text-[13px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-space-accent)]"
         >
           <option value="MEMBER">{SPACE_ROLE_LABELS.MEMBER}（可一起编辑）</option>
           <option value="VIEWER">{SPACE_ROLE_LABELS.VIEWER}（只能查看）</option>
@@ -122,7 +122,7 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
           value={days}
           onChange={(e) => setDays(parseInt(e.target.value, 10))}
           aria-label="有效期"
-          className="h-11 rounded-[var(--m-radius-control)] bg-[var(--social-surface)] px-3 text-[13px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--space-accent)]"
+          className="h-11 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface)] px-3 text-[13px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-space-accent)]"
         >
           <option value={1}>1 天</option>
           <option value={3}>3 天</option>
@@ -136,12 +136,12 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
 
       {/* 生成结果：码 + 链接 */}
       {generated && (
-        <div className="rounded-[var(--m-radius-control)] bg-[var(--space-accent-soft)] p-3.5">
-          <p className="text-[13px] text-[var(--space-accent-text)]">
+        <div className="rounded-[var(--m-radius-control)] bg-[var(--ui-space-accent-soft)] p-3.5">
+          <p className="text-[13px] text-[var(--ui-space-accent-text)]">
             把下面的邀请码或链接发给对方（{role === 'VIEWER' ? '只能查看' : '可一起编辑'}，
             {days} 天内有效）
           </p>
-          <p className="mt-2 select-all text-center font-mono text-[18px] font-bold tracking-[0.28em] text-[var(--space-accent-strong)]">
+          <p className="mt-2 select-all text-center font-mono text-[18px] font-bold tracking-[0.28em] text-[var(--ui-space-accent-strong)]">
             {generated}
           </p>
           <div className="mt-3 flex gap-2">
@@ -169,10 +169,10 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
 
       {/* 邀请记录 */}
       <div>
-        <p className="mb-2 text-[13px] font-semibold tracking-[0.08em] text-[var(--social-muted)]">
+        <p className="mb-2 text-[13px] font-semibold tracking-[0.08em] text-[var(--ui-social-muted)]">
           邀请记录
           {pending.length > 0 && (
-            <span className="ml-1.5 tabular-nums text-[var(--social-faint)]">{pending.length} 个待使用</span>
+            <span className="ml-1.5 tabular-nums text-[var(--ui-social-faint)]">{pending.length} 个待使用</span>
           )}
         </p>
         {loading ? (
@@ -180,18 +180,18 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
             <Loader variant="ring" />
           </div>
         ) : invites.length === 0 ? (
-          <p className="py-3 text-center text-[13px] text-[var(--social-faint)]">还没有邀请记录</p>
+          <p className="py-3 text-center text-[13px] text-[var(--ui-social-faint)]">还没有邀请记录</p>
         ) : (
           <div className="space-y-1.5">
             {invites.map((inv) => (
               <div
                 key={inv.id}
-                className="flex items-center justify-between gap-2 rounded-[var(--m-radius-control)] bg-[var(--social-surface-60)] px-3 py-2.5"
+                className="flex items-center justify-between gap-2 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface-60)] px-3 py-2.5"
               >
                 <div className="min-w-0">
-                  <p className="text-[13px] text-[var(--social-text)]">
+                  <p className="text-[13px] text-[var(--ui-social-text)]">
                     {spaceRoleLabelOf(inv.role)}
-                    <span className="ml-2 text-[11px] text-[var(--social-faint)]">
+                    <span className="ml-2 text-[11px] text-[var(--ui-social-faint)]">
                       {inv.status === 'PENDING' && (
                         <span className="inline-flex items-center gap-1">
                           <Icon icon={Clock} size="sm" />
@@ -203,7 +203,7 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
                     </span>
                   </p>
                   {inv.code && inv.status === 'PENDING' && (
-                    <p className="mt-0.5 select-all font-mono text-[13px] tracking-[0.2em] text-[var(--space-accent-strong)]">
+                    <p className="mt-0.5 select-all font-mono text-[13px] tracking-[0.2em] text-[var(--ui-space-accent-strong)]">
                       {inv.code}
                     </p>
                   )}
@@ -213,7 +213,7 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
                     type="button"
                     aria-label="撤销邀请"
                     onClick={() => void revoke(inv.id)}
-                    className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[var(--social-faint)] transition hover:text-[var(--danger-soft)]"
+                    className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[var(--ui-social-faint)] transition hover:text-[var(--danger-soft)]"
                   >
                     <Icon icon={Ban} size="sm" />
                   </button>

@@ -187,13 +187,13 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
             {success}
           </div>
         ) : travel.pendingSync ? (
-          <div className="card p-8 text-center text-travel-ink/70">
+          <div className="card p-8 text-center text-travel-ink/80">
             这本旅行还在本地待同步，联网后会自动上传。同步完成即可在这里记录。
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-travel-ink/70">此刻标题</label>
+              <label className="mb-1 block text-sm text-travel-ink/80">此刻标题</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -204,7 +204,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-travel-ink/70">写点什么</label>
+              <label className="mb-1 block text-sm text-travel-ink/80">写点什么</label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -216,14 +216,14 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
 
             {/* 照片：本页此前完全没有这块 */}
             <div>
-              <label className="mb-2 block text-sm text-travel-ink/70">
+              <label className="mb-2 block text-sm text-travel-ink/80">
                 照片<span className="ml-1 text-xs text-travel-ink/40">最多 {MAX_PHOTOS} 张</span>
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {photos.map((p, i) => (
                   <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={'data:' + p.mimeType + ';base64,' + p.base64} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                    <img src={'data:' + p.mimeType + ';base64,' + p.base64} alt="" width={400} height={400} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     <button
                       type="button"
                       aria-label="移除这张照片"
@@ -248,7 +248,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
             </div>
 
             <div>
-              <label className="mb-2 block text-sm text-travel-ink/70">心情</label>
+              <label className="mb-2 block text-sm text-travel-ink/80">心情</label>
               <div className="flex flex-wrap gap-2">
                 {MOODS.map((m) => (
                   <button
@@ -259,7 +259,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
                       'rounded-full border px-4 py-2 text-sm transition-colors ' +
                       (mood === m
                         ? 'border-travel-bloom bg-travel-sakura text-travel-ink'
-                        : 'border-[#E8E8E4] bg-white text-travel-ink/70')
+                        : 'border-[#E8E8E4] bg-white text-travel-ink/80')
                     }
                   >
                     {m}

@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { Delete, Lock } from 'lucide-react'
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { Delete, Lock } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
 import { hapticError, hapticLight, hapticSuccess } from '@/lib/mobile/haptics'
 import {
@@ -10,6 +10,7 @@ import {
   markUnlocked,
   verifyPin,
 } from '@/lib/modules/offline/privacy-lock'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 const MIN_PIN_LENGTH = 4
 const MAX_PIN_LENGTH = 8
@@ -33,6 +34,15 @@ export default function PrivacyLockGate() {
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: locked,
+    onClose: () => {},
+    dismissible: false,
+    panelRef,
+  })
 
   useEffect(() => {
     if (!isPrivacyLockSupported()) {
@@ -91,7 +101,7 @@ export default function PrivacyLockGate() {
   return (
     <div
       className="fixed inset-0 z-[200] flex min-h-dvh flex-col items-center justify-center bg-[var(--m-bg)] px-6"
-      role="dialog"
+      ref={panelRef} tabIndex={-1} role="dialog"
       aria-modal="true"
       aria-label="本地隐私锁"
       data-privacy-lock="1"
@@ -100,7 +110,7 @@ export default function PrivacyLockGate() {
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
           <Icon icon={Lock} size="lg" />
         </div>
-        <h1 className="mt-4 text-[22px] font-bold tracking-[-0.02em] text-[var(--m-text)]">本地隐私锁</h1>
+        <h1 className="mt-4 text-[18px] font-bold tracking-[-0.02em] text-[var(--m-text)]">本地隐私锁</h1>
         <p className="mt-1.5 text-center text-sm text-[var(--m-muted)]">输入 PIN 解锁，仅本次打开有效</p>
 
         {/* PIN 圆点 */}
@@ -130,7 +140,7 @@ export default function PrivacyLockGate() {
               type="button"
               onClick={() => press(d)}
               aria-label={'数字 ' + d}
-              className="m-pressable h-14 rounded-[var(--m-radius-control)] bg-[var(--m-surface-solid)] text-[22px] font-semibold text-[var(--m-text)] ring-1 ring-[var(--m-line)] active:scale-95"
+              className="m-pressable h-14 rounded-[var(--m-radius-control)] bg-[var(--m-surface-solid)] text-[18px] font-semibold text-[var(--m-text)] ring-1 ring-[var(--m-line)] active:scale-95"
             >
               {d}
             </button>
@@ -140,7 +150,7 @@ export default function PrivacyLockGate() {
             type="button"
             onClick={() => press('0')}
             aria-label="数字 0"
-            className="m-pressable h-14 rounded-[var(--m-radius-control)] bg-[var(--m-surface-solid)] text-[22px] font-semibold text-[var(--m-text)] ring-1 ring-[var(--m-line)] active:scale-95"
+            className="m-pressable h-14 rounded-[var(--m-radius-control)] bg-[var(--m-surface-solid)] text-[18px] font-semibold text-[var(--m-text)] ring-1 ring-[var(--m-line)] active:scale-95"
           >
             0
           </button>

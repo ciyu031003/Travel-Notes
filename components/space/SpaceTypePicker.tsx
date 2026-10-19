@@ -45,8 +45,8 @@ export function SpaceTypePicker({
               className={cn(
                 'w-full overflow-hidden rounded-[var(--m-radius-control)] text-left transition active:scale-[0.98] disabled:opacity-60',
                 active
-                  ? 'bg-[var(--space-accent-soft)] space-ring'
-                  : 'bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]',
+                  ? 'bg-[var(--ui-space-accent-soft)] space-ring'
+                  : 'bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]',
               )}
             >
               {/* 主题色预览条：用户在这里"看到"这套配色 */}
@@ -56,21 +56,21 @@ export function SpaceTypePicker({
                   <Icon
                     icon={spaceTypeIconOf(type)}
                     size="sm"
-                    className={active ? 'text-[var(--space-accent-strong)]' : 'text-[var(--social-muted)]'}
+                    className={active ? 'text-[var(--ui-space-accent-strong)]' : 'text-[var(--ui-social-muted)]'}
                   />
                   <span
                     className={cn(
                       'text-[13px] font-semibold',
-                      active ? 'text-[var(--space-accent-text)]' : 'text-[var(--social-text)]',
+                      active ? 'text-[var(--ui-space-accent-text)]' : 'text-[var(--ui-social-text)]',
                     )}
                   >
                     {spaceTypeLabelOf(type)}
                   </span>
                   {active && (
-                    <Icon icon={Check} size="sm" className="ml-auto text-[var(--space-accent-strong)]" />
+                    <Icon icon={Check} size="sm" className="ml-auto text-[var(--ui-space-accent-strong)]" />
                   )}
                 </span>
-                <span className="mt-0.5 block text-[11px] text-[var(--social-faint)]">
+                <span className="mt-0.5 block text-[11px] text-[var(--ui-social-faint)]">
                   {spaceTypeHintOf(type)}
                 </span>
               </span>

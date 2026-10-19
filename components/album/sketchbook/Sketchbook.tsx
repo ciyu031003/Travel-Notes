@@ -6,6 +6,7 @@ import type { Book } from '@/components/album/travel-book/TravelBook'
 import { buildSpreads, type Spread } from './spreads'
 import { formatDotDate } from '@/lib/modules/album/presentation'
 import './sketchbook.css'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 type Dir = 'next' | 'prev'
 
@@ -47,6 +48,14 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
   const [loupeOn, setLoupeOn] = useState(false)
   const [showHint, setShowHint] = useState(true)
   const [viewer, setViewer] = useState<Spread | null>(null)
+
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: Boolean(viewer),
+    onClose: () => setViewer(null),
+    panelRef,
+  })
 
   const rootRef = useRef<HTMLDivElement>(null)
   const threeDRef = useRef<HTMLDivElement>(null)
@@ -944,7 +953,7 @@ export default function Sketchbook({ book, onBack, onToggleBook }: { book: Book;
 
       {/* 查看大图（原图）：全屏 overlay，点击遮罩或关闭按钮退出 */}
       {viewer && (
-        <div className="sk-viewer" onClick={() => setViewer(null)} role="dialog" aria-modal="true" aria-label="查看大图">
+        <div className="sk-viewer" onClick={() => setViewer(null)} ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="查看大图">
           <button type="button" className="sk-viewer-close" aria-label="关闭大图" onClick={() => setViewer(null)}>
             <X />
           </button>

@@ -43,7 +43,7 @@ export function AdminButton({ variant = 'primary', className, ...props }: AdminB
         'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none',
         variant === 'primary' && 'bg-travel-accent text-white shadow-lg shadow-travel-accent/20 hover:bg-travel-accentStrong',
         variant === 'secondary' && 'border border-travel-line/60 bg-white/80 text-travel-ink hover:bg-travel-sakura/40 dark:border-shell-line dark:bg-white/5 dark:text-shell-text',
-        variant === 'ghost' && 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/5',
+        variant === 'ghost' && 'text-travel-ink/80 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/5',
         variant === 'danger' && 'bg-travel-danger/10 text-travel-danger hover:bg-travel-danger/20',
         className
       )}

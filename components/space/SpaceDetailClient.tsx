@@ -159,10 +159,10 @@ function MessageState({
     <div className="m-gutter pb-24 pt-2">
       <LargeTitle title={title} back="/space" />
       <div className="mt-10 flex flex-col items-center text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-[var(--m-radius-card)] bg-[var(--social-surface2)] text-[var(--social-faint)]">
+        <span className="flex h-14 w-14 items-center justify-center rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface2)] text-[var(--ui-social-faint)]">
           <Icon icon={ShieldAlert} size="lg" />
         </span>
-        <p className="mt-3 max-w-[280px] text-[13px] leading-5 text-[var(--social-muted)]">{description}</p>
+        <p className="mt-3 max-w-[280px] text-[13px] leading-5 text-[var(--ui-social-muted)]">{description}</p>
         <div className="mt-5">{action}</div>
       </div>
     </div>

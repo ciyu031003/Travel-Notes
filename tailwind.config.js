@@ -64,39 +64,41 @@ module.exports = {
         //   新代码请用 semantic-accent* / var(--ui-accent*)，本轮保留以维持视觉零变化。
         // ★ primary 语义色：对齐 travel 暖陶土（原为天蓝 #0ea5e9，与暖陶土品牌冲突）
         //   改为品牌主色后，admin 主按钮/聚焦环/上传态全局统一，一次性消除 primary 蓝残留
+        // P2-31 B3：RGB 通道化（色值与旧 hex 逐字节相等，保留 /opacity 修饰符）
         primary: {
-          50: '#F3E4D5', 100: '#E8D5C0', 200: '#D4B9A0', 300: '#C2A082',
-          400: '#B08663', 500: '#A85F3A', 600: '#8A4A2B', 700: '#7A3F24',
-          800: '#6A351E', 900: '#5A2C18',
+          50: 'rgb(var(--ui-tw-primary-50-rgb) / <alpha-value>)',
+          100: 'rgb(var(--ui-tw-primary-100-rgb) / <alpha-value>)',
+          200: 'rgb(var(--ui-tw-primary-200-rgb) / <alpha-value>)',
+          300: 'rgb(var(--ui-tw-primary-300-rgb) / <alpha-value>)',
+          400: 'rgb(var(--ui-tw-primary-400-rgb) / <alpha-value>)',
+          500: 'rgb(var(--ui-tw-primary-500-rgb) / <alpha-value>)',
+          600: 'rgb(var(--ui-tw-primary-600-rgb) / <alpha-value>)',
+          700: 'rgb(var(--ui-tw-primary-700-rgb) / <alpha-value>)',
+          800: 'rgb(var(--ui-tw-primary-800-rgb) / <alpha-value>)',
+          900: 'rgb(var(--ui-tw-primary-900-rgb) / <alpha-value>)',
         },
         // ⚠️ deprecated（P2-31）：值与 tokens.css 的 --ui-travel-* / --palette-* 同源；
         //   含 775 处 /opacity 用法，直接改 var() 会破坏透明度修饰符，存量保留。
         // ★ travel 暖色调系列（项目主色调）→ --ui-travel-*（CSS 变量侧唯一源）
+        // P2-31 B3：RGB 通道化（色值与旧 hex 逐字节相等，保留 /opacity 修饰符）
         travel: {
-          cream: '#FAF6EE',    // 主背景（暖米白）
-          // P2-28：主文字由 #585450 调深为 #444140。
-          // 依据：对比度 = (L1+0.05)/(L2+0.05)。cream #FAF6EE 相对亮度 0.9142；
-          //   #585450 → 6.96:1（/70 透明度合成仅 3.40:1，57 处不达 AA）
-          //   #444140 → 9.38:1（/70 合成 4.12:1，/80 合成 5.37:1）
-          // 只改 token、不逐个改 class；/60、/50 等更低的透明度档位仍需后续改为 ink/80（见汇报 deferred）。
-          ink: '#444140',       // 主文字（暖墨灰）
-          dim: '#DAD5CB',       // 次要边框（暖浅灰）
-          sakura: '#F3E4D5',    // 暖米（浅）
-          bloom: '#E4B478',     // 琥珀暖（深色模式强调）
-          sky: '#A8C8DC',       // 天空蓝
-          mist: '#D6E8F0',      // 雾蓝（浅）
-          accent: '#A85F3A',   // 陶土暖棕（主强调）
-          accentStrong: '#8A4A2B', // 陶土深（hover/强调强）
-          accentSoft: '#C97E55',  // 陶土浅（次级文字/浅强调）
-          // P2-28：由 #8B7355 调深为 #7D6754 —— cream #FAF6EE 上 4.16:1 → 4.94:1（AA 正文 4.5 达标）。
-          // 保留原暖棕相（H 不变，仅压亮度），120 处 text-travel-sand 一次性受益。
-          sand: '#7D6754',        // 暖棕（纸面次级文字，AA 4.5:1）
-          sandSoft: '#C2AF9A',     // 暖棕浅（暗色模式次级）
-          sandLight: '#E4D6C4',    // 暖米（暗色模式强调）
-          parchment: '#FDF5ED',    // 羊皮纸亮
-          parchmentDim: '#F5EDE4', // 羊皮纸亮-渐变色
-          inkStrong: '#5A4A3A',    // 暖深棕标题
-          line: '#E8DDD4',         // 暖浅边框
+          cream: 'rgb(var(--ui-tw-travel-cream-rgb) / <alpha-value>)', // 主背景（暖米白）
+          ink: 'rgb(var(--ui-tw-travel-ink-rgb) / <alpha-value>)', // 主文字（暖墨灰；P2-28 调深 #585450→#444140，/70 合成 4.12:1）
+          dim: 'rgb(var(--ui-tw-travel-dim-rgb) / <alpha-value>)', // 次要边框（暖浅灰）
+          sakura: 'rgb(var(--ui-tw-travel-sakura-rgb) / <alpha-value>)', // 暖米（浅）
+          bloom: 'rgb(var(--ui-tw-travel-bloom-rgb) / <alpha-value>)', // 琥珀暖（深色模式强调）
+          sky: 'rgb(var(--ui-tw-travel-sky-rgb) / <alpha-value>)', // 天空蓝
+          mist: 'rgb(var(--ui-tw-travel-mist-rgb) / <alpha-value>)', // 雾蓝（浅）
+          accent: 'rgb(var(--ui-tw-travel-accent-rgb) / <alpha-value>)', // 陶土暖棕（主强调）
+          accentStrong: 'rgb(var(--ui-tw-travel-accent-strong-rgb) / <alpha-value>)', // 陶土深（hover/强调强）
+          accentSoft: 'rgb(var(--ui-tw-travel-accent-soft-rgb) / <alpha-value>)', // 陶土浅（次级文字/浅强调）
+          sand: 'rgb(var(--ui-tw-travel-sand-rgb) / <alpha-value>)', // 暖棕（纸面次级文字；P2-28 调深 #8B7355→#7D6754，AA 4.94:1）
+          sandSoft: 'rgb(var(--ui-tw-travel-sand-soft-rgb) / <alpha-value>)', // 暖棕浅（暗色模式次级）
+          sandLight: 'rgb(var(--ui-tw-travel-sand-light-rgb) / <alpha-value>)', // 暖米（暗色模式强调）
+          parchment: 'rgb(var(--ui-tw-travel-parchment-rgb) / <alpha-value>)', // 羊皮纸亮
+          parchmentDim: 'rgb(var(--ui-tw-travel-parchment-dim-rgb) / <alpha-value>)', // 羊皮纸亮-渐变色
+          inkStrong: 'rgb(var(--ui-tw-travel-ink-strong-rgb) / <alpha-value>)', // 暖深棕标题
+          line: 'rgb(var(--ui-tw-travel-line-rgb) / <alpha-value>)', // 暖浅边框
         },
                         // ★ 像素风木屋/纸面肤色（P2-31：去重 —— 值统一由 app/tokens.css 的
         //   --palette-pixel-*-rgb / --album-pixel-* 提供，这里只保留 Tailwind 入口。
@@ -123,22 +125,24 @@ module.exports = {
         //   保留仅为存量 class 兼容；新代码用 semantic-* 或 CSS 变量。含 rgba 与 /opacity
         //   混用，直接改 var() 会破坏透明度修饰符，故本轮只标注、不迁移（见汇报 deferred）。
         // ★ 相册暗色视觉系统（Stage 1：Album Design Tokens）
+        // P2-31 B3：RGB 通道化。含内建 alpha 的 5 个色用 calc(<alpha-value> * a) 保留原 alpha，
+        // 默认渲染值与旧 rgba 字面值逐字节相等；/opacity 修饰符在此基础上叠加（复合 alpha）。
         album: {
-          bg0: '#050508',
-          bg1: '#0b0807',
-          bg2: '#14100e',
-          surface: 'rgba(255,255,255,0.06)',
-          text1: 'rgba(245,247,255,0.92)',
-          text2: 'rgba(245,247,255,0.68)',
-          text3: 'rgba(245,247,255,0.45)',
-          warm: '#a89f91',
-          accent: '#e8b06a',
-          accentStrong: '#f5c97e',
-          accentDim: 'rgba(232,176,106,0.16)',
-          ok: '#6fcf97',
-          sync: '#f5c97e',
-          wait: '#9aa3b2',
-          error: '#e06c6c',
+          bg0: 'rgb(var(--ui-tw-album-bg0-rgb) / <alpha-value>)',
+          bg1: 'rgb(var(--ui-tw-album-bg1-rgb) / <alpha-value>)',
+          bg2: 'rgb(var(--ui-tw-album-bg2-rgb) / <alpha-value>)',
+          surface: 'rgb(var(--ui-tw-album-surface-rgb) / calc(<alpha-value> * 0.06))',
+          text1: 'rgb(var(--ui-tw-album-text1-rgb) / calc(<alpha-value> * 0.92))',
+          text2: 'rgb(var(--ui-tw-album-text2-rgb) / calc(<alpha-value> * 0.68))',
+          text3: 'rgb(var(--ui-tw-album-text3-rgb) / calc(<alpha-value> * 0.45))',
+          warm: 'rgb(var(--ui-tw-album-warm-rgb) / <alpha-value>)',
+          accent: 'rgb(var(--ui-tw-album-accent-rgb) / <alpha-value>)',
+          accentStrong: 'rgb(var(--ui-tw-album-accent-strong-rgb) / <alpha-value>)',
+          accentDim: 'rgb(var(--ui-tw-album-accent-dim-rgb) / calc(<alpha-value> * 0.16))',
+          ok: 'rgb(var(--ui-tw-album-ok-rgb) / <alpha-value>)',
+          sync: 'rgb(var(--ui-tw-album-sync-rgb) / <alpha-value>)',
+          wait: 'rgb(var(--ui-tw-album-wait-rgb) / <alpha-value>)',
+          error: 'rgb(var(--ui-tw-album-error-rgb) / <alpha-value>)',
         },
         // ★ night.* 已于 P2-31 删除：13 个色值与 --social-* 暗色完全重复，且全仓 0 处
         //   night-* class 引用（grep 校验）。social 暗色统一由 tokens.css 的 --ui-social-* 承担。
@@ -162,17 +166,18 @@ module.exports = {
         // ★ 暖灰数字阶（1.20.0）：admin 后台由 Tailwind 冷灰 gray-N 归一到项目 token。
         //   取 stone（暖灰）系，与 gray-N 亮度逐档对齐 —— 批量替换后视觉零跳变，
         //   但整体色温与全站暖陶土色板一致，且受 check-design-tokens 治理。
+        // P2-31 B3：RGB 通道化（色值与旧 hex 逐字节相等，保留 /opacity 修饰符）
         warm: {
-          50: '#FAFAF9',
-          100: '#F5F5F4',
-          200: '#E7E5E4',
-          300: '#D6D3D1',
-          400: '#A8A29E',
-          500: '#78716C',
-          600: '#57534E',
-          700: '#44403C',
-          800: '#292524',
-          900: '#1C1917',
+          50: 'rgb(var(--ui-tw-warm-50-rgb) / <alpha-value>)',
+          100: 'rgb(var(--ui-tw-warm-100-rgb) / <alpha-value>)',
+          200: 'rgb(var(--ui-tw-warm-200-rgb) / <alpha-value>)',
+          300: 'rgb(var(--ui-tw-warm-300-rgb) / <alpha-value>)',
+          400: 'rgb(var(--ui-tw-warm-400-rgb) / <alpha-value>)',
+          500: 'rgb(var(--ui-tw-warm-500-rgb) / <alpha-value>)',
+          600: 'rgb(var(--ui-tw-warm-600-rgb) / <alpha-value>)',
+          700: 'rgb(var(--ui-tw-warm-700-rgb) / <alpha-value>)',
+          800: 'rgb(var(--ui-tw-warm-800-rgb) / <alpha-value>)',
+          900: 'rgb(var(--ui-tw-warm-900-rgb) / <alpha-value>)',
         },
         // ★ travel 语义色（Phase2 对齐命名；色值与上方 success/warning/danger 保持一致）
         'travel-success': '#22c55e',

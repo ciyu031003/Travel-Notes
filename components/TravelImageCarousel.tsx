@@ -167,7 +167,7 @@ export default function TravelImageCarousel({
             <Icon icon={ImageOff} size="lg" className="text-travel-ink" />
           </div>
           <p className="text-travel-ink text-base font-medium">暂无旅行照片</p>
-          <p className="text-travel-ink/70 text-sm">上传照片开启美好的旅行回忆</p>
+          <p className="text-travel-ink/80 text-sm">上传照片开启美好的旅行回忆</p>
         </div>
         <style jsx>{`
           @keyframes carousel-float {
@@ -228,7 +228,7 @@ export default function TravelImageCarousel({
           {currentHasError ? (
             <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-3 bg-travel-cream">
               <Icon icon={ImageOff} size="lg" className="text-travel-ink/50" />
-              <p className="text-sm text-travel-ink/70">图片加载失败</p>
+              <p className="text-sm text-travel-ink/80">图片加载失败</p>
             </div>
           ) : (
             <NextImage

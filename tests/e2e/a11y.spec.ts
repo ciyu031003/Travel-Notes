@@ -23,6 +23,23 @@ import AxeBuilder from '@axe-core/playwright'
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
+/**
+ * 已登记、待收敛的对比度项（B2 · 2026-10-19）。
+ *
+ * 口径：**只有「已登记」的项才允许不失败**，且每次运行都会打印出来（可见、可追踪）；
+ * 新出现的对比度问题一律 critical/serious 失败。登记格式：`<path> <target 前缀>`。
+ *
+ * 本轮已修：text-travel-ink/70 → /80 共 59 处（/70 合成对比度 4.12:1 → /80 5.37:1）。
+ * 仍未收敛的档位（/60、/50）台账见 docs/review/_impl 汇报，后续批次处理。
+ */
+const KNOWN_CONTRAST_DEFERRED: Array<{ path: string; target: string; note: string }> = []
+
+function isDeferredContrast(path: string, target: string): boolean {
+  return KNOWN_CONTRAST_DEFERRED.some(
+    (item) => item.path === path && target.startsWith(item.target),
+  )
+}
+
 async function auditAndAssert(
   page: import('@playwright/test').Page,
   path: string,
@@ -34,13 +51,31 @@ async function auditAndAssert(
   const blocking = results.violations.filter(
     (v) => v.impact === 'critical' || v.impact === 'serious',
   )
-  if (blocking.length > 0) {
-    const summary = blocking
+
+  // 对比度单独分流：已登记项只告警、不计失败；其余仍是阻塞项。
+  const contrast = blocking.find((v) => v.id === 'color-contrast')
+  const deferredNodes = contrast
+    ? contrast.nodes.filter((node) => isDeferredContrast(path, node.target.join(' ')))
+    : []
+  const nonDeferredBlocking = blocking
+    .map((v) => {
+      if (v.id !== 'color-contrast') return v
+      const nodes = v.nodes.filter((node) => !isDeferredContrast(path, node.target.join(' ')))
+      return nodes.length ? { ...v, nodes } : null
+    })
+    .filter((v): v is NonNullable<typeof v> => Boolean(v))
+
+  if (deferredNodes.length > 0) {
+    console.log(`[a11y] ${path} 已登记待收敛对比度 ${deferredNodes.length} 处：` +
+      deferredNodes.map((n) => n.target.join(' ')).slice(0, 8).join(' | '))
+  }
+  if (nonDeferredBlocking.length > 0) {
+    const summary = nonDeferredBlocking
       .map((v) => `${v.id}(${v.impact}): ${v.nodes.length} 处，示例 ${v.nodes[0]?.target.join(' ')}`)
       .join('\n')
     console.log(`[a11y] ${path} 违规：\n${summary}`)
   }
-  expect(blocking, `${name} 存在 critical/serious 级可访问性违规`).toHaveLength(0)
+  expect(nonDeferredBlocking, `${name} 存在 critical/serious 级可访问性违规`).toHaveLength(0)
 }
 
 /* ── ① 匿名态（不继承登录态）────────────────────────────────────────────── */
@@ -87,6 +122,12 @@ const AUTH_PAGES = [
   { path: '/timeline', name: '时间线' },
   { path: '/moments', name: '碎碎念' },
   { path: '/search', name: '搜索' },
+  // B2 扩面：画册 / 看板 / 设置 / 收藏 / 同步中心（登录态主流程里此前完全没有覆盖）
+  { path: '/album', name: '画册' },
+  { path: '/dashboard', name: '数据看板' },
+  { path: '/me/settings', name: '我的设置' },
+  { path: '/me/favorites', name: '我的收藏' },
+  { path: '/sync', name: '同步中心' },
 ]
 
 for (const { path, name } of AUTH_PAGES) {
@@ -113,4 +154,30 @@ test('a11y · 主流程页面不存在无可读名的按钮/链接', async ({ pa
     })
     expect(unnamed, `${path} 存在无可读名的按钮/链接：${unnamed.join(' | ')}`).toHaveLength(0)
   }
+})
+
+
+/* ── ③ 弹层焦点圈定（B2：useModalLayer 接入后的回归门禁）──────────────────
+ * 背景：24 个 role=dialog 的弹层此前只有 3 个接入了焦点管理；B2 统一接 useModalLayer 后，
+ * 这里用「命令面板」做代表用例：打开后 Tab 焦点必须始终留在 dialog 内。
+ * 只验证键盘可达性，不依赖具体业务数据。 */
+test('a11y · 命令面板打开后焦点不逃出弹层（useModalLayer）', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'networkidle' })
+  await page.keyboard.press('Control+KeyK')
+  const dialog = page.locator('[role="dialog"]').first()
+  await expect(dialog).toBeVisible({ timeout: 10_000 })
+
+  for (let i = 0; i < 8; i++) {
+    await page.keyboard.press('Tab')
+    const inside = await page.evaluate(() => {
+      const active = document.activeElement as HTMLElement | null
+      const layer = document.querySelector('[role="dialog"]')
+      return Boolean(active && layer && (layer === active || layer.contains(active)))
+    })
+    expect(inside, 'Tab 焦点逃出了弹层（useModalLayer 焦点圈定失效）').toBe(true)
+  }
+
+  // ESC 关闭后焦点应回到打开前的元素（这里是 body / 触发按钮）
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden({ timeout: 5_000 })
 })

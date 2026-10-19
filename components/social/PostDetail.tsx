@@ -292,10 +292,10 @@ export default function PostDetail({ postId }: { postId: number }) {
     // 失败时**保留 URL**（不 redirect），并把两条出路摆在眼前。
     // 旧实现只留一句文字 + 返回旅行圈，用户以为"点开没内容"（真机反馈的现象之一）。
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[var(--social-bg)] px-6 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[var(--ui-social-bg)] px-6 text-center">
         <Icon icon={WifiOff} size="lg" tone="faint" />
-        <p className="text-sm text-[var(--social-text)]">{error || '这条旅行故事暂时打不开'}</p>
-        <p className="max-w-xs text-xs text-[var(--social-faint)]">
+        <p className="text-sm text-[var(--ui-social-text)]">{error || '这条旅行故事暂时打不开'}</p>
+        <p className="max-w-xs text-xs text-[var(--ui-social-faint)]">
           可能是网络不稳，或作者已取消公开。链接还在这里，稍后可以再试。
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
@@ -306,13 +306,13 @@ export default function PostDetail({ postId }: { postId: number }) {
               setLoading(true)
               void reload()
             }}
-            className="rounded-full bg-[var(--social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--social-on-accent)]"
+            className="rounded-full bg-[var(--ui-social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)]"
           >
             重试
           </button>
           <Link
             href="/circle"
-            className="rounded-full px-5 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)]"
+            className="rounded-full px-5 py-2.5 text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
           >
             返回旅行圈
           </Link>
@@ -337,7 +337,7 @@ export default function PostDetail({ postId }: { postId: number }) {
   const hasGallery = gallery.length > 0
 
   return (
-    <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--social-text)] md:pb-28">
+    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)] md:pb-28">
       <div className="circle-story-glow" aria-hidden="true" />
       {/*
         顶部安全区（2026-10-12 修复）：/circle/* 在 LayoutContent 里走的是
@@ -348,7 +348,7 @@ export default function PostDetail({ postId }: { postId: number }) {
       {/* 桌面端放宽到 max-w-5xl：正文改成「左图右文」的杂志式对开，窄容器放不下两栏 */}
       <div className="m-safe-top relative mx-auto max-w-3xl px-4 pb-6 md:max-w-5xl">
         {offline && (
-          <div className="mb-4 flex items-center justify-center gap-1.5 rounded-full bg-[var(--social-accent-soft)] px-4 py-1.5 text-xs text-[var(--social-accent)]">
+          <div className="mb-4 flex items-center justify-center gap-1.5 rounded-full bg-[var(--ui-social-accent-soft)] px-4 py-1.5 text-xs text-[var(--ui-social-accent)]">
             <Icon icon={WifiOff} size="sm" />
             离线模式：显示已缓存的帖子内容
           </div>
@@ -363,17 +363,17 @@ export default function PostDetail({ postId }: { postId: number }) {
             type="button"
             onClick={() => { void hapticLight(); goBackOrHome(router, '/circle') }}
             aria-label="返回上一级"
-            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition-colors hover:text-[var(--social-text)]"
+            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition-colors hover:text-[var(--ui-social-text)]"
           >
             <Icon icon={ArrowLeft} size="md" />
           </button>
-          <span className="text-sm text-[var(--social-muted)]">旅行圈</span>
+          <span className="text-sm text-[var(--ui-social-muted)]">旅行圈</span>
           <div className="ml-auto flex items-center gap-2">
             {post.canEdit && (
               <button
                 type="button"
                 onClick={openEdit}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-accent)] px-4 py-2 text-sm font-medium text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-accent)] px-4 py-2 text-sm font-medium text-[var(--ui-social-on-accent)] transition hover:bg-[var(--ui-social-accent-strong)] active:scale-95"
               >
                 <Icon icon={Pencil} size="sm" />编辑
               </button>
@@ -407,7 +407,7 @@ export default function PostDetail({ postId }: { postId: number }) {
           )}
 
           <div className={cn('mt-8', hasGallery && 'md:mt-1')}>
-            {post.location && <div className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--social-accent)]">{post.location}</div>}
+            {post.location && <div className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">{post.location}</div>}
             <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{post.title}</h1>
 
             {/* 元信息改胶囊：与旅行圈卡片上的 chip 语言一致，也比裸文字更好扫读 */}
@@ -425,19 +425,19 @@ export default function PostDetail({ postId }: { postId: number }) {
             {post.author && (
               <Link
                 href={circleUserHref(post.author.id) ?? '/circle'}
-                className="circle-story-card mt-6 flex items-center gap-3 p-3 transition-colors hover:border-[var(--social-line-strong)]"
+                className="circle-story-card mt-6 flex items-center gap-3 p-3 transition-colors hover:border-[var(--ui-social-line-strong)]"
               >
                 <SocialAvatar name={authorName} avatarUrl={post.author.avatarUrl} size={40} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-[var(--social-text)]">{authorName}</span>
-                  <span className="mt-0.5 block text-xs text-[var(--social-faint)]">公开的旅行故事</span>
+                  <span className="block truncate text-sm font-medium text-[var(--ui-social-text)]">{authorName}</span>
+                  <span className="mt-0.5 block text-xs text-[var(--ui-social-faint)]">公开的旅行故事</span>
                 </span>
                 <Icon icon={ChevronRight} size="sm" tone="faint" />
               </Link>
             )}
 
             {post.summary && (
-              <p className="mt-6 whitespace-pre-line text-base leading-relaxed text-[var(--social-muted)]">{post.summary}</p>
+              <p className="mt-6 whitespace-pre-line text-base leading-relaxed text-[var(--ui-social-muted)]">{post.summary}</p>
             )}
 
             {/*
@@ -457,8 +457,8 @@ export default function PostDetail({ postId }: { postId: number }) {
               />
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[var(--social-faint)]">
-              <button type="button" onClick={() => setShowReport(true)} className="inline-flex min-h-11 items-center gap-1 rounded-full px-3 transition hover:text-[var(--social-text)]"><Icon icon={Flag} size="sm" />举报</button>
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[var(--ui-social-faint)]">
+              <button type="button" onClick={() => setShowReport(true)} className="inline-flex min-h-11 items-center gap-1 rounded-full px-3 transition hover:text-[var(--ui-social-text)]"><Icon icon={Flag} size="sm" />举报</button>
               {post.author && (
                 <button
                   type="button"
@@ -469,8 +469,8 @@ export default function PostDetail({ postId }: { postId: number }) {
                     // 触达 ≥44px（规范 §8）：此前 py-1.5 只有约 28px 高
                     'm-pressable inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs transition-colors disabled:opacity-60',
                     blocked
-                      ? 'bg-[var(--social-accent-soft)] text-[var(--social-accent)]'
-                      : 'ring-1 ring-[var(--social-line)] hover:text-[var(--social-text)]',
+                      ? 'bg-[var(--ui-social-accent-soft)] text-[var(--ui-social-accent)]'
+                      : 'ring-1 ring-[var(--ui-social-line)] hover:text-[var(--ui-social-text)]',
                   )}
                 >
                   <Icon icon={blocked ? Check : Ban} size="sm" />
@@ -482,7 +482,7 @@ export default function PostDetail({ postId }: { postId: number }) {
             {post.slug && (
               <Link
                 href={travelDetailHref(post.slug)}
-                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--social-accent-soft)] px-4 py-2.5 text-sm font-medium text-[var(--social-accent)] transition-colors hover:bg-[var(--social-accent)] hover:text-[var(--social-on-accent)]"
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--ui-social-accent-soft)] px-4 py-2.5 text-sm font-medium text-[var(--ui-social-accent)] transition-colors hover:bg-[var(--ui-social-accent)] hover:text-[var(--ui-social-on-accent)]"
               >
                 <Icon icon={BookOpen} size="sm" />
                 查看完整旅行记录
@@ -496,7 +496,7 @@ export default function PostDetail({ postId }: { postId: number }) {
             <SectionHeading label="旅行照片" count={`共 ${post.photos.length} 张`} />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {post.photos.map((src, i) => (
-                <button key={i} type="button" onClick={() => setViewerIndex(i)} className="group relative aspect-square overflow-hidden rounded-xl bg-[var(--social-surface2)] ring-1 ring-[var(--social-line)]">
+                <button key={i} type="button" onClick={() => setViewerIndex(i)} className="group relative aspect-square overflow-hidden rounded-xl bg-[var(--ui-social-surface2)] ring-1 ring-[var(--ui-social-line)]">
                   <Image src={src} alt={`${post.title} 第 ${i + 1} 张`} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 </button>
               ))}
@@ -515,16 +515,16 @@ export default function PostDetail({ postId }: { postId: number }) {
       {showReport && (
         <div className="fixed inset-0 z-[70]">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowReport(false)} />
-          <div className="absolute left-1/2 top-1/2 w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[1.6rem] bg-[var(--social-surface)] p-5 ring-1 ring-[var(--social-line)]">
+          <div className="absolute left-1/2 top-1/2 w-[90%] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[1.6rem] bg-[var(--ui-social-surface)] p-5 ring-1 ring-[var(--ui-social-line)]">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-base font-semibold">举报该旅行</h3>
-              <button onClick={() => setShowReport(false)} className="text-[var(--social-muted)] hover:text-[var(--social-text)]"><Icon icon={X} size="sm" /></button>
+              <button onClick={() => setShowReport(false)} className="text-[var(--ui-social-muted)] hover:text-[var(--ui-social-text)]"><Icon icon={X} size="sm" /></button>
             </div>
-            <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl bg-[var(--social-bg)] px-3 py-2 text-[16px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] focus-visible:ring-[var(--social-accent)]" />
+            <textarea value={reportReason} onChange={(e) => setReportReason(e.target.value)} placeholder="请填写举报原因（如不当内容/广告/侵犯隐私等）" rows={3} className="w-full rounded-xl bg-[var(--ui-social-bg)] px-3 py-2 text-[16px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-social-accent)]" />
             <button
               onClick={submitReport}
               disabled={reporting || !reportReason.trim()}
-              className="m-pressable mt-3 w-full rounded-full bg-[var(--social-accent)] py-3 text-sm font-medium text-[var(--social-on-accent)] transition-colors disabled:opacity-40"
+              className="m-pressable mt-3 w-full rounded-full bg-[var(--ui-social-accent)] py-3 text-sm font-medium text-[var(--ui-social-on-accent)] transition-colors disabled:opacity-40"
             >
               {reporting ? '提交中…' : '提交举报'}
             </button>
@@ -534,39 +534,39 @@ export default function PostDetail({ postId }: { postId: number }) {
       {showEdit && (
         <div className="fixed inset-0 z-[80]">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowEdit(false)} />
-          <div className="absolute left-1/2 top-1/2 max-h-[88vh] w-[92%] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[1.6rem] bg-[var(--social-surface)] p-5 ring-1 ring-[var(--social-line)]">
+          <div className="absolute left-1/2 top-1/2 max-h-[88vh] w-[92%] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[1.6rem] bg-[var(--ui-social-surface)] p-5 ring-1 ring-[var(--ui-social-line)]">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">编辑旅行故事</h3>
-              <button type="button" onClick={() => setShowEdit(false)} className="text-[var(--social-muted)] transition hover:text-[var(--social-text)]" aria-label="关闭编辑"><Icon icon={X} size="md" /></button>
+              <button type="button" onClick={() => setShowEdit(false)} className="text-[var(--ui-social-muted)] transition hover:text-[var(--ui-social-text)]" aria-label="关闭编辑"><Icon icon={X} size="md" /></button>
             </div>
 
-            <label className="mb-1.5 block text-xs text-[var(--social-muted)]">标题</label>
+            <label className="mb-1.5 block text-xs text-[var(--ui-social-muted)]">标题</label>
             <input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               maxLength={255}
               placeholder="输入标题"
-              className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-[16px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus-visible:ring-[var(--social-accent)]"
+              className="w-full rounded-xl bg-[var(--ui-social-bg)] px-4 py-3 text-[16px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] transition focus-visible:ring-[var(--ui-social-accent)]"
             />
 
-            <label className="mb-1.5 mt-4 block text-xs text-[var(--social-muted)]">内容 / 摘要</label>
+            <label className="mb-1.5 mt-4 block text-xs text-[var(--ui-social-muted)]">内容 / 摘要</label>
             <textarea
               value={editSummary}
               onChange={(e) => setEditSummary(e.target.value)}
               rows={5}
               placeholder="写下这次旅行的故事…"
-              className="w-full resize-none rounded-xl bg-[var(--social-bg)] px-4 py-3 text-[16px] text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus-visible:ring-[var(--social-accent)]"
+              className="w-full resize-none rounded-xl bg-[var(--ui-social-bg)] px-4 py-3 text-[16px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] transition focus-visible:ring-[var(--ui-social-accent)]"
             />
 
             {post.postId != null ? (
               <div className="mt-5">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs text-[var(--social-muted)]">旅行照片</span>
+                  <span className="text-xs text-[var(--ui-social-muted)]">旅行照片</span>
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
                     disabled={uploading}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs text-[var(--social-accent)] ring-1 ring-[var(--social-line)] transition hover:ring-[var(--social-accent)] disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface)] px-3 py-1.5 text-xs text-[var(--ui-social-accent)] ring-1 ring-[var(--ui-social-line)] transition hover:ring-[var(--ui-social-accent)] disabled:opacity-50"
                   >
                     {uploading ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />}
                     上传图片
@@ -584,8 +584,8 @@ export default function PostDetail({ postId }: { postId: number }) {
                 {post.photos.length > 0 ? (
                   <div className="grid grid-cols-3 gap-2">
                     {post.photos.map((src) => (
-                      <div key={src} className="group relative aspect-square overflow-hidden rounded-xl bg-[var(--social-surface2)] ring-1 ring-[var(--social-line)]">
-                        <img src={src} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                      <div key={src} className="group relative aspect-square overflow-hidden rounded-xl bg-[var(--ui-social-surface2)] ring-1 ring-[var(--ui-social-line)]">
+                        <img src={src} alt="" width={400} height={400} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                         <button
                           type="button"
                           onClick={() => deleteImage(src)}
@@ -598,11 +598,11 @@ export default function PostDetail({ postId }: { postId: number }) {
                     ))}
                   </div>
                 ) : (
-                  <p className="rounded-xl bg-[var(--social-bg)] px-4 py-6 text-center text-xs text-[var(--social-faint)]">还没有照片，点击“上传图片”添加。</p>
+                  <p className="rounded-xl bg-[var(--ui-social-bg)] px-4 py-6 text-center text-xs text-[var(--ui-social-faint)]">还没有照片，点击“上传图片”添加。</p>
                 )}
               </div>
             ) : (
-              <p className="mt-4 rounded-xl bg-[var(--social-bg)] px-4 py-4 text-xs text-[var(--social-faint)]">图片请在旅行详情中统一管理。</p>
+              <p className="mt-4 rounded-xl bg-[var(--ui-social-bg)] px-4 py-4 text-xs text-[var(--ui-social-faint)]">图片请在旅行详情中统一管理。</p>
             )}
 
             {editError && <p className="mt-3 text-sm text-[var(--danger-soft)]">{editError}</p>}
@@ -611,7 +611,7 @@ export default function PostDetail({ postId }: { postId: number }) {
               <button
                 type="button"
                 onClick={() => setShowEdit(false)}
-                className="rounded-full px-5 py-2.5 text-sm text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"
+                className="rounded-full px-5 py-2.5 text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)]"
               >
                 取消
               </button>
@@ -619,7 +619,7 @@ export default function PostDetail({ postId }: { postId: number }) {
                 type="button"
                 onClick={saveEdit}
                 disabled={editSaving || uploading}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)] transition hover:bg-[var(--ui-social-accent-strong)] disabled:opacity-50"
               >
                 {editSaving ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null}
                 保存
@@ -657,25 +657,25 @@ function PostDetailSkeleton() {
   return (
     // 骨架与真实布局同构（2026-10-17 随版面对齐）：桌面端也是「左图右文」两栏，
     // 否则数据到达时正文会从一列跳成两列 —— 骨架屏的意义就是"不跳版"。
-    <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] md:pb-28">
+    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] md:pb-28">
       <div className="relative mx-auto max-w-3xl px-4 py-6 md:max-w-5xl">
         <div className="mb-7 flex items-center gap-3">
-          <div className="h-11 w-11 animate-pulse rounded-full bg-[var(--social-surface2)]" />
-          <div className="h-3 w-16 animate-pulse rounded bg-[var(--social-surface2)]" />
+          <div className="h-11 w-11 animate-pulse rounded-full bg-[var(--ui-social-surface2)]" />
+          <div className="h-3 w-16 animate-pulse rounded bg-[var(--ui-social-surface2)]" />
         </div>
         <div className="md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] md:gap-10">
-          <div className="aspect-[4/5] w-full animate-pulse rounded-[24px] bg-[var(--social-surface2)]" />
+          <div className="aspect-[4/5] w-full animate-pulse rounded-[24px] bg-[var(--ui-social-surface2)]" />
           <div className="mt-8 md:mt-1">
-            <div className="h-3 w-20 animate-pulse rounded bg-[var(--social-surface2)]" />
-            <div className="mt-3 h-7 w-3/4 animate-pulse rounded bg-[var(--social-surface2)]" />
+            <div className="h-3 w-20 animate-pulse rounded bg-[var(--ui-social-surface2)]" />
+            <div className="mt-3 h-7 w-3/4 animate-pulse rounded bg-[var(--ui-social-surface2)]" />
             <div className="mt-5 flex flex-wrap gap-2">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="h-8 w-24 animate-pulse rounded-full bg-[var(--social-surface2)]" />
+                <div key={i} className="h-8 w-24 animate-pulse rounded-full bg-[var(--ui-social-surface2)]" />
               ))}
             </div>
-            <div className="mt-6 h-16 w-full animate-pulse rounded-2xl bg-[var(--social-surface2)]" />
-            <div className="mt-4 h-16 w-full animate-pulse rounded bg-[var(--social-surface2)]" />
-            <div className="mt-7 h-14 w-full animate-pulse rounded-2xl bg-[var(--social-surface2)]" />
+            <div className="mt-6 h-16 w-full animate-pulse rounded-2xl bg-[var(--ui-social-surface2)]" />
+            <div className="mt-4 h-16 w-full animate-pulse rounded bg-[var(--ui-social-surface2)]" />
+            <div className="mt-7 h-14 w-full animate-pulse rounded-2xl bg-[var(--ui-social-surface2)]" />
           </div>
         </div>
       </div>
@@ -729,22 +729,22 @@ function TripDayList({ days }: { days: TripDay[] }) {
               <div className="circle-story-day">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="circle-story-day-badge">DAY {String(idx + 1).padStart(2, '0')}</span>
-                  {day.date && <span className="text-xs tabular-nums text-[var(--social-muted)]">{formatDayDate(day.date)}</span>}
-                  {day.title && <span className="text-sm font-medium text-[var(--social-text)]">· {day.title}</span>}
+                  {day.date && <span className="text-xs tabular-nums text-[var(--ui-social-muted)]">{formatDayDate(day.date)}</span>}
+                  {day.title && <span className="text-sm font-medium text-[var(--ui-social-text)]">· {day.title}</span>}
                 </div>
-                {day.summary && <p className="mt-2 text-sm leading-relaxed text-[var(--social-muted)]">{day.summary}</p>}
+                {day.summary && <p className="mt-2 text-sm leading-relaxed text-[var(--ui-social-muted)]">{day.summary}</p>}
 
                 {day.itinerary.length > 0 && (
                   <ul className="mt-3 flex flex-wrap gap-1.5">
                     {day.itinerary.map((it) => (
                       <li
                         key={it.id}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs ring-1 ring-[var(--social-line)]"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface)] px-3 py-1.5 text-xs ring-1 ring-[var(--ui-social-line)]"
                       >
-                        <span className="text-[var(--social-accent)]">{ITINERARY_TYPE_LABEL[it.type] || '行程'}</span>
+                        <span className="text-[var(--ui-social-accent)]">{ITINERARY_TYPE_LABEL[it.type] || '行程'}</span>
                         <span className="max-w-[12rem] truncate">{it.title}</span>
                         {it.startTime && (
-                          <span className="tabular-nums text-[var(--social-faint)]">
+                          <span className="tabular-nums text-[var(--ui-social-faint)]">
                             {new Date(it.startTime).toTimeString().slice(0, 5)}
                           </span>
                         )}
@@ -756,9 +756,9 @@ function TripDayList({ days }: { days: TripDay[] }) {
                 {day.photos.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-4">
                     {day.photos.slice(0, PHOTOS_PER_DAY).map((p, i) => (
-                      <div key={p.id} className="relative overflow-hidden rounded-lg bg-[var(--social-surface2)]">
+                      <div key={p.id} className="relative overflow-hidden rounded-lg bg-[var(--ui-social-surface2)]">
                         {/* eslint-disable-next-line @next/next/no-img-element -- 服务端已给缩略图变体，无需 next/image 再处理 */}
-                        <img src={p.url} alt="" loading="lazy" decoding="async" className="aspect-square w-full object-cover" />
+                        <img src={p.url} alt="" width={400} height={400} loading="lazy" decoding="async" className="aspect-square w-full object-cover" />
                         {i === PHOTOS_PER_DAY - 1 && day.photos.length > PHOTOS_PER_DAY && (
                           <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-medium tabular-nums text-white">
                             +{day.photos.length - PHOTOS_PER_DAY}
@@ -775,10 +775,10 @@ function TripDayList({ days }: { days: TripDay[] }) {
                       <div key={mem.id} className="circle-story-quote">
                         <p className="text-sm font-medium">
                           {mem.title}
-                          {mem.mood && <span className="ml-1.5 text-xs font-normal text-[var(--social-muted)]">· {mem.mood}</span>}
+                          {mem.mood && <span className="ml-1.5 text-xs font-normal text-[var(--ui-social-muted)]">· {mem.mood}</span>}
                         </p>
                         {mem.content && (
-                          <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--social-muted)]">{mem.content}</p>
+                          <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--ui-social-muted)]">{mem.content}</p>
                         )}
                         {mem.photos.length > 0 && (
                           <div className="mt-1.5 flex gap-1">
@@ -794,7 +794,7 @@ function TripDayList({ days }: { days: TripDay[] }) {
                 )}
 
                 {day.itinerary.length === 0 && day.photos.length === 0 && day.memories.length === 0 && (
-                  <p className="mt-2 text-xs text-[var(--social-faint)]">这一天还没有公开的记录</p>
+                  <p className="mt-2 text-xs text-[var(--ui-social-faint)]">这一天还没有公开的记录</p>
                 )}
               </div>
             </article>

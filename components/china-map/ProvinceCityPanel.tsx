@@ -130,7 +130,7 @@ export default function ProvinceCityPanel({
                     <Icon icon={MapPin} size="sm" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${hasPosts ? 'text-travel-ink' : 'text-travel-ink/70'}`}>
+                    <p className={`text-sm font-medium ${hasPosts ? 'text-travel-ink' : 'text-travel-ink/80'}`}>
                       {city.name}
                     </p>
                     <p className="text-xs text-travel-ink/40">{city.nameEn}</p>

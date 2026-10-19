@@ -64,7 +64,7 @@ export default function AsyncState({
             {title || '加载失败'}
           </p>
           {message && (
-            <p className="text-sm text-travel-ink/70 dark:text-shell-muted">{message}</p>
+            <p className="text-sm text-travel-ink/80 dark:text-shell-muted">{message}</p>
           )}
           {hint && (
             <p className="text-xs text-travel-sand dark:text-shell-faint">{hint}</p>
@@ -98,7 +98,7 @@ export default function AsyncState({
           {title || '这里还空着'}
         </p>
         {message && (
-          <p className="text-sm text-travel-ink/70 dark:text-shell-muted">{message}</p>
+          <p className="text-sm text-travel-ink/80 dark:text-shell-muted">{message}</p>
         )}
         {hint && (
           <p className="text-xs text-travel-sand dark:text-shell-faint">{hint}</p>

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { X, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { IconButton } from '@/components/mobile/IconButton'
-import { useCloseOnBack } from '@/hooks/use-close-on-back'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 export interface ViewerPhoto {
   id?: number
@@ -59,25 +59,15 @@ export default function TravelPhotoViewer({
    */
   const opened = open && photos.length > 0
 
-  // Android 物理返回 / 浏览器返回：先关查看器而不是离开详情页。
-  // （原内联 pushState+popstate 实现已抽为该 hook，嵌套弹层由栈序保证逐层关闭）
-  useCloseOnBack(opened, onClose)
+  // P2-B2：返回键 / ESC / 滚动锁 / 焦点圈定统一由弹层基座处理（含 useCloseOnBack），
+  // 这里只负责打开时复位视图状态。
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({ open: opened, onClose, panelRef })
 
-  // 打开：复位视图状态 + Esc 关闭 + 滚动锁
   useEffect(() => {
     if (!opened) return
     setIndex(Math.max(0, Math.min(startIndex, Math.max(0, photos.length - 1))))
     setChromeVisible(true)
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prevOverflow
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened, startIndex, photos.length])
 
@@ -101,7 +91,7 @@ export default function TravelPhotoViewer({
 
   // z-[110]：低于 ToastHost(120) 与「记一笔」抽屉(130)，高于底部 tab(40) 与普通抽屉(95)
   return (
-    <div className="fixed inset-0 z-[110] bg-black" role="dialog" aria-modal="true" aria-label="旅行相册">
+    <div ref={panelRef} tabIndex={-1} className="fixed inset-0 z-[110] bg-black" role="dialog" aria-modal="true" aria-label="旅行相册">
       {/* 顶栏：明确的关闭入口 + 页码 */}
       <div
         className="absolute inset-x-0 top-0 z-20 flex items-center gap-2 px-2 pb-2"

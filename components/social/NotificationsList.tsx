@@ -80,7 +80,7 @@ export default function NotificationsList() {
   }
 
   return (
-    <div className="min-h-dvh bg-[var(--social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--social-text)]">
+    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)]">
       <EdgeSwipeBack />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
 
@@ -131,17 +131,17 @@ export default function NotificationsList() {
                 >
                   <SocialAvatar name={name} avatarUrl={n.actor?.avatarUrl} size={36} />
                   <span className="min-w-0 flex-1">
-                    <span className="m-body block leading-relaxed text-[var(--social-muted)]">
-                      <span className="font-semibold text-[var(--social-text)]">{name}</span>{' '}
+                    <span className="m-body block leading-relaxed text-[var(--ui-social-muted)]">
+                      <span className="font-semibold text-[var(--ui-social-text)]">{name}</span>{' '}
                       {typeLabel[n.type] || '与你互动'}
                     </span>
-                    <span className="m-caption mt-0.5 block text-[var(--social-faint)]">
+                    <span className="m-caption mt-0.5 block text-[var(--ui-social-faint)]">
                       {new Date(n.createdAt).toLocaleString('zh-CN')}
                     </span>
                   </span>
                   {!n.read && (
                     <span
-                      className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--social-accent)]"
+                      className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--ui-social-accent)]"
                       aria-label="未读"
                     />
                   )}

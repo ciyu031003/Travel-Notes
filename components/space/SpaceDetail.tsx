@@ -37,7 +37,7 @@ function fmtDate(iso?: string | null): string {
 function SectionHeader({ title, action }: { title: string; action?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 px-1">
-      <h2 className="text-[13px] font-semibold tracking-[0.08em] text-[var(--social-muted)]">{title}</h2>
+      <h2 className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ui-social-muted)]">{title}</h2>
       {action}
     </div>
   )
@@ -143,7 +143,7 @@ export default function SpaceDetail({
         <Link
           href="/space"
           aria-label="返回空间列表"
-          className="m-pressable flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-[var(--space-accent-text)]"
+          className="m-pressable flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-[var(--ui-space-accent-text)]"
         >
           <Icon icon={ChevronLeft} size="md" />
         </Link>
@@ -153,7 +153,7 @@ export default function SpaceDetail({
             type="button"
             onClick={() => { setError(''); setSettingsOpen(true) }}
             aria-label="空间设置"
-            className="m-pressable flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-[var(--space-accent-text)]"
+            className="m-pressable flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-[var(--ui-space-accent-text)]"
           >
             <Icon icon={Settings2} size="md" />
           </button>
@@ -167,7 +167,7 @@ export default function SpaceDetail({
         <div className="flex items-start justify-between">
           <Link
             href="/space"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--social-surface)]/60 text-[var(--space-accent-text)] backdrop-blur"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ui-social-surface)]/60 text-[var(--ui-space-accent-text)] backdrop-blur"
             aria-label="返回空间列表"
           >
             <Icon icon={ChevronLeft} size="md" />
@@ -176,7 +176,7 @@ export default function SpaceDetail({
             <button
               type="button"
               onClick={() => { setError(''); setSettingsOpen(true) }}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--social-surface)]/60 text-[var(--space-accent-text)] backdrop-blur"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ui-social-surface)]/60 text-[var(--ui-space-accent-text)] backdrop-blur"
               aria-label="空间设置"
             >
               <Icon icon={Settings2} size="md" />
@@ -185,23 +185,23 @@ export default function SpaceDetail({
         </div>
 
         <div className="mt-6">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)]/70 px-3 py-1 text-[11px] font-semibold text-[var(--space-accent-text)] backdrop-blur">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface)]/70 px-3 py-1 text-[11px] font-semibold text-[var(--ui-space-accent-text)] backdrop-blur">
             <Icon icon={spaceTypeIconOf(space.spaceType)} size="sm" />
             {spaceTypeLabelOf(space.spaceType)}
             <span className="opacity-70">· 我是{spaceRoleLabelOf(space.myRole)}</span>
           </span>
-          <h1 className="mt-2.5 text-[24px] font-bold leading-8 text-[var(--space-accent-text)]">
+          <h1 className="mt-2.5 text-[24px] font-bold leading-8 text-[var(--ui-space-accent-text)]">
             {space.name}
           </h1>
           {space.description && (
-            <p className="mt-1.5 max-w-md text-[13px] leading-5 text-[var(--space-accent-text)] opacity-85">
+            <p className="mt-1.5 max-w-md text-[13px] leading-5 text-[var(--ui-space-accent-text)] opacity-85">
               {space.description}
             </p>
           )}
 
           <div className="mt-4 flex items-center gap-3">
             <SpaceAvatarStack members={space.members || []} max={5} size="md" />
-            <span className="text-[13px] text-[var(--space-accent-text)] opacity-85">
+            <span className="text-[13px] text-[var(--ui-space-accent-text)] opacity-85">
               {space.memberCount} 位成员
             </span>
             {isOwner && (
@@ -225,13 +225,13 @@ export default function SpaceDetail({
           {statItems.map(([label, value, icon]) => (
             <div
               key={label}
-              className="rounded-[var(--m-radius-control)] bg-[var(--social-surface)] py-3 text-center ring-1 ring-[var(--social-line)]"
+              className="rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface)] py-3 text-center ring-1 ring-[var(--ui-social-line)]"
             >
-              <Icon icon={icon} size="sm" className="mx-auto text-[var(--space-accent-strong)]" />
-              <div className="mt-1 text-[18px] font-semibold leading-5 tabular-nums text-[var(--social-text)]">
+              <Icon icon={icon} size="sm" className="mx-auto text-[var(--ui-space-accent-strong)]" />
+              <div className="mt-1 text-[18px] font-semibold leading-5 tabular-nums text-[var(--ui-social-text)]">
                 {value}
               </div>
-              <div className="text-[11px] text-[var(--social-faint)]">{label}</div>
+              <div className="text-[11px] text-[var(--ui-social-faint)]">{label}</div>
             </div>
           ))}
         </div>
@@ -241,16 +241,16 @@ export default function SpaceDetail({
           <SectionHeader
             title="一起记录的旅行"
             action={
-              <Link href="/travel" className="inline-flex items-center gap-0.5 text-[13px] text-[var(--space-accent-strong)]">
+              <Link href="/travel" className="inline-flex items-center gap-0.5 text-[13px] text-[var(--ui-space-accent-strong)]">
                 全部<Icon icon={ChevronRight} size="sm" />
               </Link>
             }
           />
           {data.travels.length === 0 ? (
-            <div className="mt-3 rounded-[var(--m-radius-card)] bg-[var(--social-surface-50)] px-4 py-6 text-center ring-1 ring-[var(--social-line)]">
-              <p className="text-[13px] text-[var(--social-muted)]">这个空间还没有旅行记录</p>
+            <div className="mt-3 rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface-50)] px-4 py-6 text-center ring-1 ring-[var(--ui-social-line)]">
+              <p className="text-[13px] text-[var(--ui-social-muted)]">这个空间还没有旅行记录</p>
               {canEdit && (
-                <Link href="/travel/new" className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-[var(--space-accent-strong)]">
+                <Link href="/travel/new" className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-[var(--ui-space-accent-strong)]">
                   <Icon icon={Plus} size="sm" />
                   记录一次旅行
                 </Link>
@@ -262,14 +262,14 @@ export default function SpaceDetail({
                 <Link
                   key={t.id}
                   href={`/travel/${t.slug}`}
-                  className="m-card-pressable flex items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--social-surface)] p-3.5 ring-1 ring-[var(--social-line)]"
+                  className="m-card-pressable flex items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface)] p-3.5 ring-1 ring-[var(--ui-social-line)]"
                 >
-                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[14px] bg-[var(--space-accent-soft)] text-[var(--space-accent-strong)]">
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[14px] bg-[var(--ui-space-accent-soft)] text-[var(--ui-space-accent-strong)]">
                     <Icon icon={travelTypeIconOf(t.travelType)} size="md" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium text-[var(--social-text)]">{t.title}</span>
-                    <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--social-faint)]">
+                    <span className="block truncate text-[15px] font-medium text-[var(--ui-social-text)]">{t.title}</span>
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--ui-social-faint)]">
                       {t.startDate && (
                         <>
                           <Icon icon={CalendarDays} size="sm" />
@@ -292,15 +292,15 @@ export default function SpaceDetail({
           <SectionHeader
             title="一起经营的相册"
             action={
-              <Link href="/album" className="inline-flex items-center gap-0.5 text-[13px] text-[var(--space-accent-strong)]">
+              <Link href="/album" className="inline-flex items-center gap-0.5 text-[13px] text-[var(--ui-space-accent-strong)]">
                 全部<Icon icon={ChevronRight} size="sm" />
               </Link>
             }
           />
           {data.albums.length === 0 ? (
-            <div className="mt-3 rounded-[var(--m-radius-card)] bg-[var(--social-surface-50)] px-4 py-6 text-center ring-1 ring-[var(--social-line)]">
-              <p className="text-[13px] text-[var(--social-muted)]">还没有共享相册</p>
-              <p className="mt-1 text-[11px] text-[var(--social-faint)]">
+            <div className="mt-3 rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface-50)] px-4 py-6 text-center ring-1 ring-[var(--ui-social-line)]">
+              <p className="text-[13px] text-[var(--ui-social-muted)]">还没有共享相册</p>
+              <p className="mt-1 text-[11px] text-[var(--ui-social-faint)]">
                 照片会随「旅程回忆」一起进到这个空间
               </p>
             </div>
@@ -310,9 +310,9 @@ export default function SpaceDetail({
                 <Link
                   key={a.id}
                   href="/album"
-                  className="m-pressable overflow-hidden rounded-[var(--m-radius-control)] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]"
+                  className="m-pressable overflow-hidden rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]"
                 >
-                  <span className="block aspect-square w-full bg-[var(--space-accent-soft)]">
+                  <span className="block aspect-square w-full bg-[var(--ui-space-accent-soft)]">
                     {a.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -323,12 +323,12 @@ export default function SpaceDetail({
                         onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
                       />
                     ) : (
-                      <span className="flex h-full w-full items-center justify-center text-[var(--space-accent-strong)] opacity-60">
+                      <span className="flex h-full w-full items-center justify-center text-[var(--ui-space-accent-strong)] opacity-60">
                         <Icon icon={Images} size="md" />
                       </span>
                     )}
                   </span>
-                  <span className="block truncate px-2 py-1.5 text-[11px] text-[var(--social-text)]">
+                  <span className="block truncate px-2 py-1.5 text-[11px] text-[var(--ui-social-text)]">
                     {a.title}
                   </span>
                 </Link>
@@ -346,14 +346,14 @@ export default function SpaceDetail({
                 <Link
                   key={t.id}
                   href={`/travel/${t.slug}`}
-                  className="m-card-pressable flex items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--space-accent-soft)] p-3.5"
+                  className="m-card-pressable flex items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--ui-space-accent-soft)] p-3.5"
                 >
-                  <Icon icon={MapPin} size="md" className="text-[var(--space-accent-strong)]" />
+                  <Icon icon={MapPin} size="md" className="text-[var(--ui-space-accent-strong)]" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium text-[var(--space-accent-text)]">
+                    <span className="block truncate text-[15px] font-medium text-[var(--ui-space-accent-text)]">
                       {t.title}
                     </span>
-                    <span className="text-[11px] text-[var(--space-accent-text)] opacity-80">
+                    <span className="text-[11px] text-[var(--ui-space-accent-text)] opacity-80">
                       {t.startDate ? `${fmtDate(t.startDate)} 出发` : '还没定日期'}
                     </span>
                   </span>
@@ -372,12 +372,12 @@ export default function SpaceDetail({
               {data.memories.map((m) => (
                 <div
                   key={m.id}
-                  className="rounded-[var(--m-radius-control)] bg-[var(--social-surface)] px-3.5 py-3 ring-1 ring-[var(--social-line)]"
+                  className="rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface)] px-3.5 py-3 ring-1 ring-[var(--ui-social-line)]"
                 >
-                  <p className="line-clamp-2 text-[13px] leading-5 text-[var(--social-text)]">
+                  <p className="line-clamp-2 text-[13px] leading-5 text-[var(--ui-social-text)]">
                     {m.content || '（无文字）'}
                   </p>
-                  <p className="mt-1 text-[11px] text-[var(--social-faint)]">
+                  <p className="mt-1 text-[11px] text-[var(--ui-social-faint)]">
                     {m.createdBy ? `${m.createdBy} · ` : ''}
                     {fmtDate(m.happenedAt)}
                   </p>
@@ -391,11 +391,11 @@ export default function SpaceDetail({
         <section className="mt-7">
           <SectionHeader title="空间动态" />
           {data.activity.length === 0 ? (
-            <p className="mt-3 rounded-[var(--m-radius-card)] bg-[var(--social-surface-50)] px-4 py-6 text-center text-[13px] text-[var(--social-muted)] ring-1 ring-[var(--social-line)]">
+            <p className="mt-3 rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface-50)] px-4 py-6 text-center text-[13px] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]">
               还没有动态。有人创建内容或调整成员后，这里会留下痕迹。
             </p>
           ) : (
-            <div className="mt-1 rounded-[var(--m-radius-card)] bg-[var(--social-surface)] px-3.5 py-1 ring-1 ring-[var(--social-line)]">
+            <div className="mt-1 rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface)] px-3.5 py-1 ring-1 ring-[var(--ui-social-line)]">
               <SpaceActivityFeed items={data.activity} />
             </div>
           )}
@@ -410,7 +410,7 @@ export default function SpaceDetail({
                 <button
                   type="button"
                   onClick={() => setInviteOpen(true)}
-                  className="inline-flex items-center gap-0.5 text-[13px] text-[var(--space-accent-strong)]"
+                  className="inline-flex items-center gap-0.5 text-[13px] text-[var(--ui-space-accent-strong)]"
                 >
                   管理<Icon icon={ChevronRight} size="sm" />
                 </button>
@@ -434,7 +434,7 @@ export default function SpaceDetail({
               void hapticLight()
               setLeaveOpen(true)
             }}
-            className="m-pressable mt-6 flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-[13px] text-[var(--social-faint)] transition-colors hover:text-[var(--danger-soft)]"
+            className="m-pressable mt-6 flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-[13px] text-[var(--ui-social-faint)] transition-colors hover:text-[var(--danger-soft)]"
           >
             <Icon icon={LogOut} size="sm" />
             退出空间
@@ -498,8 +498,8 @@ export default function SpaceDetail({
           </FieldSelect>
 
           {editType !== space.spaceType && (
-            <div className="rounded-[var(--m-radius-control)] bg-[var(--social-surface2)] p-3">
-              <p className="mb-2 text-[13px] text-[var(--social-muted)]">预览新配色</p>
+            <div className="rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface2)] p-3">
+              <p className="mb-2 text-[13px] text-[var(--ui-social-muted)]">预览新配色</p>
               <div className="space-hero h-14 rounded-[12px]" data-space={spaceThemeOf(editType)} />
             </div>
           )}

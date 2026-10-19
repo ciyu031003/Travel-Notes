@@ -179,8 +179,8 @@ export default function StackedGallery({ images, alt, className, onOpen }: Stack
               aria-label={isActive ? `查看第 ${i + 1} 张图片` : undefined}
               onClick={() => { if (isActive) onOpen?.(index) }}
               className={cn(
-                "absolute inset-0 overflow-hidden rounded-2xl ring-1 ring-[var(--social-line)]",
-                "bg-[var(--social-surface2)] will-change-transform",
+                "absolute inset-0 overflow-hidden rounded-2xl ring-1 ring-[var(--ui-social-line)]",
+                "bg-[var(--ui-social-surface2)] will-change-transform",
                 isActive ? "cursor-pointer" : "pointer-events-none",
               )}
               style={styleFor(pos)}
@@ -241,7 +241,7 @@ export default function StackedGallery({ images, alt, className, onOpen }: Stack
               onClick={() => goTo(i)}
               className={cn(
                 "h-1.5 rounded-full transition-all duration-300",
-                i === index ? "w-6 bg-[var(--social-accent)]" : "w-1.5 bg-[var(--social-line-strong)]",
+                i === index ? "w-6 bg-[var(--ui-social-accent)]" : "w-1.5 bg-[var(--ui-social-line-strong)]",
               )}
             />
           ))}

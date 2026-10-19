@@ -185,7 +185,7 @@ export default function TravelComposer({
                   className={`rounded-xl px-2 py-2 text-xs font-medium transition ${
                     active
                       ? 'bg-travel-accent text-white'
-                      : 'bg-travel-dim/40 text-travel-ink/70 hover:bg-travel-dim/70'
+                      : 'bg-travel-dim/40 text-travel-ink/80 hover:bg-travel-dim/70'
                   }`}
                 >
                   {t.label}

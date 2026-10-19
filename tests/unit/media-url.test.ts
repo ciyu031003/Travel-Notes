@@ -17,7 +17,7 @@ describe('absoluteMediaUrl（M0 · B1 移动端媒体绝对 URL）', () => {
   })
 
   it('相对 /api/images/N 补成绝对地址', () => {
-    expect(absoluteMediaUrl('/api/images/12')).toBe(SITE + '/api/images/12')
+    expect(absoluteMediaUrl('/api/images/12')).toBe(SITE + '/api/images/12?v=2')
   })
 
   it('已是绝对地址原样返回（对象存储/CDN）', () => {

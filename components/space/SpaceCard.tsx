@@ -64,7 +64,7 @@ export function SpaceCard({ space, className }: { space: SpaceCardData; classNam
     <Link
       href={spaceDetailHref(space.slug)}
       className={cn(
-        'm-card-pressable block overflow-hidden rounded-[var(--m-radius-card)] bg-[var(--social-surface)] ring-1 ring-[var(--social-line)]',
+        'm-card-pressable block overflow-hidden rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]',
         className,
       )}
     >
@@ -72,34 +72,34 @@ export function SpaceCard({ space, className }: { space: SpaceCardData; classNam
       <div className="space-hero relative h-[88px] px-4 pt-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="truncate text-[18px] font-semibold leading-6 text-[var(--space-accent-text)]">
+            <h3 className="truncate text-[18px] font-semibold leading-6 text-[var(--ui-space-accent-text)]">
               {space.name}
             </h3>
-            <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-[var(--space-accent-text)] opacity-80">
+            <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-[var(--ui-space-accent-text)] opacity-80">
               <Icon icon={spaceTypeIconOf(space.spaceType)} size="sm" />
               {spaceTypeLabelOf(space.spaceType)}
               {space.isDefault ? ' · 默认' : ''}
             </p>
           </div>
-          <span className="flex-none rounded-full bg-[var(--social-surface)]/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--space-accent-text)] backdrop-blur">
+          <span className="flex-none rounded-full bg-[var(--ui-social-surface)]/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--ui-space-accent-text)] backdrop-blur">
             {spaceRoleLabelOf(space.myRole)}
           </span>
         </div>
       </div>
 
       <div className="px-4 pb-4 pt-3">
-        <p className="line-clamp-2 min-h-[2.5rem] text-[13px] leading-5 text-[var(--social-muted)]">
+        <p className="line-clamp-2 min-h-[2.5rem] text-[13px] leading-5 text-[var(--ui-social-muted)]">
           {space.description || '还没有简介，写一句话介绍这个空间吧'}
         </p>
 
         {/* 统计：数字用主题色（关键数字是规范允许上色的四处之一） */}
         <div className="mt-3 grid grid-cols-4 gap-1.5">
           {stats.map(([label, value]) => (
-            <div key={label} className="rounded-[12px] bg-[var(--social-surface-60)] py-2 text-center">
-              <div className="text-[18px] font-semibold leading-5 tabular-nums text-[var(--space-accent-strong)]">
+            <div key={label} className="rounded-[12px] bg-[var(--ui-social-surface-60)] py-2 text-center">
+              <div className="text-[18px] font-semibold leading-5 tabular-nums text-[var(--ui-space-accent-strong)]">
                 {value}
               </div>
-              <div className="mt-0.5 text-[11px] text-[var(--social-faint)]">{label}</div>
+              <div className="mt-0.5 text-[11px] text-[var(--ui-social-faint)]">{label}</div>
             </div>
           ))}
         </div>
@@ -107,11 +107,11 @@ export function SpaceCard({ space, className }: { space: SpaceCardData; classNam
         <div className="mt-3 flex items-center justify-between">
           <span className="flex items-center gap-2">
             <SpaceAvatarStack members={space.members || []} max={4} size="sm" />
-            <span className="text-[13px] text-[var(--social-muted)]">
+            <span className="text-[13px] text-[var(--ui-social-muted)]">
               {space.memberCount > 0 ? `${space.memberCount} 位成员` : '还没有其他成员'}
             </span>
           </span>
-          <span className="flex items-center gap-1 text-[11px] text-[var(--social-faint)]">
+          <span className="flex items-center gap-1 text-[11px] text-[var(--ui-social-faint)]">
             {space.updatedAt && (
               <>
                 <Icon icon={Clock} size="sm" />
@@ -130,11 +130,11 @@ export function SpaceCard({ space, className }: { space: SpaceCardData; classNam
 export function SpaceSectionHeader({ title, count }: { title: string; count?: number }) {
   return (
     <div className="flex items-center gap-3 px-1">
-      <h2 className="text-[13px] font-semibold tracking-[0.08em] text-[var(--social-muted)]">
+      <h2 className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ui-social-muted)]">
         {title}
-        {count !== undefined && <span className="ml-1.5 tabular-nums text-[var(--social-faint)]">{count}</span>}
+        {count !== undefined && <span className="ml-1.5 tabular-nums text-[var(--ui-social-faint)]">{count}</span>}
       </h2>
-      <div className="h-px flex-1 bg-[var(--social-line)]" />
+      <div className="h-px flex-1 bg-[var(--ui-social-line)]" />
     </div>
   )
 }

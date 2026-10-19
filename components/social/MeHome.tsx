@@ -272,7 +272,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   const upcoming = profile.upcomingTravel
 
   return (
-    <div className="m-mobile-page m-bottom-nav-safe bg-[var(--social-bg)] text-[var(--social-text)]">
+    <div className="m-mobile-page m-bottom-nav-safe bg-[var(--ui-social-bg)] text-[var(--ui-social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.05),transparent_60%)]" />
 
       <div className="m-safe-top relative mx-auto max-w-2xl px-4 pb-6 sm:px-6 sm:pt-8">
@@ -287,11 +287,11 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                   <Link
                     href="/me/notifications"
                     aria-label="通知"
-                    className="m-pressable relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)]"
+                    className="m-pressable relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
                   >
                     <Icon icon={Bell} size="md" />
                     {unread > 0 && (
-                      <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />
+                      <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--ui-social-accent)]" />
                     )}
                   </Link>
                   {/*
@@ -303,7 +303,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                     type="button"
                     aria-label="设置与记录入口"
                     onClick={() => setDrawerOpen(true)}
-                    className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)]"
+                    className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
                   >
                     <Icon icon={Menu} size="md" />
                   </button>
@@ -314,25 +314,25 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
           <header className="mb-5 hidden items-center justify-between gap-3 md:flex">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--social-accent)]">My Archive</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">My Archive</p>
               <h1 className="mt-1.5 truncate text-[26px] font-semibold leading-none tracking-tight">我的</h1>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <Link
                 href="/me/notifications"
                 aria-label="通知"
-                className="relative flex h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"
+                className="relative flex h-11 w-11 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)]"
               >
                 <Icon icon={Bell} size="md" />
                 {unread > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--social-accent)]" />
+                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--ui-social-accent)]" />
                 )}
               </Link>
               <button
                 type="button"
                 aria-label="设置与记录入口"
                 onClick={() => setDrawerOpen(true)}
-                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--social-muted)] ring-1 ring-[var(--social-line)] transition hover:text-[var(--social-text)]"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)]"
               >
                 <Icon icon={Menu} size="md" />
               </button>
@@ -378,19 +378,19 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           {upcoming && (
             <Link
               href={travelDetailHref(upcoming.slug)}
-              className="m-enter m-press mt-4 flex items-center gap-3 rounded-[1.4rem] bg-[var(--social-surface)] p-4 ring-1 ring-[var(--social-line)]"
+              className="m-enter m-press mt-4 flex items-center gap-3 rounded-[1.4rem] bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-social-line)]"
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--social-accent-soft)] text-[var(--social-accent)]">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--ui-social-accent-soft)] text-[var(--ui-social-accent)]">
                 <Icon icon={Plane} size="md" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold">{upcoming.title}</span>
-                <span className="mt-0.5 block text-xs text-[var(--social-muted)]">
+                <span className="mt-0.5 block text-xs text-[var(--ui-social-muted)]">
                   {upcoming.location ? `${upcoming.location} · ` : ''}
                   {upcoming.daysUntilStart === 0 ? '今天出发' : `还有 ${upcoming.daysUntilStart} 天出发`}
                 </span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[var(--social-accent)]">
+              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[var(--ui-social-accent)]">
                 <Icon icon={Clock} size="sm" />
                 准备中
               </span>
@@ -400,19 +400,19 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           {/* ② 我的空间 */}
           <section className="m-enter mt-6">
             <div className="flex items-center gap-3 px-1">
-              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">我的空间</h2>
-              <div className="h-px flex-1 bg-[var(--social-line)]" />
+              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent)]">我的空间</h2>
+              <div className="h-px flex-1 bg-[var(--ui-social-line)]" />
             </div>
             <Link
               href="/space"
-              className="m-press mt-3 flex w-full items-center gap-4 rounded-[1.4rem] bg-[var(--social-surface)] p-4 text-left ring-1 ring-[var(--social-line)]"
+              className="m-press mt-3 flex w-full items-center gap-4 rounded-[1.4rem] bg-[var(--ui-social-surface)] p-4 text-left ring-1 ring-[var(--ui-social-line)]"
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--social-accent-soft)] text-[var(--social-accent)]">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--ui-social-accent-soft)] text-[var(--ui-social-accent)]">
                 <Icon icon={Users} size="md" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold">情侣 / 家庭 / 朋友 / 独旅空间</span>
-                <span className="mt-0.5 block text-xs text-[var(--social-muted)]">
+                <span className="mt-0.5 block text-xs text-[var(--ui-social-muted)]">
                   邀请 TA 一起经营旅行记录，每种空间有自己的配色
                 </span>
               </span>
@@ -424,18 +424,18 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           {profile.companionStats && profile.companionStats.length > 0 && (
             <section className="m-enter mt-6">
               <div className="flex items-center gap-3 px-1">
-                <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--social-accent)]">和 TA 们去过</h2>
-                <div className="h-px flex-1 bg-[var(--social-line)]" />
+                <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent)]">和 TA 们去过</h2>
+                <div className="h-px flex-1 bg-[var(--ui-social-line)]" />
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {profile.companionStats.map((c) => (
                   <span
                     key={c.name}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--social-surface)] px-3 py-1.5 text-xs ring-1 ring-[var(--social-line)]"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface)] px-3 py-1.5 text-xs ring-1 ring-[var(--ui-social-line)]"
                   >
                     <span className="max-w-[8rem] truncate">{c.name}</span>
-                    {c.relation && <span className="text-[var(--social-faint)]">· {c.relation}</span>}
-                    <span className="tabular-nums text-[var(--social-accent)]">×{c.count}</span>
+                    {c.relation && <span className="text-[var(--ui-social-faint)]">· {c.relation}</span>}
+                    <span className="tabular-nums text-[var(--ui-social-accent)]">×{c.count}</span>
                   </span>
                 ))}
               </div>
@@ -444,7 +444,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
           {error && <p className="mt-4 px-1 text-sm text-[var(--danger-soft)]">{error}</p>}
 
-          <p className="mt-4 text-center text-[11px] text-[var(--social-faint)]">
+          <p className="mt-4 text-center text-[11px] text-[var(--ui-social-faint)]">
             <Sparkles className="mr-1 inline align-[-2px]" size={11} />
             甜途 · 把走过的路，变成值得记住的故事
           </p>
@@ -548,30 +548,30 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
       <Modal
         open={showEdit}
         onClose={() => setShowEdit(false)}
-        className="max-w-sm bg-[var(--social-surface)] ring-1 ring-[var(--social-line)] dark:bg-[var(--social-surface)]"
+        className="max-w-sm bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)] dark:bg-[var(--ui-social-surface)]"
         title="编辑资料"
       >
-        <p className="mb-3 text-xs text-[var(--social-faint)]">账号名 @{profile.username} 只能在后台修改。</p>
-        <label className="mb-1.5 block text-xs text-[var(--social-muted)]">昵称</label>
+        <p className="mb-3 text-xs text-[var(--ui-social-faint)]">账号名 @{profile.username} 只能在后台修改。</p>
+        <label className="mb-1.5 block text-xs text-[var(--ui-social-muted)]">昵称</label>
         <input
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           maxLength={24}
           placeholder="输入 1-24 位昵称"
-          className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus-visible:ring-[var(--social-accent)]"
+          className="w-full rounded-xl bg-[var(--ui-social-bg)] px-4 py-3 text-sm text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] transition focus-visible:ring-[var(--ui-social-accent)]"
         />
-        <label className="mb-1.5 mt-4 block text-xs text-[var(--social-muted)]">个性签名</label>
+        <label className="mb-1.5 mt-4 block text-xs text-[var(--ui-social-muted)]">个性签名</label>
         <input
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           maxLength={120}
           placeholder="写一句话，成为你的旅行签名"
-          className="w-full rounded-xl bg-[var(--social-bg)] px-4 py-3 text-sm text-[var(--social-text)] outline-none ring-1 ring-[var(--social-line)] transition focus-visible:ring-[var(--social-accent)]"
+          className="w-full rounded-xl bg-[var(--ui-social-bg)] px-4 py-3 text-sm text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] transition focus-visible:ring-[var(--ui-social-accent)]"
         />
         <button
           onClick={saveProfile}
           disabled={saving || !nickname.trim()}
-          className="mt-4 w-full rounded-full bg-[var(--social-accent)] py-3 text-sm font-semibold text-[var(--social-on-accent)] transition hover:bg-[var(--social-accent-strong)] disabled:opacity-50"
+          className="mt-4 w-full rounded-full bg-[var(--ui-social-accent)] py-3 text-sm font-semibold text-[var(--ui-social-on-accent)] transition hover:bg-[var(--ui-social-accent-strong)] disabled:opacity-50"
         >
           {saving ? '保存中…' : '保存'}
         </button>

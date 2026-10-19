@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, MapPin, CalendarDays, Menu, X, Moon, Sun, Settings, LogOut, Search, Compass, BookOpen } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import BrandLogo from '@/components/brand/BrandLogo'
 import { cn } from '@/lib/utils'
 import { apiUrl } from '@/lib/api-base'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface NavbarProps {
   variant?: 'default' | 'transparent'
@@ -64,15 +65,10 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
     }
   }, [])
 
-  // 抽屉打开时锁定 body 滚动
-  useEffect(() => {
-    if (!isMenuOpen) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [isMenuOpen])
+  // P2-B2：抽屉的滚动锁 / 焦点圈定与恢复 / ESC / 返回键统一交给弹层基座，
+  // 不再各自维护 body.overflow（双层锁在嵌套弹层时会互相盖掉）。
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({ open: isMenuOpen, onClose: () => setIsMenuOpen(false), panelRef })
 
   const toggleTheme = () => {
     if (isDark) {
@@ -267,7 +263,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
           必须 portal 到 body：header 的 backdrop-blur 会使 fixed 后代相对 header 定位，scrim 会塌成 0 高。 */}
       {isMenuOpen &&
         createPortal(
-          <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="导航菜单">
+          <div className="fixed inset-0 z-50 md:hidden" ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="导航菜单">
             {/* 遮罩从导航栏以下开始，条形栏保持可见可关 */}
             <div
               className="absolute inset-x-0 bottom-0 top-16 bg-black/45 backdrop-blur-[2px] motion-safe:animate-[fadeIn_.18s_ease-out]"

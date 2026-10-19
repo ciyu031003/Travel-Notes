@@ -263,7 +263,7 @@ export default function TravelBook({
                 className={
                   isCurrent
                     ? 'inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
-                    : 'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/70 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
+                    : 'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                 }
               >
                 <Icon icon={m.icon} size="sm" />
@@ -316,7 +316,7 @@ export default function TravelBook({
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       wallView === 'wall'
                         ? 'bg-travel-sakura text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
-                        : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
+                        : 'text-travel-ink/80 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                     }`}
                   >
                     <Icon icon={LayoutGrid} size="sm" />卡片墙
@@ -328,7 +328,7 @@ export default function TravelBook({
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       wallView === 'list'
                         ? 'bg-travel-sakura text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
-                        : 'text-travel-ink/70 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
+                        : 'text-travel-ink/80 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                     }`}
                   >
                     <Icon icon={List} size="sm" />目录
@@ -392,7 +392,7 @@ export default function TravelBook({
                       <span className="relative flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-travel-dim/15 ring-1 ring-travel-dim/20">
                         {cover ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={cover} alt="" loading="lazy" className="h-full w-full object-cover" />
+                          <img src={cover} alt="" width={48} height={64} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                         ) : (
                           <span className="font-display text-lg font-semibold text-travel-ink/40">
                             {(book.title || '行').trim().charAt(0)}
@@ -415,14 +415,14 @@ export default function TravelBook({
                         {book.photoCount} 图
                       </span>
                       {book.travelType && (
-                        <span className="hidden shrink-0 rounded-full bg-travel-sakura/40 px-2 py-0.5 text-[11px] text-travel-ink/70 md:inline dark:bg-white/10 dark:text-shell-muted">
+                        <span className="hidden shrink-0 rounded-full bg-travel-sakura/40 px-2 py-0.5 text-[11px] text-travel-ink/80 md:inline dark:bg-white/10 dark:text-shell-muted">
                           {TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}
                         </span>
                       )}
                       <Icon
                         icon={ChevronRight}
                         size="sm"
-                        className="shrink-0 text-travel-ink/35 transition-transform group-hover:translate-x-0.5 group-hover:text-travel-ink/70 dark:text-shell-faint dark:group-hover:text-shell-muted"
+                        className="shrink-0 text-travel-ink/35 transition-transform group-hover:translate-x-0.5 group-hover:text-travel-ink/80 dark:text-shell-faint dark:group-hover:text-shell-muted"
                       />
                     </button>
                   )
@@ -432,7 +432,7 @@ export default function TravelBook({
 
             {opening && (
               <div className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-travel-cream/40 dark:bg-shell-bg/40 backdrop-blur-[2px]">
-                <div className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm text-travel-ink/70 dark:bg-shell-surface/90 dark:text-shell-text shadow-[0_10px_30px_-10px_rgba(41,39,35,0.35)]">
+                <div className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm text-travel-ink/80 dark:bg-shell-surface/90 dark:text-shell-text shadow-[0_10px_30px_-10px_rgba(41,39,35,0.35)]">
                   <Icon icon={Loader2} size="sm" className="animate-spin" />
                   正在翻开《{openingTitle}》...
                 </div>

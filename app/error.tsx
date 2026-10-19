@@ -29,7 +29,7 @@ export default function ErrorPage({
           <Icon icon={AlertCircle} size="lg" />
         </span>
         <h1 className="mt-5 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">页面出了点问题</h1>
-        <p className="mt-2 text-sm leading-relaxed text-travel-ink/70 dark:text-shell-muted">
+        <p className="mt-2 text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
           刚才的操作没有完成，你可以重试一次；如果反复出现，请回到首页再进入。
         </p>
         {error?.digest && (

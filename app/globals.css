@@ -96,15 +96,15 @@
      通过 token 使用）。这两个类就是空间主题的"受控渐变 token"。
      颜色取自 [data-space] 作用域，所以同一个类在五个空间里是五种渐变。 */
   .space-hero {
-    background-image: linear-gradient(150deg, var(--space-hero-a) 0%, var(--space-hero-b) 100%);
+    background-image: linear-gradient(150deg, var(--ui-space-hero-a) 0%, var(--ui-space-hero-b) 100%);
   }
   /* 头图上的文字遮罩：亮色底上压一层向下的空间色渐隐，保证标题可读 */
   .space-hero-scrim {
-    background-image: linear-gradient(to top, var(--space-hero-b) 0%, transparent 72%);
+    background-image: linear-gradient(to top, var(--ui-space-hero-b) 0%, transparent 72%);
   }
   /* 细描边强调（用于激活态卡片的外圈，替代纯彩色填充） */
   .space-ring {
-    box-shadow: 0 0 0 1.5px var(--space-accent);
+    box-shadow: 0 0 0 1.5px var(--ui-space-accent);
   }
 }
 
@@ -133,7 +133,7 @@ html {
    键盘用户"摸黑"；移动端有统一 --m-ring，桌面补齐同一层底座。
    只在 :focus-visible（键盘导航）时出现，鼠标点击不触发。 */
 :focus-visible {
-  outline: 2px solid var(--social-accent, #A85F3A);
+  outline: 2px solid var(--ui-social-accent, #A85F3A);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -838,7 +838,7 @@ html.dark {
 .mc-button:focus-visible,
 .sk-arrow:focus-visible,
 .book-cover-3d:has(button):focus-visible button {
-  outline: 2px solid var(--album-accent, #e8b06a);
+  outline: 2px solid var(--ui-album-accent, #e8b06a);
   outline-offset: 2px;
   box-shadow: 0 0 0 3px rgba(232, 176, 106, 0.35);
 }
@@ -2175,16 +2175,16 @@ html.dark {
   inset: 0 0 auto;
   height: 420px;
   pointer-events: none;
-  background: radial-gradient(60% 60% at 50% -10%, var(--social-accent-soft), transparent 65%);
+  background: radial-gradient(60% 60% at 50% -10%, var(--ui-social-accent-soft), transparent 65%);
 }
 
 /* 封面卡组外框：给堆叠相册一个"纸面"底，照片不再直接贴在页面底色上 */
 .circle-story-stack {
   padding: 10px;
   border-radius: 26px;
-  background: var(--social-surface-60);
-  border: 1px solid var(--social-line);
-  box-shadow: 0 32px 72px -52px var(--social-line-strong);
+  background: var(--ui-social-surface-60);
+  border: 1px solid var(--ui-social-line);
+  box-shadow: 0 32px 72px -52px var(--ui-social-line-strong);
 }
 
 /* 元信息胶囊（日期 / 天数 / 张数） */
@@ -2197,16 +2197,16 @@ html.dark {
   border-radius: 999px;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-  color: var(--social-muted);
-  background: var(--social-surface-60);
-  border: 1px solid var(--social-line);
+  color: var(--ui-social-muted);
+  background: var(--ui-social-surface-60);
+  border: 1px solid var(--ui-social-line);
 }
 
 /* 柔面卡片：作者行 / 动作条 / 每天章节共用的"一张纸" */
 .circle-story-card {
   border-radius: 20px;
-  background: var(--social-surface-60);
-  border: 1px solid var(--social-line);
+  background: var(--ui-social-surface-60);
+  border: 1px solid var(--ui-social-line);
 }
 
 /* 分节标题：小字号 + 字距 + 一条延伸到右端的细线，把版面切成整齐的段落 */
@@ -2220,25 +2220,25 @@ html.dark {
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--social-accent);
+  color: var(--ui-social-accent);
 }
 .circle-story-heading-rule {
   height: 1px;
   flex: 1;
-  background: var(--social-line);
+  background: var(--ui-social-line);
 }
 .circle-story-heading-count {
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-  color: var(--social-faint);
+  color: var(--ui-social-faint);
 }
 
 /* 时间轴竖线（原为组件内联 bg-gradient-to-b） */
 .circle-story-rail {
   background: linear-gradient(
     to bottom,
-    var(--social-accent-soft),
-    var(--social-line) 40%,
+    var(--ui-social-accent-soft),
+    var(--ui-social-line) 40%,
     transparent
   );
 }
@@ -2251,15 +2251,15 @@ html.dark {
   width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: var(--social-bg);
-  border: 1px solid var(--social-line-strong);
+  background: var(--ui-social-bg);
+  border: 1px solid var(--ui-social-line-strong);
 }
 .circle-story-dot::after {
   content: '';
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: var(--social-accent);
+  background: var(--ui-social-accent);
 }
 
 /* DAY 徽标 */
@@ -2273,23 +2273,23 @@ html.dark {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
-  color: var(--social-accent);
-  background: var(--social-accent-soft);
+  color: var(--ui-social-accent);
+  background: var(--ui-social-accent-soft);
 }
 
 /* 每天的章节卡：左侧一条 accent 细边 + 悬停微微抬起 */
 .circle-story-day {
   padding: 18px 18px 16px;
   border-radius: 20px;
-  background: var(--social-surface-60);
-  border: 1px solid var(--social-line);
-  border-left: 2px solid var(--social-accent-soft);
+  background: var(--ui-social-surface-60);
+  border: 1px solid var(--ui-social-line);
+  border-left: 2px solid var(--ui-social-accent-soft);
   transition: transform 320ms var(--m-ease-out), border-color 320ms var(--m-ease-out);
 }
 @media (hover: hover) {
   .circle-story-day:hover {
     transform: translateY(-2px);
-    border-color: var(--social-line-strong);
+    border-color: var(--ui-social-line-strong);
   }
 }
 
@@ -2297,8 +2297,8 @@ html.dark {
 .circle-story-quote {
   padding: 10px 12px;
   border-radius: 14px;
-  background: var(--social-surface-50);
-  border-left: 2px solid var(--social-accent-soft);
+  background: var(--ui-social-surface-50);
+  border-left: 2px solid var(--ui-social-accent-soft);
 }
 
 @media (prefers-reduced-motion: reduce) {

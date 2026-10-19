@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Map, Images, Footprints, ChevronRight, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -9,6 +9,7 @@ import { Icon } from './Icon'
 import { IconBadge } from './IconBadge'
 import type { LucideIcon } from 'lucide-react'
 import type { BadgeTone } from '@/lib/mobile/icon-system'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 /**
  * 首次启动引导（3 屏）
@@ -65,6 +66,14 @@ export function Onboarding() {
   const [visible, setVisible] = useState(false)
   const [index, setIndex] = useState(0)
 
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: visible,
+    onClose: () => close(false),
+    panelRef,
+  })
+
   // 只在「首页」首次进入时展示。
   // 为什么不做全局展示：本组件是全屏模态，若挂在所有路由上，任何深链首次打开
   // 都会被它挡住（如他人分享的 /travel/xxx、或 /travel?compose=1 记录流程），
@@ -111,7 +120,7 @@ export function Onboarding() {
   return (
     <div
       className="fixed inset-0 z-[60] flex flex-col bg-[var(--m-bg)] text-[var(--m-text)] md:hidden"
-      role="dialog"
+      ref={panelRef} tabIndex={-1} role="dialog"
       aria-modal="true"
       aria-label="首次使用引导"
     >

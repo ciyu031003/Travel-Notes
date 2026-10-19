@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Check, ImagePlus, X } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
 import { base64ToBytes, extFromMime, pickImage, type PickedImage } from '@/lib/media/pick-image'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 /**
  * 「记一笔」：在某个「天」下新建一条回忆，并可同时上传照片。
@@ -49,6 +50,14 @@ export default function MemoryComposer({
   const [saving, setSaving] = useState(false)
   const [progress, setProgress] = useState('')
   const [error, setError] = useState('')
+
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: true,
+    onClose: onClose,
+    panelRef,
+  })
 
   const addPhotos = async () => {
     const p = await pickImage('photos')
@@ -118,7 +127,7 @@ export default function MemoryComposer({
   }
 
   return (
-    <div className="fixed inset-0 z-[130] flex items-end justify-center" role="dialog" aria-modal="true" aria-label="记一笔">
+    <div className="fixed inset-0 z-[130] flex items-end justify-center" ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="记一笔">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-[var(--m-surface-solid)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 shadow-[var(--m-shadow-lg)]">
         <div className="flex items-start justify-between">
@@ -218,7 +227,7 @@ export default function MemoryComposer({
               {photos.map((p, i) => (
                 <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`data:${p.mimeType};base64,${p.base64}`} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                  <img src={`data:${p.mimeType};base64,${p.base64}`} alt="" width={400} height={400} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { CalendarDays, Camera, Plus, Sparkles, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
@@ -11,6 +11,7 @@ import { addTravelDay } from '@/lib/modules/offline/travel-write'
 import MemoryPhotoPicker from './MemoryPhotoPicker'
 import ItineraryEditor from './ItineraryEditor'
 import MemoryComposer from './MemoryComposer'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 
 /**
  * 「添加一天」抽屉。
@@ -33,6 +34,14 @@ export function AddDaySheet({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({
+    open: true,
+    onClose: onClose,
+    panelRef,
+  })
+
   const submit = async () => {
     setSaving(true)
     setError('')
@@ -50,7 +59,7 @@ export function AddDaySheet({
   }
 
   return (
-    <div className="fixed inset-0 z-[130] flex items-end justify-center" role="dialog" aria-modal="true" aria-label="添加一天">
+    <div className="fixed inset-0 z-[130] flex items-end justify-center" ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="添加一天">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-[var(--m-surface-solid)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 shadow-[var(--m-shadow-lg)]">
         <div className="flex items-start justify-between">
@@ -201,7 +210,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
           <button
             type="button"
             onClick={() => setAddingDay(true)}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-dashed border-travel-dim/80 px-5 text-sm font-medium text-travel-ink/70 active:scale-95"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-dashed border-travel-dim/80 px-5 text-sm font-medium text-travel-ink/80 active:scale-95"
           >
             <Icon icon={Plus} size="sm" />
             添加一天
@@ -237,7 +246,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
         <button
           type="button"
           onClick={() => setAddingDay(true)}
-          className="ml-auto inline-flex min-h-[36px] items-center gap-1 rounded-full border border-dashed border-travel-dim/80 px-3 text-xs font-medium text-travel-ink/70 transition-colors hover:border-travel-bloom hover:bg-travel-sakura/40 active:scale-95"
+          className="ml-auto inline-flex min-h-[36px] items-center gap-1 rounded-full border border-dashed border-travel-dim/80 px-3 text-xs font-medium text-travel-ink/80 transition-colors hover:border-travel-bloom hover:bg-travel-sakura/40 active:scale-95"
         >
           <Icon icon={Plus} size="sm" />
           加一天
@@ -263,7 +272,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                   {day.date && <span className="text-xs text-travel-ink/50">{formatDay(day.date)}</span>}
                   {day.title && <span className="text-sm font-medium text-travel-ink/80">· {day.title}</span>}
                 </div>
-                {day.summary && <p className="mt-1.5 text-sm text-travel-ink/70 leading-relaxed">{day.summary}</p>}
+                {day.summary && <p className="mt-1.5 text-sm text-travel-ink/80 leading-relaxed">{day.summary}</p>}
 
                 {/* 行程项：按 type 显示对应图标（景点/餐厅/住宿/交通/活动/其他）
                     此前对全部类型硬编码同一个 MapPin，type 字段完全没用上 */}
@@ -291,7 +300,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                   <button
                     type="button"
                     onClick={() => setEditingDay({ id: day.id, label: `DAY ${String(idx + 1).padStart(2, '0')}${day.date ? ` · ${formatDay(day.date)}` : ''}` })}
-                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-dashed border-travel-dim/80 px-3.5 text-xs font-medium text-travel-ink/70 transition-colors hover:border-travel-bloom hover:bg-travel-sakura/40 hover:text-travel-ink"
+                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-dashed border-travel-dim/80 px-3.5 text-xs font-medium text-travel-ink/80 transition-colors hover:border-travel-bloom hover:bg-travel-sakura/40 hover:text-travel-ink"
                   >
                     <Icon icon={Plus} size="sm" />
                     添加行程
@@ -303,10 +312,10 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                   <div className="mt-3 grid grid-cols-4 gap-1.5">
                     {day.photos.slice(0, 8).map((p) => (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img key={p.id} src={p.url} alt="" loading="lazy" decoding="async" className="aspect-square w-full rounded-lg object-cover" />
+                      <img key={p.id} src={p.url} alt="" width={400} height={400} loading="lazy" decoding="async" className="aspect-square w-full rounded-lg object-cover" />
                     ))}
                     {day.photos.length > 8 && (
-                      <div className="flex aspect-square items-center justify-center rounded-lg bg-travel-sakura/50 text-xs text-travel-ink/70">
+                      <div className="flex aspect-square items-center justify-center rounded-lg bg-travel-sakura/50 text-xs text-travel-ink/80">
                         +{day.photos.length - 8}
                       </div>
                     )}
@@ -324,7 +333,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                             {mem.title}
                             {mem.mood && <span className="ml-1.5 text-xs font-normal text-travel-ink/50">· {MOOD_LABEL[mem.mood] || mem.mood}</span>}
                           </p>
-                          {mem.content && <p className="mt-0.5 text-sm text-travel-ink/70 leading-relaxed line-clamp-3 whitespace-pre-wrap">{mem.content}</p>}
+                          {mem.content && <p className="mt-0.5 text-sm text-travel-ink/80 leading-relaxed line-clamp-3 whitespace-pre-wrap">{mem.content}</p>}
                           {mem.photos.length > 0 && (
                             <div className="mt-1.5 flex gap-1">
                               {mem.photos.slice(0, 3).map((p) => (
