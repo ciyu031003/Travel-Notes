@@ -1,8 +1,11 @@
 version: 2
 
-# P2-36：依赖升级改为由 Dependabot 定期提 PR，而不是等 npm audit 红灯才动。
-# 大版本刻意忽略：next 16 / prisma 8 / tailwind 4 / react 20 都需要单独排期回归，
-# 让机器人开 PR 只会制造噪音（我们宁可手动升，也不想合并一堆未验证的 major）。
+# B8/P2-36：依赖升级由 Dependabot 定期提 PR，而不是等 npm audit 红灯才动。
+# 大版本刻意忽略：next 16 / prisma 8 / tailwind 4 / react 20 等都需要单独排期回归，
+# 让机器人开 PR 只会制造噪音（宁可手动升，也不合并一堆未验证的 major）。
+# 升级策略、剩余漏洞根因与复评时间见 docs/review/_impl/DEPS.md。
+# 注意：package.json 里的 overrides（braces/extract-zip/tmp/basic-ftp/postcss/mysql2）
+# Dependabot 不会自动跟随，需定期按 DEPS.md 手动复核并 npm audit 验证。
 updates:
   - package-ecosystem: npm
     directory: /
@@ -50,5 +53,18 @@ updates:
         update-types:
           - version-update:semver-major
       - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      # 以下为 dev/build 链路：上游修复建议是「降级」或需大版本，禁止机器人自动提 major
+      - dependency-name: '@lhci/cli'
+        update-types:
+          - version-update:semver-major
+      - dependency-name: eslint-config-next
+        update-types:
+          - version-update:semver-major
+      - dependency-name: nodemailer
+        update-types:
+          - version-update:semver-major
+      - dependency-name: mysql2
         update-types:
           - version-update:semver-major

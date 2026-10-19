@@ -225,43 +225,18 @@ export class AuthService {
     await this.tokenService.blacklistToken(token)
   }
 
-  /**
-   * @deprecated 单管理员时代的「改第一个用户密码」路径，已无调用方（改密走
-   * app/api/admin/settings/password → siteService.updatePassword(username)）。
-   * 保留它是因为删除会牵动 repository 接口；**不要在新路由里使用**（会改错人，评审 A-1）。
-   */
-  async changePassword(
-    currentPassword: string,
-    newPassword: string,
-    currentSid?: string | null,
-  ): Promise<{ success: boolean; error?: string }> {
-    const settings = await this.userRepo.getSettings()
-
-    const valid = await verifyPassword(currentPassword, settings.passwordHash)
-    if (!valid) {
-      return { success: false, error: '当前密码错误' }
-    }
-
-    const newHash = await hashPassword(newPassword)
-    await this.userRepo.updateCredentials(settings.username, newHash, settings.email, true)
-
-    // 密码变更后撤销其它会话，仅保留当前会话
-    await this.sessionRepo.revokeAllForUser(settings.username, currentSid ?? undefined)
-
-    return { success: true }
-  }
-
   async sendResetCode(email: string, ip?: string | null): Promise<{ success: boolean; error?: string; remainingSeconds?: number; delivered?: boolean }> {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { success: false, error: '请输入有效的邮箱地址' }
     }
 
-    const settings = await this.userRepo.getSettings()
-    if (!settings.email || settings.email !== email) {
+    // B11：按邮箱精确定位用户（旧实现读「首用户的设置」，非首用户永远无法找回密码）
+    const user = await this.userRepo.findByEmail(email)
+    if (!user) {
       return { success: false, error: '该邮箱未绑定账号' }
     }
 
-    if (!settings.emailVerified) {
+    if (!user.emailVerified) {
       return { success: false, error: '该邮箱未验证，请联系管理员' }
     }
 
@@ -287,8 +262,8 @@ export class AuthService {
       return { success: false, error: '参数错误' }
     }
 
-    const settings = await this.userRepo.getSettings()
-    if (!settings.email || settings.email !== email) {
+    const user = await this.userRepo.findByEmail(email)
+    if (!user) {
       return { success: false, error: '该邮箱未绑定账号' }
     }
 
@@ -310,8 +285,9 @@ export class AuthService {
       return { success: false, error: passwordCheck.message }
     }
 
-    const settings = await this.userRepo.getSettings()
-    if (!settings.email || settings.email !== email) {
+    // B11：按邮箱精确定位用户；只改这一个人的密码（旧实现改的是「首用户」）
+    const user = await this.userRepo.findByEmail(email)
+    if (!user) {
       return { success: false, error: '该邮箱未绑定账号' }
     }
 
@@ -321,12 +297,12 @@ export class AuthService {
     }
 
     const passwordHash = await hashPassword(newPassword)
-    await this.userRepo.updateCredentials(settings.username, passwordHash, settings.email)
+    await this.userRepo.updatePasswordById(user.id, passwordHash)
 
     await consumeResetCode(email)
 
     // 密码重置后撤销该账号全部会话，强制重新登录
-    await this.sessionRepo.revokeAllForUser(settings.username)
+    await this.sessionRepo.revokeAllForUser(user.username)
 
     return { success: true }
   }

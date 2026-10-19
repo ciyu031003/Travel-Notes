@@ -7,15 +7,17 @@
  * 配置说明见 docs/EMAIL_SETUP.md
  */
 import nodemailer from 'nodemailer'
+// nodemailer 10 自带类型：Transporter 是命名导出，不再有 nodemailer.Transporter 命名空间
+import type { Transporter } from 'nodemailer'
 import { logger } from './logger'
 
 export function isSmtpConfigured(): boolean {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
 }
 
-let transporter: nodemailer.Transporter | null = null
+let transporter: Transporter | null = null
 
-function getTransporter(): nodemailer.Transporter {
+function getTransporter(): Transporter {
   if (transporter) return transporter
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,

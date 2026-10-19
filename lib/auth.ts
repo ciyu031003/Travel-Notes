@@ -41,6 +41,8 @@ function emptySettings(): SiteSettings {
 /**
  * 单管理员迁移：从旧 SiteSetting 回填到 User 表（幂等）。
  * 仅在 User 表为空且 SiteSetting 存在时执行，用于平滑升级。
+ *
+ * 这是**引导性**写入（库里一个用户都没有），不是「改某个用户」，因此不存在写错人的风险。
  */
 async function migrateSiteSettingToUser(): Promise<void> {
   try {
@@ -65,10 +67,21 @@ async function migrateSiteSettingToUser(): Promise<void> {
   }
 }
 
+/**
+ * 读取站点设置（**只读兼容路径**，B11）。
+ *
+ * 为什么这里仍保留「首个用户（id 升序）」：
+ *  · 登录页 / 初始化引导 / 未登录时的 needsSetup 判断没有 username 上下文，只需要「站点是否已配置」；
+ *  · 历史数据是单管理员模型，首用户即站点主人。
+ *
+ * **写路径绝对不要走这里** —— 写完会隐式落到别的用户头上（评审 S-2/A-1 的账号接管链）。
+ * 写凭据必须用 updateCredentials（按显式 username 定位）。
+ */
 async function fetchSiteSettingsFromDB(): Promise<SiteSettings> {
   try {
     await migrateSiteSettingToUser()
 
+    // 只读兼容：首用户 = 站点级配置的归属者
     const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
     if (user) {
       return mapSetting(user)
@@ -91,6 +104,7 @@ async function fetchSiteSettingsFromDB(): Promise<SiteSettings> {
   await initializeDefaultAdmin()
 
   try {
+    // 只读兼容：同上（初始化后重新读首用户）
     const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
     if (user) {
       return mapSetting(user)
@@ -138,6 +152,10 @@ async function initializeDefaultAdmin(): Promise<void> {
   }
 }
 
+/**
+ * 引导初始化（B11）：**只在「一个用户都没有」时**按 env 创建初始管理员，已有用户时什么都不做。
+ * 因此它不会隐式改写任何既有用户的凭据（旧语义的 7 处首用户写路径已全部移除）。
+ */
 export async function initializeCredentialsFromEnv(): Promise<void> {
   try {
     await migrateSiteSettingToUser()
@@ -150,27 +168,26 @@ export async function initializeCredentialsFromEnv(): Promise<void> {
   }
 }
 
-export async function getCredentials(): Promise<{ username: string; passwordHash: string; requirePasswordChange: boolean }> {
-  const settings = await getSiteSettings()
-  return {
-    username: settings.username,
-    passwordHash: settings.passwordHash,
-    requirePasswordChange: settings.requirePasswordChange,
-  }
-}
-
+/**
+ * 写入账号凭据（B11：**按显式 username 定位**，不再 findFirst(id asc)）。
+ *
+ * 旧实现每次写都先取「id 最小的用户」，于是任何一次漏传目标都会改掉站长的账号/密码
+ * （评审 S-2：注册即可接管站长）。现在：
+ *  · 目标用户存在 → 按 id 更新，只影响这一个人；
+ *  · 不存在 → 创建（仅初始化/引导路径会走到：/api/admin/setup、env 初始化）；
+ *  · 绝不隐式改动其它用户。
+ */
 export async function updateCredentials(
   username: string,
   passwordHash: string,
   email?: string | null,
-  clearRequireChange: boolean = false
+  clearRequireChange: boolean = false,
 ): Promise<void> {
   try {
     await migrateSiteSettingToUser()
-    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
+    const user = await prisma.user.findUnique({ where: { username }, select: { id: true } })
     if (user) {
-      const now = new Date()
-      const updateData: any = { username, passwordHash, updatedAt: now }
+      const updateData: any = { passwordHash, updatedAt: new Date() }
       if (clearRequireChange) {
         updateData.requirePasswordChange = false
       }
@@ -195,126 +212,5 @@ export async function updateCredentials(
     invalidateSiteSettingsCache()
   } catch (error) {
     console.error('[updateCredentials] Failed:', error)
-  }
-}
-
-export async function isRequirePasswordChange(): Promise<boolean> {
-  try {
-    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
-    return (user as any)?.requirePasswordChange ?? false
-  } catch {
-    return false
-  }
-}
-
-export async function updateEmail(email: string | null, verified?: boolean): Promise<void> {
-  try {
-    await migrateSiteSettingToUser()
-    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
-    if (user) {
-      const updateData: any = { email: email || null, updatedAt: new Date() }
-      if (verified !== undefined) {
-        updateData.emailVerified = verified
-      } else if (email) {
-        updateData.emailVerified = false
-      }
-      await prisma.user.update({ where: { id: user.id }, data: updateData })
-      invalidateSiteSettingsCache()
-    }
-  } catch {}
-}
-
-export async function setEmailVerified(): Promise<void> {
-  try {
-    await migrateSiteSettingToUser()
-    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
-    if (user) {
-      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } })
-      invalidateSiteSettingsCache()
-    }
-  } catch {}
-}
-
-// ===== 以下为旧 Token 密码重置流程（已被验证码流程替代，保留以兼容旧调用）=====
-
-export async function generateResetToken(): Promise<{ token: string; exp: Date } | null> {
-  try {
-    const setting = await prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } })
-    if (!setting || !setting.email || !setting.emailVerified) {
-      return null
-    }
-
-    const token = crypto.randomUUID()
-    const exp = new Date(Date.now() + 3600 * 1000)
-
-    await prisma.siteSetting.update({
-      where: { id: setting.id },
-      data: { resetToken: token, resetTokenExp: exp },
-    })
-
-    return { token, exp }
-  } catch {
-    return null
-  }
-}
-
-export async function verifyResetToken(token: string): Promise<boolean> {
-  try {
-    const setting = await prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } })
-    if (!setting || !setting.resetToken || !setting.resetTokenExp) return false
-    if (setting.resetToken !== token) return false
-    if (setting.resetTokenExp < new Date()) return false
-    return true
-  } catch {
-    return false
-  }
-}
-
-export async function resetPasswordWithToken(token: string, newPassword: string): Promise<boolean> {
-  try {
-    const setting = await prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } })
-    if (!setting || !setting.resetToken || !setting.resetTokenExp) return false
-    if (setting.resetToken !== token) return false
-    if (setting.resetTokenExp < new Date()) return false
-
-    const passwordHash = await hashPassword(newPassword)
-    const now = new Date()
-    await prisma.siteSetting.update({
-      where: { id: setting.id },
-      data: { passwordHash, resetToken: null, resetTokenExp: null, requirePasswordChange: false, updatedAt: now },
-    })
-    invalidateSiteSettingsCache()
-    return true
-  } catch {
-    return false
-  }
-}
-
-export async function clearResetToken(): Promise<void> {
-  try {
-    const setting = await prisma.siteSetting.findFirst({ orderBy: { id: 'asc' } })
-    if (setting) {
-      await prisma.siteSetting.update({
-        where: { id: setting.id },
-        data: { resetToken: null, resetTokenExp: null },
-      })
-      invalidateSiteSettingsCache()
-    }
-  } catch {}
-}
-
-export async function updateAnniversaryStart(date: string | null): Promise<void> {
-  try {
-    await migrateSiteSettingToUser()
-    const user = await prisma.user.findFirst({ orderBy: { id: 'asc' } })
-    if (user) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { anniversaryStart: date, updatedAt: new Date() },
-      })
-      invalidateSiteSettingsCache()
-    }
-  } catch (error) {
-    console.error('[updateAnniversaryStart] Failed:', error)
   }
 }
