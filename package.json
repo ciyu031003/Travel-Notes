@@ -78,15 +78,15 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
-    "@capacitor/cli": "^8.5.0",
+    "@axe-core/playwright": "^4.14.0",
+    "@capacitor/cli": "^8.5.3",
     "@lhci/cli": "^0.15.1",
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.1",
     "@types/archiver": "^6.0.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/d3-geo": "^3.1.1",
     "@types/node": "^20.11.0",
-    "@types/nodemailer": "^8.0.1",
+    "@types/nodemailer": "^8.0.2",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -94,7 +94,7 @@
     "@types/turndown": "^5.0.6",
     "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^8.56.0",
-    "eslint-config-next": "^15.5.23",
+    "eslint-config-next": "^15.5.28",
     "playwright": "^1.62.1",
     "vitest": "^4.1.10"
   },
