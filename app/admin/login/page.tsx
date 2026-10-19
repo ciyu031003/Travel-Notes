@@ -148,7 +148,7 @@ export default function AdminLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-travel-sand/50 transition-colors hover:text-travel-accent"
+                  className="absolute right-4 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-travel-sand/50 transition-colors hover:text-travel-accent"
                   aria-label={showPassword ? '隐藏密码' : '显示密码'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -191,7 +191,7 @@ export default function AdminLoginPage() {
           </motion.div>
         </motion.div>
 
-        <motion.p variants={item} className="mt-6 text-center text-xs text-travel-sand/50 dark:text-shell-faint">
+        <motion.p variants={item} className="mt-6 text-center text-xs text-travel-sand dark:text-shell-faint">
           Made with ♥ by 甜途
         </motion.p>
       </motion.div>

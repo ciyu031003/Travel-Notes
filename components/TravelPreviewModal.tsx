@@ -120,6 +120,7 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
           </div>
           <button
             onClick={onClose}
+            aria-label="关闭预览"
             className="w-9 h-9 rounded-lg flex items-center justify-center text-travel-sand hover:text-travel-inkStrong dark:text-shell-muted dark:hover:text-shell-text hover:bg-travel-sakura/40 dark:hover:bg-white/10 transition-colors"
           >
             <Icon icon={X} size="md" />
@@ -202,12 +203,14 @@ export default function TravelPreviewModal({ isOpen, onClose, formData }: Travel
 
                           <button
                             onClick={prev}
+                            aria-label="上一张"
                             className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-black/70 transition-colors"
                           >
                             <Icon icon={ChevronLeft} size="md" className="text-travel-inkStrong dark:text-shell-text" />
                           </button>
                           <button
                             onClick={next}
+                            aria-label="下一张"
                             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-black/70 transition-colors"
                           >
                             <Icon icon={ChevronRight} size="md" className="text-travel-inkStrong dark:text-shell-text" />

@@ -142,7 +142,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                   <div key={p.name}>
                     <div className="mb-1.5 flex items-center justify-between text-sm">
                       <span className="text-travel-ink dark:text-shell-text">{p.name}</span>
-                      <span className="tabular-nums text-travel-ink/60 dark:text-shell-muted">{p.count} 篇</span>
+                      <span className="tabular-nums text-travel-ink/80 dark:text-shell-muted">{p.count} 篇</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-travel-sakura/40 dark:bg-white/5">
                       <div
@@ -170,7 +170,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                 <div key={item.label} className="flex items-center gap-3">
                   <span className={`h-2.5 w-2.5 rounded-full ${item.color} flex-shrink-0`} />
                   <span className="flex-1 text-sm text-travel-ink dark:text-shell-text">{item.label}</span>
-                  <span className="tabular-nums text-sm text-travel-ink/60 dark:text-shell-muted">{item.value}</span>
+                  <span className="tabular-nums text-sm text-travel-ink/80 dark:text-shell-muted">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -179,7 +179,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               const max = Math.max(1, stats[0]?.count ?? 1)
               return (
                 <div className="mt-5 border-t border-travel-line/50 pt-4 dark:border-shell-line">
-                  <p className="mb-2.5 text-xs font-medium text-travel-ink/60 dark:text-shell-muted">旅行类型</p>
+                  <p className="mb-2.5 text-xs font-medium text-travel-ink/80 dark:text-shell-muted">旅行类型</p>
                   <div className="space-y-2">
                     {stats.slice(0, 5).map((s) => (
                       <div key={s.type} className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                             style={{ width: `${Math.min(100, (s.count / max) * 100)}%` }}
                           />
                         </div>
-                        <span className="w-6 shrink-0 text-right text-xs tabular-nums text-travel-ink/60 dark:text-shell-muted">{s.count}</span>
+                        <span className="w-6 shrink-0 text-right text-xs tabular-nums text-travel-ink/80 dark:text-shell-muted">{s.count}</span>
                       </div>
                     ))}
                   </div>
@@ -200,7 +200,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               )
             })()}
             <div className="mt-6 border-t border-travel-line/50 pt-4 dark:border-shell-line">
-              <p className="text-xs text-travel-ink/50 dark:text-shell-faint">
+              <p className="text-xs text-travel-ink/80 dark:text-shell-faint">
                 最近更新：{recent ? formatDate(recent.date) : '—'}
               </p>
             </div>

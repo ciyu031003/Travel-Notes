@@ -230,7 +230,7 @@ export default function SyncCenter() {
         <PullToRefresh onRefresh={load}>
         <header className="mb-8 hidden items-center gap-3 md:flex">
           <div className="ml-auto"><SocialThemeToggle /></div>
-          <Link href="/me" className="rounded-full p-2 text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
+          <Link href="/me" aria-label="返回我的" className="rounded-full p-2 text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">Sync</p>
             <h1 className="text-xl font-semibold">数据与同步</h1>
@@ -248,7 +248,7 @@ export default function SyncCenter() {
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-[var(--ui-social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
+          <div className="py-20 text-center text-[var(--ui-social-muted)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3">
@@ -302,9 +302,9 @@ export default function SyncCenter() {
             {total === 0 && (
               <div className="mt-6 rounded-[2rem] bg-[var(--ui-social-surface-50)] px-6 py-14 text-center ring-1 ring-[var(--ui-social-line)]">
                 <Icon icon={CheckCheck} size="lg" className="mx-auto text-[var(--ui-social-accent)]" />
-                <p className="mt-4 text-sm text-[var(--ui-social-muted)]">所有改动都已同步。</p>                <p className="mt-1 text-xs leading-relaxed text-[var(--ui-social-faint)]">离线写的照片、留言、碎碎念会进入队列，联网后自动上传。</p>
+                <p className="mt-4 text-sm text-[var(--ui-social-muted)]">所有改动都已同步。</p>                <p className="mt-1 text-xs leading-relaxed text-[var(--ui-social-muted)]">离线写的照片、留言、碎碎念会进入队列，联网后自动上传。</p>
                 {lastSync && (
-                  <p className="mt-3 text-xs text-[var(--ui-social-faint)]">
+                  <p className="mt-3 text-xs text-[var(--ui-social-muted)]">
                     最近同步：{new Date(lastSync.at).toLocaleTimeString('zh-CN')} · 更新 {lastSync.written} 条本地缓存
                   </p>
                 )}
@@ -325,7 +325,7 @@ export default function SyncCenter() {
                     <div key={f.id} className="m-pressable flex items-center gap-3 rounded-[1.2rem] bg-[var(--ui-social-surface-80)] px-4 py-3 ring-1 ring-[var(--ui-social-line)]">
                       <div className="min-w-0 flex-1">
                         <div className="text-sm">{f.entityType} · {f.operation}</div>
-                        <div className="mt-0.5 truncate text-xs text-[var(--ui-social-faint)]">
+                        <div className="mt-0.5 truncate text-xs text-[var(--ui-social-muted)]">
                     {f.status === 'DEAD' ? '已停止自动重试 · ' : ''}
                     {f.lastError || '同步失败'}
                   </div>
@@ -347,7 +347,7 @@ export default function SyncCenter() {
                 label="本地隐私锁"
                 description="开启需设置 4–8 位数字 PIN；之后每次冷启动进入 App 都要先解锁（Web 端不启用）。"
               />
-              <p className="mt-3 px-1 text-xs leading-relaxed text-[var(--ui-social-faint)]">
+              <p className="mt-3 px-1 text-xs leading-relaxed text-[var(--ui-social-muted)]">
                 本地数据库：
                 {encryption.encrypted ? (
                   <span className="text-[var(--m-success)]">已加密（密钥存于 Android Keystore）</span>

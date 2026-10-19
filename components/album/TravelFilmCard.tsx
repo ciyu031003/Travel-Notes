@@ -67,7 +67,7 @@ export default function TravelFilmCard({
         placeholderIcon: 'text-travel-ink/40',
         title: 'text-travel-inkStrong',
         meta: 'font-sans text-xs text-travel-accent',
-        metaDate: 'font-mono text-travel-ink/60',
+        metaDate: 'font-mono text-travel-ink/80',
         sub: 'text-travel-ink/80',
         badge: 'border-travel-dim bg-travel-cream/95 text-travel-accent font-sans',
         nav: 'group-hover:border-travel-accent/40 text-travel-accent',

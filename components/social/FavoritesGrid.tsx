@@ -66,9 +66,9 @@ export default function FavoritesGrid() {
           <SocialThemeToggle />
         </header>
         {loading ? (
-          <div className="py-20 text-center text-[var(--ui-social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
+          <div className="py-20 text-center text-[var(--ui-social-muted)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : posts.length === 0 ? (
-          <p className="py-20 text-center text-sm text-[var(--ui-social-faint)]">还没有收藏任何旅行。</p>
+          <p className="py-20 text-center text-sm text-[var(--ui-social-muted)]">还没有收藏任何旅行。</p>
         ) : (
           <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
             {posts.map((p, i) => <SocialFilmCard key={p.id} {...cardProps(p, FRAMES[i % FRAMES.length])} className="mb-5 break-inside-avoid" />)}

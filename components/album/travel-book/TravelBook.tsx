@@ -283,7 +283,7 @@ export default function TravelBook({
         ) : loadError ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <Icon icon={AlertCircle} size="lg" className="text-red-400/70" />
-            <p className="text-sm text-travel-ink/60 dark:text-shell-muted">{loadError}</p>
+            <p className="text-sm text-travel-ink/80 dark:text-shell-muted">{loadError}</p>
             <button
               type="button"
               onClick={retryLoad}
@@ -295,8 +295,8 @@ export default function TravelBook({
         ) : books && books.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
             <Icon icon={Camera} size="lg" className="text-travel-bloom/40" />
-            <p className="text-sm text-travel-ink/60 dark:text-shell-muted">还没有旅行故事，去记录一次旅行吧。</p>
-            <p className="text-xs text-travel-ink/40 dark:text-shell-faint">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
+            <p className="text-sm text-travel-ink/80 dark:text-shell-muted">还没有旅行故事，去记录一次旅行吧。</p>
+            <p className="text-xs text-travel-ink/80 dark:text-shell-faint">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
           </div>
         ) : (
           <>
@@ -403,12 +403,12 @@ export default function TravelBook({
                         <span className="block truncate font-display text-sm font-semibold text-travel-ink dark:text-shell-text">
                           {book.title}
                         </span>
-                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-travel-ink/55 dark:text-shell-muted">
+                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-travel-ink/80 dark:text-shell-muted">
                           {book.location && <span>{book.location}</span>}
                           {date && <span className="tabular-nums">{date}</span>}
                         </span>
                       </span>
-                      <span className="hidden shrink-0 items-center gap-1.5 text-xs text-travel-ink/50 sm:flex dark:text-shell-muted">
+                      <span className="hidden shrink-0 items-center gap-1.5 text-xs text-travel-ink/80 sm:flex dark:text-shell-muted">
                         <Icon icon={BookOpen} size="sm" />
                         {book.dayCount} 章
                         <Icon icon={Camera} size="sm" className="ml-2" />

@@ -128,7 +128,7 @@ export default function MeSettingsPage() {
         <LargeTitle title="账号设置" subtitle="资料、安全与账号" back="/me" />
 
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-[var(--ui-social-faint)]">
+          <div className="flex items-center justify-center gap-2 py-20 text-[var(--ui-social-muted)]">
             <Icon icon={Loader2} size="md" className="animate-spin" />
             <span className="text-sm">加载中…</span>
           </div>
@@ -145,7 +145,7 @@ export default function MeSettingsPage() {
                 <p className="text-xs text-[var(--ui-social-muted)]">账号名（不可在此修改）</p>
                 <p className="text-sm">@{info?.username}</p>
                 {info?.accountId && (
-                  <p className="text-xs text-[var(--ui-social-faint)]">ID {info.accountId}</p>
+                  <p className="text-xs text-[var(--ui-social-muted)]">ID {info.accountId}</p>
                 )}
               </div>
 
@@ -230,9 +230,9 @@ export default function MeSettingsPage() {
                 </div>
                 <div className="mt-3 border-t border-[var(--ui-social-line)] pt-3">
                   <IcpLicense
-                    className="text-xs text-[var(--ui-social-faint)]"
+                    className="text-xs text-[var(--ui-social-muted)]"
                     numberClassName="text-[var(--ui-social-muted)] hover:text-[var(--ui-social-accent)]"
-                    linkClassName="text-[var(--ui-social-faint)] hover:text-[var(--ui-social-accent)]"
+                    linkClassName="text-[var(--ui-social-muted)] hover:text-[var(--ui-social-accent)]"
                   />
                 </div>
               </div>
@@ -247,7 +247,7 @@ export default function MeSettingsPage() {
               退出登录
             </button>
 
-            <p className="mt-4 text-center text-[11px] text-[var(--ui-social-faint)]">
+            <p className="mt-4 text-center text-[11px] text-[var(--ui-social-muted)]">
               想改头像与档案头图？回<Link href="/me" className="mx-1 underline underline-offset-2">我的</Link>页直接点即可
             </p>
           </>

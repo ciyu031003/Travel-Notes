@@ -303,7 +303,7 @@ export default function SocialFilmCard({
           className="m-img-fade object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-[var(--ui-social-faint)]"><Icon icon={ImageIcon} size="lg" /></div>
+        <div className="absolute inset-0 flex items-center justify-center text-[var(--ui-social-muted)]"><Icon icon={ImageIcon} size="lg" /></div>
       )}
       {overlay}
     </div>
@@ -355,7 +355,7 @@ export default function SocialFilmCard({
         {cityName && <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--ui-social-accent)]"><Icon icon={MapPin} size="sm" />{cityName}</div>}
         {title && <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--ui-social-text)]">{title}</h3>}
         {summary && <p className="line-clamp-2 text-sm leading-relaxed text-[var(--ui-social-muted)]">{summary}</p>}
-        <div className="flex items-center gap-x-2 gap-y-1 text-xs text-[var(--ui-social-faint)]">
+        <div className="flex items-center gap-x-2 gap-y-1 text-xs text-[var(--ui-social-muted)]">
           {travelRelation && <span className="text-[var(--ui-social-accent)]">{travelRelation}</span>}
           {dateRange && <span>{dateRange}</span>}
           {dayCount !== undefined && <span>· {dayCount} 天</span>}

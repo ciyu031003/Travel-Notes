@@ -46,7 +46,26 @@ async function auditAndAssert(
   name: string,
 ) {
   await page.goto(path, { waitUntil: 'networkidle' })
+
+  // 登录页有一道「地图门」开场动画：动画中间态会出现半透明文字（合成对比度被 axe 误判）。
+  // 点击开门后再审计，既贴近真实可交互状态，也避开过渡帧的假阳性。
+  if (path === '/login') {
+    await page.getByText('点击开门').click({ timeout: 3000 }).catch(() => null)
+    await page.waitForTimeout(1400)
+  }
+  // 页面入场动画/骨架退场后再采样（避免过渡帧影响对比度与焦点判定）。
+  await page.waitForTimeout(300)
+
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+
+  // 运行报告用：把本次页面命中的全部规则桶打印出来（含 moderate/minor），
+  // 失败判据仍只取 critical/serious。
+  if (results.violations.length > 0) {
+    console.log(
+      `[a11y:all] ${path} ` +
+        results.violations.map((v) => `${v.id}(${v.impact})x${v.nodes.length}`).join(', '),
+    )
+  }
 
   const blocking = results.violations.filter(
     (v) => v.impact === 'critical' || v.impact === 'serious',
@@ -70,8 +89,16 @@ async function auditAndAssert(
       deferredNodes.map((n) => n.target.join(' ')).slice(0, 8).join(' | '))
   }
   if (nonDeferredBlocking.length > 0) {
+    // 打印逐节点 target（修复时直接据此定位组件/class），最多每规则 8 条。
     const summary = nonDeferredBlocking
-      .map((v) => `${v.id}(${v.impact}): ${v.nodes.length} 处，示例 ${v.nodes[0]?.target.join(' ')}`)
+      .map((v) => {
+        const nodes = v.nodes
+          .slice(0, 8)
+          .map((n) => `${n.target.join(' ')}  ::  ${(n.html || '').replace(/\s+/g, ' ').slice(0, 120)}`)
+          .join('\n    | ')
+        const more = v.nodes.length > 8 ? ` …+${v.nodes.length - 8}` : ''
+        return `${v.id}(${v.impact}) x${v.nodes.length}:\n    ${nodes}${more}`
+      })
       .join('\n')
     console.log(`[a11y] ${path} 违规：\n${summary}`)
   }
@@ -162,16 +189,18 @@ test('a11y · 主流程页面不存在无可读名的按钮/链接', async ({ pa
  * 这里用「命令面板」做代表用例：打开后 Tab 焦点必须始终留在 dialog 内。
  * 只验证键盘可达性，不依赖具体业务数据。 */
 test('a11y · 命令面板打开后焦点不逃出弹层（useModalLayer）', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'networkidle' })
+  // 用 /search 而不是 /：首页首访会弹 Onboarding（同为 role=dialog），
+  // 会让 [role="dialog"].first() 拿到引导层，测试对象不可信。
+  await page.goto('/search', { waitUntil: 'networkidle' })
   await page.keyboard.press('Control+KeyK')
-  const dialog = page.locator('[role="dialog"]').first()
+  const dialog = page.locator('[role="dialog"][aria-label="命令面板"]')
   await expect(dialog).toBeVisible({ timeout: 10_000 })
 
   for (let i = 0; i < 8; i++) {
     await page.keyboard.press('Tab')
     const inside = await page.evaluate(() => {
       const active = document.activeElement as HTMLElement | null
-      const layer = document.querySelector('[role="dialog"]')
+      const layer = document.querySelector('[role="dialog"][aria-label="命令面板"]')
       return Boolean(active && layer && (layer === active || layer.contains(active)))
     })
     expect(inside, 'Tab 焦点逃出了弹层（useModalLayer 焦点圈定失效）').toBe(true)

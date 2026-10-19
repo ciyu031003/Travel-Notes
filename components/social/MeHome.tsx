@@ -400,7 +400,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           {/* ② 我的空间 */}
           <section className="m-enter mt-6">
             <div className="flex items-center gap-3 px-1">
-              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent)]">我的空间</h2>
+              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent-strong)]">我的空间</h2>
               <div className="h-px flex-1 bg-[var(--ui-social-line)]" />
             </div>
             <Link
@@ -424,7 +424,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           {profile.companionStats && profile.companionStats.length > 0 && (
             <section className="m-enter mt-6">
               <div className="flex items-center gap-3 px-1">
-                <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent)]">和 TA 们去过</h2>
+                <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent-strong)]">和 TA 们去过</h2>
                 <div className="h-px flex-1 bg-[var(--ui-social-line)]" />
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
@@ -434,7 +434,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                     className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface)] px-3 py-1.5 text-xs ring-1 ring-[var(--ui-social-line)]"
                   >
                     <span className="max-w-[8rem] truncate">{c.name}</span>
-                    {c.relation && <span className="text-[var(--ui-social-faint)]">· {c.relation}</span>}
+                    {c.relation && <span className="text-[var(--ui-social-muted)]">· {c.relation}</span>}
                     <span className="tabular-nums text-[var(--ui-social-accent)]">×{c.count}</span>
                   </span>
                 ))}
@@ -444,7 +444,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
           {error && <p className="mt-4 px-1 text-sm text-[var(--danger-soft)]">{error}</p>}
 
-          <p className="mt-4 text-center text-[11px] text-[var(--ui-social-faint)]">
+          <p className="mt-4 text-center text-[11px] text-[var(--ui-social-muted)]">
             <Sparkles className="mr-1 inline align-[-2px]" size={11} />
             甜途 · 把走过的路，变成值得记住的故事
           </p>
@@ -551,7 +551,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
         className="max-w-sm bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)] dark:bg-[var(--ui-social-surface)]"
         title="编辑资料"
       >
-        <p className="mb-3 text-xs text-[var(--ui-social-faint)]">账号名 @{profile.username} 只能在后台修改。</p>
+        <p className="mb-3 text-xs text-[var(--ui-social-muted)]">账号名 @{profile.username} 只能在后台修改。</p>
         <label className="mb-1.5 block text-xs text-[var(--ui-social-muted)]">昵称</label>
         <input
           value={nickname}

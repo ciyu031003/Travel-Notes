@@ -96,7 +96,7 @@ export default function TimelinePage() {
               <Icon icon={Sparkles} size="lg" />
             </div>
             <p className="mt-4 text-base font-medium text-travel-inkStrong dark:text-shell-text">时间线还是空的</p>
-            <p className="mt-1 text-sm text-travel-ink/60 dark:text-shell-muted">从第一段旅行开始，慢慢收藏路上的光</p>
+            <p className="mt-1 text-sm text-travel-ink/80 dark:text-shell-muted">从第一段旅行开始，慢慢收藏路上的光</p>
           </div>
           <div className="m-card mx-0 p-6 md:hidden">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
@@ -210,8 +210,8 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
             {isTravel ? <Icon icon={MapPin} size="sm" /> : <Icon icon={Sparkles} size="sm" />}
             {isTravel ? '旅行' : '回忆'}
           </span>
-          <span className="text-xs text-travel-ink/50 dark:text-shell-muted">{formatDate(entry.date)}</span>
-          {!isTravel && entry.travelTitle && <span className="text-xs text-travel-ink/50 dark:text-shell-muted">· {entry.travelTitle}</span>}
+          <span className="text-xs text-travel-ink/80 dark:text-shell-muted">{formatDate(entry.date)}</span>
+          {!isTravel && entry.travelTitle && <span className="text-xs text-travel-ink/80 dark:text-shell-muted">· {entry.travelTitle}</span>}
         </div>
         <h3 className="text-base font-semibold text-travel-inkStrong dark:text-shell-text group-hover:text-travel-accent transition-colors">{entry.title}</h3>
         {entry.description && <p className="text-sm text-travel-ink/80 dark:text-shell-muted mt-1 line-clamp-2">{entry.description}</p>}

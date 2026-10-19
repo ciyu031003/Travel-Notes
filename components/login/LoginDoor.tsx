@@ -130,6 +130,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
           showContent ? '' : 'pointer-events-none opacity-0'
         }`}
         aria-hidden={!showContent}
+        inert={!showContent}
       >
         {children}
       </div>
@@ -176,7 +177,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
             </div>
             {/* 邮戳章 */}
             <div className="absolute bottom-8 right-8 flex h-24 w-24 rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-white/40 dark:border-travel-bloom/70 dark:bg-shell-surface/60">
-              <div className="text-center text-travel-accent dark:text-travel-bloom">
+              <div className="text-center text-travel-accentStrong dark:text-travel-bloom">
                 <Icon icon={MapPin} size="sm" className="mx-auto" />
                 <p className="mt-0.5 text-[10px] tracking-widest">地图门</p>
               </div>
@@ -190,7 +191,7 @@ export default function LoginDoor({ children }: LoginDoorProps) {
             }`}
           >
             <div className="flex h-28 w-28 -rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-travel-parchment shadow-[0_10px_30px_rgba(168,95,58,0.25)] dark:border-travel-bloom/70 dark:bg-shell-surface">
-              <div className="text-center text-travel-accent dark:text-travel-bloom">
+              <div className="text-center text-travel-accentStrong dark:text-travel-bloom">
                 <p className="text-[10px] tracking-[0.3em]">启程</p>
                 <p className="mt-1 font-display text-base font-bold">{sealDate}</p>
               </div>

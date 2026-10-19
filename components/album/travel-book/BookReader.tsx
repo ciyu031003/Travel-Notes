@@ -333,11 +333,11 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
                       }`}
                     >
                       <span className="text-xs font-semibold text-travel-ink dark:text-shell-text">{meta.label}</span>
-                      <span className="text-[11px] leading-snug text-travel-ink/60 dark:text-shell-muted">{meta.description}</span>
+                      <span className="text-[11px] leading-snug text-travel-ink/80 dark:text-shell-muted">{meta.description}</span>
                     </button>
                   )
                 })}
-                <p className="px-3 pb-1 pt-2 text-[11px] leading-snug text-travel-ink/45 dark:text-shell-faint">
+                <p className="px-3 pb-1 pt-2 text-[11px] leading-snug text-travel-ink/80 dark:text-shell-faint">
                   主题只改变版式外观，不影响画册页数与顺序。
                 </p>
               </div>
@@ -404,7 +404,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
           <span
             aria-live="polite"
             aria-label={`第 ${spreadIndex + 1} 页，共 ${total} 页`}
-            className="shrink-0 font-display text-xs tabular-nums text-travel-ink/60 dark:text-shell-muted"
+            className="shrink-0 font-display text-xs tabular-nums text-travel-ink/80 dark:text-shell-muted"
           >
             {currentLabel}
           </span>

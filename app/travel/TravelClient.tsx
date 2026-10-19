@@ -247,7 +247,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                 全部旅行记录
               </h2>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-travel-ink/50">
+                <span className="text-sm text-travel-ink/80">
                   共 {posts.length} 篇
                 </span>
                 <ManageEntry
@@ -300,7 +300,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                     <h3 className="font-semibold text-travel-ink mb-2 group-hover:text-travel-ink line-clamp-1">
                       {post.title}
                     </h3>
-                    <div className="flex items-center gap-3 text-xs text-travel-ink/50 mb-2">
+                    <div className="flex items-center gap-3 text-xs text-travel-ink/80 mb-2">
                       <span className="flex items-center gap-1">
                         <Icon icon={Calendar} size="sm" />
                         {formatDate(post.date)}

@@ -41,7 +41,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-8 pt-6 border-t border-travel-line/60 dark:border-shell-line text-center text-sm text-travel-ink/60 dark:text-shell-muted">
+        <div className="mt-8 pt-6 border-t border-travel-line/60 dark:border-shell-line text-center text-sm text-travel-ink/80 dark:text-shell-muted">
           <p className="flex items-center justify-center gap-1">
             Made with <Icon icon={Heart} size="sm" className="text-travel-accent fill-travel-accent" /> by 甜途
           </p>

@@ -317,7 +317,7 @@ export default function TravelCircleFeed() {
 
         {loading ? (
           <>
-            <div className="hidden flex-col items-center gap-3 py-28 text-[var(--ui-social-faint)] md:flex"><Icon icon={Loader2} size="lg" tone="accent" className="animate-spin" /><span className="text-sm">正在翻阅旅行相册…</span></div>
+            <div className="hidden flex-col items-center gap-3 py-28 text-[var(--ui-social-muted)] md:flex"><Icon icon={Loader2} size="lg" tone="accent" className="animate-spin" /><span className="text-sm">正在翻阅旅行相册…</span></div>
             <div className="space-y-4 md:hidden">
               <Skeleton className="h-72 w-full" style={{ borderRadius: 26 }} />
               <SkeletonCard />
@@ -390,7 +390,7 @@ export default function TravelCircleFeed() {
                 {tab === 'following' ? '关注的旅途' : '最新旅途'}
               </span>
               <span className="h-px flex-1 bg-[var(--ui-social-line)]" />
-              {total > 0 && <span className="text-xs tabular-nums text-[var(--ui-social-faint)]">共 {total} 篇</span>}
+              {total > 0 && <span className="text-xs tabular-nums text-[var(--ui-social-muted)]">共 {total} 篇</span>}
             </div>
 
             {/* 移动端：保留紧凑 hero 大图叙事（桌面端走瀑布流，避免全宽巨卡） */}
@@ -406,7 +406,7 @@ export default function TravelCircleFeed() {
             </Stagger>
             <div ref={sentinelRef} className="mt-6 flex justify-center">
               {loadingMore ? (
-                <span className="flex items-center gap-1.5 text-xs text-[var(--ui-social-faint)]">
+                <span className="flex items-center gap-1.5 text-xs text-[var(--ui-social-muted)]">
                   <Icon icon={Loader2} size="sm" className="animate-spin" />
                   正在加载更多…
                 </span>
@@ -417,7 +417,7 @@ export default function TravelCircleFeed() {
                 </button>
               ) : (
                 posts.length > 0 && (
-                  <span className="text-xs text-[var(--ui-social-faint)]">看到这里就是全部了 · 共 {posts.length} 篇</span>
+                  <span className="text-xs text-[var(--ui-social-muted)]">看到这里就是全部了 · 共 {posts.length} 篇</span>
                 )
               )}
             </div>

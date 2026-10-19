@@ -312,6 +312,7 @@ export default function VideoPlayer({
 
               <button
                 onClick={toggleFullscreen}
+                aria-label="全屏"
                 className="text-white hover:text-white/80 transition-colors"
               >
                 <Icon icon={Maximize} size="md" />

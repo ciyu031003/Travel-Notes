@@ -145,7 +145,7 @@ export default function DownloadPage() {
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-travel-bloom/40 bg-white/70 px-4 py-1.5 text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface dark:text-travel-bloom">
             <Icon icon={Package} size="sm" />
             版本 v{version}
-            <span className="text-travel-ink/40 dark:text-shell-muted">build {buildNumber}</span>
+            <span className="text-travel-ink/80 dark:text-shell-muted">build {buildNumber}</span>
           </div>
         </section>
 
@@ -184,7 +184,7 @@ export default function DownloadPage() {
               <p className="mt-4 rounded-2xl border border-travel-sky/40 bg-travel-mist/40 px-4 py-3 text-center text-xs leading-relaxed text-travel-ink/80 dark:border-shell-line dark:bg-shell-surface/60 dark:text-shell-muted">
                 <Icon icon={Info} size="sm" className="mr-1 inline align-[-2px]" />
                 iOS 暂不支持安装 APK，可直接使用网页版
-                <Link href="/" className="mx-1 font-medium text-travel-accent underline-offset-2 hover:underline dark:text-travel-bloom">
+                <Link href="/" className="mx-1 font-medium text-travel-accentStrong underline-offset-2 hover:underline dark:text-travel-bloom">
                   甜途网页版
                 </Link>
                 ，或后续关注 iOS 版本。
@@ -198,7 +198,7 @@ export default function DownloadPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={qrDataUrl} alt="甜途 App 下载二维码" width={220} height={220} loading="lazy" decoding="async" className="h-44 w-44 md:h-52 md:w-52" />
                 ) : (
-                  <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/40 md:h-52 md:w-52">
+                  <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/80 md:h-52 md:w-52">
                     二维码生成中…
                   </div>
                 )}
@@ -264,7 +264,7 @@ export default function DownloadPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={qrDataUrl} alt="扫码下载甜途 App" width={184} height={184} loading="lazy" decoding="async" className="h-44 w-44" />
                   ) : (
-                    <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/40">
+                    <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/80">
                       二维码生成中…
                     </div>
                   )}
@@ -273,7 +273,7 @@ export default function DownloadPage() {
                   <p className="text-sm font-medium text-travel-inkStrong dark:text-shell-text">
                     手机扫码下载
                   </p>
-                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/60 dark:text-shell-muted">
+                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/80 dark:text-shell-muted">
                     用手机浏览器扫码，直达最新安装包。
                   </p>
                 </div>
@@ -294,7 +294,7 @@ export default function DownloadPage() {
                 <Icon icon={Download} size="md" />
                 立即下载 APK
               </button>
-              <p className="mt-2 text-center text-xs text-travel-ink/40 dark:text-shell-faint">
+              <p className="mt-2 text-center text-xs text-travel-ink/80 dark:text-shell-faint">
                 {sizeText} · 下载后请允许安装未知来源应用
               </p>
             </div>
@@ -322,7 +322,7 @@ export default function DownloadPage() {
               </li>
             ))}
           </ol>
-          <p className="mt-4 text-center text-xs text-travel-ink/40 dark:text-shell-faint">
+          <p className="mt-4 text-center text-xs text-travel-ink/80 dark:text-shell-faint">
             官网直连下载 · 支持断点续传 · 数据自动加密同步
           </p>
         </section>
@@ -330,7 +330,7 @@ export default function DownloadPage() {
         {/* 备案号：下载页同样展示 App 备案编号，编号可点击跳转工信部备案系统查询 */}
         <section className="mt-8 text-center">
           <IcpLicense
-            className="text-xs text-travel-ink/50 dark:text-shell-faint"
+            className="text-xs text-travel-ink/80 dark:text-shell-faint"
             numberClassName="hover:text-travel-accent dark:hover:text-travel-bloom"
             linkClassName="hover:text-travel-accent dark:hover:text-travel-bloom"
           />

@@ -168,6 +168,7 @@ export default function CommandPalette() {
       tabIndex={-1}
       role="dialog"
       aria-modal="true"
+      aria-label="命令面板"
     >
       <div
         className="w-full max-w-xl bg-white dark:bg-shell-surface rounded-2xl shadow-2xl border border-travel-line dark:border-shell-line overflow-hidden"
@@ -193,6 +194,7 @@ export default function CommandPalette() {
             <button
               type="button"
               onClick={close}
+              aria-label="关闭命令面板"
               className="p-1 rounded-md text-travel-sand/70 hover:text-travel-ink dark:hover:text-shell-text hover:bg-travel-sakura/40 dark:hover:bg-white/10"
             >
               <Icon icon={X} size="sm" />

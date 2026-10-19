@@ -84,7 +84,13 @@ export function LargeTitle({
     <>
       {/* 哨兵：与标题同位置滚出视口顶部 → 折叠 */}
       <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />
-      <div className={cn('m-collapser', collapsed && 'is-collapsed')} aria-hidden={!collapsed}>
+      {/* 折叠栏未展开时 aria-hidden：必须同时 inert，否则里面的返回按钮仍可被 Tab/读屏访问
+          （axe aria-hidden-focus serious）。视觉不变，只影响可聚焦性。 */}
+      <div
+        className={cn('m-collapser', collapsed && 'is-collapsed')}
+        aria-hidden={!collapsed}
+        inert={!collapsed}
+      >
         {backKey()}
         <span className="m-collapser-title truncate">{title}</span>
         <span aria-hidden="true" />

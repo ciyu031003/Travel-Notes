@@ -113,7 +113,7 @@ export default function ProfileHero({
             style={{ objectPosition }}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[linear-gradient(160deg,var(--ui-social-surface2),var(--ui-social-surface))] text-[var(--ui-social-faint)]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[linear-gradient(160deg,var(--ui-social-surface2),var(--ui-social-surface))] text-[var(--ui-social-muted)]">
             <Icon icon={Images} size="lg" />
             <p className="px-8 text-center text-xs">上传一张风景照，作为你的旅行档案封面</p>
           </div>
@@ -202,7 +202,7 @@ export default function ProfileHero({
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--ui-social-muted)]">
               <span>@{data.username}</span>
               {data.accountId && (
-                <span className="rounded-full bg-[var(--ui-social-accent-soft)] px-2 py-0.5 text-[var(--ui-social-accent)]">
+                <span className="rounded-full bg-[var(--ui-social-accent-soft)] px-2 py-0.5 text-[var(--ui-social-accent-strong)]">
                   ID {data.accountId}
                 </span>
               )}
@@ -228,7 +228,7 @@ export default function ProfileHero({
           ))}
         </div>
         {data.provinceCount > 0 && (
-          <p className="mt-2 text-center text-[11px] text-[var(--ui-social-faint)]">
+          <p className="mt-2 text-center text-[11px] text-[var(--ui-social-muted)]">
             足迹点亮 {data.provinceCount} 个省份
           </p>
         )}
@@ -325,9 +325,9 @@ function FocusGrid({
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-[13px] font-medium">画面重点在哪？</p>
-          <p className="mt-0.5 text-[11px] text-[var(--ui-social-faint)]">点一格，头图会跟着调整裁切位置</p>
+          <p className="mt-0.5 text-[11px] text-[var(--ui-social-muted)]">点一格，头图会跟着调整裁切位置</p>
         </div>
-        {saving && <Icon icon={Loader2} size="sm" className="animate-spin text-[var(--ui-social-faint)]" />}
+        {saving && <Icon icon={Loader2} size="sm" className="animate-spin text-[var(--ui-social-muted)]" />}
       </div>
 
       <div className="relative mt-2 overflow-hidden rounded-xl">
@@ -370,7 +370,7 @@ function FocusGrid({
       <button
         type="button"
         onClick={onReset}
-        className="mt-2 text-[11px] text-[var(--ui-social-faint)] underline-offset-2 hover:underline"
+        className="mt-2 text-[11px] text-[var(--ui-social-muted)] underline-offset-2 hover:underline"
       >
         恢复居中
       </button>

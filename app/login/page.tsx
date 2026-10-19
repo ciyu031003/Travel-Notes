@@ -246,7 +246,7 @@ function LoginPageContent() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-travel-sand/50 transition-colors hover:text-travel-accent"
+                      className="absolute right-4 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-travel-sand/50 transition-colors hover:text-travel-accent"
                       aria-label={showPassword ? '隐藏密码' : '显示密码'}
                     >
                       {showPassword ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
@@ -338,13 +338,15 @@ function LoginPageContent() {
               </button>
 
               <div className="mt-5 border-t border-travel-line/60 pt-4 dark:border-shell-line">
-                <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+                {/* 可横向滚动的区域必须可聚焦（WCAG 2.1.1 / axe scrollable-region-focusable）：
+                    Safari 键盘用户无法在没有 tabindex 的滚动容器里滚动。tabIndex 不影响视觉。 */}
+                <div tabIndex={0} className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                   {cityThumbnails.map((city, i) => (
                     <div
                       key={i}
                       className="flex h-12 w-12 flex-shrink-0 rotate-[-4deg] items-center justify-center rounded-full border-2 border-dashed border-travel-bloom/80 bg-travel-parchment dark:border-travel-bloom/50 dark:bg-shell-surface sm:h-14 sm:w-14"
                     >
-                      <span className="text-center text-[10px] font-medium leading-tight text-travel-accent dark:text-travel-bloom">
+                      <span className="text-center text-[10px] font-medium leading-tight text-travel-accentStrong dark:text-travel-bloom">
                         {city}
                       </span>
                     </div>
@@ -397,7 +399,7 @@ function LoginPageContent() {
                 <h3 className="text-xl font-bold text-travel-inkStrong dark:text-shell-text">
                   相册已上锁
                 </h3>
-                <p className="mt-2 text-sm text-travel-sand/70 dark:text-travel-sandSoft/80">
+                <p className="mt-2 text-sm text-travel-sand dark:text-travel-sandSoft">
                   请输入相册解锁密码
                 </p>
               </div>
@@ -415,7 +417,7 @@ function LoginPageContent() {
                     autoFocus
                   />
                 </div>
-                <p className="text-center text-xs text-travel-sand/40 dark:text-travel-sandSoft/50">
+                <p className="text-center text-xs text-travel-sand dark:text-travel-sandSoft">
                   支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
                 </p>
 

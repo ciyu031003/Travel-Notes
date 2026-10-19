@@ -182,6 +182,7 @@ function SearchContent() {
             <button
               type="button"
               onClick={handleClear}
+              aria-label="清空搜索"
               className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-travel-sand/70 hover:text-travel-ink dark:hover:text-shell-text hover:bg-travel-sakura/40 dark:hover:bg-white/10"
             >
               <Icon icon={X} size="sm" />
@@ -248,7 +249,7 @@ function SearchContent() {
                       <Icon icon={MapPin} size="sm" />
                       旅行记录
                     </span>
-                    <span className="text-xs text-travel-sand/70 dark:text-shell-faint">
+                    <span className="text-xs text-travel-sand dark:text-shell-faint">
                       {formatDate(post.date)}
                     </span>
                   </div>

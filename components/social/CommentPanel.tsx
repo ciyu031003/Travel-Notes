@@ -550,6 +550,7 @@ export default function CommentPanel({
               placeholder={replyTo ? '回复 ' + replyTo.username + '…' : '写下你的评论…'}
               className="h-11 min-w-0 flex-1 rounded-full bg-[var(--ui-social-bg)] px-4 text-[16px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] placeholder:text-[var(--ui-social-faint)] focus-visible:ring-[var(--ui-social-accent)]" />
             <button type="button" onClick={submit} disabled={submitting || !content.trim()}
+              aria-label="发送评论"
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-accent)] text-[var(--ui-social-on-accent)] transition active:scale-90 disabled:opacity-40">
               <Icon icon={Send} size="sm" tone="inverse" />
             </button>
