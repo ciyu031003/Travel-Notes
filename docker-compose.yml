@@ -64,8 +64,8 @@ services:
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
       # OTA 版本（/api/version 供 App 检查更新；默认值由 scripts/bump-version.cjs 同步，
       # verify-version.cjs 会校验它和 package.json 一致，避免漏配 .env 时下发 1.0.0 触发误强更）
-      APP_VERSION: ${APP_VERSION:-1.24.8}
-      APP_BUILD_NUMBER: ${APP_BUILD_NUMBER:-54}
+      APP_VERSION: ${APP_VERSION:-1.24.9}
+      APP_BUILD_NUMBER: ${APP_BUILD_NUMBER:-55}
       APP_DOWNLOAD_URL: ${APP_DOWNLOAD_URL:-https://travel-notes.yuanabd.cn/downloads/tiantu.apk}
       # 更新弹窗文案（app/api/version/route.ts 支持 APP_CHANGELOG 覆盖）。
       # 此前 compose 没转发这个变量 → 每次改文案都被迫改代码、重新构建镜像。

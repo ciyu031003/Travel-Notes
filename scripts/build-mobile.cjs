@@ -64,9 +64,12 @@ try {
       ...process.env,
       MOBILE_EXPORT: '1',
       NEXT_PUBLIC_API_BASE: apiBase,
+      // 静态壳也需要站点 URL：next.config 的 images.remotePatterns 白名单从这里解析
+      // （缺省会回退 https:** 并告警；壳内图片实际来自 API/COS 域名）
+      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || apiBase,
       NEXT_PUBLIC_APP_PLATFORM: 'mobile',
-      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.24.8',
-      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '54',
+      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.24.9',
+      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '55',
       NEXT_PUBLIC_APP_DOWNLOAD_URL: process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL || process.env.APP_DOWNLOAD_URL || 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk',
       SKIP_DB_ON_BUILD: '1',
     },
@@ -89,6 +92,48 @@ if (fs.existsSync(outDir)) {
   if (fs.existsSync(bundledMediaDir)) {
     fs.rmSync(bundledMediaDir, { recursive: true, force: true })
     console.log('[build-mobile] 已移除打包冗余：www/uploads/media（照片改为运行期从服务端加载）')
+  }
+
+  /**
+   * P2-26 后半（2026-10-19）：移动壳瘦身。
+   *
+   * 1) uploads 全目录剔除：媒体由服务端 /uploads 与 COS/CDN 在运行期提供，
+   *    壳内副本既无用又是用户照片泄露面。此前只删 uploads/media，covers/memories/travels
+   *    仍会随包分发（本地开发目录里还有数百个衍生文件）。
+   * 2) 动态路由占位页剔除：generateStaticParams 产出的 travel/placeholder、
+   *    space/placeholder、circle/0、circle/user/0 只用于构建期占位，移动端一律走
+   *    query-param 路由（/travel/detail?slug= 等），这些页面不会被正确渲染，删掉减小包体。
+   */
+  const prunePaths = [
+    'uploads',
+    'circle/0.html',
+    'circle/0.txt',
+    'circle/user/0.html',
+    'circle/user/0.txt',
+    'space/placeholder.html',
+    'space/placeholder.txt',
+    'travel/placeholder.html',
+    'travel/placeholder.txt',
+    'travel/placeholder/record.html',
+    'travel/placeholder/record.txt',
+  ]
+  let pruned = 0
+  for (const rel of prunePaths) {
+    const target = path.join(wwwDir, rel)
+    if (!fs.existsSync(target)) continue
+    fs.rmSync(target, { recursive: true, force: true })
+    pruned += 1
+  }
+  for (const rel of ['travel/placeholder', 'space/placeholder', 'circle/user/0']) {
+    const dir = path.join(wwwDir, rel)
+    try {
+      if (fs.existsSync(dir) && fs.readdirSync(dir).length === 0) fs.rmdirSync(dir)
+    } catch {
+      /* 目录非空则保留 */
+    }
+  }
+  if (pruned > 0) {
+    console.log('[build-mobile] 已剔除 ' + pruned + ' 项冗余产物（uploads 全目录 / 动态路由占位页）')
   }
 
   // 运行时品牌标志用 logo-512.png（258KB）；2048×2048 的 logo.png 仅作为

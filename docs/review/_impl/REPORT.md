@@ -204,3 +204,51 @@
 - 根路由 `/` 在共享树 build 中为 Dynamic：这是 P1-18 首页 SSR（cookies()）的预期结果，不是本批回归。
 - `components/album/**` 在 token checker 第 12 条规则中豁免（Album 2.0 自有受控暗色主题）。
 - 剩余未迁移：legacy 消费端 400 处 `--album-*/--social-*/--space-*`（已冻结基线只拦新增）、Tailwind travel/album/warm/primary 仍 hex（需 RGB 通道方案）、移动端旧 `www/` 与 Android assets 内的旧字体副本（下次移动端构建清除）。
+
+
+---
+
+# 附三：移动端真机 bug 修复 + C1 安全加固 + 1.24.9 / b55 重打包（2026-10-19）
+
+## 1. 真机严重 bug：半屏抽屉所有入口都回首页
+
+**现象**（1.24.8 真机）：我的页右上角「记录与设置」半屏抽屉里，我的旅行/画册/时间线/碎碎念/数据看板/收藏/旅行圈/通知/同步/账号设置等全部"可点但都跳到首页"。
+
+**根因（两层，均已实测复现）**：
+1. **Capacitor Html5Mode**：`android/.../WebViewLocalServer.java:425` 对「最后一段不含点」的路径一律回退 `index.html`。抽屉入口用的是原生 `<a>` 整页跳转，点击 `/dashboard` 时 WebView 直接加载首页 —— 这是"都回首页"的直接原因。
+2. **弹层历史回退竞态**：抽屉打开时 `useCloseOnBack` 压入一条同 URL 历史；点击入口后抽屉关闭（cleanup 执行 `history.back()`），而 Next 路由是异步的，未完成的导航被 back 顶回原页 —— 即使改成客户端路由也会"点了没反应"。
+
+**修复**：
+- `components/mobile/SideDrawer.tsx`：抽屉链接改为拦截普通左键 → 先 `markOverlayNavigation()` → `router.replace(href)`（用 replace 消费抽屉压入的重复历史项，返回键仍回到当前页）；修饰键保留浏览器原生行为。
+- `hooks/use-close-on-back.ts`：新增导航标记导出；cleanup 时若 10s 内发生过显式导航、或路由已变，则**不再 history.back()**（避免把新路由顶掉）。
+- `app/page.tsx`：为 `output:'export'` 增加 MOBILE_EXPORT 静态分支（壳内无服务端运行时；Web 仍走 cookies() 动态 SSR），否则移动端构建会因 `force-dynamic` 直接失败。
+
+**验证（模拟 Capacitor html5mode 的静态服务器 + Playwright，390×844）**：
+`tab->/me ok` → `drawer->/dashboard ok` → `drawer->/timeline ok` → `back->/me ok`（修复前 drawer 点击后 URL 停留在 /me）。该 harness 未入库，仅作本次验证。
+
+## 2. C1 移动端安全加固
+
+| 项 | 落点 |
+|---|---|
+| 禁止明文 | `usesCleartextTraffic=false` + `network_security_config.xml`（base 禁明文、仅 system 根证书）+ `allowMixedContent=false` |
+| 禁止备份外流 | `allowBackup=false` + `fullBackupContent=false` + `data_extraction_rules.xml`（cloud-backup/device-transfer 全排除） |
+| SQLite 加密 | `SecureStorePlugin.java` 用 AndroidKeyStore AES/GCM 保管 32B 随机口令（落盘仅密文+IV）；`sqlite-db.ts` 加密连接 + 明文库迁移（exportToJson → 备份落盘 → 删库 → importFromJson → 逐表行数校验；失败回滚明文、回滚失败保留备份）|
+| 真实隐私锁 | `privacy-lock.ts` 重写（4–8 位 PIN + 随机盐 + SHA-256 + 会话语义）；`PrivacyLockGate.tsx` 冷启动全屏门禁；SyncCenter 开关要求设置/验证 PIN；“开关=开但无 PIN”的假状态自动修复 |
+
+**验证**：tsc 0；vitest 82 文件/740 用例全绿（+11）；`gradlew assembleRelease` BUILD SUCCESSFUL；合并后 APK manifest 四项属性核验通过；R8 后 SecureStorePlugin 未被裁剪（mapping.txt）。
+
+## 3. 移动壳瘦身与重打包（1.24.9 / build 55）
+
+- `scripts/build-mobile.cjs`：删除 `www/uploads` 全目录（此前只删 media）与动态路由占位页（travel/placeholder、space/placeholder、circle/0、circle/user/0）；补 `NEXT_PUBLIC_SITE_URL` 让 images 白名单不退化。
+- `www` 体积：20.5MB → **13.6MB**；APK：16,787,826 B → **14,635,024 B（-2.15MB / -12.8%）**，SHA-256 `9019a6a4ac0235cf448bb7ae46941176702d3ce7e5f5646ee1d5d130ad7fc529`。
+- 版本：1.24.8/54 → **1.24.9/55**（包名 com.tiantu.app，label 甜途；签名证书 MD5 `f67e57f3…` 与历史一致）。
+- APK 内容核验：`assets/public/zpix.woff2` 存在、`zpix.ttf` 不存在、无 `uploads/`、无动态占位页、无旧资源引用；`capacitor.config.json` 中 `allowMixedContent=false`、`androidIsEncryption=true`。
+- Web 构建 `next build` 复验 exit 0（首页仍为动态 SSR）。
+
+## 4. 仍需真机/发布确认
+
+1. **明文库→加密库迁移**必须真机验证：覆盖安装（已有明文库）→ 杀进程 → 重启，确认数据完整、`数据与同步` 页显示"已加密"；异常时按报告回滚路径处理。
+2. `allowBackup=false` 会阻止本地离线缓存随系统备份/换机迁移（云端数据不受影响）——产品需确认。
+3. PIN 暂无失败次数节流（数据库由 Keystore 密钥保护，PIN 只是 UI 门禁），建议下批加退避。
+4. APK 尚未发布到下载地址；发布时同步更新服务端 `APP_VERSION=1.24.9` / `APP_BUILD_NUMBER=55` / `APP_CHANGELOG` 与 `downloads/tiantu.apk`。
+5. 服务器/CI 首次运行仍需按前文验证（migrate/backup/E2E）。

@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '画册翻页更顺：一屏一个对开，并修掉翻页时书页下方的重影；旅行圈补齐评论点赞与列表收藏，点开别人的旅行版面重做；首页足迹地图显示每个省份的旅行张数。',
+    changelog: process.env.APP_CHANGELOG || '修复半屏抽屉入口全部回首页；移动端安全加固（禁明文/禁备份/SQLite 加密/隐私锁）；字体与包体瘦身',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
