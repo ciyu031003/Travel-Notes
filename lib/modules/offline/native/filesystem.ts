@@ -46,6 +46,33 @@ export async function deleteLocalFile(path: string, dir: FsDir = 'Data'): Promis
   await Filesystem.deleteFile({ path, directory: Directory[dir] }).catch(() => {})
 }
 
+/**
+ * 写文本文件（UTF-8）。
+ *
+ * 与 writeLocalFile 的区别：writeLocalFile 的字符串按 **base64** 语义处理（二进制约定），
+ * 而迁移备份是 JSON 文本，必须显式 encoding UTF8，否则写进去的是一堆乱码字节。
+ */
+export async function writeTextFile(path: string, text: string, dir: FsDir = 'Data'): Promise<void> {
+  if (!isNativePlatform()) {
+    webStore.set('text:' + dir + '/' + path, text)
+    return
+  }
+  const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem')
+  await Filesystem.writeFile({ path, data: text, directory: Directory[dir], encoding: Encoding.UTF8, recursive: true })
+}
+
+/** 读文本文件（UTF-8）；不存在/异常返回 null */
+export async function readTextFile(path: string, dir: FsDir = 'Data'): Promise<string | null> {
+  if (!isNativePlatform()) return webStore.get('text:' + dir + '/' + path) ?? null
+  const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem')
+  try {
+    const res = await Filesystem.readFile({ path, directory: Directory[dir], encoding: Encoding.UTF8 })
+    return typeof res.data === 'string' ? res.data : null
+  } catch {
+    return null
+  }
+}
+
 /** 列出目录下的文件名（不存在/插件异常返回空数组，供清理逻辑使用） */
 export async function listLocalFiles(path: string, dir: FsDir = 'Data'): Promise<string[]> {
   if (!isNativePlatform()) {

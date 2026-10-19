@@ -7,9 +7,17 @@
 import type { SQLiteDBConnection } from '@capacitor-community/sqlite'
 import { isNativePlatform } from '../platform'
 import { CREATE_TABLES_SQL, CREATE_INDEXES_SQL } from '../schema'
+import { getOrCreateDbSecret } from './secure-store'
+import { writeTextFile, deleteLocalFile } from './filesystem'
 
 const DB_NAME = 'tiantu_offline'
 const DB_VERSION = 1
+
+/** SQLCipher 加密连接的模式（插件约定：encrypted=true 时必须 mode='secret'） */
+const ENCRYPTED_MODE = 'secret'
+
+/** 存量明文库迁移时的备份文件名（Directory.Data 下；迁移成功即删除） */
+export const DB_MIGRATION_BACKUP = 'db-upgrade-backup.json'
 
 /** 幂等列升级（schema v2 → v3 等增量列；旧库已存在表时 CREATE IF NOT EXISTS 不会加列） */
 const COLUMN_UPGRADES_SQL: string[] = [
@@ -154,6 +162,178 @@ let sqliteConn: { closeConnection: (database: string, readonly: boolean) => Prom
 let initing: Promise<SQLiteDBConnection> | null = null
 
 /**
+ * 加密状态（C1）：供「数据与同步」页面显示"本地库是否已加密 / 为什么没加密"。
+ * 与 lastInitError 分开：加密降级不等于初始化失败（离线功能照常可用），
+ * 但用户/排查者需要知道"这台设备上的本地数据是不是明文"。
+ */
+let encryptionState: { encrypted: boolean; notice: string | null } = { encrypted: false, notice: '尚未初始化' }
+
+export function getOfflineEncryptionState(): { encrypted: boolean; notice: string | null } {
+  return { ...encryptionState }
+}
+
+/** SQLiteConnection 里我们用到的子集（避免把插件类型泄漏到公共签名） */
+interface SqliteConnManager {
+  isConnection(database: string, readonly: boolean): Promise<{ result?: boolean }>
+  retrieveConnection(database: string, readonly: boolean): Promise<SQLiteDBConnection>
+  createConnection(database: string, encrypted: boolean, mode: string, version: number, readonly: boolean): Promise<SQLiteDBConnection>
+  closeConnection(database: string, readonly: boolean): Promise<void>
+  isDatabase(database: string): Promise<{ result?: boolean }>
+  isDatabaseEncrypted(database: string): Promise<{ result?: boolean }>
+  isSecretStored(): Promise<{ result?: boolean }>
+  setEncryptionSecret(passphrase: string): Promise<void>
+  checkEncryptionSecret(passphrase: string): Promise<{ result?: boolean }>
+  importFromJson(jsonstring: string): Promise<unknown>
+}
+
+interface SqlitePluginLike {
+  deleteDatabase(options: { database: string; readonly: boolean }): Promise<void>
+}
+
+/** 打开（或复用）连接；encrypted 决定建连接时的加密模式 */
+async function openConnection(sqlite: SqliteConnManager, encrypted: boolean): Promise<SQLiteDBConnection> {
+  await sqlite.closeConnection(DB_NAME, false).catch(() => {})
+  const reuse = await sqlite.isConnection(DB_NAME, false).then((r) => !!r?.result).catch(() => false)
+  const conn = reuse
+    ? await sqlite.retrieveConnection(DB_NAME, false)
+    : await sqlite.createConnection(DB_NAME, encrypted, encrypted ? ENCRYPTED_MODE : 'no-encryption', DB_VERSION, false)
+  // 已打开的连接再 open 是幂等的（Android 侧 Database.open 会先判断 isOpen）；
+  // 仅对"已打开"这类错误容忍，其他错误照旧抛出
+  await conn.open().catch((e: unknown) => {
+    const msg = e instanceof Error ? e.message : String(e)
+    if (!/already open/i.test(msg)) throw e
+  })
+  return conn
+}
+
+/**
+ * 确保插件已持有加密口令。
+ *
+ * SQLCipher 的流程要求：打开加密库**之前**先 setEncryptionSecret。
+ * 口令来自 AndroidKeyStore（稳定持久），因此正常情况下只需设置一次；
+ * 已存过则校验一次 —— 不一致说明 Keystore 被系统重置，此时不能硬改口令
+ * （changeEncryptionSecret 需要旧口令），只能报错让上层降级并暴露原因。
+ */
+async function ensureEncryptionSecret(sqlite: SqliteConnManager, secret: string): Promise<void> {
+  const stored = await sqlite.isSecretStored().then((r) => !!r?.result).catch(() => false)
+  if (!stored) {
+    await sqlite.setEncryptionSecret(secret)
+    return
+  }
+  const check = await sqlite.checkEncryptionSecret(secret).catch(() => null)
+  if (check && check.result === false) {
+    throw new Error('SQLite 加密口令与设备已存口令不一致（可能是 Keystore 被重置），已跳过加密')
+  }
+}
+
+/** 把导出的 JSON 备份改成目标库形态（库名固定；encrypted 决定导入后是加密库还是明文库） */
+function withJsonFlags(jsonString: string, encrypted: boolean): string {
+  const parsed = JSON.parse(jsonString) as Record<string, unknown>
+  parsed.database = DB_NAME
+  parsed.encrypted = encrypted
+  return JSON.stringify(parsed)
+}
+
+/**
+ * 迁移后校验：逐表比对"备份里的行数"与"新库实际行数"。
+ * 只要求"实际 ≥ 期望"：导入过程不会凭空多出行，但如果少行就说明数据丢了，必须回滚。
+ */
+async function verifyMigration(conn: SQLiteDBConnection, jsonString: string): Promise<void> {
+  const parsed = JSON.parse(jsonString) as { tables?: Array<{ name?: string; values?: unknown[] }> }
+  const tables = Array.isArray(parsed.tables) ? parsed.tables : []
+  for (const table of tables) {
+    const name = table?.name
+    if (!name || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) continue
+    if (name.startsWith('sqlite_')) continue
+    const expected = Array.isArray(table.values) ? table.values.length : 0
+    const rows = toRows(await conn.query('SELECT COUNT(*) AS c FROM ' + name))
+    const actual = Number(rowGet(rows[0], 'c', 0)) || 0
+    if (actual < expected) {
+      throw new Error('迁移校验失败：' + name + ' 期望 ' + expected + ' 行，实际 ' + actual + ' 行')
+    }
+  }
+}
+
+/**
+ * 存量明文库 → 加密库（C1，必须不丢数据）。
+ *
+ * 步骤：
+ *  ① 明文库 exportToJson('full')（全量 schema + 数据）；
+ *  ② 把 JSON 备份写入 Directory.Data/db-upgrade-backup.json（崩溃也能恢复）；
+ *  ③ close → deleteDatabase（删明文库）→ importFromJson（按 encrypted=true 建加密库）→ 行数校验；
+ *  ④ 成功删备份；任一步失败：
+ *     - 删掉半成品加密库；
+ *     - 用同一份备份按 encrypted=false 重建明文库并校验；
+ *     - 校验通过则删备份、抛错（上层降级为明文模式，App 照常可用）；
+ *     - 回滚也失败 → **保留备份文件**并抛错（绝不删备份，留给人工/下次启动恢复）。
+ *
+ * @returns true 表示本次完成了一次真实迁移
+ */
+async function migratePlaintextToEncrypted(
+  sqlite: SqliteConnManager,
+  plugin: SqlitePluginLike,
+  secret: string,
+): Promise<boolean> {
+  void secret // 口令已由 ensureEncryptionSecret 装进插件；这里保留参数以便日志/未来校验使用
+  const exists = await sqlite.isDatabase(DB_NAME).then((r) => !!r?.result).catch(() => false)
+  if (!exists) return false // 全新安装：直接按加密库创建
+  const alreadyEncrypted = await sqlite.isDatabaseEncrypted(DB_NAME).then((r) => !!r?.result).catch(() => false)
+  if (alreadyEncrypted) return false // 已是加密库：正常打开
+
+  // ① 明文导出（严格单连接：先确保没有残留连接）
+  let backup: string
+  const plain = await openConnection(sqlite, false)
+  try {
+    const exported = await plain.exportToJson('full')
+    const payload = (exported as { export?: Record<string, unknown> } | null)?.export
+    if (!payload) throw new Error('导出结果为空，拒绝迁移（避免删除用户数据）')
+    backup = withJsonFlags(JSON.stringify(payload), true)
+  } finally {
+    await plain.close().catch(() => {})
+    await sqlite.closeConnection(DB_NAME, false).catch(() => {})
+  }
+
+  // ② 备份落盘（UTF-8 文本；后续回滚与人工恢复都依赖它）
+  await writeTextFile(DB_MIGRATION_BACKUP, backup)
+
+  try {
+    // ③ 换库并导入
+    await plugin.deleteDatabase({ database: DB_NAME, readonly: false })
+    await sqlite.importFromJson(backup)
+    const enc = await openConnection(sqlite, true)
+    await verifyMigration(enc, backup)
+    await enc.close().catch(() => {})
+    await sqlite.closeConnection(DB_NAME, false).catch(() => {})
+    // ④ 成功：删除备份
+    await deleteLocalFile(DB_MIGRATION_BACKUP)
+    return true
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[offline] 加密迁移失败，开始回滚到明文库:', msg)
+    await sqlite.closeConnection(DB_NAME, false).catch(() => {})
+    await plugin.deleteDatabase({ database: DB_NAME, readonly: false }).catch(() => {})
+    try {
+      const plainJson = withJsonFlags(backup, false)
+      await sqlite.importFromJson(plainJson)
+      const restored = await openConnection(sqlite, false)
+      await verifyMigration(restored, plainJson)
+      await restored.close().catch(() => {})
+      await sqlite.closeConnection(DB_NAME, false).catch(() => {})
+      await deleteLocalFile(DB_MIGRATION_BACKUP)
+      console.warn('[offline] 已回滚为明文库，数据完整（离线可用，加密未启用）')
+    } catch (rollbackErr) {
+      const rbMsg = rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr)
+      console.error(
+        '[offline] 回滚失败：备份文件保留在 Directory.Data/' + DB_MIGRATION_BACKUP + '，请勿清理应用数据',
+        rbMsg,
+      )
+      throw new Error('加密迁移与回滚均失败（备份已保留）: ' + msg + ' / ' + rbMsg)
+    }
+    throw new Error(msg)
+  }
+}
+
+/**
  * 最近一次离线库初始化失败的原因（成功则清空）。
  *
  * 为什么必须留着：离线层一旦初始化失败（连接 exists、建表/自愈抛错…），
@@ -193,19 +373,43 @@ export async function getOfflineDb(): Promise<SQLiteDBConnection> {
        * 官方推荐写法：`checkConnectionsConsistency()` → `isConnection()` → 复用或创建。
        */
       await sqlite.checkConnectionsConsistency().catch(() => {})
-      const reuse = await sqlite
-        .isConnection(DB_NAME, false)
-        .then((r) => !!r?.result)
-        .catch(() => false)
-      const conn = reuse
-        ? await sqlite.retrieveConnection(DB_NAME, false)
-        : await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false)
-      // 已打开的连接再 open 是幂等的（Android 侧 Database.open 会先判断 isOpen）；
-      // 仅对"已打开"这类错误容忍，其他错误照旧抛出
-      await conn.open().catch((e: unknown) => {
+
+      /**
+       * C1：加密初始化（先于任何连接创建）。
+       *
+       * 顺序：取 Keystore 口令 → 装进插件 → 如有明文旧库则迁移 → 再打开连接。
+       * **失败一律降级为明文**：加密是安全增强，不能因为 Keystore 异常/迁移失败
+       * 让整个离线层（本地读、队列、同步）不可用 —— 那等于 App 半瘫。
+       * 降级原因写进 encryptionState，界面上「数据与同步」可见。
+       */
+      let encrypted = false
+      try {
+        const secret = await getOrCreateDbSecret()
+        if (secret) {
+          await ensureEncryptionSecret(sqlite, secret)
+          const migrated = await migratePlaintextToEncrypted(
+            sqlite as unknown as SqliteConnManager,
+            CapacitorSQLite as unknown as SqlitePluginLike,
+            secret,
+          )
+          encrypted = true
+          encryptionState = {
+            encrypted: true,
+            notice: migrated ? '已从明文库迁移（行数已校验）' : null,
+          }
+          if (migrated) console.warn('[offline] 明文库已迁移为加密库（备份已校验并删除）')
+        } else {
+          encryptionState = { encrypted: false, notice: '未取得设备密钥（SecureStore 不可用）' }
+          console.warn('[offline] 未取得设备密钥，SQLite 以未加密模式打开（离线功能可用）')
+        }
+      } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
-        if (!/already open/i.test(msg)) throw e
-      })
+        encrypted = false
+        encryptionState = { encrypted: false, notice: msg }
+        console.error('[offline] 加密初始化失败，按明文库继续（数据未丢，安全性降级）:', msg)
+      }
+
+      const conn = await openConnection(sqlite as unknown as SqliteConnManager, encrypted)
       await conn.execute(CREATE_TABLES_SQL.join(';\n') + ';')
       // 老清单先跑（对老库是主要路径），再跑自省自愈（补齐清单漏掉的列，如 travel.slug / travel.cover）
       for (const sql of COLUMN_UPGRADES_SQL) {

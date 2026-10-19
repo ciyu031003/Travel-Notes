@@ -11,14 +11,25 @@ const config: CapacitorConfig = {
   appName: '甜途',
   webDir: 'www',
   android: {
-    // 本地壳 https://localhost 中仍可加载 http 图片/媒体
-    allowMixedContent: true,
+    /**
+     * C1：禁止 WebView 混合内容。
+     * 本地壳是 https://localhost，之前允许 http 图片/媒体 —— 等于给中间人留了一条
+     * "把 http 资源注入 HTTPS 页面"的通路。现在要求所有远程资源必须 HTTPS
+     * （服务端 COS/CDN 与 API 都是 https；配合 network_security_config 双重约束）。
+     */
+    allowMixedContent: false,
   },
   plugins: {
     CapacitorSQLite: {
       iosDatabaseLocation: 'Library/CapacitorDatabase',
       iosIsEncryption: false,
-      androidIsEncryption: false,
+      /**
+       * C1：Android 端启用加密支持。实际打开加密库时 sqlite-db.ts 会显式传
+       * encrypted=true / mode='secret' 并 setEncryptionSecret（密钥由 AndroidKeyStore
+       * 生成的 SecureStore 插件提供）；这里置 true 是让插件的 isInConfigEncryption()
+       * 与运行时行为一致，避免"配置说没开、代码却开"的隐性不一致。
+       */
+      androidIsEncryption: true,
     },
     Keyboard: {
       // 键盘弹出时原生 resize WebView（adjustResize），sheet/底部输入条不被键盘遮挡

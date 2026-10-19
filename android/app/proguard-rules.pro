@@ -14,7 +14,10 @@
     @com.getcapacitor.PluginMethod public <methods>;
 }
 
-# --- 本仓库自有原生代码（AppUpdater 本地插件，见 MainActivity.registerPlugin） ---
+# --- 本仓库自有原生代码（本地 Capacitor 插件，见 MainActivity.registerPlugin） ---
+# C1 起包含：AppUpdaterPlugin（应用内更新）+ SecureStorePlugin（SQLite 加密口令 / AndroidKeyStore）。
+# 这两个类都是"用类名注册"的插件入口（registerPlugin(XxxPlugin.class) + @CapacitorPlugin 注解），
+# R8 看不到反射引用，删掉/改名 = 运行时插件不可用（更新下载失败 / 数据库打不开）。
 -keep class com.tiantu.app.** { *; }
 
 # --- @capacitor-community/sqlite（含 SQLCipher 可选依赖）---------------------

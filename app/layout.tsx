@@ -3,6 +3,7 @@ import './globals.css'
 import LayoutContent from '@/components/layout/LayoutContent'
 import LazyOverlays from '@/components/layout/LazyOverlays'
 import OfflineBootstrap from '@/components/offline/OfflineBootstrap'
+import PrivacyLockGate from '@/components/offline/PrivacyLockGate'
 import { ToastHost } from '@/components/mobile/Toast'
 import ThemeColorSync from '@/components/mobile/ThemeColorSync'
 import NativeBackHandler from '@/components/mobile/NativeBackHandler'
@@ -99,6 +100,8 @@ export default function RootLayout({
         {/* 常驻浮层（AppUpdatePrompt/Onboarding/PreferenceSurvey/CommandPalette）
             P1-19：已收敛到 lazy 客户端壳，首屏不再下载 motion / 这些组件的 chunk。 */}
         <LazyOverlays />
+        {/* C1：冷启动隐私锁门禁（仅原生壳 + 已设 PIN 时出锁；Web 恒不渲染） */}
+        <PrivacyLockGate />
         <OfflineBootstrap />
         <ToastHost />
       </body>

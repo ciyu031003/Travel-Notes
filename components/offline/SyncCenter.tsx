@@ -8,12 +8,24 @@ import { SyncQueue } from '@/lib/modules/offline/sync-queue'
 import { getSyncQueueStorage } from '@/lib/modules/offline/storage'
 import type { SyncQueueItem } from '@/lib/modules/offline/types'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
-import { getPrivacyLockEnabled, setPrivacyLockEnabled } from '@/lib/modules/offline/privacy-lock'
+import {
+  clearPin,
+  getPrivacyLockEnabled,
+  hasPin,
+  isValidPin,
+  markUnlocked,
+  setPin,
+  setPrivacyLockEnabled,
+  verifyPin,
+} from '@/lib/modules/offline/privacy-lock'
 import { getSyncEngine } from '@/lib/modules/offline/bootstrap'
-import { getOfflineInitError } from '@/lib/modules/offline/native/sqlite-db'
+import { getOfflineEncryptionState, getOfflineInitError } from '@/lib/modules/offline/native/sqlite-db'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Switch } from '@/components/mobile/Switch'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { Field } from '@/components/mobile/Field'
+import { Button } from '@/components/mobile/Button'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Stagger } from '@/components/mobile/Stagger'
 
@@ -25,8 +37,19 @@ export default function SyncCenter() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  // v3.1 M4-C1：本地隐私锁
+  // C1：本地隐私锁（真实 PIN。开关只是"意图"，必须 setPin 成功才算开启）
   const [lockEnabled, setLockEnabled] = useState(false)
+  /** PIN 面板：'set'=首次设置/重设；'verify'=关闭前验证；null=不显示 */
+  const [pinSheet, setPinSheet] = useState<'set' | 'verify' | null>(null)
+  const [pinInput, setPinInput] = useState('')
+  const [pinConfirm, setPinConfirm] = useState('')
+  const [pinError, setPinError] = useState('')
+  const [pinBusy, setPinBusy] = useState(false)
+  /** 本地库加密状态（C1：让用户知道"这台设备上的离线数据是否加密"） */
+  const [encryption, setEncryption] = useState<{ encrypted: boolean; notice: string | null }>({
+    encrypted: false,
+    notice: null,
+  })
   // v3.1 M4-C1：最近同步统计（冲突保护/写入量）
   const [lastSync, setLastSync] = useState<{ at: number; written: number } | null>(null)
   // 引擎内部被隔离的阶段错误（例如"本地队列读失败但上传照常"）：不阻断同步，但必须能看见
@@ -35,7 +58,19 @@ export default function SyncCenter() {
   const [offlineInitError, setOfflineInitError] = useState<string | null>(null)
 
   useEffect(() => {
-    setLockEnabled(getPrivacyLockEnabled())
+    /**
+     * v3.1 的开关只写了一个 localStorage 标记、没有 PIN。升级到 C1 后
+     * 这些设备的"开关=开"是假的（没有 PIN 就没有门禁），这里自动修复为关闭，
+     * 避免界面显示"已开启"而实际不设防。
+     */
+    const enabled = getPrivacyLockEnabled()
+    if (enabled && !hasPin()) {
+      setPrivacyLockEnabled(false)
+      setLockEnabled(false)
+    } else {
+      setLockEnabled(enabled)
+    }
+    setEncryption(getOfflineEncryptionState())
     const engine = getSyncEngine()
     if (engine?.lastSyncStats) setLastSync(engine.lastSyncStats)
     if (engine?.lastError) setEngineError(engine.lastError)
@@ -87,6 +122,86 @@ export default function SyncCenter() {
       setError(e instanceof Error ? e.message : '重试失败')
     } finally {
       setBusy(false)
+    }
+  }
+
+  /**
+   * 开关 → 打开 PIN 面板。
+   * 开启隐私锁**必须先设 PIN**；关闭必须验证 PIN（否则任何拿到手机的人
+   * 都能直接把锁关掉，等于没有锁）。
+   */
+  const handleLockToggle = (next: boolean) => {
+    setPinError('')
+    setPinInput('')
+    setPinConfirm('')
+    if (next) {
+      setPinSheet('set')
+    } else {
+      if (!hasPin()) {
+        // 历史遗留：开关为开但没有 PIN（v3.1 空壳状态）→ 直接关掉
+        setPrivacyLockEnabled(false)
+        setLockEnabled(false)
+        return
+      }
+      setPinSheet('verify')
+    }
+  }
+
+  const closePinSheet = () => {
+    if (pinBusy) return
+    setPinSheet(null)
+    setPinError('')
+    setPinInput('')
+    setPinConfirm('')
+  }
+
+  /** 保存新 PIN（两次输入一致且格式合法） */
+  const savePin = async () => {
+    if (pinBusy) return
+    if (!isValidPin(pinInput)) {
+      setPinError('PIN 需为 4–8 位数字')
+      return
+    }
+    if (pinInput !== pinConfirm) {
+      setPinError('两次输入的 PIN 不一致')
+      return
+    }
+    setPinBusy(true)
+    setPinError('')
+    try {
+      const ok = await setPin(pinInput)
+      if (!ok) {
+        setPinError('设置失败，请重试')
+        return
+      }
+      markUnlocked()
+      setLockEnabled(true)
+      closePinSheet()
+    } catch {
+      setPinError('设置失败，请重试')
+    } finally {
+      setPinBusy(false)
+    }
+  }
+
+  /** 验证 PIN 后关闭隐私锁并清除 PIN */
+  const disableLock = async () => {
+    if (pinBusy) return
+    setPinBusy(true)
+    setPinError('')
+    try {
+      const ok = await verifyPin(pinInput)
+      if (!ok) {
+        setPinError('PIN 不正确')
+        return
+      }
+      clearPin()
+      setLockEnabled(false)
+      closePinSheet()
+    } catch {
+      setPinError('验证失败，请重试')
+    } finally {
+      setPinBusy(false)
     }
   }
 
@@ -202,18 +317,71 @@ export default function SyncCenter() {
 
             {error && <p className="mt-6 text-sm text-[var(--danger-soft)]">{error}</p>}
 
-            {/* v3.1 M4-C3：本地隐私锁（统一移动端 Switch 组件） */}
+            {/* C1：本地隐私锁（真实 PIN）+ 数据库加密状态 */}
             <section className="mt-10">
               <Switch
                 checked={lockEnabled}
-                onCheckedChange={(next) => {
-                  setLockEnabled(next)
-                  setPrivacyLockEnabled(next)
-                }}
+                onCheckedChange={handleLockToggle}
                 label="本地隐私锁"
-                description="开启后，打开相册、回忆等私密模块前需验证 PIN / 生物识别；本地数据库可启用加密（真机生效）。"
+                description="开启需设置 4–8 位数字 PIN；之后每次冷启动进入 App 都要先解锁（Web 端不启用）。"
               />
+              <p className="mt-3 px-1 text-xs leading-relaxed text-[var(--social-faint)]">
+                本地数据库：
+                {encryption.encrypted ? (
+                  <span className="text-[var(--m-success)]">已加密（密钥存于 Android Keystore）</span>
+                ) : (
+                  <span>
+                    未加密
+                    {encryption.notice ? '（' + encryption.notice + '）' : ''}
+                  </span>
+                )}
+              </p>
             </section>
+
+            {/* PIN 设置 / 验证面板 */}
+            <BottomSheet
+              open={pinSheet != null}
+              onClose={closePinSheet}
+              title={pinSheet === 'verify' ? '关闭隐私锁' : '设置隐私锁 PIN'}
+            >
+              <div className="px-1 pb-4">
+                <p className="mb-4 text-sm leading-relaxed text-[var(--social-muted)]">
+                  {pinSheet === 'verify'
+                    ? '输入当前 PIN 以关闭隐私锁（关闭后将清除 PIN）。'
+                    : 'PIN 为 4–8 位数字。忘记 PIN 只能清除应用数据，请设置一个记得住的。'}
+                </p>
+                <div className="space-y-3">
+                  <Field
+                    type="password"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder={pinSheet === 'verify' ? '输入当前 PIN' : '设置 PIN（4–8 位数字）'}
+                    value={pinInput}
+                    onChange={(e) => { setPinInput(e.target.value.replace(/\D/g, '').slice(0, 8)); setPinError('') }}
+                  />
+                  {pinSheet !== 'verify' && (
+                    <Field
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="再次输入 PIN"
+                      value={pinConfirm}
+                      onChange={(e) => { setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 8)); setPinError('') }}
+                    />
+                  )}
+                </div>
+                {pinError && <p className="mt-3 text-sm text-[var(--m-danger)]">{pinError}</p>}
+                <Button
+                  block
+                  className="mt-5"
+                  loading={pinBusy}
+                  disabled={pinBusy || pinInput.length < 4}
+                  onClick={() => void (pinSheet === 'verify' ? disableLock() : savePin())}
+                >
+                  {pinSheet === 'verify' ? '验证并关闭' : '保存并开启'}
+                </Button>
+              </div>
+            </BottomSheet>
           </>
         )}
         </PullToRefresh>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  C1：全局禁止明文流量（API 24+ 生效，24 以上系统对 usesCleartextTraffic 与
+  networkSecurityConfig 同时存在时以本文件为准）。
+  只信任系统根证书：用户安装的 CA 不再被信任 —— 防止"装个代理证书就能解密 WebView 流量"。
+  本地壳加载 https://localhost 的静态资源不经过网络栈，不受影响。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

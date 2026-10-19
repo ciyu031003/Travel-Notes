@@ -26,8 +26,8 @@ android {
         applicationId "com.tiantu.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 54
-        versionName "1.24.8"
+        versionCode 55
+        versionName "1.24.9"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         /**
          * P2-26：只打真机 ABI。之前 4 个 ABI 全打，libsqlcipher.so 的

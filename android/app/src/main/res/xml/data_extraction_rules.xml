@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  C1：Android 12（API 31+）备份/换机迁移规则。
+  allowBackup=false 已从整体上关闭备份；本文件是 API 31+ 的显式声明，
+  同时排除 cloud-backup 与 device-transfer，避免"某些厂商 ROM 仍读取该规则"导致数据外流。
+  排除范围覆盖：数据库（含 tiantu_offline SQLite）、SharedPreferences（插件密钥/状态）、
+  应用私有文件（离线照片、db 备份文件）、外部私有目录。
+
+  注：AndroidKeyStore 里的密钥本身不可备份，因此即使备份被用旧设备密钥也解不开加密库；
+  这里排除是纵深防御，避免"备份→恢复→撞库"路径。
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+    </device-transfer>
+</data-extraction-rules>
