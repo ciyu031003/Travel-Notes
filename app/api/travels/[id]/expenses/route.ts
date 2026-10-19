@@ -8,6 +8,7 @@ import { guardTravelWrite } from '@/lib/modules/travel/api-guard'
 import { parseBody } from '@/lib/api/handler'
 import { asApiErrorFromResponse, parseIdParam, toApiError, withRouteErrors } from '@/lib/api/schemas/common'
 import { AddExpenseSchema } from '@/lib/api/schemas/travel'
+import { readIdempotencyKey, withIdempotency } from '@/lib/api/idempotency'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,20 +53,29 @@ export const POST = withRouteErrors(async (request, routeContext) => {
 
   const body = await parseBody(request, AddExpenseSchema)
   try {
-    const result = await addExpense(travelId, {
-      amount: body.amount,
-      currency: body.currency || 'CNY',
-      category: normalizeExpenseCategory(body.category),
-      payer: body.payer ?? undefined,
-      note: body.note ?? undefined,
-      happenedAt: body.happenedAt ? body.happenedAt : undefined,
-      /**
-       * 可选绑定行程：只做形态校验；**归属校验在服务层**
-       * （addExpense 会确认该行程确实属于本旅行，跨旅行/已删除则退化为不绑定）。
-       */
-      itineraryItemId: body.itineraryItemId ?? null,
+    // B4：幂等 —— 离线队列重放的同一 Idempotency-Key 直接返回首次创建的 expense id
+    const idem = await withIdempotency({
+      key: readIdempotencyKey(request),
+      userId: guard.ctx.userId,
+      entityType: 'Expense',
+      run: async () => {
+        const result = await addExpense(travelId, {
+          amount: body.amount,
+          currency: body.currency || 'CNY',
+          category: normalizeExpenseCategory(body.category),
+          payer: body.payer ?? undefined,
+          note: body.note ?? undefined,
+          happenedAt: body.happenedAt ? body.happenedAt : undefined,
+          /**
+           * 可选绑定行程：只做形态校验；**归属校验在服务层**
+           * （addExpense 会确认该行程确实属于本旅行，跨旅行/已删除则退化为不绑定）。
+           */
+          itineraryItemId: body.itineraryItemId ?? null,
+        })
+        return { entityId: result.id, value: null as null }
+      },
     })
-    return NextResponse.json({ success: true, id: result.id }, { status: 201 })
+    return NextResponse.json({ success: true, id: idem.entityId }, { status: 201 })
   } catch (error) {
     throw toApiError(error, '添加失败')
   }

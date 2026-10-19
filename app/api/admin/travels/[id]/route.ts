@@ -72,7 +72,7 @@ export const DELETE = withAuth(async (_request, ctx, routeContext) => {
   const { id } = await params
   const travelId = parseTravelId(id)
   try {
-    await deleteTravel(travelId)
+    await deleteTravel(travelId, ctx.userId)
   } catch (error: any) {
     throw new ApiError('DELETE_FAILED', error?.message || '删除失败', 400)
   }

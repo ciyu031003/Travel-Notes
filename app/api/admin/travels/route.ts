@@ -7,6 +7,8 @@ import { isSpaceContentEditor } from '@/lib/modules/access/space-scope'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { ApiError } from '@/lib/api-response'
 import { withAuth, parseBody } from '@/lib/api/handler'
+import { prisma } from '@/lib/db'
+import { readIdempotencyKey, withIdempotency } from '@/lib/api/idempotency'
 
 const TRAVEL_TYPES = ['ALONE', 'COUPLE', 'FAMILY', 'FRIENDS', 'BFF', 'GROUP', 'OTHER'] as const
 
@@ -99,30 +101,54 @@ export const POST = withAuth(async (request, ctx) => {
       ? 'SPACE'
       : 'PRIVATE'
 
+  // B4：离线队列重试会带同一个 Idempotency-Key；命中直接返回首次创建的主键（绝不重复建旅行）
+  const idempotencyKey = readIdempotencyKey(request)
+
   try {
-    const result = await createTravel({
-      title: body.title,
-      description: body.description ? String(body.description) : undefined,
-      startDate: body.startDate || undefined,
-      endDate: body.endDate || undefined,
-      location: normalizeLocation(body.location),
-      ownerId: ctx.userId,
-      isPublic: visibility === 'PUBLIC',
-      visibility,
-      spaceId,
-      travelType: (body.travelType as any) || undefined,
-      companions,
+    const idem = await withIdempotency({
+      key: idempotencyKey,
+      userId: ctx.userId,
+      entityType: 'Travel',
+      run: async () => {
+        const result = await createTravel({
+          title: body.title,
+          description: body.description ? String(body.description) : undefined,
+          startDate: body.startDate || undefined,
+          endDate: body.endDate || undefined,
+          location: normalizeLocation(body.location),
+          ownerId: ctx.userId,
+          isPublic: visibility === 'PUBLIC',
+          visibility,
+          spaceId,
+          travelType: (body.travelType as any) || undefined,
+          companions,
+        })
+        return { entityId: result.id, value: result.slug }
+      },
     })
+
+    if (idem.replayed) {
+      // 重放：ClientMutation 只存 entityId，slug 回查一次（成功响应结构保持不变）
+      const existing =
+        idem.entityId != null
+          ? await prisma.travel
+              .findUnique({ where: { id: idem.entityId }, select: { slug: true } })
+              .catch(() => null)
+          : null
+      return NextResponse.json({ success: true, id: idem.entityId, slug: existing?.slug ?? '' }, { status: 201 })
+    }
+
+    const entityId = idem.entityId as number
     writeAuditLog({
       username: ctx.username || 'unknown',
       action: 'CREATE',
       resourceType: 'Travel',
-      resourceId: String(result.id),
+      resourceId: String(entityId),
       spaceId,
       metadata: { title: body.title, location: normalizeLocation(body.location) ?? null, visibility },
     }).catch(() => {})
     // 回传 slug：前台新建后直接跳 /travel/<slug>
-    return NextResponse.json({ success: true, id: result.id, slug: result.slug }, { status: 201 })
+    return NextResponse.json({ success: true, id: entityId, slug: idem.value ?? '' }, { status: 201 })
   } catch (error: any) {
     throw new ApiError('CREATE_FAILED', error?.message || '创建失败', 400)
   }

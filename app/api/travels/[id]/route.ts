@@ -71,7 +71,7 @@ export const DELETE = withAuth(async (_request, ctx, routeContext) => {
   const { id } = await params
   const travelId = parseTravelId(id)
   try {
-    await travelService.deleteTravel(ctx.username || '', travelId)
+    await travelService.deleteTravel(ctx.username || '', travelId, ctx.userId)
     return NextResponse.json({ success: true })
   } catch (error: any) {
     const msg = error?.message || '删除失败'

@@ -5,6 +5,7 @@ import { PrismaMemoryRepository, prismaMemoryRepository, type MemoryVisibility, 
 import { requireSpaceRole } from '../space/permissions'
 import { writeAuditLog } from '../audit/audit-log.service'
 import { prisma } from '../../db'
+import { recordSyncTombstone, resolveUserIdByUsername } from '../../api/sync-tombstone'
 
 const TITLE_MAX = 255
 const MOOD_MAX = 50
@@ -93,11 +94,13 @@ export class MemoryService {
     return updated
   }
 
-  async deleteMemory(username: string, memoryId: number): Promise<void> {
+  async deleteMemory(username: string, memoryId: number, actorUserId?: number | null): Promise<void> {
     const m = await this.repo.findById(memoryId)
     if (!m) throw new Error('回忆不存在')
     await requireSpaceRole(username, m.spaceId, ['OWNER', 'MEMBER'])
     await this.repo.remove(memoryId)
+    // B4：删除墓碑（best-effort）；creator 回退用 createdBy 反查 userId
+    await recordSyncTombstone('Memory', memoryId, actorUserId ?? (await resolveUserIdByUsername(m.createdBy)))
     await writeAuditLog({
       username,
       action: 'DELETE',

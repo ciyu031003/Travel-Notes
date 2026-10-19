@@ -8,6 +8,7 @@ import { canActOnContent } from '@/lib/modules/access'
 import { spaceService } from '@/lib/modules/space/space.service'
 import { parseIdParam, toApiError } from '@/lib/api/schemas/common'
 import { CreateTravelMemorySchema } from '@/lib/api/schemas/travel'
+import { readIdempotencyKey, withIdempotency } from '@/lib/api/idempotency'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,20 +110,29 @@ export const POST = withAuth(async (request, ctx, routeContext) => {
   }
 
   try {
-    const memory = await memoryService.createMemory(username, {
-      spaceId,
-      travelId,
-      travelDayId,
-      title: body.title,
-      content: body.content ?? null,
-      mood: body.mood ?? null,
-      happenedAt: body.happenedAt ?? new Date().toISOString(),
-      // 可见性（R2）：公开旅行里的单条回忆默认仍是 SPACE（仅自己与同行者）。
-      // 旅行圈详情只下发 `visibility = PUBLIC` 的回忆，所以"想被别人看到"必须显式打开。
-      visibility: body.isPublic === true ? 'PUBLIC' : 'SPACE',
+    // B4：幂等 —— 离线队列重放的同一 Idempotency-Key 直接返回首次创建的 memoryId
+    const idem = await withIdempotency({
+      key: readIdempotencyKey(request),
+      userId: ctx.userId,
+      entityType: 'Memory',
+      run: async () => {
+        const memory = await memoryService.createMemory(username, {
+          spaceId,
+          travelId,
+          travelDayId,
+          title: body.title,
+          content: body.content ?? null,
+          mood: body.mood ?? null,
+          happenedAt: body.happenedAt ?? new Date().toISOString(),
+          // 可见性（R2）：公开旅行里的单条回忆默认仍是 SPACE（仅自己与同行者）。
+          // 旅行圈详情只下发 `visibility = PUBLIC` 的回忆，所以"想被别人看到"必须显式打开。
+          visibility: body.isPublic === true ? 'PUBLIC' : 'SPACE',
+        })
+        return { entityId: memory.id, value: null as null }
+      },
     })
 
-    return NextResponse.json({ success: true, memoryId: memory.id }, { status: 201 })
+    return NextResponse.json({ success: true, memoryId: idem.entityId }, { status: 201 })
   } catch (error) {
     throw toApiError(error, '记录失败')
   }

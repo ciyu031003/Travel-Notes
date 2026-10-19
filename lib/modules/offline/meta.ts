@@ -48,6 +48,8 @@ export async function deleteMeta(key: string): Promise<void> {
 export const META_KEYS = {
   /** 当前本地库归属的账号（服务端 User.id 字符串） */
   accountId: 'accountId',
-  /** 最近一次成功拉取的时间戳（增量拉取游标） */
+  /** 最近一次成功拉取的时间戳（旧全量拉取的 since 参数，保留兼容） */
   lastSyncAt: 'lastSyncAt',
+  /** B4 增量同步游标：服务端 /api/sync/changes 返回的 serverTime（毫秒） */
+  syncCursor: 'syncCursor',
 } as const

@@ -11,7 +11,7 @@ import { isNativePlatform } from './platform'
 import { isPermanentSyncError } from './sync-dispatcher'
 import type { SyncDispatcher } from './sync-dispatcher'
 import type { PullDispatcher } from './pull-dispatcher'
-import { pullEntityTypes } from './pull'
+import { pullEntityTypes, pullIncremental } from './pull'
 import { markEntitySynced } from './local-write'
 import { reconcileOfflineState } from './reconcile'
 
@@ -118,9 +118,16 @@ export class SyncEngine {
     }
   }
 
-  /** 下载拉取（3.4b）：远端列表 → 本地 SQLite，LWW 落地；返回写入条数 */
+  /**
+   * 下载拉取（3.4b）：远端列表 → 本地 SQLite，LWW 落地；返回写入条数。
+   *
+   * B4：优先走增量端点 GET /api/sync/changes（带游标 + 墓碑）；
+   * 服务端不支持（404）/请求失败时 pullIncremental 返回 null，回退原有全量拉取。
+   */
   private async pullRemote(): Promise<number> {
     if (!this.puller || !isNativePlatform()) return 0
+    const incremental = await pullIncremental(this.puller)
+    if (incremental != null) return incremental
     return pullEntityTypes(this.puller, [...PULL_ENTITY_TYPES])
   }
 

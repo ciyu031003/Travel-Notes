@@ -77,7 +77,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!owned) {
       return NextResponse.json({ error: '相册不存在或无权操作' }, { status: 404 })
     }
-    await deleteAlbum(albumId)
+    await deleteAlbum(albumId, auth.payload?.userId)
     writeAuditLog({ username: auth.username, action: 'DELETE', resourceType: 'Album', resourceId: String(albumId) }).catch(() => {})
     return NextResponse.json({ success: true })
   } catch (error: any) {

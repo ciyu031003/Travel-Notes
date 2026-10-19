@@ -1,6 +1,7 @@
 import { MomentRepository, MomentRecord } from '../repositories/moment-repository'
 import { CacheService } from '../infrastructure/cache'
 import { checkContent } from '../modules/content/policy'
+import { recordSyncTombstone } from '../api/sync-tombstone'
 
 export interface MomentDTO {
   id: number
@@ -73,6 +74,8 @@ export class MomentService {
       throw new Error('记录不存在')
     }
     await this.momentRepo.delete(id)
+    // B4：删除墓碑（best-effort）—— 供 GET /api/sync/changes 下发，客户端删本地行
+    await recordSyncTombstone('Moment', id, userId ?? null)
     await this.invalidateCache()
   }
 

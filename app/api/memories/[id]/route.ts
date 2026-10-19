@@ -52,7 +52,7 @@ export const DELETE = withAuth(async (_request, ctx, routeContext) => {
   // reviewed-no-body-input：DELETE 仅路径参数，没有 JSON body
   const memoryId = parseIdParam(id, '回忆 ID')
   try {
-    await memoryService.deleteMemory(ctx.username || '', memoryId)
+    await memoryService.deleteMemory(ctx.username || '', memoryId, ctx.userId)
     return NextResponse.json({ success: true })
   } catch (error) {
     throw toApiError(error, '删除失败')

@@ -16,6 +16,7 @@ import { storageKeyToUrl } from '../../media-url'
 // P0 收敛：空间成员关系的唯一查询入口（同时按 userId + username 两种键查）
 import { myActiveSpaceIds as sharedMyActiveSpaceIds, spaceScopedWhere, isSpaceContentEditor } from '../access/space-scope'
 import { writeAuditLog } from '../audit/audit-log.service'
+import { recordSyncTombstone } from '../../api/sync-tombstone'
 import type {
   ExpenseRecord,
   ItineraryItemRecord,
@@ -581,7 +582,11 @@ export async function updateTravel(id: number, input: any): Promise<void> {
  * 而旅行删除本身又会级联 TravelPost（schema onDelete: Cascade）—— 相当于
  * 一次无意义的两次写。现在放进同一事务：要么都成功，要么都不生效。
  */
-export async function deleteTravel(id: number): Promise<void> {
+export async function deleteTravel(id: number, actorUserId?: number | null): Promise<void> {
+  // 墓碑需要 userId：优先用调用方（当前会话）的；缺省回退到旅行 owner
+  const owner = await prisma.travel
+    .findUnique({ where: { id }, select: { ownerId: true } })
+    .catch(() => null)
   await prisma.$transaction(async (tx) => {
     // TravelPost 有级联删除兜底，这里显式清理只是让"取消公开"语义可读；
     // 即便它失败，tx.travel.delete 的级联仍会移除帖子行。
@@ -592,6 +597,8 @@ export async function deleteTravel(id: number): Promise<void> {
     }
     await tx.travel.delete({ where: { id } })
   })
+  // B4：删除墓碑（best-effort，事务提交后再写，不阻断删除）
+  await recordSyncTombstone('Travel', id, actorUserId ?? owner?.ownerId ?? null)
 }
 
 export async function addDay(travelId: number, input: { date?: string; title?: string; summary?: string }): Promise<{ id: number }> {

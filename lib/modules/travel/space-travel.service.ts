@@ -8,6 +8,7 @@ import { requireSpaceRole, SpaceAccessError, type SpaceRole } from '../space/per
 import { writeAuditLog } from '../audit/audit-log.service'
 import { syncTravelPost, unpublishTravelPost } from '../social/travel-post.service'
 import { prisma } from '../../db'
+import { recordSyncTombstone, resolveUserIdByUsername } from '../../api/sync-tombstone'
 
 /**
  * 旁路写入（审计 / TravelPost 投影）的失败处理（P1-15 去静默）：
@@ -159,7 +160,7 @@ export class TravelService {
     return updated
   }
 
-  async deleteTravel(username: string, travelId: number): Promise<void> {
+  async deleteTravel(username: string, travelId: number, actorUserId?: number | null): Promise<void> {
     const t = await this.repo.findById(travelId)
     if (!t) throw new Error('旅行不存在')
     // 关键修复：个人旅行（spaceId=NULL）此前在这里被判「无权访问该空间」而删不掉
@@ -167,6 +168,8 @@ export class TravelService {
     // 行删除本身会级联 TravelPost（schema onDelete: Cascade），这里只是显式取消公开
     await bestEffort('TravelPost 清理失败（删除）', () => unpublishTravelPost(travelId))
     await this.repo.remove(travelId)
+    // B4：删除墓碑（best-effort）—— 删完再写，不阻断删除主流程
+    await recordSyncTombstone('Travel', travelId, actorUserId ?? (await resolveUserIdByUsername(username)))
     await bestEffort('审计写入失败（DELETE）', () =>
       writeAuditLog({
         username,

@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto'
 import { getStorageService } from '../../infrastructure/storage'
 import { absoluteMediaUrl } from '../../media-url'
 import { generateMediaVariants } from '../../infrastructure/media-variants'
+import { recordSyncTombstone } from '../../api/sync-tombstone'
 import {
   validateAndSanitizeImage,
   MAX_IMAGE_COUNT,
@@ -245,9 +246,12 @@ async function mediaReferencedElsewhere(mediaIds: number[], excludeAlbumId?: num
   return refs
 }
 
-export async function deleteAlbum(id: number): Promise<void> {
+export async function deleteAlbum(id: number, actorUserId?: number | null): Promise<void> {
   // 先收集媒体，删除相册后一并清理 Media 记录与存储文件（避免孤儿数据）；
   // 仍被其他相册/回忆引用的媒体只随级联解除本相册关联，不删记录与文件。
+  const albumRow = await prisma.album
+    .findUnique({ where: { id }, select: { userId: true } })
+    .catch(() => null)
   const links = await prisma.albumMedia.findMany({
     where: { albumId: id },
     select: { mediaId: true, media: { select: { storageKey: true } } },
@@ -269,6 +273,8 @@ export async function deleteAlbum(id: number): Promise<void> {
   for (const key of storageKeys) {
     storage.delete(key).catch(() => {})
   }
+  // B4：删除墓碑（best-effort）—— 行已删除，墓碑失败不影响主流程
+  await recordSyncTombstone('Album', id, actorUserId ?? albumRow?.userId ?? null)
 }
 
 /** 上传图片到相册：校验 + 重新编码 → 存储 → Media + AlbumMedia 记录 */

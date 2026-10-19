@@ -207,6 +207,8 @@ model Moment {
 
   @@index([createdAt])
   @@index([userId])
+  // B4：增量同步按 updatedAt > since 拉变更
+  @@index([updatedAt])
 }
 
 model Like {
@@ -461,6 +463,8 @@ model Travel {
 
   @@unique([spaceId, slug])
   @@index([spaceId, startDate])
+  // B4：增量同步按 updatedAt > since 拉变更
+  @@index([updatedAt])
 }
 
 /// 旅行中的一天
@@ -529,6 +533,8 @@ model Memory {
   @@index([spaceId, travelId])
   // P1-16：旅行详情页按 travelId 拉回忆
   @@index([travelId])
+  // B4：增量同步按 updatedAt > since 拉变更
+  @@index([updatedAt])
 }
 
 /// 回忆-媒体 多对多关联（v3.1 M2-A2：一张照片可进多个回忆；memoryId 主关联兼容旧数据）
@@ -627,6 +633,8 @@ model Album {
   @@index([spaceId, createdAt])
   // P1-16：旅行详情页按 travelId 拉相册（一个旅行对应一个相册）
   @@index([travelId])
+  // B4：增量同步按 updatedAt > since 拉变更
+  @@index([updatedAt])
 }
 
 /// 相册-媒体关联
@@ -908,4 +916,28 @@ model UserBlock {
 
   @@unique([blockerId, blockedId])
   @@index([blockedId])
+}
+
+/// 客户端幂等键（B4）：离线队列每轮重试携带同一个 Idempotency-Key。
+/// id = 客户端生成的幂等键；entityId = 首次成功创建的主键（重放时直接返回，避免重复创建）。
+model ClientMutation {
+  id         String   @id @db.VarChar(128)
+  userId     Int?
+  entityType String   @db.VarChar(50)
+  entityId   Int?
+  createdAt  DateTime @default(now()) @db.Timestamp(3)
+
+  @@index([userId, createdAt])
+}
+
+/// 同步墓碑（B4）：删除实体时落一条，供 GET /api/sync/changes 下发，客户端据此删本地行。
+model SyncTombstone {
+  id         Int      @id @default(autoincrement())
+  entityType String   @db.VarChar(50)
+  entityId   Int
+  userId     Int?
+  deletedAt  DateTime @default(now()) @db.Timestamp(3)
+
+  @@index([userId, deletedAt])
+  @@index([entityType, entityId])
 }

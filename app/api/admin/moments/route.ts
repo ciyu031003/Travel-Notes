@@ -5,6 +5,7 @@ import { getMomentService } from '@/lib/container'
 import { ok, serverError, unauthorized, ApiError, errorResponse } from '@/lib/api-response'
 import { parseBody, getRequestId } from '@/lib/api/handler'
 import { MomentCreateSchema, PaginationQuerySchema } from '@/lib/api/schemas/admin'
+import { readIdempotencyKey, withIdempotency } from '@/lib/api/idempotency'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,8 +44,22 @@ export async function POST(request: NextRequest) {
     const tags = (body.tags || []).map((t) => t.trim()).filter(Boolean).slice(0, 10)
 
     const momentService = getMomentService()
-    const result = await momentService.createMoment(content, tags.length > 0 ? tags : null, auth.payload?.userId, Boolean(body.isPublic))
-    return ok(result, '发布成功')
+    // B4：幂等 —— 离线队列重放的同一 Idempotency-Key 直接返回首次创建的 id
+    const idem = await withIdempotency({
+      key: readIdempotencyKey(request),
+      userId: auth.payload?.userId,
+      entityType: 'Moment',
+      run: async () => {
+        const result = await momentService.createMoment(
+          content,
+          tags.length > 0 ? tags : null,
+          auth.payload?.userId,
+          Boolean(body.isPublic),
+        )
+        return { entityId: result.id, value: null as null }
+      },
+    })
+    return ok({ id: idem.entityId }, '发布成功')
   } catch (error: any) {
     if (error instanceof ApiError) return errorResponse(error, getRequestId(request))
     console.error('[POST /api/admin/moments] Error:', error?.message || error)
