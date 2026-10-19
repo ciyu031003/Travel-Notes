@@ -313,3 +313,56 @@
 4. next 16 / prisma 8 / tailwind 4 / eslint 10 大版本升级（DEPS.md 有计划）。
 5. APK 信创/真机验证：SQLite 加密迁移、压缩画质、隐私锁、分片续传。
 6. 多副本部署假设（临时目录、内存限流/缓存）仍为单实例。
+
+
+---
+
+# 附五：A1 CI 首跑 / A3+A4+D2 生产部署验证（2026-10-19）
+
+## A1 CI 首跑：真实拦住 4 个问题后全绿
+
+首跑依次暴露并修复：
+1. **Type check 红**：CI 的 `npm ci` 不执行被 allow-scripts 拦截的 postinstall，Prisma Client 未生成；把 `npx prisma generate` 前移到 lint/typecheck 之前（commit 756b735）。
+2. **Design tokens 红**：C1 新增的 PrivacyLockGate/SyncCenter 引入 4 处新违规；修掉 lucide 直引/字号，B3 收敛 legacy 后基线收紧到 307/398。
+3. **E2E 红（1）**：home-aggregate 仍按 P1-18 之前的「客户端请求 /api/home」契约断言；改为 SSR 直出 + 聚合接口契约 + 可见 h1=1（commit a6a9e05）。
+4. **E2E flaky（1）**：auth 用例点抽屉入口未等待水合完成；改为先等待 visible 30s 再点（commit eae833b）。
+最终：**c6a82ba 的 CI 两个 job（ci + e2e-smoke）全绿**（c6a82ba 之前的 eae833b/f29f134 也绿）。
+
+## A3 生产部署（1.24.8/54 → 1.25.0/56）
+
+- 部署包：`git archive HEAD`（31.5MB）→ scp → `scripts/server-rebuild.sh`（磁盘清理/空间校验/备份门禁/清理归档中已删源码/解包/重建/健康检查）。
+- 构建期真实问题（已修）：
+  a) 服务器上残留旧测试 `tests/security/video-path-traversal.test.ts`（引用已删除的 app/api/video 路由）被 COPY 进 Docker 构建上下文，导致镜像 typecheck 失败 → server-rebuild 的 stale 清理目录加入 `tests`。
+  b) `docker-compose.yml` 重复 `APP_CHANGELOG` 键导致 YAML 解析失败 → 去重。
+  c) 健康检查 `migrations` 把「已回滚 + 重新 resolve 成功」的同名历史行误判为 pending → 改为「无任何成功应用的迁移才算 pending」。
+- **迁移事故与恢复（数据无损）**：存量库是 db push 长出来的，P1 迁移在 `CREATE INDEX Album_travelId_idx` 处 P3018/1061（该索引 db push 已建过）。按 DEPLOYMENT.md 新增的《存量 db-push 库升级已知坑》流程：`migrate diff --from-config-datasource` 生成缺失 SQL（2 张同步表 + 4 个 updatedAt 索引）→ mysql 应用 → `migrate resolve --applied` P1 与 sync 迁移 → 清理失败历史行。最终 `prisma migrate status` = up to date，live schema 与 schema.prisma **diff 0**。
+- 验证（生产实跑）：
+  - `/api/health` 200：db ok / migrations ok / storage ok / uptime 正常。
+  - `/api/version` = 1.25.0 / build 56，含 **sha256=48c66eae…、size=14727474、minSupportedBuild=54**（compose env 透传修复后生效）。
+  - 入口日志：`No pending migrations to apply` → Next.js 15.5.27 Ready。
+  - 公网 HTTPS：/api/health 200、/api/version 200、/login 200、/ 307（未登录跳登录，符合预期）。
+  - 镜像内置测试：typecheck + lint(454/486) + vitest 938 全绿。
+
+## A4 备份 / 恢复演练 / 定时任务
+
+- 新备份：`backups/db/travel_notes-20261019-204253.sql.gz`（42KB，gzip -t 通过）。
+- `backup-db.sh --check` 通过；`--verify` 恢复演练到临时库 `travel_notes_verify_20261019`：**User 行数 = 30**，与源库一致；演练后删除临时库。
+- cron 已安装：`30 2 * * * cd /home/ubuntu/travel-notes && ./scripts/backup-db.sh >> logs/backup.log 2>&1`（与服务器既有的磁盘清理任务并存）。
+
+## D2 缓存清理
+
+- 代码：`lib/media-url.ts` 对 `/api/images/<id>` 统一加 `?v=2`（MEDIA_URL_VERSION），旧 1 年 immutable 缓存条目自然失效；新响应已改为 public 86400 / 私有 no-store。
+- 生产核查：Nginx 无 /api/images 的 proxy_cache；/uploads 为 alias 直出（无 immutable）；当前库 **PostImage=0 / Media=19**，实际受旧缓存影响的资源极少，代码修复为后续兜底。
+
+## APK 发布
+
+- 发布 `/var/www/travel-notes-downloads/tiantu.apk`：**14,727,474 B**，sha256 `48c66eae7e7480d95397452ead6b2dd19a885a214cf18bb27f32223405604e8d`（与本地 APK 一致）；带版本副本 `tiantu-20261019-v1.25.0-b56.apk`。
+- 公网下载验证：HTTP 200、size=14727474、sha256 一致。
+
+## 仍未完成（明确列入下一批）
+
+1. **存量库自动迁移修复**：bootstrap 目前遇到「P1 索引已存在」会失败退出（已提供手工恢复文档）；要做成自动判定需要更多真实库样本验证。
+2. 生产环境 a11y E2E/axe 未跑（CI 无浏览器依赖 axe 的失败项已用登记机制兜底）。
+3. 真机验证（SQLite 加密迁移、压缩画质、隐私锁、分片续传）与 APK 安装升级路径。
+4. 多副本部署（临时文件/内存缓存仍是单实例假设）。
+5. next 16 / prisma 8 / tailwind 4 / eslint 10 大版本（DEPS.md 有计划）。
