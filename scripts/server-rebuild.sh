@@ -81,6 +81,17 @@ tar -tzf "$TARBALL" | sed 's#^\./##' | grep -v '/$' | sort > "$MANIFEST"
 
 # tests 也必须清理：Docker 构建会把 tests/ 一起 COPY 进 builder 并跑 tsc，
 # 服务器上残留的旧测试（引用已删除的 app/api 路由）会让镜像构建在 typecheck 阶段失败。
+# 根目录源码文件（middleware.ts / proxy.ts / next.config.js 等）不在上面目录清理范围：
+# Next 16 把 middleware.ts 更名为 proxy.ts 后，服务器上残留的 middleware.ts 会让 next build
+# 直接报「Both middleware and proxy detected」——2026-10-19 真实踩到，必须在解包后按归档同步。
+ROOT_SOURCE_FILES="middleware.ts proxy.ts next.config.js next-env.d.ts tailwind.config.js eslint.config.mjs .eslintrc.json"
+for f in $ROOT_SOURCE_FILES; do
+  if [ -f "$f" ] && ! grep -qx "$f" "$MANIFEST"; then
+    echo "  移除归档中已不存在的根文件: $f"
+    rm -f "$PROJECT_DIR/$f"
+  fi
+done
+
 for dir in app components lib hooks prisma types tests; do
   [ -d "$PROJECT_DIR/$dir" ] || continue
   ( cd "$PROJECT_DIR" && find "$dir" -type f \

@@ -35,6 +35,20 @@ export default async function globalSetup(_config: FullConfig) {
   if (!session) throw new Error('[e2e-setup] 未收到 admin_session cookie')
   const value = session.split(';')[0].slice('admin_session='.length)
 
+  /**
+   * 把 e2e 账号的一次性引导状态清掉：
+   *  · 新库首次登录会弹「偏好问卷」（全屏 dialog，会拦截首页点击）；
+   *  · 前端引导还有 localStorage 标记。
+   * 通过 API 把 preferencesCompletedAt 落库 + 在 storageState 里预置 onboard 标记，
+   * 让所有用例从「老用户」状态开始，避免用例之间/数据库状态互相影响。
+   */
+  const cookieHeader = 'admin_session=' + value
+  await fetch(`${BASE}/api/me/preferences`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+    body: JSON.stringify({ skipped: true }),
+  }).catch(() => null)
+
   const authDir = path.join(__dirname, '.auth')
   fs.mkdirSync(authDir, { recursive: true })
   fs.writeFileSync(
@@ -56,7 +70,12 @@ export default async function globalSetup(_config: FullConfig) {
           sameSite: 'Lax',
         },
       ],
-      origins: [],
+      origins: [
+        {
+          origin: BASE,
+          localStorage: [{ name: 'tiantu-onboard-seen-v1', value: '1' }],
+        },
+      ],
     }),
   )
 

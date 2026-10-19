@@ -366,3 +366,37 @@
 3. 真机验证（SQLite 加密迁移、压缩画质、隐私锁、分片续传）与 APK 安装升级路径。
 4. 多副本部署（临时文件/内存缓存仍是单实例假设）。
 5. next 16 / prisma 8 / tailwind 4 / eslint 10 大版本（DEPS.md 有计划）。
+
+
+---
+
+# 附六：下一批六项收口（2026-10-19 · 1.26.0 / build 57）
+
+## ① 存量 db-push 库迁移自动修复 ✅
+- scripts/migrate-bootstrap.cjs 重写：存量库 resolve 基线后探测 P1 七个对象 → 缺失部分用 migrate diff 计算、**只应用加法 DDL**（DROP/RENAME/MODIFY/数据语句即中止）、复核 schema diff 为空、逐个 resolve 未记录迁移、再交 entrypoint deploy；失败 exit 1 + 6 步手工指引。
+- 测试：16 例纯函数单测 + 4 例真实 MySQL 集成（模拟 P3018 现场/真正 partial/幂等/全新库），集成断言 schema diff 0。
+- 文档：DEPLOYMENT.md 迁移章节改为「四分支 + 自动修复 + 手工兜底」。
+
+## ② 多副本准备 ✅
+- 可选 Redis：缓存（tag 失效/PX TTL/失败降级内存）、限流（固定窗口/失败锁/指数退避/降级）、懒连接 500ms 超时+60s 冷却；未配 REDIS_URL 行为与改造前完全一致。
+- 媒体分片临时目录 MEDIA_TMP_DIR；compose 可选 redis profile；docs/ops/多副本部署.md 列出 14 项进程内单例清单、scale 示例与迁移顺序。
+- 遗留：34 处 app/api 限流调用点仍内存版（文档有迁移清单，可分批）；视频分片路由仍 os.tmpdir；feed 缓存 60s 不一致；调度去重/日志聚合属外部配置。
+
+## ③ 真机/模拟器验证 ⛔ 环境阻塞（静态验证全部通过）
+- 无 Hypervisor 且无真机：emulator -accel-check 明确报缺驱动；-accel off 软件模拟 15 分钟未 boot（进程 0 CPU）。
+- 静态替代全部通过：1.25.0/56 包 versionCode/ABI/加固属性/签名与旧包一致（可覆盖升级）；包内命中 B4/B5/C1 特征（/api/media/resumable、__clientMutationId、db-upgrade-backup.json、SecureStore、libsqlcipher.so）；debug 包已构建，真机可直接 run-as 验库头。
+- 待真机清单（报告 §6）：SQLite 明文→加密迁移、覆盖升级数据保留、隐私锁冷启动、R8 运行时、压缩/分片、WebView 首屏、logcat 无 FATAL。
+
+## ④ 大版本升级（隔离 worktree → 合并主干）
+- **Next 16.4.2 / React 19.3.1 / ESLint 10.13 ✅**：middleware→proxy、去 tsconfig BOM、flat config、lint 预算 460 单一来源；Turbopack 构建 84/84。
+- **Tailwind 4.3.3 ❌ 回滚**：v4 的 @apply 不支持变体（5 个 @apply 块/3 个带变体）、typography 插件需 @plugin、无视觉基线；已 reset 回 3.4.19，迁移方案写入 UPGRADE-EVALUATION.md。
+- **Prisma 8 ⏸ 不升级**：仍为 8.0.0-rc.23，@prisma/client 无 8.x 配套（E404）；engines 不再支持 Node 20，且自定义 adapter/migrate 链耦合深。
+- 合并后 gate：tsc 0、vitest 107 文件/978 通过（4 skip）、lint 0 error/452 warning（预算 460）、tokens/parity PASS、Turbopack build 84/84、audit-gate 0。
+
+## ⑤ a11y axe 真实运行 ✅ 18/18
+- 真实 MySQL 8.4（3307）+ Next server（3111）+ Playwright 1.63/axe 4.13；15 页（匿名 3 + 登录 12）+ label/图标可读名 + 命令面板焦点圈定。
+- 首跑 9 failed → 逐项修复：Footer ink/60（命中 8 页）、download/travel/login/admin-login 对比度与 24×24 触控目标、LoginDoor/LargeTitle 的 inert、城市邮戳滚动容器 tabIndex、social-accent→accent-strong、8 个纯图标控件补名、social-faint→muted 26 处。末跑 18/18，KNOWN_CONTRAST_DEFERRED 为空。
+
+## ⑥ 部署脚本端到端 + 1.26.0 发版
+- 本轮以 1.26.0 真实走完 server-rebuild（磁盘/空间/备份门禁/清理/解包/重建/健康检查）与镜像构建；部署后验证见下方「发布记录」。
+- APK：15,306,490 B，versionCode 57 / 1.26.0，签名 MD5 f67e57f3…（与历史一致）。
