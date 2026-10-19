@@ -30,6 +30,10 @@ const EXCLUDES = [
   // 且开发工具不应进入发给用户的安装包 —— 与 /admin 同理移出。
   ['app/dev', 'dev'],
   ['middleware.ts', 'middleware.ts'],
+  // Next 16 起 middleware 更名为 proxy.ts（安全头/鉴权逻辑不变），静态壳不能带服务端代理
+  ['proxy.ts', 'proxy.ts'],
+  // 测试文件会 import 被移出的 app/api 路由；静态导出不需要测试，移出后仍对 app 源码做类型检查
+  ['tests', 'tests'],
 ]
 
 // 复制 + 删除（而非 rename）：兼容 Docker overlayfs 的 EXDEV 跨层限制，本地 NTFS 亦可
@@ -68,8 +72,8 @@ try {
       // （缺省会回退 https:** 并告警；壳内图片实际来自 API/COS 域名）
       NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || apiBase,
       NEXT_PUBLIC_APP_PLATFORM: 'mobile',
-      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.25.0',
-      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '56',
+      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.26.0',
+      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '57',
       NEXT_PUBLIC_APP_DOWNLOAD_URL: process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL || process.env.APP_DOWNLOAD_URL || 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk',
       SKIP_DB_ON_BUILD: '1',
     },
