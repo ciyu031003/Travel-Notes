@@ -53,12 +53,13 @@ docker compose up -d --build app
 
 ### 数据库迁移（Prisma Migrate，P0-8）
 
-**唯一真相是 `prisma/migrations/`，禁止再用 `prisma db push`。** 目前有两条迁移：
+**唯一真相是 `prisma/migrations/`，禁止再用 `prisma db push`。** 目前有三条迁移：
 
 | 迁移 | 内容 | 谁用 |
 |---|---|---|
 | `20261018000000_init` | 存量库基线 = P1 之前的 schema（`CREATE TABLE` 全量） | 存量库由 bootstrap 标记为已应用；全新库直接执行 |
 | `20261018120000_p1_indexes_and_site_role` | P1 新增索引 + P0 `User.siteRole` 列（`ALTER TABLE` / `CREATE INDEX`） | 所有库都会执行 |
+| `20261019190000_sync_idempotency_and_tombstones` | B4：`ClientMutation` / `SyncTombstone` + 4 个 `updatedAt` 索引 | 所有库都会执行 |
 
 **容器启动流程**（`scripts/docker-entrypoint.sh`，已无任何 `|| echo [warn]` 吞错）：
 
@@ -66,18 +67,25 @@ docker compose up -d --build app
 wait-for-db → node scripts/migrate-bootstrap.cjs → npx prisma migrate deploy → npm run start
 ```
 
-`migrate-bootstrap.cjs` 的三分支：
+`migrate-bootstrap.cjs` 的分支：
 1. 已有 `_prisma_migrations` 表 → 跳过（Migrate 已接管）；
-2. 无 `_prisma_migrations` 但有 `User` 表 → **存量库**：`prisma migrate resolve --applied 20261018000000_init` 把基线标记为已应用，随后 `migrate deploy` 只跑增量迁移；
-3. 两者都没有 → 全新库：bootstrap 跳过，`migrate deploy` 从基线开始建表。
+2. 无 `_prisma_migrations` 且无 `User` 表 → 全新库：bootstrap 跳过，`migrate deploy` 从基线开始建表；
+3. 无 `_prisma_migrations` 但有 `User` 表 → **存量库**：
+   a. `prisma migrate resolve --applied 20261018000000_init` 把基线标记为已应用；
+   b. 探测 P1 的 7 个对象（`User.siteRole` 列 + 6 个索引）：
+      - **全部不存在** → 交给 deploy 正常应用增量迁移（原行为，零变化）；
+      - **部分/全部已存在**（历史 `db push` 建过，典型 1061 现场）→ **自动修复**：
+        1) `npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` 计算 live → schema 缺失 SQL；
+        2) 只应用**加法语句**（`CREATE TABLE` / `CREATE [UNIQUE] INDEX` / `ALTER TABLE ... ADD COLUMN`）；
+           出现 `DROP` / `RENAME` / `MODIFY` / 数据语句时**中止**（绝不删数据），转手工兜底；
+        3) 复核 diff 已为空后，把 `prisma/migrations` 里尚未记录的迁移逐个 `prisma migrate resolve --applied`；
+        4) 返回 0，由 entrypoint 的 `migrate deploy` 收尾（应无待应用）。
+   c. 任一步失败：**非 0 退出**并打印手工恢复指引（见下文「存量 db-push 库升级到 Migrate」），entrypoint 的 `set -e` 会阻止应用带不确定 schema 启动。
 
-> ⚠️ **存量库首次升级前必须先核对漂移**：如果该库此前用 `db push`/手工 DDL 已经加过 P1 索引或 `siteRole`，增量迁移会因「列/索引已存在」失败。升级前在能连生产库的环境执行：
->
-> ```bash
-> npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script
-> ```
->
-> 输出为空才可直接升级；非空则先按差异手工对齐（或把对应语句从增量迁移中排除并记录），否则 `migrate deploy` 会中途失败，entrypoint 会中止启动（这是有意的 fail-fast）。
+> 升级前仍建议先备份数据库（`scripts/backup-db.sh`）并保留旧镜像以便回滚。自动修复只做加法、不删除任何数据；
+> 日志出现 `[migrate-bootstrap] ✅ 自动修复完成` 表示已自动对齐，无需人工介入。
+> 本次增强的集成验证：临时 MySQL 上模拟 1.24.8 db-push 现场（无 `_prisma_migrations` + P1 对象已存在），
+> 断言 bootstrap 成功、schema diff 0、迁移全部 applied（见 `tests/unit/migrate-bootstrap.integration.test.ts`，需 `TN_BOOTSTRAP_IT_DATABASE_URL`）。
 
 **开发/CI 的漂移门禁**：
 
@@ -461,22 +469,63 @@ sudo nginx -t && sudo systemctl reload nginx
 > 更彻底的方案（推荐后续做）：启用对象存储 + CDN（STORAGE_* 配置即启用），媒体 URL 直指 CDN，Node 零负担。
 
 
-## 存量 db-push 库升级到 Migrate 的已知坑（2026-10-19 实测）
+## 存量 db-push 库升级到 Migrate：自动修复 + 手工兜底（2026-10-19 实测 / 同日增强）
 
 从 1.24.8 及更早版本（schema 由 prisma db push 维护）首次升级到含 Prisma Migrate 的版本时，
 entrypoint 会把基线 `20261018000000_init` 标记为已应用，随后 `migrate deploy` 应用
 `20261018120000_p1_indexes_and_site_role`。如果历史 db push 已经创建过其中某个索引
 （典型：`Album_travelId_idx`），迁移会在该语句上报 P3018 / MySQL 1061（Duplicate key name），
-容器退出。
+容器退出（历史版本的表现；当前 bootstrap 会自动修复，见下）。
 
-恢复步骤（本机已验证，数据无损）：
+### 自动修复（默认路径，无需人工）
+
+`scripts/migrate-bootstrap.cjs` 在标记基线后会探测 P1 的 7 个对象；只要发现**部分/全部已存在**，
+就自动执行与人工恢复等价的修复（数据无损，只做加法）：
+
+1. `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`
+   算出「库里还缺什么」；
+2. **只应用加法语句**：`CREATE TABLE` / `CREATE [UNIQUE] INDEX` / `ALTER TABLE ... ADD COLUMN`。
+   一旦 diff 里出现 `DROP` / `RENAME` / `MODIFY` / 数据语句 → **立即中止**（绝不删数据），转手工兜底；
+3. 复核 diff 已为空后，把 `prisma/migrations/` 中尚未记录的迁移逐个 `prisma migrate resolve --applied`
+   （若某条待 resolve 的迁移 SQL 含 `INSERT/UPDATE/DELETE` 数据回填 → 中止，避免跳过数据步骤）；
+4. 交给 entrypoint 的 `migrate deploy` 收尾（应显示无待应用）。
+
+成功标志（`docker compose logs app | grep migrate-bootstrap`）：
+
+```text
+[migrate-bootstrap] 检测到历史 db-push 已部分/全部创建 P1 对象（partial|all）→ 进入自动修复：
+[migrate-bootstrap] ✅ 自动修复完成：缺失 DDL 已补齐、迁移已标记，migrate deploy 将无待应用。
+```
+
+修复失败时脚本**非 0 退出**（entrypoint `set -e` 阻止应用启动），并打印下面手工步骤；
+所有分支都不会删除/回滚任何数据。再次运行是幂等的（已有 `_prisma_migrations` → 直接跳过）。
+
+### 手工兜底（仅当自动修复中止/失败）
+
+触发条件：diff 含破坏性语句（DROP/RENAME/MODIFY）、待 resolve 的迁移含数据回填、DDL 执行报错。
+此时脚本 stderr 会给出同样的指引。步骤（数据无损，改造前已手工验证）：
 1. 先确认失败迁移：`docker exec travel-notes-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot travel_notes -e "SELECT migration_name,finished_at,rolled_back_at FROM _prisma_migrations"' `
 2. 计算「库里还缺什么」：`docker compose run --rm --no-deps --entrypoint sh app -c 'cd /app && npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script' > /tmp/diff.sql`
-3. 只应用该 diff（新增表/索引，幂等审阅后）：`docker cp /tmp/diff.sql travel-notes-db:/tmp/ && docker exec travel-notes-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot travel_notes < /tmp/diff.sql'`
+3. **审阅** `/tmp/diff.sql`（自动修复中止时通常含 RENAME/DROP，需人工判断）：先备份（`scripts/backup-db.sh`），
+   确认后执行：`docker cp /tmp/diff.sql travel-notes-db:/tmp/ && docker exec travel-notes-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot travel_notes < /tmp/diff.sql'`
 4. 把失败的 P1 与后续迁移标记为已应用：
    `docker compose run --rm --no-deps --entrypoint sh app -c 'cd /app && npx prisma migrate resolve --applied 20261018120000_p1_indexes_and_site_role && npx prisma migrate resolve --applied 20261019190000_sync_idempotency_and_tombstones'`
 5. 清理失败历史行（可选，否则 /api/health 会因「已回滚」行报 pending）：
    `DELETE FROM _prisma_migrations WHERE migration_name='20261018120000_p1_indexes_and_site_role' AND finished_at IS NULL;`
 6. 重启：`docker compose up -d --no-build app`，确认 `/api/health` 200 且 migrations=ok。
 
-预防：升级前在旧库上跑第 2 步的 diff，若输出里含 P1 索引说明历史 db push 已创建过，按上面流程手工标记。
+### 验证
+
+- 单测：`npx vitest run tests/unit/migrate-bootstrap.test.ts`（SQL 加法过滤 / 对象探测 / 迁移目录 / CLI 快速失败）。
+- 集成（需临时 MySQL；CI 的 mysql service 或本机实例）：
+
+  ```bash
+  export TN_BOOTSTRAP_IT_DATABASE_URL="mysql://root@127.0.0.1:13307/tn_bootstrap_it"
+  npx vitest run tests/unit/migrate-bootstrap.integration.test.ts
+  ```
+
+  覆盖两种历史现场：①P1 的 7 个对象全部已存在（P3018 现场）；②仅缺 `Media_storageKey_idx`
+  （真正 partial）。断言 bootstrap 成功、schema diff 0、迁移全部 applied、再次运行走跳过分支、
+  全新空库零行为变化。
+
+> 升级前仍建议：备份数据库（`scripts/backup-db.sh`）、保留旧镜像以便回滚。
