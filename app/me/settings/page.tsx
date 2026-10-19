@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -61,7 +61,7 @@ export default function MeSettingsPage() {
    * 于是会话失效能被 `useSessionRedirect` 识别并送去登录页（手写 fetch 会漏掉这一步）。
    */
   const { data, error: loadError, loading, reload } = useApi<MeInfo>(apiUrl('/api/me'))
-  const expired = useSessionRedirect(loadError)
+  useSessionRedirect(loadError)
 
   const info = data ?? null
   const [nickname, setNickname] = useState('')

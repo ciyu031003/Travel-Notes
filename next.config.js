@@ -70,11 +70,9 @@ const nextConfig = {
     unoptimized: MOBILE_EXPORT ? true : undefined,
   },
   // 低内存构建优化：
-  // - 项目未配置 ESLint，构建期跳过 lint 步骤可显著降低内存与耗时
+  // - Next 16 已移除 next lint / 构建期 ESLint，lint 一律走独立命令（CI 的 npm run lint -- --max-warnings=N）；
+  //   因此这里不再声明 eslint 配置（Next 16 会报 Unrecognized key）。
   // - 类型检查默认保留；极端低内存服务器可设置 SKIP_TSC=1 跳过（不推荐）
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: process.env.SKIP_TSC === '1',
   },

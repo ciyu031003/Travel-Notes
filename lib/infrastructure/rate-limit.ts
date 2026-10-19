@@ -85,6 +85,7 @@ export interface LoginLockOptions {
 const failures = new Map<string, { count: number; lockedUntil: number; lockMs: number }>()
 
 export function checkLoginLock(lockKey: string, options: LoginLockOptions): { locked: boolean; retryAfterSeconds: number } {
+  void options
   const now = Date.now()
   const entry = failures.get(lockKey)
   if (!entry || entry.lockedUntil <= now) {

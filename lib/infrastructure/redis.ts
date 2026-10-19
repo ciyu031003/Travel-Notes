@@ -155,6 +155,7 @@ export function withTimeout<T>(promise: Promise<T>, ms: number = REDIS_TIMEOUT_M
 }
 
 async function connectIoredis(url: string): Promise<RedisClient> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 动态导入的 CJS/ESM 互操作对象
   const mod: any = await import('ioredis')
   const RedisCtor = mod?.default ?? mod?.Redis ?? mod
   const redis: IoredisLike = new RedisCtor(url, {

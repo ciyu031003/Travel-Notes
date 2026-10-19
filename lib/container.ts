@@ -38,8 +38,8 @@ let photoMessageServiceInstance: PhotoMessageService | null = null
 export function getPostService(): PostService {
   if (!postServiceInstance) {
     const postRepo = new PrismaPostRepository()
-    const cache = getCacheService()
     const markdownRenderer = getMarkdownRenderer()
+    const cache = getCacheService()
     postServiceInstance = new PostService(postRepo, cache, markdownRenderer)
   }
   return postServiceInstance

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
@@ -13,16 +12,32 @@ import { apiUrl } from '@/lib/api-base'
 
 const FRAMES = ['portrait', 'landscape', 'square', 'wide', 'portrait', 'landscape'] as const
 
+type FavoriteRow = {
+  id: number
+  coverUrl?: string | null
+  location?: string | null
+  title?: string
+  summary?: string
+  startDate?: string | null
+  dayCount?: number
+  photoCount?: number
+  author?: { nickname?: string | null; username?: string; avatarUrl?: string | null } | null
+  isLiked?: boolean
+  likeCount?: number
+  commentCount?: number
+  favoriteCount?: number
+}
+
 export default function FavoritesGrid() {
   const router = useRouter()
-  const [posts, setPosts] = useState<any[]>([])
+  const [posts, setPosts] = useState<FavoriteRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetch(apiUrl('/api/social/me/favorites?page=1&pageSize=30')).then((r) => r.json()).then((j) => setPosts(j.data || [])).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  const cardProps = (p: any, frame: (typeof FRAMES)[number]) => ({
+  const cardProps = (p: FavoriteRow, frame: (typeof FRAMES)[number]) => ({
     coverUrl: p.coverUrl || undefined,
     cityName: p.location || undefined,
     title: p.title,
@@ -30,7 +45,7 @@ export default function FavoritesGrid() {
     dateRange: p.startDate ? p.startDate.slice(0, 10) : '',
     dayCount: p.dayCount,
     photoCount: p.photoCount,
-    author: p.author ? { name: p.author.nickname || p.author.username, avatar: p.author.avatarUrl } : null,
+    author: p.author ? { name: p.author.nickname || p.author.username || '', avatar: p.author.avatarUrl ?? null } : null,
     // 快捷点赞：收藏列表里也能直接点赞（/api/social/me/favorites 已回填 isLiked）
     postId: p.id,
     liked: p.isLiked,

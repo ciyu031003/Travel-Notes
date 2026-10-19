@@ -178,7 +178,6 @@ export default function SocialFilmCard({
   dateRange,
   dayCount,
   photoCount,
-  location,
   travelRelation,
   author,
   stats,
