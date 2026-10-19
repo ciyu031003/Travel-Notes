@@ -1,0 +1,4 @@
+﻿accel:
+6
+Android Emulator hypervisor driver is not installed on this machine
+accel

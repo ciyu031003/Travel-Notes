@@ -1,0 +1,45 @@
+﻿# APK 静态验证证据（2026-10-19 21:41:16)
+
+## 1) 新版 release APK（android/app/build/outputs/apk/release/app-release.apk）
+package: name='com.tiantu.app' versionCode='56' versionName='1.25.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+sdkVersion:'24'
+targetSdkVersion:'36'
+application-label:'甜途'
+launchable-activity: name='com.tiantu.app.MainActivity'  label='甜途' icon=''
+native-code: 'arm64-v8a' 'armeabi-v7a'
+
+## 2) 关键 manifest 属性（aapt2 xmltree）
+A: http://schemas.android.com/apk/res/android:versionCode(0x0101021b)=56
+A: http://schemas.android.com/apk/res/android:versionName(0x0101021c)="1.25.0" (Raw: "1.25.0")
+A: http://schemas.android.com/apk/res/android:compileSdkVersionCodename(0x01010573)="16" (Raw: "16")
+A: platformBuildVersionCode=36
+A: platformBuildVersionName=16
+A: http://schemas.android.com/apk/res/android:minSdkVersion(0x0101020c)=24
+A: http://schemas.android.com/apk/res/android:targetSdkVersion(0x01010270)=36
+A: http://schemas.android.com/apk/res/android:allowBackup(0x01010280)=false
+A: http://schemas.android.com/apk/res/android:fullBackupContent(0x010104eb)=false
+A: http://schemas.android.com/apk/res/android:usesCleartextTraffic(0x010104ec)=false
+A: http://schemas.android.com/apk/res/android:networkSecurityConfig(0x01010527)=@0x7f130008
+A: http://schemas.android.com/apk/res/android:dataExtractionRules(0x0101063e)=@0x7f130001
+
+## 3) 签名（apksigner --print-certs）
+### 新版 1.25.0 / code 56
+Signer #1 certificate DN: CN=Travel-Notes, OU=Dev, O=tiantu, L=Wuhan, ST=Hubei, C=CN
+Signer #1 certificate SHA-256 digest: e07184d9234431a56774597d567b145ab7469e0834d35c8517bb893ac9b91a11
+### 旧版 1.24.8 / code 54（下载件）
+Signer #1 certificate DN: CN=Travel-Notes, OU=Dev, O=tiantu, L=Wuhan, ST=Hubei, C=CN
+Signer #1 certificate SHA-256 digest: e07184d9234431a56774597d567b145ab7469e0834d35c8517bb893ac9b91a11
+
+## 4) 旧版 badging（升级路径对照）
+package: name='com.tiantu.app' versionCode='54' versionName='1.24.8' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+sdkVersion:'24'
+targetSdkVersion:'36'
+native-code: 'arm64-v8a' 'armeabi-v7a' 'x86' 'x86_64'
+
+## 5) 哈希
+new  SHA256: 48C66EAE7E7480D95397452EAD6B2DD19A885A214CF18BB27F32223405604E8D
+old  SHA256: 3FD8E9F7CAEFDB45052ADB66CBB4DECF409661AB9D6CD4A6C2BD271E212A393D
+
+## 6) 功能标记（assets/public/*.js|html 内字符串）
+/api/media/resumable=1, __clientMutationId=5, db-upgrade-backup.json=1, tiantu-privacy-pin=2, travel-notes.yuanabd.cn=38, 登录你的旅行记忆空间=1
+DEX 字符串: AppUpdater=1, CapacitorSQLite=1, net.sqlcipher=0, SecureStore=1, tiantu_db_secret=1
