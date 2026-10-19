@@ -19,9 +19,24 @@ import { useEffect, useRef } from 'react'
 /** 弹层压入顺序栈（模块级，跨所有弹层实例共享） */
 const overlayStack: symbol[] = []
 
+/**
+ * 弹层内导航标记（2026-10-19）。
+ *
+ * 为什么需要：抽屉打开时压入了同 URL 历史；点击抽屉里的入口时，React 会先关闭抽屉
+ * （state 更新 → cleanup），而 Next router 的导航是异步的（URL 还没变）。
+ * cleanup 此时若 history.back()，会把即将完成的导航顶回旧路由 —— 实测表现为
+ * 「点了没反应 / 又回上一页」。导航前显式打标记，cleanup 在标记窗口内不回退。
+ */
+let overlayNavigationAt = 0
+export function markOverlayNavigation(): void {
+  overlayNavigationAt = Date.now()
+}
+
 export function useCloseOnBack(open: boolean, onClose: () => void, enabled = true): void {
   /** 是否压入过历史（决定卸载清理时是否回退） */
   const pushedRef = useRef(false)
+  /** 压入历史时的位置：若关闭时路由已变（弹层内导航），绝不能 history.back 把新路由顶掉 */
+  const pushedLocationRef = useRef<string | null>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
   const enabledRef = useRef(enabled)
@@ -34,6 +49,7 @@ export function useCloseOnBack(open: boolean, onClose: () => void, enabled = tru
     try {
       window.history.pushState({ ...window.history.state, overlayClose: true }, '')
       pushedRef.current = true
+      pushedLocationRef.current = window.location.pathname + window.location.search
     } catch {
       pushedRef.current = false
     }
@@ -63,7 +79,20 @@ export function useCloseOnBack(open: boolean, onClose: () => void, enabled = tru
         // 监听器已先移除，随后触发的 popstate 不会再次调用 onClose。
         if (pushedRef.current && i === overlayStack.length) {
           pushedRef.current = false
-          window.history.back()
+          /**
+           * 2026-10-19 真机 bug（抽屉入口全回首页）的第二层根因：
+           * 抽屉打开时压了一条同 URL 历史；若本次关闭是因为**弹层内导航**
+           * （router.push/replace 已经改了路由），这里再 history.back 会把刚导航到的页面
+           * 顶回旧路由（表现为“点了没反应/又回上一页”）。
+           * 路由已变 ⇒ 新历史项已经覆盖该槽位，直接放弃回退。
+           */
+          const pushedLocation = pushedLocationRef.current
+          const currentLocation = window.location.pathname + window.location.search
+          const navigating = Date.now() - overlayNavigationAt < 10_000
+          if (!navigating && pushedLocation !== null && pushedLocation === currentLocation) {
+            window.history.back()
+          }
+          pushedLocationRef.current = null
         }
       }
     }

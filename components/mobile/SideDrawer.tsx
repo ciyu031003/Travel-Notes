@@ -2,9 +2,11 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { useModalLayer } from '@/hooks/use-modal-layer'
+import { markOverlayNavigation } from '@/hooks/use-close-on-back'
 import { cn } from '@/lib/utils'
 import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/motion'
 import { Icon } from './Icon'
@@ -139,6 +141,7 @@ export function DrawerRow({
   onClick?: () => void
   href?: string
 }) {
+  const router = useRouter()
   const body = (
     <>
       <span className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-[var(--m-surface-2)] text-[var(--m-muted)]">
@@ -177,8 +180,41 @@ export function DrawerRow({
       <a
         href={href}
         className={cls}
-        onClick={() => {
+        onClick={(event) => {
+          /**
+           * 2026-10-19 真机回归（严重 bug）：半屏抽屉里的所有入口点下去都回到首页。
+           *
+           * 根因（Capacitor Android WebViewLocalServer.java:425）：
+           *   `if (path === "/" || (!lastSegment.includes(".") && html5mode)) serve index.html`
+           * —— html5mode 会把**任何无扩展名路径**（/moments、/dashboard、/me/settings…）
+           * 都回退成 index.html。用原生 <a> 做整页跳转时，WebView 于是加载首页；
+           * 这就是"抽屉里点什么都回首页"的原因（此前误判为 Link 在 portal 里不工作）。
+           *
+           * 修法：拦截普通左键，走 Next 客户端路由（router.push）。静态导出壳里
+           * 客户端路由只请求 `/route.txt`（带扩展名，Capacitor 会命中真实文件），
+           * 不触发整页文档请求，因此不再被 html5 回退劫持。
+           * 修饰键/中键保留浏览器原生行为（Web 端可在新标签打开）。
+           */
+          if (
+            event.defaultPrevented ||
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          ) {
+            return
+          }
+          event.preventDefault()
+          // 先打导航标记（阻止弹层 cleanup 的 history.back 把新路由顶掉），再关抽屉与导航
+          markOverlayNavigation()
           onClick?.()
+          /**
+           * 用 replace 而不是 push：抽屉打开时 useCloseOnBack 已经压了一条同 URL 历史，
+           * replace 正好消费掉它（历史仍是 当前页 → 目标页，返回键回到当前页）；
+           * 配合 useCloseOnBack 的「路由已变不再 back」守卫，导航不会被回退顶掉。
+           */
+          router.replace(href)
         }}
       >
         {body}
