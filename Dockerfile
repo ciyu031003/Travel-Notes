@@ -30,7 +30,7 @@ RUN npx prisma generate
 # 之前 builder 是 SKIP_TSC=1 且完全跳过 lint/test，导致「本地改完直接打包 scp 上线」可以绕过 CI。
 # lint 预算与 .github/workflows/ci.yml 保持一致（486 = 2026-10-18 P0 阶段实测存量，只许下调，不许为了过而放大）。
 RUN npm run typecheck \
- && npm run lint -- --max-warnings=486 \
+ && npm run lint \
  && npm test
 
 RUN SKIP_DB_ON_BUILD=1 npm run build

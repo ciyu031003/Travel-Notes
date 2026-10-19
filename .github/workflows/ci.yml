@@ -51,12 +51,12 @@ jobs:
       - name: Prepare Prisma Client
         run: npx prisma generate
 
-      # P1-25：lint 从「0 error 即通过」改成 warning 预算。
-      # 486 = 2026-10-18 P0 阶段实测存量（0 errors / 486 warnings），只许下调：
-      # 清掉一批就同步改小（建议每两周 -30），最终目标 --max-warnings=0。
-      # 只允许调小，不允许为了「变绿」调大预算。
+      # ESLint 10 flat config 迁移后，warning 预算（460）收敛到 package.json 的 lint 脚本里，
+      # CI 与 Dockerfile 都只调 `npm run lint`，避免两处预算漂移：
+      #   eslint app components hooks lib --max-warnings=460
+      # 预算只许下调；React Compiler 新规则（115 处存量）本轮显式关闭，见 docs/review/_impl/UPGRADE-EVALUATION.md。
       - name: Lint (warning budget)
-        run: npm run lint -- --max-warnings=486
+        run: npm run lint
 
       - name: Type check
         run: npm run typecheck
