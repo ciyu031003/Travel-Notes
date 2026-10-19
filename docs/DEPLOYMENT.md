@@ -459,3 +459,24 @@ sudo nginx -t && sudo systemctl reload nginx
 4. 验证：请求任意媒体，响应头出现 X-Accel-Redirect 时由 nginx 直出；`curl -I` 确认不再经 Node 流式路径。
 
 > 更彻底的方案（推荐后续做）：启用对象存储 + CDN（STORAGE_* 配置即启用），媒体 URL 直指 CDN，Node 零负担。
+
+
+## 存量 db-push 库升级到 Migrate 的已知坑（2026-10-19 实测）
+
+从 1.24.8 及更早版本（schema 由 prisma db push 维护）首次升级到含 Prisma Migrate 的版本时，
+entrypoint 会把基线 `20261018000000_init` 标记为已应用，随后 `migrate deploy` 应用
+`20261018120000_p1_indexes_and_site_role`。如果历史 db push 已经创建过其中某个索引
+（典型：`Album_travelId_idx`），迁移会在该语句上报 P3018 / MySQL 1061（Duplicate key name），
+容器退出。
+
+恢复步骤（本机已验证，数据无损）：
+1. 先确认失败迁移：`docker exec travel-notes-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot travel_notes -e "SELECT migration_name,finished_at,rolled_back_at FROM _prisma_migrations"' `
+2. 计算「库里还缺什么」：`docker compose run --rm --no-deps --entrypoint sh app -c 'cd /app && npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script' > /tmp/diff.sql`
+3. 只应用该 diff（新增表/索引，幂等审阅后）：`docker cp /tmp/diff.sql travel-notes-db:/tmp/ && docker exec travel-notes-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot travel_notes < /tmp/diff.sql'`
+4. 把失败的 P1 与后续迁移标记为已应用：
+   `docker compose run --rm --no-deps --entrypoint sh app -c 'cd /app && npx prisma migrate resolve --applied 20261018120000_p1_indexes_and_site_role && npx prisma migrate resolve --applied 20261019190000_sync_idempotency_and_tombstones'`
+5. 清理失败历史行（可选，否则 /api/health 会因「已回滚」行报 pending）：
+   `DELETE FROM _prisma_migrations WHERE migration_name='20261018120000_p1_indexes_and_site_role' AND finished_at IS NULL;`
+6. 重启：`docker compose up -d --no-build app`，确认 `/api/health` 200 且 migrations=ok。
+
+预防：升级前在旧库上跑第 2 步的 diff，若输出里含 P1 索引说明历史 db push 已创建过，按上面流程手工标记。
