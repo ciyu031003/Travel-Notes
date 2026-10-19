@@ -45,6 +45,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # 必须在 lint/typecheck 之前生成 Prisma Client：CI 的 npm ci 不执行被 allow-scripts
+      # 拦截的 postinstall，缺 .prisma/client 时 tsc 会报 @prisma/client 类型错误（CI 首跑红灯根因）。
+      # CI 的 npm ci 不会执行被 allow-scripts 拦截的 postinstall，显式生成一次 Prisma Client
+      - name: Prepare Prisma Client
+        run: npx prisma generate
+
       # P1-25：lint 从「0 error 即通过」改成 warning 预算。
       # 486 = 2026-10-18 P0 阶段实测存量（0 errors / 486 warnings），只许下调：
       # 清掉一批就同步改小（建议每两周 -30），最终目标 --max-warnings=0。
@@ -66,10 +72,6 @@ jobs:
           name: coverage
           path: coverage/
           retention-days: 7
-
-      # CI 的 npm ci 不会执行被 allow-scripts 拦截的 postinstall，显式生成一次 Prisma Client
-      - name: Prepare Prisma Client
-        run: npx prisma generate
 
       # P0-8：schema 变更只走 Prisma Migrate（prisma/migrations/ 为唯一真相），不再 db push。
       - name: Apply database migrations
