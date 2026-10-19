@@ -252,3 +252,64 @@
 3. PIN 暂无失败次数节流（数据库由 Keystore 密钥保护，PIN 只是 UI 门禁），建议下批加退避。
 4. APK 尚未发布到下载地址；发布时同步更新服务端 `APP_VERSION=1.24.9` / `APP_BUILD_NUMBER=55` / `APP_CHANGELOG` 与 `downloads/tiantu.apk`。
 5. 服务器/CI 首次运行仍需按前文验证（migrate/backup/E2E）。
+
+
+---
+
+# 附四：剩余实施项收口（2026-10-19 · 1.25.0 / build 56）
+
+本轮把此前 A/B/P3 剩余项全部处理（除确需外部环境/产品决策的条目，见文末）：
+
+## B4 离线同步闭环
+- 服务端：ClientMutation 幂等表 + Idempotency-Key（5 个创建端点）；SyncTombstone 墓碑（travel/moment/album/memory 删除写入）；GET /api/sync/changes（ISO/毫秒游标、可见性裁剪、limit 500、serverTime 先行、private no-store）。
+- 客户端：pullChanges 优先增量、404/失败回退全量；pullIncremental 应用实体+墓碑（PENDING_UPLOAD 保留、不误删 media）；游标仅在全部成功后推进。
+- 迁移：20261019190000_sync_idempotency_and_tombstones（2 表 + 4 索引）用旧/新 schema diff 生成；测试 29 例。
+
+## B5 媒体管线
+- 上传前 Canvas 压缩（1600/q0.82，高清 4096/q0.9，GIF 不重编码）、缩略图、本地命名约定（原图/缩略图/远端缓存）与 400MB LRU；上传成功删原图、保留缩略图；入队 payload 去 thumbBase64。
+- 大图（>2MB）分片续传：app/api/media/resumable（512KB 分片、归属校验、会话绑定 userId/albumId、24h TTL），失败自动回退整图。
+- 启动维护接入 OfflineBootstrap；SyncCenter 展示本地媒体占用/配额/缩略图数。
+
+## B11 + B10
+- lib/auth.ts 写路径全部显式 username/id；删除 9 个零调用旧函数；忘记密码按邮箱精确定位用户；admin 页面守卫（能力接口）。
+- /api/health：startedAt 顶层记录（uptime 不再 null）、migrations（未完成/回滚项）、storage（upload+delete 探针），三者全绿才 200。
+
+## B8 + P3-40
+- npm audit：43（24 high）→ **29（13 high / 11 moderate / 5 low / 0 critical）**；nodemailer 10.1.7、prisma 7.10.1、mysql2 3.24.6、postcss 8.5.31、tmp 0.2.7、basic-ftp 6.2.3。
+- 剩余 13 high 全在 dev/build 链路（braces / extract-zip 上游无补丁、tailwind 4、next 16），DEPS.md 记录根因与 2027-01-31 复评；dependabot 分组/ignore 更新。
+- 文档治理：改动记录拆分 scripts/split-changelog.cjs（113 节 → docs/design/changelog/2026.md，幂等 + --check 门禁）、ADR 模板、发布说明模板、失效注释盘点。
+
+## P3-38/39
+- 契约测试：7 个 schema 文件全部导出 schema 的合法/缺字段/类型错/边界 + 统一错误形状 + parseBody/withAuth 契约（59 例）；docs/api/contract.md 覆盖 85 个路由文件 / 108 个写 handler。
+- 覆盖率：Statements 52.38% → **58.11%**；Branches 45.43% → 49.32%；Functions 50.66% → 57.64%；Lines 54.45% → 60.45%；阈值 51/45/50/53 → **57/49/57/59**。
+
+## B2 + B1 + B12
+- 对比度：59 处 text-travel-ink/70 → /80（4.12:1 → 5.37:1，达 AA）；剩余 /60、/50 档位登记 deferred。
+- 弹层：24/24 个 role=dialog/alertdialog 全部接入 useModalLayer（焦点圈定/恢复、ESC/返回键、滚动锁）。
+- a11y E2E：登录态页面 7→12，新增「已登记待收敛对比度」机制与命令面板焦点回归。
+- 裸 img：23 个标签补 16 处属性，22/23 四属性齐全（object-contain 大图预览有意不猜比例）。
+- OG：public/brand/og-1200x630.png（1200×630，79.6KB），layout 与 circle/travel 详情页回退品牌 OG。
+
+## B3
+- 658 处 legacy 变量（--album-*/--social-*/--space-*）→ --ui-*（32 文件，源码残留 0）。
+- tailwind 四色板改 rgb(var(--ui-tw-*-rgb)/<alpha-value>)，52 组通道；迁移前后 1641 条 class 探针比对 1483 条颜色声明 0 不等。
+- checker 第 12 条清零（400 → 0），基线收紧到 307/398；parity 345/345 PASS。代价：tokens.css +6.2KB raw / +1.36KB gzip。
+
+## D2 缓存清理（代码侧）
+- `lib/media-url.ts` 新增 MEDIA_URL_VERSION=2：/api/images 序列化统一加 ?v=2，旧 1 年 immutable 缓存条目自然失效（无需 CDN 控制台）。
+- 生产 Nginx 核查：无 /api/images 的 proxy_cache；/uploads 直出无 immutable。
+
+## 本轮验证（实跑）
+- tsc 0；vitest **103 文件 / 938 用例**全绿；coverage 58.11/49.32/57.64/60.45（阈值 57/49/57/59）。
+- lint 454 warning / 0 error（预算 486）；tokens:check 307/398 exit 0；parity PASS。
+- audit-gate exit 0（13 high 全豁免）；verify-version 1.25.0/56 通过；split-changelog --check 通过。
+- Web build exit 0；移动静态导出 exit 0；`gradlew assembleRelease` BUILD SUCCESSFUL。
+- APK：**14,727,474 B**，versionCode 56 / versionName 1.25.0，label 甜途，签名 MD5 f67e57f3… 与历史一致；manifest cleartext=false / allowBackup=false / networkSecurityConfig / dataExtractionRules。
+
+## 仍待外部环境/产品决策
+1. 生产部署与迁移/备份/缓存的实际验证（本轮随后执行，见部署记录）。
+2. a11y E2E 实际运行（本机无 MySQL）；/60、/50 透明度档位待收敛。
+3. 非 portal 弹层的 inert 只能冻结 body 级兄弟节点，彻底方案需统一 portal（布局重构）。
+4. next 16 / prisma 8 / tailwind 4 / eslint 10 大版本升级（DEPS.md 有计划）。
+5. APK 信创/真机验证：SQLite 加密迁移、压缩画质、隐私锁、分片续传。
+6. 多副本部署假设（临时目录、内存限流/缓存）仍为单实例。
