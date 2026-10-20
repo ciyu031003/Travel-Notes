@@ -270,9 +270,7 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/typography'),
-  ],
+  // Tailwind 4：@tailwindcss/typography 已迁移到 app/globals.css 的 @plugin 指令
 }
 
 

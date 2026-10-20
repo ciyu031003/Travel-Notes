@@ -37,5 +37,7 @@ export default defineConfig({
     url: 'http://localhost:3111/login',
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
+    // 视觉基线（task-32）覆盖 /dev/ui* 预览台：生产构建默认 404，测试服务显式开启。
+    env: { DEV_UI: '1' },
   },
 })
