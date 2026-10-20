@@ -448,3 +448,12 @@
 
 ## 发布记录
 - 1.27.0/58：Tailwind4 + 多副本 + Prisma 门禁；APK 15,311,205 B，sha256 fe227ddf…，签名 MD5 f67e57f3…；生产部署与公网验证见下方。
+
+
+## 1.27.0 发布与安全补丁（2026-10-20 20:17）
+
+- 生产已升级 1.27.0 / build 58：镜像 f0fc28cc（含 sharp 0.35.5），容器 healthy；/api/health 200（db/migrations/storage ok）；/api/version 返回 1.27.0/58 + sha256/size。
+- APK：15,311,205 B，sha256 fe227ddf…，公网下载 200 且哈希一致。
+- 部署中发现并修复：Tailwind4 合并后 node_modules 的 sharp 损坏（0.35.3 目录不完整）→ 重装；随后 audit-gate 报 sharp 两条 high（libheif/librsvg）→ 升级到 0.35.5 后 audit 通过（3 条 high 全为已豁免的 dev 链路）。
+- CI：2e73a06 因 audit sharp 失败；**738fda6（含 sharp 0.35.5 + 报告）CI 全绿（ci + e2e-smoke）**。
+- 发布顺序：先 1.27.0（Tailwind4/多副本）→ 安全补丁镜像（sharp 0.35.5）滚动替换，版本/构建号与 APK 不变。
