@@ -1,5 +1,38 @@
+@import "tailwindcss";
 @import './tokens.css';
 @import './mobile.css';
+
+/* Tailwind 4 配置接入（P2-31 三层 token + 既有 theme 配置都保留在 tailwind.config.js） */
+@config "../tailwind.config.js";
+/* 文章排版插件：v4 必须用 @plugin，JS 配置里的 plugins 不再生效 */
+@plugin "@tailwindcss/typography";
+
+/* 暗色策略：项目一直是 .dark class（v4 默认跟随系统媒体查询，必须显式声明） */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Tailwind 4 preflight 差异回填（保持 v3 视觉零变化）──────────────────────
+   v3→v4 的三处全站级默认值变化：
+     · 默认 border-color：gray-200(#e5e7eb) → currentColor
+     · placeholder 颜色：gray-400(#9ca3af) → currentColor/50%
+     · button 默认 cursor：pointer → default
+   不恢复会让全站边框/占位文字/按钮光标同时漂移（视觉截图会立刻暴露）。 */
+@layer base {
+  *,
+  ::before,
+  ::after,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e5e7eb; /* v3 preflight: theme(colors.gray.200) */
+  }
+  ::placeholder {
+    color: #9ca3af; /* v3 preflight: theme(colors.gray.400) */
+    opacity: 1;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 /* Source Serif 4 — 摄影画册正文衬线体（Art Mode） */
 @font-face {
@@ -59,10 +92,6 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* ══════════════════════════════════════════════════════════════════════════
    容器宽度：收敛为 2 档（P1-2）
 
@@ -80,14 +109,51 @@
 @layer components {
   .container-custom,
   .container-page {
-    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+    width: 100%;
+    max-width: 72rem; /* max-w-6xl = 1152px */
+    margin-inline: auto;
+    padding-inline: 1rem; /* px-4 */
   }
   .container-wide {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    width: 100%;
+    max-width: 80rem; /* max-w-7xl = 1280px */
+    margin-inline: auto;
+    padding-inline: 1rem; /* px-4 */
+  }
+  /* v4 的 @apply 不支持变体（sm:/lg:），这里展开为 media query（与原断点一致） */
+  @media (min-width: 640px) {
+    .container-custom,
+    .container-page,
+    .container-wide {
+      padding-inline: 1.5rem; /* sm:px-6 */
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-custom,
+    .container-page,
+    .container-wide {
+      padding-inline: 2rem; /* lg:px-8 */
+    }
   }
 
   .card {
-    @apply bg-white/75 dark:bg-shell-surface/75 backdrop-blur-sm rounded-2xl shadow-soft border border-travel-line/70 dark:border-shell-line transition-all duration-200 hover:shadow-card;
+    background-color: rgb(255 255 255 / 0.75); /* bg-white/75 */
+    backdrop-filter: blur(4px); /* backdrop-blur-sm（v3 = 4px） */
+    border-radius: 1.25rem; /* rounded-2xl（config 覆盖值） */
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(var(--ui-tw-travel-line-rgb) / 0.7); /* border-travel-line/70 */
+    box-shadow: 0 10px 28px rgba(90, 102, 112, 0.08); /* shadow-soft */
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms; /* transition-all duration-200 */
+  }
+  .card:hover {
+    box-shadow: 0 12px 40px -12px rgba(90, 102, 112, 0.18); /* hover:shadow-card */
+  }
+  html.dark .card {
+    background-color: rgb(var(--ui-shell-surface-rgb) / 0.75); /* dark:bg-shell-surface/75 */
+    border-color: rgb(var(--ui-shell-line-rgb)); /* dark:border-shell-line */
   }
 
   /* ── 空间主题的渐变（P1） ────────────────────────────────────────────────
