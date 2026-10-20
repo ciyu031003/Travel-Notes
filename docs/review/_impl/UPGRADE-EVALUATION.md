@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | ① | Next 15.5 → **16.4.2**（React 19.0 → 19.3.1） | ✅ 成功 | `9957e44 chore-upgrade-next16` | tsc 0 / vitest 103 文件 938 用例 / lint 0 error / tokens+parity pass / Turbopack build 84⁄84 静态页 |
 | ② | ESLint 8 → **10.13**（flat config） | ✅ 成功 | `530ef11 chore-upgrade-eslint10` + `300b52e chore-eslint10-node-engines-and-gates` | lint 0 error / 460 warning（预算内）/ tsc / vitest / build 全绿 |
-| ③ | Tailwind 3.4 → **4.3.3** | ❌ 回滚 | 无（`git reset --hard 530ef11`） | build 失败：`Cannot apply unknown utility class 'sm:px-6'`（详见 §3） |
+| ③ | Tailwind 3.4 → **4.3.3** | ✅ 成功（第二批 · task-32） | `chore-upgrade-tailwind4` | 视觉基线 8/8 通过（5 页 0px、3 页 ≤0.00072）；tsc/vitest/lint/tokens/parity/build 全绿（详见 §7） |
 | ④ | Prisma 7.10 → 8.x | ⏸ 仅评估 | 无 | 8.x 仍为 RC，且 `@prisma/client` 无 8.x 稳定版（详见 §4） |
 
 分支最终包含 ①② + 文档提交；Tailwind 4 改动已完全回滚。
@@ -137,3 +137,74 @@ CssSyntaxError: tailwindcss: app/globals.css:1:1: Cannot apply unknown utility c
 - 整个分支回滚：不合并即可；
 - 单 commit 回滚：`git revert 9957e44`（Next 回 15.5）/ `git revert 530ef11 300b52e`（ESLint 回 8，需恢复 `.eslintrc.json`）；
 - Tailwind 4 改动未进入任何 commit，无需回滚。
+
+
+---
+
+## 7. Tailwind 4.3.3 迁移实施记录（第二批 · task-32 · 2026-10-20）
+
+> 工作区：独立 worktree `C:\CodeFiles\tn-tailwind4`，分支 `upgrade/tailwind4`，基线 `7f89729`（1.26.0/57）；不 push、不合并 master。
+> 环境：MySQL 127.0.0.1:3308（travel_notes_visual，migrate deploy 已执行）；Playwright webServer = 生产构建 + next start :3111。
+
+### 7.1 视觉基线（先于升级落地）
+
+- 新增 `tests/e2e/visual.spec.ts`：8 页（/dev/ui、/dev/ui/space、/dev/ui/v4、/login、/download、/travel、/me、/dashboard）× viewport 390×844、dpr=1、zh-CN、light。
+- 确定性措施：`reducedMotion='reduce'` + `toHaveScreenshot({ animations:'disabled', caret:'hide', maxDiffPixelRatio:0.001 })`；页面脚本执行前冻结 Date（2026-03-15T10:24+08:00）与 Math.random（mulberry32 固定种子）；等待 document.fonts.ready、全部 `<img>` complete、networkidle、600ms 稳定窗；**登录页 mp4 背景统一 pause + seek 0**（animations:'disabled' 不会暂停 video，否则稳定性判定永远失败）。
+- `playwright.config.ts` 的 webServer 增加 `env: { DEV_UI: '1' }`：/dev/ui* 生产构建默认 404，视觉测试需显式开启。
+- 基线 PNG 入库：`tests/e2e/visual.spec.ts-snapshots/*-win32.png`（8 张）。基线 commit `5eb91a1 test-visual-baseline-tailwind3`；login 基线由 Tailwind3 worktree 用最终版 spec 重新生成后 amend 进该 commit，消除视频帧噪声。
+
+### 7.2 升级改动
+
+- 依赖：`tailwindcss` 3.4 → **4.3.3**（移到 devDependencies）、新增 `@tailwindcss/postcss` 4.3.3（dev）；`postcss.config.js` 改为 `{ '@tailwindcss/postcss': {} }`（移除 autoprefixer；依赖保留未删）。
+- `app/globals.css`：
+  - 顶部 `@import "tailwindcss"`，删除旧 `@tailwind base/components/utilities`；
+  - `@config "../tailwind.config.js"` 保留既有 theme（P2-31 三层 token 不动）；
+  - `@plugin "@tailwindcss/typography"`（JS 配置里的 plugins 移除）；
+  - `@custom-variant dark (&:where(.dark, .dark *))` 显式恢复 class 暗色策略（v4 默认 media）；
+  - preflight 差异回填（`@layer base`）：默认 border-color #e5e7eb（v4 改 currentColor）、placeholder #9ca3af/opacity 1（v4 改 currentColor/50%）、`button` cursor:pointer（v4 改 default）；
+  - 5 个 `@apply` 中 3 个含变体块改写为普通 CSS：容器类（sm:/lg: → media query 640/1024px；max-w 72rem/80rem、padding 1/1.5/2rem 与原值一致）、`.card`（bg-white/75、backdrop-blur 4px、rounded 1.25rem、travel-line/70 边框、shadow-soft、transition 200ms、hover shadow-card、html.dark 覆盖）；`.mermaid` 与 `pre code.hljs` 两个无变体 @apply 保留（v4 支持）。
+- `tailwind.config.js`：删除 `plugins: [require('@tailwindcss/typography')]`，其余 theme/screens/content 原样保留（由 @config 载入）。
+
+### 7.3 回归结果
+
+默认阈值（maxDiffPixelRatio 0.001）：`npx playwright test tests/e2e/visual.spec.ts` → **8/8 通过**。
+
+零容忍实测（`VISUAL_MAX_DIFF_RATIO=0`，测精确差异像素）：
+
+| 页面 | 差异像素 | 占比 | 判定 |
+|---|---|---|---|
+| dev-ui | 0 | 0 | ✅ 完全一致 |
+| dev-ui-space | 0 | 0 | ✅ 完全一致 |
+| dev-ui-v4 | 0 | 0 | ✅ 完全一致 |
+| travel | 0 | 0 | ✅ 完全一致 |
+| dashboard | 0 | 0 | ✅ 完全一致 |
+| login | 103 | 0.00031 | 接受：diff 图人工核对无布局位移，仅子像素渲染差异 |
+| download | 51 | 0.00015 | 接受：同上 |
+| me | 238 | 0.00072 | 接受：同上 |
+
+- 3 页残余差异均为文本/图片抗锯齿边缘的低幅度色差（Playwright 阈值以上像素），无任何区域尺寸/位置变化；判定为 Tailwind4（Lightning CSS）颜色/阴影计算的舍入差异，**非布局回归**，按「有记录地接受」处理（远低于 0.001 阈值）。
+- 复跑命令：`npx playwright test tests/e2e/visual.spec.ts`（严格测量：`$env:VISUAL_MAX_DIFF_RATIO='0'`）。
+
+### 7.4 门禁（全部通过）
+
+```text
+npx tsc --noEmit --incremental false        → exit 0
+npx vitest run --reporter=dot               → 107 文件通过 / 1 skipped；978 用例通过 / 4 skipped
+npm run lint                                → exit 0（0 error / 452 warning，预算 460）
+node scripts/check-design-tokens.mjs --check-baseline → ✅ 无新增回退（307/398）
+node scripts/check-token-parity.mjs         → PASS 345/345
+SKIP_DB_ON_BUILD=1 npx next build           → exit 0（Compiled successfully，Turbopack）
+```
+
+### 7.5 回滚方式
+
+- 整体：分支 `upgrade/tailwind4` 不合并即回滚；或 `git reset --hard 7f89729` + `npm ci`。
+- 单 commit：`git revert chore-upgrade-tailwind4` 后 `npm ci`（lockfile 恢复 Tailwind 3.4 依赖树）；视觉基线 commit 可独立保留（Tailwind3 下同样 8/8 通过）。
+- 未入库：`.env`（DATABASE_URL/JWT_SECRET）、`tests/e2e/.auth/`、`test-results/`（gitignore）。
+
+### 7.6 已知代价 / 后续
+
+- @config 兼容层仍在；长期建议把主题迁移到 CSS-first `@theme`，逐步删除 JS config。
+- autoprefixer 已不被 postcss 使用，可从 devDependencies 移除（本批保留以缩小 diff）。
+- `www/` 旧静态产物仍是 Tailwind3 生成，下次移动端构建自动重建。
+- 视觉基线仅覆盖 8 页移动视口；桌面视口与其余页面按后续批次扩展。
