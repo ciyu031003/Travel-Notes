@@ -421,3 +421,30 @@
 | Tailwind 4 | ❌ 回滚 | @apply 变体/typography 插件/无视觉基线；评估文档 |
 | Prisma 8 | ⏸ 阻塞 | 仅 RC、无 8.x client；engines 与 adapter 耦合 |
 | 部署脚本端到端 | ✅ | 1.26.0 真实 deploy；根文件同步修复已验证 |
+
+
+---
+
+# 附七：Tailwind 4 / Prisma 8 / 多副本收尾（2026-10-20 · 1.27.0 / build 58）
+
+## Tailwind 4 迁移 ✅（含视觉截图基线）
+- 在隔离 worktree 先建基线：tests/e2e/visual.spec.ts 覆盖 8 页（/dev/ui、/dev/ui/space、/dev/ui/v4、/login、/download、/travel、/me、/dashboard，390×844，animations disabled，/login 视频 pause+seek 0 保证可复现），基线 PNG 入库。
+- 升级 tailwindcss/@tailwindcss/postcss 4.3.3：@import "tailwindcss" + @config 保留旧配置、typography 改 @plugin、dark 自定义变体、preflight 三项默认值回填 v3（border-color/placeholder/button cursor）、3 个含变体 @apply（sm/lg/dark/hover）改写为普通 CSS + media query/html.dark。
+- 视觉回归：默认阈值 0.001 下 **8/8 通过**；零容忍实测 5 页 0 px，login 103 px / download 51 px / me 238 px（≤0.00072，人工核对仅抗锯齿级色差，已记录接受）。
+- 门禁：tsc 0、vitest 988 通过、lint 0 error/452 warning、tokens 307/398、parity 345/345、Turbopack build 0。
+- 文档：UPGRADE-EVALUATION.md §7 记录基线页、差异清单、修复/接受明细、回滚方式。
+
+## Prisma 8 就绪门禁 ⏸（仍 RC，已把等待变成可执行门禁）
+- 实测 registry：prisma latest=8.0.0-rc.23、@prisma/client latest=7.10.1（无 8.x stable/配套 client）；engines 与当前 Node 24 不匹配。
+- 新增 scripts/prisma-upgrade-readiness.cjs（三条件判定 + JSON + 未就绪 exit 1 + --self-test 4 场景）；package.json 增加 prisma:ready；新增 .github/workflows/prisma-ready.yml 每周一自动检查并在 ready 时输出 notice。
+- 预演（RC + client dev tag）：RC client ETARGET、CLI 平台化重写（validate/generate 取消、migrate→migration、db migrate）、prisma.config defineConfig 移除（TS2305）、7.x 迁移包格式可能不兼容；已记录到 PRISMA8-UPGRADE-RUNBOOK.md（7 步流程/风险/回滚/验收）。
+- 结论：stable 8 + 配套 client 发布后按 runbook 起分支；当前生产仍 7.10.1。
+
+## 多副本收尾 ✅
+- app/api 全部 34 处同步限流迁移到 *Shared（Redis 或内存委托），17 个文件；key/limit/窗口/429 语义不变，新增 parity 单测。
+- 视频分片临时目录改 mediaTmpDir('tn-vuploads')，统一受 MEDIA_TMP_DIR 控制。
+- feed 一致性：新增 social-feed tag，点赞/收藏/评论/删评/改标题/屏蔽、以及 TravelPost 发布/更新/取消公开/分享/取消分享后立即失效缓存；9 个新测试（命中/失效/tag）。
+- docs/ops/多副本部署.md 更新为「三项已完成 + 剩余外部项清单」。
+
+## 发布记录
+- 1.27.0/58：Tailwind4 + 多副本 + Prisma 门禁；APK 15,311,205 B，sha256 fe227ddf…，签名 MD5 f67e57f3…；生产部署与公网验证见下方。
