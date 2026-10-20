@@ -89,27 +89,46 @@ CssSyntaxError: tailwindcss: app/globals.css:1:1: Cannot apply unknown utility c
 - `git reset --hard 530ef11` 回滚全部 Tailwind 改动 + `npm ci` 恢复依赖（tailwindcss 3.4.19 已确认）。
 - 建议：单独分支 + 先做截图基线（P3-38 视觉回归），按「typography 插件 → @apply 变体 → preflight 差异 → 视觉回归」顺序迁移，预估 1–2 人日；迁移期间不要与 token 三层化同时进行。
 
-## 4. ④ Prisma 8 评估（仅评估，不升级）
+## 4. ④ Prisma 8 就绪门禁与升级预演（2026-10-20 更新）
 
-### 事实（npm 元数据实测，2026-10-19）
+> 详细执行手册：**`docs/review/_impl/PRISMA8-UPGRADE-RUNBOOK.md`**（步骤/风险/回滚/验收）。
+> 自动就绪判定：**`npm run prisma:ready`**（`scripts/prisma-upgrade-readiness.cjs`，见 §4.1）。
 
-- `prisma` dist-tags：`latest = 8.0.0-rc.23`（**仍是 RC**）、`prev = 7.10.1`；本仓库当前 7.10.1。
-- `@prisma/client` dist-tags：`latest = 7.10.1`，8.x 只有 `dev = 8.1.0-dev.9` —— **没有与 prisma 8.0.0-rc 配套的稳定 client 版本**（直接 `npm i @prisma/client@8.0.0-rc.23` 实测 E404）。
-- `prisma@8.0.0-rc.23` engines：`^22.18.0 || ^24.11.0 || >=26.0.0` —— **不再支持 Node 20**；本仓库 engines 声明含 20，Dockerfile 用 node:22（需 ≥22.18）。
-- 依赖结构大改：新增 `@prisma/cli-engine`、`@prisma/compute-sdk`、`@prisma/orm-toolchain`、`@prisma/management-api-sdk` 等，说明 8.x 是 CLI/运行时的整体重写，不是普通 major。
+### 4.1 就绪门禁（新增脚本）
 
-### 与本项目的耦合点（升级风险）
+`scripts/prisma-upgrade-readiness.cjs` 直接查 npm registry，判定三个条件并输出 JSON（未就绪 exit 1）：
 
-1. `prisma/schema.prisma` 的 `generator client { provider = "prisma-client-js" }` —— 8.x 主推新的 `prisma-client` 生成器（ESM/显式 output），`prisma-client-js` 的去留需按正式版文档确认；
-2. `lib/prisma-adapter.ts`（528 行自定义 mysql2 适配器）+ `lib/db.ts` 的 `PrismaClient` 构造 —— driver adapter API 在 8.x 若有签名/生命周期变化，需要重做适配层并回归全部数据路径；
-3. `prisma.config.ts`（7.x 引入的 config：schema/migrations/datasource）—— 8.x 的迁移/配置命令可能再变（本仓库 P0 刚把迁移基线切到 `migrate deploy` + `migrate diff --from-migrations`，8.x 若改参数会再次破坏门禁）；
-4. 数据库迁移：8.x 正式版前不宜动生产迁移链；当前 allowlist 里 prisma 已无 high（7.10.1 已修复）。
+1. `prisma` 存在 **stable >= 8**（排除 RC/dev）；
+2. `@prisma/client` 存在与 prisma **同 major.minor 的 stable 版本**；
+3. 目标版本 `engines.node` 覆盖**当前 Node**（同时校验 client）。
 
-### 结论与升级前提
+当前实测（2026-10-20）：`ready=false`，原因 `prisma 没有 stable >= 8（registry latest=8.0.0-rc.23；最高 stable=7.10.1）`。`--self-test` 覆盖 RC-only / client 滞后 / engines 不支持 / 全满足 4 类场景（mock registry，不依赖网络）。
 
-- **现在不升级**（RC + client 未配套 + Node 20 支持被移除）。
-- 正式版发布后按此顺序评估：① 在独立 worktree 升级 `prisma`/`@prisma/client` 到同一 stable 版本；② 按新文档改 generator/driver adapter；③ 跑 `prisma validate` + `migrate diff --exit-code`（空 diff）+ 单测；④ 用真实 MySQL 跑 `migrate deploy` 与核心读写回归；⑤ 再合并。
+```bash
+npm run prisma:ready            # JSON + exit code（0=可升级，1=未就绪）
+node scripts/prisma-upgrade-readiness.cjs --self-test   # 判定逻辑自测
+```
 
+### 4.2 升级预演结果（worktree `upgrade/prisma8`，base 7f89729）
+
+- **安装**：`prisma@8.0.0-rc.23` + `@prisma/client@8.0.0-rc.23` → `ETARGET`（client 无该版本）；改用 `@prisma/client@8.1.0-dev.9`（dev tag）可安装。
+- **CLI 平台化重写**：`validate`/`generate` 命令已不存在（`CLI.UNKNOWN_COMMAND`），改为 `contract emit|infer|format|print`；`migrate` 改名 `migration`（check/graph/list/log/new/plan/show/status/ref），应用迁移改为 `db migrate`；CLI 输出变成 JSON envelope。
+- **config 破坏**：`prisma.config.ts` 的 `defineConfig` 在 `prisma/config` 中已被移除 → `tsc` 报 `TS2305`。
+- **代码编译**：`tsc` 仅 1 个错误（上述 config）；`lib/prisma-adapter.ts` + `lib/db.ts` 在 client 8.1.0-dev 类型下未报错（仅说明类型表面兼容，运行时未验证）。
+- **迁移链**：P0 落地的 `migrate deploy`、`migrate diff --from-migrations`（CI drift 门禁）、`migrate resolve`（bootstrap）在 8.x 全部需要按新命令/新迁移包格式重写；8.x migration 是「由 contract 变更派生的 on-disk package」，与 7.x `prisma/migrations/*.sql` 很可能不兼容，需空库重放 + 存量库 `migration status` 核对。
+- **未验证**：`prisma db migrate` 真库执行、迁移表兼容、client dev tag 的运行时行为（本机无 MySQL）。预演后已回滚到 7.10.1（`npm ci` + `npx prisma generate`，tsc/vitest 复绿）。
+
+### 4.3 触发条件（全部满足才启动正式升级）
+
+1. `npm run prisma:ready` exit 0（prisma stable ≥8 + client 同 major.minor stable + engines 覆盖 Node）；
+2. 官方 stable release notes 明确 contract/migration/`db migrate` 最终形态；
+3. Node 矩阵统一（8.x 要求 `^22.18 || ^24.11 || >=26`；当前 engines 含 Node 20 需同步调整 CI/Docker/本地）；
+4. 按 runbook 在 staging（有 MySQL）完成迁移重放/存量库核对/回滚演练。
+
+### 4.4 结论
+
+- 现在仍**不升级**（无 stable 8.x、无 stable client、CLI/迁移体系仍在 RC 重写中）。
+- 就绪后按 `PRISMA8-UPGRADE-RUNBOOK.md` 执行；就绪门禁可进 CI/定时任务，未就绪即 exit 1 提醒仍被阻塞。
 ## 5. 合并建议（给 Lead）
 
 ### 分支与提交
@@ -130,7 +149,7 @@ CssSyntaxError: tailwindcss: app/globals.css:1:1: Cannot apply unknown utility c
 4. **middleware→proxy 改名后**，需回归 Nginx 反代下的安全头、CSP、CORS（App 本地壳 origin）、登录重定向与 `/uploads` 静态缓存；建议跑一遍现有 e2e 冒烟（CI 已覆盖 5 spec）。
 5. Turbopack 的 `Dynamic filesystem access` 警告：确认 `app/api/uploads` 的 trace 范围可接受（当前会 trace 整个项目），后续单独优化。
 6. ESLint 10：CI/Dockerfile 已改为单一预算来源；React Compiler 规则保持 off，待专项清理（115 处）后再开；`engines` 已收紧到 `^20.19 || ^22.13 || >=24 <25`，README 的 Node 说明可同步（当前写 20–24）。
-7. Tailwind 4 / Prisma 8 **不要**随本分支合并，按 §3/§4 单独排期。
+7. Tailwind 4 / Prisma 8 **不要**随本分支合并；Prisma 8 的触发条件/步骤/回滚见 `PRISMA8-UPGRADE-RUNBOOK.md`，就绪状态用 `npm run prisma:ready` 检查。
 
 ## 6. 回滚方式
 

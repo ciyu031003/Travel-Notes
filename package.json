@@ -17,7 +17,8 @@
     "typecheck": "tsc --noEmit",
     "test:coverage": "vitest run --coverage",
     "audit:gate": "node scripts/audit-gate.cjs",
-    "tokens:parity": "node scripts/check-token-parity.mjs"
+    "tokens:parity": "node scripts/check-token-parity.mjs",
+    "prisma:ready": "node scripts/prisma-upgrade-readiness.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1109.0",
