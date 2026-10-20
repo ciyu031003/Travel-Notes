@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { hashPassword } from '@/lib/auth-utils'
 import { getSiteSettings, updateCredentials } from '@/lib/auth'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { PasswordSchema } from '@/lib/validators/auth.validator'
 import { ApiError, errorResponse } from '@/lib/api-response'
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const requestId = getRequestId(request)
   try {
     const ip = getClientIp(request)
-    const limit = rateLimit({ prefix: 'setup:ip', key: ip || 'unknown', limit: 5, windowMs: 10 * 60 * 1000 })
+    const limit = await rateLimitShared({ prefix: 'setup:ip', key: ip || 'unknown', limit: 5, windowMs: 10 * 60 * 1000 })
     if (!limit.ok) {
       return NextResponse.json(
         { error: '尝试过于频繁，请稍后再试', code: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds, requestId },

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth-middleware'
 import { getSiteService } from '@/lib/container'
 import { generateAlbumToken, ALBUM_COOKIE } from '@/lib/album-auth'
-import { rateLimit, checkLoginLock, recordLoginFailure, clearLoginFailures } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared, checkLoginLockShared, recordLoginFailureShared, clearLoginFailuresShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { z } from 'zod'
 import { ApiError, errorResponse } from '@/lib/api-response'
@@ -57,16 +57,16 @@ export async function POST(request: Request) {
     const ip = getClientIp(request)
 
     // ① IP 维度窗口限流
-    const ipLimit = rateLimit({ prefix: 'album:ip', key: ip || 'unknown', limit: IP_LIMIT, windowMs: IP_WINDOW_MS })
+    const ipLimit = await rateLimitShared({ prefix: 'album:ip', key: ip || 'unknown', limit: IP_LIMIT, windowMs: IP_WINDOW_MS })
     if (!ipLimit.ok) return tooManyRequests(ipLimit.retryAfterSeconds)
 
     // ② 全局维度（低熵口令必须防换 IP 的分布式爆破）
-    const globalLimit = rateLimit({ prefix: 'album:global', key: 'all', limit: GLOBAL_LIMIT, windowMs: GLOBAL_WINDOW_MS })
+    const globalLimit = await rateLimitShared({ prefix: 'album:global', key: 'all', limit: GLOBAL_LIMIT, windowMs: GLOBAL_WINDOW_MS })
     if (!globalLimit.ok) return tooManyRequests(globalLimit.retryAfterSeconds)
 
     // ③ 失败退避锁：最近连续失败时直接拒绝，不再消耗口令尝试次数
     const lockKey = albumLockKey(ip)
-    const lock = checkLoginLock(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
+    const lock = await checkLoginLockShared(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
     if (lock.locked) return tooManyRequests(lock.retryAfterSeconds, '失败次数过多，请稍后再试')
 
     // P1-17：body 用 zod（date 长度上限 / skip 布尔；两者至少一个）
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
     if (!expectedDate) {
       // 多元场景：未设置纪念日（如独旅用户）时，直接放行解锁，不强制密码
       // 安全性不受影响：本来就无密码保护，放行只是跳过无意义的门槛
-      clearLoginFailures(lockKey)
+      await clearLoginFailuresShared(lockKey)
       const token = await generateAlbumToken('none')
       const response = NextResponse.json({ success: true, unlocked: true })
       response.cookies.set(ALBUM_COOKIE, token, {
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
       inputDate.replace(/-/g, '') === expectedDate.replace(/-/g, '')
 
     if (isValid) {
-      clearLoginFailures(lockKey)
+      await clearLoginFailuresShared(lockKey)
       const token = await generateAlbumToken(expectedDate)
       const response = NextResponse.json({ success: true })
       response.cookies.set(ALBUM_COOKIE, token, {
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
     }
 
     // 失败：记一次失败并按次数退避（recordLoginFailure 返回本次锁定时长）
-    const failure = recordLoginFailure(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
+    const failure = await recordLoginFailureShared(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
     return NextResponse.json(
       { success: false, error: '日期不正确', retryAfterSeconds: failure.retryAfterSeconds },
       { status: 401 },

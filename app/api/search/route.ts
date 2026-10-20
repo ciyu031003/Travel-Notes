@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { getPostService } from '@/lib/container'
 import { ok, fail, serverError } from '@/lib/api-response'
 import { applyCacheControl } from '@/lib/http-cache'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 
 export const dynamic = 'force-dynamic'
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // 阶段 A · A6：搜索为全表扫描类查询，按 IP 限流防止滥用
     const ip = getClientIp(request)
-    const limit = rateLimit({ prefix: 'search:ip', key: ip || 'unknown', limit: 15, windowMs: 60_000 })
+    const limit = await rateLimitShared({ prefix: 'search:ip', key: ip || 'unknown', limit: 15, windowMs: 60_000 })
     if (!limit.ok) {
       return fail('搜索过于频繁，请稍后再试', 429)
     }

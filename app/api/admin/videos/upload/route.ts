@@ -12,7 +12,7 @@ import {
   MAX_VIDEO_SIZE,
   MAX_VIDEO_COUNT,
 } from '@/lib/infrastructure/media-validation'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { enqueueTranscode, sweepAndEnqueue } from '@/lib/infrastructure/video-transcode'
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   try {
     // 上传限流：IP 每 15 分钟最多 60 次视频上传请求
     const ip = getClientIp(request)
-    const limit = rateLimit({ prefix: 'video-upload:ip', key: ip || 'unknown', limit: 60, windowMs: 15 * 60 * 1000 })
+    const limit = await rateLimitShared({ prefix: 'video-upload:ip', key: ip || 'unknown', limit: 60, windowMs: 15 * 60 * 1000 })
     if (!limit.ok) {
       return NextResponse.json(
         { error: '上传过于频繁，请稍后再试', retryAfterSeconds: limit.retryAfterSeconds },

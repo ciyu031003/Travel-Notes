@@ -59,7 +59,7 @@ vi.mock('@/lib/modules/travel/travel.service', () => ({
   canManageTravel: canManageTravelMock,
   addExpense: addExpenseMock,
 }))
-vi.mock('@/lib/infrastructure/rate-limit', () => ({ rateLimit: () => ({ ok: true }) }))
+vi.mock('@/lib/infrastructure/rate-limit-factory', () => ({ rateLimitShared: async () => ({ ok: true }) }))
 vi.mock('sharp', () => ({ default: vi.fn() }))
 
 import { POST as previewPOST } from '@/app/api/admin/preview/route'

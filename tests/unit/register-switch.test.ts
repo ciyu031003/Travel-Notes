@@ -7,7 +7,7 @@ import { NextRequest } from 'next/server'
 const { registerMock } = vi.hoisted(() => ({ registerMock: vi.fn() }))
 
 vi.mock('@/lib/container', () => ({ getAuthService: () => ({ register: registerMock }) }))
-vi.mock('@/lib/infrastructure/rate-limit', () => ({ rateLimit: () => ({ ok: true }) }))
+vi.mock('@/lib/infrastructure/rate-limit-factory', () => ({ rateLimitShared: async () => ({ ok: true }) }))
 
 import { POST } from '@/app/api/register/route'
 

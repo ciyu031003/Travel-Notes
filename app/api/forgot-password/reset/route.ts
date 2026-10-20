@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthService } from '@/lib/container'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { ResetPasswordSchema } from '@/lib/validators/auth.validator'
 import { ApiError, errorResponse } from '@/lib/api-response'
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   try {
     const ip = getClientIp(request)
     // IP 维度：每 15 分钟最多 20 次重置尝试
-    const ipLimit = rateLimit({ prefix: 'reset:ip', key: ip || 'unknown', limit: 20, windowMs: 15 * 60 * 1000 })
+    const ipLimit = await rateLimitShared({ prefix: 'reset:ip', key: ip || 'unknown', limit: 20, windowMs: 15 * 60 * 1000 })
     if (!ipLimit.ok) {
       return NextResponse.json(
         { error: '尝试过于频繁，请稍后再试', code: 'RATE_LIMITED', retryAfterSeconds: ipLimit.retryAfterSeconds, requestId },

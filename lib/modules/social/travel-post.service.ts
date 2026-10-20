@@ -8,6 +8,8 @@ import { prisma } from '../../db'
 import type { Prisma } from '@prisma/client'
 import { isPublishedToCircle } from './social-permissions'
 import { storageKeyToUrl, absoluteMediaUrl } from '../../media-url'
+// 多副本收尾 · task-33 ③：TravelPost 的发布/取消发布/分享都会改变旅行圈 feed，写后失效缓存
+import { invalidateSocialFeedCache } from './feed-cache'
 
 /**
  * 事务客户端（P1-15）：travel.service 的 create/update/delete 会把
@@ -66,6 +68,8 @@ export async function syncTravelPost(travelId: number, tx?: TxClient): Promise<T
   if (!isPublishedToCircle(travel)) {
     // 取消公开：失败必须让事务回滚（老实现 .catch(() => {}) 会留下"帖子还在但旅行已私密"的不一致）
     await db.travelPost.deleteMany({ where: { travelId } })
+    // 帖子从 feed 消失：写后立即失效（多副本配 Redis 时全副本生效）
+    await invalidateSocialFeedCache()
     return null
   }
 
@@ -85,6 +89,7 @@ export async function syncTravelPost(travelId: number, tx?: TxClient): Promise<T
         ...(authorId ? { authorId } : {}),
       },
     })
+    await invalidateSocialFeedCache()
     return { id: existing.id, published: true }
   }
 
@@ -99,6 +104,7 @@ export async function syncTravelPost(travelId: number, tx?: TxClient): Promise<T
       coverMediaId,
     },
   })
+  await invalidateSocialFeedCache()
   return { id: created.id, published: true }
 }
 
@@ -111,6 +117,7 @@ export async function publishTravelPost(travelId: number, tx?: TxClient): Promis
 export async function unpublishTravelPost(travelId: number, tx?: TxClient): Promise<void> {
   const db = tx ?? prisma
   await db.travelPost.deleteMany({ where: { travelId } })
+  await invalidateSocialFeedCache()
 }
 
 /** 按 Travel ID 取公开帖子 */
@@ -174,6 +181,7 @@ export async function syncPublicPostToCircle(postId: number): Promise<TravelPost
     } catch (err) {
       console.error('[travel-post.syncPublicPostToCircle] TravelPost 清理失败', { postId, err })
     }
+    await invalidateSocialFeedCache()
     return null
   }
 
@@ -187,6 +195,7 @@ export async function syncPublicPostToCircle(postId: number): Promise<TravelPost
       where: { postId },
       data: { title: post.title, summary, visibility: 'PUBLIC', publishedAt, ...(authorId ? { authorId } : {}) },
     })
+    await invalidateSocialFeedCache()
     return { id: existing.id, published: true }
   }
 
@@ -201,6 +210,7 @@ export async function syncPublicPostToCircle(postId: number): Promise<TravelPost
       publishedAt,
     },
   })
+  await invalidateSocialFeedCache()
   return { id: created.id, published: true }
 }
 
@@ -210,6 +220,7 @@ export async function unpublishPublicPost(postId: number): Promise<void> {
   } catch (err) {
     console.error('[travel-post.unpublishPublicPost] TravelPost 清理失败', { postId, err })
   }
+  await invalidateSocialFeedCache()
 }
 
 // ============================================================
@@ -260,6 +271,7 @@ export async function sharePostToCircle(
         ...(authorId ? { authorId } : {}),
       },
     })
+    await invalidateSocialFeedCache()
     return { id: existing.id, published: true }
   }
 
@@ -275,6 +287,7 @@ export async function sharePostToCircle(
       travelId,
     },
   })
+  await invalidateSocialFeedCache()
   return { id: created.id, published: true }
 }
 
@@ -285,4 +298,5 @@ export async function unsharePost(postId: number): Promise<void> {
   } catch (err) {
     console.error('[travel-post.unsharePost] TravelPost 清理失败', { postId, err })
   }
+  await invalidateSocialFeedCache()
 }

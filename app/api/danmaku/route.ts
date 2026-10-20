@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { ok, fail, unauthorized } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth-middleware'
 import { applyCacheControl } from '@/lib/http-cache'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { z } from 'zod'
 import { ApiError, errorResponse } from '@/lib/api-response'
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   try {
     // 阶段 A · A6：公开写接口按 IP 限流，防止刷弹幕
     const ip = getClientIp(request)
-    const limit = rateLimit({ prefix: 'danmaku:ip', key: ip || 'unknown', limit: 10, windowMs: 60_000 })
+    const limit = await rateLimitShared({ prefix: 'danmaku:ip', key: ip || 'unknown', limit: 10, windowMs: 60_000 })
     if (!limit.ok) {
       return fail('发送过于频繁，请稍后再试', 429)
     }

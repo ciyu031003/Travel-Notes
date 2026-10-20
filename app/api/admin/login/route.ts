@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAuthService } from '@/lib/container'
 import { validateLogin } from '@/lib/validators/auth.validator'
 import { DEFAULT_SESSION_SECONDS } from '@/lib/services/auth-service'
-import { rateLimit, checkLoginLock, recordLoginFailure, clearLoginFailures } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared, checkLoginLockShared, recordLoginFailureShared, clearLoginFailuresShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp, getUserAgent } from '@/lib/request-utils'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const username = validation.data.username
 
     // IP 维度限流
-    const ipLimit = rateLimit({ prefix: 'login:ip', key: ip || 'unknown', limit: IP_LIMIT, windowMs: IP_WINDOW_MS })
+    const ipLimit = await rateLimitShared({ prefix: 'login:ip', key: ip || 'unknown', limit: IP_LIMIT, windowMs: IP_WINDOW_MS })
     if (!ipLimit.ok) {
       return NextResponse.json(
         { error: '请求过于频繁，请稍后再试', retryAfterSeconds: ipLimit.retryAfterSeconds },
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     // 用户名维度限流
-    const userLimit = rateLimit({ prefix: 'login:user', key: username, limit: USER_LIMIT, windowMs: USER_WINDOW_MS })
+    const userLimit = await rateLimitShared({ prefix: 'login:user', key: username, limit: USER_LIMIT, windowMs: USER_WINDOW_MS })
     if (!userLimit.ok) {
       return NextResponse.json(
         { error: '该账号尝试过于频繁，请稍后再试', retryAfterSeconds: userLimit.retryAfterSeconds },
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
     // 连续失败锁定检查
     const lockKey = loginLockKey(ip, username)
-    const lock = checkLoginLock(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
+    const lock = await checkLoginLockShared(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
     if (lock.locked) {
       return NextResponse.json(
         { error: `失败次数过多，请 ${lock.retryAfterSeconds} 秒后重试`, retryAfterSeconds: lock.retryAfterSeconds },
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
     if (!result.success) {
       // 记录失败，触发锁定
-      const lockResult = recordLoginFailure(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
+      const lockResult = await recordLoginFailureShared(lockKey, { maxFailures: LOCK_MAX_FAILURES, baseLockMs: LOCK_BASE_MS, maxLockMs: LOCK_MAX_MS })
       if (lockResult.locked && lockResult.retryAfterSeconds > 0) {
         return NextResponse.json(
           { error: '用户名或密码错误', retryAfterSeconds: lockResult.retryAfterSeconds },
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     }
 
     // 登录成功清除失败计数
-    clearLoginFailures(lockKey)
+    await clearLoginFailuresShared(lockKey)
     writeAuditLog({ username, action: 'LOGIN', ip, metadata: { rememberMe: !!validation.data.rememberMe } }).catch(() => {})
 
     const sessionSeconds = result.ttlSeconds || DEFAULT_SESSION_SECONDS

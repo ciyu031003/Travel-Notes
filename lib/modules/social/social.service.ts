@@ -6,7 +6,14 @@
  */
 import { prisma } from '../../db'
 import { checkContent } from '../content/policy'
-import { appCache } from '../../cache'
+// 多副本收尾 · task-33 ③：feed 缓存走 CacheService + tag（未配 REDIS_URL 时等价于原内存缓存，
+// 但写操作后会立即失效；配置 Redis 后失效跨副本共享）
+import {
+  SOCIAL_FEED_CACHE_TAG,
+  SOCIAL_FEED_CACHE_TTL_SECONDS,
+  getSocialFeedCache,
+  invalidateSocialFeedCache,
+} from './feed-cache'
 import { absoluteMediaUrl } from '../../media-url'
 
 export type SocialFeedTab = 'recommended' | 'latest' | 'hot' | 'following'
@@ -185,7 +192,8 @@ export async function listSocialFeed(params: {
   // 缓存 key 必须带上类型筛选——同一用户在不同筛选下不能共享同一份候选集
   const since = new Date(Date.now() - 90 * 24 * 3600 * 1000)
   const feedCacheKey = `social:feed:recommended:u${userId ?? 'anon'}:t${travelType ?? 'all'}`
-  const cachedScored = await appCache.get<Array<{ p: any; score: number }>>(feedCacheKey)
+  const feedCache = getSocialFeedCache()
+  const cachedScored = await feedCache.get<Array<{ p: any; score: number }>>(feedCacheKey)
   let scored: Array<{ p: any; score: number }>
   if (cachedScored) {
     scored = cachedScored
@@ -199,7 +207,7 @@ export async function listSocialFeed(params: {
     scored = candidates
       .map((p) => ({ p, score: heatScore(p) }))
       .sort((a, b) => b.score - a.score)
-    await appCache.set(feedCacheKey, scored, 60_000)
+    await feedCache.set(feedCacheKey, scored, SOCIAL_FEED_CACHE_TTL_SECONDS, [SOCIAL_FEED_CACHE_TAG])
   }
   const total = scored.length
   const slice = scored.slice((page - 1) * pageSize, page * pageSize).map((s) => s.p)
@@ -433,6 +441,8 @@ export async function updateSocialPost(
     }
   })
 
+  // 标题/摘要是 feed 卡片内容：写后立即失效
+  await invalidateSocialFeedCache()
   return getSocialPost(id, userId)
 }
 
@@ -476,6 +486,8 @@ export async function setPostLike(postId: number, userId: number, liked: boolean
     return { liked, likeCount: p?.likeCount ?? 0, changed: false }
   })
   if (result.liked && result.changed) await notify(post.authorId, userId, 'LIKE', 'TravelPost', postId)
+  // 点赞影响 feed 热度排序：写后立即失效（原来最多 60s 旧数据）
+  if (result.changed) await invalidateSocialFeedCache()
   return { liked: result.liked, likeCount: result.likeCount }
 }
 
@@ -505,6 +517,7 @@ export async function setPostFavorite(postId: number, userId: number, favorited:
     return { favorited, favoriteCount: p?.favoriteCount ?? 0, changed: false }
   })
   if (result.favorited && result.changed) await notify(post.authorId, userId, 'FAVORITE', 'TravelPost', postId)
+  if (result.changed) await invalidateSocialFeedCache()
   return { favorited: result.favorited, favoriteCount: result.favoriteCount }
 }
 
@@ -587,6 +600,9 @@ export async function createPostComment(input: { postId: number; userId: number;
   if (input.parentId && parentAuthorId) await notify(parentAuthorId, input.userId, 'REPLY', 'Comment', id)
   else await notify(post.authorId, input.userId, 'COMMENT', 'TravelPost', input.postId)
 
+  // 评论影响 feed 的 commentCount 与热度分：写后立即失效
+  await invalidateSocialFeedCache()
+
   const created = await prisma.comment.findUnique({ where: { id }, include: { user: { select: { id: true, username: true, nickname: true, avatarUrl: true, accountId: true } }, _count: { select: { likes: true } } } })
   // 传 input.userId：刚发出去这条当然是本人所写，客户端要立刻显示删除入口
   return serializeComment(created, new Set(), input.userId)
@@ -602,6 +618,8 @@ export async function deletePostComment(commentId: number, userId: number) {
       await tx.travelPost.update({ where: { id: c.postId }, data: { commentCount: { decrement: 1 } } })
     })
   }
+  // 删除评论会 decrement commentCount：同样要让 feed 立刻重算
+  await invalidateSocialFeedCache()
   return { deleted: true }
 }
 
@@ -657,11 +675,14 @@ export async function blockUser(actorId: number, targetId: number) {
     update: {},
     create: { blockerId: actorId, blockedId: targetId },
   })
+  // 屏蔽会改变本人 feed 的可见作者集合：写后立即失效
+  await invalidateSocialFeedCache()
   return { blocked: true }
 }
 
 export async function unblockUser(actorId: number, targetId: number) {
   await prisma.userBlock.deleteMany({ where: { blockerId: actorId, blockedId: targetId } })
+  await invalidateSocialFeedCache()
   return { blocked: false }
 }
 

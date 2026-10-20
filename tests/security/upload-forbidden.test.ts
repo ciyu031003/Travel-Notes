@@ -18,8 +18,8 @@ vi.mock('@/lib/container', () => ({
   getImageService: () => ({ upload: uploadMock, delete: deleteMock }),
 }))
 vi.mock('@/lib/site-owner', () => ({ isSiteOwner: ownerMock, getSiteOwnerId: vi.fn() }))
-vi.mock('@/lib/infrastructure/rate-limit', () => ({
-  rateLimit: vi.fn(() => ({ ok: true, used: 1, remaining: 119, retryAfterSeconds: 60 })),
+vi.mock('@/lib/infrastructure/rate-limit-factory', () => ({
+  rateLimitShared: vi.fn(async () => ({ ok: true, used: 1, remaining: 119, retryAfterSeconds: 60 })),
 }))
 vi.mock('@/lib/request-utils', () => ({ getClientIp: vi.fn(() => '1.2.3.4') }))
 vi.mock('@/lib/modules/audit/audit-log.service', () => ({ writeAuditLog: vi.fn(async () => {}) }))

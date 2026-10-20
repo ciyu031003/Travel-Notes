@@ -6,7 +6,7 @@ import {
   getVerificationCodeStatus,
   isEmailDeliveryConfigured,
 } from '@/lib/verification'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { sendMail } from '@/lib/infrastructure/mailer'
 import { getClientIp } from '@/lib/request-utils'
 import { logger } from '@/lib/infrastructure/logger'
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   try {
     const ip = getClientIp(request)
     // 已登录用户发送验证码同样限流：IP 每 15 分钟 10 次
-    const ipLimit = rateLimit({ prefix: 'verify-code:ip', key: ip || 'unknown', limit: 10, windowMs: 15 * 60 * 1000 })
+    const ipLimit = await rateLimitShared({ prefix: 'verify-code:ip', key: ip || 'unknown', limit: 10, windowMs: 15 * 60 * 1000 })
     if (!ipLimit.ok) {
       return NextResponse.json(
         { error: '发送过于频繁，请稍后再试', retryAfterSeconds: ipLimit.retryAfterSeconds },

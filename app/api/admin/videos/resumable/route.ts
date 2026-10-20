@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import fs from 'fs'
-import os from 'os'
 import path from 'path'
 import { requireAuth } from '@/lib/auth-middleware'
 import { isSiteOwner } from '@/lib/site-owner'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { validateVideoBuffer, MAX_VIDEO_SIZE } from '@/lib/infrastructure/media-validation'
 import {
@@ -17,6 +16,7 @@ import {
 } from '@/lib/infrastructure/video-upload-shared'
 import { enqueueTranscode, sweepAndEnqueue } from '@/lib/infrastructure/video-transcode'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
+import { mediaTmpDir } from '@/lib/media/tmp-dir'
 import { z } from 'zod'
 import { ApiError, errorResponse } from '@/lib/api-response'
 import { parseBody, getRequestId } from '@/lib/api/handler'
@@ -61,12 +61,16 @@ export const dynamic = 'force-dynamic'
  * 临时目录 24h TTL，init 时顺带清理过期会话。
  */
 const VIDEO_DIR = path.join(process.cwd(), 'public', 'uploads', 'videos')
-// 分片临时目录放容器本地盘：COSFS 是对象存储语义（unlink 后目录列表有最终一致性延迟，
-// rmdir 会 ENOTEMPTY），且分片是纯瞬态数据——只有拼装完成的成品才写 COS。
-const TMP_ROOT = path.join(os.tmpdir(), 'tn-vuploads')
+// 分片临时目录（多副本准备）：MEDIA_TMP_DIR 可配，默认 os.tmpdir()。
+// 多副本必须指向共享卷，否则「init 在副本 A、chunk 落到副本 B」会找不到会话目录。
+// （COSFS 是对象存储语义：unlink 后目录列表有最终一致性延迟、rmdir 会 ENOTEMPTY，
+//   所以默认仍放本地盘，只有拼装完成的成品才写 COS；共享卷由部署方按需指定。）
+function tmpRoot(): string {
+  return mediaTmpDir('tn-vuploads')
+}
 
 function tmpDirOf(uploadId: string): string {
-  return path.join(TMP_ROOT, uploadId)
+  return path.join(tmpRoot(), uploadId)
 }
 
 interface SessionMeta {
@@ -103,12 +107,12 @@ function uploadedChunks(uploadId: string, totalChunks: number): number[] {
 
 function cleanupStaleSessions(): void {
   try {
-    if (!fs.existsSync(TMP_ROOT)) return
+    if (!fs.existsSync(tmpRoot())) return
     const now = Date.now()
-    for (const dir of fs.readdirSync(TMP_ROOT)) {
+    for (const dir of fs.readdirSync(tmpRoot())) {
       const meta = readMeta(dir)
       if (meta && now - meta.createdAt > RESUMABLE_SESSION_TTL_MS) {
-        fs.rmSync(path.join(TMP_ROOT, dir), { recursive: true, force: true })
+        fs.rmSync(path.join(tmpRoot(), dir), { recursive: true, force: true })
       }
     }
   } catch {
@@ -136,7 +140,7 @@ export async function POST(request: NextRequest) {
   try {
     // ---------- 分片上传（multipart） ----------
     if (contentType.includes('multipart/form-data')) {
-      const limit = rateLimit({ prefix: 'vchunk:ip', key: ip || 'unknown', limit: 600, windowMs: 15 * 60 * 1000 })
+      const limit = await rateLimitShared({ prefix: 'vchunk:ip', key: ip || 'unknown', limit: 600, windowMs: 15 * 60 * 1000 })
       if (!limit.ok) {
         return NextResponse.json({ error: '上传过于频繁，请稍后再试' }, { status: 429 })
       }
@@ -175,7 +179,7 @@ export async function POST(request: NextRequest) {
     const action = body.action
 
     if (action === 'init') {
-      const limit = rateLimit({ prefix: 'vinit:ip', key: ip || 'unknown', limit: 60, windowMs: 15 * 60 * 1000 })
+      const limit = await rateLimitShared({ prefix: 'vinit:ip', key: ip || 'unknown', limit: 60, windowMs: 15 * 60 * 1000 })
       if (!limit.ok) {
         return NextResponse.json({ error: '上传过于频繁，请稍后再试' }, { status: 429 })
       }
@@ -189,7 +193,7 @@ export async function POST(request: NextRequest) {
       }
       cleanupStaleSessions()
       sweepAndEnqueue()
-      fs.mkdirSync(TMP_ROOT, { recursive: true })
+      fs.mkdirSync(tmpRoot(), { recursive: true })
       const uploadId = randomUUID()
       const meta: SessionMeta = {
         filename,

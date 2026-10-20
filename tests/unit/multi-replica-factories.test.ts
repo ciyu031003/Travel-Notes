@@ -63,6 +63,26 @@ describe('缓存/限流工厂：未配置 REDIS_URL 时行为完全不变', () =
   })
 })
 
+describe('rateLimitShared 未配 REDIS_URL 时与同步语义一致（迁移不改行为）', () => {
+  it('同一窗口内 limit 次数放行，第 limit+1 次拒绝并给 retryAfterSeconds', async () => {
+    const { rateLimitShared } = await import('@/lib/infrastructure/rate-limit-factory')
+    const restore = withEnv('REDIS_URL', undefined)
+    try {
+      __resetRateLimiterForTest()
+      const opts = { prefix: 'migrate:parity', key: 'k', limit: 2, windowMs: 60_000 }
+      const first = await rateLimitShared(opts)
+      expect(first).toMatchObject({ ok: true, used: 1, remaining: 1 })
+      const second = await rateLimitShared(opts)
+      expect(second).toMatchObject({ ok: true, used: 2, remaining: 0 })
+      const third = await rateLimitShared(opts)
+      expect(third.ok).toBe(false)
+      expect(third.retryAfterSeconds).toBeGreaterThan(0)
+    } finally {
+      restore()
+    }
+  })
+})
+
 describe('缓存/限流工厂：配置 REDIS_URL 后切换实现', () => {
   it('缓存切到 RedisCacheService（构造不连接，失败时命令级降级）', () => {
     const restore = withEnv('REDIS_URL', 'redis://127.0.0.1:6379')

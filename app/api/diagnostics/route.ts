@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +28,7 @@ const bodySchema = z.object({
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request) || 'unknown'
-  const limited = rateLimit({ prefix: 'diagnostics:ip', key: ip, limit: 20, windowMs: 60_000 })
+  const limited = await rateLimitShared({ prefix: 'diagnostics:ip', key: ip, limit: 20, windowMs: 60_000 })
   if (!limited.ok) {
     return NextResponse.json(
       { ok: false, error: 'too many reports' },

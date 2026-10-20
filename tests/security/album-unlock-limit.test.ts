@@ -17,11 +17,11 @@ const { rateLimitMock, checkLockMock, recordFailureMock, clearFailuresMock, site
   requireAuthMock: vi.fn(),
 }))
 
-vi.mock('@/lib/infrastructure/rate-limit', () => ({
-  rateLimit: rateLimitMock,
-  checkLoginLock: checkLockMock,
-  recordLoginFailure: recordFailureMock,
-  clearLoginFailures: clearFailuresMock,
+vi.mock('@/lib/infrastructure/rate-limit-factory', () => ({
+  rateLimitShared: rateLimitMock,
+  checkLoginLockShared: checkLockMock,
+  recordLoginFailureShared: recordFailureMock,
+  clearLoginFailuresShared: clearFailuresMock,
 }))
 vi.mock('@/lib/db', () => ({ prisma: { anniversary: { findFirst: vi.fn(async () => null) } } }))
 vi.mock('@/lib/auth-middleware', () => ({ requireAuth: requireAuthMock }))
@@ -46,16 +46,16 @@ function req(body: Record<string, unknown> = { date: '2020-05-20' }) {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  rateLimitMock.mockReturnValue({ ok: true, used: 1, remaining: 9, retryAfterSeconds: 60 })
-  checkLockMock.mockReturnValue({ locked: false, retryAfterSeconds: 0 })
-  recordFailureMock.mockReturnValue({ locked: true, retryAfterSeconds: 60 })
+  rateLimitMock.mockResolvedValue({ ok: true, used: 1, remaining: 9, retryAfterSeconds: 60 })
+  checkLockMock.mockResolvedValue({ locked: false, retryAfterSeconds: 0 })
+  recordFailureMock.mockResolvedValue({ locked: true, retryAfterSeconds: 60 })
   requireAuthMock.mockResolvedValue({ authenticated: false })
   siteConfigMock.mockResolvedValue({ anniversaryStart: '2020-05-20' })
 })
 
 describe('P0-5 相册解锁限流', () => {
   it('IP 维度超限 → 429 + retryAfterSeconds（不再进入口令校验）', async () => {
-    rateLimitMock.mockReturnValue({ ok: false, used: 10, remaining: 0, retryAfterSeconds: 120 })
+    rateLimitMock.mockResolvedValue({ ok: false, used: 10, remaining: 0, retryAfterSeconds: 120 })
 
     const res = await POST(req())
     expect(res.status).toBe(429)
@@ -65,7 +65,7 @@ describe('P0-5 相册解锁限流', () => {
   })
 
   it('全局维度超限 → 429（挡住换 IP 的分布式爆破）', async () => {
-    rateLimitMock.mockImplementation((opts: any) =>
+    rateLimitMock.mockImplementation(async (opts: any) =>
       opts.prefix === 'album:global'
         ? { ok: false, used: 30, remaining: 0, retryAfterSeconds: 300 }
         : { ok: true, used: 1, remaining: 9, retryAfterSeconds: 60 },
@@ -78,7 +78,7 @@ describe('P0-5 相册解锁限流', () => {
   })
 
   it('失败退避锁生效 → 429 且带 retryAfterSeconds', async () => {
-    checkLockMock.mockReturnValue({ locked: true, retryAfterSeconds: 900 })
+    checkLockMock.mockResolvedValue({ locked: true, retryAfterSeconds: 900 })
 
     const res = await POST(req())
     expect(res.status).toBe(429)

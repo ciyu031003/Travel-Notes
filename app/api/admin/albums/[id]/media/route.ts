@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth-middleware'
 import { requireCapability } from '@/lib/capability-guard'
 import { addMediaToAlbum, removeMediaFromAlbum, canManageAlbum } from '@/lib/modules/album/album.service'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { z } from 'zod'
 import { ApiError, errorResponse } from '@/lib/api-response'
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   try {
     const ip = getClientIp(request)
-    const limit = rateLimit({ prefix: 'album-upload:ip', key: ip || 'unknown', limit: 120, windowMs: 15 * 60 * 1000 })
+    const limit = await rateLimitShared({ prefix: 'album-upload:ip', key: ip || 'unknown', limit: 120, windowMs: 15 * 60 * 1000 })
     if (!limit.ok) {
       return NextResponse.json(
         { error: '上传过于频繁，请稍后再试', retryAfterSeconds: limit.retryAfterSeconds },

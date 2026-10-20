@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getImageService } from '@/lib/container'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { ApiError } from '@/lib/api-response'
@@ -21,7 +21,7 @@ const DeleteImageSchema = z.object({
 export const POST = withAuth(async (request, ctx) => {
   // 上传限流：IP 每 15 分钟最多 120 次上传请求
   const ip = getClientIp(request)
-  const limit = rateLimit({ prefix: 'upload:ip', key: ip || 'unknown', limit: 120, windowMs: 15 * 60 * 1000 })
+  const limit = await rateLimitShared({ prefix: 'upload:ip', key: ip || 'unknown', limit: 120, windowMs: 15 * 60 * 1000 })
   if (!limit.ok) {
     throw new ApiError('RATE_LIMITED', '上传过于频繁，请稍后再试', 429)
   }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOilPainting } from '@/lib/modules/oil-paint/oil-paint.service'
 import { getCurrentUserId } from '@/lib/current-user'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 
 /**
  * 照片 → 油画版。仅接受本站相对路径(如 /uploads/…、/api/images/…)防止 SSRF。
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     if (!userId) return NextResponse.json({ url: null }, { status: 401 })
 
     // 付费外部 API：每用户 10 次/分钟
-    const rl = rateLimit({ prefix: 'oil:user', key: String(userId), limit: 10, windowMs: 60_000 })
+    const rl = await rateLimitShared({ prefix: 'oil:user', key: String(userId), limit: 10, windowMs: 60_000 })
     if (!rl.ok) {
       return NextResponse.json(
         { url: null, error: 'rate-limited' },

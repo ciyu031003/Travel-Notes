@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthService } from '@/lib/container'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp } from '@/lib/request-utils'
 import { ApiError, errorResponse } from '@/lib/api-response'
 import { parseBody, getRequestId } from '@/lib/api/handler'
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     const ip = getClientIp(request)
     // IP 维度：每 15 分钟最多 5 次发送；邮箱维度：每 15 分钟最多 3 次
-    const ipLimit = rateLimit({ prefix: 'reset-code:ip', key: ip || 'unknown', limit: 5, windowMs: 15 * 60 * 1000 })
+    const ipLimit = await rateLimitShared({ prefix: 'reset-code:ip', key: ip || 'unknown', limit: 5, windowMs: 15 * 60 * 1000 })
     if (!ipLimit.ok) {
       return NextResponse.json(
         { error: '发送过于频繁，请稍后再试', retryAfterSeconds: ipLimit.retryAfterSeconds },
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     // P1-17：body 用 zod（邮箱格式；格式非法不属于账号枚举，可如实 400）
     const { email } = await parseBody(request, SendCodeSchema)
 
-    const emailLimit = rateLimit({ prefix: 'reset-code:email', key: email, limit: 3, windowMs: 15 * 60 * 1000 })
+    const emailLimit = await rateLimitShared({ prefix: 'reset-code:email', key: email, limit: 3, windowMs: 15 * 60 * 1000 })
     if (!emailLimit.ok) {
       return NextResponse.json(
         { error: '该邮箱发送过于频繁，请稍后再试', retryAfterSeconds: emailLimit.retryAfterSeconds },

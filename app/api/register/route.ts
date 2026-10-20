@@ -3,7 +3,7 @@ import { getAuthService } from '@/lib/container'
 import { RegisterSchema } from '@/lib/validators/auth.validator'
 import { DEFAULT_SESSION_SECONDS } from '@/lib/services/auth-service'
 import { sessionCookieOptions } from '@/lib/auth-utils'
-import { rateLimit } from '@/lib/infrastructure/rate-limit'
+import { rateLimitShared } from '@/lib/infrastructure/rate-limit-factory'
 import { getClientIp, getUserAgent } from '@/lib/request-utils'
 import { ApiError } from '@/lib/api-response'
 import { parseBody, getRequestId } from '@/lib/api/handler'
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const ip = getClientIp(request)
-    const limit = rateLimit({ prefix: 'register:ip', key: ip || 'unknown', limit: IP_LIMIT, windowMs: IP_WINDOW_MS })
+    const limit = await rateLimitShared({ prefix: 'register:ip', key: ip || 'unknown', limit: IP_LIMIT, windowMs: IP_WINDOW_MS })
     if (!limit.ok) {
       return NextResponse.json(
         { error: '请求过于频繁，请稍后再试', code: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds, requestId },
