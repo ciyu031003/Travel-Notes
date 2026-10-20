@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || 'Next 16/React 19.3/ESLint 10 升级；存量库迁移自动修复；多副本 Redis 准备；a11y axe 全绿；真机静态验证',
+    changelog: process.env.APP_CHANGELOG || 'Tailwind 4 + 视觉基线；多副本限流/分片/feed 一致性；Prisma 8 就绪门禁',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
