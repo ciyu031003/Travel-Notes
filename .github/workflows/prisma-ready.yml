@@ -1,0 +1,31 @@
+name: Prisma 8 readiness
+
+# Prisma 8 目前仅 RC（2026-10-20）：本工作流每周检查 registry，
+# 等 prisma stable >=8 + @prisma/client 同版本 stable 出现时在 job summary 标出，
+# 再由维护者按 docs/review/_impl/PRISMA8-UPGRADE-RUNBOOK.md 起升级分支。
+on:
+  schedule:
+    - cron: '0 2 * * 1' # 每周一 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Self-test readiness checker
+        run: node scripts/prisma-upgrade-readiness.cjs --self-test
+
+      - name: Check registry readiness (non-blocking)
+        run: |
+          node scripts/prisma-upgrade-readiness.cjs > /tmp/ready.json || true
+          cat /tmp/ready.json
+          if grep -q '"ready": true' /tmp/ready.json; then
+            echo "::notice title=Prisma 8 ready::stable prisma>=8 与同版本 @prisma/client 已发布，可按 RUNBOOK 升级"
+          else
+            echo "::notice title=Prisma 8 not ready::仍只有 RC 或无配套 client，保持 7.10.1"
+          fi
