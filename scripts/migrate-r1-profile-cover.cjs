@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * @deprecated 历史一次性迁移脚本（保留仅为排查旧库/回溯历史，勿用于新库或常规发版）。
+ *
+ * P0-8 起容器入口已改为 `prisma migrate deploy`（见 scripts/docker-entrypoint.sh），
+ * 本脚本不再被 entrypoint/CI/应用代码调用；日常迁移请使用 Prisma Migrate。
+ * 状态记录：docs/review/_impl/DOCS-GOVERNANCE.md §4（2026-10-22 收尾）。
+ */
+/**
  * R1 增量迁移：**只**加「我的」页档案头图需要的三列。
  *
  * 为什么不直接跑 `apply-schema-migration.cjs`：

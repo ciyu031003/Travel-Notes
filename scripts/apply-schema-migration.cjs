@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * @deprecated 历史一次性迁移脚本（保留仅为排查旧库/回溯历史，勿用于新库或常规发版）。
+ *
+ * P0-8 起容器入口已改为 `prisma migrate deploy`（见 scripts/docker-entrypoint.sh），
+ * 本脚本不再被 entrypoint/CI/应用代码调用；日常迁移请使用 Prisma Migrate。
+ * 状态记录：docs/review/_impl/DOCS-GOVERNANCE.md §4（2026-10-22 收尾）。
+ */
+/**
  * 幂等 schema 增量迁移（**只做 DDL，不改数据**）。
  *
  *  - 检查每个目标列/索引/外键是否存在，不存在才添加（按 Prisma 约定 ON UPDATE CASCADE）

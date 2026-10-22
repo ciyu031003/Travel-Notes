@@ -18,7 +18,8 @@
     "test:coverage": "vitest run --coverage",
     "audit:gate": "node scripts/audit-gate.cjs",
     "tokens:parity": "node scripts/check-token-parity.mjs",
-    "prisma:ready": "node scripts/prisma-upgrade-readiness.cjs"
+    "prisma:ready": "node scripts/prisma-upgrade-readiness.cjs",
+    "changelog": "node scripts/generate-changelog.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1109.0",

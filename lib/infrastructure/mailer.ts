@@ -4,7 +4,7 @@
  *
  * 环境变量：
  *   SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_SECURE / MAIL_FROM
- * 配置说明见 docs/EMAIL_SETUP.md
+ * 配置说明见 docs/DEPLOYMENT.md「邮件服务」章节（原 docs/EMAIL_SETUP.md 已并入）
  */
 import nodemailer from 'nodemailer'
 // nodemailer 10 自带类型：Transporter 是命名导出，不再有 nodemailer.Transporter 命名空间
