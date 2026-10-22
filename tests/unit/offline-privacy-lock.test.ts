@@ -59,8 +59,12 @@ describe('C1 · PIN 存储与校验', () => {
     expect(await lock.setPin('2580')).toBe(true)
     const raw = local.getItem('tiantu-privacy-pin')
     expect(raw).toBeTruthy()
-    expect(raw).not.toContain('2580')
+    // 注意：不能断言「整个 JSON 不含 2580」—— salt/hash 是十六进制字符串，随机内容里
+    // 偶然出现 4 位数字子串（约 0.1% 概率）会把"没有明文 PIN"误判成失败（已实观测到一次假红）。
+    // 正确口径：明文 PIN 不能作为独立值出现，且存储对象只有 salt/hash/createdAt 三个已知字段。
     const record = JSON.parse(raw as string)
+    expect(Object.values(record)).not.toContain('2580')
+    expect(Object.keys(record).sort()).toEqual(['createdAt', 'hash', 'salt'])
     expect(record.salt).toMatch(/^[0-9a-f]{32}$/)
     expect(record.hash).toMatch(/^[0-9a-f]{64}$/)
 

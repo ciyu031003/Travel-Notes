@@ -21,17 +21,18 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       reportsDirectory: 'coverage',
-      // P3-39（2026-10-19）：补 lib 纯函数/契约测试后，最终共享树实测 103 文件 / 938 用例：
-      //   statements 58.11%（4405/7580）、branches 49.32%（3046/6175）、
-      //   functions 57.64%（773/1341）、lines 60.45%（3885/6426）
-      // 阈值 = 实测**向下取整**（57/49/57/59），低于实测约 0.3-1pp 作为并发/平台抖动缓冲；
-      // statements 已达成 55+ 目标（本轮起点 52.38% → 58.11%）。只许上调（收紧），
-      // 不允许为了「变绿」调低阈值；目标 60/50/60/62，后续每次实测 +2pp 上调。
+      // P3-36（2026-10-22）：补 lib/prisma-adapter、lib/exif、media-variants 等可 mock 模块单测后，
+      // 共享树实测 113 文件 / 1039 用例（112 passed + 1 skipped）：
+      //   statements 65.15%（5311/8151）、branches 55.65%（3576/6425）、
+      //   functions 63.86%（942/1475）、lines 67.67%（4702/6948）
+      // 目标（本轮验收）：statements ≥60 / branches ≥50 / functions ≥55 / lines ≥60 —— **全部达成**。
+      // 阈值取「实测向下取整后留 0.3-1pp 抖动」（64/55/63/67），均高于旧阈值（57/49/57/59）与目标值，
+      // 只许上调（收紧），不允许为了「变绿」调低；后续实测每 +2pp 上调一次。
       thresholds: {
-        statements: 57,
-        branches: 49,
-        functions: 57,
-        lines: 59,
+        statements: 64,
+        branches: 55,
+        functions: 63,
+        lines: 67,
       },
     },
   },
