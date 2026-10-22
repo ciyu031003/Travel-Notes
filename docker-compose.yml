@@ -130,6 +130,17 @@ services:
       # ffmpeg：宿主机静态二进制只读挂载（视频转码管线；镜像内不走 apt，5M 带宽拉不动 400MB 依赖）。
       # 缺失时转码模块自动降级跳过。二进制来源 @ffmpeg-installer/linux-x64（静态链接，glibc 兼容）。
       - /usr/local/bin/ffmpeg:/usr/local/bin/ffmpeg:ro
+      # ===== 多副本：媒体分片/转码临时目录共享卷（默认不启用）=====
+      # 单副本默认用 os.tmpdir()（容器内 /tmp），最快也最简单，无需任何挂载。
+      # 多副本**必须**让所有副本看到同一个 MEDIA_TMP_DIR，否则「init 在副本 A、chunk 落到副本 B」
+      # 会找不到会话目录（表现为上传一直重传/404）。
+      # 启用步骤：
+      #   1) 宿主机建目录并 chown 1000:1000（容器以 node 用户运行）：
+      #        sudo mkdir -p /data/travel-notes/media-tmp && sudo chown -R 1000:1000 /data/travel-notes/media-tmp
+      #   2) 取消下面这行注释（挂载到容器内 /app/media-tmp）；
+      #   3) 在 .env 设 MEDIA_TMP_DIR=/app/media-tmp（不要把 MEDIA_TMP_DIR 指到 public/uploads 或 COSFS 根：
+      #      分片是瞬态数据，COSFS 的 unlink/rmdir 有最终一致性延迟，建议本地盘或 NFS/EFS）。
+      # - /data/travel-notes/media-tmp:/app/media-tmp
     healthcheck:
       # 镜像里没有 curl（node:22-bookworm-slim），用 node 自带的 fetch
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]

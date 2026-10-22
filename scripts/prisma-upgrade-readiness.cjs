@@ -168,7 +168,7 @@ function evaluate(input) {
 
 async function fetchDoc(pkg) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 20000)
+  const timer = setTimeout(() => controller.abort(), 40000)
   try {
     const res = await fetch(REGISTRY + '/' + encodeURIComponent(pkg), {
       headers: { accept: 'application/vnd.npm.install-v1+json' },
@@ -178,6 +178,16 @@ async function fetchDoc(pkg) {
     return await res.json()
   } finally {
     clearTimeout(timer)
+  }
+}
+
+async function fetchDocWithRetry(pkg) {
+  try {
+    return await fetchDoc(pkg)
+  } catch (error) {
+    // registry 偶尔慢/抖动：重试一次，仍失败则外层输出 ready:false + error（不误报可升级）
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    return await fetchDoc(pkg)
   }
 }
 
@@ -194,7 +204,7 @@ async function main() {
   }
 
   try {
-    const [prismaDoc, clientDoc] = await Promise.all([fetchDoc('prisma'), fetchDoc('@prisma/client')])
+    const [prismaDoc, clientDoc] = await Promise.all([fetchDocWithRetry('prisma'), fetchDocWithRetry('@prisma/client')])
     const result = evaluate({ prismaDoc, clientDoc, nodeVersion: process.versions.node })
     result.checkedAt = new Date().toISOString()
     console.log(JSON.stringify(result, null, 2))

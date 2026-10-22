@@ -1,6 +1,6 @@
 {
   "_comment": "npm audit 存量豁免清单（B8 依赖治理后重新生成，2026-10-19）。 本轮已修/升级：nodemailer 10.1.7、prisma/@prisma/client 7.10.1、mysql2 3.24.6、postcss 8.5.31、tmp 0.2.7、basic-ftp 6.2.3（后四项走 npm overrides）；对应条目已从本文件移除。 audit-gate.cjs 只对 high/critical 阻断：未列在这里的 high/critical、或已过 expires 的条目都会让 CI 失败。 处理方式：修掉 → 删除条目；暂时不能修 → 续期 expires 并在 reason 写清根因与复查计划（详见 docs/review/_impl/DEPS.md）。 scope：runtime=进生产运行时；build=构建期；dev=仅开发/测试工具链。",
-  "generatedAt": "2026-10-19",
+  "generatedAt": "2026-10-22",
   "entries": [
     {
       "package": "@capacitor/cli",
