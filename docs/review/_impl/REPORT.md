@@ -457,3 +457,35 @@
 - 部署中发现并修复：Tailwind4 合并后 node_modules 的 sharp 损坏（0.35.3 目录不完整）→ 重装；随后 audit-gate 报 sharp 两条 high（libheif/librsvg）→ 升级到 0.35.5 后 audit 通过（3 条 high 全为已豁免的 dev 链路）。
 - CI：2e73a06 因 audit sharp 失败；**738fda6（含 sharp 0.35.5 + 报告）CI 全绿（ci + e2e-smoke）**。
 - 发布顺序：先 1.27.0（Tailwind4/多副本）→ 安全补丁镜像（sharp 0.35.5）滚动替换，版本/构建号与 APK 不变。
+
+---
+
+# 附八：最后一批剩余任务收口（2026-10-22 · 1.27.0 维护线）
+
+## 视觉基线扩面 ✅
+- 从 8 页/移动单视口扩到 24 张基线：移动 390×844 共 16 页（新增 /circle、/moments、/search、/me/settings、/space、/travel/detail、/me/favorites、/sync），桌面 1280×800 共 8 页（/、/travel、/circle、/me、/dashboard、/dev/ui、/login、/download）。
+- 快照命名含视口（visual-page-wxh.png），旧扁平命名一次性迁移；确定性口径不变（固定时钟/随机、fonts/images/networkidle、login 视频 pause、reducedMotion、animations disabled）。
+- 最终回归：24 passed（4.3m）；保留空态形态，真实数据/长列表形态列为后续扩展。
+
+## 覆盖率抬升到目标以上 ✅
+- 新增 exif（14）、prisma-adapter（18）、media-variants（15）三组测试；修复 offline-privacy-lock 的概率性假红（断言改为确定性字段口径）。
+- 实测：Statements 65.15%、Branches 55.65%、Functions 63.86%、Lines 67.67%（目标 60/50/55/60 全部超额）；阈值上调为 64/55/63/67（只许上调）。
+- 遗留：space.service / social.service 大文件仍可继续补；lib/exif.ts 的 ExifIFD 简化实现建议单排标准解析任务。
+
+## 发版工程收尾 ✅
+- scripts/generate-changelog.cjs：Conventional + 历史批次式提交解析、分组/去重/过滤 merge、--from/--to/--output/--check/--self-test；package.json 增加 changelog。
+- 新增 docs/release/v1.27.0.md 发布说明；修复 next.config/mailer 过时注释、两个历史脚本加 @deprecated；DOCS-GOVERNANCE 更新。
+- 仓库标签：补齐 v1.27.0 annotated tag（此前仅 v1.0.0）。
+
+## 多副本运维收尾 + 生产验证 ✅
+- 新增 scripts/verify-multi-replica.cjs：Redis ping/缓存写读+TTL/限流 INCR+PEXPIRE/清理、MEDIA_TMP_DIR 写读清理、URL 脱敏、三态退出码、--self-test 30+ 断言；package 增加 verify:multi-replica。
+- 文档补齐 Nginx upstream/keepalive/XFF、DB 连接数估算、ISR 注意、滚动发布、日志聚合、调度去重结论。
+- 生产实测：启动 travel-notes-redis（profiles=redis，仅回环），app 注入 REDIS_URL=redis://redis:6379/0 与 MEDIA_TMP_DIR=/app/public/uploads/.media-tmp；验证脚本在容器内运行输出 ok:true（redis 7 项检查 + mediaTmp 4 项检查全 true）；/api/health 200。
+
+## Prisma 8 ⏸ 仍被上游阻塞
+- 2026-10-22 复查：prisma latest 仍为 8.0.0-rc.25（非 stable），@prisma/client latest 仍 7.10.1（无 8.x 配套）；就绪门禁 npm run prisma:ready 按设计 exit 1，每周一 workflow 自动复查；runbook 就绪。上游发布 stable 8 后按 runbook 执行，不在 RC 上升级生产。
+
+## 最终门禁（实跑）
+- tsc 0；vitest+coverage 112 passed/1 skipped、1035 用例（4 skipped），覆盖率 65.15/55.65/63.86/67.67；
+- lint 0 error / 452 warning（预算 460）；tokens 307/398；parity 345/345；audit-gate 0（3 条 high 全为已豁免 dev 链路）；
+- Turbopack build 0；视觉回归 24/24；生产 /api/health 200、Redis/共享目录验证 ok。
