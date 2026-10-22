@@ -226,4 +226,47 @@ SKIP_DB_ON_BUILD=1 npx next build           → exit 0（Compiled successfully�
 - @config 兼容层仍在；长期建议把主题迁移到 CSS-first `@theme`，逐步删除 JS config。
 - autoprefixer 已不被 postcss 使用，可从 devDependencies 移除（本批保留以缩小 diff）。
 - `www/` 旧静态产物仍是 Tailwind3 生成，下次移动端构建自动重建。
-- 视觉基线仅覆盖 8 页移动视口；桌面视口与其余页面按后续批次扩展。
+- 视觉基线覆盖已由 task-35 扩展为 **16 页移动 + 8 页桌面**（共 24 张，见 §7.7）；后续新增/改版页面应继续补进同一份基线。
+
+
+### 7.7 视觉基线扩面（task-35 · 2026-10-22）
+
+> 环境：MySQL 127.0.0.1:3308（travel_notes_visual，migrate deploy 已完成；Playwright 用 `e2e/e2e` 账号），
+> 主目录生产构建 + `next start -p 3111`（playwright webServer 自动 build/start，`DEV_UI=1` 供 `/dev/ui*`）。
+> 确定性口径与 §7.1 完全一致（固定 Date/Math.random、fonts.ready、图片 complete、networkidle、额外 600ms、
+> login 视频 pause+seek0、reducedMotion=reduce、animations:'disabled'、maxDiffPixelRatio=0.001）。
+
+**覆盖面（24 个基线）**
+
+| 视口 | 页数 | 页面 |
+|---|---|---|
+| 移动 390×844（dpr=1） | 16 | /dev/ui、/dev/ui/space、/dev/ui/v4、/login、/download、/travel、/me、/dashboard、**/circle、/moments、/search、/me/settings、/space、/travel/detail、/me/favorites、/sync** |
+| 桌面 1280×800（dpr=1） | 8 | **/**、/travel、/circle、/me、/dashboard、/dev/ui、/login、/download |
+
+- 快照命名含视口：`visual-<page>-390x844-win32.png` / `visual-<page>-1280x800-win32.png`，同一页面双视口互不覆盖；
+  基线位置仍是 `tests/e2e/visual.spec.ts-snapshots/`，24 张 PNG 合计约 **2.93MB**。
+- 用例结构：`test.describe('mobile 390x844')` / `test.describe('desktop 1280x800')` 分别用 `test.use({ viewport })`，
+  `beforeEach` 的时钟/随机冻结与 `waitForVisualReady` 对两组共用，避免两套确定性逻辑漂移。
+- 新增页面选用空态：/space、/me/favorites、/sync、/travel/detail（查询参数版入口，无 slug 时为稳定空/错误态）在空库下也可访问，
+  符合「先钉形态、不钉业务数据」的口径；/dev/ui* 仍依赖 webServer 的 `DEV_UI=1`。
+- **未剔除任何页面**：24 页一次生成后复跑全绿，无视频/异步数据导致的不稳定页。
+
+**验证结果**
+
+```text
+# 生成（首次/有意改视觉后）
+npx playwright test tests/e2e/visual.spec.ts --update-snapshots   → 24 passed（写入 24 张基线）
+# 回归验证（本批）
+npx playwright test tests/e2e/visual.spec.ts                      → 24 passed (4.5m), EXIT 0
+npx tsc --noEmit --incremental false                              → exit 0
+npx vitest run --reporter=dot                                     → 全部通过
+```
+
+**环境备注（本次踩到并已修正）**
+
+- MySQL 3308 里的 `e2e` 账号原先只有 `'e2e'@'%'`，从 127.0.0.1 连接会被解析为 `'e2e'@'localhost'` 而匹配不到
+  （报 `Access denied for user 'e2e'@'localhost'`，表现为 global-setup 登录 500）。已补 `'e2e'@'localhost'`
+  并把两个 host 的口令统一为 `e2e`、授予 `travel_notes_visual.*` 权限；这是本地测试库操作，不入库。
+- 生成基线时 `next build` 的类型门禁曾被并行任务的临时调试用例 `tests/unit/zz-debug-exif.test.ts`（Buffer 迭代 TS2802）打断，
+  视觉运行用 `SKIP_TSC=1` 绕过；该临时文件随后已移除，最终 `npx tsc` 恢复 exit 0，**基线本身不依赖跳过类型检查**。
+- 更新基线务必与代码改动同 commit：基线是「当前预期形态」的唯一事实源，单独改代码不同步基线会让 CI 变成随机红灯。
