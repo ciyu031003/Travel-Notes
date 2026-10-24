@@ -131,7 +131,7 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
           </div>
         )}
         {/* 地图区 - 可收起侧边栏布局（移动端 40vh，列表前置） */}
-        <section className="relative h-[40vh] md:h-[calc(100vh-64px)] overflow-hidden">
+        <section className="relative h-[40vh] md:h-[calc(100dvh-64px)] overflow-hidden">
           {/* 地图容器 */}
           <div className="absolute inset-0 p-2 md:p-4">
             <div className="w-full h-full rounded-2xl border border-travel-dim/60 bg-travel-cream p-3 md:p-5 shadow-[0_10px_28px_rgba(90,102,112,0.08)]">

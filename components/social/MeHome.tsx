@@ -319,7 +319,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
           <header className="mb-5 hidden items-center justify-between gap-3 md:flex">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">My Archive</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-social-accent)]">My Archive</p>
               <h1 className="mt-1.5 truncate text-[26px] font-semibold leading-none tracking-tight">我的</h1>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">

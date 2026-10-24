@@ -33,7 +33,7 @@ export default function UserList({ endpoint, title }: { endpoint: string; title:
             <Icon icon={ArrowLeft} size="md" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">People</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--ui-social-accent)]">People</p>
             <h1 className="text-xl font-semibold">{title}</h1>
           </div>
           <SocialThemeToggle />

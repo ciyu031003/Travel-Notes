@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function MomentsPage() {
   return (
-    <div className="relative min-h-[calc(100vh-5rem)] overflow-hidden">
+    <div className="relative min-h-[calc(100dvh-5rem)] overflow-hidden">
       {/* 温暖氛围背景：柔和光斑与纸纹 */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(228,180,120,0.24),transparent)]" />

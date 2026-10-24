@@ -246,7 +246,8 @@ function LoginPageContent() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-travel-sand/50 transition-colors hover:text-travel-accent"
+                      // 触达 ≥44px（设计规范 §1/§8）：视觉图标小，热区扩大到 44 并右移对齐输入框内缘
+                      className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-travel-sand/50 transition-colors hover:text-travel-accent"
                       aria-label={showPassword ? '隐藏密码' : '显示密码'}
                     >
                       {showPassword ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
@@ -282,12 +283,13 @@ function LoginPageContent() {
                   </div>
                 )}
 
-                <label className="flex cursor-pointer items-center gap-2">
+                {/* 触达 ≥44px：整行都是点击区（此前复选框仅 16px，登录页是未登录用户唯一能看到的页面） */}
+                <label className="flex min-h-[44px] cursor-pointer items-center gap-2.5">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 rounded border-travel-line accent-travel-accentSoft"
+                    className="h-5 w-5 rounded border-travel-line accent-travel-accentSoft"
                   />
                   <span className="text-xs text-travel-ink dark:text-shell-muted">记住我 (5小时)</span>
                 </label>
@@ -399,8 +401,9 @@ function LoginPageContent() {
                 <h3 className="text-xl font-bold text-travel-inkStrong dark:text-shell-text">
                   相册已上锁
                 </h3>
+                {/* 文案必须与下方移动端 BottomSheet 完全一致（2026-10-24 修复漂移："相册解锁密码" vs "纪念日作为解锁密码"） */}
                 <p className="mt-2 text-sm text-travel-sand dark:text-travel-sandSoft">
-                  请输入相册解锁密码
+                  请输入纪念日作为解锁密码
                 </p>
               </div>
 
@@ -440,7 +443,7 @@ function LoginPageContent() {
         </div>
       )}
 
-      {/* 移动端：相册锁 iOS 底部面板 */}
+      {/* 移动端：相册锁 iOS 底部面板（标题/副标题/格式提示三处文案与上方桌面 Modal 一字不差） */}
       {showAlbumLock && (
         <div className="md:hidden">
           <BottomSheet open onClose={() => {

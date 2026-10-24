@@ -89,7 +89,8 @@ export default function TravelPhotoViewer({
     setIndex(target)
   }
 
-  // z-[110]：低于 ToastHost(120) 与「记一笔」抽屉(130)，高于底部 tab(40) 与普通抽屉(95)
+  // z-[110]：低于 Toast(150)、AppUpdatePrompt(140)、BottomSheet(135)、页面级编辑器(130)、
+  // SideDrawer(115)，高于底部 tab(40) —— 层级权威表见 components/mobile/BottomSheet.tsx 头注释
   return (
     <div ref={panelRef} tabIndex={-1} className="fixed inset-0 z-[110] bg-black" role="dialog" aria-modal="true" aria-label="旅行相册">
       {/* 顶栏：明确的关闭入口 + 页码 */}

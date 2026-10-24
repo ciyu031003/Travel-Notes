@@ -1429,3 +1429,16 @@ html.dark .m-toast {
     transition: none !important;
   }
 }
+
+/* ── 长列表渲染跳过（P-10 后半）─────────────────────────────────────────
+   旅行圈无限滚动会把每页卡片累加进 DOM，长刷后数百张卡片常驻。
+   content-visibility:auto 让屏外卡片跳过渲染/布局（保留占位高度），
+   滚动到附近再真正渲染。**只在 ≤767px 生效**：桌面是 CSS 多列瀑布流
+   （columns-2/3 + column-fill:balance），多列与 c-v 的占位估算配合不佳；
+   移动端单列没有该问题。contain-intrinsic-size 取移动卡片常见高度量级。 */
+@media (max-width: 767px) {
+  .m-cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 420px;
+  }
+}

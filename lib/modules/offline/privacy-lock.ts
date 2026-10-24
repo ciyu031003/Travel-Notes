@@ -19,6 +19,8 @@ const PIN_KEY = 'tiantu-privacy-pin'
 /** 沿用旧 key：升级后「开关曾经打开过」的状态不丢（但旧状态没有 PIN，会被自动修复为关闭） */
 const LOCK_ENABLED_KEY = 'tiantu-privacy-lock'
 const UNLOCK_SESSION_KEY = 'tiantu-privacy-unlocked'
+/** 失败计数与锁定截止时间：**持久化**（杀进程也 reset 不了——否则节流形同虚设） */
+const ATTEMPTS_KEY = 'tiantu-privacy-attempts'
 
 const MIN_PIN_LENGTH = 4
 const MAX_PIN_LENGTH = 8
@@ -113,6 +115,7 @@ export async function setPin(pin: string): Promise<boolean> {
   const salt = randomHex(16)
   const hash = await hashPin(normalized, salt)
   writeRecord({ salt, hash, createdAt: Date.now() })
+  resetPinAttempts()
   // 设置 PIN 的本人当场视为已解锁，避免刚开启就被自己的门禁挡住
   markUnlocked()
   setPrivacyLockEnabled(true)
@@ -129,9 +132,76 @@ export async function verifyPin(pin: string): Promise<boolean> {
   return hash === record.hash
 }
 
+/* ── 失败节流（1.28.0 补口）─────────────────────────────────────────────
+ * 此前 PIN 无失败次数限制：4 位 PIN 可每秒手试数十次，几分钟内穷举完。
+ * 节流是 UI 门禁层的最后一道减速带（真正的数据防线仍是设备锁屏 + SQLCipher）。
+ * 策略：连续错 5 次内不锁；第 5 次起指数退避 30s×2^n，上限 15 分钟；
+ * 持久化到 localStorage（杀进程不清零——否则节流可被重启绕过）。
+ * 注意：这些值是"减速带"不是保险箱，故意不做服务端参与（离线可用性优先）。
+ */
+const THROTTLE_BASE_MS = 30_000
+const THROTTLE_MAX_MS = 15 * 60_000
+const THROTTLE_FREE_TRIES = 5
+
+interface AttemptRecord {
+  count: number
+  lockedUntil: number
+}
+
+function readAttempts(): AttemptRecord {
+  try {
+    const raw = localStorage.getItem(ATTEMPTS_KEY)
+    if (!raw) return { count: 0, lockedUntil: 0 }
+    const parsed = JSON.parse(raw) as Partial<AttemptRecord>
+    return { count: Number(parsed?.count) || 0, lockedUntil: Number(parsed?.lockedUntil) || 0 }
+  } catch {
+    return { count: 0, lockedUntil: 0 }
+  }
+}
+
+function writeAttempts(record: AttemptRecord): void {
+  try {
+    localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(record))
+  } catch {
+    // 存不了就退化为内存级节流（unlockedInMemory 同目录的取舍）
+  }
+}
+
+/** 当前是否处于失败锁定中；返回剩余毫秒（0 = 未锁定） */
+export function pinLockoutRemainingMs(): number {
+  const { lockedUntil } = readAttempts()
+  return Math.max(0, lockedUntil - Date.now())
+}
+
+/**
+ * 带节流的 PIN 校验：锁定中直接拒绝（不比较哈希）；
+ * 校验成功清零计数，失败累加并按上表计锁。
+ */
+export async function verifyPinThrottled(pin: string): Promise<boolean> {
+  if (pinLockoutRemainingMs() > 0) return false
+  const ok = await verifyPin(pin)
+  const { count } = readAttempts()
+  if (ok) {
+    writeAttempts({ count: 0, lockedUntil: 0 })
+    return true
+  }
+  const nextCount = count + 1
+  // 第 (FREE+1) 次失败开始锁：30s × 2^(超出次数-1)，指数上限 15 分钟
+  const over = nextCount - THROTTLE_FREE_TRIES
+  const lockMs = over > 0 ? Math.min(THROTTLE_MAX_MS, THROTTLE_BASE_MS * Math.pow(2, over - 1)) : 0
+  writeAttempts({ count: nextCount, lockedUntil: lockMs > 0 ? Date.now() + lockMs : 0 })
+  return false
+}
+
+/** 清除失败计数（成功解锁 / 关闭锁 / 重设 PIN 时调用） */
+export function resetPinAttempts(): void {
+  writeAttempts({ count: 0, lockedUntil: 0 })
+}
+
 /** 清除 PIN 与解锁态（关闭隐私锁时调用） */
 export function clearPin(): void {
   writeRecord(null)
+  resetPinAttempts()
   setPrivacyLockEnabled(false)
   lockNow()
 }

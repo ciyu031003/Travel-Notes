@@ -413,7 +413,7 @@ export default function PostDetail({ postId }: { postId: number }) {
           )}
 
           <div className={cn('mt-8', hasGallery && 'md:mt-1')}>
-            {post.location && <div className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">{post.location}</div>}
+            {post.location && <div className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--ui-social-accent)]">{post.location}</div>}
             <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{post.title}</h1>
 
             {/* 元信息改胶囊：与旅行圈卡片上的 chip 语言一致，也比裸文字更好扫读 */}

@@ -14,9 +14,10 @@ import {
   hasPin,
   isValidPin,
   markUnlocked,
+  pinLockoutRemainingMs,
   setPin,
   setPrivacyLockEnabled,
-  verifyPin,
+  verifyPinThrottled,
 } from '@/lib/modules/offline/privacy-lock'
 import { getSyncEngine } from '@/lib/modules/offline/bootstrap'
 import { getOfflineEncryptionState, getOfflineInitError } from '@/lib/modules/offline/native/sqlite-db'
@@ -206,9 +207,9 @@ export default function SyncCenter() {
     setPinBusy(true)
     setPinError('')
     try {
-      const ok = await verifyPin(pinInput)
+      const ok = await verifyPinThrottled(pinInput)
       if (!ok) {
-        setPinError('PIN 不正确')
+        setPinError(pinLockoutRemainingMs() > 0 ? '尝试次数过多，请稍后再试' : 'PIN 不正确')
         return
       }
       clearPin()
@@ -232,7 +233,7 @@ export default function SyncCenter() {
           <div className="ml-auto"><SocialThemeToggle /></div>
           <Link href="/me" aria-label="返回我的" className="rounded-full p-2 text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)]"><Icon icon={ArrowLeft} size="md" /></Link>
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">Sync</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--ui-social-accent)]">Sync</p>
             <h1 className="text-xl font-semibold">数据与同步</h1>
           </div>
         </header>
@@ -251,7 +252,7 @@ export default function SyncCenter() {
           <div className="py-20 text-center text-[var(--ui-social-muted)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {([
                 ['待上传', stats.PENDING],
                 ['上传中', stats.SYNCING],

@@ -133,7 +133,7 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
       </header>
 
       {/* 书本容器 */}
-      <div className="relative z-10 min-h-[calc(100vh-56px)] flex items-center justify-center p-4 md:p-8">
+      <div className="relative z-10 min-h-[calc(100dvh-56px)] flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-[900px] pixel-book-container flex flex-col md:flex-row relative rounded-sm min-h-[640px]">
           {/* 金色书角 */}
           <div className="pixel-corner-gold-tl" />

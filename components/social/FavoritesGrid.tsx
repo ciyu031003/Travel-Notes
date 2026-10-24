@@ -75,7 +75,7 @@ export default function FavoritesGrid() {
             <Icon icon={ArrowLeft} size="md" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">Memories</p>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--ui-social-accent)]">Memories</p>
             <h1 className="text-xl font-semibold">我的收藏</h1>
           </div>
           <SocialThemeToggle />

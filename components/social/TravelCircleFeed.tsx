@@ -231,7 +231,7 @@ export default function TravelCircleFeed() {
         <PullToRefresh onRefresh={() => load(tab, 1, false)}>
         <header className="m-enter mb-7 hidden items-start justify-between gap-4 md:flex">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--ui-social-accent)]">Travel Circle</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ui-social-accent)]">Travel Circle</p>
             <h1 className="mt-1.5 text-[30px] font-semibold leading-none tracking-tight text-[var(--ui-social-text)]">旅行圈</h1>
             <p className="mt-2 max-w-md text-sm leading-6 text-[var(--ui-social-muted)]">看看别人眼中的世界，发现正在发生的旅途。</p>
           </div>
@@ -400,7 +400,7 @@ export default function TravelCircleFeed() {
                 <SocialFilmCard
                   key={p.id}
                   {...cardProps(p, FRAMES[i % FRAMES.length])}
-                  className={cn('mb-5 break-inside-avoid', hero && p.id === hero.id && 'hidden md:block')}
+                  className={cn('mb-5 break-inside-avoid m-cv-auto', hero && p.id === hero.id && 'hidden md:block')}
                 />
               ))}
             </Stagger>

@@ -8,7 +8,8 @@ import {
   isPrivacyLockSupported,
   lockState,
   markUnlocked,
-  verifyPin,
+  pinLockoutRemainingMs,
+  verifyPinThrottled,
 } from '@/lib/modules/offline/privacy-lock'
 import { useModalLayer } from '@/hooks/use-modal-layer'
 
@@ -34,6 +35,8 @@ export default function PrivacyLockGate() {
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  /** 失败节流的剩余锁定毫秒（>0 时禁用键盘，1s tick 刷新提示） */
+  const [lockoutMs, setLockoutMs] = useState(0)
 
   // P2-B2：统一弹层基座（焦点圈定/恢复、背景 inert、滚动锁、ESC/返回键）
   const panelRef = useRef<HTMLDivElement>(null)
@@ -62,7 +65,8 @@ export default function PrivacyLockGate() {
     setBusy(true)
     setError('')
     try {
-      const ok = await verifyPin(pin)
+      // 带失败节流的校验（1.28.0）：连续错 5 次后指数退避，防止 4 位 PIN 被手试穷举
+      const ok = await verifyPinThrottled(pin)
       if (ok) {
         markUnlocked()
         void hapticSuccess()
@@ -70,7 +74,9 @@ export default function PrivacyLockGate() {
         setLocked(false)
       } else {
         void hapticError()
-        setError('PIN 不正确，请重试')
+        const remaining = pinLockoutRemainingMs()
+        setLockoutMs(remaining)
+        setError(remaining > 0 ? '尝试次数过多，请稍后再试' : 'PIN 不正确，请重试')
         setPin('')
       }
     } catch {
@@ -81,15 +87,22 @@ export default function PrivacyLockGate() {
     }
   }, [busy, pin])
 
+  // 锁定期间的倒计时：每秒刷新一次，归零即恢复输入
+  useEffect(() => {
+    if (lockoutMs <= 0) return
+    const timer = setInterval(() => setLockoutMs(pinLockoutRemainingMs()), 1000)
+    return () => clearInterval(timer)
+  }, [lockoutMs])
+
   const press = (digit: string) => {
-    if (busy) return
+    if (busy || lockoutMs > 0) return
     void hapticLight()
     setError('')
     setPin((prev) => (prev.length >= MAX_PIN_LENGTH ? prev : prev + digit))
   }
 
   const backspace = () => {
-    if (busy) return
+    if (busy || lockoutMs > 0) return
     void hapticLight()
     setError('')
     setPin((prev) => prev.slice(0, -1))
@@ -126,7 +139,12 @@ export default function PrivacyLockGate() {
           ))}
         </div>
 
-        {error && (
+        {lockoutMs > 0 && (
+          <p className="mt-3 text-sm text-[var(--m-danger)]" role="alert">
+            失败次数过多，{Math.ceil(lockoutMs / 1000)} 秒后可重试
+          </p>
+        )}
+        {error && lockoutMs <= 0 && (
           <p className="mt-3 text-sm text-[var(--m-danger)]" role="alert">
             {error}
           </p>
@@ -168,10 +186,10 @@ export default function PrivacyLockGate() {
         <button
           type="button"
           onClick={() => void submit()}
-          disabled={pin.length < MIN_PIN_LENGTH || busy}
+          disabled={pin.length < MIN_PIN_LENGTH || busy || lockoutMs > 0}
           className="mt-5 h-12 w-full rounded-[var(--m-radius-control)] bg-[var(--m-cta-bg)] text-[15px] font-semibold text-[var(--m-on-accent)] active:scale-[0.99] disabled:opacity-40"
         >
-          {busy ? '校验中…' : '解锁'}
+          {busy ? '校验中…' : lockoutMs > 0 ? '已锁定' : '解锁'}
         </button>
 
         <p className="mt-4 text-center text-xs leading-relaxed text-[var(--m-faint)]">
