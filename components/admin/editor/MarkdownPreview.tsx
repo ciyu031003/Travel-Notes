@@ -54,7 +54,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
   }, [content])
 
   return (
-    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-xs p-6">
       <div className="text-sm font-medium text-warm-700 dark:text-warm-300 mb-4">
         实时预览
         {loading && (

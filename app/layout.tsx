@@ -7,6 +7,7 @@ import PrivacyLockGate from '@/components/offline/PrivacyLockGate'
 import { ToastHost } from '@/components/mobile/Toast'
 import ThemeColorSync from '@/components/mobile/ThemeColorSync'
 import NativeBackHandler from '@/components/mobile/NativeBackHandler'
+import { useCrashReport } from '@/hooks/use-crash-report'
 
 /**
  * 站点绝对地址：metadataBase / canonical / OG 图片解析都依赖它。
@@ -72,6 +73,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // 全局崩溃/未捕获异常上报（P-07 后半）：根布局挂一次，全站生效
+  useCrashReport()
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <head>

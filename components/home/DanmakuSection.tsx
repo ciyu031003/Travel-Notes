@@ -227,7 +227,7 @@ function DanmakuItem({
 
   return (
     <div className="absolute text-sm font-medium whitespace-nowrap" style={style}>
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-travel-line/70 dark:border-shell-line bg-white/90 dark:bg-shell-surface/95 px-3 py-1 text-travel-ink dark:text-shell-muted shadow-sm">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-travel-line/70 dark:border-shell-line bg-white/90 dark:bg-shell-surface/95 px-3 py-1 text-travel-ink dark:text-shell-muted shadow-xs">
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: danmaku.color }} />
         {danmaku.text}
       </span>

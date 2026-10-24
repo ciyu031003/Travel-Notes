@@ -262,7 +262,7 @@ export default function TravelBook({
                 title={isCurrent ? `当前视图（${m.label}）` : m.title}
                 className={
                   isCurrent
-                    ? 'inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
+                    ? 'inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-xs dark:bg-travel-accent/20 dark:text-travel-bloom'
                     : 'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                 }
               >
@@ -315,7 +315,7 @@ export default function TravelBook({
                     aria-pressed={wallView === 'wall'}
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       wallView === 'wall'
-                        ? 'bg-travel-sakura text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
+                        ? 'bg-travel-sakura text-travel-ink shadow-xs dark:bg-travel-accent/20 dark:text-travel-bloom'
                         : 'text-travel-ink/80 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                     }`}
                   >
@@ -327,7 +327,7 @@ export default function TravelBook({
                     aria-pressed={wallView === 'list'}
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       wallView === 'list'
-                        ? 'bg-travel-sakura text-travel-ink shadow-sm dark:bg-travel-accent/20 dark:text-travel-bloom'
+                        ? 'bg-travel-sakura text-travel-ink shadow-xs dark:bg-travel-accent/20 dark:text-travel-bloom'
                         : 'text-travel-ink/80 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
                     }`}
                   >

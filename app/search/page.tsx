@@ -176,7 +176,7 @@ function SearchContent() {
               if (e.key === 'Enter') performSearch(query)
             }}
             placeholder="输入城市、地点或关键词..."
-            className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-travel-line dark:border-shell-line bg-white dark:bg-shell-surface2 text-travel-inkStrong dark:text-shell-text outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft focus-visible:border-transparent shadow-sm"
+            className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-travel-line dark:border-shell-line bg-white dark:bg-shell-surface2 text-travel-inkStrong dark:text-shell-text outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft focus-visible:border-transparent shadow-xs"
           />
           {query && (
             <button

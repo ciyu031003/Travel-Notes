@@ -19,6 +19,8 @@ import { EmptyState } from '@/components/mobile/EmptyState'
 import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 import { Stagger } from '@/components/mobile/Stagger'
 import { Button } from '@/components/mobile/Button'
+import { DesktopOnly, MobileOnly } from '@/components/mobile/MobileOnly'
+import { Virtuoso } from 'react-virtuoso'
 
 const TABS = [
   { key: 'recommended', label: '推荐' },
@@ -393,34 +395,68 @@ export default function TravelCircleFeed() {
               {total > 0 && <span className="text-xs tabular-nums text-[var(--ui-social-muted)]">共 {total} 篇</span>}
             </div>
 
-            {/* 移动端：保留紧凑 hero 大图叙事（桌面端走瀑布流，避免全宽巨卡） */}
-            {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="m-enter mb-5 md:hidden" />}
-            <Stagger className="m-enter columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]" delayBase={60} step={36}>
-              {posts.map((p, i) => (
-                <SocialFilmCard
-                  key={p.id}
-                  {...cardProps(p, FRAMES[i % FRAMES.length])}
-                  className={cn('mb-5 break-inside-avoid m-cv-auto', hero && p.id === hero.id && 'hidden md:block')}
-                />
-              ))}
-            </Stagger>
-            <div ref={sentinelRef} className="mt-6 flex justify-center">
-              {loadingMore ? (
-                <span className="flex items-center gap-1.5 text-xs text-[var(--ui-social-muted)]">
-                  <Icon icon={Loader2} size="sm" className="animate-spin" />
-                  正在加载更多…
-                </span>
-              ) : hasMore ? (
-                <button type="button" onClick={loadMore}
-                  className="m-pressable rounded-full bg-[var(--ui-social-surface)] px-6 py-2.5 text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition-colors hover:text-[var(--ui-social-text)] hover:ring-[var(--ui-social-line-strong)]">
-                  加载更多
-                </button>
-              ) : (
-                posts.length > 0 && (
-                  <span className="text-xs text-[var(--ui-social-muted)]">看到这里就是全部了 · 共 {posts.length} 篇</span>
-                )
-              )}
-            </div>
+            {/* 移动端：hero 大图 + **真虚拟列表**（react-virtuoso）。
+                无限滚动此前只累加分页结果，长刷后数百张图卡片常驻 DOM，低端 WebView 必然掉帧
+                （评审 P-10）。Virtuoso 只保留视口附近的卡片，滚过的卡片卸载、占位高度保留。
+                入场 Stagger 动画在虚拟化下会随重挂载重放，故虚拟列表内不使用；桌面瀑布流不受影响。 */}
+            <MobileOnly>
+              {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="m-enter mb-5" />}
+              <Virtuoso
+                useWindowScroll
+                increaseViewportBy={{ top: 600, bottom: 900 }}
+                totalCount={posts.length}
+                itemContent={(i, p) => (
+                  <SocialFilmCard
+                    key={p.id}
+                    {...cardProps(p, FRAMES[i % FRAMES.length])}
+                    className="mb-5"
+                  />
+                )}
+                endReached={loadMore}
+              />
+              <div className="mt-6 flex justify-center pb-2">
+                {loadingMore ? (
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--ui-social-muted)]">
+                    <Icon icon={Loader2} size="sm" className="animate-spin" />
+                    正在加载更多…
+                  </span>
+                ) : (
+                  !hasMore && (
+                    <span className="text-xs text-[var(--ui-social-muted)]">看到这里就是全部了 · 共 {posts.length} 篇</span>
+                  )
+                )}
+              </div>
+            </MobileOnly>
+
+            {/* 桌面端：CSS 多列瀑布流（列数少、资源充裕，保持 Stagger 入场；不做虚拟化） */}
+            <DesktopOnly>
+              <Stagger className="m-enter columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]" delayBase={60} step={36}>
+                {posts.map((p, i) => (
+                  <SocialFilmCard
+                    key={p.id}
+                    {...cardProps(p, FRAMES[i % FRAMES.length])}
+                    className={cn('mb-5 break-inside-avoid m-cv-auto', hero && p.id === hero.id && 'hidden')}
+                  />
+                ))}
+              </Stagger>
+              <div ref={sentinelRef} className="mt-6 flex justify-center">
+                {loadingMore ? (
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--ui-social-muted)]">
+                    <Icon icon={Loader2} size="sm" className="animate-spin" />
+                    正在加载更多…
+                  </span>
+                ) : hasMore ? (
+                  <button type="button" onClick={loadMore}
+                    className="m-pressable rounded-full bg-[var(--ui-social-surface)] px-6 py-2.5 text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition-colors hover:text-[var(--ui-social-text)] hover:ring-[var(--ui-social-line-strong)]">
+                    加载更多
+                  </button>
+                ) : (
+                  posts.length > 0 && (
+                    <span className="text-xs text-[var(--ui-social-muted)]">看到这里就是全部了 · 共 {posts.length} 篇</span>
+                  )
+                )}
+              </div>
+            </DesktopOnly>
           </>
         )}
         </PullToRefresh>

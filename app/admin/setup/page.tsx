@@ -70,7 +70,7 @@ export default function AdminSetupPage() {
   if (done) {
     return (
       <div className="min-h-dvh bg-warm-50 dark:bg-warm-900 flex items-center justify-center px-4">
-        <div className="bg-white dark:bg-warm-800 rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
+        <div className="bg-white dark:bg-warm-800 rounded-2xl shadow-xs p-8 max-w-md w-full text-center">
           <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 mb-3">
             <CheckCircle className="w-6 h-6" />
             <h1 className="text-xl font-bold text-warm-900 dark:text-white">初始化完成</h1>
@@ -102,7 +102,7 @@ export default function AdminSetupPage() {
           </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-warm-800 rounded-2xl shadow-sm p-8">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-warm-800 rounded-2xl shadow-xs p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
               <KeyRound className="w-6 h-6 text-primary-500" />

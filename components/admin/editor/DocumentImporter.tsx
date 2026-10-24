@@ -205,7 +205,7 @@ export default function DocumentImporter({
 
       {result && (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-warm-800 rounded-xl shadow-xs p-6">
             <div className="flex items-center gap-2 mb-4">
               {result.isValid ? (
                 <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -219,7 +219,7 @@ export default function DocumentImporter({
             <LintReport issues={result.issues} />
           </div>
 
-          <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6 space-y-4">
+          <div className="bg-white dark:bg-warm-800 rounded-xl shadow-xs p-6 space-y-4">
             <h3 className="text-base font-semibold text-warm-900 dark:text-white flex items-center gap-2">
               <FileText className="w-5 h-5" />
               元数据编辑
@@ -288,7 +288,7 @@ export default function DocumentImporter({
 
           <MarkdownPreview content={result.content} />
 
-          <div className="flex items-center justify-end gap-3 bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-end gap-3 bg-white dark:bg-warm-800 rounded-xl shadow-xs p-6">
             <button
               type="button"
               onClick={handleFillToEditor}

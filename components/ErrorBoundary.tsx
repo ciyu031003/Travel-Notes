@@ -1,6 +1,7 @@
 'use client'
 
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { reportClientError } from '@/lib/client/diagnostics'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -45,6 +46,14 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
       error,
       info?.componentStack,
     )
+    // 上报到诊断端点（P-07）：渲染器崩溃是"线上只能靠截图猜"的主要来源，
+    // message 去重 + 会话限额在 reportClientError 内部处理，这里 fire-and-forget。
+    const message = error instanceof Error ? error.message : String(error ?? '')
+    reportClientError({
+      kind: 'react-boundary',
+      message: (this.props.label ? `[${this.props.label}] ` : '') + message,
+      stack: error instanceof Error ? error.stack : undefined,
+    })
   }
 
   private handleRetry = () => {

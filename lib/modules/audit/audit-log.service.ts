@@ -17,6 +17,7 @@ export type AuditAction =
   | 'UPDATE_PERMISSIONS'
   | 'CHANGE_PASSWORD'
   | 'SETTINGS_UPDATE'
+  | 'PURGE_CLIENT_ERRORS'
 
 export interface AuditLogInput {
   username: string

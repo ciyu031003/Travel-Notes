@@ -8,7 +8,7 @@ export function AdminInput({ className, ...props }: InputHTMLAttributes<HTMLInpu
   return (
     <input
       className={cn(
-        'w-full rounded-xl border border-travel-line/60 bg-white/80 px-4 py-2.5 text-sm text-travel-ink placeholder-travel-sand/50 shadow-sm transition-all dark:border-shell-line dark:bg-white/5 dark:text-shell-text',
+        'w-full rounded-xl border border-travel-line/60 bg-white/80 px-4 py-2.5 text-sm text-travel-ink placeholder-travel-sand/50 shadow-xs transition-all dark:border-shell-line dark:bg-white/5 dark:text-shell-text',
         'focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50',
         className
       )}
@@ -22,7 +22,7 @@ export function AdminTextarea({ className, ...props }: TextareaHTMLAttributes<HT
   return (
     <textarea
       className={cn(
-        'w-full resize-none rounded-xl border border-travel-line/60 bg-white/80 px-4 py-3 text-sm text-travel-ink placeholder-travel-sand/50 shadow-sm transition-all dark:border-shell-line dark:bg-white/5 dark:text-shell-text',
+        'w-full resize-none rounded-xl border border-travel-line/60 bg-white/80 px-4 py-3 text-sm text-travel-ink placeholder-travel-sand/50 shadow-xs transition-all dark:border-shell-line dark:bg-white/5 dark:text-shell-text',
         'focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50',
         className
       )}

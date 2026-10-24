@@ -116,7 +116,7 @@ export default function VideoUploader({
   }
 
   return (
-    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-xs p-6">
       <div className="flex items-center justify-between mb-4">
         <label className="block text-sm font-medium text-warm-700 dark:text-warm-300">
           旅行视频管理

@@ -368,7 +368,7 @@ export default function AdminSpacesPage() {
                 return (
                   <div
                     key={space.id}
-                    className="group overflow-hidden rounded-3xl border border-warm-200/70 dark:border-warm-800 bg-white dark:bg-warm-900 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                    className="group overflow-hidden rounded-3xl border border-warm-200/70 dark:border-warm-800 bg-white dark:bg-warm-900 shadow-xs transition-all hover:shadow-xl hover:-translate-y-1"
                   >
                     {/* 封面 */}
                     <div className={`relative h-24 bg-gradient-to-br ${gradient} p-4`}>

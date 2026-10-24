@@ -83,7 +83,7 @@ export default function AdminSocialPage() {
             <div className="flex gap-2">
               {tabs.map((t) => (
                 <button key={t.key} onClick={() => setTab(t.key)}
-                  className={tab === t.key ? 'rounded-full bg-travel-accent px-4 py-1.5 text-sm font-medium text-white shadow-sm shadow-travel-accent/25' : 'rounded-full bg-white/70 px-4 py-1.5 text-sm text-travel-ink/80 hover:bg-travel-sakura/40 dark:bg-white/5 dark:text-warm-300'}>
+                  className={tab === t.key ? 'rounded-full bg-travel-accent px-4 py-1.5 text-sm font-medium text-white shadow-xs shadow-travel-accent/25' : 'rounded-full bg-white/70 px-4 py-1.5 text-sm text-travel-ink/80 hover:bg-travel-sakura/40 dark:bg-white/5 dark:text-warm-300'}>
                   {t.label}
                 </button>
               ))}

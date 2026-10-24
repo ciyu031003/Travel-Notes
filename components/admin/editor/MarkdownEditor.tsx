@@ -24,7 +24,7 @@ function countWords(text: string): { chars: number; words: number } {
 export default function MarkdownEditor({ content, onChange }: MarkdownEditorProps) {
   const { chars, words } = countWords(content)
   return (
-    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-warm-800 rounded-xl shadow-xs p-6">
       <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
         <FileText className="w-4 h-4 inline mr-2" />
         正文内容 (支持 Markdown)

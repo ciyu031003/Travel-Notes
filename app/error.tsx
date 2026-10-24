@@ -24,7 +24,7 @@ export default function ErrorPage({
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-16">
-      <div className="w-full max-w-md rounded-3xl border border-travel-line/70 bg-semantic-surface p-8 text-center shadow-sm dark:border-shell-line dark:bg-shell-surface">
+      <div className="w-full max-w-md rounded-3xl border border-travel-line/70 bg-semantic-surface p-8 text-center shadow-xs dark:border-shell-line dark:bg-shell-surface">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-travel-sakura/50 text-travel-accent dark:bg-travel-accent/15 dark:text-travel-bloom">
           <Icon icon={AlertCircle} size="lg" />
         </span>

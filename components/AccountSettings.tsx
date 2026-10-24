@@ -83,7 +83,7 @@ export default function AccountSettings() {
   }
 
   return (
-    <div className="bg-white dark:bg-shell-surface rounded-xl shadow-sm p-6">
+    <div className="bg-white dark:bg-shell-surface rounded-xl shadow-xs p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-gradient-to-br from-travel-accent to-travel-accentSoft rounded-lg flex items-center justify-center">
           <Icon icon={Settings} size="md" tone="inverse" />

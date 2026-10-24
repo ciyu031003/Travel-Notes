@@ -270,3 +270,16 @@ npx vitest run --reporter=dot                                     → 全部通�
 - 生成基线时 `next build` 的类型门禁曾被并行任务的临时调试用例 `tests/unit/zz-debug-exif.test.ts`（Buffer 迭代 TS2802）打断，
   视觉运行用 `SKIP_TSC=1` 绕过；该临时文件随后已移除，最终 `npx tsc` 恢复 exit 0，**基线本身不依赖跳过类型检查**。
 - 更新基线务必与代码改动同 commit：基线是「当前预期形态」的唯一事实源，单独改代码不同步基线会让 CI 变成随机红灯。
+
+## 8. shadow-sm 语义漂移收口（2026-10-24 · 1.29.0）
+
+**背景**：v3 `shadow-sm`（`0 1px 2px 0 rgb(0 0 0/0.05)`）在 v4 改名为 `shadow-xs`，v4 的 `shadow-sm`
+等于 v3 的 `shadow`（`0 1px 3px …, 0 1px 2px -1px`）。1.27.0 迁移时全站 `shadow-sm`（39 处类名）
+渲染整体比原设计意图**偏大一档**——视觉基线通过是因为迁移"零回归到当时的实际状态"。
+
+**决策（deferred 清单收口）**：对齐 v3 设计意图 —— 全站类名 `shadow-sm` → `shadow-xs`（39 处，
+机械替换；`app/tokens.css` 的 `--m-shadow-sm` / `--ui-mobile-shadow-sm` 是**变量名**不是工具类，
+保持不动；仓库无 `drop-shadow-sm`，无误伤）。替换后卡片阴影回到迁移前的视觉重量。
+
+**验证方式**：受影响基线页（/me、/dashboard、admin 系列截图）在可跑环境
+`npm run test:visual -- --update-snapshots` 后逐张人工核对（阴影变化属预期，布局不得位移）。

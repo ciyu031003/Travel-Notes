@@ -129,7 +129,7 @@ export default function AdminShell({
           {...(item.href === '/' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
           className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
             active
-              ? 'bg-gradient-to-r from-travel-sakura to-travel-sakura dark:from-travel-accent/15 dark:to-travel-accentSoft/10 text-travel-accentStrong dark:text-travel-accentSoft shadow-sm'
+              ? 'bg-gradient-to-r from-travel-sakura to-travel-sakura dark:from-travel-accent/15 dark:to-travel-accentSoft/10 text-travel-accentStrong dark:text-travel-accentSoft shadow-xs'
               : 'text-travel-ink/80 dark:text-shell-muted hover:bg-white/70 dark:hover:bg-white/5 hover:text-travel-ink dark:hover:text-[#E8E6E1]'
           }`}
         >

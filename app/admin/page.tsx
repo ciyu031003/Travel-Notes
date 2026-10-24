@@ -197,7 +197,7 @@ export default function AdminDashboard() {
   })
 
   const glassInput =
-    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-travel-ink dark:text-shell-text placeholder-warm-400 shadow-sm backdrop-blur-xl transition-all focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50'
+    'w-full rounded-xl border border-white/70 bg-white/75 dark:border-white/10 dark:bg-white/5 px-4 py-2.5 text-sm text-travel-ink dark:text-shell-text placeholder-warm-400 shadow-xs backdrop-blur-xl transition-all focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50'
 
   return (
     <AdminShell title="文章管理">

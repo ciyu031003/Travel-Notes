@@ -19,7 +19,7 @@ export default function PostTitleInput({
 }: PostTitleInputProps) {
   return (
     <>
-      <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6">
+      <div className="bg-white dark:bg-warm-800 rounded-xl shadow-xs p-6">
         <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">标题</label>
         <input
           type="text"
@@ -31,7 +31,7 @@ export default function PostTitleInput({
         />
       </div>
 
-      <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm p-6 space-y-5">
+      <div className="bg-white dark:bg-warm-800 rounded-xl shadow-xs p-6 space-y-5">
         <div>
           <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-2">
             <Calendar className="w-4 h-4 inline mr-2" />

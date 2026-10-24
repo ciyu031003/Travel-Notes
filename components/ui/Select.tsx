@@ -34,7 +34,7 @@ export function Select({
         <select
           id={selectId}
           className={cn(
-            'w-full appearance-none rounded-xl border border-semantic-line bg-semantic-surface px-4 py-2.5 pr-9 text-sm text-semantic-text shadow-sm transition-all',
+            'w-full appearance-none rounded-xl border border-semantic-line bg-semantic-surface px-4 py-2.5 pr-9 text-sm text-semantic-text shadow-xs transition-all',
             'focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-semantic-accentSoft/50',
             '[&>option]:bg-semantic-surface'
           )}

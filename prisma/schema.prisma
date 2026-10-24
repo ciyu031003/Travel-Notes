@@ -941,3 +941,25 @@ model SyncTombstone {
   @@index([userId, deletedAt])
   @@index([entityType, entityId])
 }
+
+/// 客户端错误上报（P-07 后半，1.29.0）：自建轻量崩溃/异常收集。
+/// 之前线上 JS 白屏/报错"只能靠用户截图猜"——这是唯一的可观测通道。
+/// 只做诊断不做聚合分析：每条有界（message/stack/url 截断在服务端与 zod 双保险），
+/// 写入频率靠客户端去重 + IP 限流约束，表按 createdAt 滚动清理可另行加任务。
+model ClientErrorLog {
+  id          Int      @id @default(autoincrement())
+  /// js-error | unhandled-rejection | react-boundary
+  kind        String   @db.VarChar(30)
+  message     String   @db.VarChar(500)
+  stack       String?  @db.Text
+  url         String?  @db.VarChar(300)
+  appVersion  String?  @db.VarChar(20)
+  buildNumber Int?
+  /// native（App 壳）| web
+  platform    String?  @db.VarChar(10)
+  userId      Int?
+  createdAt   DateTime @default(now()) @db.Timestamp(3)
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
+}

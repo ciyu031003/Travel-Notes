@@ -48,7 +48,7 @@ export default function MomentComposer({
       )}
     >
       <div className="mb-2 flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom text-white shadow-sm">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom text-white shadow-xs">
           <Icon icon={Feather} size="sm" />
         </span>
         <span className="text-sm font-semibold text-travel-inkStrong dark:text-shell-text">

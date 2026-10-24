@@ -64,7 +64,7 @@ export default function AdminSettingsPage() {
   return (
     <AdminShell title="账号设置">
       <main className="mx-auto max-w-4xl px-1 py-2">
-        <div className="bg-white dark:bg-warm-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-warm-800 rounded-xl shadow-xs overflow-hidden">
           <div className="border-b border-warm-200 dark:border-warm-700">
             <nav className="flex -mb-px" aria-label="Tabs">
               {TABS.map((tab) => {

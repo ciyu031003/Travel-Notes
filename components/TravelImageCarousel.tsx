@@ -292,7 +292,7 @@ export default function TravelImageCarousel({
             />
           ))}
         </div>
-        <div className="px-3 py-1 rounded-full bg-white/70 backdrop-blur-sm shadow-sm">
+        <div className="px-3 py-1 rounded-full bg-white/70 backdrop-blur-sm shadow-xs">
           <span className="text-xs font-medium text-travel-ink">
             第 {currentIndex + 1} / {total} 张
           </span>

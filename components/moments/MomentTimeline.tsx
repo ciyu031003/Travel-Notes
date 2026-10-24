@@ -171,7 +171,7 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-travel-sakura/60 px-5 text-sm font-medium text-travel-accent transition-all hover:bg-travel-sakura hover:shadow-sm disabled:opacity-50 dark:bg-travel-accent/15 dark:text-travel-accentSoft dark:hover:bg-travel-accentStrong/30"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-travel-sakura/60 px-5 text-sm font-medium text-travel-accent transition-all hover:bg-travel-sakura hover:shadow-xs disabled:opacity-50 dark:bg-travel-accent/15 dark:text-travel-accentSoft dark:hover:bg-travel-accentStrong/30"
           >
             {loadingMore ? '加载中...' : '加载更多'}
           </button>

@@ -265,7 +265,7 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
                 <span className="h-2 w-2 rounded-full bg-travel-bloom" />
               </span>
 
-              <div className="rounded-2xl border border-travel-dim/60 bg-white/60 p-5 shadow-sm">
+              <div className="rounded-2xl border border-travel-dim/60 bg-white/60 p-5 shadow-xs">
                 {/* 章节头 */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-travel-ink">DAY {String(idx + 1).padStart(2, '0')}</span>

@@ -21,6 +21,72 @@ const allCities = [
   '桂林', '三亚', '拉萨', '大理',
 ]
 
+/**
+ * 相册解锁面板体（P-13 跨端收敛，2026-10-24）。
+ *
+ * 桌面 Modal 与移动 BottomSheet 的**唯一内容源**（标题/副标题/输入/提示/错误/按钮）：
+ * 此前两处各写一份 JSX，副标题已经漂移过一次（"相册解锁密码" vs "纪念日作为解锁密码"）。
+ * 外壳（桌面 parchment 卡片 / 移动 sheet）各自保留，壳内内容必须从这里渲染。
+ * tone 只决定 token 档，结构与文案只有一份。
+ */
+function AlbumUnlockBody({
+  tone,
+  password,
+  onPasswordChange,
+  error,
+  verifying,
+  onSubmit,
+}: {
+  tone: 'parchment' | 'sheet'
+  password: string
+  onPasswordChange: (v: string) => void
+  error: string
+  verifying: boolean
+  onSubmit: (e: React.FormEvent) => void
+}) {
+  const cls =
+    tone === 'parchment'
+      ? {
+          title: 'text-xl font-bold text-travel-inkStrong dark:text-shell-text',
+          subtitle: 'mt-2 text-sm text-travel-sand dark:text-travel-sandSoft',
+          error: 'border border-travel-bloom/50 bg-travel-sakura/40 text-travel-accent dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom',
+        }
+      : {
+          title: 'mt-4 text-[22px] font-bold tracking-[-0.02em] text-[var(--m-text)]',
+          subtitle: 'mt-1.5 text-sm text-[var(--m-muted)]',
+          error: 'border border-[rgba(224,108,108,0.35)] bg-[rgba(224,108,108,0.12)] text-[var(--danger-soft)]',
+        }
+  return (
+    <div className="flex w-full flex-col items-center text-center">
+      <h3 className={cls.title}>相册已上锁</h3>
+      <p className={cls.subtitle}>请输入纪念日作为解锁密码</p>
+
+      <form onSubmit={onSubmit} className="mt-4 w-full space-y-3">
+        <Field
+          type="text"
+          value={password}
+          onChange={(e) => onPasswordChange(e.target.value)}
+          leadingIcon={Lock}
+          placeholder="如 2023-06-20"
+          required
+          autoFocus
+        />
+        <p className="text-center text-xs text-[var(--m-faint)]">
+          支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
+        </p>
+
+        {error && (
+          <div className={`rounded-xl px-4 py-2.5 text-center text-sm ${cls.error}`}>{error}</div>
+        )}
+
+        <Button type="submit" block loading={verifying} disabled={verifying} className="mt-2">
+          {verifying ? '验证中…' : '解锁相册'}
+        </Button>
+      </form>
+    </div>
+  )
+}
+
 function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -398,52 +464,22 @@ function LoginPageContent() {
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-sakura to-travel-bloom shadow-lg">
                   <Icon icon={Heart} size="lg" className="fill-white text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-travel-inkStrong dark:text-shell-text">
-                  相册已上锁
-                </h3>
-                {/* 文案必须与下方移动端 BottomSheet 完全一致（2026-10-24 修复漂移："相册解锁密码" vs "纪念日作为解锁密码"） */}
-                <p className="mt-2 text-sm text-travel-sand dark:text-travel-sandSoft">
-                  请输入纪念日作为解锁密码
-                </p>
+                {/* 面板体唯一来源：AlbumUnlockBody（移动端 BottomSheet 同源，文案/结构不允许两份） */}
+                <AlbumUnlockBody
+                  tone="parchment"
+                  password={albumPassword}
+                  onPasswordChange={setAlbumPassword}
+                  error={albumError}
+                  verifying={albumVerifying}
+                  onSubmit={handleAlbumUnlock}
+                />
               </div>
-
-              <form onSubmit={handleAlbumUnlock} className="mt-6 space-y-4">
-                <div className="relative">
-                  <Icon icon={Lock} size="sm" className="absolute left-4 top-1/2 -translate-y-1/2 text-travel-sand/40" />
-                  <input
-                    type="text"
-                    value={albumPassword}
-                    onChange={(e) => setAlbumPassword(e.target.value)}
-                    className="w-full rounded-2xl border border-travel-line bg-white/60 py-3 pl-11 pr-4 text-travel-inkStrong transition-all placeholder-travel-sand/40 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom/60 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-travel-sandSoft/50"
-                    placeholder="如 2023-06-20"
-                    required
-                    autoFocus
-                  />
-                </div>
-                <p className="text-center text-xs text-travel-sand dark:text-travel-sandSoft">
-                  支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
-                </p>
-
-                {albumError && (
-                  <div className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-2.5 text-center text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom">
-                    {albumError}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={albumVerifying}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-travel-accent py-3 font-semibold text-white shadow-lg shadow-travel-accent/30 transition-colors hover:bg-travel-accentStrong disabled:opacity-50"
-                >
-                  {albumVerifying ? '验证中...' : '解锁相册'}
-                </button>
-              </form>
             </div>
           </div>
         </div>
       )}
 
-      {/* 移动端：相册锁 iOS 底部面板（标题/副标题/格式提示三处文案与上方桌面 Modal 一字不差） */}
+      {/* 移动端：相册锁 iOS 底部面板（面板体与桌面 Modal 同源：AlbumUnlockBody） */}
       {showAlbumLock && (
         <div className="md:hidden">
           <BottomSheet open onClose={() => {
@@ -455,38 +491,14 @@ function LoginPageContent() {
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
                 <Icon icon={Heart} size="lg" className="fill-current" />
               </span>
-              <h3 className="mt-4 text-[22px] font-bold tracking-[-0.02em] text-[var(--m-text)]">
-                相册已上锁
-              </h3>
-              <p className="mt-1.5 text-sm text-[var(--m-muted)]">
-                请输入纪念日作为解锁密码
-              </p>
-
-              <form onSubmit={handleAlbumUnlock} className="mt-6 w-full space-y-3">
-                {/* v4 M5 接入：字段/主按钮收敛到统一 Field / Button
-                    （此前按钮是 m-chip 加 !important 硬顶的写法） */}
-                <Field
-                  type="text"
-                  value={albumPassword}
-                  onChange={(e) => setAlbumPassword(e.target.value)}
-                  leadingIcon={Lock}
-                  placeholder="如 2023-06-20"
-                  required
-                />
-                <p className="text-center text-xs text-[var(--m-faint)]">
-                  支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
-                </p>
-
-                {albumError && (
-                  <div className="rounded-xl border border-[rgba(224,108,108,0.35)] bg-[rgba(224,108,108,0.12)] px-4 py-2.5 text-center text-sm text-[var(--danger-soft)]">
-                    {albumError}
-                  </div>
-                )}
-
-                <Button type="submit" block loading={albumVerifying} disabled={albumVerifying} className="mt-4">
-                  {albumVerifying ? '验证中…' : '解锁相册'}
-                </Button>
-              </form>
+              <AlbumUnlockBody
+                tone="sheet"
+                password={albumPassword}
+                onPasswordChange={setAlbumPassword}
+                error={albumError}
+                verifying={albumVerifying}
+                onSubmit={handleAlbumUnlock}
+              />
             </div>
           </BottomSheet>
         </div>
