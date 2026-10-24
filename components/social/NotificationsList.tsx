@@ -10,7 +10,6 @@ import { EmptyState } from '@/components/mobile/EmptyState'
 import { hapticLight } from '@/lib/mobile/haptics'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
-import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { circlePostHref, circleUserHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
 
@@ -81,7 +80,7 @@ export default function NotificationsList() {
 
   return (
     <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)]">
-      <EdgeSwipeBack />
+      {/* 左缘右滑返回由全局壳（LayoutContent）提供，页面不再重复挂载（一滑退两层 bug） */}
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
 
       <div className="m-safe-top-16 relative mx-auto max-w-2xl px-4 pb-8 sm:px-6 sm:py-8">

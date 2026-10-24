@@ -439,6 +439,9 @@ export default function ChinaMap({ posts, externalPanel = false, onProvinceSelec
     <div
       ref={containerRef}
       className="relative w-full h-full overflow-hidden"
+      // 地图平移与全局左缘右滑返回是同形手势（横向拖动）：不豁免的话，
+      // 从地图左缘 24px 起手横拖会同时平移地图并把整页"滑走"（真机 bug）
+      data-no-swipeback=""
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}

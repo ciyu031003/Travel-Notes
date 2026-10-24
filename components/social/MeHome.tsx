@@ -29,6 +29,7 @@ import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import ProfileHero from '@/components/social/ProfileHero'
 import { Modal } from '@/components/ui/Modal'
 import { apiUrl } from '@/lib/api-base'
+import { performLogout } from '@/lib/client/logout'
 import { isMobileShell, travelDetailHref } from '@/lib/routes'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
@@ -232,10 +233,14 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
   const coveredFileRef = useRef<HTMLInputElement | null>(null)
 
+  /**
+   * 退出登录必须走共享 performLogout（M-1 / P1-22）：此前的裸 fetch + push
+   * 不停同步引擎、不清本地库——引擎继续回放队列，无 Cookie 的请求全部 401，
+   * 4xx 规则会把尚未上传的离线创作批量打成 DEAD（用户内容永久丢失）。
+   * 见 lib/client/logout.ts。
+   */
   const logout = async () => {
-    try {
-      await fetch(apiUrl('/api/logout'), { method: 'POST', credentials: 'include' })
-    } catch {}
+    await performLogout()
     router.push('/login')
   }
 

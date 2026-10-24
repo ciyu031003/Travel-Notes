@@ -17,11 +17,12 @@
  * 只统计本站内部的 push/pop，栈深度 > 1 才允许 back()，否则走 fallback。
  * 这样无论浏览器还是原生壳，行为一致且永不退出应用。
  */
-import { canGoBackInApp, recordPop, recordPush } from './navigation-stack'
+import { canGoBackInApp, recordPop, recordPush, replaceCurrent } from './navigation-stack'
 
 export interface BackCapableRouter {
   back: () => void
   push: (href: string) => void
+  replace: (href: string) => void
 }
 
 /**
@@ -38,7 +39,13 @@ export function goBackOrHome(router: BackCapableRouter, fallback = '/'): void {
   if (typeof window !== 'undefined' && canGoBackInApp()) {
     router.back()
   } else {
-    // replace 而非 push：避免在栈底反复 back 时堆出重复的 fallback 项
-    router.push(fallback)
+    // 必须 replace 而非 push（2026-10-24 修复"深链返回弹跳"）：
+    // 深链打开详情页时栈里只有这一页（canGoBackInApp=false），若用 push 去
+    // fallback，浏览器历史会变成 [详情, 列表] 且 navigation-stack 深度变 2 ——
+    // 用户在列表按返回时 router.back() 又弹回刚离开的详情页，"回不去也退不出"。
+    // replace 不新增历史项；同时把应用内栈校正为 [fallback]，否则 trackNavigation
+    // 会把这次 replace 记成前进、留下假深度（见 navigation-stack.replaceCurrent）。
+    router.replace(fallback)
+    replaceCurrent(fallback)
   }
 }

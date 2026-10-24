@@ -12,6 +12,7 @@ import { getClientIp } from '@/lib/request-utils'
 import { writeAuditLog } from '@/lib/modules/audit/audit-log.service'
 import { ApiError, errorResponse } from '@/lib/api-response'
 import { parseBody, getRequestId } from '@/lib/api/handler'
+import { readIdempotencyKey, withIdempotency } from '@/lib/api/idempotency'
 import { RESUMABLE_CHUNK_BYTES, totalChunksForBytes } from '@/lib/media/upload-policy'
 import { mediaTmpDir } from '@/lib/media/tmp-dir'
 
@@ -265,13 +266,31 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // 复用相册媒体管线：魔数校验 / 变体生成 / media 行 / album_media 关联 / 空间配额
-      const media = await addMediaToAlbum(
-        meta.albumId,
-        [{ name: meta.filename, buffer, mimeType: meta.mimeType }],
+      // B4 补口：complete 建行是分片链路里唯一的"服务端副作用"，响应丢失后重传
+      // 会走一遍 init→chunk→complete 生成重复照片。离线队列的 clientMutationId
+      // 由客户端在 init/complete 都带 Idempotency-Key，服务端按键去重：
+      // 命中即返回首次创建的首个 media id（客户端只读 media[0].id）。
+      const idem = await withIdempotency({
+        key: readIdempotencyKey(request),
         userId,
-      )
+        entityType: 'Media',
+        run: async () => {
+          // 复用相册媒体管线：魔数校验 / 变体生成 / media 行 / album_media 关联 / 空间配额
+          const media = await addMediaToAlbum(
+            meta.albumId,
+            [{ name: meta.filename, buffer, mimeType: meta.mimeType }],
+            userId,
+          )
+          const firstId = media[0]?.id
+          if (typeof firstId !== 'number') throw new ApiError('UPLOAD_FAILED', '上传失败', 400)
+          return { entityId: firstId, value: media }
+        },
+      })
       dropSession(body.uploadId)
+      if (idem.replayed) {
+        return NextResponse.json({ success: true, media: [{ id: idem.entityId }] })
+      }
+      const media = idem.value ?? []
       writeAuditLog({
         username: auth.username,
         action: 'UPLOAD_MEDIA',

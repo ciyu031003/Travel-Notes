@@ -10,7 +10,6 @@ import { LoaderBlock } from '@/components/mobile/Loader'
 import { apiUrl } from '@/lib/api-base'
 import { spaceDetailHref } from '@/lib/routes'
 import type { SpaceOverview } from '@/lib/modules/space/space-overview.types'
-import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { SpaceThemeScope } from './SpaceThemeScope'
 import SpaceDetail, { type SpaceDetailData } from './SpaceDetail'
 
@@ -140,7 +139,7 @@ export default function SpaceDetailClient({ slugProp }: { slugProp?: string }) {
 
   return (
     <SpaceThemeScope type={data.space.spaceType}>
-      <EdgeSwipeBack />
+      {/* 左缘右滑返回由全局壳（LayoutContent）提供，页面不再重复挂载（一滑退两层 bug） */}
       <SpaceDetail data={data} onChanged={() => void load()} />
     </SpaceThemeScope>
   )

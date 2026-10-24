@@ -49,6 +49,19 @@ export function canGoBackInApp(): boolean {
   return stack.length > 1
 }
 
+/**
+ * 以 replace 方式到达 pathname 时校正栈（goBackOrHome 的深链兜底专用）。
+ *
+ * replace 不新增浏览器历史项，但随后的 pathname 变化仍会经 trackNavigation
+ * 走 recordPush —— 若不在这里把栈重置为 [pathname]，栈会留下
+ * [深链页, fallback] 的假深度，返回键判定"有上一页"后 back() 到的却是
+ * 已被替换掉的深链历史项（表现为"返回后又弹回详情页"）。
+ * 校正后 trackNavigation 对同路径重复 push 不叠加，栈保持诚实。
+ */
+export function replaceCurrent(pathname: string): void {
+  stack = [normalize(pathname)]
+}
+
 /** 仅用于测试/调试 */
 export function __getStack(): string[] {
   return stack.slice()

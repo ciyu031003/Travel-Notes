@@ -8,6 +8,7 @@ import { getClientIp } from '@/lib/request-utils'
 import { z } from 'zod'
 import { ApiError, errorResponse } from '@/lib/api-response'
 import { parseBody, getRequestId } from '@/lib/api/handler'
+import { readIdempotencyKey, withIdempotency } from '@/lib/api/idempotency'
 import { AlbumMediaDeleteSchema, IdSchema } from '@/lib/api/schemas/admin'
 
 /** 相册批量传图：multipart 表单，只校验 files 形状（文件内容由 media-validation 魔数校验） */
@@ -59,14 +60,33 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }))
     )
 
-    const media = await addMediaToAlbum(albumId, imageFiles, auth.payload?.userId)
+    // B4 补口：离线队列的照片上传一直带着 Idempotency-Key，但本端点此前不消费——
+    // "服务端已收、响应丢失"的重传会生成重复照片（其余 5 个创建端点均已接入）。
+    // 离线管线每次只传一张图且只读 media[0].id，因此重放时用记录的首个 media id
+    // 还原最小响应即可；Web 端多图上传不带键，走原路径不受影响。
+    const idempotencyKey = readIdempotencyKey(request)
+    const idem = await withIdempotency({
+      key: idempotencyKey,
+      userId: auth.payload?.userId,
+      entityType: 'Media',
+      run: async () => {
+        const media = await addMediaToAlbum(albumId, imageFiles, auth.payload?.userId)
+        const firstId = media[0]?.id
+        if (typeof firstId !== 'number') throw new ApiError('UPLOAD_FAILED', '上传失败', 400)
+        return { entityId: firstId, value: media }
+      },
+    })
+
+    const media = idem.replayed
+      ? [{ id: idem.entityId }]
+      : (idem.value ?? [])
     writeAuditLog({
       username: auth.username,
       action: 'UPLOAD_MEDIA',
       resourceType: 'Album',
       resourceId: String(albumId),
       ip,
-      metadata: { count: media.length },
+      metadata: { count: media.length, replayed: idem.replayed },
     }).catch(() => {})
     return NextResponse.json({ success: true, media })
   } catch (error: any) {

@@ -291,6 +291,8 @@ export async function uploadMediaFromLocalFile(input: {
         base64,
         mimeType,
         fileName: input.localPath.split('/').pop() || 'photo.jpg',
+        // B4：把队列幂等键传给分片链路（complete 侧服务端按键去重）
+        idempotencyKey: input.idempotencyKey,
       })
       if (resumable.ok) {
         const media = resumable.media

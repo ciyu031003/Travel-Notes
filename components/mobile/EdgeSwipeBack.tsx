@@ -13,7 +13,9 @@ import { canGoBackInApp } from '@/lib/navigation-stack'
  * - 仅 <768px 生效；起手点在 [data-no-swipeback] 内（横向轮播/地图）则不启用；
  * - v1 不做全程跟手位移：transform 常驻会成为 fixed 后代（折叠栏等）的包含块，
  *   连锁修复成本高于收益；方向性退场已能传达空间层级，Android 亦有系统返回兜底。
- * - 挂载点：二级/详情页（旅行详情、帖子详情、我的子页）。
+ * - 挂载点：**仅全局壳**（components/layout/LayoutContent.tsx 的各常规页分支）。
+ *   此前 6 个页面还各自挂载过一份，同一手势两套监听都 commit → goBackOrHome
+ *   调两次 = 一滑退两层（真机 bug，2026-10-24 收敛）。新页面不要再单独挂载。
  */
 export default function EdgeSwipeBack() {
   const router = useRouter()
@@ -26,6 +28,9 @@ export default function EdgeSwipeBack() {
     let startY = 0
     let tracking = false
     let committed = false
+    // commit → back 的延迟窗口：组件卸载 / 二次导航时必须取消，
+    // 否则 goBackOrHome 会在新页面上再退一层（多退一层的竞态）
+    let commitTimer: ReturnType<typeof setTimeout> | null = null
 
     const reset = () => {
       tracking = false
@@ -65,7 +70,9 @@ export default function EdgeSwipeBack() {
         committed = true
         document.body.classList.add('m-swipeback-commit')
         // 等滑出动画播完再退栈，上一层以 m-page-pop 入场
-        window.setTimeout(() => {
+        if (commitTimer) clearTimeout(commitTimer)
+        commitTimer = setTimeout(() => {
+          commitTimer = null
           reset()
           committed = false
           goBackOrHome(router)
@@ -89,6 +96,7 @@ export default function EdgeSwipeBack() {
       window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('touchend', onTouchEnd)
       window.removeEventListener('touchcancel', onTouchEnd)
+      if (commitTimer) clearTimeout(commitTimer)
       reset()
     }
   }, [router])

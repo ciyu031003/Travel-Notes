@@ -18,7 +18,6 @@ import { travelDetailHref, travelRecordHref } from '@/lib/routes'
 import { TravelTypePill } from '@/components/mobile/Pills'
 import { Icon } from '@/components/mobile/Icon'
 import { IconButton } from '@/components/mobile/IconButton'
-import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { useIsMobile } from '@/hooks/use-is-mobile'
 import { hapticLight } from '@/lib/mobile/haptics'
 import { readWithFallback } from '@/lib/modules/offline/repository'
@@ -305,7 +304,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
 
   return (
     <div className="bg-travel-cream min-h-dvh">
-      <EdgeSwipeBack />
+      {/* 左缘右滑返回由全局壳（LayoutContent）提供，页面不再重复挂载（一滑退两层 bug） */}
       {/* 移动端：四 tab 信息架构（仅移动端挂载） */}
       {isMobile && travel && (
         <TravelDetailMobile

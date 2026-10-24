@@ -132,12 +132,17 @@ function requestSignal(): AbortSignal | undefined {
 async function postJson(
   body: Record<string, unknown>,
   fetchImpl: typeof fetch,
+  /** B4：init/complete 带上队列项的幂等键（chunk 重传无副作用，不需要） */
+  idempotencyKey?: string,
 ): Promise<{ ok: boolean; status: number; json: Record<string, unknown> }> {
   try {
     const res = await fetchImpl(apiUrl(ENDPOINT), {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+      },
       body: JSON.stringify(body),
       signal: requestSignal(),
     })
@@ -154,6 +159,8 @@ export interface ResumableUploadInput {
   base64: string
   mimeType?: string
   fileName?: string
+  /** 队列项幂等键（payload.__clientMutationId）：complete 侧服务端按键去重防重复照片 */
+  idempotencyKey?: string
   onProgress?: (percent: number) => void
   /** 测试注入用 */
   fetchImpl?: typeof fetch
@@ -181,6 +188,7 @@ export async function uploadImageResumable(input: ResumableUploadInput): Promise
     const init = await postJson(
       { action: 'init', albumId: input.albumId, size: bytes.length, mimeType, filename: input.fileName || 'photo.jpg' },
       doFetch,
+      input.idempotencyKey,
     )
     if (!init.ok) {
       return { ok: false, error: String(init.json.error || '初始化上传失败'), resumed: false }
@@ -243,7 +251,7 @@ export async function uploadImageResumable(input: ResumableUploadInput): Promise
     }
   }
 
-  const complete = await postJson({ action: 'complete', uploadId: current.uploadId }, doFetch)
+  const complete = await postJson({ action: 'complete', uploadId: current.uploadId }, doFetch, input.idempotencyKey)
   if (!complete.ok) {
     // 保留会话：下轮补传缺失分片后再 complete
     return { ok: false, error: String(complete.json.error || '合并上传失败'), resumed, uploadId: current.uploadId }

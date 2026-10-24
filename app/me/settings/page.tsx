@@ -17,7 +17,6 @@ import {
 import { Icon } from '@/components/mobile/Icon'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { ListSection, ListRow } from '@/components/mobile/ListRow'
-import EdgeSwipeBack from '@/components/mobile/EdgeSwipeBack'
 import { apiUrl } from '@/lib/api-base'
 import { useApi } from '@/lib/client/use-api'
 import { isMobileShell } from '@/lib/routes'
@@ -25,9 +24,7 @@ import { toast } from '@/lib/mobile/toast-store'
 import { useSessionRedirect } from '@/hooks/use-session-redirect'
 import IcpLicense from '@/components/IcpLicense'
 import { APP_VERSION, APP_BUILD_NUMBER } from '@/lib/app-version'
-import { stopSyncEngine } from '@/lib/modules/offline/bootstrap'
-import { purgeOfflineForLogout } from '@/lib/modules/offline/reset'
-import { resetAccountScopeCache } from '@/lib/modules/offline/account-scope'
+import { performLogout } from '@/lib/client/logout'
 
 /**
  * 「账号设置」独立页（R3）。
@@ -97,32 +94,17 @@ export default function MeSettingsPage() {
   }
 
   /**
-   * 退出登录（M-1 / P1-22）。
-   *
-   * 顺序刻意如此：**先清本地，再注销会话**。
-   *  - 本地 SQLite 是全局单库，不清就会出现"换账号后仍能看到上一个账号的旅行"；
-   *  - 待同步队列若留着，会带着**下一个账号的 Cookie** 上传（数据污染）；
-   *  - 每一步都包 try/catch：本地存储异常（插件坏、磁盘满）不能把用户困在登录态里。
+   * 退出登录（M-1 / P1-22）：清理顺序与"为什么必须先清本地"见
+   * lib/client/logout.ts（与「我的」tab 抽屉的退出入口共用同一实现）。
    */
   const logout = async () => {
-    try {
-      stopSyncEngine()
-    } catch {}
-    try {
-      await purgeOfflineForLogout()
-    } catch {}
-    try {
-      resetAccountScopeCache()
-    } catch {}
-    try {
-      await fetch(apiUrl('/api/logout'), { method: 'POST', credentials: 'include' })
-    } catch {}
+    await performLogout()
     router.push('/login')
   }
 
   return (
     <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)]">
-      <EdgeSwipeBack />
+      {/* 左缘右滑返回由全局壳（LayoutContent）提供，页面不再重复挂载（一滑退两层 bug） */}
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="m-safe-top-16 relative mx-auto max-w-2xl px-4 pb-8 sm:px-6 sm:py-8">
         <LargeTitle title="账号设置" subtitle="资料、安全与账号" back="/me" />
