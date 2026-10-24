@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || 'Tailwind 4 + 视觉基线；多副本限流/分片/feed 一致性；Prisma 8 就绪门禁',
+    changelog: process.env.APP_CHANGELOG || '移动端全面修复：登出清理收口/媒体幂等/深链返回/侧滑去重/弹层返回键覆盖/键盘避让/低端机降级/OTA完整性',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

@@ -46,14 +46,17 @@ const versionIn = (t, re) => (t.match(re) || [])[1] || null
 const vPkg = pkg ? pkg.version : null
 const vApp = versionIn(appVer.text, /NEXT_PUBLIC_APP_VERSION \|\| '([^']+)'/)
 const vGradle = versionIn(gradle.text, /versionName "([^"]+)"/)
-const vMobile = versionIn(mob.text, /NEXT_PUBLIC_APP_VERSION: process\.env\.NEXT_PUBLIC_APP_VERSION \|\| '([^']+)'/)
 
-check('版本号四处一致', new Set([vPkg, vApp, vGradle, vMobile]).size === 1, `pkg=${vPkg} app=${vApp} gradle=${vGradle} mobile=${vMobile}`)
+// 1.28.0 起 build-mobile.cjs 不再硬编码版本兜底：缺省值从 build.gradle 解析
+// （单一来源），硬编码回潮反而会让"漏配环境变量时烘焙旧版本"的 bug 复活，
+// 因此这里把"没有硬编码兜底"本身作为一条检查。
+const vMobileHardcoded = versionIn(mob.text, /NEXT_PUBLIC_APP_VERSION: process\.env\.NEXT_PUBLIC_APP_VERSION \|\| '([^']+)'/)
+check('build-mobile.cjs 无硬编码版本兜底（从 gradle 解析）', vMobileHardcoded == null && mob.text.includes('readGradleVersion'))
+check('版本号三处一致', new Set([vPkg, vApp, vGradle]).size === 1, `pkg=${vPkg} app=${vApp} gradle=${vGradle}`)
 
 const bApp = Number(versionIn(appVer.text, /NEXT_PUBLIC_APP_BUILD_NUMBER \|\| (\d+)/))
 const bGradle = Number(versionIn(gradle.text, /versionCode (\d+)/))
-const bMobile = Number(versionIn(mob.text, /NEXT_PUBLIC_APP_BUILD_NUMBER: process\.env\.NEXT_PUBLIC_APP_BUILD_NUMBER \|\| '(\d+)'/))
-check('构建号三处一致', new Set([bApp, bGradle, bMobile]).size === 1, `app=${bApp} gradle=${bGradle} mobile=${bMobile}`)
+check('构建号两处一致', bApp === bGradle, `app=${bApp} gradle=${bGradle}`)
 
 // 5) docker-compose 的默认版本/构建号（漏配 .env 时 /api/version 实际下发它，必须跟 package.json 同步）
 const compose = readUtf8NoBom('docker-compose.yml')
