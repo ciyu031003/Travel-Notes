@@ -94,3 +94,11 @@ npx prisma validate && npx prisma generate # 7.10.1 正常
 2. 改 `overrides` 后要 `npm install` 重新生成 lock（否则 CI `npm ci` 与本地不一致）。
 3. allowlist 到期（2027-01-31）前复评；上游修复后删条目，不要续期了事。
 4. Dependabot 只自动提 patch/minor；major 一律人工排期（见 `.github/dependabot.yml` 的 ignore 列表）。
+
+## 追加（2026-10-24 · 1.29.0）
+
+- 引入 `react-virtuoso@4.18.19`（旅行圈移动端虚拟列表，runtime 依赖，无已知 advisory）。
+- `npm audit fix`（非破坏）修复两条新拦截：**dompurify 3.4.16→3.4.17**（mermaid 传递，critical/high ×3 全消除——dompurify 在生产渲染链，这条必须修不豁免）、**body-parser 1.20.9**（经 @lhci/cli→express，dev 链）。
+- 新增豁免 1 条：**zod（GHSA-mrhx-c7xc-m3w5）**——仅 playwright/chromium-bidi 测试链传递引入，生产 zod 独立树不受影响；复查 2027-01-31。
+- 清理失效豁免 1 条：braces::GHSA-vfj7-8cjw-p6xm（audit 输出已不含）。
+- 实测总量：**18 vulnerabilities（low 5 / moderate 5 / high 8 / critical 0）**；high/critical 全部有未过期豁免或已修复，audit-gate exit 0。
