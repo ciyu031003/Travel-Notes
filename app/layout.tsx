@@ -7,7 +7,7 @@ import PrivacyLockGate from '@/components/offline/PrivacyLockGate'
 import { ToastHost } from '@/components/mobile/Toast'
 import ThemeColorSync from '@/components/mobile/ThemeColorSync'
 import NativeBackHandler from '@/components/mobile/NativeBackHandler'
-import { useCrashReport } from '@/hooks/use-crash-report'
+import CrashReportListener from '@/components/CrashReportListener'
 
 /**
  * 站点绝对地址：metadataBase / canonical / OG 图片解析都依赖它。
@@ -73,8 +73,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // 全局崩溃/未捕获异常上报（P-07 后半）：根布局挂一次，全站生效
-  useCrashReport()
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
@@ -109,6 +107,8 @@ export default function RootLayout({
         <LayoutContent>{children}</LayoutContent>
         <NativeBackHandler />
         <ThemeColorSync />
+        {/* 全局崩溃/未捕获异常上报（P-07 后半）：server component 布局经客户端壳挂载，全站生效 */}
+        <CrashReportListener />
         {/* 常驻浮层（AppUpdatePrompt/Onboarding/PreferenceSurvey/CommandPalette）
             P1-19：已收敛到 lazy 客户端壳，首屏不再下载 motion / 这些组件的 chunk。 */}
         <LazyOverlays />
