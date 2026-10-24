@@ -215,7 +215,19 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
    * 桌面分支的 TravelTimeline 会在手机上空跑一次时间线请求。
    * 断点与 Tailwind 的 md 对齐（768px），与 TravelClient 的既有判断同口径。
    */
-  const isMobile = useIsMobile() === true
+  /**
+   * 移动 / 桌面只渲染一支。
+   *
+   * 为什么不用 CSS 双向渲染（hidden md:block + md:hidden）：那样两个分支都会挂载 ——
+   * 页面上会出现**两个 h1**（无障碍与 E2E 的 strict 模式都会炸），而且
+   * 桌面分支的 TravelTimeline 会在手机上空跑一次时间线请求。
+   * 断点与 Tailwind 的 md 对齐（768px），与 TravelClient 的既有判断同口径。
+   *
+   * 保留三态：null（静态壳预渲染 + 水合首帧）时渲染中性骨架 —— 2026-10-24 修复：
+   * 此前写 `=== true`，null 被当成桌面，手机冷加载先画整页桌面树再翻成移动树
+   * （肉眼可见的闪跳），桌面分支的 TravelTimeline 还空跑一次 memories 请求。
+   */
+  const isMobile = useIsMobile()
 
   /**
    * 保存后：标题变化会连带 slug 变化（服务端重算），此时必须换地址再整页重载，
@@ -305,8 +317,16 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   return (
     <div className="bg-travel-cream min-h-dvh">
       {/* 左缘右滑返回由全局壳（LayoutContent）提供，页面不再重复挂载（一滑退两层 bug） */}
+      {/* 断点未知（静态壳预渲染/水合首帧）：中性骨架，不偏向任何一棵树 */}
+      {isMobile === null && (
+        <div className="mx-auto max-w-3xl px-4 pt-6">
+          <div className="m-skeleton h-8 w-2/3 rounded-lg" />
+          <div className="m-skeleton mt-3 h-4 w-1/3 rounded" />
+          <div className="m-skeleton mt-6 aspect-[4/3] w-full rounded-2xl" />
+        </div>
+      )}
       {/* 移动端：四 tab 信息架构（仅移动端挂载） */}
-      {isMobile && travel && (
+      {isMobile === true && travel && (
         <TravelDetailMobile
           slug={travel.slug || slug}
           travel={travel}
@@ -325,7 +345,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
         上一轮把正文只放在 !isMobile 的桌面分支里，导致这类旅行在手机上只剩一条返回栏、
         正文全空白 —— 真机反馈的"点开旅途整个页面空白"就是它。
       */}
-      {isMobile && !travel && legacy && (
+      {isMobile === true && !travel && legacy && (
         <div className="bg-travel-cream">
           <div className="m-glass m-safe-top sticky top-0 z-40">
             <div className="flex h-14 items-center gap-1 px-2">
@@ -383,7 +403,7 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       )}
 
       {/* 桌面端：原有文章式排版（保持不动，降低回归面） */}
-      {!isMobile && (
+      {isMobile === false && (
       <div>
         <div className="container-custom flex flex-wrap items-center gap-2 pt-6">
           <Link

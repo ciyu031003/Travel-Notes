@@ -12,6 +12,7 @@ import { AnimatePresence, MotionConfig, motion, useDragControls } from 'motion/r
 import { X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { useModalLayer } from '@/hooks/use-modal-layer'
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { cn } from '@/lib/utils'
 import { MOBILE_OVERLAY_TRANSITION, MOBILE_PANEL_SPRING } from '@/lib/mobile/motion'
 
@@ -52,6 +53,13 @@ export function BottomSheet({
   const dragControls = useDragControls()
   const panelRef = useRef<HTMLDivElement | null>(null)
   const [mounted, setMounted] = useState(false)
+  /**
+   * 键盘避让（P1-1 补口）：sheet 里带输入框（PIN 设置、各编辑抽屉）时，移动 Web 下
+   * 键盘"浮"在页面之上、视口高度不变，贴底的 sheet 会被键盘盖住。
+   * 原生壳里 Capacitor insets 会压缩视口，inset≈0，样式不生效 —— 两边行为一致。
+   * 在基座统一处理，调用方无需各自接 useKeyboardInset。
+   */
+  const keyboardInset = useKeyboardInset()
 
   useEffect(() => {
     setMounted(true)
@@ -93,6 +101,7 @@ export function BottomSheet({
               tabIndex={-1}
               aria-label={title || '底部面板'}
               className={cn('m-sheet', className)}
+              style={keyboardInset ? { bottom: keyboardInset } : undefined}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}

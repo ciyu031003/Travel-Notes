@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ArrowLeft, MapPin } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 import AlbumPhoto from './AlbumPhoto'
 import AlbumDayDivider from './AlbumDayDivider'
 import PhotoViewer from './PhotoViewer'
@@ -36,6 +37,11 @@ interface TravelArchiveViewProps {
 export default function TravelArchiveView({ city, onClose }: TravelArchiveViewProps) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
 
+  // 全屏档案此前未接弹层基座：硬件返回键/ESC 直接退出整页。接入后返回键先关档案，
+  // 内层 PhotoViewer 打开时仍在其上层（弹层栈先关最顶层）。
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({ open: true, onClose, panelRef })
+
   const dayList = city.days && city.days.length > 0
     ? city.days
     : [{ date: city.date, title: city.name, images: city.images }]
@@ -48,7 +54,7 @@ export default function TravelArchiveView({ city, onClose }: TravelArchiveViewPr
   )
 
   return (
-    <div className="fixed inset-0 z-[110] overflow-y-auto bg-album-bg0">
+    <div ref={panelRef} className="fixed inset-0 z-[110] overflow-y-auto bg-album-bg0">
       <div className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-white/10 bg-black/40 px-4 backdrop-blur-md md:px-8">
         <button
           type="button"

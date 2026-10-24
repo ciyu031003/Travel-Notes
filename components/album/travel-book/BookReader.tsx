@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, ChevronLeft, ChevronRight, List, Palette, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import type { Book } from './TravelBook'
 import ArtFlipBook, { type ArtFlipBookHandle } from '../reader/ArtFlipBook'
 import { BookPageBody } from '../book/BookPageBody'
@@ -57,6 +58,10 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
   const { themeKey, theme, setThemeKey } = useBookTheme()
   const { tier, profile } = useBookTier()
   const [showThemes, setShowThemes] = useState(false)
+
+  // 硬件返回键：主题弹窗开着先关弹窗，否则退出阅读模式（ESC 的既有语义保持不动，
+  // 键盘处理仍走下方手写 keydown，避免与弹层基座的 ESC 监听双触发）
+  useCloseOnBack(true, showThemes ? () => setShowThemes(false) : onBack)
 
   // 编排：只随 book 变化（与视口无关，保证逻辑页稳定）
   const composed = useMemo(() => composeFromSourceBook(book), [book])

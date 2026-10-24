@@ -15,6 +15,7 @@ import SocialAvatar from '@/components/social/SocialAvatar'
 import PhotoViewer from '@/components/album/PhotoViewer'
 import StackedGallery from '@/components/mobile/StackedGallery'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialPostById } from '@/lib/modules/offline/social-read'
@@ -97,6 +98,11 @@ export default function PostDetail({ postId }: { postId: number }) {
   const [editError, setEditError] = useState('')
   const [uploading, setUploading] = useState(false)
   const photoInputRef = useRef<HTMLInputElement | null>(null)
+
+  // 两个页内弹窗（举报 / 编辑旅行故事）此前未接返回键：按返回=整页退出，
+  // 编辑中的表单内容随之丢失。开着的弹窗压入历史，返回键先关弹窗。
+  useCloseOnBack(showReport, () => setShowReport(false))
+  useCloseOnBack(showEdit, () => setShowEdit(false))
 
   /** 拉取/重拉详情（失败态的重试按钮也用它，失败时把错误文案带出来） */
   const reload = useCallback(async () => {

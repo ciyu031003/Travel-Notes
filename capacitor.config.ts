@@ -32,7 +32,12 @@ const config: CapacitorConfig = {
       androidIsEncryption: true,
     },
     Keyboard: {
-      // 键盘弹出时原生 resize WebView（adjustResize），sheet/底部输入条不被键盘遮挡
+      // ⚠️ `resize` 是 **iOS 专属**选项（Android 侧插件只读 resizeOnFullScreen）。
+      // Android 的键盘避让不靠这里：Capacitor 8 的 SystemBars 插件默认
+      // insetsHandling='css'，在 WindowInsets 监听里对 IME insets 做原生 padding
+      // （新 WebView 直接透传 safe-area，旧 WebView 原生垫高），WebView 视口随之收缩。
+      // 移动 Web 端的键盘避让由 hooks/use-keyboard-inset.ts（visualViewport 差值）补齐，
+      // 已接入 CommentPanel / TravelDetailMobile / BottomSheet / TravelComposerForm。
       resize: 'native',
     },
   },

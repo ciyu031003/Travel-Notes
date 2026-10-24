@@ -58,7 +58,43 @@ function moveBack() {
   if (fs.existsSync(EXCLUDE_DIR)) fs.rmSync(EXCLUDE_DIR, { recursive: true, force: true })
 }
 
-console.log('[build-mobile] 静态导出（NEXT_PUBLIC_API_BASE=' + apiBase + '）...')
+console.log('[build-mobile] 静态导出（NEXT_PUBLIC_API_BASE=' + apiBase + ')...')
+
+/**
+ * 版本单一来源（2026-10-24）：壳内自报版本此前硬编码兜底 '1.27.0'/58 ——
+ * 某次发版漏配 NEXT_PUBLIC_APP_VERSION/BUILD_NUMBER 时，所有新包都会自报旧版本，
+ * 对新版 manifest **永远弹更新**。现在缺省值从 android/app/build.gradle 解析
+ * （bump-version.cjs 会同步它，是 APK 的 versionCode/versionName 权威），
+ * 两处都拿不到才失败退出 —— 宁可构建失败也不能烘焙漂移的版本号。
+ */
+function readGradleVersion() {
+  try {
+    const gradle = fs.readFileSync(path.join(root, 'android', 'app', 'build.gradle'), 'utf8')
+    const code = gradle.match(/versionCode\s+(\d+)/)
+    const name = gradle.match(/versionName\s+"([^"]+)"/)
+    if (code && name) return { build: code[1], version: name[1] }
+  } catch {
+    /* 读不到走失败分支 */
+  }
+  return null
+}
+const gradleVersion = readGradleVersion()
+const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || (gradleVersion && gradleVersion.version)
+const appBuildNumber = process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || (gradleVersion && gradleVersion.build)
+if (!appVersion || !appBuildNumber) {
+  console.error('[build-mobile] 缺少 NEXT_PUBLIC_APP_VERSION / NEXT_PUBLIC_APP_BUILD_NUMBER，且无法从 android/app/build.gradle 解析版本：拒绝以未知版本号构建（烘焙错版本会让 OTA 判定失效）')
+  process.exit(1)
+}
+if (gradleVersion && (process.env.NEXT_PUBLIC_APP_VERSION || process.env.NEXT_PUBLIC_APP_BUILD_NUMBER)) {
+  const mismatches = []
+  if (gradleVersion.version !== appVersion) mismatches.push('version ' + appVersion + ' ≠ gradle ' + gradleVersion.version)
+  if (gradleVersion.build !== appBuildNumber) mismatches.push('build ' + appBuildNumber + ' ≠ gradle ' + gradleVersion.build)
+  if (mismatches.length > 0) {
+    console.error('[build-mobile] 环境变量与 android/app/build.gradle 不一致：' + mismatches.join('；') + ' —— 先跑 bump-version.cjs 统一版本')
+    process.exit(1)
+  }
+}
+
 moveOut()
 try {
   execSync('npx next build', {
@@ -72,8 +108,8 @@ try {
       // （缺省会回退 https:** 并告警；壳内图片实际来自 API/COS 域名）
       NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || apiBase,
       NEXT_PUBLIC_APP_PLATFORM: 'mobile',
-      NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.27.0',
-      NEXT_PUBLIC_APP_BUILD_NUMBER: process.env.NEXT_PUBLIC_APP_BUILD_NUMBER || '58',
+      NEXT_PUBLIC_APP_VERSION: appVersion,
+      NEXT_PUBLIC_APP_BUILD_NUMBER: appBuildNumber,
       NEXT_PUBLIC_APP_DOWNLOAD_URL: process.env.NEXT_PUBLIC_APP_DOWNLOAD_URL || process.env.APP_DOWNLOAD_URL || 'https://travel-notes.yuanabd.cn/downloads/tiantu.apk',
       SKIP_DB_ON_BUILD: '1',
     },

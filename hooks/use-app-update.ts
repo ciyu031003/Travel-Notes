@@ -69,24 +69,34 @@ export function useAppUpdate() {
 
   useEffect(() => {
     if (!isNativePlatform()) return
-    fetch(apiUrl('/api/version'), { credentials: 'include' })
-      .then((r) => r.json())
-      .then((m: VersionManifest) => {
-        if (!m) return
-        const newerVersion = isNewerVersion(APP_VERSION, m.version || '0.0.0')
-        const newerBuild = Number(m.buildNumber || 0) > APP_BUILD_NUMBER
-        /**
-         * P2-30：低于 minSupportedBuild 的客户端**必须**更新（服务端用它封掉已知坏版本）；
-         * 其余情况仍按版本号/构建号判断，并受灰度比例约束。
-         */
-        const belowMin = Number(m.minSupportedBuild || 0) > APP_BUILD_NUMBER
-        if (belowMin) {
-          setManifest({ ...m, forceUpdate: true })
-          return
-        }
-        if ((newerVersion || newerBuild) && inRollout(m.rolloutPercent)) setManifest(m)
-      })
-      .catch(() => {})
+    // 弱网下版本检查卡 30s+ 会拖慢启动链路：10s 超时 + 一次重试，都失败则本会话不再检查
+    const AS = typeof AbortSignal !== 'undefined'
+      ? (AbortSignal as unknown as { timeout?: (ms: number) => AbortSignal })
+      : undefined
+    const signal = AS && typeof AS.timeout === 'function' ? AS.timeout(10_000) : undefined
+    const loadVersion = (retry: boolean): void => {
+      fetch(apiUrl('/api/version'), { credentials: 'include', cache: 'no-store', signal })
+        .then((r) => r.json())
+        .then((m: VersionManifest) => {
+          if (!m) return
+          const newerVersion = isNewerVersion(APP_VERSION, m.version || '0.0.0')
+          const newerBuild = Number(m.buildNumber || 0) > APP_BUILD_NUMBER
+          /**
+           * P2-30：低于 minSupportedBuild 的客户端**必须**更新（服务端用它封掉已知坏版本）；
+           * 其余情况仍按版本号/构建号判断，并受灰度比例约束。
+           */
+          const belowMin = Number(m.minSupportedBuild || 0) > APP_BUILD_NUMBER
+          if (belowMin) {
+            setManifest({ ...m, forceUpdate: true })
+            return
+          }
+          if ((newerVersion || newerBuild) && inRollout(m.rolloutPercent)) setManifest(m)
+        })
+        .catch(() => {
+          if (retry) setTimeout(() => loadVersion(false), 3000)
+        })
+    }
+    loadVersion(true)
   }, [])
 
   /** 原生事件 → 状态 */
@@ -168,18 +178,19 @@ export function useAppUpdate() {
   /** 只重试"打开安装器"（安装包已下载，用户上次取消了安装） */
   const installDownloaded = useCallback(async () => {
     try {
-      const r = await appUpdater.installDownloaded()
+      // 透传 manifest 指纹：原生侧安装前重验磁盘文件（P2-30）
+      const r = await appUpdater.installDownloaded({ sha256: manifest?.sha256, size: manifest?.size })
       if (r?.needsPermission) {
         setStatus('needsPermission')
         return
       }
       setStatus('installing')
     } catch (e) {
-      // 文件不在了 → 回退到重新下载
+      // 文件不在了 / 校验不过 → 回退到重新下载
       setError(e instanceof Error ? e.message : '安装包已失效')
       setStatus('error')
     }
-  }, [])
+  }, [manifest])
 
   // 授权后回到前台 → 自动续跑
   useEffect(() => {

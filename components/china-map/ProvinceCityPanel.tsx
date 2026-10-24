@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { X, MapPin, Sparkles, Plus } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import type { City } from '@/data/cities'
 import type { PostMeta } from './types'
 
@@ -22,6 +23,9 @@ export default function ProvinceCityPanel({
   onClose: () => void
   onCityClick: (city: City) => void
 }) {
+  // 面板是条件渲染（挂载即打开）：硬件返回键先关面板，不退出地图页
+  useCloseOnBack(true, onClose)
+
   return (
     <>
       {/* 移动端遮罩：点击关闭（桌面端右侧滑入不需要） */}

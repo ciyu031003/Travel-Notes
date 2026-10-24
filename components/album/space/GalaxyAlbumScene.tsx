@@ -8,6 +8,7 @@ import { GalaxyAlbumEngine } from './galaxyEngine'
 import type { CityData } from './particlePhoto'
 import SpaceAlbumHUD from './SpaceAlbumHUD'
 import { Icon } from '@/components/mobile/Icon'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { albumModeOf } from '@/lib/album-modes'
 
 /** 模式文案/图标统一取自 lib/album-modes */
@@ -27,6 +28,8 @@ interface GalaxyAlbumSceneProps {
   onTogglePixel: () => void
   onOpenChat: (photo: SpaceChatPhoto) => void
   onWebGLFail: () => void
+  /** 硬件返回键的出口：银河是 fixed 全屏接管（下层是书墙模式），返回应先退出模式而非整页 */
+  onExitMode?: () => void
 }
 
 function formatDate(dateStr: string) {
@@ -47,6 +50,7 @@ export default function GalaxyAlbumScene({
   onTogglePixel,
   onOpenChat,
   onWebGLFail,
+  onExitMode,
 }: GalaxyAlbumSceneProps) {
   const mountRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<GalaxyAlbumEngine | null>(null)
@@ -56,6 +60,9 @@ export default function GalaxyAlbumScene({
   const [hovered, setHovered] = useState<number | null>(null)
   const [closeup, setCloseup] = useState(false)
   const [failed, setFailed] = useState(false)
+
+  // 硬件返回键：先退出银河模式回书墙（未传 onExitMode 时保持默认导航）
+  useCloseOnBack(true, onExitMode ?? (() => {}), !!onExitMode)
 
   useEffect(() => {
     const mount = mountRef.current

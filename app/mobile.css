@@ -205,6 +205,18 @@
     background: var(--m-surface-solid);
   }
 }
+/* 低端设备运行时降级（P-10）：prefers-reduced-transparency 是 WebKit 特性，
+   **Chromium/Android WebView 不支持** —— 最需要降级的平台上这条规则永不触发。
+   .low-end 由 app/layout.tsx 的内联脚本按 navigator.deviceMemory /
+   hardwareConcurrency 判定（≤4 视为低端），与 reduced-transparency 同一口径。
+   选择器带 html.low-end 前缀以稳定压过单类定义。 */
+html.low-end .m-glass,
+html.low-end .m-glass-thin,
+html.low-end .m-glass-thick {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--m-surface-solid);
+}
 
 .m-card {
   background: var(--m-surface-solid);

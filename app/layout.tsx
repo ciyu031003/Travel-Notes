@@ -82,6 +82,15 @@ export default function RootLayout({
             __html: `try{if(localStorage.getItem('theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}`,
           }}
         />
+        {/* 低端设备标记（P-10）：prefers-reduced-transparency 在 Chromium/Android WebView
+            不生效，低端机上的常驻玻璃模糊永不降级 —— 用运行时能力探测补上降级路径，
+            CSS 侧见 mobile.css 的 html.low-end .m-glass 规则。deviceMemory 仅 Chromium 提供，
+            缺省时只看核心数；两项都拿不到（iOS Safari）则不打标，维持现状。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var n=navigator,dm=n.deviceMemory,hc=n.hardwareConcurrency;if((dm&&dm<=4)||(hc&&hc<=4)){document.documentElement.classList.add('low-end')}}catch(e){}`,
+          }}
+        />
         <link rel="manifest" href="/manifest.json" />
         {/* theme-color 由 viewport 导出注入，运行时由 ThemeColorSync 随暗色切换同步 */}
         {/* favicon 由 app/icon.png / app/apple-icon.png 文件约定自动注入（源：public/brand/logo.png） */}

@@ -29,6 +29,7 @@ export default function AlbumSpaceMode({
   onOpenChat,
   onCloseChat,
   onWebGLFail,
+  onExitMode,
 }: {
   cities: AlbumCity[]
   chatPhoto: SpaceChatPhoto | null
@@ -37,6 +38,8 @@ export default function AlbumSpaceMode({
   onOpenChat: (photo: SpaceChatPhoto) => void
   onCloseChat: () => void
   onWebGLFail: () => void
+  /** 硬件返回键在银河模式下的出口：退出模式回书墙（照片留言开着时先关留言） */
+  onExitMode: () => void
 }) {
   return (
     <div key="mode-space" className="motion-safe:animate-[fadeIn_.2s_ease-out]">
@@ -47,6 +50,7 @@ export default function AlbumSpaceMode({
           onTogglePixel={onTogglePixel}
           onOpenChat={onOpenChat}
           onWebGLFail={onWebGLFail}
+          onExitMode={onExitMode}
         />
       </ErrorBoundary>
       {view === 'chat' && chatPhoto && (

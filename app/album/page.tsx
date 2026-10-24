@@ -185,6 +185,7 @@ export default function AlbumPage() {
           setChatPhoto(null)
         }}
         onWebGLFail={handleWebGLFail}
+        onExitMode={() => changeMode('book')}
       />
     )
   }

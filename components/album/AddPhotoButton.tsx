@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Camera, Images, Loader2, Plus, Sparkles, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { pickPhotoFromCamera, addPhotoToAlbum } from '@/lib/modules/offline/media-upload'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 
@@ -21,6 +22,9 @@ export default function AddPhotoButton({
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+
+  // 选择弹窗打开期间接管硬件返回键：先关弹窗而不是退出整页
+  useCloseOnBack(open, () => setOpen(false))
 
   // 仅原生端显示；albumId 非数字（本地新建未同步）时禁用
   if (!isNativePlatform()) return null

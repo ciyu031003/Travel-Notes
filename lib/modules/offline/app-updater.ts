@@ -21,7 +21,7 @@ export interface AppUpdaterPlugin {
     started?: boolean
     needsPermission?: boolean
   }>
-  installDownloaded(options?: { fileName?: string }): Promise<{ needsPermission?: boolean }>
+  installDownloaded(options?: { fileName?: string; sha256?: string; size?: number }): Promise<{ needsPermission?: boolean }>
   addListener(
     eventName: 'downloadProgress',
     listener: (data: { percent: number; received: number; total: number }) => void,
@@ -72,9 +72,19 @@ export const appUpdater = {
       size: integrity?.size && integrity.size > 0 ? integrity.size : 0,
     })
   },
-  async installDownloaded(): Promise<{ needsPermission?: boolean }> {
+  /**
+   * 安装已下载的包（授权返回后重试 / 用户取消安装器后重试）。
+   * 透传 sha256/size（P2-30）：原生侧在拉起安装器**前**对磁盘文件重验，
+   * 下载完成 ≠ 磁盘上这份仍完好。manifest 缺失（如进程重启后）时原生侧
+   * 用下载时记录的指纹，两处都没有则跳过重验 —— 不阻塞安装路径。
+   */
+  async installDownloaded(integrity?: { sha256?: string; size?: number }): Promise<{ needsPermission?: boolean }> {
     if (!isNativePlatform()) return {}
-    return AppUpdater.installDownloaded({ fileName: UPDATE_FILE_NAME })
+    return AppUpdater.installDownloaded({
+      fileName: UPDATE_FILE_NAME,
+      sha256: integrity?.sha256 || '',
+      size: integrity?.size && integrity.size > 0 ? integrity.size : 0,
+    })
   },
   async onProgress(cb: (percent: number) => void): Promise<PluginListenerHandle | null> {
     if (!isNativePlatform()) return null

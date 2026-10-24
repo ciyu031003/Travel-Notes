@@ -6,6 +6,7 @@ import { ArrowLeft, Send, Moon, Loader2, MessageCircle, Sparkles } from 'lucide-
 import dynamicImport from 'next/dynamic'
 import StarfieldBackground from './StarfieldBackground'
 import { Icon } from '@/components/mobile/Icon'
+import { useModalLayer } from '@/hooks/use-modal-layer'
 import { apiUrl } from '@/lib/api-base'
 
 /**
@@ -54,6 +55,10 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
   const [aspect, setAspect] = useState(4 / 3)
   const listRef = useRef<HTMLDivElement>(null)
 
+  // 弹层基座接管 ESC / 硬件返回键 / 滚动锁（此前只有手写 ESC，返回键会直接退出整页）
+  const panelRef = useRef<HTMLDivElement>(null)
+  useModalLayer({ open: true, onClose: onBack, panelRef })
+
   const loadMessages = useCallback(async () => {
     setLoading(true)
     try {
@@ -79,14 +84,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
     }
   }, [messages])
 
-  // Esc 返回
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onBack()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onBack])
+  // Esc 返回：由 useModalLayer 统一处理（避免与基座双触发）
 
   const handleSend = async () => {
     const content = input.trim()
@@ -114,7 +112,7 @@ export default function PhotoChatView({ image, imageKey, cityName, onBack }: Pho
   }
 
   return (
-    <div className="fixed inset-0 z-[110] overflow-hidden bg-album-bg0 flex items-center justify-center p-3 sm:p-6">
+    <div ref={panelRef} className="fixed inset-0 z-[110] overflow-hidden bg-album-bg0 flex items-center justify-center p-3 sm:p-6">
       {/* 窗外环境：深空星空 */}
       <div className="absolute inset-0 opacity-60 pointer-events-none" aria-hidden="true">
         <StarfieldBackground />

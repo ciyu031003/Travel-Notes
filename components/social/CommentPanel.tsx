@@ -536,7 +536,12 @@ export default function CommentPanel({
           )}
         </div>
 
-        <div className="border-t border-[var(--ui-social-line)] bg-[var(--ui-social-bg)] px-5 py-3">
+        <div
+          className="border-t border-[var(--ui-social-line)] bg-[var(--ui-social-bg)] px-5 py-3"
+          // 面板 bottom-0 贴视口底：targetSdk 36 强制 edge-to-edge，手势导航机型上
+          // 不补 safe-area 会让输入行压在系统手势条下面（与 .m-sheet 同一口径）
+          style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+        >
           {replyTo && (
             <div className="mb-2 flex items-center gap-2 text-xs text-[var(--ui-social-muted)]">
               <span>回复 @{replyTo.username}</span>

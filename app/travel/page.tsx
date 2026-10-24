@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import TravelClient from './TravelClient'
 import TravelMobileClient, { TravelMobileLoading } from './TravelMobileClient'
 import AsyncState from '@/components/AsyncState'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import {
@@ -16,6 +17,16 @@ export default function TravelPage() {
   const [posts, setPosts] = useState<unknown[] | null>(null)
   const [error, setError] = useState('')
   const [offline, setOffline] = useState(false)
+
+  /**
+   * 移动 / 桌面只渲染一支（2026-10-24）。
+   *
+   * 此前用 `hidden md:block` 双向渲染：两棵树都挂载，手机上隐藏的桌面
+   * TravelClient 照样 dynamicImport 下 d3-geo 地图大 chunk、多发一次
+   * /api/travel/settings 请求 —— tab 切换可感知变慢（移动端性能税）。
+   * 代价是 SSR/水合首帧（null）只能给中性骨架，正好与首页的三态口径一致。
+   */
+  const isMobile = useIsMobile()
 
   const load = useCallback(async () => {
     try {
@@ -49,37 +60,15 @@ export default function TravelPage() {
   }, [load])
 
   if (error) {
-    return (
-      <>
-        <div className="hidden md:block">
-          <AsyncState variant="error" message={error} title="旅行记录加载失败" />
-        </div>
-        <div className="md:hidden">
-          <TravelMobileLoading message={error} />
-        </div>
-      </>
-    )
+    if (isMobile === true) return <TravelMobileLoading message={error} />
+    return <AsyncState variant="error" message={error} title="旅行记录加载失败" />
   }
-  if (!posts) {
-    return (
-      <>
-        <div className="hidden md:block">
-          <AsyncState variant="loading" message="正在加载旅行记录…" />
-        </div>
-        <div className="md:hidden">
-          <TravelMobileLoading />
-        </div>
-      </>
-    )
+  if (!posts || isMobile === null) {
+    return <AsyncState variant="loading" message="正在加载旅行记录…" />
   }
-  return (
-    <>
-      <div className="hidden md:block">
-        <TravelClient posts={posts as never[]} offline={offline} />
-      </div>
-      <div className="md:hidden">
-        <TravelMobileClient posts={posts as never[]} offline={offline} onRefresh={load} />
-      </div>
-    </>
+  return isMobile ? (
+    <TravelMobileClient posts={posts as never[]} offline={offline} onRefresh={load} />
+  ) : (
+    <TravelClient posts={posts as never[]} offline={offline} />
   )
 }

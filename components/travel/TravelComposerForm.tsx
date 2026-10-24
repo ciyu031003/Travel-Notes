@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, Plus, X } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import DateRangePicker from './DateRangePicker'
 import { apiUrl } from '@/lib/api-base'
 import { useTravelDraft } from '@/hooks/use-travel-draft'
@@ -51,6 +52,8 @@ export default function TravelComposerForm({
   const [companionName, setCompanionName] = useState('')
   const [companionRelation, setCompanionRelation] = useState('')
   const [succeeded, setSucceeded] = useState(false)
+  // 粘底保存条在移动 Web 下要自己避让键盘（原生壳里 insets 会压视口，值≈0 不干扰）
+  const keyboardInset = useKeyboardInset()
 
   /**
    * 可在其中创建内容的共享空间（OWNER/MEMBER）。
@@ -518,10 +521,15 @@ export default function TravelComposerForm({
             <p role="alert" className="px-1 text-[13px] text-[var(--m-danger,#d9534f)]">{error}</p>
           )}
 
-          {/* ── 底部固定操作条（键盘弹起时随之上移） ─────── */}
+          {/* ── 底部固定操作条（keyboardInset>0 时随键盘上移，见 P1-1） ─────── */}
           <div
             className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-4 px-4 pt-3"
-            style={{ background: 'linear-gradient(to top, var(--m-bg) 78%, transparent)' }}
+            style={{
+              background: 'linear-gradient(to top, var(--m-bg) 78%, transparent)',
+              bottom: keyboardInset
+                ? `calc(76px + env(safe-area-inset-bottom) + ${keyboardInset}px)`
+                : undefined,
+            }}
           >
             {!validation.canSubmit && validation.blocker && (
               <p className="mb-2 text-center text-[12px] text-[var(--m-faint)]">{validation.blocker}</p>

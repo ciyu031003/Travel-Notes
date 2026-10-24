@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { X, MapPin, Sparkles, ChevronUp, ChevronDown, ChevronLeft } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { getProvince } from '@/data/provinces'
 import { getCitiesByProvince, type City } from '@/data/cities'
 import { travelDetailHref } from '@/lib/routes'
@@ -46,6 +47,10 @@ export default function MobileProvinceDrawer({
    */
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+
+  // 抽屉打开期间接管硬件返回键：选中了城市先回省份列表，否则关抽屉
+  //（hook 必须在早退 return 之前调用；open=false 时压栈/监听都不生效）
+  useCloseOnBack(!!provinceId && mounted, city ? onBack : onClose)
 
   if (!provinceId) return null
   const provinceInfo = getProvince(provinceId)

@@ -51,6 +51,16 @@ public class AppUpdaterPlugin extends Plugin {
 
     private final AtomicBoolean downloading = new AtomicBoolean(false);
 
+    /**
+     * 最近一次"下载完成且已通过校验"的包指纹：installDownloaded() 重装时没有
+     * 服务端清单可查（授权跳转可能离开页面再回来），用内存里的指纹对磁盘上的
+     * 文件做**安装前重验**——文件在两次调用之间被替换/损坏时不进安装器。
+     * 进程被杀后字段为空 → 跳过重验（保持向后兼容，不阻塞安装路径）。
+     */
+    private volatile String lastVerifiedFileName = null;
+    private volatile String lastVerifiedSha256 = null;
+    private volatile long lastVerifiedSize = -1;
+
     /** 是否已授权「安装未知应用」（Android 8 以下恒为 true） */
     @PluginMethod
     public void canInstall(PluginCall call) {
@@ -96,6 +106,12 @@ public class AppUpdaterPlugin extends Plugin {
          * 非空则下载边算 SHA-256，不一致直接删包报错，不进安装器。
          */
         final String expectSha256 = call.getString("sha256", "");
+        /**
+         * P2-30 补口：size 快校验（/api/version 下发）。sha256 是完整性主校验；
+         * size 是次级校验 + 进度条兜底——部分 CDN 不回 Content-Length，
+         * 此前 total<=0 时百分比永远停在 0%，用户以为卡死。
+         */
+        final int expectSize = call.getInt("size", 0);
         if (url == null || url.isEmpty()) {
             call.reject("缺少下载地址");
             return;
@@ -141,7 +157,8 @@ public class AppUpdaterPlugin extends Plugin {
                 if (code < 200 || code >= 300) {
                     throw new Exception("服务器返回 HTTP " + code);
                 }
-                final long total = conn.getContentLengthLong();
+                long total = conn.getContentLengthLong();
+                if (total <= 0 && expectSize > 0) total = expectSize;
                 final InputStream in = conn.getInputStream();
                 out = new FileOutputStream(part);
                 byte[] buf = new byte[64 * 1024];
@@ -172,11 +189,16 @@ public class AppUpdaterPlugin extends Plugin {
                 in.close();
 
                 // 完整性校验：不一致说明传输损坏或被中间环节替换，绝不交给系统安装器
+                // （digest() 会重置摘要，必须只调用一次并把结果存住复用）
+                String actualSha = null;
                 if (digest != null) {
-                    final String actual = toHex(digest.digest());
-                    if (!actual.equalsIgnoreCase(expectSha256.trim())) {
+                    actualSha = toHex(digest.digest());
+                    if (!actualSha.equalsIgnoreCase(expectSha256.trim())) {
                         throw new Exception("安装包校验失败（SHA-256 不匹配），请重试下载");
                     }
+                }
+                if (expectSize > 0 && part.length() != expectSize) {
+                    throw new Exception("安装包大小不符（期望 " + expectSize + " 字节），请重试下载");
                 }
 
                 if (target.exists() && !target.delete()) {
@@ -185,6 +207,11 @@ public class AppUpdaterPlugin extends Plugin {
                 if (!part.renameTo(target)) {
                     throw new Exception("无法保存安装包");
                 }
+
+                // 记录指纹供 installDownloaded() 安装前重验（见字段注释）
+                lastVerifiedFileName = fileName;
+                lastVerifiedSha256 = actualSha;
+                lastVerifiedSize = target.length();
 
                 JSObject done = new JSObject();
                 done.put("path", target.getAbsolutePath());
@@ -215,6 +242,8 @@ public class AppUpdaterPlugin extends Plugin {
     @PluginMethod
     public void installDownloaded(PluginCall call) {
         final String fileName = call.getString("fileName", DEFAULT_FILE_NAME);
+        final String expectSha256 = call.getString("sha256", "");
+        final int expectSize = call.getInt("size", 0);
         final Context context = getContext();
         File dir = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "updates");
         File target = new File(dir, fileName);
@@ -229,7 +258,38 @@ public class AppUpdaterPlugin extends Plugin {
             call.resolve(ret);
             return;
         }
+        /**
+         * P2-30 补口：**安装前重验**。下载时校验过 ≠ 磁盘上这份仍然完好——
+         * 文件可能在授权跳转/用户搁置期间被替换或损坏。期望值优先用调用方透传的
+         * （来自 /api/version），否则回退到本进程下载完成时记录的指纹；
+         * 两处都没有（服务端未配置 + 进程已重启）→ 跳过重验，不阻塞安装。
+         */
         try {
+            final String knownSha = (expectSha256 != null && !expectSha256.isEmpty())
+                ? expectSha256.trim()
+                : (fileName.equals(lastVerifiedFileName) ? lastVerifiedSha256 : null);
+            final long knownSize = (expectSize > 0)
+                ? expectSize
+                : (fileName.equals(lastVerifiedFileName) ? lastVerifiedSize : -1);
+            if (knownSha != null) {
+                final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                final InputStream in = new java.io.FileInputStream(target);
+                final byte[] buf = new byte[64 * 1024];
+                int n;
+                try {
+                    while ((n = in.read(buf)) > 0) digest.update(buf, 0, n);
+                } finally {
+                    in.close();
+                }
+                if (!toHex(digest.digest()).equalsIgnoreCase(knownSha)) {
+                    call.reject("安装包校验失败（SHA-256 不匹配），请删除后重新下载");
+                    return;
+                }
+            }
+            if (knownSize > 0 && target.length() != knownSize) {
+                call.reject("安装包大小不符，请删除后重新下载");
+                return;
+            }
             openInstaller(context, target);
             call.resolve();
         } catch (Exception e) {
