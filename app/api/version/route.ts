@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '结构收敛与基础设施：跨端数据层 useTravelList/断点包装/相册解锁同源、自建崩溃上报与诊断查询、OTA 灰度回滚 runbook、旅行圈移动端虚拟列表、shadow-sm 对齐 v3 语义',
+    changelog: process.env.APP_CHANGELOG || '修复旅行圈公开文章崩溃；统一移动端状态栏安全区与顶部间距；补强公开详情错误态和移动端回归门禁',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

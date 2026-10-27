@@ -46,6 +46,10 @@ if (!/^\d+\.\d+\.\d+$/.test(targetVersion)) {
 const edits = [
   [pkgPath, [[`"version": "${curVersion}"`, `"version": "${targetVersion}"`]]],
   [
+    'package-lock.json',
+    [[`"version": "${curVersion}"`, `"version": "${targetVersion}"`]],
+  ],
+  [
     appVersionPath,
     [
       [`|| '${curVersion}'`, `|| '${targetVersion}'`],
@@ -57,13 +61,6 @@ const edits = [
     [
       [`versionCode ${curBuild}`, `versionCode ${targetBuild}`],
       [`versionName "${curVersion}"`, `versionName "${targetVersion}"`],
-    ],
-  ],
-  [
-    'scripts/build-mobile.cjs',
-    [
-      [`|| '${curVersion}'`, `|| '${targetVersion}'`],
-      [`|| '${curBuild}'`, `|| '${targetBuild}'`],
     ],
   ],
   // P2-34：compose 的默认版本是「漏配 .env 时线上实际下发的版本」。
