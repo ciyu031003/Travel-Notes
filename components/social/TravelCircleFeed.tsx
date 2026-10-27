@@ -20,6 +20,7 @@ import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 import { Stagger } from '@/components/mobile/Stagger'
 import { Button } from '@/components/mobile/Button'
 import { DesktopOnly, MobileOnly } from '@/components/mobile/MobileOnly'
+import { MobilePageShell } from '@/components/mobile/MobilePageShell'
 import { Virtuoso } from 'react-virtuoso'
 
 const TABS = [
@@ -190,6 +191,8 @@ export default function TravelCircleFeed() {
   }, [hasMore, loadingMore, loading, tab, page, activeType])
 
   const hero = posts[0]
+  // 移动端 hero 单独渲染；虚拟列表必须从第二篇开始，避免同一篇出现两次。
+  const mobileListPosts = posts.slice(1)
 
   const cardProps = (p: Post, frame: (typeof FRAMES)[number] = 'portrait') => ({
     coverUrl: p.coverUrl,
@@ -227,9 +230,11 @@ export default function TravelCircleFeed() {
   })
 
   return (
-    <div className="m-mobile-page m-bottom-nav-safe bg-[var(--ui-social-bg)] text-[var(--ui-social-text)]">
+    <MobilePageShell
+      className="bg-[var(--ui-social-bg)] text-[var(--ui-social-text)]"
+      contentClassName="relative mx-auto max-w-6xl px-4 pb-8 sm:px-6 sm:pt-8"
+    >
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.06),transparent_60%)]" />
-      <div className="m-safe-top-26 relative mx-auto max-w-6xl px-4 pb-8 sm:px-6 sm:pt-8">
         <PullToRefresh onRefresh={() => load(tab, 1, false)}>
         <header className="m-enter mb-7 hidden items-start justify-between gap-4 md:flex">
           <div>
@@ -401,19 +406,21 @@ export default function TravelCircleFeed() {
                 入场 Stagger 动画在虚拟化下会随重挂载重放，故虚拟列表内不使用；桌面瀑布流不受影响。 */}
             <MobileOnly>
               {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="m-enter mb-5" />}
-              <Virtuoso
-                useWindowScroll
-                increaseViewportBy={{ top: 600, bottom: 900 }}
-                totalCount={posts.length}
-                itemContent={(i, p) => (
-                  <SocialFilmCard
-                    key={p.id}
-                    {...cardProps(p, FRAMES[i % FRAMES.length])}
-                    className="mb-5"
-                  />
-                )}
-                endReached={loadMore}
-              />
+              {mobileListPosts.length > 0 && (
+                <Virtuoso
+                  useWindowScroll
+                  increaseViewportBy={{ top: 600, bottom: 900 }}
+                  data={mobileListPosts}
+                  itemContent={(i, p) => (
+                    <SocialFilmCard
+                      key={p.id}
+                      {...cardProps(p, FRAMES[i % FRAMES.length])}
+                      className="mb-5"
+                    />
+                  )}
+                  endReached={loadMore}
+                />
+              )}
               <div className="mt-6 flex justify-center pb-2">
                 {loadingMore ? (
                   <span className="flex items-center gap-1.5 text-xs text-[var(--ui-social-muted)]">
@@ -460,7 +467,6 @@ export default function TravelCircleFeed() {
           </>
         )}
         </PullToRefresh>
-      </div>
-    </div>
+    </MobilePageShell>
   )
 }

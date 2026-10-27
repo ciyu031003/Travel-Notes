@@ -21,6 +21,7 @@ import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialPostById } from '@/lib/modules/offline/social-read'
 import { circleUserHref, travelDetailHref } from '@/lib/routes'
 import { goBackOrHome } from '@/lib/navigation'
+import { MobilePageShell } from '@/components/mobile/MobilePageShell'
 
 interface PostDetailData {
   id: number
@@ -298,7 +299,11 @@ export default function PostDetail({ postId }: { postId: number }) {
     // 失败时**保留 URL**（不 redirect），并把两条出路摆在眼前。
     // 旧实现只留一句文字 + 返回旅行圈，用户以为"点开没内容"（真机反馈的现象之一）。
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[var(--ui-social-bg)] px-6 text-center">
+      <MobilePageShell
+        className="bg-[var(--ui-social-bg)] text-[var(--ui-social-text)]"
+        contentClassName="flex min-h-[calc(100dvh-var(--m-safe-top))] flex-col items-center justify-center gap-4 px-6 pb-[calc(96px+env(safe-area-inset-bottom))] text-center md:pb-6"
+        bottomNavSafe={false}
+      >
         <Icon icon={WifiOff} size="lg" tone="faint" />
         <p className="text-sm text-[var(--ui-social-text)]">{error || '这条旅行故事暂时打不开'}</p>
         <p className="max-w-xs text-xs text-[var(--ui-social-faint)]">
@@ -323,7 +328,7 @@ export default function PostDetail({ postId }: { postId: number }) {
             返回旅行圈
           </Link>
         </div>
-      </div>
+      </MobilePageShell>
     )
   }
 
@@ -343,7 +348,11 @@ export default function PostDetail({ postId }: { postId: number }) {
   const hasGallery = gallery.length > 0
 
   return (
-    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)] md:pb-28">
+    <MobilePageShell
+      className="bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)] md:pb-28"
+      contentClassName="relative mx-auto max-w-3xl px-4 pb-6 md:max-w-5xl"
+      bottomNavSafe={false}
+    >
       <div className="circle-story-glow" aria-hidden="true" />
       {/*
         顶部安全区（2026-10-12 修复）：/circle/* 在 LayoutContent 里走的是
@@ -352,7 +361,6 @@ export default function PostDetail({ postId }: { postId: number }) {
         被状态栏压住一部分（真机反馈的 bug）。改用与其它移动页一致的 m-safe-top。
       */}
       {/* 桌面端放宽到 max-w-5xl：正文改成「左图右文」的杂志式对开，窄容器放不下两栏 */}
-      <div className="m-safe-top relative mx-auto max-w-3xl px-4 pb-6 md:max-w-5xl">
         {offline && (
           <div className="mb-4 flex items-center justify-center gap-1.5 rounded-full bg-[var(--ui-social-accent-soft)] px-4 py-1.5 text-xs text-[var(--ui-social-accent)]">
             <Icon icon={WifiOff} size="sm" />
@@ -516,7 +524,6 @@ export default function PostDetail({ postId }: { postId: number }) {
           数据只包含公开回忆（服务端按 Memory.visibility 过滤），私密内容不下发。
         */}
         {days.length > 0 && <TripDayList days={days} />}
-      </div>
 
       {showReport && (
         <div className="fixed inset-0 z-[70]">
@@ -647,7 +654,7 @@ export default function PostDetail({ postId }: { postId: number }) {
       {viewerIndex !== null && post.photos.length > 0 && (
         <PhotoViewer images={gallery.map((src) => ({ src, alt: post.title }))} index={viewerIndex} onClose={() => setViewerIndex(null)} onIndexChange={setViewerIndex} />
       )}
-    </div>
+    </MobilePageShell>
   )
 }
 
@@ -663,8 +670,11 @@ function PostDetailSkeleton() {
   return (
     // 骨架与真实布局同构（2026-10-17 随版面对齐）：桌面端也是「左图右文」两栏，
     // 否则数据到达时正文会从一列跳成两列 —— 骨架屏的意义就是"不跳版"。
-    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] md:pb-28">
-      <div className="relative mx-auto max-w-3xl px-4 py-6 md:max-w-5xl">
+    <MobilePageShell
+      className="bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] md:pb-28"
+      contentClassName="relative mx-auto max-w-3xl px-4 pb-6 md:max-w-5xl"
+      bottomNavSafe={false}
+    >
         <div className="mb-7 flex items-center gap-3">
           <div className="h-11 w-11 animate-pulse rounded-full bg-[var(--ui-social-surface2)]" />
           <div className="h-3 w-16 animate-pulse rounded bg-[var(--ui-social-surface2)]" />
@@ -684,8 +694,7 @@ function PostDetailSkeleton() {
             <div className="mt-7 h-14 w-full animate-pulse rounded-2xl bg-[var(--ui-social-surface2)]" />
           </div>
         </div>
-      </div>
-    </div>
+    </MobilePageShell>
   )
 }
 

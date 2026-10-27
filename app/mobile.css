@@ -296,7 +296,7 @@ html.low-end .m-glass-thick {
   grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   padding: 4px 10px 6px;
-  padding-top: calc(var(--m-safe-top) + 2px);
+  padding-top: calc(var(--m-system-top) + var(--m-topbar-gap));
   background: var(--m-surface);
   backdrop-filter: blur(18px) saturate(1.5);
   -webkit-backdrop-filter: blur(18px) saturate(1.5);
@@ -334,7 +334,7 @@ html.low-end .m-glass-thick {
   grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   padding: 4px 10px 6px;
-  padding-top: calc(var(--m-safe-top) + 2px);
+  padding-top: calc(var(--m-system-top) + var(--m-topbar-gap));
   background: var(--ui-space-hero-a);
   border-bottom: 0.5px solid var(--ui-space-hairline);
   opacity: 0;

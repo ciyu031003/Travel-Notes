@@ -20,6 +20,12 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
   },
   plugins: {
+    SystemBars: {
+      // targetSdk 36 强制 edge-to-edge；显式采用 CSS inset + 先声明 cover，
+      // 避免依赖 Capacitor 默认值或首帧 viewport-fit 切换造成顶部跳动。
+      insetsHandling: 'css',
+      initialViewportFitValueHint: 'cover',
+    },
     CapacitorSQLite: {
       iosDatabaseLocation: 'Library/CapacitorDatabase',
       iosIsEncryption: false,

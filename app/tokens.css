@@ -72,15 +72,23 @@
   --palette-mobile-radius-sm: 12px;
   --palette-mobile-section-gap: 32px;
   --palette-mobile-status-bar-height: 0px;
-  --palette-mobile-safe-top: max(20px, env(safe-area-inset-top), var(--m-status-bar-height));
-  --palette-mobile-safe-top-8: max(8px, env(safe-area-inset-top), var(--m-status-bar-height));
-  --palette-mobile-safe-top-10: max(10px, env(safe-area-inset-top), var(--m-status-bar-height));
-  --palette-mobile-safe-top-12: max(12px, env(safe-area-inset-top), var(--m-status-bar-height));
-  --palette-mobile-safe-top-16: max(16px, env(safe-area-inset-top), var(--m-status-bar-height));
-  --palette-mobile-safe-top-24: max(24px, env(safe-area-inset-top), var(--m-status-bar-height));
-  --palette-mobile-safe-top-26: max(26px, env(safe-area-inset-top), var(--m-status-bar-height));
-  --palette-mobile-safe-top-40: max(40px, env(safe-area-inset-top), var(--m-status-bar-height));
-  --palette-mobile-safe-top-48: max(48px, env(safe-area-inset-top), var(--m-status-bar-height));
+  --palette-mobile-system-top: max(
+    0px,
+    env(safe-area-inset-top, 0px),
+    var(--safe-area-inset-top, 0px),
+    var(--m-status-bar-height, 0px)
+  );
+  --palette-mobile-topbar-gap: 8px;
+  --palette-mobile-page-top-gap: 12px;
+  --palette-mobile-safe-top: calc(var(--m-system-top) + var(--m-page-top-gap));
+  --palette-mobile-safe-top-8: calc(var(--m-system-top) + 8px);
+  --palette-mobile-safe-top-10: calc(var(--m-system-top) + 10px);
+  --palette-mobile-safe-top-12: calc(var(--m-system-top) + 12px);
+  --palette-mobile-safe-top-16: calc(var(--m-system-top) + 16px);
+  --palette-mobile-safe-top-24: calc(var(--m-system-top) + 24px);
+  --palette-mobile-safe-top-26: calc(var(--m-system-top) + 26px);
+  --palette-mobile-safe-top-40: calc(var(--m-system-top) + 40px);
+  --palette-mobile-safe-top-48: calc(var(--m-system-top) + 48px);
   --palette-mobile-icon-sm: 16px;
   --palette-mobile-icon-stroke: 2;
   --palette-mobile-icon-stroke-lg: 1.75;
@@ -481,6 +489,9 @@ html.dark [data-space='SOLO'] {
   --ui-mobile-gutter: var(--palette-mobile-radius-card);
   --ui-mobile-section-gap: var(--palette-mobile-section-gap);
   --ui-mobile-status-bar-height: var(--palette-mobile-status-bar-height);
+  --ui-mobile-system-top: var(--palette-mobile-system-top);
+  --ui-mobile-topbar-gap: var(--palette-mobile-topbar-gap);
+  --ui-mobile-page-top-gap: var(--palette-mobile-page-top-gap);
   --ui-mobile-safe-top: var(--palette-mobile-safe-top);
   --ui-mobile-safe-top-8: var(--palette-mobile-safe-top-8);
   --ui-mobile-safe-top-10: var(--palette-mobile-safe-top-10);
@@ -1017,6 +1028,9 @@ html.dark [data-space='OTHER'] {
   --m-gutter: var(--ui-mobile-gutter);
   --m-section-gap: var(--ui-mobile-section-gap);
   --m-status-bar-height: var(--ui-mobile-status-bar-height);
+  --m-system-top: var(--ui-mobile-system-top);
+  --m-topbar-gap: var(--ui-mobile-topbar-gap);
+  --m-page-top-gap: var(--ui-mobile-page-top-gap);
   --m-safe-top: var(--ui-mobile-safe-top);
   --m-safe-top-8: var(--ui-mobile-safe-top-8);
   --m-safe-top-10: var(--ui-mobile-safe-top-10);
