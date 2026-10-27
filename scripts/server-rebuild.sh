@@ -130,7 +130,8 @@ sleep 5
 HEALTH_OK=0
 i=1
 while [ "$i" -le 12 ]; do
-  if curl -fsS -H "Host: travel-notes.yuanabd.cn" "https://127.0.0.1/api/health" -o /dev/null -w "health: HTTP %{http_code}\n"; then
+  # 回环地址使用本机证书链；这里只验证固定 Host 的本机路由，公网域名随后单独验收。
+  if curl -kfsS -H "Host: travel-notes.yuanabd.cn" "https://127.0.0.1/api/health" -o /dev/null -w "health: HTTP %{http_code}\n"; then
     HEALTH_OK=1
     break
   fi
