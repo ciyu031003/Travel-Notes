@@ -180,6 +180,11 @@ jobs:
           tests/e2e/auth.spec.ts
           tests/e2e/session-expired.spec.ts
 
+      # 旅行圈公开 feed/详情的移动端门禁：route mock，不依赖数据库内容。
+      # 覆盖 320/412px、0/24/32/44px 状态栏、虚拟列表、404 与 5xx。
+      - name: Mobile route-only E2E
+        run: npm run test:e2e:mobile
+
       - name: Upload Playwright artifacts
         if: failure()
         uses: actions/upload-artifact@v4

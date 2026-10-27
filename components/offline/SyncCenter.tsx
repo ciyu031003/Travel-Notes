@@ -30,6 +30,7 @@ import { Button } from '@/components/mobile/Button'
 import { CountUp } from '@/components/mobile/CountUp'
 import { Stagger } from '@/components/mobile/Stagger'
 import { getMediaStorageStats } from '@/lib/media/local-files'
+import { MobilePageShell } from '@/components/mobile/MobilePageShell'
 
 type StatCounts = { PENDING: number; SYNCING: number; FAILED: number; DEAD: number }
 
@@ -225,9 +226,12 @@ export default function SyncCenter() {
   const total = stats.PENDING + stats.SYNCING + stats.FAILED + stats.DEAD
 
   return (
-    <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)] md:pb-28">
+    <MobilePageShell
+      className="bg-[var(--ui-social-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--ui-social-text)] md:pb-28"
+      contentClassName="relative mx-auto max-w-2xl px-4 pb-6"
+      bottomNavSafe={false}
+    >
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
-      <div className="relative mx-auto max-w-2xl px-4 py-6">
         <PullToRefresh onRefresh={load}>
         <header className="mb-8 hidden items-center gap-3 md:flex">
           <div className="ml-auto"><SocialThemeToggle /></div>
@@ -408,7 +412,6 @@ export default function SyncCenter() {
           </>
         )}
         </PullToRefresh>
-      </div>
-    </div>
+    </MobilePageShell>
   )
 }

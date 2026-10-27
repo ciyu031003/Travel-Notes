@@ -188,7 +188,7 @@ export default function AdminShell({
       {/* ===== 主区域 ===== */}
       <div className="lg:pl-64">
         {/* 移动端顶栏 */}
-        <header className="sticky top-0 z-30 border-b border-travel-line/50 bg-white/80 dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:hidden">
+        <header className="sticky top-0 z-30 border-b border-travel-line/50 bg-white/80 pt-[var(--m-safe-top)] dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:hidden">
           <div className="flex h-14 items-center justify-between px-4">
             <div className="flex items-center gap-2.5">
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${accent} shadow-md`}>

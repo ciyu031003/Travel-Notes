@@ -52,6 +52,22 @@ interface PostDetailData {
   canSuggest?: boolean
 }
 
+type PostDetailErrorKind = 'not-found' | 'unauthorized' | 'forbidden' | 'network'
+
+interface PostDetailFailure {
+  kind: PostDetailErrorKind
+  message: string
+}
+
+class PostDetailHttpError extends Error {
+  kind: PostDetailErrorKind
+
+  constructor(kind: PostDetailErrorKind, message: string) {
+    super(message)
+    this.kind = kind
+  }
+}
+
 interface TripDay {
   date: string | null
   title: string | null
@@ -83,7 +99,7 @@ export default function PostDetail({ postId }: { postId: number }) {
   const router = useRouter()
   const [post, setPost] = useState<PostDetailData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<PostDetailFailure | null>(null)
   const [showComments, setShowComments] = useState(false)
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const [showReport, setShowReport] = useState(false)
@@ -107,13 +123,25 @@ export default function PostDetail({ postId }: { postId: number }) {
 
   /** 拉取/重拉详情（失败态的重试按钮也用它，失败时把错误文案带出来） */
   const reload = useCallback(async () => {
-    setError('')
+    setError(null)
     setLoading(true)
     try {
       const result = await readWithFallback<PostDetailData>(
         async () => {
           const res = await fetch(apiUrl('/api/social/posts/' + postId), { credentials: 'include' })
-          if (!res.ok) throw new Error('http ' + res.status)
+          if (!res.ok) {
+            const payload = await res.json().catch(() => ({}))
+            if (res.status === 404) {
+              throw new PostDetailHttpError('not-found', payload.error || '这条旅行故事不存在或已取消公开')
+            }
+            if (res.status === 401) {
+              throw new PostDetailHttpError('unauthorized', payload.error || '登录后才能查看这篇旅行故事')
+            }
+            if (res.status === 403) {
+              throw new PostDetailHttpError('forbidden', payload.error || '你没有权限查看这篇旅行故事')
+            }
+            throw new PostDetailHttpError('network', '服务暂时不可用，请稍后重试')
+          }
           const json = await res.json()
           if (!json.data) throw new Error(json.error || '帖子不存在')
           return json.data as PostDetailData
@@ -129,7 +157,11 @@ export default function PostDetail({ postId }: { postId: number }) {
       setOffline(result.source === 'local')
     } catch (e) {
       setPost(null)
-      setError(e instanceof Error ? e.message : '帖子不存在')
+      setError(
+        e instanceof PostDetailHttpError
+          ? { kind: e.kind, message: e.message }
+          : { kind: 'network', message: '网络开小差了，请检查连接后重试' },
+      )
     } finally {
       setLoading(false)
     }
@@ -296,6 +328,14 @@ export default function PostDetail({ postId }: { postId: number }) {
     return <PostDetailSkeleton />
   }
   if (error || !post) {
+    const failure = error || { kind: 'not-found' as const, message: '这条旅行故事不存在或已取消公开' }
+    const isMissing = failure.kind === 'not-found'
+    const needsLogin = failure.kind === 'unauthorized'
+    const isForbidden = failure.kind === 'forbidden'
+    const canRetry = !isMissing && !needsLogin && !isForbidden
+    const loginHref = typeof window === 'undefined'
+      ? '/login?redirect=%2Fcircle'
+      : `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`
     // 失败时**保留 URL**（不 redirect），并把两条出路摆在眼前。
     // 旧实现只留一句文字 + 返回旅行圈，用户以为"点开没内容"（真机反馈的现象之一）。
     return (
@@ -305,22 +345,47 @@ export default function PostDetail({ postId }: { postId: number }) {
         bottomNavSafe={false}
       >
         <Icon icon={WifiOff} size="lg" tone="faint" />
-        <p className="text-sm text-[var(--ui-social-text)]">{error || '这条旅行故事暂时打不开'}</p>
+        <h1 className="text-base font-semibold text-[var(--ui-social-text)]">
+          {isMissing
+            ? '这篇旅行故事不存在或已取消公开'
+            : needsLogin
+              ? '登录后才能查看'
+              : isForbidden
+                ? '没有查看权限'
+                : '网络开小差了'}
+        </h1>
+        <p className="text-sm text-[var(--ui-social-text)]">{failure.message}</p>
         <p className="max-w-xs text-xs text-[var(--ui-social-faint)]">
-          可能是网络不稳，或作者已取消公开。链接还在这里，稍后可以再试。
+          {isMissing
+            ? '链接仍然保留，可以返回旅行圈继续浏览其他公开旅途。'
+            : needsLogin
+              ? '登录后会回到当前链接。'
+              : isForbidden
+                ? '内容可能已调整可见范围，可以返回旅行圈浏览公开内容。'
+                : '链接仍然保留，网络恢复后可以重试。'}
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setError('')
-              setLoading(true)
-              void reload()
-            }}
-            className="rounded-full bg-[var(--ui-social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)]"
-          >
-            重试
-          </button>
+          {canRetry && (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null)
+                setLoading(true)
+                void reload()
+              }}
+              className="rounded-full bg-[var(--ui-social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)]"
+            >
+              重试
+            </button>
+          )}
+          {needsLogin && (
+            <Link
+              href={loginHref}
+              className="rounded-full bg-[var(--ui-social-accent)] px-5 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)]"
+            >
+              去登录
+            </Link>
+          )}
           <Link
             href="/circle"
             className="rounded-full px-5 py-2.5 text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"

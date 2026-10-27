@@ -21,6 +21,7 @@ import { Stagger } from '@/components/mobile/Stagger'
 import { Button } from '@/components/mobile/Button'
 import { DesktopOnly, MobileOnly } from '@/components/mobile/MobileOnly'
 import { MobilePageShell } from '@/components/mobile/MobilePageShell'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { Virtuoso } from 'react-virtuoso'
 
 const TABS = [
@@ -404,6 +405,15 @@ export default function TravelCircleFeed() {
                 无限滚动此前只累加分页结果，长刷后数百张图卡片常驻 DOM，低端 WebView 必然掉帧
                 （评审 P-10）。Virtuoso 只保留视口附近的卡片，滚过的卡片卸载、占位高度保留。
                 入场 Stagger 动画在虚拟化下会随重挂载重放，故虚拟列表内不使用；桌面瀑布流不受影响。 */}
+            <ErrorBoundary
+              label="TravelCircleMobileFeed"
+              fallback={(
+                <div role="alert" className="rounded-2xl bg-[var(--ui-social-surface)] p-6 text-center ring-1 ring-[var(--ui-social-line)]">
+                  <p className="text-sm font-medium text-[var(--ui-social-text)]">这部分旅行内容暂时无法显示</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--ui-social-muted)]">页面其它区域仍可浏览，请刷新后再试。</p>
+                </div>
+              )}
+            >
             <MobileOnly>
               {hero && <SocialFilmCard {...cardProps(hero, 'wide')} variant="hero" className="m-enter mb-5" />}
               {mobileListPosts.length > 0 && (
@@ -434,6 +444,7 @@ export default function TravelCircleFeed() {
                 )}
               </div>
             </MobileOnly>
+            </ErrorBoundary>
 
             {/* 桌面端：CSS 多列瀑布流（列数少、资源充裕，保持 Stagger 入场；不做虚拟化） */}
             <DesktopOnly>
