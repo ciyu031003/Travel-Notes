@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { 
-  Lock, Mail, ArrowLeft, Eye, EyeOff, Loader2, 
+import {
+  Lock, Mail, ArrowLeft, Eye, EyeOff,
   CheckCircle2, XCircle, KeyRound
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { Field } from '@/components/mobile/Field'
+import { Button } from '@/components/mobile/Button'
 import { apiUrl } from '@/lib/api-base'
 
 type StepType = 'request' | 'verify' | 'reset'
@@ -15,15 +17,15 @@ type StepType = 'request' | 'verify' | 'reset'
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const [step, setStep] = useState<StepType>('request')
-  
+
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  
+
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPwd, setShowConfirmPwd] = useState(false)
-  
+
   const [loading, setLoading] = useState(false)
   const [sendingCode, setSendingCode] = useState(false)
   const [countdown, setCountdown] = useState(0)
@@ -45,11 +47,11 @@ export default function ForgotPasswordPage() {
 
     const levels = [
       { score: 0, label: '', color: '' },
-      { score: 1, label: '太弱', color: 'bg-red-500' },
-      { score: 2, label: '弱', color: 'bg-orange-500' },
-      { score: 3, label: '中等', color: 'bg-yellow-500' },
-      { score: 4, label: '强', color: 'bg-green-500' },
-      { score: 5, label: '非常强', color: 'bg-green-600' },
+      { score: 1, label: '太弱', color: 'var(--danger-soft)' },
+      { score: 2, label: '偏弱', color: 'var(--m-tone-peach-fg)' },
+      { score: 3, label: '中等', color: 'var(--m-tone-honey-fg)' },
+      { score: 4, label: '强', color: 'var(--m-tone-mint-fg)' },
+      { score: 5, label: '非常强', color: 'var(--m-tone-mint-fg)' },
     ]
     setPasswordStrength(levels[Math.min(score, 5)])
   }
@@ -171,214 +173,236 @@ export default function ForgotPasswordPage() {
     }
   }
 
+// 顶部的三步进度：只做状态提示，不承担跳转（验证码仍由原来的接口流程控制）
+  const steps: { key: StepType; label: string }[] = [
+    { key: 'request', label: '验证邮箱' },
+    { key: 'verify', label: '输入验证码' },
+    { key: 'reset', label: '设置密码' },
+  ]
+  const currentStep = steps.findIndex((s) => s.key === step)
+  const strengthColor = passwordStrength.score > 0 ? passwordStrength.color : 'var(--m-line)'
+
+  const eyeButton = (shown: boolean, onToggle: () => void) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--m-faint)] transition-colors active:bg-[var(--m-surface-2)]"
+      aria-label={shown ? '隐藏密码' : '显示密码'}
+    >
+      {shown ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
+    </button>
+  )
+
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-travel-cream relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-travel-sakura/40 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-travel-mist/40 rounded-full blur-3xl" />
-      </div>
+    <div className="m2-screen min-h-dvh">
+      <header className="m2-gutter flex items-center justify-between pb-2 pt-[max(14px,env(safe-area-inset-top))]">
+        <Link
+          href="/login"
+          aria-label="返回登录"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] text-[var(--m-text)] shadow-[var(--m-shadow-l1)] transition active:scale-95"
+        >
+          <Icon icon={ArrowLeft} size="md" />
+        </Link>
+        <span className="text-[13px] font-semibold text-[var(--m-muted)]">账户找回</span>
+        <span className="h-11 w-11" aria-hidden="true" />
+      </header>
 
-      <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-travel-dim/60">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-travel-sakura to-travel-bloom rounded-2xl flex items-center justify-center mx-auto mb-4">
-              {step === 'request' && <Icon icon={KeyRound} size="lg" className="text-travel-ink" />}
-              {step === 'verify' && <Icon icon={Mail} size="lg" className="text-travel-ink" />}
-              {step === 'reset' && <Icon icon={Lock} size="lg" className="text-travel-ink" />}
-            </div>
-            <h1 className="text-2xl font-bold text-travel-ink">找回密码</h1>
-            <p className="text-travel-ink/80 text-sm mt-2">
-              {step === 'request' && '输入绑定的邮箱，发送验证码重置密码'}
-              {step === 'verify' && '请查看邮箱中的验证码'}
-              {step === 'reset' && '设置您的新密码'}
-            </p>
-          </div>
+      <main className="mx-auto w-full max-w-[430px] px-[18px] pb-[max(32px,env(safe-area-inset-bottom))]">
+        <div className="pt-5">
+          <p className="m2-eyebrow">ACCOUNT RECOVERY</p>
+          <h1 className="m2-page-title">找回密码</h1>
+          <p className="m2-page-sub">用绑定邮箱验证身份，重新拿回你的甜途记忆。</p>
+        </div>
 
-          {message && (
+        {/* 三步进度条：与下方表单同一数据源，仅展示当前步骤 */}
+        <div className="m2-seg mt-5" role="list" aria-label="找回密码步骤">
+          {steps.map((item, index) => (
             <div
-              className={`mb-4 flex items-center gap-2 px-4 py-3 rounded-xl text-sm ${
-                message.type === 'success'
-                  ? 'bg-green-50 border border-green-200 text-green-700'
-                  : 'bg-red-50 border border-red-200 text-red-700'
+              key={item.key}
+              role="listitem"
+              aria-current={item.key === step ? 'step' : undefined}
+              className={`m2-seg-btn flex flex-col items-center justify-center gap-0.5 ${
+                index === currentStep ? 'is-active' : 'opacity-65'
               }`}
             >
-              {message.type === 'success' ? (
-                <Icon icon={CheckCircle2} size="sm" />
-              ) : (
-                <Icon icon={XCircle} size="sm" />
-              )}
-              <span>{message.text}</span>
+              <span className="text-[10px] font-bold tabular-nums">STEP {index + 1}</span>
+              <span className="text-[12px] font-semibold">{item.label}</span>
             </div>
-          )}
+          ))}
+        </div>
 
-          {step === 'request' && (
-            <form onSubmit={handleSendCode} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-travel-ink mb-2">邮箱地址</label>
-                <div className="relative">
-                  <Icon icon={Mail} size="md" className="absolute left-3 top-1/2 -translate-y-1/2 text-travel-ink/40" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent"
-                    placeholder="请输入绑定的邮箱"
-                    required
-                  />
-                </div>
-                <p className="mt-2 text-xs text-travel-ink/60">
-                  如果您的账号未绑定邮箱，请联系管理员或等待管理员重置密码。
-                </p>
-              </div>
+        <section className="m2-card mt-4 overflow-hidden">
+          <div className="flex items-start gap-3 border-b border-[var(--m-line)] p-5 pb-4">
+            <span className="m2-icon-box m2-tone-pink h-12 w-12 shrink-0 [&>svg]:text-[var(--m-accent-strong)]">
+              {step === 'request' && <Icon icon={KeyRound} size="lg" />}
+              {step === 'verify' && <Icon icon={Mail} size="lg" />}
+              {step === 'reset' && <Icon icon={Lock} size="lg" />}
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-[17px] font-bold tracking-[-0.01em] text-[var(--m-text)]">
+                {step === 'request' && '先确认你的邮箱'}
+                {step === 'verify' && '查看邮箱验证码'}
+                {step === 'reset' && '设置一个新密码'}
+              </h2>
+              <p className="mt-1 text-[12px] leading-5 text-[var(--m-muted)]">
+                {step === 'request' && '我们会向绑定邮箱发送一次性验证码。'}
+                {step === 'verify' && '验证码 10 分钟内有效，请留意收件箱。'}
+                {step === 'reset' && '新密码至少 8 位，建议混合字母与数字。'}
+              </p>
+            </div>
+          </div>
 
-              <button
-                type="submit"
-                disabled={sendingCode || countdown > 0}
-                className="w-full py-3 bg-gradient-to-r from-travel-accent to-travel-accent/90 text-travel-cream font-semibold rounded-xl hover:from-travel-accent/90 hover:to-travel-accent/80 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          <div className="p-5">
+            {message && (
+              <div
+                role={message.type === 'error' ? 'alert' : 'status'}
+                className={`mb-4 flex items-start gap-2 rounded-[12px] border px-3.5 py-3 text-[13px] leading-5 ${
+                  message.type === 'success'
+                    ? 'border-[color-mix(in_srgb,var(--m-tone-mint-fg)_22%,transparent)] bg-[var(--m-tone-mint-bg)] text-[var(--m-tone-mint-fg)]'
+                    : 'border-[color-mix(in_srgb,var(--danger-soft)_24%,transparent)] bg-[color-mix(in_srgb,var(--danger-soft)_10%,white)] text-[var(--danger-soft)]'
+                }`}
               >
-                {sendingCode && <Icon icon={Loader2} size="sm" className="animate-spin" />}
-                {countdown > 0 ? `${countdown} 秒后重试` : '发送验证码'}
-              </button>
-            </form>
-          )}
+                {message.type === 'success' ? (
+                  <Icon icon={CheckCircle2} size="sm" className="mt-0.5 shrink-0" />
+                ) : (
+                  <Icon icon={XCircle} size="sm" className="mt-0.5 shrink-0" />
+                )}
+                <span>{message.text}</span>
+              </div>
+            )}
 
-          {step === 'verify' && (
-            <form onSubmit={handleVerifyCode} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-travel-ink mb-2">验证码</label>
-                <input
+            {step === 'request' && (
+              <form onSubmit={handleSendCode} className="space-y-4">
+                <Field
+                  label="邮箱地址"
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  leadingIcon={Mail}
+                  placeholder="请输入绑定的邮箱"
+                  autoComplete="email"
+                  inputMode="email"
+                  hint="如果账号未绑定邮箱，请联系管理员协助重置。"
+                />
+                <Button
+                  type="submit"
+                  block
+                  size="lg"
+                  loading={sendingCode}
+                  disabled={sendingCode || countdown > 0}
+                >
+                  {countdown > 0 ? `${countdown} 秒后可重新发送` : '发送验证码'}
+                </Button>
+              </form>
+            )}
+
+            {step === 'verify' && (
+              <form onSubmit={handleVerifyCode} className="space-y-4">
+                <Field
+                  label="6 位验证码"
+                  required
                   type="text"
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
                   maxLength={6}
-                  className="w-full px-4 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent text-center text-xl tracking-widest"
-                  placeholder="请输入 6 位验证码"
-                  required
+                  className="[&_.m-field-input]:text-center [&_.m-field-input]:text-[22px] [&_.m-field-input]:font-bold [&_.m-field-input]:tracking-[0.42em]"
+                  hint={`验证码已发送至 ${email}`}
                 />
-              </div>
-
-              <div className="flex gap-3">
+                <div className="flex gap-3">
+                  <Button type="button" variant="secondary" block onClick={() => setStep('request')}>
+                    返回
+                  </Button>
+                  <Button type="submit" block loading={loading} disabled={loading}>
+                    验证并继续
+                  </Button>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setStep('request')}
-                  className="flex-1 py-3 bg-white/60 text-travel-ink font-medium rounded-xl border border-travel-dim hover:bg-white transition-colors"
+                  onClick={() => handleSendCode()}
+                  disabled={sendingCode || countdown > 0}
+                  className="mx-auto flex min-h-11 items-center justify-center px-3 text-[13px] font-semibold text-[var(--m-accent-strong)] disabled:text-[var(--m-faint)]"
                 >
-                  返回
+                  {countdown > 0 ? `${countdown} 秒后可重新发送` : '没收到？重新发送'}
                 </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 py-3 bg-gradient-to-r from-travel-accent to-travel-accent/90 text-travel-cream font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading && <Icon icon={Loader2} size="sm" className="animate-spin" />}
-                  验证并继续
-                </button>
-              </div>
-            </form>
-          )}
+              </form>
+            )}
 
-          {step === 'reset' && (
-            <form onSubmit={handleResetPassword} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-travel-ink mb-2">新密码</label>
-                <div className="relative">
-                  <Icon icon={Lock} size="md" className="absolute left-3 top-1/2 -translate-y-1/2 text-travel-ink/40" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value)
-                      evaluatePassword(e.target.value)
-                    }}
-                    className="w-full pl-10 pr-12 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent"
-                    placeholder="至少 8 位字符"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-ink/40 hover:text-travel-ink transition-colors"
-                  >
-                    {showPassword ? <Icon icon={EyeOff} size="md" /> : <Icon icon={Eye} size="md" />}
-                  </button>
-                </div>
+            {step === 'reset' && (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <Field
+                  label="新密码"
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value)
+                    evaluatePassword(e.target.value)
+                  }}
+                  leadingIcon={Lock}
+                  trailing={eyeButton(showPassword, () => setShowPassword((v) => !v))}
+                  placeholder="至少 8 位字符"
+                  autoComplete="new-password"
+                />
                 {passwordStrength.score > 0 && (
-                  <div className="mt-2">
-                    <div className="flex gap-1">
+                  <div className="rounded-[12px] bg-[var(--m-surface-2)] p-3">
+                    <div className="flex gap-1.5">
                       {[1, 2, 3, 4, 5].map((i) => (
-                        <div
+                        <span
                           key={i}
-                          className={`h-1 flex-1 rounded-full ${
-                            i <= passwordStrength.score ? passwordStrength.color : 'bg-travel-dim'
-                          }`}
+                          className="h-1.5 flex-1 rounded-full transition-colors"
+                          style={{ background: i <= passwordStrength.score ? strengthColor : 'var(--m-line)' }}
                         />
                       ))}
                     </div>
-                    <p className="mt-1 text-xs text-travel-ink/60">
-                      密码强度：<span className="font-medium">{passwordStrength.label}</span>
+                    <p className="mt-2 text-[12px] text-[var(--m-muted)]">
+                      密码强度：<span className="font-bold text-[var(--m-text)]">{passwordStrength.label}</span>
                     </p>
                   </div>
                 )}
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-travel-ink mb-2">确认新密码</label>
-                <div className="relative">
-                  <Icon icon={Lock} size="md" className="absolute left-3 top-1/2 -translate-y-1/2 text-travel-ink/40" />
-                  <input
-                    type={showConfirmPwd ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 bg-white/60 border border-travel-dim rounded-xl text-travel-ink placeholder-travel-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom focus-visible:border-transparent"
-                    placeholder="再次输入新密码"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPwd(!showConfirmPwd)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-travel-ink/40 hover:text-travel-ink transition-colors"
-                  >
-                    {showConfirmPwd ? <Icon icon={EyeOff} size="md" /> : <Icon icon={Eye} size="md" />}
-                  </button>
+                <Field
+                  label="确认新密码"
+                  required
+                  type={showConfirmPwd ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  leadingIcon={Lock}
+                  trailing={eyeButton(showConfirmPwd, () => setShowConfirmPwd((v) => !v))}
+                  placeholder="再次输入新密码"
+                  autoComplete="new-password"
+                />
+
+                <div className="flex gap-3 pt-1">
+                  <Button type="button" variant="secondary" block onClick={() => setStep('verify')} disabled={loading}>
+                    返回
+                  </Button>
+                  <Button type="submit" block loading={loading} disabled={loading}>
+                    重置密码
+                  </Button>
                 </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep('verify')}
-                  className="flex-1 py-3 bg-white/60 text-travel-ink font-medium rounded-xl border border-travel-dim hover:bg-white transition-colors"
-                  disabled={loading}
-                >
-                  返回
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 py-3 bg-gradient-to-r from-travel-accent to-travel-accent/90 text-travel-cream font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading && <Icon icon={Loader2} size="sm" className="animate-spin" />}
-                  重置密码
-                </button>
-              </div>
-            </form>
-          )}
-
-          <div className="mt-6 text-center">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1 text-travel-ink/80 hover:text-travel-ink text-sm transition-colors"
-            >
-              <Icon icon={ArrowLeft} size="sm" />
-              返回登录
-            </Link>
+              </form>
+            )}
           </div>
+        </section>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/login"
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 px-4 text-[13px] font-semibold text-[var(--m-muted)] transition-colors hover:text-[var(--m-accent-strong)]"
+          >
+            <Icon icon={ArrowLeft} size="sm" />
+            返回登录
+          </Link>
         </div>
 
-        <p className="text-center text-travel-ink/40 text-xs mt-6">
-          © {new Date().getFullYear()} 甜途
+        <p className="mt-4 text-center text-[11px] text-[var(--m-faint)]">
+          © {new Date().getFullYear()} 甜途 · 把路变成值得记住的故事
         </p>
-      </div>
+      </main>
     </div>
   )
 }

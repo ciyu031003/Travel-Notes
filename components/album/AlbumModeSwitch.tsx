@@ -35,7 +35,7 @@ export default function AlbumModeSwitch({
       <button
         type="button"
         onClick={() => onSelect('pixel')}
-        className="space-glass-btn rounded-full px-4 py-2 text-xs text-album-text2 flex items-center gap-1.5"
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3 text-[11px] font-bold text-[var(--m-accent-strong)] shadow-[var(--m-shadow-l1)]"
       >
         <Icon icon={Rocket} size="sm" />
         切到像素
@@ -43,25 +43,34 @@ export default function AlbumModeSwitch({
     )
   }
 
+  const itemClass = (active: boolean) =>
+    `inline-flex h-10 items-center gap-1 rounded-full px-2.5 text-[11px] font-bold transition active:scale-95 ${
+      active
+        ? 'bg-[var(--m-tone-pink)] text-[var(--m-accent-strong)]'
+        : 'bg-[var(--m-surface-solid)] text-[var(--m-muted)] border border-[var(--m-line)]'
+    }`
+
   return (
     <>
       <button
         type="button"
         onClick={() => onSelect('book')}
-        className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
+        className={itemClass(viewMode === 'book')}
         title={BOOK_MODE.title}
+        aria-current={viewMode === 'book' ? 'true' : undefined}
       >
         <Icon icon={BOOK_MODE.icon} size="sm" />
-        <span className="hidden sm:inline">{BOOK_MODE.label}</span>
+        <span className="hidden min-[360px]:inline">{BOOK_MODE.label}</span>
       </button>
       <button
         type="button"
         onClick={() => onSelect(viewMode === 'space' ? 'pixel' : 'space')}
-        className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
+        className={itemClass(viewMode === 'space')}
         title={SPACE_MODE.title}
+        aria-current={viewMode === 'space' ? 'true' : undefined}
       >
         <Icon icon={SPACE_MODE.icon} size="sm" />
-        <span className="hidden sm:inline">{SPACE_MODE.label}</span>
+        <span className="hidden min-[360px]:inline">{SPACE_MODE.label}</span>
       </button>
     </>
   )

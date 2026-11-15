@@ -42,30 +42,25 @@ export interface DashboardData {
   travelTypeStats?: Array<{ type: string; count: number }>
 }
 
-/** 旅行记忆空间 · 核心大数（护照式，弱化"数据后台"感） */
-function BigStat({
-  value,
-  label,
-  icon,
-  href,
-}: {
+/** 核心大数：糖果色统计块 */
+function BigStat({ value, label, icon, href, tone }: {
   value: number | string
   label: string
   icon: LucideIcon
   href?: string
+  tone: 'pink' | 'honey' | 'mint'
 }) {
+  const toneCls = tone === 'pink' ? 'm2-tone-pink' : tone === 'honey' ? 'm2-tone-honey' : 'm2-tone-mint'
   const inner = (
-    <div className="group flex flex-col items-center text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-travel-line/70 bg-travel-sakura/40 text-travel-accent dark:border-shell-line dark:bg-travel-accent/15 dark:text-travel-bloom">
+    <div className="flex flex-col items-center text-center">
+      <span className={`m2-icon-box ${toneCls}`}>
         <Icon icon={icon} size="md" />
-      </div>
-      <div className="mt-2 text-2xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text tabular-nums md:mt-3 md:text-3xl">
-        {value}
-      </div>
-      <div className="mt-1 text-xs text-travel-ink/80 dark:text-shell-muted">{label}</div>
+      </span>
+      <span className="mt-2 text-[22px] font-bold leading-none tabular-nums text-[var(--m-text)]">{value}</span>
+      <span className="mt-1 text-[11px] text-[var(--m-faint)]">{label}</span>
     </div>
   )
-  return href ? <Link href={href} className="transition group-hover:opacity-90">{inner}</Link> : inner
+  return href ? <Link href={href} className="m-press block rounded-[14px] py-2">{inner}</Link> : inner
 }
 
 export default function DashboardClient({ data }: { data: DashboardData }) {
@@ -75,137 +70,134 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
   )
 
   const recent = data.travelPosts[0] as { date: string } | undefined
+  const typeMax = Math.max(1, ...(data.travelTypeStats ?? []).map((t) => t.count))
+  const composition = [
+    { label: '旅行记录', value: data.travelCount, width: data.travelCount },
+    { label: '旅行照片', value: data.totalPhotos, width: data.totalPhotos },
+    { label: '碎碎念', value: data.momentCount, width: data.momentCount },
+  ]
+  const compositionMax = Math.max(1, ...composition.map((c) => c.width))
 
   return (
-    <div className="bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream dark:from-shell-bg dark:via-shell-surface2 dark:to-shell-bg">
-      {/*
-        D2 修复：本页此前是**纯桌面树**（无任何 md: 分支）——移动端既没有安全区
-        顶部内边距（内容顶到状态栏、与刘海重叠），也没有返回入口，底部导航还会
-        盖住最后一段内容。这里补移动端骨架，桌面端保持不变。
-      */}
-      <div className="container-custom m-safe-top-16 pb-[calc(96px+env(safe-area-inset-bottom))] md:py-14">
-        <div className="md:hidden">
+    <div className="m2-screen min-h-dvh pb-[calc(96px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
+      <div className="relative mx-auto max-w-3xl pb-6">
+        <div className="m-safe-top pb-2 pt-1">
           <LargeTitle title="数据看板" subtitle="足迹与照片的全部沉淀" back="/me" />
         </div>
 
-        <header className="mb-10 hidden text-center md:mb-12 md:block">
-          <p className="text-xs font-medium uppercase tracking-[0.28em] text-travel-accent dark:text-travel-bloom">
-            My Travel Space
-          </p>
-          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-4xl">
-            我的旅行记忆空间
-          </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
-            走过的省份、写下的文字、拍下的照片——这里是你旅行的全部沉淀。
-          </p>
-        </header>
+        <main className="space-y-5 px-[18px]">
+          {/* 核心大数 */}
+          <section className="m2-card p-4">
+            <p className="m2-eyebrow">MY TRAVEL MEMORY</p>
+            <h2 className="mt-1 text-[20px] font-bold tracking-[-0.02em]">我的旅行记忆空间</h2>
+            <p className="mt-1 text-[12px] leading-5 text-[var(--m-muted)]">
+              走过的省份、写下的文字、拍下的照片，都在这里。
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="m2-stat-tile"><BigStat icon={MapPin} label="点亮省份" value={data.provincesVisitedCount} href="/travel" tone="pink" /></div>
+              <div className="m2-stat-tile"><BigStat icon={Camera} label="旅行记录" value={data.travelCount} href="/travel" tone="honey" /></div>
+              <div className="m2-stat-tile"><BigStat icon={ImageIcon} label="照片" value={data.totalPhotos} href="/album" tone="mint" /></div>
+            </div>
+          </section>
 
-        {/* 核心大数（护照式，弱化后台报表感） */}
-        <section className="mx-auto mb-8 grid max-w-3xl grid-cols-3 gap-3 rounded-[1.6rem] border border-travel-line/60 bg-white/60 py-6 backdrop-blur-sm dark:border-shell-line dark:bg-shell-surface/70 md:mb-12 md:gap-6 md:py-10">
-          <BigStat icon={MapPin} label="点亮省份" value={data.provincesVisitedCount} href="/travel" />
-          <BigStat icon={Camera} label="旅行记录" value={data.travelCount} href="/travel" />
-          <BigStat icon={ImageIcon} label="照片" value={data.totalPhotos} href="/album" />
-        </section>
-
-        {/* 足迹地图（视觉主体前置） */}
-        <section className="mb-8 md:mb-14">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-travel-inkStrong dark:text-shell-text">
-              <Icon icon={MapPin} size="md" className="text-travel-accent" />
-              我的旅行足迹
-            </h2>
-            <Link href="/travel" className="inline-flex items-center gap-1 py-2 pl-2 -my-2 text-xs text-travel-accent hover:text-travel-accentStrong">
-              去旅行记录 <Icon icon={ArrowRight} size="sm" />
-            </Link>
-          </div>
-          <div className="overflow-hidden rounded-[1.6rem] border border-travel-line/60 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/30 p-2 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.3)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-shell-surface">
-            <div className="h-[340px] sm:h-[440px] lg:h-[520px]">
+          {/* 足迹地图 */}
+          <section className="m2-card overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-4">
+              <h2 className="m2-section-title">我的旅行足迹</h2>
+              <Link href="/travel" className="m2-section-link">
+                去旅行记录 <Icon icon={ArrowRight} size="sm" />
+              </Link>
+            </div>
+            <div className="relative mt-3 h-[260px] w-full overflow-hidden border-y border-[var(--m-line)] bg-[linear-gradient(140deg,#FFE6EE,#FFF8F3_52%,#FFF1CF)] dark:bg-[linear-gradient(140deg,#3A1D28,#241720_52%,#3D2D16)]">
               <ChinaMap posts={data.travelPosts as never} />
             </div>
-          </div>
-        </section>
+            <p className="px-4 py-3 text-[11px] text-[var(--m-faint)]">足迹分布示意 · 点亮省份会在地图上高亮</p>
+          </section>
 
-        {/* 省份打卡 + 内容构成（左右分栏，弱化为侧栏） */}
-        <section className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-shell-line dark:bg-shell-surface/80">
-            <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-shell-text">
-              <Icon icon={MapPin} size="sm" className="text-travel-accent" />
-              省份打卡
-            </h2>
+          {/* 省份打卡 */}
+          <section className="m2-card p-4">
+            <div className="m2-section-head">
+              <h2 className="m2-section-title">省份打卡</h2>
+              <span className="text-[11px] text-[var(--m-faint)]">{data.provincesVisitedCount} / 34 省</span>
+            </div>
             {data.provinceStats.length === 0 ? (
-              <p className="py-10 text-center text-sm text-travel-ink/80 dark:text-shell-muted">
-                还没有旅行记录，去点亮第一个省份吧
-              </p>
+              <p className="py-8 text-center text-[13px] text-[var(--m-muted)]">还没有旅行记录，去点亮第一个省份吧</p>
             ) : (
-              <div className="space-y-4">
-                {data.provinceStats.slice(0, 8).map((p) => (
-                  <div key={p.name}>
-                    <div className="mb-1.5 flex items-center justify-between text-sm">
-                      <span className="text-travel-ink dark:text-shell-text">{p.name}</span>
-                      <span className="tabular-nums text-travel-ink/80 dark:text-shell-muted">{p.count} 篇</span>
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {data.provinceStats.map((p) => (
+                    <span key={p.name} className="m2-pill m2-pill-pink min-h-[32px] px-3 text-[12px]">
+                      {p.name} · {p.count}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-4 space-y-3">
+                  {data.provinceStats.slice(0, 8).map((p) => (
+                    <div key={p.name}>
+                      <div className="mb-1.5 flex items-center justify-between text-[11px]">
+                        <span className="text-[var(--m-muted)]">{p.name}</span>
+                        <span className="tabular-nums text-[var(--m-faint)]">{p.count} 篇</span>
+                      </div>
+                      <div className="m2-progress-soft">
+                        <i style={{ width: `${(p.count / maxProvinceCount) * 100}%` }} />
+                      </div>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-travel-sakura/40 dark:bg-white/5">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-travel-bloom to-travel-accent transition-all duration-700"
-                        style={{ width: `${(p.count / maxProvinceCount) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
-          </div>
+          </section>
 
-          <div className="rounded-[1.4rem] border border-travel-line/60 bg-white/70 p-6 dark:border-shell-line dark:bg-shell-surface/80">
-            <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-travel-inkStrong dark:text-shell-text">
-              <Icon icon={Sparkles} size="sm" className="text-travel-accent" />
-              内容构成
-            </h2>
-            <div className="space-y-4">
-              {[
-                { label: '旅行记录', value: data.travelCount, color: 'bg-travel-accent' },
-                { label: '旅行照片', value: data.totalPhotos, color: 'bg-travel-bloom' },
-                { label: '碎碎念', value: data.momentCount, color: 'bg-travel-sand' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-3">
-                  <span className={`h-2.5 w-2.5 rounded-full ${item.color} flex-shrink-0`} />
-                  <span className="flex-1 text-sm text-travel-ink dark:text-shell-text">{item.label}</span>
-                  <span className="tabular-nums text-sm text-travel-ink/80 dark:text-shell-muted">{item.value}</span>
+          {/* 内容构成 */}
+          <section className="m2-card p-4">
+            <h2 className="m2-section-title">内容构成</h2>
+            <div className="mt-4 space-y-3">
+              {composition.map((item, i) => (
+                <div key={item.label}>
+                  <div className="mb-1.5 flex items-center justify-between text-[11px]">
+                    <span className="text-[var(--m-muted)]">{item.label}</span>
+                    <span className="font-semibold tabular-nums text-[var(--m-text)]">{item.value}</span>
+                  </div>
+                  <div className="m2-progress-soft">
+                    <i
+                      style={{
+                        width: `${Math.min(100, (item.width / compositionMax) * 100)}%`,
+                        background: i === 0 ? 'var(--m-accent-strong)' : i === 1 ? 'var(--m-tone-sun-fg)' : 'var(--m-tone-mint-fg)',
+                      }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
-            {data.travelTypeStats && data.travelTypeStats.length > 0 && (() => {
-              const stats = data.travelTypeStats as Array<{ type: string; count: number }>
-              const max = Math.max(1, stats[0]?.count ?? 1)
-              return (
-                <div className="mt-5 border-t border-travel-line/50 pt-4 dark:border-shell-line">
-                  <p className="mb-2.5 text-xs font-medium text-travel-ink/80 dark:text-shell-muted">旅行类型</p>
-                  <div className="space-y-2">
-                    {stats.slice(0, 5).map((s) => (
-                      <div key={s.type} className="flex items-center gap-2">
-                        <span className="w-14 shrink-0 text-xs text-travel-ink/80 dark:text-shell-muted">
-                          {TRAVEL_TYPE_LABELS[s.type] || s.type}
-                        </span>
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-travel-sakura/40 dark:bg-white/5">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-travel-bloom to-travel-accent"
-                            style={{ width: `${Math.min(100, (s.count / max) * 100)}%` }}
-                          />
-                        </div>
-                        <span className="w-6 shrink-0 text-right text-xs tabular-nums text-travel-ink/80 dark:text-shell-muted">{s.count}</span>
+
+            {data.travelTypeStats && data.travelTypeStats.length > 0 && (
+              <div className="mt-5 border-t border-[var(--m-line)] pt-4">
+                <p className="mb-3 text-[11px] font-semibold text-[var(--m-muted)]">旅行类型</p>
+                <div className="space-y-2.5">
+                  {data.travelTypeStats.slice(0, 5).map((s, i) => (
+                    <div key={s.type} className="flex items-center gap-2">
+                      <span className="w-14 shrink-0 text-[11px] text-[var(--m-muted)]">
+                        {TRAVEL_TYPE_LABELS[s.type] || s.type}
+                      </span>
+                      <div className="m2-progress-soft flex-1">
+                        <i
+                          style={{
+                            width: `${Math.min(100, (s.count / typeMax) * 100)}%`,
+                            background: ['var(--m-accent-strong)', 'var(--m-tone-sun-fg)', 'var(--m-tone-lavender-fg)', 'var(--m-tone-mint-fg)', 'var(--m-tone-sky-fg)'][i % 5],
+                          }}
+                        />
                       </div>
-                    ))}
-                  </div>
+                      <span className="w-6 shrink-0 text-right text-[11px] tabular-nums text-[var(--m-faint)]">{s.count}</span>
+                    </div>
+                  ))}
                 </div>
-              )
-            })()}
-            <div className="mt-6 border-t border-travel-line/50 pt-4 dark:border-shell-line">
-              <p className="text-xs text-travel-ink/80 dark:text-shell-faint">
-                最近更新：{recent ? formatDate(recent.date) : '—'}
-              </p>
-            </div>
-          </div>
-        </section>
+              </div>
+            )}
+            <p className="mt-5 border-t border-[var(--m-line)] pt-3 text-[11px] text-[var(--m-faint)]">
+              最近更新：{recent ? formatDate(recent.date) : '—'}
+            </p>
+          </section>
+        </main>
       </div>
     </div>
   )

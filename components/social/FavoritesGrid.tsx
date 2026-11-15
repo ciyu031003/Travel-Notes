@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Bookmark, Loader2 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
@@ -75,15 +75,30 @@ export default function FavoritesGrid() {
             <Icon icon={ArrowLeft} size="md" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--ui-social-accent)]">Memories</p>
-            <h1 className="text-xl font-semibold">我的收藏</h1>
+            <p className="m2-eyebrow">MEMORIES</p>
+            <h1 className="mt-0.5 text-[26px] font-bold leading-[32px] tracking-[-0.03em]">我的收藏</h1>
           </div>
           <SocialThemeToggle />
         </header>
         {loading ? (
           <div className="py-20 text-center text-[var(--ui-social-muted)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : posts.length === 0 ? (
-          <p className="py-20 text-center text-sm text-[var(--ui-social-muted)]">还没有收藏任何旅行。</p>
+          <div className="m2-card flex flex-col items-center px-6 py-14 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
+              <Icon icon={Bookmark} size="lg" />
+            </span>
+            <p className="mt-4 text-[15px] font-semibold">还没有收藏任何旅行</p>
+            <p className="mt-1.5 max-w-[260px] text-[12px] leading-5 text-[var(--ui-social-muted)]">
+              在旅行圈遇到心动的故事，点一下收藏，就会出现在这里。
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/circle')}
+              className="m-btn m-btn-primary mt-5"
+            >
+              去旅行圈看看
+            </button>
+          </div>
         ) : (
           <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 [column-fill:_balance]">
             {posts.map((p, i) => <SocialFilmCard key={p.id} {...cardProps(p, FRAMES[i % FRAMES.length])} className="mb-5 break-inside-avoid" />)}

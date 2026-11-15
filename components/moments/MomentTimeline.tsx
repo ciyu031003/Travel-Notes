@@ -107,14 +107,14 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
 
   if (moments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-travel-line/70 bg-white/60 px-6 py-16 text-center dark:border-shell-line dark:bg-shell-surface/50">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-travel-sakura/40 text-travel-accent dark:bg-travel-accent/15 dark:text-travel-accentSoft">
+      <div className="m2-card flex flex-col items-center justify-center border-dashed px-6 py-16 text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
           <Icon icon={Inbox} size="md" />
         </span>
-        <p className="mt-4 text-sm font-medium text-travel-inkStrong dark:text-shell-text">
+        <p className="mt-4 text-[14px] font-semibold text-[var(--m-text)]">
           还没有碎碎念
         </p>
-        <p className="mt-1.5 text-sm text-travel-sand dark:text-shell-muted">
+        <p className="mt-1.5 text-[12px] text-[var(--m-muted)]">
           把脑海里一闪而过的念头留在这里吧
         </p>
       </div>
@@ -128,21 +128,21 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
           <div key={moment.id} className="group relative pl-8">
           {/* 时间线竖线 + 节点 */}
           {idx < moments.length - 1 && (
-            <span className="absolute left-[9px] top-9 bottom-[-18px] w-px bg-gradient-to-b from-travel-bloom/70 via-travel-sakura/50 to-transparent dark:from-travel-accentStrong/40" />
+            <span className="absolute left-[9px] top-9 bottom-[-18px] w-px bg-gradient-to-b from-[var(--m-accent)] via-[var(--m-line-strong)] to-transparent" />
           )}
-          <span className="absolute left-0 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom shadow-[0_4px_12px_-4px_rgba(168,95,58,0.5)]">
+          <span className="absolute left-0 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--m-grad-cta)] shadow-[0_4px_12px_-4px_rgba(184,63,99,0.5)]">
             <Icon icon={Sparkles} size="sm" tone="inverse" />
           </span>
 
-          <div className="relative overflow-hidden rounded-2xl border border-travel-line/70 bg-white/85 p-5 shadow-[0_12px_30px_-24px_rgba(90,102,112,0.35)] transition-all hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_16px_36px_-24px_rgba(198,122,78,0.45)] active:scale-[0.98] dark:border-shell-line dark:bg-shell-surface/85 dark:hover:border-travel-accentStrong/60">
-            <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[radial-gradient(closest-side,rgba(228,180,120,0.14),transparent)]" />
-            <Icon icon={Quote} size="sm" className="relative mb-2 text-travel-bloom/70" />
-            <p className="relative whitespace-pre-wrap break-words text-[15px] leading-7 text-travel-ink dark:text-shell-text">
+          <div className="m2-card relative overflow-hidden p-5 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[radial-gradient(closest-side,rgba(231,111,145,0.14),transparent)]" />
+            <Icon icon={Quote} size="sm" className="relative mb-2 text-[var(--m-accent)]" />
+            <p className="relative whitespace-pre-wrap break-words text-[14px] leading-7 text-[var(--m-text)]">
               {moment.content}
             </p>
             <div className="relative mt-4 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-travel-sand dark:text-shell-faint">
+                <span className="text-[11px] text-[var(--m-faint)]">
                   {formatRelativeTime(moment.createdAt)}
                 </span>
                 {moment.tags && moment.tags.length > 0 && (
@@ -150,7 +150,7 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
                     {moment.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full bg-travel-sakura/60 px-2 py-0.5 text-xs text-travel-accent dark:bg-travel-accent/15 dark:text-travel-accentSoft"
+                        className="m2-pill m2-pill-pink"
                       >
                         #{tag}
                       </span>
@@ -171,7 +171,7 @@ const MomentTimeline = forwardRef<MomentTimelineHandle, { limit?: number }>(func
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-travel-sakura/60 px-5 text-sm font-medium text-travel-accent transition-all hover:bg-travel-sakura hover:shadow-xs disabled:opacity-50 dark:bg-travel-accent/15 dark:text-travel-accentSoft dark:hover:bg-travel-accentStrong/30"
+            className="m-btn m-btn-secondary min-h-[44px] px-5 text-[13px] disabled:opacity-50"
           >
             {loadingMore ? '加载中...' : '加载更多'}
           </button>

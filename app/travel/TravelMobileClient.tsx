@@ -5,8 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import dynamicImport from 'next/dynamic'
-import { MapPin, Calendar, ArrowRight, Image as ImageIcon, WifiOff, CloudOff, Plus } from 'lucide-react'
-import { formatDate, cn } from '@/lib/utils'
+import { MapPin, Calendar, ArrowRight, Image as ImageIcon, WifiOff, CloudOff, Plus, Search } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/mobile/Button'
 import { openNewTravel } from '@/lib/mobile/new-travel'
 import { findProvinceByLocation } from '@/lib/province-map'
@@ -17,9 +17,7 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Stagger } from '@/components/mobile/Stagger'
-import { CountUp } from '@/components/mobile/CountUp'
 import { Icon } from '@/components/mobile/Icon'
-import { StatRow } from '@/components/mobile/StatBlock'
 
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
 
@@ -32,6 +30,7 @@ interface PostMeta {
   images?: string[]
   tags?: string[]
   location?: string
+  confirmed?: boolean
   /**
    * 只在本地 SQLite 里、还没同步上云（合并逻辑见 lib/modules/offline/travel-read.ts）。
    * 此前这个字段被合并进来却没人渲染，用户看不出"刚建的那本还在队列里"。
@@ -127,26 +126,31 @@ export default function TravelMobileClient({
           无文字加号（且列表页原有的右上角按钮在 96ed895 被删除），真机反馈
           「找不到新建旅行在哪个地方」。这里给出与"旅行记录"标题同屏的可见入口。
         */}
-        <header className="m-gutter m-safe-top flex items-start justify-between gap-3 pb-5">
-          <div className="min-w-0">
-            <p className="m-label text-[var(--m-accent-strong)]">MY JOURNEYS</p>
-            <h1 className="m-title-1 mt-2 text-[var(--m-text)]">旅行记录</h1>
-            <StatRow
-              className="mt-2"
-              items={[
-                { value: <CountUp value={posts.length} />, unit: '篇旅途' },
-                { value: <CountUp value={provincesVisited} />, unit: '个省' },
-                { value: <CountUp value={cityCount} />, unit: '个城市' },
-              ]}
-            />
+        <header className="m2-gutter m-safe-top flex items-start gap-3 pb-4">
+          <div className="min-w-0 flex-1">
+            <p className="m2-eyebrow">MY JOURNEYS</p>
+            <h1 className="m2-page-title">我的旅程</h1>
+            <p className="m2-page-sub">
+              <b className="font-semibold text-[var(--m-accent-strong)]">{posts.length}</b> 段旅程 ·{' '}
+              <b className="font-semibold text-[var(--m-tone-sun-fg)]">{provincesVisited}</b> 省 ·{' '}
+              <b className="font-semibold text-[var(--m-tone-mint-fg)]">{cityCount}</b> 城
+            </p>
           </div>
+          <Link
+            href="/search"
+            aria-label="搜索旅程"
+            className="m-pressable mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-solid)] text-[var(--m-muted)] ring-1 ring-[var(--m-line)]"
+          >
+            <Icon icon={Search} size="md" />
+          </Link>
           <Button
             icon={Plus}
+            size="sm"
             onClick={handleRecord}
             className="mt-1 shrink-0"
-            aria-label="新建旅行"
+            aria-label="新建旅程"
           >
-            新建旅行
+            新建
           </Button>
         </header>
 
@@ -190,59 +194,63 @@ export default function TravelMobileClient({
               </Button>
             </div>
           ) : (
-            <Stagger className="space-y-4" delayBase={120} step={40}>
-              {posts.map((post, index) => {
+            <Stagger className="space-y-3" delayBase={120} step={40}>
+              {posts.map((post) => {
                 const cover = post.cover || post.images?.[0]
                 return (
-                  <Link
-                    key={post.slug}
-                    href={travelDetailHref(post.slug)}
-                    className={cn(
-                      'm-enter m-press block overflow-hidden rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] shadow-[var(--m-shadow-sm)]',
-                      index % 2 === 1 && 'border-[var(--m-line-strong)]',
-                    )}
-                  >
-                    <div className="relative aspect-[4/3] overflow-hidden bg-[linear-gradient(135deg,var(--m-bg-soft),var(--m-surface-2))]">
-                      {cover ? (
-                        <Image
-                          src={cover}
-                          alt={post.title}
-                          fill
-                          sizes="100vw"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <Icon icon={MapPin} size="lg" tone="faint" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(26,16,9,0.62),rgba(26,16,9,0)_65%)]" />
-                      {post.localOnly && (
-                        <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">
-                          <Icon icon={CloudOff} size="sm" />
-                          待同步
-                        </span>
-                      )}
-                      <div className="absolute inset-x-0 bottom-0 p-4">
-                        {post.location && (
-                          <span className="m-chip m-chip-inverse">
-                            {post.location}
+                  <article key={post.slug} className="m-enter m2-card overflow-hidden">
+                    <Link href={travelDetailHref(post.slug)} className="m2-trip-row">
+                      <span className="m2-trip-thumb">
+                        {cover ? (
+                          <Image
+                            src={cover}
+                            alt={post.title}
+                            fill
+                            sizes="96px"
+                            className="object-cover"
+                            onError={(e) => { e.currentTarget.style.display = 'none' }}
+                          />
+                        ) : (
+                          <span className="flex h-full items-center justify-center">
+                            <Icon icon={MapPin} size="md" tone="faint" />
                           </span>
                         )}
-                        <span className="mt-2 line-clamp-1 text-[22px] font-bold tracking-tight text-white">{post.title}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-3.5">
-                      <span className="flex items-center gap-1.5 text-xs text-[var(--m-muted)]">
-                        <Icon icon={Calendar} size="sm" tone="accent" />
-                        {formatDate(post.date)}
+                        {post.localOnly && (
+                          <span className="absolute inset-x-1 top-1 inline-flex items-center justify-center gap-1 rounded-full bg-black/45 px-1.5 py-1 text-[10px] font-medium text-white backdrop-blur-md">
+                            <Icon icon={CloudOff} size="sm" />
+                            待同步
+                          </span>
+                        )}
                       </span>
-                      <span className="flex items-center gap-1 text-xs font-semibold text-[var(--m-accent-strong)]">
-                        阅读游记
-                        <Icon icon={ArrowRight} size="sm" />
+
+                      <span className="min-w-0 flex-1 py-1">
+                        <span className="flex items-center gap-2">
+                          <span className={post.confirmed === false ? 'm2-pill m2-pill-honey' : 'm2-pill m2-pill-pink'}>
+                            {post.confirmed === false ? '进行中' : '已归档'}
+                          </span>
+                          {post.location && (
+                            <span className="truncate text-[11px] text-[var(--m-faint)]">{post.location}</span>
+                          )}
+                        </span>
+                        <span className="mt-2 block truncate text-[16px] font-bold leading-snug text-[var(--m-text)]">
+                          {post.title}
+                        </span>
+                        <span className="mt-1 flex items-center gap-1 text-[11px] text-[var(--m-faint)]">
+                          <Icon icon={Calendar} size="sm" />
+                          {formatDate(post.date)}
+                        </span>
+                        {post.description && (
+                          <span className="mt-1.5 line-clamp-1 block text-[11px] text-[var(--m-muted)]">
+                            {post.description}
+                          </span>
+                        )}
+                        <span className="mt-2 block text-[11px] font-semibold text-[var(--m-accent-strong)]">
+                          打开旅行档案
+                          <Icon icon={ArrowRight} size="sm" className="ml-1 inline align-[-2px]" />
+                        </span>
                       </span>
-                    </div>
-                  </Link>
+                    </Link>
+                  </article>
                 )
               })}
             </Stagger>

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Loader2, Compass, Home, WifiOff } from 'lucide-react'
+import { Loader2, Compass, Home, WifiOff, Search } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
@@ -12,7 +12,6 @@ import { apiUrl } from '@/lib/api-base'
 import { circlePostCommentsHref, circlePostHref } from '@/lib/routes'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialFeed } from '@/lib/modules/offline/social-read'
-import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { SegmentedControl } from '@/components/mobile/SegmentedControl'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { EmptyState } from '@/components/mobile/EmptyState'
@@ -108,7 +107,7 @@ function relationLabel(p: Post): string | undefined {
 
 export default function TravelCircleFeed() {
   const router = useRouter()
-  const [tab, setTab] = useState('recommended')
+  const [tab, setTab] = useState('latest')
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -169,7 +168,7 @@ export default function TravelCircleFeed() {
     }
   }, [])
 
-  useEffect(() => { load('recommended', 1, false) }, [load])
+  useEffect(() => { load('latest', 1, false) }, [load])
 
   const switchTab = (t: string) => { setTab(t); load(t, 1, false, activeType) }
   const changeType = (type: string) => { setActiveType(type); load(tab, 1, false, type) }
@@ -251,14 +250,24 @@ export default function TravelCircleFeed() {
           </div>
         </header>
 
-        {/* 移动端：iOS 大标题 + 分段控制器 */}
-        <div className="md:hidden">
-          <LargeTitle
-            title="旅行圈"
-            subtitle="看看别人眼中的世界，发现正在发生的旅途。"
-            trailing={<SocialThemeToggle />}
-          />
-        </div>
+        {/* 移动端：与 Demo 一致的眉标 + 大标题 + 搜索 / 明暗切换 */}
+        <header className="m-safe-top flex items-start gap-3 px-[18px] pb-3 md:hidden">
+          <div className="min-w-0 flex-1">
+            <p className="m2-eyebrow">TRAVEL CIRCLE</p>
+            <h1 className="m2-page-title">旅行圈</h1>
+            <p className="m2-page-sub">看看别人眼中的世界，发现正在发生的旅途。</p>
+          </div>
+          <Link
+            href="/search"
+            aria-label="搜索旅行圈"
+            className="m-pressable mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
+          >
+            <Icon icon={Search} size="md" />
+          </Link>
+          <div className="mt-1 shrink-0">
+            <SocialThemeToggle />
+          </div>
+        </header>
 
         {offline && (
           <div className="mb-6 flex items-center justify-center gap-1.5 rounded-full bg-[var(--ui-social-accent-soft)] px-4 py-1.5 text-xs text-[var(--ui-social-accent)]">
@@ -299,7 +308,7 @@ export default function TravelCircleFeed() {
                 type="button"
                 onClick={() => changeType(filter.key)}
                 aria-pressed={active}
-                className={cn('m-chip shrink-0', active && 'm-chip-active')}
+                className={cn('m-chip min-h-[44px] shrink-0 px-4', active && 'm-chip-active')}
               >
                 {filter.label}
               </button>

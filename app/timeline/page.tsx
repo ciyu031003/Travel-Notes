@@ -51,7 +51,7 @@ export default function TimelinePage() {
 
   return (
     <div className="relative min-h-dvh overflow-x-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(228,180,120,0.16),transparent_72%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(231,111,145,0.14),transparent_72%)]" />
 
       <div className="relative container-custom py-10 md:py-14">
         <PullToRefresh onRefresh={reload}>
@@ -110,26 +110,26 @@ export default function TimelinePage() {
           <div className="relative mx-auto max-w-3xl">
             {years.map(({ year, entries }) => (
               <section key={year} className="relative mb-12 pl-8 md:pl-12">
-                <div className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-travel-bloom via-travel-sakura to-transparent dark:from-travel-bloom/60 dark:via-travel-sakura/25" />
+                <div className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-[var(--m-accent)] via-[var(--m-line-strong)] to-transparent" />
                 <h2 className="relative mb-6 flex items-center gap-3">
-                  <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-travel-accentSoft shadow ring-4 ring-white dark:ring-shell-bg md:-left-12" />
-                  <span className="text-2xl font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-3xl">{year}</span>
+                  <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[var(--m-accent)] shadow-[0_0_0_4px_var(--m-bg)] md:-left-12" />
+                  <span className="text-2xl font-bold tracking-tight text-[var(--m-text)] md:text-3xl">{year}</span>
                   <span className="h-px flex-1 bg-gradient-to-r from-travel-sakura/70 to-transparent" />
                 </h2>
 
                 <Stagger className="space-y-5" delayBase={60} step={30}>
-                  {entries.map((entry) => (
-                    <div key={entry.type + '-' + entry.id} className="group relative">
-                      <span className="absolute -left-8 top-7 h-3 w-3 -translate-x-1/2 rounded-full bg-[var(--surface,white)] ring-2 ring-travel-bloom/70 dark:bg-shell-surface2 md:-left-12" />
+                  {entries.map((entry, entryIndex) => (
+                    <div key={`${entry.type}-${entry.id}-${entry.date}-${entryIndex}`} className="group relative">
+                      <span className="absolute -left-8 top-7 h-3 w-3 -translate-x-1/2 rounded-full bg-[var(--m-bg)] ring-2 ring-[var(--m-accent)]/40 md:-left-12" />
                       {entry.type === 'travel' && entry.slug ? (
                         <Link
                           href={travelDetailHref(entry.slug)}
-                          className="block rounded-2xl border border-travel-line/70 bg-white/90 p-5 shadow-[0_14px_34px_-24px_rgba(90,102,112,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/70 hover:shadow-[0_20px_44px_-24px_rgba(168,95,58,0.4)] active:scale-[0.98] dark:bg-shell-surface/90 md:rounded-2xl"
+                          className="m2-card block p-4 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] md:p-5"
                         >
                           <TimelineItem entry={entry} />
                         </Link>
                       ) : (
-                        <div className="rounded-2xl border border-travel-line/70 bg-white/80 p-5 shadow-[0_14px_34px_-26px_rgba(90,102,112,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:border-travel-bloom/50 active:scale-[0.98] dark:bg-shell-surface/80 md:rounded-2xl">
+                        <div className="m2-card p-4 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] md:p-5">
                           <TimelineItem entry={entry} />
                         </div>
                       )}
@@ -206,24 +206,24 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-2">
-          <span className={'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ' + (isTravel ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent dark:text-travel-accentSoft' : 'bg-travel-mist/50 dark:bg-travel-sky/20 text-travel-sky dark:text-travel-sky')}>
+          <span className={'m2-pill ' + (isTravel ? 'm2-pill-pink' : 'm2-pill-sky')}>
             {isTravel ? <Icon icon={MapPin} size="sm" /> : <Icon icon={Sparkles} size="sm" />}
             {isTravel ? '旅行' : '回忆'}
           </span>
-          <span className="text-xs text-travel-ink/80 dark:text-shell-muted">{formatDate(entry.date)}</span>
-          {!isTravel && entry.travelTitle && <span className="text-xs text-travel-ink/80 dark:text-shell-muted">· {entry.travelTitle}</span>}
+          <span className="text-[11px] text-[var(--m-faint)]">{formatDate(entry.date)}</span>
+          {!isTravel && entry.travelTitle && <span className="text-[11px] text-[var(--m-faint)]">· {entry.travelTitle}</span>}
         </div>
-        <h3 className="text-base font-semibold text-travel-inkStrong dark:text-shell-text group-hover:text-travel-accent transition-colors">{entry.title}</h3>
-        {entry.description && <p className="text-sm text-travel-ink/80 dark:text-shell-muted mt-1 line-clamp-2">{entry.description}</p>}
+        <h3 className="text-[15px] font-semibold text-[var(--m-text)] transition-colors group-hover:text-[var(--m-accent-strong)]">{entry.title}</h3>
+        {entry.description && <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-[var(--m-muted)]">{entry.description}</p>}
         {(entry.location || entry.mood) && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {entry.location && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/80 dark:text-shell-muted">
+              <span className="m2-pill bg-[var(--m-surface-2)] text-[var(--m-muted)]">
                 <Icon icon={MapPin} size="sm" />
                 {entry.location}
               </span>
             )}
-            {entry.mood && <span className="text-xs px-2 py-0.5 rounded-full bg-travel-sakura/40 dark:bg-white/5 text-travel-ink/80 dark:text-shell-muted">{entry.mood}</span>}
+            {entry.mood && <span className="m2-pill bg-[var(--m-surface-2)] text-[var(--m-muted)]">{entry.mood}</span>}
           </div>
         )}
       </div>

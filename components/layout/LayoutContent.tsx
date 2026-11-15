@@ -38,6 +38,8 @@ export default function LayoutContent({
   const isSyncPage = pathname.startsWith('/sync')
   const isAdminPage = pathname.startsWith('/admin')
   const isForgotPasswordPage = pathname.startsWith('/forgot-password')
+  const isDownloadPage = pathname.startsWith('/download')
+  const isAdminAuthPage = pathname === '/admin/login' || pathname === '/admin/setup'
 
   /**
    * 这些页面是"沉浸式全屏流"，**自带返回/关闭**，因此不挂底部 tab：
@@ -48,7 +50,7 @@ export default function LayoutContent({
    * 进去后底部导航栏直接消失，用户在移动端没有任何退路（真机反馈"返回到首页以后，
    * 下方的 tab 栏直接没了"）。现在后台在移动端也挂底部导航，至少保证"能出去"。
    */
-  if (isLoginPage || isForgotPasswordPage || isAlbumPage) {
+  if (isLoginPage || isForgotPasswordPage || isAlbumPage || isDownloadPage || isAdminAuthPage) {
     return <>{children}</>
   }
 

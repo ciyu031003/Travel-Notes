@@ -72,7 +72,7 @@ export function LargeTitle({
         onClick={goBack}
         aria-label="返回"
         className={cn(
-          'm-pressable flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--m-text)]',
+          'm-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--m-text)]',
           extraClass,
         )}
       >
@@ -95,12 +95,19 @@ export function LargeTitle({
         <span className="m-collapser-title truncate">{title}</span>
         <span aria-hidden="true" />
       </div>
-      <header className={cn('m-title', className)}>
+      <header
+        className={cn(
+          'flex items-end justify-between gap-3 px-[18px] pb-4 pt-1',
+          className,
+        )}
+      >
         {back && backKey('-ml-2 h-11 w-11')}
         <div className="min-w-0 flex-1">
-          <h1 className="m-title-1 truncate text-[var(--m-text)]">{title}</h1>
+          <h1 className="truncate text-[26px] font-bold leading-[32px] tracking-[-0.03em] text-[var(--m-text)]">
+            {title}
+          </h1>
           {subtitle && (
-            <p className="m-caption mt-1.5 text-[var(--m-muted)]">{subtitle}</p>
+            <p className="mt-1 text-[13px] leading-5 text-[var(--m-muted)]">{subtitle}</p>
           )}
         </div>
         {trailing && <div className="shrink-0">{trailing}</div>}

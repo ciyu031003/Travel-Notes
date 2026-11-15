@@ -1,20 +1,13 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'motion/react'
-import { User, Lock, Eye, EyeOff, Heart, ArrowLeft, Loader2 } from 'lucide-react'
-
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.09, delayChildren: 0.1 } },
-}
-
-const item = {
-  hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.55, ease: [0.23, 1, 0.32, 1] as const } },
-}
+import { User, Lock, Eye, EyeOff, Heart, ArrowLeft } from 'lucide-react'
+import { Icon } from '@/components/mobile/Icon'
+import { Field } from '@/components/mobile/Field'
+import { Button } from '@/components/mobile/Button'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -64,138 +57,101 @@ export default function AdminLoginPage() {
     }
   }
 
-  const inputCls =
-    'w-full rounded-xl border border-travel-line bg-white/70 py-3 pl-11 pr-11 text-travel-ink transition-all placeholder-[#9A958F] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-accentSoft/50 dark:border-shell-line dark:bg-shell-surface2/80 dark:text-shell-text dark:placeholder-[#6E6A64]'
-
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-travel-cream p-4 dark:bg-shell-bg">
-      {/* 氛围光晕 */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-travel-sakura/70 blur-3xl dark:bg-shell-surface/30" />
-        <div className="absolute -bottom-32 -right-24 h-[28rem] w-[28rem] rounded-full bg-travel-mist/80 blur-3xl dark:bg-shell-line/30" />
-        <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-travel-bloom/40 blur-3xl dark:bg-shell-surface/40" />
-        {/* 漂浮樱花颗粒 */}
-        {Array.from({ length: 14 }).map((_, i) => (
-          <span
-            key={i}
-            className="absolute rounded-full bg-travel-bloom/50 dark:bg-travel-bloom/20"
-            style={{
-              left: `${(i * 67) % 100}%`,
-              top: `${(i * 41) % 100}%`,
-              width: `${6 + (i % 5) * 3}px`,
-              height: `${6 + (i % 5) * 3}px`,
-              animation: `sakuraFloat ${14 + (i % 7) * 3}s linear infinite`,
-              animationDelay: `-${i * 2.3}s`,
-            }}
-          />
-        ))}
+    <div className="m2-screen relative flex min-h-dvh items-center justify-center overflow-hidden px-[18px] py-10">
+      {/* 樱粉 / 蜜桃 / 薄荷柔光，保持后台与前台同一套糖果色温 */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[var(--m-tone-pink)] blur-3xl" />
+        <div className="absolute -bottom-28 -right-20 h-[26rem] w-[26rem] rounded-full bg-[var(--m-tone-mint-bg)] blur-3xl" />
+        <div className="absolute left-1/2 top-1/4 h-64 w-64 -translate-x-1/2 rounded-full bg-[var(--m-tone-peach-bg)] opacity-70 blur-3xl" />
       </div>
 
       <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="relative z-10 w-full max-w-md"
+        initial={{ opacity: 0, y: 12, filter: 'blur(3px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 w-full max-w-[400px]"
       >
-        <motion.div
-          variants={item}
-          className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_rgba(90,102,112,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-shell-bg/90"
-        >
-          {/* 顶部渐变条 */}
-          <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-travel-sakura via-travel-bloom to-travel-sky" />
+        <header className="mb-5 flex items-center gap-3">
+          <span className="m2-icon-box m2-tone-pink h-12 w-12 rounded-[15px]">
+            <Icon icon={Heart} size="lg" className="fill-current" />
+          </span>
+          <div className="min-w-0">
+            <p className="m2-eyebrow">ADMIN STUDIO</p>
+            <p className="mt-0.5 text-[22px] font-bold tracking-[-0.03em] text-[var(--m-text)]">甜途 · 后台</p>
+          </div>
+        </header>
 
-          <motion.div variants={item} className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-travel-accent to-travel-bloom shadow-lg shadow-travel-accent/25">
-              <Heart className="h-8 w-8 text-white" fill="currentColor" />
-            </div>
-            <h1 className="text-2xl font-bold text-[#2D3842] dark:text-shell-text">甜途 · 后台管理</h1>
-            <p className="mt-2 text-sm text-travel-ink dark:text-shell-muted">甜途 · 从这里开始打理</p>
-          </motion.div>
+        <section className="m2-card p-5">
+          <h1 className="text-[20px] font-bold tracking-[-0.02em] text-[var(--m-text)]">后台管理登录</h1>
+          <p className="mt-1 text-[12px] leading-5 text-[var(--m-muted)]">打理旅程、相册与旅行圈内容。</p>
 
-          <motion.form variants={item} onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="admin-login-username" className="mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">用户名</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
-                <input
-                  id="admin-login-username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className={inputCls}
-                  placeholder="请输入用户名"
-                  autoComplete="username"
-                  required
-                  autoFocus
-                />
-              </div>
-            </div>
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            <Field
+              label="用户名"
+              required
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              leadingIcon={User}
+              placeholder="请输入管理员用户名"
+              autoComplete="username"
+              autoFocus
+            />
 
-            <div>
-              <label htmlFor="admin-login-password" className="mb-2 block text-sm font-medium text-travel-ink dark:text-shell-muted">密码</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-travel-sand/50" />
-                <input
-                  id="admin-login-password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={inputCls}
-                  placeholder="请输入密码"
-                  autoComplete="current-password"
-                  required
-                />
+            <Field
+              label="密码"
+              required
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              leadingIcon={Lock}
+              placeholder="请输入管理员密码"
+              autoComplete="current-password"
+              trailing={
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-travel-sand/50 transition-colors hover:text-travel-accent"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--m-faint)] transition-colors active:bg-[var(--m-surface-2)]"
                   aria-label={showPassword ? '隐藏密码' : '显示密码'}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
                 </button>
-              </div>
-            </div>
+              }
+            />
 
             {error && (
-              <motion.div
-                key={error}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="rounded-xl border border-travel-bloom/50 bg-travel-sakura/40 px-4 py-3 text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface/70 dark:text-travel-bloom"
-              >
+              <div role="alert" className="rounded-[12px] bg-[color-mix(in_srgb,var(--danger-soft)_10%,white)] px-3.5 py-3 text-[13px] leading-5 text-[var(--danger-soft)]">
                 {error}
-              </motion.div>
+              </div>
             )}
 
-            <motion.button
-              type="submit"
-              disabled={loading}
-              whileHover={{ scale: loading ? 1 : 1.015 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-travel-accent to-travel-accentSoft py-3.5 font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:shadow-xl disabled:opacity-60"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '登 录'}
-            </motion.button>
-          </motion.form>
+            <Button type="submit" block size="lg" loading={loading} disabled={loading}>
+              登录后台
+            </Button>
+          </form>
 
-          <motion.div variants={item} className="mt-6 flex items-center justify-center gap-6 text-sm">
+          <div className="mt-4 flex flex-col items-center gap-1 border-t border-[var(--m-line)] pt-3">
             {needsSetup && (
-              <Link href="/admin/setup" className="text-travel-accent transition-colors hover:text-travel-accentStrong underline underline-offset-4 dark:text-travel-bloom">
+              <Link
+                href="/admin/setup"
+                className="flex min-h-11 items-center px-2 text-[12px] font-bold text-[var(--m-accent-strong)]"
+              >
                 首次使用？初始化管理员
               </Link>
             )}
-            <Link href="/" className="inline-flex items-center gap-1 text-travel-ink transition-colors hover:text-travel-accent dark:text-shell-muted dark:hover:text-travel-bloom">
-              <ArrowLeft className="h-3.5 w-3.5" />
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center gap-1.5 px-2 text-[12px] font-semibold text-[var(--m-muted)]"
+            >
+              <Icon icon={ArrowLeft} size="sm" />
               返回首页
             </Link>
-          </motion.div>
-        </motion.div>
+          </div>
+        </section>
 
-        <motion.p variants={item} className="mt-6 text-center text-xs text-travel-sand dark:text-shell-faint">
-          Made with ♥ by 甜途
-        </motion.p>
+        <p className="mt-4 text-center text-[11px] text-[var(--m-faint)]">Made with ♥ by 甜途</p>
       </motion.div>
     </div>
   )
 }
-

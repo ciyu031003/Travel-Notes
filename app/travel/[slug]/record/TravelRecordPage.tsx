@@ -165,70 +165,92 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
   }
 
   return (
-    <div className="min-h-dvh bg-travel-cream">
-      <header className="sticky top-0 z-10 border-b border-[#E8E8E4] bg-travel-cream/90 backdrop-blur">
-        <div className="mx-auto flex max-w-xl items-center gap-3 px-4 py-3">
-          <Link href={travelDetailHref(slug)} className="-ml-2 p-2 text-travel-ink" aria-label="返回">
-            <Icon icon={ArrowLeft} size="md" />
-          </Link>
-          <h1 className="font-semibold text-travel-ink">记录此刻 · {travel.title}</h1>
+    <div className="min-h-dvh overflow-x-hidden bg-[var(--m-bg)] pb-[calc(112px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
+      <header className="m2-topbar">
+        <div className="m2-navbar">
+          <span className="m2-navbar-side">
+            <Link
+              href={travelDetailHref(slug)}
+              aria-label="返回旅行"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--m-text)]"
+            >
+              <Icon icon={ArrowLeft} size="md" />
+            </Link>
+          </span>
+          <h1 className="m2-navbar-title">记录此刻</h1>
+          <span className="m2-navbar-side" aria-hidden="true" />
         </div>
       </header>
 
-      <main className="mx-auto max-w-xl px-4 py-6">
+      <main className="px-[18px] pt-4">
+        <p className="mb-4 text-[12px] text-[var(--m-faint)]">{travel.title}</p>
+
         {offline && (
-          <div className="mb-4 rounded-2xl border border-travel-bloom/40 bg-travel-bloom/15 px-4 py-2 text-center text-xs text-[#B07686]">
-            离线模式：保存的留言会先存到本地，联网后自动上传
+          <div className="mb-4 rounded-[12px] bg-[var(--m-tone-sun-bg)] px-4 py-2.5 text-center text-[12px] font-semibold text-[var(--m-tone-sun-fg)]">
+            离线模式：保存的内容会先存到本地，联网后自动上传
           </div>
         )}
+
         {success ? (
-          <div className="card flex flex-col items-center gap-2 p-8 text-center text-green-600">
-            <Icon icon={Sparkles} size="md" />
-            {success}
+          <div className="m2-card flex flex-col items-center gap-3 p-8 text-center">
+            <span className="m2-icon-box m2-tone-mint h-14 w-14 rounded-[18px]">
+              <Icon icon={Sparkles} size="lg" />
+            </span>
+            <p className="text-[15px] font-semibold text-[var(--m-text)]">{success}</p>
           </div>
         ) : travel.pendingSync ? (
-          <div className="card p-8 text-center text-travel-ink/80">
+          <div className="m2-card p-8 text-center text-[13px] leading-6 text-[var(--m-muted)]">
             这本旅行还在本地待同步，联网后会自动上传。同步完成即可在这里记录。
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm text-travel-ink/80">此刻标题</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                maxLength={255}
-                placeholder="比如：今天看到的海"
-                className="w-full rounded-2xl border border-travel-bloom/50 bg-white px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom/60"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-travel-ink/80">写点什么</label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={6}
-                placeholder="此刻的心情、发生的事…"
-                className="w-full resize-none rounded-2xl border border-travel-bloom/50 bg-white px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-travel-bloom/60"
-              />
-            </div>
+            <section className="m2-form-section">
+              <h2 className="m2-form-section-title">这一刻</h2>
+              <div>
+                <label htmlFor="record-title" className="mb-2 block text-[13px] font-semibold text-[var(--m-muted)]">
+                  标题
+                </label>
+                <input
+                  id="record-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  maxLength={255}
+                  placeholder="比如：今天看到的海"
+                  className="m2-input"
+                />
+              </div>
+              <div>
+                <label htmlFor="record-content" className="mb-2 block text-[13px] font-semibold text-[var(--m-muted)]">
+                  写点什么
+                </label>
+                <textarea
+                  id="record-content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={6}
+                  placeholder="此刻的心情、发生的事…"
+                  className="m2-input resize-none"
+                  style={{ minHeight: 132 }}
+                />
+              </div>
+            </section>
 
-            {/* 照片：本页此前完全没有这块 */}
-            <div>
-              <label className="mb-2 block text-sm text-travel-ink/80">
-                照片<span className="ml-1 text-xs text-travel-ink/40">最多 {MAX_PHOTOS} 张</span>
-              </label>
+            <section className="m2-form-section">
+              <h2 className="m2-form-section-title">
+                照片
+                <span className="ml-auto text-[11px] font-normal text-[var(--m-faint)]">最多 {MAX_PHOTOS} 张</span>
+              </h2>
               <div className="grid grid-cols-3 gap-2">
                 {photos.map((p, i) => (
-                  <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl">
+                  <div key={p.id} className="relative aspect-square overflow-hidden rounded-[12px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={'data:' + p.mimeType + ';base64,' + p.base64} alt="" width={400} height={400} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     <button
                       type="button"
                       aria-label="移除这张照片"
                       onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white active:scale-95"
+                      className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white active:scale-95"
                     >
                       <Icon icon={X} size="sm" />
                     </button>
@@ -238,45 +260,48 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
                   <button
                     type="button"
                     onClick={addPhotos}
-                    className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-travel-bloom/50 text-travel-ink/50 active:scale-95"
+                    className="flex aspect-square flex-col items-center justify-center gap-1 rounded-[12px] border border-dashed border-[var(--m-line-strong)] text-[var(--m-faint)] active:scale-95"
                   >
                     <Icon icon={ImagePlus} size="md" />
                     <span className="text-[11px]">添加照片</span>
                   </button>
                 )}
               </div>
-            </div>
+              <p className="text-[11px] leading-5 text-[var(--m-faint)]">照片仅与这条回忆绑定，可在旅行详情里查看。</p>
+            </section>
 
-            <div>
-              <label className="mb-2 block text-sm text-travel-ink/80">心情</label>
+            <section className="m2-form-section">
+              <h2 className="m2-form-section-title">此刻心情</h2>
               <div className="flex flex-wrap gap-2">
                 {MOODS.map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setMood(mood === m ? '' : m)}
+                    aria-pressed={mood === m}
                     className={
-                      'rounded-full border px-4 py-2 text-sm transition-colors ' +
+                      'min-h-[44px] rounded-full border px-4 text-[13px] font-semibold transition-colors ' +
                       (mood === m
-                        ? 'border-travel-bloom bg-travel-sakura text-travel-ink'
-                        : 'border-[#E8E8E4] bg-white text-travel-ink/80')
+                        ? 'border-transparent bg-[var(--m-grad-cta)] text-white'
+                        : 'border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] text-[var(--m-muted)]')
                     }
                   >
                     {m}
                   </button>
                 ))}
               </div>
-            </div>
+            </section>
 
             {error && (
-              <div className="rounded-2xl border border-travel-sakura bg-travel-sakura/50 px-4 py-3 text-sm text-travel-accentStrong">
+              <div className="rounded-[12px] bg-[var(--m-danger)]/10 px-4 py-3 text-[12px] font-semibold text-[var(--m-danger)]">
                 {error}
               </div>
             )}
+
             <button
               type="submit"
               disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-travel-bloom to-[#D4A5B0] py-3 font-semibold text-white disabled:opacity-50"
+              className="m-btn m-btn-primary m-btn-lg m-btn-block"
             >
               {submitting ? progress || '保存中...' : (<><Icon icon={Send} size="sm" />保存回忆</>)}
             </button>

@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { Button } from '@/components/mobile/Button'
 import { useApi } from '@/lib/client/use-api'
 import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
@@ -73,7 +74,7 @@ export default function DownloadPage() {
     QRCode.toDataURL(downloadUrl, {
       width: 480,
       margin: 2,
-      color: { dark: '#3B3228', light: '#FFFFFF' },
+      color: { dark: '#4A2B38', light: '#FFFFFF' },
     })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(null))
@@ -116,226 +117,237 @@ export default function DownloadPage() {
     setModalOpen(false)
   }
 
-  return (
-    <div className="min-h-[100dvh] bg-travel-cream pb-[env(safe-area-inset-bottom)] dark:bg-shell-bg">
-      {/* 顶部返回 */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-travel-line/60 bg-travel-cream/85 px-4 py-3 backdrop-blur-lg dark:border-shell-line dark:bg-shell-bg/85">
+return (
+    <div className="m2-screen min-h-dvh pb-[env(safe-area-inset-bottom)]">
+      <header className="m2-gutter sticky top-0 z-30 flex items-center justify-between border-b border-[var(--m-line)] bg-[color-mix(in_srgb,var(--m-bg)_88%,transparent)] pb-2 pt-[max(12px,env(safe-area-inset-top))] backdrop-blur-xl">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-travel-ink transition hover:bg-travel-sakura/50 dark:text-shell-text dark:hover:bg-white/10"
+          aria-label="返回首页"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] text-[var(--m-text)] shadow-[var(--m-shadow-l1)] transition active:scale-95"
         >
-          <Icon icon={ArrowLeft} size="sm" />
-          返回
+          <Icon icon={ArrowLeft} size="md" />
         </Link>
-        <span className="text-sm text-travel-ink/80 dark:text-shell-muted">甜途 · 移动端</span>
+        <div className="text-center">
+          <p className="m2-eyebrow">GET THE APP</p>
+          <p className="text-[15px] font-bold tracking-[-0.01em] text-[var(--m-text)]">甜途 App</p>
+        </div>
+        <span className="h-11 w-11" aria-hidden="true" />
       </header>
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-8 md:py-12">
-        {/* Hero */}
-        <section className="text-center">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-travel-accent to-travel-bloom shadow-lg shadow-travel-accent/25">
-            <Icon icon={Smartphone} size="lg" className="text-white" />
+      <main className="mx-auto w-full max-w-[430px] px-[18px] pb-10">
+        {/* Hero：用柔光圆环和糖果色块替代旧的棕色单色图标 */}
+        <section className="pt-7 text-center">
+          <div className="relative mx-auto flex h-24 w-24 items-center justify-center">
+            <span className="absolute inset-0 rotate-6 rounded-[30px] bg-[var(--m-tone-peach-bg)]" aria-hidden="true" />
+            <span className="absolute inset-1 -rotate-6 rounded-[26px] bg-[var(--m-tone-lavender-bg)]" aria-hidden="true" />
+            <span className="relative flex h-20 w-20 items-center justify-center rounded-[24px] bg-[var(--m-grad-cta)] text-white shadow-[0_18px_36px_-16px_rgba(184,63,99,0.7)]">
+              <Icon icon={Smartphone} size="lg" />
+            </span>
+            <span className="absolute -right-1 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--m-tone-honey-bg)] text-[var(--m-tone-honey-fg)] shadow-sm">
+              <Icon icon={Download} size="sm" />
+            </span>
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-travel-inkStrong dark:text-shell-text md:text-4xl">
-            甜途 App
-          </h1>
-          <p className="mt-2 text-sm text-travel-ink/80 dark:text-shell-muted md:text-base">
-            把每一次出发与归来，都装进口袋。
+          <h1 className="m2-page-title mt-5 text-center">把旅行装进口袋</h1>
+          <p className="m2-page-sub mx-auto mt-1.5 max-w-[300px]">
+            把每一次出发与归来，都收进甜途。离线也能记，联网自动同步。
           </p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-travel-bloom/40 bg-white/70 px-4 py-1.5 text-sm text-travel-accent dark:border-shell-line dark:bg-shell-surface dark:text-travel-bloom">
-            <Icon icon={Package} size="sm" />
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-4 py-2 text-[12px] font-semibold text-[var(--m-muted)] shadow-[var(--m-shadow-l1)]">
+            <Icon icon={Package} size="sm" className="text-[var(--m-accent-strong)]" />
             版本 v{version}
-            <span className="text-travel-ink/80 dark:text-shell-muted">build {buildNumber}</span>
+            <span className="text-[var(--m-faint)]">build {buildNumber}</span>
           </div>
         </section>
 
         {native ? (
-          /* 已在 App 内 */
-          <section className="mt-8 rounded-3xl border border-travel-line bg-white/80 p-6 text-center dark:border-shell-line dark:bg-shell-surface md:p-8">
-            <Icon icon={CheckCircle2} size="lg" className="mx-auto text-travel-success" />
-            <h2 className="mt-3 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">
-              你正在使用甜途 App
-            </h2>
-            <p className="mt-2 text-sm text-travel-ink/80 dark:text-shell-muted">
+          <section className="m2-card mt-6 p-5 text-center">
+            <span className="m2-icon-box m2-tone-mint mx-auto h-14 w-14">
+              <Icon icon={CheckCircle2} size="lg" />
+            </span>
+            <h2 className="mt-3 text-[18px] font-bold text-[var(--m-text)]">你正在使用甜途 App</h2>
+            <p className="mt-1.5 text-[13px] leading-5 text-[var(--m-muted)]">
               当前版本 v{version}（build {buildNumber}）。新版本会通过 OTA 自动提示更新。
             </p>
           </section>
         ) : (
           <>
-            {/* 下载按钮：点击弹出更新与扫码弹窗，避免浏览器右上角直接下载 */}
-            <section className="mt-8">
-              <button
-                type="button"
-                onClick={() => setModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-travel-accent py-4 text-base font-semibold text-white shadow-lg shadow-travel-accent/25 transition active:scale-[0.98] hover:bg-travel-accentStrong"
-              >
-                <Icon icon={Download} size="md" />
-                下载 Android 安装包（{version}）
-              </button>
-              <button
-                type="button"
-                onClick={copyLink}
-                className="mt-3 w-full rounded-xl border border-travel-line bg-white/60 py-2.5 text-sm text-travel-ink/80 transition hover:bg-white dark:border-shell-line dark:bg-shell-surface/60 dark:text-shell-muted dark:hover:bg-shell-surface"
-              >
-                {copied ? '已复制链接 ✓' : '复制下载链接'}
-              </button>
-
-              {/* iOS 提示 */}
-              <p className="mt-4 rounded-2xl border border-travel-sky/40 bg-travel-mist/40 px-4 py-3 text-center text-xs leading-relaxed text-travel-ink/80 dark:border-shell-line dark:bg-shell-surface/60 dark:text-shell-muted">
-                <Icon icon={Info} size="sm" className="mr-1 inline align-[-2px]" />
-                iOS 暂不支持安装 APK，可直接使用网页版
-                <Link href="/" className="mx-1 font-medium text-travel-accentStrong underline-offset-2 hover:underline dark:text-travel-bloom">
-                  甜途网页版
-                </Link>
-                ，或后续关注 iOS 版本。
-              </p>
-            </section>
-
-            {/* 扫码下载 */}
-            <section className="mt-8 flex flex-col items-center rounded-3xl border border-travel-line bg-white/80 p-6 dark:border-shell-line dark:bg-shell-surface md:flex-row md:items-center md:gap-8 md:p-8">
-              <div className="shrink-0 rounded-2xl bg-white p-3 shadow-inner ring-1 ring-travel-line/60 dark:ring-shell-line">
-                {qrDataUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={qrDataUrl} alt="甜途 App 下载二维码" width={220} height={220} loading="lazy" decoding="async" className="h-44 w-44 md:h-52 md:w-52" />
-                ) : (
-                  <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/80 md:h-52 md:w-52">
-                    二维码生成中…
-                  </div>
-                )}
+            <section className="m2-card mt-6 p-5">
+              <div className="flex items-start gap-3">
+                <span className="m2-icon-box m2-tone-mint h-12 w-12 shrink-0">
+                  <Icon icon={ShieldCheck} size="md" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-bold text-[var(--m-text)]">安全下载 · 官方直连</p>
+                  <p className="mt-1 text-[12px] leading-5 text-[var(--m-muted)]">
+                    Android APK · {sizeText} · 支持断点续传
+                  </p>
+                </div>
               </div>
-              <div className="mt-5 text-center md:mt-0 md:text-left">
-                <h2 className="text-lg font-semibold text-travel-inkStrong dark:text-shell-text">扫码下载</h2>
-                <p className="mt-2 text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
-                  用手机浏览器扫码即可下载安装包；
-                  <br className="hidden md:block" />
-                  电脑上打开本页，手机扫码最方便。
+
+              <Button type="button" block size="lg" icon={Download} className="mt-5" onClick={() => setModalOpen(true)}>
+                下载 Android 安装包（{version}）
+              </Button>
+              <Button type="button" block variant="secondary" className="mt-2.5" onClick={copyLink}>
+                {copied ? '已复制下载链接' : '复制下载链接'}
+              </Button>
+
+              <div className="mt-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--m-tone-sky-bg)] px-3.5 py-3 text-[12px] leading-5 text-[var(--m-tone-sky-fg)]">
+                <Icon icon={Info} size="sm" className="mt-0.5 shrink-0" />
+                <p>
+                  iOS 暂不支持安装 APK，可直接使用
+                  <Link href="/" className="mx-1 font-bold underline decoration-current/30 underline-offset-2">
+                    甜途网页版
+                  </Link>
+                  ，或后续关注 iOS 版本。
                 </p>
               </div>
             </section>
 
-            {/* 更新日志 */}
-            <section className="mt-8 rounded-3xl border border-travel-line bg-white/80 p-6 dark:border-shell-line dark:bg-shell-surface md:p-8">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">
-                <Icon icon={Package} size="md" className="text-travel-accent dark:text-travel-bloom" />
-                更新日志 · v{version}
-              </h2>
-              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-travel-ink/80 dark:text-shell-muted">
-                {changelog}
-              </p>
-            </section>
-          </>
-        )}
-
-        {/* 下载弹窗：更新说明 + 扫码下载 */}
-        {!native && modalOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-travel-ink/40 backdrop-blur-sm sm:items-center sm:p-4"
-            onClick={() => setModalOpen(false)}
-            ref={panelRef} tabIndex={-1} role="dialog"
-            aria-modal="true"
-            aria-label="下载甜途 App"
-          >
-            <div
-              className="m-enter w-full max-w-md rounded-t-3xl bg-travel-cream p-6 shadow-2xl dark:bg-shell-surface sm:rounded-3xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-travel-inkStrong dark:text-shell-text">
-                  下载甜途 App
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  aria-label="关闭"
-                  className="rounded-full p-2 text-travel-ink/50 transition hover:bg-travel-sakura dark:text-shell-muted dark:hover:bg-white/10"
-                >
-                  <Icon icon={X} size="md" />
-                </button>
+            {/* 扫码下载 */}
+            <section className="m2-card mt-4 p-5">
+              <div className="m2-section-head">
+                <h2 className="m2-section-title">扫码下载</h2>
+                <span className="m2-pill m2-pill-pink">手机更方便</span>
               </div>
-
-              <div className="mt-1 flex items-center gap-2 text-sm text-travel-accent dark:text-travel-bloom">
-                <Icon icon={Package} size="sm" />
-                版本 v{version} · build {buildNumber}
-              </div>
-
-              <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-                <div className="rounded-2xl bg-white p-3 shadow-inner ring-1 ring-travel-line/60 dark:ring-shell-line">
+              <div className="flex items-center gap-4">
+                <div className="shrink-0 rounded-[16px] border border-[var(--m-line)] bg-white p-2.5 shadow-[var(--m-shadow-l1)]">
                   {qrDataUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={qrDataUrl} alt="扫码下载甜途 App" width={184} height={184} loading="lazy" decoding="async" className="h-44 w-44" />
+                    <img
+                      src={qrDataUrl}
+                      alt="甜途 App 下载二维码"
+                      width={128}
+                      height={128}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-32 w-32"
+                    />
                   ) : (
-                    <div className="flex h-44 w-44 items-center justify-center text-sm text-travel-ink/80">
+                    <div className="flex h-32 w-32 items-center justify-center text-center text-[12px] text-[var(--m-faint)]">
                       二维码生成中…
                     </div>
                   )}
                 </div>
-                <div className="text-center sm:text-left">
-                  <p className="text-sm font-medium text-travel-inkStrong dark:text-shell-text">
-                    手机扫码下载
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/80 dark:text-shell-muted">
-                    用手机浏览器扫码，直达最新安装包。
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-bold text-[var(--m-text)]">用手机浏览器扫一扫</p>
+                  <p className="mt-1.5 text-[12px] leading-5 text-[var(--m-muted)]">
+                    直达最新安装包。电脑上打开本页，手机扫码最方便。
                   </p>
                 </div>
               </div>
+            </section>
 
-              <div className="mt-4 rounded-2xl border border-travel-line bg-white/70 p-4 dark:border-shell-line dark:bg-shell-surface/70">
-                <p className="text-xs font-medium text-travel-inkStrong dark:text-shell-text">本次更新</p>
-                <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-travel-ink/80 dark:text-shell-muted">
-                  {changelog}
-                </p>
+            {/* 更新日志 */}
+            <section className="m2-card mt-4 p-5">
+              <div className="flex items-center gap-2">
+                <span className="m2-icon-box m2-tone-honey h-9 w-9">
+                  <Icon icon={Package} size="sm" />
+                </span>
+                <h2 className="m2-section-title">本次更新 · v{version}</h2>
               </div>
-
-              <button
-                type="button"
-                onClick={startDownload}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-travel-accent py-3.5 text-base font-semibold text-white shadow-lg shadow-travel-accent/25 transition active:scale-[0.98] hover:bg-travel-accentStrong"
-              >
-                <Icon icon={Download} size="md" />
-                立即下载 APK
-              </button>
-              <p className="mt-2 text-center text-xs text-travel-ink/80 dark:text-shell-faint">
-                {sizeText} · 下载后请允许安装未知来源应用
-              </p>
-            </div>
-          </div>
+              <p className="mt-3 whitespace-pre-line text-[13px] leading-6 text-[var(--m-muted)]">{changelog}</p>
+            </section>
+          </>
         )}
 
         {/* 安装说明 */}
-        <section className="mt-8">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-travel-inkStrong dark:text-shell-text">
-            <Icon icon={ShieldCheck} size="md" className="text-travel-accent dark:text-travel-bloom" />
-            安装说明
-          </h2>
-          <ol className="mt-4 space-y-3">
-            {INSTALL_STEPS.map((s, i) => (
-              <li key={s.title} className="flex gap-3 rounded-2xl border border-travel-line bg-white/70 p-4 dark:border-shell-line dark:bg-shell-surface/70">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-travel-sakura text-sm font-bold text-travel-accentStrong dark:bg-white/10 dark:text-travel-bloom">
-                  {i + 1}
+        <section className="mt-6">
+          <div className="m2-section-head">
+            <h2 className="m2-section-title">安装说明</h2>
+            <span className="text-[11px] text-[var(--m-faint)]">3 步完成</span>
+          </div>
+          <ol className="m2-list-group">
+            {INSTALL_STEPS.map((step, i) => (
+              <li key={step.title} className="m2-list-row items-start">
+                <span className="m2-list-icon mt-0.5">{i + 1}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-bold text-[var(--m-text)]">{step.title}</span>
+                  <span className="mt-1 block text-[12px] leading-5 text-[var(--m-muted)]">
+                    {i === 0 ? `${step.desc}，${sizeText}。` : step.desc}
+                  </span>
                 </span>
-                <div>
-                  <p className="text-sm font-medium text-travel-inkStrong dark:text-shell-text">{s.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-travel-ink/80 dark:text-shell-muted">
-                    {i === 0 ? `${s.desc}，${sizeText}。` : s.desc}
-                  </p>
-                </div>
               </li>
             ))}
           </ol>
-          <p className="mt-4 text-center text-xs text-travel-ink/80 dark:text-shell-faint">
+          <p className="mt-4 text-center text-[11px] leading-5 text-[var(--m-faint)]">
             官网直连下载 · 支持断点续传 · 数据自动加密同步
           </p>
         </section>
 
-        {/* 备案号：下载页同样展示 App 备案编号，编号可点击跳转工信部备案系统查询 */}
-        <section className="mt-8 text-center">
+        <section className="mt-7 text-center">
           <IcpLicense
-            className="text-xs text-travel-ink/80 dark:text-shell-faint"
-            numberClassName="hover:text-travel-accent dark:hover:text-travel-bloom"
-            linkClassName="hover:text-travel-accent dark:hover:text-travel-bloom"
+            className="text-[11px] text-[var(--m-faint)]"
+            numberClassName="hover:text-[var(--m-accent-strong)]"
+            linkClassName="hover:text-[var(--m-accent-strong)]"
           />
         </section>
       </main>
+
+      {/* 下载弹窗：保留原有 useModalLayer 的焦点圈定 / ESC / 返回键处理 */}
+      {!native && modalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-[rgba(58,20,36,0.42)] backdrop-blur-[3px]"
+          onClick={() => setModalOpen(false)}
+          ref={panelRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-label="下载甜途 App"
+        >
+          <div
+            className="m-enter max-h-[90dvh] w-full max-w-[430px] overflow-y-auto rounded-t-[26px] bg-[var(--m-surface-solid)] p-5 pb-[max(24px,env(safe-area-inset-bottom))] shadow-[0_-20px_60px_-20px_rgba(58,20,36,0.4)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[var(--m-line-strong)]" aria-hidden="true" />
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="m2-eyebrow">READY TO GO</p>
+                <h3 className="mt-1 text-[20px] font-bold tracking-[-0.02em] text-[var(--m-text)]">下载甜途 App</h3>
+                <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[var(--m-muted)]">
+                  <Icon icon={Package} size="sm" />
+                  v{version} · build {buildNumber}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                aria-label="关闭"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-2)] text-[var(--m-muted)] transition active:scale-95"
+              >
+                <Icon icon={X} size="md" />
+              </button>
+            </div>
+
+            <div className="mt-5 flex items-center gap-4 rounded-[16px] bg-[var(--m-surface-2)] p-4">
+              <div className="shrink-0 rounded-[12px] bg-white p-2 ring-1 ring-[var(--m-line)]">
+                {qrDataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={qrDataUrl} alt="扫码下载甜途 App" width={128} height={128} loading="lazy" decoding="async" className="h-32 w-32" />
+                ) : (
+                  <div className="flex h-32 w-32 items-center justify-center text-center text-[12px] text-[var(--m-faint)]">二维码生成中…</div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[14px] font-bold text-[var(--m-text)]">手机扫码下载</p>
+                <p className="mt-1 text-[12px] leading-5 text-[var(--m-muted)]">
+                  {sizeText} · 用手机浏览器扫码，直达最新安装包。
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-[14px] border border-[var(--m-line)] p-4">
+              <p className="text-[12px] font-bold text-[var(--m-text)]">本次更新</p>
+              <p className="mt-1.5 whitespace-pre-line text-[12px] leading-5 text-[var(--m-muted)]">{changelog}</p>
+            </div>
+
+            <Button type="button" block size="lg" icon={Download} className="mt-5" onClick={startDownload}>
+              立即下载 APK
+            </Button>
+            <p className="mt-2 text-center text-[11px] text-[var(--m-faint)]">
+              {sizeText} · 下载后请允许安装未知来源应用
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

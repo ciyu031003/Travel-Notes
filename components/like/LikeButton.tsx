@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { Heart } from 'lucide-react'
@@ -100,10 +100,10 @@ export default function LikeButton({
       title={state.liked ? '取消点赞' : '点赞'}
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full transition-all select-none',
-        sm ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm',
+        sm ? 'min-h-[40px] px-3.5 text-[12px]' : 'min-h-[44px] px-4 text-[13px]',
         state.liked
-          ? 'bg-travel-sakura/50 dark:bg-travel-accent/20 text-travel-accent border border-travel-sakura dark:border-travel-accent/40'
-          : 'bg-travel-dim/50 dark:bg-shell-surface2 text-travel-sand dark:text-shell-muted border border-transparent hover:bg-travel-sakura/60 dark:hover:bg-travel-accentStrong/20 hover:text-travel-accent hover:border-travel-sakura dark:hover:border-travel-accentStrong',
+          ? 'bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)] border border-[var(--m-line-strong)]'
+          : 'bg-[var(--m-surface-2)] text-[var(--m-muted)] border border-transparent',
         loading && 'opacity-60 cursor-wait',
         className
       )}
@@ -113,7 +113,7 @@ export default function LikeButton({
         className={cn(
           'transition-transform',
           sm ? 'w-3.5 h-3.5' : 'w-4 h-4',
-          state.liked && 'fill-travel-accent scale-110',
+          state.liked && 'fill-[var(--m-accent)] scale-110',
           state.liked && popKey > 0 && 'm-pop'
         )}
       />
@@ -121,4 +121,3 @@ export default function LikeButton({
     </button>
   )
 }
-

@@ -299,6 +299,7 @@ export default function SocialFilmCard({
           fill
           sizes={variant === 'hero' ? '100vw' : '(max-width: 768px) 100vw, 33vw'}
           onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
           className="m-img-fade object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
       ) : (
@@ -310,7 +311,7 @@ export default function SocialFilmCard({
 
   if (variant === 'hero') {
     return (
-      <div className={cn('group relative block w-full overflow-hidden rounded-[2rem] bg-[var(--ui-social-surface)] text-left ring-1 ring-[var(--ui-social-line)]', className)}>
+      <div className={cn('group relative block w-full overflow-hidden rounded-[22px] bg-[var(--ui-social-surface)] text-left ring-1 ring-[var(--ui-social-line)] shadow-[var(--m-shadow-l1)]', className)}>
         {openLayer}
         {cover('aspect-[16/10]')}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/15 to-transparent" />
@@ -324,7 +325,7 @@ export default function SocialFilmCard({
         */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] p-4 sm:p-7">
           {/* 以下文字一律用固定浅色：它们永远压在深色遮罩上，主题 token 在浅色主题下会变成深色而看不清 */}
-          {cityName && <div className="text-xs font-medium tracking-[0.22em] text-travel-bloom uppercase">{cityName}</div>}
+          {cityName && <div className="text-xs font-medium tracking-[0.22em] text-white/80 uppercase">{cityName}</div>}
           {title && <h2 className="mt-2 max-w-2xl text-xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">{title}</h2>}
           {summary && <p className="mt-2 line-clamp-2 max-w-2xl text-sm text-white/75 max-sm:hidden">{summary}</p>}
           <div className="mt-3 flex items-center justify-between gap-3 sm:mt-4">
@@ -341,7 +342,7 @@ export default function SocialFilmCard({
 
   return (
     <div
-      className={cn('m-card-pressable group relative block w-full overflow-hidden rounded-[1.4rem] bg-[var(--ui-social-surface-90)] text-left ring-1 ring-[var(--ui-social-line)] transition-colors duration-300',
+      className={cn('m-card-pressable group relative block w-full overflow-hidden rounded-[20px] bg-[var(--ui-social-surface-90)] text-left ring-1 ring-[var(--ui-social-line)] shadow-[var(--m-shadow-l1)] transition-colors duration-300',
         onOpen && 'hover:-translate-y-0.5 hover:bg-[var(--ui-social-surface)] hover:ring-[var(--ui-social-line-strong)]', className)}>
       {openLayer}
       {cover(

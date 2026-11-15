@@ -379,10 +379,10 @@ export default function TravelDetailMobile({
             type="button"
             aria-label="全屏查看旅行照片"
             onClick={() => setViewer({ photos: viewerPhotos, index: 0 })}
-            className="relative block h-48 w-full overflow-hidden bg-[var(--m-bg-soft)] text-left"
+            className="relative block h-[264px] w-full overflow-hidden bg-[var(--m-bg-soft)] text-left"
           >
             <Image src={heroCover} alt={travel.title} fill sizes="100vw" className="object-cover" priority />
-            <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(26,16,9,0.72),rgba(26,16,9,0)_62%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(58,20,36,0.84),rgba(58,20,36,0.16)_64%,rgba(58,20,36,0.04)_100%)]" />
             {/* 右上角：全屏查看（图片上一个明确的按钮，符合真机要求） */}
             <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[12px] font-medium text-white backdrop-blur-md">
               <Icon icon={Maximize2} size="sm" />
@@ -394,7 +394,7 @@ export default function TravelDetailMobile({
               </span>
             )}
             <span className="absolute inset-x-0 bottom-0 block px-4 pb-2.5">
-              <h1 className="text-[24px] font-bold leading-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]">
+              <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]">
                 {travel.title}
               </h1>
             </span>

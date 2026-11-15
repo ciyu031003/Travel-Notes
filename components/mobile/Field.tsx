@@ -1,10 +1,10 @@
 'use client'
 
+import { useId, type ReactNode } from 'react'
 import type {
   InputHTMLAttributes,
   TextareaHTMLAttributes,
   SelectHTMLAttributes,
-  ReactNode,
 } from 'react'
 import { cn } from '@/lib/utils'
 import { Icon } from './Icon'
@@ -38,6 +38,8 @@ interface FieldShellProps {
   className?: string
   children: ReactNode
   controlClassName?: string
+  /** 关联的控件 id：label 点击与读屏要真正落到对应输入框 */
+  htmlFor?: string
 }
 
 function FieldShell({
@@ -50,12 +52,13 @@ function FieldShell({
   className,
   controlClassName,
   children,
+  htmlFor,
 }: FieldShellProps) {
   const invalid = Boolean(error)
   return (
     <div className={cn('m-field', invalid && 'is-error', className)}>
       {label && (
-        <label className="m-field-label">
+        <label className="m-field-label" htmlFor={htmlFor}>
           {label}
           {required && (
             <span className="m-field-required" aria-hidden="true">
@@ -111,9 +114,11 @@ export function Field({
   id,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & BaseFieldProps) {
-  const fieldId = id || props.name
+  const generatedId = useId()
+  const fieldId = id || props.name || generatedId
   return (
     <FieldShell
+      htmlFor={fieldId}
       label={label}
       hint={hint}
       error={error}
@@ -143,9 +148,11 @@ export function FieldTextarea({
   id,
   ...props
 }: TextareaHTMLAttributes<HTMLTextAreaElement> & BaseFieldProps) {
-  const fieldId = id || props.name
+  const generatedId = useId()
+  const fieldId = id || props.name || generatedId
   return (
     <FieldShell
+      htmlFor={fieldId}
       label={label}
       hint={hint}
       error={error}
@@ -176,9 +183,11 @@ export function FieldSelect({
   children,
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement> & BaseFieldProps) {
-  const fieldId = id || props.name
+  const generatedId = useId()
+  const fieldId = id || props.name || generatedId
   return (
     <FieldShell
+      htmlFor={fieldId}
       label={label}
       hint={hint}
       error={error}

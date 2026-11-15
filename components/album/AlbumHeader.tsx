@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Lock, Menu, Orbit, Rocket, Settings2 } from '@/lib/mobile/icon-system'
+import { ArrowLeft, Lock, MapPin, Menu, Orbit, Rocket, Settings2 } from '@/lib/mobile/icon-system'
 import ManageEntry from '@/components/layout/ManageEntry'
 import { Icon } from '@/components/mobile/Icon'
 import AlbumModeSwitch, { type AlbumViewMode } from './AlbumModeSwitch'
@@ -26,104 +26,98 @@ export default function AlbumHeader({
 }) {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
 
-  return (
-    <header className="sticky top-0 z-40 h-14 flex items-center justify-between gap-2 px-3 md:px-8 border-b-4 border-black bg-black/45">
-      <Link
-        href="/"
-        className="pixel-btn pixel-border-stone px-3 py-1.5 text-xs font-bold rounded-sm shrink-0"
-        aria-label="返回首页"
-      >
-        <Icon icon={ArrowLeft} size="sm" className="sm:mr-1" />
-        <span className="hidden sm:inline">返回</span>
-      </Link>
-      <div className="font-zpix text-album-accent text-sm font-bold tracking-widest drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)] flex items-center gap-2 min-w-0 truncate">
-        <Icon icon={BookOpen} size="sm" className="shrink-0" />
-        <span className="truncate">旅行相册<span className="hidden sm:inline"> · 存档</span></span>
-      </div>
-      <div className="relative flex items-center gap-2 shrink-0">
-        <AlbumModeSwitch viewMode={viewMode} onSelect={onSelectMode} />
-        {/* 桌面：完整操作组 */}
-        <div className="hidden md:flex items-center gap-2">
-          <ManageEntry
-            href="/admin/albums"
-            label="管理相册"
-            icon={<Icon icon={Settings2} size="sm" />}
-            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
-          />
+return (
+    <header className="m2-gutter sticky top-0 z-40 border-b border-[var(--m-line)] bg-[color-mix(in_srgb,var(--m-bg)_90%,transparent)] pb-2 pt-[max(10px,env(safe-area-inset-top))] backdrop-blur-xl">
+      <div className="flex items-center gap-2.5">
+        <Link
+          href="/"
+          aria-label="返回首页"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] text-[var(--m-text)] shadow-[var(--m-shadow-l1)] transition active:scale-95"
+        >
+          <Icon icon={ArrowLeft} size="md" />
+        </Link>
+
+        <div className="min-w-0 flex-1">
+          <p className="m2-eyebrow">TRAVEL ALBUM</p>
+          <h1 className="mt-0.5 truncate text-[20px] font-bold tracking-[-0.02em] text-[var(--m-text)]">旅行相册</h1>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1.5">
+          <AlbumModeSwitch viewMode={viewMode} onSelect={onSelectMode} />
+
+          {/* 桌面/移动统一：星图是相册的高频动作，不再埋进二级菜单 */}
           <button
             type="button"
             onClick={onOpenStarMap}
-            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5"
-            title="查看旅行星图"
+            aria-label="查看旅行星图"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] text-[var(--m-accent-strong)] shadow-[var(--m-shadow-l1)] transition active:scale-95"
           >
             <Icon icon={Orbit} size="sm" />
-            星图
           </button>
-          <Link
-            href="/"
-            className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm"
+
+          <button
+            type="button"
+            onClick={() => setShowMoreMenu((v) => !v)}
+            aria-label="更多操作"
+            aria-expanded={showMoreMenu}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] text-[var(--m-text)] shadow-[var(--m-shadow-l1)] transition active:scale-95"
           >
-            进入地图
-          </Link>
+            <Icon icon={Menu} size="sm" />
+          </button>
         </div>
-        {/* 移动：更多菜单 */}
-        <button
-          type="button"
-          onClick={() => setShowMoreMenu((v) => !v)}
-          className="pixel-btn pixel-border-gold px-3 py-1.5 text-xs font-bold rounded-sm flex items-center gap-1.5 md:hidden"
-          title="更多操作"
-          aria-expanded={showMoreMenu}
-        >
-          <Icon icon={Menu} size="sm" />
-          更多
-        </button>
+
         {showMoreMenu && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
-            <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-sm border border-pixel-line bg-pixel-panel shadow-[0_10px_24px_rgba(0,0,0,0.6)]">
-              <div className="p-1">
-                <ManageEntry
-                  href="/admin/albums"
-                  label="管理相册"
-                  icon={<Icon icon={Settings2} size="sm" />}
-                  className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
-                />
-                <button
-                  type="button"
-                  onClick={() => { onOpenStarMap(); setShowMoreMenu(false) }}
-                  className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
-                >
-                  <Icon icon={Orbit} size="sm" />
-                  星图
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onToggleViewMode(); setShowMoreMenu(false) }}
-                  className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
-                >
-                  <Icon icon={Rocket} size="sm" />
-                  银河风
-                </button>
-                <Link
-                  href="/"
-                  onClick={() => setShowMoreMenu(false)}
-                  className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
-                >
-                  进入地图
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // 清除相册解锁 cookie 并刷新，回到上锁态（原「返回登录」入口的正规语义）
-                    document.cookie = 'album_token=; Max-Age=0; path=/'
-                    window.location.reload()
-                  }}
-                  className="w-full justify-start rounded-sm px-3 py-2 text-xs font-bold text-album-warm hover:bg-black/40 flex items-center gap-1.5"
-                >
-                  <Icon icon={Lock} size="sm" />
-                  重新锁定相册
-                </button>
-              </div>
+            <div className="m2-card absolute right-[18px] top-full z-50 mt-2 w-52 overflow-hidden bg-[var(--m-surface-solid)] p-1.5">
+              <ManageEntry
+                href="/admin/albums"
+                label="管理相册"
+                icon={<Icon icon={Settings2} size="sm" />}
+                className="m2-list-row w-full justify-start rounded-[10px] px-3 py-2 text-left text-[13px] font-semibold text-[var(--m-text)]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenStarMap()
+                  setShowMoreMenu(false)
+                }}
+                className="m2-list-row w-full justify-start rounded-[10px] px-3 py-2 text-left text-[13px] font-semibold text-[var(--m-text)]"
+              >
+                <Icon icon={Orbit} size="sm" />
+                旅行星图
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onToggleViewMode()
+                  setShowMoreMenu(false)
+                }}
+                className="m2-list-row w-full justify-start rounded-[10px] px-3 py-2 text-left text-[13px] font-semibold text-[var(--m-text)]"
+              >
+                <Icon icon={Rocket} size="sm" />
+                切换银河模式
+              </button>
+              <Link
+                href="/"
+                onClick={() => setShowMoreMenu(false)}
+                className="m2-list-row w-full justify-start rounded-[10px] px-3 py-2 text-left text-[13px] font-semibold text-[var(--m-text)]"
+              >
+                <Icon icon={MapPin} size="sm" />
+                进入地图
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  // 清除相册解锁 cookie 并刷新，回到上锁态（原「返回登录」入口的正规语义）
+                  document.cookie = 'album_token=; Max-Age=0; path=/'
+                  window.location.reload()
+                }}
+                className="m2-list-row w-full justify-start rounded-[10px] px-3 py-2 text-left text-[13px] font-semibold text-[var(--m-danger)]"
+              >
+                <Icon icon={Lock} size="sm" />
+                重新锁定相册
+              </button>
             </div>
           </>
         )}

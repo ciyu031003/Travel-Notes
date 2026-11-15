@@ -16,9 +16,8 @@ import {
 import { apiUrl } from '@/lib/api-base'
 import { Icon } from '@/components/mobile/Icon'
 import { ALBUM_MODES, type AlbumModeKey } from '@/lib/album-modes'
-import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
+import { formatDotDate } from '@/lib/modules/album/presentation'
 import BookReader from './BookReader'
-import PostcardCard from '../PostcardCard'
 
 type Mode = AlbumModeKey
 
@@ -231,26 +230,51 @@ export default function TravelBook({
     return <BookReader book={openBook} onBack={closeReader} />
   }
 
+const firstBook = books && books.length > 0 ? books[0] : null
+
   return (
-    <div className="min-h-dvh bg-travel-cream dark:bg-shell-bg">
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-travel-dim/40 bg-travel-cream/90 px-3 backdrop-blur-md md:px-8 dark:border-shell-line dark:bg-shell-bg/90">
-        <div className="flex min-w-0 items-center gap-2">
+    <div className="m2-screen min-h-dvh">
+      <header className="m2-gutter sticky top-0 z-40 border-b border-[var(--m-line)] bg-[color-mix(in_srgb,var(--m-bg)_88%,transparent)] pb-3 pt-[max(12px,env(safe-area-inset-top))] backdrop-blur-xl">
+        <div className="flex items-center gap-3">
           <Link
             href="/"
             aria-label="返回首页"
-            className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] text-[var(--m-text)] shadow-[var(--m-shadow-l1)] transition active:scale-95"
           >
-            <Icon icon={ArrowLeft} size="sm" />
-            <span className="hidden sm:inline">返回</span>
+            <Icon icon={ArrowLeft} size="md" />
           </Link>
-          <div className="flex items-center gap-2 font-semibold text-travel-ink dark:text-shell-text">
-            {/* travel-* 主题：保留主题色类，不套 --m-* 的 tone（规范 §5.3 跨主题边界） */}
-            <Icon icon={BookOpen} size="sm" className="text-travel-bloom" />
-            <span className="truncate text-sm sm:text-base">我的旅行画册</span>
+          <div className="min-w-0 flex-1">
+            <p className="m2-eyebrow">TRAVEL BOOKS</p>
+            <h1 className="mt-0.5 truncate text-[24px] font-bold tracking-[-0.03em] text-[var(--m-text)]">旅行画册</h1>
+          </div>
+          <div className="flex items-center gap-1 rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] p-1 shadow-[var(--m-shadow-l1)]">
+            <button
+              type="button"
+              onClick={() => changeWallView('wall')}
+              aria-pressed={wallView === 'wall'}
+              aria-label="卡片墙"
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                wallView === 'wall' ? 'bg-[var(--m-tone-pink)] text-[var(--m-accent-strong)]' : 'text-[var(--m-faint)]'
+              }`}
+            >
+              <Icon icon={LayoutGrid} size="sm" />
+            </button>
+            <button
+              type="button"
+              onClick={() => changeWallView('list')}
+              aria-pressed={wallView === 'list'}
+              aria-label="目录列表"
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                wallView === 'list' ? 'bg-[var(--m-tone-pink)] text-[var(--m-accent-strong)]' : 'text-[var(--m-faint)]'
+              }`}
+            >
+              <Icon icon={List} size="sm" />
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/60 p-0.5 dark:border-shell-line dark:bg-shell-surface3/80">
-          {/* 模式切换：名称/顺序/图标统一取自 lib/album-modes（防止命名漂移） */}
+
+        {/* 三种既有呈现模式：书页 / 银河 / 像素。只换入口样式，不改变切换逻辑 */}
+        <div className="m2-seg mt-3">
           {ALBUM_MODES.map((m) => {
             const isCurrent = m.key === 'book'
             return (
@@ -259,12 +283,9 @@ export default function TravelBook({
                 type="button"
                 onClick={() => !isCurrent && onModeChange(m.key)}
                 aria-current={isCurrent ? 'true' : undefined}
-                title={isCurrent ? `当前视图（${m.label}）` : m.title}
-                className={
-                  isCurrent
-                    ? 'inline-flex items-center gap-1 rounded-full bg-travel-sakura px-3 py-1.5 text-xs font-medium text-travel-ink shadow-xs dark:bg-travel-accent/20 dark:text-travel-bloom'
-                    : 'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-travel-ink/80 transition-colors hover:bg-travel-sakura/50 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
-                }
+                className={`m2-seg-btn inline-flex items-center justify-center gap-1.5 ${
+                  isCurrent ? 'is-active' : ''
+                }`}
               >
                 <Icon icon={m.icon} size="sm" />
                 {m.label}
@@ -274,76 +295,42 @@ export default function TravelBook({
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <main className="mx-auto w-full max-w-[430px] px-[18px] pb-10 pt-4">
         {books === null && !loadError ? (
-          <div className="flex items-center justify-center gap-2 py-24 text-travel-ink/45 dark:text-shell-faint">
-            <Icon icon={Loader2} size="md" className="animate-spin" />
-            <span className="text-sm">正在翻阅旅行画册，把走过的城市一本本摊开...</span>
+          <div className="m2-card flex items-center justify-center gap-2.5 px-5 py-16 text-[13px] text-[var(--m-muted)]">
+            <Icon icon={Loader2} size="md" className="animate-spin text-[var(--m-accent)]" />
+            正在翻开旅行画册…
           </div>
         ) : loadError ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-            <Icon icon={AlertCircle} size="lg" className="text-red-400/70" />
-            <p className="text-sm text-travel-ink/80 dark:text-shell-muted">{loadError}</p>
+          <div className="m2-card px-6 py-12 text-center">
+            <span className="m2-icon-box m2-tone-peach mx-auto h-14 w-14">
+              <Icon icon={AlertCircle} size="lg" />
+            </span>
+            <p className="mt-3 text-[14px] font-semibold text-[var(--m-text)]">{loadError}</p>
             <button
               type="button"
               onClick={retryLoad}
-              className="rounded-full bg-travel-sakura px-4 py-1.5 text-xs font-medium text-travel-ink hover:bg-travel-sakura/70"
+              className="m-btn m-btn-primary m-btn-sm mt-4 px-5"
             >
-              重试
+              重新加载
             </button>
           </div>
         ) : books && books.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-            <Icon icon={Camera} size="lg" className="text-travel-bloom/40" />
-            <p className="text-sm text-travel-ink/80 dark:text-shell-muted">还没有旅行故事，去记录一次旅行吧。</p>
-            <p className="text-xs text-travel-ink/80 dark:text-shell-faint">在「旅行」或后台创建一次旅行，就会生成一本画册</p>
+          <div className="m2-card px-6 py-12 text-center">
+            <span className="m2-icon-box m2-tone-lavender mx-auto h-14 w-14">
+              <Icon icon={Camera} size="lg" />
+            </span>
+            <p className="mt-3 text-[15px] font-bold text-[var(--m-text)]">还没有旅行画册</p>
+            <p className="mt-1 text-[12px] leading-5 text-[var(--m-muted)]">
+              去记录一次旅行，走过的城市会自动变成一本画册。
+            </p>
           </div>
         ) : (
           <>
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="font-display text-lg font-semibold text-travel-ink dark:text-shell-text">旅行画册</h2>
-                <p className="mt-1.5 text-xs text-travel-ink/55 dark:text-shell-muted">
-                  {wallStats.count} 本 · 每个城市一本 · 点开卡片翻页阅读
-                </p>
-              </div>
-              <div className="flex flex-col items-start gap-2 sm:items-end">
-                <div className="flex items-center gap-0.5 rounded-full border border-travel-dim/40 bg-travel-cream/80 p-0.5 dark:border-shell-line dark:bg-shell-surface3/80">
-                  <button
-                    type="button"
-                    onClick={() => changeWallView('wall')}
-                    aria-pressed={wallView === 'wall'}
-                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                      wallView === 'wall'
-                        ? 'bg-travel-sakura text-travel-ink shadow-xs dark:bg-travel-accent/20 dark:text-travel-bloom'
-                        : 'text-travel-ink/80 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
-                    }`}
-                  >
-                    <Icon icon={LayoutGrid} size="sm" />卡片墙
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => changeWallView('list')}
-                    aria-pressed={wallView === 'list'}
-                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                      wallView === 'list'
-                        ? 'bg-travel-sakura text-travel-ink shadow-xs dark:bg-travel-accent/20 dark:text-travel-bloom'
-                        : 'text-travel-ink/80 hover:bg-travel-sakura/40 hover:text-travel-ink dark:text-shell-muted dark:hover:bg-white/10 dark:hover:text-shell-text'
-                    }`}
-                  >
-                    <Icon icon={List} size="sm" />目录
-                  </button>
-                </div>
-                <p className="text-xs text-travel-ink/55 dark:text-shell-muted">
-                  共 {wallStats.days} 天 · {wallStats.photos} 张照片
-                </p>
-              </div>
-            </div>
-
             {openError && (
               <div
                 role="alert"
-                className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-red-200/70 bg-red-50/80 px-3.5 py-2.5 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+                className="mb-4 flex items-center justify-between gap-3 rounded-[12px] bg-[color-mix(in_srgb,var(--danger-soft)_10%,white)] px-3.5 py-3 text-[12px] text-[var(--danger-soft)]"
               >
                 <span className="flex items-center gap-2">
                   <Icon icon={AlertCircle} size="sm" className="shrink-0" />
@@ -353,88 +340,141 @@ export default function TravelBook({
                   type="button"
                   onClick={() => setOpenError('')}
                   aria-label="收起提示"
-                  className="rounded-full p-1 transition-colors hover:bg-red-100 dark:hover:bg-red-500/20"
+                  className="flex h-8 w-8 items-center justify-center rounded-full"
                 >
                   <Icon icon={X} size="sm" />
                 </button>
               </div>
             )}
 
-            {wallView === 'wall' ? (
-              <div className="album-scatter grid grid-cols-1 gap-x-6 gap-y-9 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3 xl:grid-cols-4">
-                {(books || []).map((book, i) => (
-                  <PostcardCard
-                    key={book.bookKey || book.travelId}
-                    book={book}
-                    onOpen={() => openBookByKey(book)}
-                    index={i}
-                  />
-                ))}
+            {wallView === 'wall' && firstBook && (
+              <button
+                type="button"
+                onClick={() => openBookByKey(firstBook)}
+                className="m2-hero-card block w-full text-left"
+                aria-label={`打开《${firstBook.title}》旅行画册`}
+              >
+                <div className="relative h-[250px]">
+                  {firstBook.coverThumb || firstBook.coverPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={firstBook.coverThumb || firstBook.coverPreview || ''}
+                      alt={firstBook.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-[var(--m-grad-hero)]" />
+                  )}
+                  <div className="m2-hero-shade" />
+                  <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                    <p className="text-[11px] font-semibold text-white/90">
+                      {firstBook.startDate ? formatDotDate(firstBook.startDate) : 'TRAVEL BOOK'}
+                    </p>
+                    <h2 className="mt-1 line-clamp-2 text-[23px] font-bold leading-7 tracking-[-0.02em]">
+                      {firstBook.title}
+                    </h2>
+                    <p className="mt-1 text-[11px] text-white/85">
+                      {firstBook.dayCount} 天 · {firstBook.photoCount} 张照片
+                      {firstBook.location ? ` · ${firstBook.location}` : ''}
+                    </p>
+                    <span className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white px-4 text-[12px] font-bold text-[var(--m-accent-strong)] shadow-sm">
+                      <Icon icon={BookOpen} size="sm" />
+                      翻开画册
+                    </span>
+                  </div>
+                </div>
+              </button>
+            )}
+
+            <section className={wallView === 'wall' ? 'mt-6' : 'mt-1'}>
+              <div className="m2-section-head">
+                <h2 className="m2-section-title">{wallView === 'wall' ? '全部画册' : '画册目录'}</h2>
+                <span className="text-[11px] text-[var(--m-faint)]">
+                  {wallStats.count} 本 · {wallStats.days} 天 · {wallStats.photos} 张
+                </span>
               </div>
-            ) : (
-              <div className="divide-y divide-travel-dim/30 dark:divide-shell-line dark:border-shell-line overflow-hidden rounded-2xl border border-travel-dim/30 bg-[#FFFCF7] dark:bg-shell-surface shadow-[0_30px_50px_-34px_rgba(41,39,35,0.45)]">
-                {(books || []).map((book) => {
-                  const cover = book.coverThumb || book.coverPreview
-                  const date = book.startDate
-                    ? formatDotDate(book.startDate) +
-                      (book.endDate && book.endDate !== book.startDate
-                        ? ` ~ ${formatDotDate(book.endDate)}`
-                        : '')
-                    : ''
-                  return (
-                    <button
-                      key={book.bookKey || book.travelId}
-                      type="button"
-                      onClick={() => openBookByKey(book)}
-                      aria-label={`打开《${book.title}》旅行画册`}
-                      className="group flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-travel-sakura/25 sm:gap-4 sm:px-5"
-                    >
-                      <span className="relative flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-travel-dim/15 ring-1 ring-travel-dim/20">
+
+              {wallView === 'wall' ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {(books || []).map((book) => {
+                    const cover = book.coverThumb || book.coverPreview
+                    return (
+                      <button
+                        key={book.bookKey || book.travelId}
+                        type="button"
+                        onClick={() => openBookByKey(book)}
+                        className="m2-book-cover block text-left shadow-[var(--m-shadow-l2)] transition active:scale-[0.985]"
+                        aria-label={`打开《${book.title}》旅行画册`}
+                      >
                         {cover ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={cover} alt="" width={48} height={64} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                          <img
+                            src={cover}
+                            alt=""
+                            className="absolute inset-0 h-full w-full object-cover"
+                            loading="lazy"
+                            decoding="async"
+                          />
                         ) : (
-                          <span className="font-display text-lg font-semibold text-travel-ink/40">
+                          <span className="absolute inset-0 flex items-center justify-center bg-[var(--m-grad-hero)] font-display text-4xl font-bold text-[var(--m-accent-strong)]">
                             {(book.title || '行').trim().charAt(0)}
                           </span>
                         )}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-display text-sm font-semibold text-travel-ink dark:text-shell-text">
-                          {book.title}
+                        <span className="absolute inset-0 bg-[linear-gradient(to_top,rgba(58,20,36,0.78),rgba(58,20,36,0.02)_62%)]" aria-hidden="true" />
+                        <span className="absolute inset-x-0 bottom-0 z-[3] p-3 text-white">
+                          <span className="line-clamp-1 text-[13px] font-bold">{book.title}</span>
+                          <span className="mt-0.5 block text-[10px] text-white/85">
+                            {book.startDate ? formatDotDate(book.startDate) : '待记录'} · {book.photoCount} 张
+                          </span>
                         </span>
-                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-travel-ink/80 dark:text-shell-muted">
-                          {book.location && <span>{book.location}</span>}
-                          {date && <span className="tabular-nums">{date}</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="m2-list-group">
+                  {(books || []).map((book) => {
+                    const cover = book.coverThumb || book.coverPreview
+                    return (
+                      <button
+                        key={book.bookKey || book.travelId}
+                        type="button"
+                        onClick={() => openBookByKey(book)}
+                        className="m2-list-row w-full text-left"
+                        aria-label={`打开《${book.title}》旅行画册`}
+                      >
+                        <span className="relative h-14 w-11 shrink-0 overflow-hidden rounded-[6px] bg-[var(--m-surface-2)]">
+                          {cover ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={cover} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center font-display text-lg font-bold text-[var(--m-accent-strong)]">
+                              {(book.title || '行').trim().charAt(0)}
+                            </span>
+                          )}
                         </span>
-                      </span>
-                      <span className="hidden shrink-0 items-center gap-1.5 text-xs text-travel-ink/80 sm:flex dark:text-shell-muted">
-                        <Icon icon={BookOpen} size="sm" />
-                        {book.dayCount} 章
-                        <Icon icon={Camera} size="sm" className="ml-2" />
-                        {book.photoCount} 图
-                      </span>
-                      {book.travelType && (
-                        <span className="hidden shrink-0 rounded-full bg-travel-sakura/40 px-2 py-0.5 text-[11px] text-travel-ink/80 md:inline dark:bg-white/10 dark:text-shell-muted">
-                          {TRAVEL_TYPE_LABELS[book.travelType] || book.travelType}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[14px] font-bold text-[var(--m-text)]">{book.title}</span>
+                          <span className="mt-1 block truncate text-[11px] text-[var(--m-muted)]">
+                            {book.location ? `${book.location} · ` : ''}
+                            {book.dayCount} 章 · {book.photoCount} 图
+                          </span>
                         </span>
-                      )}
-                      <Icon
-                        icon={ChevronRight}
-                        size="sm"
-                        className="shrink-0 text-travel-ink/35 transition-transform group-hover:translate-x-0.5 group-hover:text-travel-ink/80 dark:text-shell-faint dark:group-hover:text-shell-muted"
-                      />
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+                        <Icon icon={ChevronRight} size="sm" className="shrink-0 text-[var(--m-faint)]" />
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
 
             {opening && (
-              <div className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-travel-cream/40 dark:bg-shell-bg/40 backdrop-blur-[2px]">
-                <div className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm text-travel-ink/80 dark:bg-shell-surface/90 dark:text-shell-text shadow-[0_10px_30px_-10px_rgba(41,39,35,0.35)]">
-                  <Icon icon={Loader2} size="sm" className="animate-spin" />
-                  正在翻开《{openingTitle}》...
+              <div className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-[rgba(255,246,248,0.55)] backdrop-blur-[2px]">
+                <div className="flex items-center gap-2 rounded-full bg-[var(--m-surface-solid)] px-4 py-2.5 text-[12px] font-semibold text-[var(--m-text)] shadow-[var(--m-shadow-l2)]">
+                  <Icon icon={Loader2} size="sm" className="animate-spin text-[var(--m-accent)]" />
+                  正在翻开《{openingTitle}》…
                 </div>
               </div>
             )}

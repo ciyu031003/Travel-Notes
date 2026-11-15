@@ -305,7 +305,7 @@ function SearchContent() {
               }}
               placeholder="搜索城市、地点或关键词"
               enterKeyHint="search"
-              className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)]"
+              className="h-11 min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] text-[var(--m-text)] shadow-none outline-none placeholder:text-[var(--m-faint)] focus:ring-0"
             />
             {query && (
               <button
@@ -337,7 +337,7 @@ function SearchContent() {
                       key={tag}
                       type="button"
                       onClick={() => setQuery(tag)}
-                      className="m-press m-chip inline-flex items-center gap-1.5"
+                      className="m-press m-chip inline-flex min-h-[44px] items-center gap-1.5 px-4"
                     >
                       <Icon icon={Tag} size="sm" />
                       {tag}

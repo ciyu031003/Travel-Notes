@@ -176,7 +176,7 @@ export default function TravelComposerForm({
           className="space-y-4"
         >
           {/* ── ① 去哪 ─────────────────────────────────── */}
-          <section ref={locationRef} className="m-card p-4">
+          <section ref={locationRef} className="m2-form-section">
             <label htmlFor="travel-location" className="text-[13px] font-semibold text-[var(--m-muted)]">
               去哪？
             </label>
@@ -228,7 +228,7 @@ export default function TravelComposerForm({
           </section>
 
           {/* ── ② 什么时候 ─────────────────────────────── */}
-          <section className="m-card p-4">
+          <section className="m2-form-section">
             <span className="text-[13px] font-semibold text-[var(--m-muted)]">什么时候？</span>
             <button
               type="button"
@@ -257,7 +257,7 @@ export default function TravelComposerForm({
           </section>
 
           {/* ── ③ 名字（必填，但由前两项自动长出来） ──────── */}
-          <section className="m-card p-4">
+          <section className="m2-form-section">
             <label htmlFor="travel-title" className="text-[13px] font-semibold text-[var(--m-muted)]">
               给这段旅程起个名字
             </label>

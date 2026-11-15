@@ -31,7 +31,6 @@ import { Modal } from '@/components/ui/Modal'
 import { apiUrl } from '@/lib/api-base'
 import { performLogout } from '@/lib/client/logout'
 import { isMobileShell, travelDetailHref } from '@/lib/routes'
-import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDrawer'
 import VersionCheckRow from '@/components/mobile/VersionCheckRow'
@@ -282,40 +281,32 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
 
       <div className="m-safe-top relative mx-auto max-w-2xl px-4 pb-6 sm:px-6 sm:pt-8">
         <PullToRefresh onRefresh={refreshAll}>
-          {/* 移动端：iOS 大标题 + 关键操作 */}
-          <div className="md:hidden">
-            <LargeTitle
-              title="我的"
-              subtitle={displayName}
-              trailing={
-                <div className="flex items-center gap-1.5">
-                  <Link
-                    href="/me/notifications"
-                    aria-label="通知"
-                    className="m-pressable relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
-                  >
-                    <Icon icon={Bell} size="md" />
-                    {unread > 0 && (
-                      <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--ui-social-accent)]" />
-                    )}
-                  </Link>
-                  {/*
-                    右上角 ≡ → 右侧半屏抽屉。
-                    「我的」页只保留旅行档案（头图/统计/最近旅行/同行者），
-                    记录与设置类入口全部收进抽屉 —— 这样页面不再被一长串列表撑长。
-                  */}
-                  <button
-                    type="button"
-                    aria-label="设置与记录入口"
-                    onClick={() => setDrawerOpen(true)}
-                    className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
-                  >
-                    <Icon icon={Menu} size="md" />
-                  </button>
-                </div>
-              }
-            />
-          </div>
+          {/* 移动端：与 Demo 一致的眉标 + 大标题 + 通知 / 菜单 */}
+          <header className="m-safe-top flex items-start gap-3 px-[18px] pb-3 md:hidden">
+            <div className="min-w-0 flex-1">
+              <p className="m2-eyebrow">MY ARCHIVE</p>
+              <h1 className="m2-page-title">我的</h1>
+              <p className="m2-page-sub truncate">{displayName}</p>
+            </div>
+            <Link
+              href="/me/notifications"
+              aria-label="通知"
+              className="m-pressable relative mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
+            >
+              <Icon icon={Bell} size="md" />
+              {unread > 0 && (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--danger)] ring-2 ring-[var(--ui-social-surface)]" />
+              )}
+            </Link>
+            <button
+              type="button"
+              aria-label="设置与记录入口"
+              onClick={() => setDrawerOpen(true)}
+              className="m-pressable mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
+            >
+              <Icon icon={Menu} size="md" />
+            </button>
+          </header>
 
           <header className="mb-5 hidden items-center justify-between gap-3 md:flex">
             <div className="min-w-0">
@@ -377,6 +368,113 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               className="hidden"
               onChange={(e) => void uploadCover(e.target.files?.[0] ?? null)}
             />
+          </section>
+
+          {/* 四宫格快捷入口：收藏 / 通知 / 空间 / 看板 */}
+          <section className="m-enter mt-4 grid grid-cols-4 gap-2 md:hidden">
+            <Link href="/me/favorites" className="m2-quick">
+              <span className="m2-icon-box m2-tone-pink">
+                <Icon icon={Bookmark} size="md" />
+              </span>
+              <span className="m2-quick-label">收藏</span>
+            </Link>
+            <Link href="/me/notifications" className="m2-quick">
+              <span className="relative m2-icon-box m2-tone-honey">
+                <Icon icon={Bell} size="md" />
+                {unread > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-semibold text-white">
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                )}
+              </span>
+              <span className="m2-quick-label">通知</span>
+            </Link>
+            <Link href="/space" className="m2-quick">
+              <span className="m2-icon-box m2-tone-lavender">
+                <Icon icon={Users} size="md" />
+              </span>
+              <span className="m2-quick-label">空间</span>
+            </Link>
+            <Link href="/dashboard" className="m2-quick">
+              <span className="m2-icon-box m2-tone-mint">
+                <Icon icon={ChartColumn} size="md" />
+              </span>
+              <span className="m2-quick-label">看板</span>
+            </Link>
+          </section>
+
+          {/* 我的内容：把抽屉里的内容入口在页面上铺开，层级更清楚 */}
+          <section className="m-enter mt-6 md:hidden">
+            <div className="m2-section-head">
+              <h2 className="m2-section-title">我的内容</h2>
+            </div>
+            <div className="m2-list-group">
+              <Link href="/travel" className="m2-list-row">
+                <span className="m2-list-icon"><Icon icon={Route} size="sm" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold">我的旅程</span>
+                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">{profile.summary.travelCount} 段旅程 · {profile.summary.provinceCount} 个省份</span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </Link>
+              <Link href="/album" className="m2-list-row">
+                <span className="m2-list-icon m2-tone-peach"><Icon icon={Images} size="sm" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold">旅行画册</span>
+                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">按旅行与城市自动成册</span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </Link>
+              <Link href="/timeline" className="m2-list-row">
+                <span className="m2-list-icon m2-tone-sky"><Icon icon={CalendarDays} size="sm" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold">时间线</span>
+                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">按年份回看旅程与回忆</span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </Link>
+              <Link href="/moments" className="m2-list-row">
+                <span className="m2-list-icon m2-tone-lavender"><Icon icon={NotebookPen} size="sm" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold">碎碎念</span>
+                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">生活里的灵光与小确幸</span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </Link>
+            </div>
+          </section>
+
+          {/* 记录与同步 */}
+          <section className="m-enter mt-6 md:hidden">
+            <div className="m2-section-head">
+              <h2 className="m2-section-title">记录与同步</h2>
+            </div>
+            <div className="m2-list-group">
+              <Link href="/sync" className="m2-list-row">
+                <span className="m2-list-icon m2-tone-mint"><Icon icon={RefreshCw} size="sm" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold">数据与同步</span>
+                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">离线内容与同步状态</span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </Link>
+              <button type="button" onClick={exportArchive} className="m2-list-row w-full text-left">
+                <span className="m2-list-icon m2-tone-sky"><Icon icon={Download} size="sm" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold">导出记忆档案</span>
+                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">分享卡片 / JSON / Markdown / 原图 ZIP</span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </button>
+              <Link href="/me/settings" className="m2-list-row">
+                <span className="m2-list-icon m2-tone-pink"><Icon icon={Settings} size="sm" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold">账号设置</span>
+                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">密码、邮箱与账号信息</span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </Link>
+            </div>
           </section>
 
           {/* 下一趟未出发的旅行（有才显示） */}

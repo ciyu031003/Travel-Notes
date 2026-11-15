@@ -42,7 +42,7 @@ export default function MomentsContent() {
           onClick={() => setComposerOpen(true)}
           className="m-fab fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-4 z-[45] flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform active:scale-95"
           style={{
-            background: 'linear-gradient(135deg, #C67A4E 0%, #A85F3A 60%, #8A4A2B 100%)',
+            background: 'var(--m-grad-cta)',
           }}
         >
           <Icon icon={Plus} size="lg" />

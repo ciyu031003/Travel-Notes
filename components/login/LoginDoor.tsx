@@ -122,7 +122,9 @@ export default function LoginDoor({ children }: LoginDoorProps) {
         />
       )}
       {/* 可读性遮罩（中部加深，保证登录卡与输入框在花哨视频上可读） */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
+      {/* 粉色薄雾：保留开场视频的氛围，但把整体拉到甜途樱花粉的柔和色温 */}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,240,245,0.86)_0%,rgba(255,232,240,0.72)_46%,rgba(255,246,248,0.90)_100%)] dark:bg-[linear-gradient(180deg,rgba(36,10,20,0.94)_0%,rgba(50,15,30,0.82)_46%,rgba(28,8,17,0.95)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(90%_55%_at_15%_10%,rgba(255,183,201,0.28),transparent_60%),radial-gradient(80%_50%_at_88%_80%,rgba(205,189,244,0.22),transparent_60%)]" />
 
       {/* 登录内容 */}
       <div
@@ -145,10 +147,10 @@ export default function LoginDoor({ children }: LoginDoorProps) {
         >
           {/* 左扇门 */}
           <div
-            className="absolute inset-y-0 left-0 w-1/2 origin-left overflow-hidden bg-travel-parchmentDim transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-shell-surface"
+            className="absolute inset-y-0 left-0 w-1/2 origin-left overflow-hidden bg-[var(--m-bg-soft)] transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-[var(--m-bg-soft)] md:bg-travel-parchmentDim md:dark:bg-shell-surface"
             style={{ transform: phase === 'opening' ? 'rotateY(-108deg)' : 'rotateY(0deg)' }}
           >
-            <div className="absolute left-0 top-0 h-full w-screen [--door-map-fill:rgba(168,95,58,0.08)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(228,180,120,0.1)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
+            <div className="absolute left-0 top-0 h-full w-screen [--door-map-fill:rgba(231,111,145,0.10)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(240,138,170,0.14)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
               <DoorMap className="h-full w-full" />
             </div>
             <div className="absolute left-6 top-6 flex items-center gap-2 md:left-10 md:top-10">
@@ -166,18 +168,18 @@ export default function LoginDoor({ children }: LoginDoorProps) {
 
           {/* 右扇门 */}
           <div
-            className="absolute inset-y-0 right-0 w-1/2 origin-right overflow-hidden bg-travel-parchmentDim transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-shell-surface"
+            className="absolute inset-y-0 right-0 w-1/2 origin-right overflow-hidden bg-[var(--m-bg-soft)] transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-[var(--m-bg-soft)] md:bg-travel-parchmentDim md:dark:bg-shell-surface"
             style={{
               transform: phase === 'opening' ? 'rotateY(108deg)' : 'rotateY(0deg)',
               transitionDelay: phase === 'opening' ? '70ms' : '0ms',
             }}
           >
-            <div className="absolute right-0 top-0 h-full w-screen [--door-map-fill:rgba(168,95,58,0.08)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(228,180,120,0.1)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
+            <div className="absolute right-0 top-0 h-full w-screen [--door-map-fill:rgba(231,111,145,0.10)] [--door-map-stroke:rgba(61,72,82,0.5)] dark:[--door-map-fill:rgba(240,138,170,0.14)] dark:[--door-map-stroke:rgba(232,230,225,0.45)]">
               <DoorMap className="h-full w-full" />
             </div>
             {/* 邮戳章 */}
-            <div className="absolute bottom-8 right-8 flex h-24 w-24 rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-white/40 dark:border-travel-bloom/70 dark:bg-shell-surface/60">
-              <div className="text-center text-travel-accentStrong dark:text-travel-bloom">
+            <div className="absolute bottom-8 right-8 flex h-24 w-24 rotate-6 items-center justify-center rounded-full border-2 border-dashed border-[var(--m-line-strong)] bg-white/40 md:border-travel-accentSoft dark:border-travel-bloom/70 dark:bg-shell-surface/60">
+              <div className="text-center text-[var(--m-accent-strong)] dark:text-[var(--m-accent-strong)] md:text-travel-accentStrong">
                 <Icon icon={MapPin} size="sm" className="mx-auto" />
                 <p className="mt-0.5 text-[10px] tracking-widest">地图门</p>
               </div>
@@ -190,8 +192,8 @@ export default function LoginDoor({ children }: LoginDoorProps) {
               phase === 'opening' ? 'scale-x-0 opacity-0' : 'scale-x-100 opacity-100'
             }`}
           >
-            <div className="flex h-28 w-28 -rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-travel-parchment shadow-[0_10px_30px_rgba(168,95,58,0.25)] dark:border-travel-bloom/70 dark:bg-shell-surface">
-              <div className="text-center text-travel-accentStrong dark:text-travel-bloom">
+            <div className="flex h-28 w-28 -rotate-6 items-center justify-center rounded-full border-2 border-dashed border-travel-accentSoft bg-travel-parchment shadow-[0_10px_30px_rgba(201,79,115,0.22)] dark:border-travel-bloom/70 dark:bg-shell-surface">
+              <div className="text-center text-[var(--m-accent-strong)] dark:text-[var(--m-accent-strong)] md:text-travel-accentStrong">
                 <p className="text-[10px] tracking-[0.3em]">启程</p>
                 <p className="mt-1 font-display text-base font-bold">{sealDate}</p>
               </div>

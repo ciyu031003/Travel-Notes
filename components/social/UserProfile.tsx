@@ -117,18 +117,20 @@ export default function UserProfile({ userId }: { userId: number }) {
     <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-24 text-[var(--ui-social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-5xl px-4 py-6">
-        <header className="mb-8 flex items-center gap-3">
-          <div className="ml-auto"><SocialThemeToggle /></div>
-          {/* 图标按钮：补可访问名称 + 44px 触达（pro-rules 两条硬要求） */}
+        <header className="mb-6 flex items-center gap-3">
           <button
             type="button"
             onClick={() => goBackOrHome(router)}
             aria-label="返回"
-            className="m-pressable flex h-11 w-11 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] hover:text-[var(--ui-social-text)]"
+            className="m-pressable flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
           >
             <Icon icon={ArrowLeft} size="md" />
           </button>
-          <span className="text-sm text-[var(--ui-social-muted)]">旅行者主页</span>
+          <div className="min-w-0 flex-1">
+            <p className="m2-eyebrow">TRAVELER</p>
+            <h1 className="mt-0.5 text-[20px] font-bold leading-7 tracking-[-0.02em]">旅行者主页</h1>
+          </div>
+          <SocialThemeToggle />
         </header>
 
         <section className="flex flex-col gap-8 sm:flex-row sm:items-center">
@@ -138,19 +140,19 @@ export default function UserProfile({ userId }: { userId: number }) {
             <p className="mt-1 text-sm text-[var(--ui-social-muted)]">@{profile.username}</p>
             {profile.accountId && <span className="mt-2 inline-block rounded-full bg-[var(--ui-social-accent-soft)] px-3 py-1 text-xs text-[var(--ui-social-accent)]">ID {profile.accountId}</span>}
             <div className="mt-6 flex gap-10">
-              <Stat label="Trips" value={profile.stats.postCount} />
-              <Stat label="Followers" value={profile.stats.followerCount} />
-              <Stat label="Following" value={profile.stats.followingCount} />
+              <Stat label="旅程" value={profile.stats.postCount} />
+              <Stat label="粉丝" value={profile.stats.followerCount} />
+              <Stat label="关注" value={profile.stats.followingCount} />
             </div>
             <div className="mt-6 flex gap-2">
               <button type="button" onClick={follow} disabled={busy}
-                className={cn('inline-flex items-center gap-1.5 rounded-full px-6 py-2.5 text-sm font-medium transition active:scale-95 disabled:opacity-50',
-                  profile.isFollowing ? 'bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]' : 'bg-[var(--ui-social-accent)] text-[var(--ui-social-on-accent)]')}>
+                className={cn('m-btn min-h-[44px] gap-1.5 px-5',
+                  profile.isFollowing ? 'm-btn-secondary' : 'm-btn-primary')}>
                 {profile.isFollowing ? <Icon icon={UserMinus} size="sm" /> : <Icon icon={UserPlus} size="sm" />}
                 {profile.isFollowing ? '取消关注' : '关注'}
               </button>
               <button type="button" onClick={toggleBlock} disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-surface)] px-6 py-2.5 text-sm text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition hover:text-[var(--ui-social-text)] disabled:opacity-50">
+                className="m-btn m-btn-secondary min-h-[44px] gap-1.5 px-5 disabled:opacity-50">
                 <Icon icon={Ban} size="sm" />{profile.isBlocked ? '取消屏蔽' : '屏蔽'}
               </button>
             </div>
@@ -158,7 +160,7 @@ export default function UserProfile({ userId }: { userId: number }) {
         </section>
 
         <div className="mt-12 flex items-center gap-3">
-          <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent)]">Travel Stories</h2>
+          <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent)]">旅行故事</h2>
           <div className="h-px flex-1 bg-[var(--ui-social-line)]" />
         </div>
 

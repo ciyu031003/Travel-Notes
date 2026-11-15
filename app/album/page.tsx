@@ -121,10 +121,10 @@ export default function AlbumPage() {
 
   if (checkingLock) {
     return (
-      <div className="min-h-dvh pixel-desk-bg flex items-center justify-center">
-        <div className="flex items-center gap-3 text-album-accent">
-          <div className="w-6 h-6 border-2 border-album-accent/30 border-t-album-accent rounded-full animate-spin" />
-          <span className="text-sm tracking-wider text-album-warm">正在翻开相册...</span>
+      <div className="m2-screen flex min-h-dvh items-center justify-center">
+        <div className="m2-card flex items-center gap-3 px-5 py-4 text-[13px] font-semibold text-[var(--m-muted)]">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--m-line-strong)] border-t-[var(--m-accent)]" />
+          正在翻开相册…
         </div>
       </div>
     )

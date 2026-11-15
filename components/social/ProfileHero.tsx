@@ -111,6 +111,7 @@ export default function ProfileHero({
             decoding="async"
             className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition }}
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[linear-gradient(160deg,var(--ui-social-surface2),var(--ui-social-surface))] text-[var(--ui-social-muted)]">
@@ -175,6 +176,7 @@ export default function ProfileHero({
                   loading="eager"
                   decoding="async"
                   className="h-full w-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
                 />
               ) : (
                 <span className="flex h-full w-full items-center justify-center text-[30px] font-semibold text-[var(--ui-social-accent)]">
@@ -238,7 +240,7 @@ export default function ProfileHero({
           <button
             type="button"
             onClick={onRecordTravel}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--ui-social-accent)] text-sm font-semibold text-[var(--ui-social-on-accent)] transition active:scale-[0.98]"
+            className="m-btn m-btn-primary min-h-[44px] flex-1 gap-2 text-[14px]"
           >
             <Icon icon={Route} size="sm" />
             记录一次旅行
@@ -246,7 +248,7 @@ export default function ProfileHero({
           <button
             type="button"
             onClick={onOpenAlbum}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--ui-social-surface)] text-sm font-semibold ring-1 ring-[var(--ui-social-line)] transition active:scale-[0.98]"
+            className="m-btn m-btn-secondary min-h-[44px] flex-1 gap-2 text-[14px]"
           >
             <Icon icon={Images} size="sm" tone="accent" />
             旅行画册

@@ -42,6 +42,7 @@ export async function GET(_request: NextRequest) {
       videos: [] as unknown[],
       tags: t.tags ?? [],
       location: t.location ?? undefined,
+      confirmed: Boolean(t.confirmedAt),
       type: 'travel',
       published: true,
     }))

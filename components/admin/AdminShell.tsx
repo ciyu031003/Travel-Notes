@@ -147,7 +147,7 @@ export default function AdminShell({
     })
 
   return (
-    <div className="min-h-dvh bg-travel-cream text-travel-ink dark:bg-shell-bg dark:text-shell-muted">
+    <div className="min-h-dvh bg-[var(--m-bg)] text-[var(--m-text)] dark:text-[var(--m-muted)]">
       {/* ===== 桌面侧边栏 ===== */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-travel-line/40 bg-white/75 dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:flex">
         {/* 品牌 */}
@@ -188,7 +188,7 @@ export default function AdminShell({
       {/* ===== 主区域 ===== */}
       <div className="lg:pl-64">
         {/* 移动端顶栏 */}
-        <header className="sticky top-0 z-30 border-b border-travel-line/50 bg-white/80 pt-[var(--m-safe-top)] dark:border-white/5 dark:bg-shell-bg/85 backdrop-blur-2xl lg:hidden">
+        <header className="sticky top-0 z-30 border-b border-[var(--m-line)] bg-[color-mix(in_srgb,var(--m-bg)_90%,transparent)] pt-[var(--m-safe-top)] backdrop-blur-xl lg:hidden">
           <div className="flex h-14 items-center justify-between px-4">
             <div className="flex items-center gap-2.5">
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${accent} shadow-md`}>
@@ -201,7 +201,7 @@ export default function AdminShell({
               onClick={() => setOpen(true)}
               aria-label="打开菜单"
               aria-expanded={open}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-warm-700 dark:text-warm-200 transition-all hover:bg-black/5 dark:hover:bg-white/10 active:scale-95"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] text-[var(--m-text)] shadow-[var(--m-shadow-l1)] active:scale-95"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -226,7 +226,7 @@ export default function AdminShell({
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-travel-line/50 px-5 dark:border-white/5 h-16">
+            <div className="flex h-16 items-center justify-between border-b border-[var(--m-line)] px-5">
               <div className="flex items-center gap-2.5">
                 <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${accent}`}>
                   <Compass className="h-4 w-4 text-white" />

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Images } from "lucide-react"
+import { ChevronLeft, ChevronRight, Image as ImageIcon, Images } from "lucide-react"
 import { Icon } from "@/components/mobile/Icon"
 import { hapticLight } from "@/lib/mobile/haptics"
 import { cn } from "@/lib/utils"
@@ -48,6 +48,7 @@ export default function StackedGallery({ images, alt, className, onOpen }: Stack
   const [index, setIndex] = useState(0)
   const [dir, setDir] = useState<1 | -1>(1)
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null)
+  const [failed, setFailed] = useState<Record<string, boolean>>({})
   const startRef = useRef<{ x: number; y: number } | null>(null)
   const frameRef = useRef(0)
   const pendingRef = useRef<{ x: number; y: number } | null>(null)
@@ -185,15 +186,23 @@ export default function StackedGallery({ images, alt, className, onOpen }: Stack
               )}
               style={styleFor(pos)}
             >
-              <Image
-                src={src}
-                alt={alt}
-                fill
-                sizes="(max-width: 768px) 100vw, 768px"
-                className="object-cover"
-                priority={i === 0}
-                draggable={false}
-              />
+              {failed[src] ? (
+                <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[var(--m-tone-blush-bg)] text-[var(--m-tone-blush-fg)]">
+                  <Icon icon={ImageIcon} size="lg" />
+                  <span className="text-[12px] font-semibold">图片暂时无法加载</span>
+                </span>
+              ) : (
+                <Image
+                  src={src}
+                  alt={alt}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 768px"
+                  className="object-cover"
+                  priority={i === 0}
+                  draggable={false}
+                  onError={() => setFailed((prev) => ({ ...prev, [src]: true }))}
+                />
+              )}
             </button>
           )
         })}
