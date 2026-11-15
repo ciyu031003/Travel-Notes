@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '修复旅行圈公开文章崩溃；统一移动端状态栏安全区与顶部间距；补强公开详情错误态和移动端回归门禁',
+    changelog: process.env.APP_CHANGELOG || '移动端 UI 重构内测：樱花粉糖果撞色、全新底部导航与页面层级、旅行画册与旅行圈视觉升级；旅程地图交互保持原有实现。',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
