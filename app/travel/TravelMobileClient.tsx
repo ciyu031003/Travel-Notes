@@ -18,6 +18,7 @@ import { Skeleton, SkeletonCard } from '@/components/mobile/Skeleton'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Stagger } from '@/components/mobile/Stagger'
 import { Icon } from '@/components/mobile/Icon'
+import { SegmentedControl } from '@/components/mobile/SegmentedControl'
 
 const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
 
@@ -52,6 +53,11 @@ export default function TravelMobileClient({
   const [selectedCity, setSelectedCity] = useState<City | null>(null)
   const [drawerExpanded, setDrawerExpanded] = useState(false)
   const [resetToken, setResetToken] = useState(0)
+  /**
+   * 旅程分类（对齐最新 Demo 的三段筛选）。
+   * 归类口径沿用卡片上原本就在用的状态标：confirmed === false → 进行中，其余 → 已归档。
+   */
+  const [journeyFilter, setJourneyFilter] = useState<'all' | 'active' | 'done'>('all')
 
   const postsByProvince = useMemo(() => {
     const map = new Map<string, PostMeta[]>()
@@ -97,6 +103,15 @@ export default function TravelMobileClient({
     return set.size
   }, [posts])
 
+  const activeCount = useMemo(() => posts.filter((p) => p.confirmed === false).length, [posts])
+  const doneCount = posts.length - activeCount
+
+  /** 当前分类下的旅程；『全部』保持服务端返回顺序 */
+  const visiblePosts = useMemo(() => {
+    if (journeyFilter === 'all') return posts
+    return posts.filter((p) => (journeyFilter === 'active' ? p.confirmed === false : p.confirmed !== false))
+  }, [posts, journeyFilter])
+
   const handleRecord = () => openNewTravel(router)
 
   const handleProvinceSelect = (provinceId: string) => {
@@ -139,7 +154,7 @@ export default function TravelMobileClient({
           <Link
             href="/search"
             aria-label="搜索旅程"
-            className="m-pressable mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-solid)] text-[var(--m-muted)] ring-1 ring-[var(--m-line)]"
+            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-solid)] text-[var(--m-muted)] ring-1 ring-[var(--m-line)]"
           >
             <Icon icon={Search} size="md" />
           </Link>
@@ -147,7 +162,7 @@ export default function TravelMobileClient({
             icon={Plus}
             size="sm"
             onClick={handleRecord}
-            className="mt-1 shrink-0"
+            className="shrink-0"
             aria-label="新建旅程"
           >
             新建
@@ -178,11 +193,24 @@ export default function TravelMobileClient({
           </div>
         </section>
 
+        {/* 分类筛选：全部 / 进行中 / 已归档（与 Demo 的分段控件一致，地图保持原样不动） */}
+        <section className="px-4 pt-6">
+          <SegmentedControl
+            value={journeyFilter}
+            onChange={setJourneyFilter}
+            options={[
+              { value: 'all', label: `全部 ${posts.length}` },
+              { value: 'active', label: `进行中 ${activeCount}` },
+              { value: 'done', label: `已归档 ${doneCount}` },
+            ]}
+          />
+        </section>
+
         {/* 最近旅行：移动端纵向海报流 */}
-        <section className="px-4 pt-9">
+        <section className="px-4 pt-7">
           <div className="m-section-title">
             <span>最近旅途</span>
-            <span className="text-xs text-[var(--m-muted)]">共 {posts.length} 篇</span>
+            <span className="text-xs text-[var(--m-muted)]">共 {visiblePosts.length} 篇</span>
           </div>
 
           {posts.length === 0 ? (
@@ -193,9 +221,22 @@ export default function TravelMobileClient({
                 记录第一次旅行
               </Button>
             </div>
+          ) : visiblePosts.length === 0 ? (
+            <div className="m-card px-5 py-10 text-center">
+              <Icon icon={MapPin} size="lg" tone="faint" className="mx-auto" />
+              <p className="mt-3 text-sm text-[var(--m-muted)]">
+                {journeyFilter === 'active' ? '还没有进行中的旅程' : '还没有已归档的旅程'}
+              </p>
+              <Button
+                onClick={() => (journeyFilter === 'active' ? handleRecord() : setJourneyFilter('all'))}
+                className="mt-5"
+              >
+                {journeyFilter === 'active' ? '开始一段新旅程' : '查看全部旅程'}
+              </Button>
+            </div>
           ) : (
             <Stagger className="space-y-3" delayBase={120} step={40}>
-              {posts.map((post) => {
+              {visiblePosts.map((post) => {
                 const cover = post.cover || post.images?.[0]
                 return (
                   <article key={post.slug} className="m-enter m2-card overflow-hidden">

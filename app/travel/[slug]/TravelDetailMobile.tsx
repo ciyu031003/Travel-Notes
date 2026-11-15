@@ -89,11 +89,39 @@ export default function TravelDetailMobile({
   // 底部「记录一笔」是 fixed 定位：软键盘弹出时若不上抬会被完全遮住
   const keyboardInset = useKeyboardInset()
   const [syncing, setSyncing] = useState(false)
+  /**
+   * 底部「记录一笔」随滚动收起：向下滚动缩小淡出、滑到底部消失，
+   * 向上滚动再放大回到原位（同时避免和弹出的输入层叠在一起）。
+   */
+  const [recordBarHidden, setRecordBarHidden] = useState(false)
   // 归属空间选择器（仅旅行创建者可见）：把自己的旅行放进某个空间，或收回为「仅自己」
   const [spacePickerOpen, setSpacePickerOpen] = useState(false)
   const [mySpaces, setMySpaces] = useState<Array<{ id: number; name: string; spaceType: string; myRole: string }>>([])
   const [spacesLoading, setSpacesLoading] = useState(false)
   const [movingSpace, setMovingSpace] = useState(false)
+
+  useEffect(() => {
+    let lastY = window.scrollY
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        const y = window.scrollY
+        const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+        const delta = y - lastY
+        if (y <= 8) setRecordBarHidden(false)
+        else if (maxY - y <= 12) setRecordBarHidden(true)
+        else if (Math.abs(delta) >= 6) setRecordBarHidden(delta > 0)
+        lastY = y
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [])
 
   const openSpacePicker = useCallback(async () => {
     setSpacePickerOpen(true)
@@ -575,7 +603,11 @@ export default function TravelDetailMobile({
         高度用 --m-tab-h token（不再硬编码 64px），并在键盘弹出时再上抬。
       */}
       <div
-        className="fixed inset-x-0 z-30 px-4 pb-3 pt-3 transition-[bottom] duration-200 ease-out"
+        className={`fixed inset-x-0 z-30 px-4 pb-2 pt-3 transition-[transform,opacity] duration-200 ease-out ${
+          recordBarHidden || composing
+            ? 'pointer-events-none translate-y-3 scale-90 opacity-0'
+            : 'translate-y-0 scale-100 opacity-100'
+        }`}
         style={{
           // 64px 硬编码改为 --m-tab-h token（导航条高度已是 token，两处不再各写各的）；
           // 软键盘弹出时整块再上抬 keyboardInset，避免「记录一笔」被键盘遮住。

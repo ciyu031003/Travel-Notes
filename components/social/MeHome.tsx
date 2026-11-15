@@ -30,7 +30,7 @@ import ProfileHero from '@/components/social/ProfileHero'
 import { Modal } from '@/components/ui/Modal'
 import { apiUrl } from '@/lib/api-base'
 import { performLogout } from '@/lib/client/logout'
-import { isMobileShell, travelDetailHref } from '@/lib/routes'
+import { isMobileShell, spaceDetailHref, travelDetailHref } from '@/lib/routes'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { SideDrawer, DrawerSection, DrawerRow } from '@/components/mobile/SideDrawer'
 import VersionCheckRow from '@/components/mobile/VersionCheckRow'
@@ -38,6 +38,8 @@ import ExportArchiveDialog from '@/components/me/ExportArchiveDialog'
 import { IconBadge } from '@/components/mobile/IconBadge'
 import { Icon } from '@/components/mobile/Icon'
 import { base64ToBytes, extFromMime } from '@/lib/media/pick-image'
+import { spaceTypeIconOf, spaceTypeLabelOf } from '@/lib/mobile/space-system'
+import type { SpaceCardData } from '@/components/space/SpaceCard'
 
 /**
  * 「我的」页（R1 重构）。
@@ -113,7 +115,28 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const [error, setError] = useState('')
+  /**
+   * 我的空间：进页面时拉一次，按「旅程文章」同一套横向卡片渲染。
+   * null = 还在加载（占位），[] = 确实没有空间（给创建引导）。
+   */
+  const [spaces, setSpaces] = useState<SpaceCardData[] | null>(null)
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    fetch(apiUrl('/api/spaces'), { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return
+        setSpaces(Array.isArray(j?.spaces) ? (j.spaces as SpaceCardData[]) : [])
+      })
+      .catch(() => {
+        if (alive) setSpaces([])
+      })
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const displayName = profile.nickname || profile.username
   const bioText = profile.bio || DEFAULT_BIO
@@ -282,7 +305,8 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
       <div className="m-safe-top relative mx-auto max-w-2xl px-4 pb-6 sm:px-6 sm:pt-8">
         <PullToRefresh onRefresh={refreshAll}>
           {/* 移动端：与 Demo 一致的眉标 + 大标题 + 通知 / 菜单 */}
-          <header className="m-safe-top flex items-start gap-3 px-[18px] pb-3 md:hidden">
+          {/* 顶部安全区由外层容器统一提供（避免双重 padding 把右上角图标压下去） */}
+          <header className="flex items-start gap-3 px-[18px] pb-3 md:hidden">
             <div className="min-w-0 flex-1">
               <p className="m2-eyebrow">MY ARCHIVE</p>
               <h1 className="m2-page-title">我的</h1>
@@ -291,7 +315,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             <Link
               href="/me/notifications"
               aria-label="通知"
-              className="m-pressable relative mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
+              className="m-pressable relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
             >
               <Icon icon={Bell} size="md" />
               {unread > 0 && (
@@ -302,7 +326,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
               type="button"
               aria-label="设置与记录入口"
               onClick={() => setDrawerOpen(true)}
-              className="m-pressable mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
+              className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
             >
               <Icon icon={Menu} size="md" />
             </button>
@@ -403,80 +427,6 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             </Link>
           </section>
 
-          {/* 我的内容：把抽屉里的内容入口在页面上铺开，层级更清楚 */}
-          <section className="m-enter mt-6 md:hidden">
-            <div className="m2-section-head">
-              <h2 className="m2-section-title">我的内容</h2>
-            </div>
-            <div className="m2-list-group">
-              <Link href="/travel" className="m2-list-row">
-                <span className="m2-list-icon"><Icon icon={Route} size="sm" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold">我的旅程</span>
-                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">{profile.summary.travelCount} 段旅程 · {profile.summary.provinceCount} 个省份</span>
-                </span>
-                <Icon icon={ChevronRight} size="sm" tone="faint" />
-              </Link>
-              <Link href="/album" className="m2-list-row">
-                <span className="m2-list-icon m2-tone-peach"><Icon icon={Images} size="sm" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold">旅行画册</span>
-                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">按旅行与城市自动成册</span>
-                </span>
-                <Icon icon={ChevronRight} size="sm" tone="faint" />
-              </Link>
-              <Link href="/timeline" className="m2-list-row">
-                <span className="m2-list-icon m2-tone-sky"><Icon icon={CalendarDays} size="sm" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold">时间线</span>
-                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">按年份回看旅程与回忆</span>
-                </span>
-                <Icon icon={ChevronRight} size="sm" tone="faint" />
-              </Link>
-              <Link href="/moments" className="m2-list-row">
-                <span className="m2-list-icon m2-tone-lavender"><Icon icon={NotebookPen} size="sm" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold">碎碎念</span>
-                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">生活里的灵光与小确幸</span>
-                </span>
-                <Icon icon={ChevronRight} size="sm" tone="faint" />
-              </Link>
-            </div>
-          </section>
-
-          {/* 记录与同步 */}
-          <section className="m-enter mt-6 md:hidden">
-            <div className="m2-section-head">
-              <h2 className="m2-section-title">记录与同步</h2>
-            </div>
-            <div className="m2-list-group">
-              <Link href="/sync" className="m2-list-row">
-                <span className="m2-list-icon m2-tone-mint"><Icon icon={RefreshCw} size="sm" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold">数据与同步</span>
-                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">离线内容与同步状态</span>
-                </span>
-                <Icon icon={ChevronRight} size="sm" tone="faint" />
-              </Link>
-              <button type="button" onClick={exportArchive} className="m2-list-row w-full text-left">
-                <span className="m2-list-icon m2-tone-sky"><Icon icon={Download} size="sm" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold">导出记忆档案</span>
-                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">分享卡片 / JSON / Markdown / 原图 ZIP</span>
-                </span>
-                <Icon icon={ChevronRight} size="sm" tone="faint" />
-              </button>
-              <Link href="/me/settings" className="m2-list-row">
-                <span className="m2-list-icon m2-tone-pink"><Icon icon={Settings} size="sm" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold">账号设置</span>
-                  <span className="mt-0.5 block text-[12px] text-[var(--ui-social-muted)]">密码、邮箱与账号信息</span>
-                </span>
-                <Icon icon={ChevronRight} size="sm" tone="faint" />
-              </Link>
-            </div>
-          </section>
-
           {/* 下一趟未出发的旅行（有才显示） */}
           {upcoming && (
             <Link
@@ -500,27 +450,73 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             </Link>
           )}
 
-          {/* ② 我的空间 */}
+          {/* ② 我的空间：已创建的空间按「旅程文章」同一套横向卡片铺开 */}
           <section className="m-enter mt-6">
-            <div className="flex items-center gap-3 px-1">
-              <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ui-social-accent-strong)]">我的空间</h2>
-              <div className="h-px flex-1 bg-[var(--ui-social-line)]" />
+            <div className="m2-section-head">
+              <h2 className="m2-section-title">我的空间</h2>
+              <Link href="/space" className="text-[13px] font-semibold text-[var(--m-accent-strong)]">
+                全部
+              </Link>
             </div>
-            <Link
-              href="/space"
-              className="m-press mt-3 flex w-full items-center gap-4 rounded-[1.4rem] bg-[var(--ui-social-surface)] p-4 text-left ring-1 ring-[var(--ui-social-line)]"
-            >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--ui-social-accent-soft)] text-[var(--ui-social-accent)]">
-                <Icon icon={Users} size="md" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">情侣 / 家庭 / 朋友 / 独旅空间</span>
-                <span className="mt-0.5 block text-xs text-[var(--ui-social-muted)]">
-                  邀请 TA 一起经营旅行记录，每种空间有自己的配色
+
+            {spaces === null ? (
+              <div className="mt-3 space-y-3">
+                <div className="m2-card h-[126px] animate-pulse" />
+              </div>
+            ) : spaces.length === 0 ? (
+              <Link
+                href="/space"
+                className="m-press mt-3 flex w-full items-center gap-3 rounded-[var(--m-radius-card)] bg-[var(--m-surface-solid)] p-4 ring-1 ring-[var(--m-line)]"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
+                  <Icon icon={Users} size="md" />
                 </span>
-              </span>
-              <Icon icon={ChevronRight} size="sm" tone="faint" />
-            </Link>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold">还没有共享空间</span>
+                  <span className="mt-0.5 block text-[12px] text-[var(--m-muted)]">
+                    邀请 TA 一起经营旅行记录，创建后会像旅程一样出现在这里
+                  </span>
+                </span>
+                <Icon icon={ChevronRight} size="sm" tone="faint" />
+              </Link>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {spaces.map((space) => (
+                  <article key={space.id} className="m-enter m2-card overflow-hidden">
+                    <Link href={spaceDetailHref(space.slug)} className="m2-trip-row">
+                      <span className="m2-trip-thumb space-hero flex items-center justify-center">
+                        <span className="text-[var(--ui-space-accent-text)]">
+                          <Icon icon={spaceTypeIconOf(space.spaceType)} size="lg" />
+                        </span>
+                      </span>
+                      <span className="min-w-0 flex-1 py-1">
+                        <span className="flex items-center gap-2">
+                          <span className="m2-pill m2-pill-pink">{spaceTypeLabelOf(space.spaceType)}</span>
+                          <span className="truncate text-[11px] text-[var(--m-faint)]">
+                            {space.memberCount} 位成员
+                          </span>
+                        </span>
+                        <span className="mt-2 block truncate text-[16px] font-bold leading-snug">
+                          {space.name}
+                        </span>
+                        <span className="mt-1 line-clamp-1 block text-[11px] text-[var(--m-muted)]">
+                          {space.description || '一起记录，各自上色'}
+                        </span>
+                        <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--m-faint)]">
+                          <span>旅行 {space.travelCount ?? 0}</span>
+                          <span>相册 {space.albumCount ?? 0}</span>
+                          <span>照片 {space.mediaCount ?? 0}</span>
+                        </span>
+                        <span className="mt-2 block text-[11px] font-semibold text-[var(--m-accent-strong)]">
+                          打开空间
+                          <Icon icon={ChevronRight} size="sm" className="ml-0.5 inline align-[-2px]" />
+                        </span>
+                      </span>
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* 同行者聚合（弱化呈现，不抢三统计的位置） */}

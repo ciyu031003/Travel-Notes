@@ -289,7 +289,9 @@ function SearchContent() {
 
     {/* 移动端：iOS 大标题内嵌搜索 + 结果骨架 */}
     <div className="md:hidden">
-      <div className="m-mobile-page m-bottom-nav-safe bg-[var(--m-bg)] text-[var(--m-text)]">
+      {/* m-safe-top：此前整页没有消费系统状态栏 inset，真机上大标题与搜索框
+          会压在状态栏下面（首页 / 旅行圈 / 旅程的搜索入口都会落到这一页） */}
+      <div className="m-mobile-page m-safe-top m-bottom-nav-safe bg-[var(--m-bg)] text-[var(--m-text)]">
         <LargeTitle title="搜索" subtitle="输入关键词，找回每一段旅行足迹" back="/" />
         <div className="px-4 pt-1">
           {/* iOS 搜索栏 */}

@@ -54,6 +54,36 @@ export default function TravelComposerForm({
   const [succeeded, setSucceeded] = useState(false)
   // 粘底保存条在移动 Web 下要自己避让键盘（原生壳里 insets 会压视口，值≈0 不干扰）
   const keyboardInset = useKeyboardInset()
+  /**
+   * 主 CTA 的滚动收起：
+   *  · 之前是 sticky，表单内容不够长时按钮会停在屏幕中部（真机反馈"卡在偏上方"）；
+   *  · 现在固定在底部导航之上，向下滚动缩小淡出、向上滚动放大回来，到底部保持收起。
+   */
+  const [ctaHidden, setCtaHidden] = useState(false)
+
+  useEffect(() => {
+    let lastY = window.scrollY
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        const y = window.scrollY
+        const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+        const delta = y - lastY
+        if (y <= 8) setCtaHidden(false)
+        // 到底部时反而要出现：这里就是提交位置，藏起来会导致「填完了点不到」
+        else if (maxY - y <= 12) setCtaHidden(false)
+        else if (Math.abs(delta) >= 6) setCtaHidden(delta > 0)
+        lastY = y
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [])
 
   /**
    * 可在其中创建内容的共享空间（OWNER/MEMBER）。
@@ -170,7 +200,7 @@ export default function TravelComposerForm({
         <span className="h-11 w-11" aria-hidden="true" />
       </header>
 
-      <main className="px-4 pb-[calc(120px+env(safe-area-inset-bottom))]">
+      <main className="px-4 pb-[calc(176px+env(safe-area-inset-bottom))]">
         <form
           onSubmit={(e) => { e.preventDefault(); void handleSubmit() }}
           className="space-y-4"
@@ -521,14 +551,15 @@ export default function TravelComposerForm({
             <p role="alert" className="px-1 text-[13px] text-[var(--m-danger,#d9534f)]">{error}</p>
           )}
 
-          {/* ── 底部固定操作条（keyboardInset>0 时随键盘上移，见 P1-1） ─────── */}
+          {/* ── 主 CTA：固定在底部导航之上，随滚动收起 / 展开 ───────────────
+                位置 = 底部 Tab 高度 + 系统安全区 +（软键盘弹起时的占用高度） */}
           <div
-            className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-4 px-4 pt-3"
+            className={`fixed inset-x-0 z-30 px-4 pb-3 pt-3 transition-[transform,opacity] duration-200 ease-out ${
+              ctaHidden ? 'pointer-events-none translate-y-2 scale-95 opacity-0' : 'translate-y-0 scale-100 opacity-100'
+            }`}
             style={{
-              background: 'linear-gradient(to top, var(--m-bg) 78%, transparent)',
-              bottom: keyboardInset
-                ? `calc(76px + env(safe-area-inset-bottom) + ${keyboardInset}px)`
-                : undefined,
+              background: 'linear-gradient(to top, var(--m-bg) 72%, transparent)',
+              bottom: `calc(var(--m-tab-h) + env(safe-area-inset-bottom) + ${keyboardInset}px)`,
             }}
           >
             {!validation.canSubmit && validation.blocker && (

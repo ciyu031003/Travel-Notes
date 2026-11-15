@@ -251,7 +251,9 @@ export default function TravelCircleFeed() {
         </header>
 
         {/* 移动端：与 Demo 一致的眉标 + 大标题 + 搜索 / 明暗切换 */}
-        <header className="m-safe-top flex items-start gap-3 px-[18px] pb-3 md:hidden">
+        {/* 顶部安全区由 MobilePageShell 统一提供，这里不再叠加 m-safe-top，
+            否则比首页/旅程多出一段，右上角图标整体下沉 */}
+        <header className="flex items-start gap-3 px-[18px] pb-3 md:hidden">
           <div className="min-w-0 flex-1">
             <p className="m2-eyebrow">TRAVEL CIRCLE</p>
             <h1 className="m2-page-title">旅行圈</h1>
@@ -260,11 +262,11 @@ export default function TravelCircleFeed() {
           <Link
             href="/search"
             aria-label="搜索旅行圈"
-            className="m-pressable mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
+            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
           >
             <Icon icon={Search} size="md" />
           </Link>
-          <div className="mt-1 shrink-0">
+          <div className="shrink-0">
             <SocialThemeToggle />
           </div>
         </header>
