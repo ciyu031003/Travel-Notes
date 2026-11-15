@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '移动端 UI 重构内测：樱花粉糖果撞色、全新底部导航与页面层级、旅行画册与旅行圈视觉升级；旅程地图交互保持原有实现。',
+    changelog: process.env.APP_CHANGELOG || '内测 2：旅程按全部 / 进行中 / 已归档分类（足迹地图交互保持原样）、底部导航换新旅程图标、四个主页面顶部图标对齐、我的页只保留空间档案并按旅程文章展示、搜索页适配系统状态栏、记录按钮固定在底部并随滚动收起。',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
