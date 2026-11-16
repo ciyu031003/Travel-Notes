@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Lock, X, Heart } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
@@ -87,6 +88,17 @@ export default function AlbumUnlockModal({ isOpen, onClose, onSuccess, redirectT
               </div>
               <p className="text-xs text-travel-sand/40 mt-2 text-center dark:text-travel-sandSoft/50">
                 支持 YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日 格式
+              </p>
+              {/* 入口补充（2026-11-16）：口令就是纪念日，但 App 里原先没有任何地方能改它。
+                  这里在「用户正被挡住」的当下直接给出跳转，而不是让他去猜设置在哪。 */}
+              <p className="mt-2 text-center">
+                <Link
+                  href="/me/album-lock"
+                  onClick={onClose}
+                  className="text-xs font-medium text-travel-accentStrong underline decoration-travel-bloom/60 underline-offset-2 dark:text-travel-bloom"
+                >
+                  想修改纪念日？
+                </Link>
               </p>
             </div>
 

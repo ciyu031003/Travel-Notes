@@ -2024,3 +2024,57 @@ html.dark .m-btn-primary { color: #fff; }
     outline: none;
   }
 }
+
+/* ── 液态玻璃（Liquid Glass）────────────────────────────────────
+   封面上的地点 / 标签必须「浮」在照片上：半透明渐变 + 背景模糊 +
+   内高光描边，再用一条缓慢扫过的高光模拟折射。
+   低端机（html.low-end）与 prefers-reduced-motion 都降级为静态实心毛玻璃。 */
+.m-liquid-glass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.66) 0%, rgba(255, 255, 255, 0.26) 46%, rgba(255, 255, 255, 0.5) 100%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.38),
+    0 6px 18px -10px rgba(38, 16, 26, 0.42);
+}
+/* 顶部高光弧：让玻璃看起来有厚度，而不是一块半透明色块 */
+.m-liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 1px 1px auto;
+  height: 54%;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+/* 缓慢扫过的高光（折射感） */
+.m-liquid-glass::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: 0;
+  width: 42%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  pointer-events: none;
+  animation: m-lg-sweep 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes m-lg-sweep {
+  0%, 52% { transform: translateX(-180%) rotate(8deg); }
+  88%, 100% { transform: translateX(340%) rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-liquid-glass::after { animation: none; opacity: 0; }
+}
+html.low-end .m-liquid-glass {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: rgba(255, 255, 255, 0.86);
+}
+html.low-end .m-liquid-glass::after { display: none; }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Link2, Plus, Trash2, Wallet } from 'lucide-react'
+import { Calculator, Link2, Plus, Trash2, Users, Wallet } from 'lucide-react'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
@@ -44,10 +44,122 @@ function buildItineraryLabelMap(days: TimelineDay[]): Map<number, string> {
   return map
 }
 
+interface CompanionLike {
+  name?: string
+  relation?: string
+}
+
+interface AaMember {
+  name: string
+  paid: number
+  /** 已付 - 应摊；> 0 应收，< 0 应付 */
+  balance: number
+}
+
+interface AaTransfer {
+  from: string
+  to: string
+  amount: number
+}
+
+interface AaResult {
+  total: number
+  share: number
+  members: AaMember[]
+  transfers: AaTransfer[]
+  /** 没有填付款人的笔数 / 金额：计入总额，但无法归属到人 */
+  missingPayerCount: number
+  missingPayerAmount: number
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100
+
+/**
+ * AA 结算（纯函数）。
+ *
+ * 口径：只有**点过「一键计算 AA」**才调用它 —— 平时只记账、不分摊。
+ * 参与人 = 同行者 ∪ 每笔花销的付款人（没人就退化成「我」）；总额按人头均摊。
+ * 转账方案用「债务/债权贪心配对」：每次让最大应付去还最大应收，
+ * 产出不超过 n-1 条转账（手动算 AA 时的最省笔数做法）。
+ */
+function buildAaLedger(
+  expenses: ExpenseItem[],
+  companions: CompanionLike[],
+): AaResult | null {
+  const total = round2(expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0))
+  if (total <= 0) return null
+
+  const names = new Set<string>()
+  for (const c of companions) {
+    const n = String(c?.name || '').trim()
+    if (n) names.add(n)
+  }
+  for (const e of expenses) {
+    const n = String(e.payer || '').trim()
+    if (n) names.add(n)
+  }
+  if (names.size === 0) names.add('我')
+
+  const paid = new Map<string, number>()
+  for (const n of Array.from(names)) paid.set(n, 0)
+  let missingPayerCount = 0
+  let missingPayerAmount = 0
+  for (const e of expenses) {
+    const n = String(e.payer || '').trim()
+    const amount = Number(e.amount) || 0
+    if (!n) {
+      missingPayerCount += 1
+      missingPayerAmount += amount
+      continue
+    }
+    paid.set(n, (paid.get(n) ?? 0) + amount)
+  }
+
+  const share = round2(total / names.size)
+  const members: AaMember[] = Array.from(paid.entries()).map(([name, p]) => ({
+    name,
+    paid: round2(p),
+    balance: round2(p - share),
+  }))
+
+  const creditors = members
+    .filter((m) => m.balance > 0.005)
+    .map((m) => ({ name: m.name, amount: m.balance }))
+    .sort((a, b) => b.amount - a.amount)
+  const debtors = members
+    .filter((m) => m.balance < -0.005)
+    .map((m) => ({ name: m.name, amount: -m.balance }))
+    .sort((a, b) => b.amount - a.amount)
+
+  const transfers: AaTransfer[] = []
+  let ci = 0
+  let di = 0
+  while (ci < creditors.length && di < debtors.length) {
+    const amount = round2(Math.min(creditors[ci].amount, debtors[di].amount))
+    if (amount > 0.005) {
+      transfers.push({ from: debtors[di].name, to: creditors[ci].name, amount })
+    }
+    creditors[ci].amount = round2(creditors[ci].amount - amount)
+    debtors[di].amount = round2(debtors[di].amount - amount)
+    if (creditors[ci].amount <= 0.005) ci += 1
+    if (debtors[di].amount <= 0.005) di += 1
+  }
+
+  return {
+    total,
+    share,
+    members,
+    transfers,
+    missingPayerCount,
+    missingPayerAmount: round2(missingPayerAmount),
+  }
+}
+
 export default function TravelExpenseTab({
   travelId,
   slug,
   days,
+  companions = [],
   loading,
   state,
   onChanged,
@@ -55,13 +167,22 @@ export default function TravelExpenseTab({
   travelId: number
   slug: string
   days: TimelineDay[]
+  /** 同行者：AA 的参与人来源之一（另一来源是每笔花销的付款人） */
+  companions?: CompanionLike[]
   loading: boolean
   state: { expenses: ExpenseItem[]; total: number; budget: number | null } | null
   onChanged: () => void
 }) {
   const [showAdd, setShowAdd] = useState(false)
+  /** AA 结果：null = 还没点过「一键计算 AA」（此时页面只有原始记账数据） */
+  const [aaResult, setAaResult] = useState<AaResult | null>(null)
   const [showBudget, setShowBudget] = useState(false)
   const [actionItem, setActionItem] = useState<ExpenseItem | null>(null)
+
+  // 账目变了，之前算出的 AA 结果就作废（避免显示一份过期的分摊）
+  useEffect(() => {
+    setAaResult(null)
+  }, [state?.total, state?.expenses.length])
 
   const total = state?.total ?? 0
   const budget = state?.budget ?? null
@@ -207,10 +328,139 @@ export default function TravelExpenseTab({
         )}
       </section>
 
+      {/* ── AA 结算（主动触发）──────────────────────────────────────
+          默认**只展示原始记账数据**；只有点了「一键计算 AA」才计算
+          总额 / 人均 / 每人应收应付 / 转账方案。 */}
+      <section className="mt-6">
+        <div className="flex items-center gap-2">
+          <span className="m-section-title mb-0 flex-1">AA 结算</span>
+          {aaResult && (
+            <button
+              type="button"
+              onClick={() => setAaResult(null)}
+              className="text-[12px] text-[var(--m-faint)]"
+            >
+              收起结果
+            </button>
+          )}
+        </div>
+
+        <div className="m-card mt-3 p-4">
+          <p className="text-[12px] leading-5 text-[var(--m-muted)]">
+            默认只记账、不分摊。确认每笔花销的付款人后，点下面的按钮才会计算总额、人均、
+            每人应收 / 应付和转账明细。
+          </p>
+
+          <Button
+            block
+            size="lg"
+            className="mt-3"
+            icon={Calculator}
+            onClick={() => {
+              const result = buildAaLedger(state?.expenses ?? [], companions)
+              if (!result) {
+                toast.error('还没有可分摊的花销')
+                return
+              }
+              setAaResult(result)
+            }}
+          >
+            一键计算 AA
+          </Button>
+
+          {aaResult && (
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-3 gap-2 rounded-2xl bg-[var(--m-surface-2)] px-2 py-3 text-center">
+                <div>
+                  <b className="block text-[17px] font-bold tabular-nums text-[var(--m-text)]">
+                    ¥{formatMoney(aaResult.total)}
+                  </b>
+                  <span className="mt-0.5 block text-[11px] text-[var(--m-faint)]">总花费</span>
+                </div>
+                <div>
+                  <b className="block text-[17px] font-bold tabular-nums text-[var(--m-accent-strong)]">
+                    ¥{formatMoney(aaResult.share)}
+                  </b>
+                  <span className="mt-0.5 block text-[11px] text-[var(--m-faint)]">人均</span>
+                </div>
+                <div>
+                  <b className="block text-[17px] font-bold tabular-nums text-[var(--m-text)]">
+                    {aaResult.members.length}
+                  </b>
+                  <span className="mt-0.5 block text-[11px] text-[var(--m-faint)]">参与人</span>
+                </div>
+              </div>
+
+              {aaResult.missingPayerCount > 0 && (
+                <p className="rounded-xl bg-[var(--m-tone-sun-bg)] px-3 py-2 text-[11px] leading-5 text-[var(--m-tone-sun-fg)]">
+                  有 {aaResult.missingPayerCount} 笔（¥{formatMoney(aaResult.missingPayerAmount)}）没填付款人：
+                  已计入总额，但无法归属到具体的人，建议补上付款人再算一次。
+                </p>
+              )}
+
+              <ul className="space-y-2">
+                {aaResult.members.map((m) => (
+                  <li
+                    key={m.name}
+                    className="flex items-center gap-2 rounded-xl bg-[var(--m-surface-solid)] px-3 py-2.5 ring-1 ring-[var(--m-line)]"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--m-text)]">
+                      {m.name}
+                    </span>
+                    <span className="shrink-0 text-[11px] tabular-nums text-[var(--m-faint)]">
+                      已付 ¥{formatMoney(m.paid)}
+                    </span>
+                    <span
+                      className={
+                        'shrink-0 text-[12px] font-semibold tabular-nums ' +
+                        (m.balance > 0.005
+                          ? 'text-[var(--m-success)]'
+                          : m.balance < -0.005
+                            ? 'text-[var(--m-danger)]'
+                            : 'text-[var(--m-faint)]')
+                      }
+                    >
+                      {m.balance > 0.005
+                        ? `应收 ¥${formatMoney(m.balance)}`
+                        : m.balance < -0.005
+                          ? `应付 ¥${formatMoney(-m.balance)}`
+                          : '已平'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div>
+                <p className="text-[12px] font-semibold text-[var(--m-text)]">转账明细</p>
+                {aaResult.transfers.length === 0 ? (
+                  <p className="mt-1.5 text-[12px] text-[var(--m-faint)]">大家都刚好付清，无需转账。</p>
+                ) : (
+                  <ul className="mt-1.5 space-y-1.5">
+                    {aaResult.transfers.map((t, i) => (
+                      <li
+                        key={t.from + '-' + t.to + '-' + i}
+                        className="flex items-center gap-2 rounded-xl bg-[var(--m-accent-soft)] px-3 py-2 text-[12px] text-[var(--m-accent-strong)]"
+                      >
+                        <Icon icon={Users} size="sm" />
+                        <span className="min-w-0 flex-1 truncate">
+                          {t.from} <span className="opacity-60">→</span> {t.to}
+                        </span>
+                        <b className="shrink-0 tabular-nums">¥{formatMoney(t.amount)}</b>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       <AddExpenseSheet
         open={showAdd}
         travelId={travelId}
         days={days}
+        companions={companions}
         onClose={() => setShowAdd(false)}
         onDone={onChanged}
       />
@@ -257,12 +507,15 @@ function AddExpenseSheet({
   open,
   travelId,
   days,
+  companions = [],
   onClose,
   onDone,
 }: {
   open: boolean
   travelId: number
   days: TimelineDay[]
+  /** 同行者：付款人快选（AA 要用同一批名字，避免手打出现「小明 / 小明 」两个账号） */
+  companions?: CompanionLike[]
   onClose: () => void
   onDone: () => void
 }) {
@@ -284,6 +537,19 @@ function AddExpenseSheet({
   const itineraryOptions = useMemo(
     () => Array.from(buildItineraryLabelMap(days), ([id, label]) => ({ id, label })),
     [days],
+  )
+
+  /** 付款人快选：同行者名字去重（上限 6 个，避免芯片换行挤爆表单） */
+  const payerOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          companions
+            .map((c) => String(c?.name || '').trim())
+            .filter(Boolean),
+        ),
+      ).slice(0, 6),
+    [companions],
   )
 
   /**
@@ -395,7 +661,35 @@ function AddExpenseSheet({
           />
         )}
 
-        <Field label="付款人" placeholder="可选" value={payer} onChange={(e) => setPayer(e.target.value)} />
+        <div>
+          <Field label="付款人" placeholder="谁付的这笔钱" value={payer} onChange={(e) => setPayer(e.target.value)} />
+          {payerOptions.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {payerOptions.map((name) => {
+                const active = payer === name
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setPayer(active ? '' : name)}
+                    className={
+                      'min-h-[32px] rounded-full px-3 text-[12px] font-medium transition active:scale-95 ' +
+                      (active
+                        ? 'bg-[var(--m-accent)] text-white'
+                        : 'bg-[var(--m-surface-2)] text-[var(--m-muted)]')
+                    }
+                  >
+                    {name}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          <p className="mt-1.5 text-[11px] text-[var(--m-faint)]">
+            AA 结算会按这里的付款人 + 同行者名单分摊
+          </p>
+        </div>
         <FieldTextarea
           label="备注"
           rows={2}

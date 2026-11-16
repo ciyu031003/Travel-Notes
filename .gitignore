@@ -1,4 +1,4 @@
-node_modules
+﻿node_modules
 # Keep environment variables out of version control
 .env
 
@@ -77,3 +77,5 @@ tests/e2e/.auth/
 .diag*.png
 .prod-*-fail.png
 .zcode/
+# 本地验证脚本与截图（Playwright 调试用，不入库）
+.tmp/

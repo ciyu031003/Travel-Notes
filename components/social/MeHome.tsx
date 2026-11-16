@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   CalendarDays,
+  CalendarHeart,
   ChartColumn,
   ChevronRight,
   Download,
@@ -586,6 +587,13 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
             title="通知"
             description={unread > 0 ? `${unread} 条未读` : '评论、点赞与关注'}
             href="/me/notifications"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <DrawerRow
+            icon={CalendarHeart}
+            title="纪念日与相册锁"
+            description="相册解锁口令就是这一天的日期"
+            href="/me/album-lock"
             onClick={() => setDrawerOpen(false)}
           />
           <DrawerRow

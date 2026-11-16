@@ -29,6 +29,8 @@ export interface SubmitOutcome {
   slug: string | null
   /** 是否离线本地保存 */
   local: boolean
+  /** 云端主键（在线创建才有；创建后要立刻补写花销等子资源时用） */
+  remoteId: number | null
 }
 
 export function useTravelDraft(enabled: boolean) {
@@ -129,10 +131,10 @@ export function useTravelDraft(enabled: boolean) {
   const validation = useMemo(() => validateDraft(draft), [draft])
 
   const submit = useCallback(async (): Promise<SubmitOutcome> => {
-    if (submitting) return { ok: false, slug: null, local: false }
+    if (submitting) return { ok: false, slug: null, local: false, remoteId: null }
     if (!validation.canSubmit) {
       setError(validation.blocker ?? '表单填写不完整')
-      return { ok: false, slug: null, local: false }
+      return { ok: false, slug: null, local: false, remoteId: null }
     }
     setSubmitting(true)
     setError('')
@@ -154,13 +156,13 @@ export function useTravelDraft(enabled: boolean) {
       const msg = r.error || '创建失败'
       setError(msg)
       toast.error(msg)
-      return { ok: false, slug: null, local: false }
+      return { ok: false, slug: null, local: false, remoteId: null }
     }
 
     clearDraft()
     const local = r.local === true
     toast.success(local ? '已保存到本地，联网后自动上传' : '旅行已创建')
-    return { ok: true, slug: r.slug ?? null, local }
+    return { ok: true, slug: r.slug ?? null, local, remoteId: r.remoteId ?? null }
   }, [submitting, validation, draft, clearDraft])
 
   return {

@@ -3,9 +3,10 @@
 import { useState, type MouseEvent } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { MessageCircle, Bookmark, MapPin, ImageIcon } from 'lucide-react'
+import { MessageCircle, Bookmark, ImageIcon } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import SocialAvatar from '@/components/social/SocialAvatar'
+import { LiquidGlassLocation } from '@/components/mobile/LiquidGlass'
 import QuickLike from '@/components/social/QuickLike'
 import { cn } from '@/lib/utils'
 import { hapticLight } from '@/lib/mobile/haptics'
@@ -315,6 +316,11 @@ export default function SocialFilmCard({
         {openLayer}
         {cover('aspect-[16/10]')}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/15 to-transparent" />
+        {cityName && (
+          <div className="pointer-events-none absolute left-3 top-3 z-[2] sm:left-5 sm:top-5">
+            <LiquidGlassLocation location={cityName} />
+          </div>
+        )}
         {/*
           z-[2] 是必需的，不是装饰：卡片的「打开详情」覆盖层是 z-[1]，而这一层原先没有
           z-index（z-auto）。同为定位元素时 z-index:1 会**画在 z-auto 之上**，
@@ -325,7 +331,6 @@ export default function SocialFilmCard({
         */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] p-4 sm:p-7">
           {/* 以下文字一律用固定浅色：它们永远压在深色遮罩上，主题 token 在浅色主题下会变成深色而看不清 */}
-          {cityName && <div className="text-xs font-medium tracking-[0.22em] text-white/80 uppercase">{cityName}</div>}
           {title && <h2 className="mt-2 max-w-2xl text-xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">{title}</h2>}
           {summary && <p className="mt-2 line-clamp-2 max-w-2xl text-sm text-white/75 max-sm:hidden">{summary}</p>}
           <div className="mt-3 flex items-center justify-between gap-3 sm:mt-4">
@@ -347,12 +352,16 @@ export default function SocialFilmCard({
       {openLayer}
       {cover(
         FRAME[frame],
-        quickActions && (
-          <div className="absolute bottom-3 right-3 z-[2]">{quickActions}</div>
-        ),
+        <>
+          {cityName && (
+            <div className="pointer-events-none absolute left-3 top-3 z-[2]">
+              <LiquidGlassLocation location={cityName} size="sm" />
+            </div>
+          )}
+          {quickActions && <div className="absolute bottom-3 right-3 z-[2]">{quickActions}</div>}
+        </>,
       )}
       <div className="space-y-2 p-4">
-        {cityName && <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-[0.16em] text-[var(--ui-social-accent)]"><Icon icon={MapPin} size="sm" />{cityName}</div>}
         {title && <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[var(--ui-social-text)]">{title}</h3>}
         {summary && <p className="line-clamp-2 text-sm leading-relaxed text-[var(--ui-social-muted)]">{summary}</p>}
         <div className="flex items-center gap-x-2 gap-y-1 text-xs text-[var(--ui-social-muted)]">

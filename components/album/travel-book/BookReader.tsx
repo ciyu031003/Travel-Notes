@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, ChevronLeft, ChevronRight, List, Palette, X } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, List, Palette, RotateCw, X } from 'lucide-react'
+import { ScreenOrientation } from '@capacitor/screen-orientation'
+import { isNativePlatform } from '@/lib/modules/offline/platform'
 import { Icon } from '@/components/mobile/Icon'
 import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import type { Book } from './TravelBook'
@@ -58,6 +60,47 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
   const { themeKey, theme, setThemeKey } = useBookTheme()
   const { tier, profile } = useBookTier()
   const [showThemes, setShowThemes] = useState(false)
+  /**
+   * 横屏阅读（2026-11-16）。
+   *
+   * 画册是「对开」的一本书：竖屏只显示单页，横屏时左右两页同时摊开（见 paginate dual）。
+   * 原生壳在 AndroidManifest 里锁了 portrait，所以这里用官方 ScreenOrientation 插件
+   * **按需**把阅读器切到 landscape（用户点按钮才切），退出时恢复 portrait，
+   * 不影响其他页面。浏览器里退化为标准 screen.orientation API。
+   */
+  const [isLandscape, setIsLandscape] = useState(false)
+  const landscapeRef = useRef(false)
+  landscapeRef.current = isLandscape
+
+  const lockOrientation = useCallback(async (next: 'landscape' | 'portrait') => {
+    if (isNativePlatform()) {
+      await ScreenOrientation.lock({ orientation: next })
+    } else {
+      const so = (screen as unknown as { orientation?: { lock?: (o: string) => Promise<void>; unlock?: () => void } }).orientation
+      if (next === 'landscape') {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.()
+        await so?.lock?.('landscape')
+      } else {
+        so?.unlock?.()
+        if (document.fullscreenElement) await document.exitFullscreen?.()
+      }
+    }
+    setIsLandscape(next === 'landscape')
+  }, [])
+
+  const toggleOrientation = useCallback(() => {
+    void lockOrientation(isLandscape ? 'portrait' : 'landscape').catch(() => {
+      // 机型/浏览器不支持强制方向时保持当前方向，不打断阅读
+    })
+  }, [isLandscape, lockOrientation])
+
+  // 退出阅读器时把方向还原（否则会带着横屏回到画册墙）
+  useEffect(() => {
+    return () => {
+      if (!landscapeRef.current) return
+      void lockOrientation('portrait').catch(() => {})
+    }
+  }, [lockOrientation])
 
   // 硬件返回键：主题弹窗开着先关弹窗，否则退出阅读模式（ESC 的既有语义保持不动，
   // 键盘处理仍走下方手写 keydown，避免与弹层基座的 ESC 监听双触发）
@@ -280,7 +323,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
       data-book-theme={theme.key}
       data-book-tier={tier}
     >
-      <header className="flex items-center justify-between gap-2 border-b border-travel-dim/40 px-3 pb-2.5 pt-[max(10px,env(safe-area-inset-top))] sm:px-4 dark:border-shell-line">
+      <header className="flex items-center justify-between gap-2 border-b border-travel-dim/40 px-3 pb-2.5 pt-[max(10px,env(safe-area-inset-top))] landscape:pb-1 landscape:pt-[max(4px,env(safe-area-inset-top))] sm:px-4 dark:border-shell-line">
         <button
           type="button"
           onClick={onBack}
@@ -295,6 +338,18 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
         </div>
         <div className="relative flex shrink-0 items-center gap-1">
           {/* 主题切换：只改视觉，不重建整本书（主题契约，见文件头） */}
+          {/* 横屏：对开两页（竖屏只显示单页） */}
+          <button
+            type="button"
+            onClick={toggleOrientation}
+            aria-pressed={isLandscape}
+            aria-label={isLandscape ? '切换竖屏阅读' : '横屏对开阅读'}
+            title={isLandscape ? '切回竖屏' : '横屏看对开两页'}
+            className="inline-flex items-center gap-1.5 rounded-full bg-travel-sakura/60 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20"
+          >
+            <Icon icon={RotateCw} size="sm" />
+            <span className="hidden sm:inline">{isLandscape ? '竖屏' : '横屏'}</span>
+          </button>
           <button
             type="button"
             onClick={() => setShowThemes((v) => !v)}
@@ -353,7 +408,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
 
       <main
         ref={stageRef}
-        className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-3"
+        className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-2 landscape:py-1 sm:px-4 sm:py-3"
       >
         <div
           ref={rigRef}
@@ -401,7 +456,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
         )}
       </main>
 
-      <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 sm:justify-center sm:px-4 dark:border-shell-line">
+      <footer className="flex items-center justify-between gap-3 border-t border-travel-dim/40 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 landscape:pb-1 landscape:pt-1 sm:justify-center sm:px-4 dark:border-shell-line">
         <button type="button" onClick={() => artFlipRef.current?.flipPrev()} className={navBtn}>
           <Icon icon={ChevronLeft} size="sm" />上一页
         </button>

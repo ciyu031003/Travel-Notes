@@ -585,6 +585,7 @@ export default function TravelDetailMobile({
               travelId={travelId}
               slug={slug}
               days={days}
+              companions={companions}
               loading={expenseLoading}
               state={expenses}
               onChanged={reload}

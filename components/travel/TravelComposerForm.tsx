@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, Plus, X } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
+import { toast } from '@/lib/mobile/toast-store'
+import { EXPENSE_CATEGORIES, EXPENSE_LABELS, type ExpenseCategory } from '@/lib/modules/travel/expense-categories'
 import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import DateRangePicker from './DateRangePicker'
 import { apiUrl } from '@/lib/api-base'
@@ -30,6 +32,15 @@ import {
  *   去哪 → 什么时候 → 给这段旅程起个名字（必填只有第三项，且由前两项自动长出来）
  * 其余全部收进「更多（可选）」。
  */
+/** 创建前暂存的一笔花销（只在前端草稿里，创建成功后才落库） */
+type DraftExpense = {
+  id: string
+  amount: number
+  note: string
+  payer: string
+  category: ExpenseCategory
+}
+
 export default function TravelComposerForm({
   onBack,
   onCreated,
@@ -60,6 +71,78 @@ export default function TravelComposerForm({
    *  · 现在固定在底部导航之上，向下滚动缩小淡出、向上滚动放大回来，到底部保持收起。
    */
   const [ctaHidden, setCtaHidden] = useState(false)
+
+  /* ── 旅途花销 ▌创建前就能先记原始账 ────────────────────────────────
+     只存本地草稿；CU 建完行程、拿到云端 id 后再逐笔 POST。
+     分摊（AA）不在这里算 —— 用户必须在旅程详情里主动点「一键计算 AA」。 */
+  const [showExpenses, setShowExpenses] = useState(false)
+  const [draftExpenses, setDraftExpenses] = useState<DraftExpense[]>([])
+  const [expAmount, setExpAmount] = useState('')
+  const [expNote, setExpNote] = useState('')
+  const [expPayer, setExpPayer] = useState('我')
+  const [expCategory, setExpCategory] = useState<ExpenseCategory>('OTHER')
+
+  /** 付款人候选：我 + 同行者（去重，「我」永远排第一） */
+  const payerOptions = useMemo(() => {
+    const names = draft.companions.map((c) => String(c?.name || '').trim()).filter(Boolean)
+    return Array.from(new Set(['我', ...names]))
+  }, [draft.companions])
+
+  const draftExpenseTotal = draftExpenses.reduce((sum, e) => sum + e.amount, 0)
+
+  const addDraftExpense = () => {
+    const value = Number(expAmount.replace(/[^\d.]/g, ''))
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error('请输入有效金额')
+      return
+    }
+    setDraftExpenses((prev) => [
+      ...prev,
+      {
+        // crypto.randomUUID 在部分旧 WebView 缺失，这里用时间戳 + 随机数兜底
+        id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+        amount: Math.round(value * 100) / 100,
+        note: expNote.trim().slice(0, 200),
+        payer: expPayer.trim() || '我',
+        category: expCategory,
+      },
+    ])
+    setExpAmount('')
+    setExpNote('')
+  }
+
+  const removeDraftExpense = (id: string) => {
+    setDraftExpenses((prev) => prev.filter((e) => e.id !== id))
+  }
+
+  /**
+   * 创建成功后补写花销。
+   * 离线本地保存（没有云端 id）时无法关联旅行，交给详情页「花销」补记，
+   * 绝不假装已保存。
+   */
+  const flushDraftExpenses = async (travelId: number) => {
+    let failed = 0
+    for (const e of draftExpenses) {
+      try {
+        const res = await fetch(apiUrl(`/api/travels/${travelId}/expenses`), {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: e.amount,
+            category: e.category,
+            note: e.note || undefined,
+            payer: e.payer,
+            happenedAt: draft.startDate ? new Date(`${draft.startDate}T12:00:00`).toISOString() : undefined,
+          }),
+        })
+        if (!res.ok) failed += 1
+      } catch {
+        failed += 1
+      }
+    }
+    return failed
+  }
 
   useEffect(() => {
     let lastY = window.scrollY
@@ -176,6 +259,18 @@ export default function TravelComposerForm({
   const handleSubmit = async () => {
     const r = await submit()
     if (!r.ok) return
+    if (draftExpenses.length > 0) {
+      if (r.remoteId) {
+        const failed = await flushDraftExpenses(r.remoteId)
+        if (failed > 0) {
+          toast.info(`${failed} 笔花销没存上，可进入旅程后在「花销」补记`)
+        } else {
+          toast.success(`已记下 ${draftExpenses.length} 笔花销`)
+        }
+      } else {
+        toast.info('花销需要在进入旅程后补记（当前是离线保存）')
+      }
+    }
     setSucceeded(true)
     // 让「已创建」可见一瞬，再交给调用方决定去哪（不直接跳，否则用户看不到确认）
     window.setTimeout(() => onCreated?.({ slug: r.slug, local: r.local }), 550)
@@ -317,7 +412,152 @@ export default function TravelComposerForm({
             )}
           </section>
 
-          {/* ── ④ 更多（可选，默认收起） ─────────────────── */}
+          {/* ── ④ 花销（可选）：只记原始账，分摊留给详情页的「一键计算 AA」 ── */}
+          <section className="m-card overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowExpenses((v) => !v)}
+              aria-expanded={showExpenses}
+              className="flex w-full items-center gap-2 px-4 py-4 text-left"
+            >
+              <span className="text-[13px] font-semibold text-[var(--m-muted)]">旅途花销</span>
+              <span className="text-[12px] text-[var(--m-faint)]">可选</span>
+              {!showExpenses && draftExpenses.length > 0 && (
+                <span className="ml-auto truncate text-[12px] text-[var(--m-accent-strong)]">
+                  ¥{draftExpenseTotal.toFixed(2)} · {draftExpenses.length} 笔
+                </span>
+              )}
+              <span className={`ml-auto shrink-0 text-[var(--m-faint)] transition-transform ${showExpenses ? 'rotate-180' : ''}`}>
+                <Icon icon={ChevronDown} size="sm" />
+              </span>
+            </button>
+
+            {showExpenses && (
+              <div className="space-y-3 border-t border-[var(--m-line)] px-4 py-4">
+                <p className="text-[12px] leading-relaxed text-[var(--m-faint)]">
+                  先记下金额和付款人，这里不做分摊；回到旅程详情点「一键计算 AA」才会算应收应付。
+                </p>
+
+                {/* 分类：横向滚动，一屏放不下也不挤压 */}
+                <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
+                  {EXPENSE_CATEGORIES.map((c) => {
+                    const active = expCategory === c
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setExpCategory(c)}
+                        aria-pressed={active}
+                        className={`shrink-0 rounded-full border px-3 py-1.5 text-[12px] transition active:scale-95 ${
+                          active
+                            ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]'
+                            : 'border-[var(--m-line)] text-[var(--m-muted)]'
+                        }`}
+                      >
+                        {EXPENSE_LABELS[c]}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* 金额 + 备注 */}
+                <div className="flex gap-2">
+                  <div className="relative w-[104px] shrink-0">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[var(--m-faint)]">¥</span>
+                    <input
+                      value={expAmount}
+                      onChange={(e) => setExpAmount(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      enterKeyHint="done"
+                      className="w-full rounded-xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] py-2.5 pl-7 pr-2 text-[16px] tabular-nums text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
+                    />
+                  </div>
+                  <input
+                    value={expNote}
+                    onChange={(e) => setExpNote(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter') return
+                      e.preventDefault()
+                      addDraftExpense()
+                    }}
+                    placeholder="备注，例如 环湖包车"
+                    maxLength={200}
+                    enterKeyHint="done"
+                    className="min-w-0 flex-1 rounded-xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3 py-2.5 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
+                  />
+                </div>
+
+                {/* 付款人：我 + 同行者快选 */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[12px] text-[var(--m-faint)]">谁付的</span>
+                  {payerOptions.map((name) => {
+                    const active = expPayer === name
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => setExpPayer(name)}
+                        aria-pressed={active}
+                        className={`min-h-[30px] rounded-full px-3 text-[12px] font-medium transition active:scale-95 ${
+                          active
+                            ? 'bg-[var(--m-accent)] text-white'
+                            : 'bg-[var(--m-surface-2)] text-[var(--m-muted)]'
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addDraftExpense}
+                  disabled={!expAmount.trim()}
+                  className="flex h-[42px] w-full items-center justify-center gap-1.5 rounded-xl bg-[var(--m-accent-soft)] text-[14px] font-medium text-[var(--m-accent-strong)] transition active:scale-[0.99] disabled:opacity-40"
+                >
+                  <Icon icon={Plus} size="sm" />
+                  记下这一笔
+                </button>
+
+                {draftExpenses.length > 0 && (
+                  <>
+                    <ul className="divide-y divide-[var(--m-line)] overflow-hidden rounded-xl bg-[var(--m-surface-2)]">
+                      {draftExpenses.map((e) => (
+                        <li key={e.id} className="flex items-center gap-2 px-3 py-2.5">
+                          <span className="shrink-0 rounded-md bg-[var(--m-surface-solid)] px-1.5 py-0.5 text-[11px] text-[var(--m-muted)]">
+                            {EXPENSE_LABELS[e.category]}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--m-text)]">
+                            {e.note || EXPENSE_LABELS[e.category]}
+                          </span>
+                          <span className="shrink-0 text-[11px] text-[var(--m-faint)]">{e.payer}</span>
+                          <span className="shrink-0 text-[13px] font-semibold tabular-nums text-[var(--m-text)]">
+                            ¥{e.amount.toFixed(2)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeDraftExpense(e.id)}
+                            aria-label="删除这笔花销"
+                            className="shrink-0 p-1 text-[var(--m-faint)] transition active:scale-90"
+                          >
+                            <Icon icon={X} size="sm" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-right text-[12px] text-[var(--m-muted)]">
+                      共 {draftExpenses.length} 笔 · 合计{' '}
+                      <span className="font-semibold text-[var(--m-text)]">¥{draftExpenseTotal.toFixed(2)}</span>
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* ── ⑤ 更多（可选，默认收起） ─────────────────── */}
           <section className="m-card overflow-hidden">
             <button
               type="button"
