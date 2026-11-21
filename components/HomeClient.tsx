@@ -7,7 +7,6 @@ import dynamicImport from 'next/dynamic'
 import {
   Heart,
   MapPin,
-  Globe2,
   ArrowRight,
   MessageCircle,
   Quote,
@@ -311,6 +310,8 @@ export default function HomeClient({
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
   // 统计行里的「张照片」：口径与地图标记上的张数同源（lib/home/photo-count）
   const totalPhotos = totalPhotoCount(travelPosts)
+  const heroCover = travelPosts.find((p) => p.cover)?.cover ?? draftTravels.find((d) => d.cover)?.cover ?? null
+  const heroImage = heroCover && heroCover.startsWith('/') ? heroCover : null
 
   /** 与 HomeMobile 同口径：归档后该旅行进入画册与最近旅行 */
   const confirmDraft = async (id: number) => {
@@ -328,82 +329,110 @@ export default function HomeClient({
   }
 
   return (
-    <div className="relative min-h-dvh bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream text-travel-ink dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C] dark:text-shell-text">
+    <div className="v4-home-page relative min-h-dvh bg-gradient-to-b from-travel-cream via-travel-parchment to-travel-cream text-travel-ink dark:from-[#12161C] dark:via-[#161B22] dark:to-[#12161C] dark:text-shell-text">
       <DanmakuSection ref={danmakuRef} />
 
       <div className="relative z-10">
-        {/* Hero 区域 - 沉浸足迹地图 */}
-        <section className="relative overflow-hidden px-3 pt-8 pb-6 md:px-6 md:pt-16 md:pb-10">
-          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-            <div className="absolute -left-28 top-4 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_35%_35%,rgba(255,214,170,0.5),rgba(198,122,78,0.05)_68%)] blur-2xl" />
-            <div className="absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_60%_40%,rgba(156,199,178,0.38),transparent_70%)] blur-2xl" />
-          </div>
-          <div className="container-page relative z-10 grid items-center gap-8 md:grid-cols-[1.02fr_0.98fr] md:gap-12 lg:gap-16">
-            <div className="animate-[fade-in-up_0.7s_ease-out_both] text-center md:text-left">
-              <h1 className="font-display text-display-hero font-bold tracking-tight text-travel-inkStrong dark:text-shell-text md:text-6xl xl:text-7xl">
-                <span className="block">把走过的路</span>
-                <span className="relative mt-1 inline-block">
-                  变成自己的故事
-                  <svg
-                    className="absolute -bottom-1.5 left-0 h-3 w-full text-travel-bloom/70"
-                    viewBox="0 0 200 12"
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M0,8 Q50,2 100,6 T200,4"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
-              </h1>
-              <p className="mt-7 text-sm tracking-[0.2em] text-travel-accent dark:text-travel-bloom md:text-base">
-                甜途 · 记录每一段旅行时光
-              </p>
-              <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-travel-ink dark:text-shell-muted md:mx-0 md:text-lg">
-                每个城市一本画册，照片铺满书页 —— 把走过的路，变成自己的故事
-              </p>
-              <div className="mt-9 flex flex-wrap items-center justify-center gap-3 md:justify-start">
-                <Link
-                  href="/travel"
-                  className="group inline-flex items-center gap-2 rounded-xl bg-travel-accent px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-travel-accent/25 transition-all hover:bg-travel-accentStrong hover:shadow-xl md:text-base"
-                >
-                  <Icon icon={MapPin} size="sm" />
-                  打开旅行地图
-                  <Icon icon={ArrowRight} size="sm" className="transition-transform group-hover:translate-x-1" />
-                </Link>
-                <Link
-                  href="/album"
-                  className="group inline-flex items-center gap-2 rounded-xl border border-travel-line/70 bg-white/85 px-6 py-3.5 text-sm font-semibold text-travel-ink transition-all hover:bg-travel-sakura/30 dark:border-shell-line dark:bg-shell-surface/90 dark:text-shell-text md:text-base"
-                >
-                  <Icon icon={ImageIcon} size="sm" className="text-travel-accent dark:text-travel-bloom" />
-                  旅行画册
-                  <Icon icon={ArrowRight} size="sm" className="transition-transform group-hover:translate-x-1" />
-                </Link>
-                <span className="inline-flex items-center gap-2 rounded-xl border border-travel-line/70 bg-white/85 px-4 py-3 text-sm text-travel-ink dark:border-shell-line dark:bg-shell-surface/90 dark:text-shell-muted">
-                  <Icon icon={Globe2} size="sm" className="text-travel-accent dark:text-travel-bloom" />
-                  <span className="font-medium text-travel-ink dark:text-shell-text">{provincesVisitedCount}</span>
-                  个省份
-                  <span className="mx-1 h-4 w-px bg-travel-line dark:bg-shell-line" />
-                  <span className="font-medium text-travel-ink dark:text-shell-text">{travelPosts.length}</span>
-                  篇旅行
-                  <span className="mx-1 h-4 w-px bg-travel-line dark:bg-shell-line" />
-                  <span className="font-medium tabular-nums text-travel-ink dark:text-shell-text">{totalPhotos}</span>
-                  张照片
-                </span>
+        {/* V4 桌面 Hero：摄影优先 + 编辑式文案 */}
+        <section className="px-3 pb-4 pt-6 md:px-6 md:pb-5 md:pt-8">
+          <div className="container-page">
+            <div className="v4-home-hero">
+              {heroImage ? (
+                <Image
+                  src={heroImage}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  priority
+                  sizes="(min-width: 1440px) 1120px, calc(100vw - 280px)"
+                  className="object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              ) : null}
+              <div className="v4-home-shade" aria-hidden="true" />
+              <div className="v4-home-copy">
+                <p className="v4-eyebrow">CINEMATIC EDITORIAL · VOL. 01</p>
+                <h1>
+                  把走过的路
+                  <br />
+                  <em>变成自己的故事</em>
+                </h1>
+                <p className="v4-lede">
+                  每个城市一本画册，照片铺满书页。把沿途的风、光线和心情，收进一本可以重新打开的旅行书。
+                </p>
+                <div className="v4-hero-actions">
+                  <Link href="/travel" className="v4-btn v4-btn-light">
+                    <Icon icon={MapPin} size="sm" />
+                    打开旅行地图
+                    <Icon icon={ArrowRight} size="sm" />
+                  </Link>
+                  <Link href="/album" className="v4-btn v4-btn-ghost">
+                    <Icon icon={ImageIcon} size="sm" />
+                    旅行画册
+                  </Link>
+                </div>
+                <div className="v4-hero-meta">
+                  <span>{new Date().getFullYear()} · VOL. 01</span>
+                  <span>{travelPosts.length} 段旅程</span>
+                  <span>{provincesVisitedCount} 个省份</span>
+                  <span>{totalPhotos} 张照片</span>
+                </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="relative animate-[fade-in-up_0.7s_ease-out_0.15s_both]">
-              <div className="relative h-[260px] overflow-hidden rounded-2xl border border-travel-line/40 bg-gradient-to-br from-travel-parchment via-travel-sakura/40 to-travel-mist/40 shadow-[0_24px_50px_-24px_rgba(168,95,58,0.35)] dark:border-shell-line dark:from-[#1F272E] dark:via-[#241B15] dark:to-[#1B2128] md:h-[440px] lg:h-[470px]">
+        {/* V4 数据带：统计 + 足迹入口 */}
+        <section className="px-3 pb-5 md:px-6">
+          <div className="container-page">
+            <div className="v4-stats-band">
+              <div className="v4-stat">
+                <b>{provincesVisitedCount}</b>
+                <span>个省份 · 已点亮足迹</span>
+              </div>
+              <div className="v4-stat">
+                <b>{travelPosts.length}</b>
+                <span>段旅程 · 持续记录</span>
+              </div>
+              <div className="v4-stat">
+                <b>{totalPhotos}</b>
+                <span>张照片 · 珍藏瞬间</span>
+              </div>
+              <Link href="/travel" className="v4-map-cta" aria-label="打开旅行地图">
+                <span className="v4-map-cta-art" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span>
+                  <small>FOOTPRINT MAP</small>
+                  <b>{provincesVisitedCount} 省 · {travelPosts.length} 段旅程</b>
+                  <em>打开足迹地图 →</em>
+                </span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* V4 足迹地图 */}
+        <section className="px-3 pb-10 md:px-6 md:pb-12">
+          <div className="container-page">
+            <div className="v4-map-panel">
+              <div className="v4-map-copy">
+                <p className="v4-eyebrow">THE WORLD YOU HAVE SEEN</p>
+                <h2>走过的路，<br />都在这里。</h2>
+                <p>
+                  从第一次出发，到下一次计划。地图上的每一枚印记，都是一段可以重新打开的故事。
+                </p>
+                <Link href="/travel" className="v4-text-link">
+                  查看完整足迹 <Icon icon={ArrowRight} size="sm" />
+                </Link>
+              </div>
+              <div className="v4-map-stage">
                 <HeroFootprintMap posts={travelPosts} />
               </div>
-              <span className="absolute bottom-3 right-3 rounded-full border border-travel-line/70 bg-white/90 px-3 py-1.5 text-xs font-medium text-travel-accent shadow-[var(--m-elev-1)] backdrop-blur-sm dark:border-shell-line dark:bg-shell-surface/90 dark:text-travel-bloom">
-                足迹地图 · {provincesVisitedCount} 省
-              </span>
             </div>
           </div>
         </section>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import LayoutContent from '@/components/layout/LayoutContent'
+import DesktopChrome from '@/components/layout/DesktopChrome'
 import LazyOverlays from '@/components/layout/LazyOverlays'
 import OfflineBootstrap from '@/components/offline/OfflineBootstrap'
 import PrivacyLockGate from '@/components/offline/PrivacyLockGate'
@@ -104,7 +105,9 @@ export default function RootLayout({
         >
           跳到主内容
         </a>
-        <LayoutContent>{children}</LayoutContent>
+        <DesktopChrome>
+          <LayoutContent>{children}</LayoutContent>
+        </DesktopChrome>
         <NativeBackHandler />
         <ThemeColorSync />
         {/* 全局崩溃/未捕获异常上报（P-07 后半）：server component 布局经客户端壳挂载，全站生效 */}

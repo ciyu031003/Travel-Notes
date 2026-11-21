@@ -303,7 +303,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
     <div className="m-mobile-page m-bottom-nav-safe bg-[var(--ui-social-bg)] text-[var(--ui-social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_-10%,rgba(232,179,106,0.10),transparent_65%),radial-gradient(40%_40%_at_100%_0%,rgba(126,147,173,0.05),transparent_60%)]" />
 
-      <div className="m-safe-top relative mx-auto max-w-2xl px-4 pb-6 sm:px-6 sm:pt-8">
+      <div className="m-safe-top relative mx-auto max-w-2xl lg:max-w-6xl px-4 pb-6 sm:px-6 sm:pt-8">
         <PullToRefresh onRefresh={refreshAll}>
           {/* 移动端：与 Demo 一致的眉标 + 大标题 + 通知 / 菜单 */}
           {/* 顶部安全区由外层容器统一提供（避免双重 padding 把右上角图标压下去） */}

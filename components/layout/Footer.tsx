@@ -5,7 +5,7 @@ import IcpLicense from '@/components/IcpLicense'
 
 export default function Footer() {
   return (
-    <footer className="border-t border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-bg">
+    <footer className="app-footer border-t border-travel-line/60 dark:border-shell-line bg-white dark:bg-shell-bg">
       <div className="container-custom py-8">
         <div className="grid md:grid-cols-3 gap-8">
           <div>

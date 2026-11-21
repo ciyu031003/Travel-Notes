@@ -100,7 +100,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+        'app-navbar fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         isTransparent
           ? scrolled
             ? 'bg-white/85 dark:bg-shell-bg/85 backdrop-blur-md border-b border-travel-line/60 dark:border-shell-line'
