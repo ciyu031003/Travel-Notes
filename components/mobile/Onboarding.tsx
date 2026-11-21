@@ -83,6 +83,10 @@ export function Onboarding() {
   // 首帧不渲染，避免 SSR/水合不一致
   useEffect(() => {
     if (!isHome) return
+    // 桌面端不展示这个移动端引导：'md:hidden' 只隐藏视觉层，但 useModalLayer 仍会把
+    // 侧边栏 / 主内容设为 inert，导致登录后整页无法点击。直接跳过，不写完成标记，
+    // 用户之后用手机打开仍可看到引导。
+    if (window.matchMedia('(min-width: 768px)').matches) return
     try {
       if (localStorage.getItem(STORAGE_KEY) === '1') return
     } catch {

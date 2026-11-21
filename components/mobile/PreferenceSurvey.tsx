@@ -70,6 +70,8 @@ export function PreferenceSurvey() {
 
   useEffect(() => {
     if (!isHome || !onboardingDone()) return
+    // 同 Onboarding：移动端全屏问卷在桌面不可见，但仍会被 useModalLayer 设为 inert。
+    if (window.matchMedia('(min-width: 768px)').matches) return
     let cancelled = false
     const check = async () => {
       try {
