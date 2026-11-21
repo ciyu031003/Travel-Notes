@@ -244,8 +244,8 @@ const firstBook = books && books.length > 0 ? books[0] : null
             <Icon icon={ArrowLeft} size="md" />
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="m2-eyebrow">TRAVEL BOOKS</p>
-            <h1 className="mt-0.5 truncate text-[24px] font-bold tracking-[-0.03em] text-[var(--m-text)]">旅行画册</h1>
+            <p className="m2-eyebrow">甜途 · 旅行画册</p>
+            <h1 className="v6-album-title mt-0.5 truncate text-[24px] font-bold tracking-[-0.03em] text-[var(--m-text)]">旅行画册</h1>
           </div>
           <div className="flex items-center gap-1 rounded-full border border-[var(--m-line)] bg-[var(--m-surface-solid)] p-1 shadow-[var(--m-shadow-l1)]">
             <button

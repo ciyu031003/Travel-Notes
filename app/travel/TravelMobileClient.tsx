@@ -143,7 +143,7 @@ export default function TravelMobileClient({
         */}
         <header className="m2-gutter m-safe-top flex items-start gap-3 pb-4">
           <div className="min-w-0 flex-1">
-            <p className="m2-eyebrow">MY JOURNEYS</p>
+            <p className="m2-eyebrow">甜途 · 旅程手帖</p>
             <h1 className="m2-page-title">我的旅程</h1>
             <p className="m2-page-sub">
               <b className="font-semibold text-[var(--m-accent-strong)]">{posts.length}</b> 段旅程 ·{' '}

@@ -309,7 +309,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           {/* 顶部安全区由外层容器统一提供（避免双重 padding 把右上角图标压下去） */}
           <header className="flex items-start gap-3 px-[18px] pb-3 md:hidden">
             <div className="min-w-0 flex-1">
-              <p className="m2-eyebrow">MY ARCHIVE</p>
+              <p className="m2-eyebrow">甜途 · 我的</p>
               <h1 className="m2-page-title">我的</h1>
               <p className="m2-page-sub truncate">{displayName}</p>
             </div>

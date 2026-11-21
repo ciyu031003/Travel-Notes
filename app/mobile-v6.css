@@ -1,0 +1,160 @@
+/* =========================================================================
+   Mobile V6 — 甜途 1.29.3 × Editorial Journal
+   Applied on top of app/mobile.css. Visual only; no business logic.
+   ========================================================================= */
+@media (max-width: 767px) {
+  :root {
+    --m-radius-card: 20px;
+    --m-radius-control: 14px;
+  }
+
+  /* editorial page titles + UI sans sections */
+  .m2-page-title {
+    font-family: var(--art-serif);
+    font-size: 30px;
+    line-height: 1.2;
+    font-weight: 500;
+    letter-spacing: .01em;
+    color: var(--m-text);
+  }
+  .m2-eyebrow {
+    color: var(--m-accent-strong);
+    letter-spacing: .14em;
+  }
+  .m2-section-title { font-weight: 700; letter-spacing: -.01em; }
+
+  /* brand app bar */
+  .v6-appbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 46px;
+    margin: 0 0 14px;
+  }
+  .v6-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 44px;
+  }
+  .v6-logo {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: grid; place-items: center; flex: none;
+    background: linear-gradient(135deg, #f18aaa, #b83f63 72%);
+    color: #fff; font-family: var(--art-serif); font-size: 17px; line-height: 1;
+    box-shadow: 0 8px 18px -6px rgba(184, 63, 99, .55), inset 0 1px 0 rgba(255, 255, 255, .35);
+  }
+  .v6-brand-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .v6-brand-text b { font-size: 16px; line-height: 1.15; font-weight: 800; letter-spacing: -.01em; color: var(--m-text); }
+  .v6-brand-text small { font-size: 9.5px; line-height: 1.35; font-weight: 600; letter-spacing: .06em; color: var(--m-muted); }
+  .v6-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+  .v6-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center; flex: none;
+    background: var(--m-surface-solid); color: var(--m-ink);
+    border: 1px solid var(--m-line);
+    box-shadow: 0 2px 8px rgba(140, 67, 91, .05);
+  }
+  .v6-icon:active { transform: scale(.94); }
+
+  .v6-intro { padding: 2px 0 6px; }
+  .v6-display {
+    margin: 6px 0 8px;
+    font-family: var(--art-serif);
+    font-size: 34px;
+    line-height: 1.2;
+    font-weight: 500;
+    letter-spacing: .01em;
+    color: var(--m-text);
+  }
+  .v6-intro .m2-page-sub { font-size: 12.5px; line-height: 1.7; }
+
+  /* current rounded cards / hero */
+  .m2-card, .m-card {
+    border-radius: 20px;
+    box-shadow: 0 10px 28px rgba(140, 67, 91, .08);
+  }
+  .m2-hero-card { border-radius: 22px; }
+  .m2-hero-card h2 {
+    font-family: var(--art-serif);
+    font-weight: 500;
+    font-size: 30px;
+    letter-spacing: .02em;
+  }
+  .m2-hero-card a, .m2-hero-card button { border-radius: 999px; }
+  .m2-btn-primary {
+    background: linear-gradient(135deg, #e76f91, #b83f63);
+    color: #fff;
+    box-shadow: 0 10px 24px -10px rgba(184, 63, 99, .65), inset 0 1px 0 rgba(255, 255, 255, .3);
+  }
+  .m2-btn-primary:hover { background: linear-gradient(135deg, #e76f91, #a63558); }
+
+  /* daily quote card */
+  .v6-quote-card {
+    position: relative;
+    margin: 4px 0 0;
+    padding: 20px 18px 16px;
+    border: 1px solid #f5dfe6;
+    border-radius: 20px;
+    background: linear-gradient(140deg, #fffaf8 0%, #fff0f4 100%);
+    box-shadow: 0 14px 32px rgba(140, 67, 91, .08);
+    text-align: center;
+    overflow: hidden;
+  }
+  .v6-quote-card::before {
+    content: "";
+    position: absolute; inset: -40% -10% auto; height: 120px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(231, 111, 145, .16), transparent 65%);
+  }
+  .v6-quote-spark { display: block; color: var(--m-accent); font-size: 13px; letter-spacing: .3em; margin-bottom: 6px; }
+  .v6-quote-card p {
+    position: relative;
+    font-family: var(--art-serif);
+    font-size: 15px; line-height: 1.7; letter-spacing: .03em;
+    color: var(--m-text);
+  }
+  .v6-quote-stamp {
+    position: relative;
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 52px; height: 52px; margin-top: 12px;
+    border: 1px dashed rgba(184, 63, 99, .55); border-radius: 50%;
+    color: var(--m-accent-strong); transform: rotate(-6deg);
+  }
+  .v6-quote-stamp small { font-size: 5.5px; font-weight: 700; letter-spacing: .18em; line-height: 1; }
+  .v6-quote-stamp b { font-size: 11px; line-height: 1.15; font-weight: 700; }
+
+  /* tabbar / FAB: keep existing 4+FAB, align to V6 */
+  .m2-tabbar {
+    background: rgba(255, 250, 247, .94);
+    border-top: 1px solid var(--m-line);
+    box-shadow: 0 -10px 30px rgba(140, 67, 91, .06);
+    backdrop-filter: blur(20px);
+  }
+  .m2-tab-item.is-active { color: var(--m-accent-strong); }
+  .m2-tab-fab {
+    background: linear-gradient(135deg, #ef87a4, #b83f63);
+    box-shadow: 0 10px 22px -8px rgba(184, 63, 99, .8), 0 0 0 5px var(--m-bg);
+  }
+
+  /* profile / space cards */
+  .v6-profile-hero {
+    border-radius: 22px !important;
+    box-shadow: 0 12px 30px rgba(140, 67, 91, .10);
+  }
+  .v6-profile-hero .rounded-full { border-color: rgba(255, 255, 255, .9); }
+
+  /* map pages: keep function, soften shell */
+  .m-card:has(> .relative.h-\[310px\]) { box-shadow: 0 12px 30px rgba(140, 67, 91, .10); }
+
+  /* dark theme */
+  html.dark .v6-appbar { background: transparent; }
+  html.dark .v6-icon { background: var(--m-surface-solid); color: var(--m-text); border-color: var(--m-line); }
+  html.dark .v6-quote-card {
+    background: linear-gradient(140deg, #2a1d21, #281c24);
+    border-color: #4a3138;
+  }
+  html.dark .m2-tabbar { background: rgba(28, 21, 20, .94); }
+}
+.v6-album-title{font-family:var(--art-serif);font-weight:500;letter-spacing:.01em}

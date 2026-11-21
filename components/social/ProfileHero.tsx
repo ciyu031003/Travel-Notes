@@ -97,7 +97,7 @@ export default function ProfileHero({
   }
 
   return (
-    <section className="overflow-hidden rounded-[1.6rem] bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]">
+    <section className="v6-profile-hero overflow-hidden rounded-[1.6rem] bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]">
       {/* ── 头图 ───────────────────────────────────────────── */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-[var(--ui-social-surface2)]">
         {hasCover ? (

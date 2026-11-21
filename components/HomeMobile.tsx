@@ -1,6 +1,6 @@
-﻿'use client'
+'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import dynamicImport from 'next/dynamic'
@@ -19,6 +19,8 @@ import {
   Plus,
   Plane,
   CheckCircle2,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
@@ -240,6 +242,21 @@ export default function HomeMobile({
   const totalPhotos = totalPhotoCount(travelPosts)
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [isDark, setIsDark] = useState(false)
+  const [dailyStamp, setDailyStamp] = useState('')
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'))
+    const d = new Date()
+    setDailyStamp((d.getMonth() + 1) + '/' + String(d.getDate()).padStart(2, '0'))
+  }, [])
+
+  const toggleTheme = () => {
+    const next = !isDark
+    document.documentElement.classList.toggle('dark', next)
+    try { localStorage.setItem('theme', next ? 'dark' : 'light') } catch {}
+    setIsDark(next)
+  }
   const active = draftTravels[0] ?? null
   const restDrafts = draftTravels.slice(1)
 
@@ -271,29 +288,30 @@ export default function HomeMobile({
     <div className="relative m-mobile-page m-bottom-nav-safe m2-screen text-[var(--m-text)]">
       <PullToRefresh onRefresh={onRefresh}>
         <div className="relative z-10">
-          {/* ── 顶部问候：日期眉标 + 大标题 + 每日一言 + 搜索 / 菜单 ── */}
-          <header className="m2-gutter m-safe-top pb-4">
-            <div className="flex items-start gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="m2-eyebrow">{todayText()}</p>
-                <h1 className="m2-page-title">{greeting()}</h1>
-                <p className="m2-page-sub line-clamp-1">「{quote}」</p>
-              </div>
-              <Link
-                href="/search"
-                aria-label="搜索旅行、城市与回忆"
-                className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-solid)] text-[var(--m-muted)] ring-1 ring-[var(--m-line)]"
-              >
-                <Icon icon={Search} size="md" />
+          {/* ── V6 品牌顶栏 + 编辑式导语 + 搜索 / 夜色 / 菜单 ── */}
+          <header className="m2-gutter m-safe-top pb-2">
+            <div className="v6-appbar">
+              <Link href="/" className="v6-brand" aria-label="甜途 · 旅行记忆空间">
+                <span className="v6-logo" aria-hidden="true">甜</span>
+                <span className="v6-brand-text"><b>甜途</b><small>旅行记忆空间</small></span>
               </Link>
-              <button
-                type="button"
-                aria-label="打开功能菜单"
-                onClick={() => setDrawerOpen(true)}
-                className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-solid)] text-[var(--m-muted)] ring-1 ring-[var(--m-line)]"
-              >
-                <Icon icon={Menu} size="md" />
-              </button>
+              <div className="v6-actions">
+                <Link href="/search" aria-label="搜索旅行、城市与回忆" className="v6-icon">
+                  <Icon icon={Search} size="md" />
+                </Link>
+                <button type="button" onClick={toggleTheme} aria-label={isDark ? '切换到暖色主题' : '切换到夜色主题'} className="v6-icon">
+                  <Icon icon={isDark ? Sun : Moon} size="md" />
+                </button>
+                <button type="button" aria-label="打开功能菜单" onClick={() => setDrawerOpen(true)} className="v6-icon">
+                  <Icon icon={Menu} size="md" />
+                </button>
+              </div>
+            </div>
+
+            <div className="v6-intro">
+              <p className="m2-eyebrow">{greeting()} · {todayText()} · 旅行手帖</p>
+              <h1 className="v6-display">把走过的路，<br />收藏成回忆。</h1>
+              <p className="m2-page-sub">每一段路途都值得被认真记录。<br />今天，也为下一次出发留一点期待。</p>
             </div>
           </header>
 
@@ -454,6 +472,16 @@ export default function HomeMobile({
                   </span>
                 </span>
               </Link>
+            </section>
+
+            {/* ── 每日一言：V6 编辑式卡片 ── */}
+            <section className="v6-quote-card" aria-label="每日一言">
+              <span className="v6-quote-spark" aria-hidden="true">✦</span>
+              <p>「{quote}」</p>
+              <span className="v6-quote-stamp">
+                <small>DAILY</small>
+                <b>{dailyStamp}</b>
+              </span>
             </section>
 
             {/* ── 最近旅行：150px 横滑卡 ── */}

@@ -255,7 +255,7 @@ export default function TravelCircleFeed() {
             否则比首页/旅程多出一段，右上角图标整体下沉 */}
         <header className="flex items-start gap-3 px-[18px] pb-3 md:hidden">
           <div className="min-w-0 flex-1">
-            <p className="m2-eyebrow">TRAVEL CIRCLE</p>
+            <p className="m2-eyebrow">甜途 · 旅行圈</p>
             <h1 className="m2-page-title">旅行圈</h1>
             <p className="m2-page-sub">看看别人眼中的世界，发现正在发生的旅途。</p>
           </div>
