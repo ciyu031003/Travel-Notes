@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '内测 2：旅程按全部 / 进行中 / 已归档分类（足迹地图交互保持原样）、底部导航换新旅程图标、四个主页面顶部图标对齐、我的页只保留空间档案并按旅程文章展示、搜索页适配系统状态栏、记录按钮固定在底部并随滚动收起。',
+    changelog: process.env.APP_CHANGELOG || 'V6 融合移动端 UI：品牌顶栏、编辑式首页、夜色模式、卡片/导航与画册壳层；功能与后端不变',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
