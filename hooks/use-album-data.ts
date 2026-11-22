@@ -76,7 +76,13 @@ export interface AlbumDataState {
   starCities: StarCity[]
 }
 
-export function useAlbumData(): AlbumDataState {
+/**
+ * @param opts.enabled 是否立刻拉取 /api/album。相册默认的「旅行画册」（book）模式
+ *   完全不用相册解锁数据（画册数据来自 /api/travel-book），传 false 可省掉这次往返；
+ *   进入像素/银河模式时再翻成 true 触发拉取。默认 true（行为与旧版一致）。
+ */
+export function useAlbumData(opts: { enabled?: boolean } = {}): AlbumDataState {
+  const enabled = opts.enabled !== false
   const [cities, setCities] = useState<AlbumCity[]>([])
   const [albums, setAlbums] = useState<AlbumItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -120,8 +126,9 @@ export function useAlbumData(): AlbumDataState {
   }, [applyOfflineAlbums])
 
   useEffect(() => {
+    if (!enabled) return
     void refresh()
-  }, [refresh])
+  }, [enabled, refresh])
 
   const reload = useCallback(() => {
     setLoading(true)

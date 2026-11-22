@@ -17,9 +17,13 @@ import UserList from '@/components/social/UserList'
 export default function MeUserRelationPage({
   endpoint,
   title,
+  eyebrow,
+  subtitle,
 }: {
   endpoint: 'followers' | 'following'
   title: string
+  eyebrow?: string
+  subtitle?: string
 }) {
   const { data, error, loading, reload } = useApi<{ id?: number }>(apiUrl('/api/me'))
   const expired = useSessionRedirect(error)
@@ -33,5 +37,12 @@ export default function MeUserRelationPage({
   }
   if (loading || !id) return <AsyncState variant="loading" message={`正在加载${title}…`} />
   // 左缘右滑返回由全局壳（LayoutContent）的 EdgeSwipeBack 提供，页面不再重复挂载
-  return <UserList endpoint={`/api/social/users/${id}/${endpoint}`} title={title} />
+  return (
+    <UserList
+      endpoint={`/api/social/users/${id}/${endpoint}`}
+      title={title}
+      eyebrow={eyebrow}
+      subtitle={subtitle}
+    />
+  )
 }

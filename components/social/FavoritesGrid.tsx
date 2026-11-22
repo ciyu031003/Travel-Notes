@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bookmark, Loader2 } from 'lucide-react'
+import { BookMarked, Loader2 } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
-import { goBackOrHome } from '@/lib/navigation'
 import { circlePostHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
 
@@ -64,28 +64,20 @@ export default function FavoritesGrid() {
       {/* m-safe-top：/me/* 走「不挂 Navbar」分支，顶部安全区必须由页面自己负责，
           否则标题栏会被手机状态栏压住（与旅行圈详情同类问题）。 */}
       <div className="m-safe-top relative mx-auto max-w-5xl px-4 pb-6">
-        <header className="mb-8 flex items-center gap-3">
-          {/* 返回键放**左侧**（用户习惯位置），并真正回上一级而非固定 /me */}
-          <button
-            type="button"
-            onClick={() => goBackOrHome(router, '/me')}
-            aria-label="返回上一级"
-            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition-colors hover:text-[var(--ui-social-text)]"
-          >
-            <Icon icon={ArrowLeft} size="md" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="m2-eyebrow">MEMORIES</p>
-            <h1 className="mt-0.5 text-[26px] font-bold leading-[32px] tracking-[-0.03em]">我的收藏</h1>
-          </div>
-          <SocialThemeToggle />
-        </header>
+        {/* 统一页头（B）：返回键真正回上一级而非固定 /me，由 LargeTitle 的 back 兜底地址负责 */}
+        <LargeTitle
+          title="我的收藏"
+          eyebrow="甜途 · 收藏"
+          subtitle="旅行圈里心动的故事"
+          back="/me"
+          trailing={<SocialThemeToggle className="m-nav-icon" />}
+        />
         {loading ? (
           <div className="py-20 text-center text-[var(--ui-social-muted)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : posts.length === 0 ? (
           <div className="m2-card flex flex-col items-center px-6 py-14 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]">
-              <Icon icon={Bookmark} size="lg" />
+              <Icon icon={BookMarked} size="lg" />
             </span>
             <p className="mt-4 text-[15px] font-semibold">还没有收藏任何旅行</p>
             <p className="mt-1.5 max-w-[260px] text-[12px] leading-5 text-[var(--ui-social-muted)]">

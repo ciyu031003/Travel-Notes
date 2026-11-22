@@ -246,9 +246,10 @@ export default function SyncCenter() {
         <div className="md:hidden">
           <LargeTitle
             title="数据与同步"
-            subtitle="离线队列、隐私锁与同步状态"
+            eyebrow="甜途 · 设置"
+            subtitle="离线队列与隐私锁"
             back="/me"
-            trailing={<SocialThemeToggle />}
+            trailing={<SocialThemeToggle className="m-nav-icon" />}
           />
         </div>
 

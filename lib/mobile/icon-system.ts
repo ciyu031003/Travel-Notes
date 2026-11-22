@@ -101,6 +101,7 @@ import {
   Menu,
   Orbit,
   Rocket,
+  X,
   // 类型
   type LucideIcon,
 } from 'lucide-react'
@@ -425,10 +426,12 @@ export {
   Loader2,
   // 相册页（P2-32）
   BookOpen,
+  BookMarked,
   ArrowLeft,
   Lock,
   Delete,
   Menu,
   Orbit,
   Rocket,
+  X,
 }

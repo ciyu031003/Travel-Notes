@@ -27,7 +27,7 @@ export default function SpaceDetailQueryPage() {
   if (!slug) {
     return (
       <div className="m-gutter pt-2">
-        <LargeTitle title="空间" back="/space" />
+        <LargeTitle title="空间" eyebrow="甜途 · 空间" subtitle="正在读取空间信息" back="/space" />
         <LoaderBlock label="正在打开空间…" />
       </div>
     )

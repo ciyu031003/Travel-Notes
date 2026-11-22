@@ -1,0 +1,138 @@
+/* ==========================================================================
+   底部抽屉与地图交互（1.30.1）：省份抽屉的进/退场、吸附与地图聚焦动画。
+   注意：本文件只允许新增类名与使用既有 --m-* / --ui-mobile-* 令牌；
+   如需定义新的 CSS 变量，必须先加到 app/mobile.css 并通知 lead（token 门禁只索引
+   tokens.css / globals.css / mobile.css，其它文件里定义的变量会被判为未定义）。
+   ========================================================================== */
+
+/* ── 省份抽屉（iOS 级 sheet）───────────────────────────────────────────────
+   为什么重做：旧实现「半屏 ↔ 全屏」用 transition-[height] 改 height。height 是
+   layout 属性，每帧都要重新布局 + 重绘整棵子树（内容里有图片和网格），真机表现
+   就是「弹出来很突兀、有点卡顿」；关闭时直接 unmount，没有退场动画。
+   现在面板恒定「全屏高度」，两个吸附位只靠 transform: translateY 表达——
+   纯合成属性，不触发布局（设计规范 §7：只做 opacity + transform）。 */
+.m-prov-sheet {
+  will-change: transform;
+  /* 面板内部自成布局/绘制边界：内容变化不向外层（地图、页面）扩散重排 */
+  contain: layout paint;
+  backface-visibility: hidden;
+}
+
+/* 入场与吸附：弹簧曲线（--m-ease-spring 的 y>1，落位时自然产生一次轻微过冲） */
+.m-prov-sheet--enter {
+  transition:
+    transform var(--m-dur-enter) var(--m-ease-spring),
+    opacity var(--m-dur-overlay) ease;
+}
+
+/* 退场：比入场快（规范 180–240ms）且不回弹，方向与入场对称 */
+.m-prov-sheet--exit {
+  transition:
+    transform var(--m-dur-page) cubic-bezier(0.4, 0, 1, 1),
+    opacity var(--m-dur-page) ease;
+}
+
+/* 跟手拖拽：必须没有过渡，否则手指与面板之间会有「粘滞/漂移」 */
+.m-prov-sheet--drag {
+  transition: none;
+}
+
+/* 遮罩：开合淡入淡出，拖拽进度跟手（不透明度由 JS 按 translateY 进度写） */
+.m-prov-overlay {
+  transition: opacity var(--m-dur-overlay) ease;
+  will-change: opacity;
+}
+.m-prov-overlay--drag {
+  transition: none;
+}
+
+/* 内容区：**半屏与全屏都可滚动**。
+   早先"只在全屏态可滚动"是为了避免内容滚动和面板拖拽抢手势，但代价是半屏时
+   只露出 3~4 个城市（10 个城市的省份），用户会以为列表就这些。现在纵向手势的
+   归属判断前置到"起手位置"：只有把手/标题栏起手才拖面板（见 startDrag），
+   内容区起手一律是滚动，因此两者不冲突。
+   overscroll-behavior: contain 防止滚到底继续上滑时把手势传给页面（Android 拉伸 /
+   iOS 橡皮筋）；body 本身在弹层打开期间已被 useModalLayer 锁滚动。 */
+.m-prov-sheet__body {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  contain: layout paint;
+}
+.m-prov-sheet__body--scroll {
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+
+/* 半屏态的滚动垫片：面板恒定全高 → 半屏时 body 有 (38dvh - 56px) 落在视口外，
+   不补这段高度的话内容"看着还能滚、实际滚不动"，最后一屏永远露不出来。
+   数值与 JS 里的 halfY 同源：halfY = H - 0.62vh = (100dvh - 56px) - 62dvh。 */
+.m-prov-sheet__spacer {
+  height: calc(38dvh - 56px);
+  pointer-events: none;
+}
+
+/* 把手 + 标题栏：恒为拖拽热区（全屏态内容区要滚动，只有这里能拉起/甩下） */
+.m-prov-sheet__grab {
+  touch-action: none;
+}
+
+/* ── 地图内容层（平移 / 缩放 / 聚焦）─────────────────────────────────────
+   地图里是 34 条省份路径 + 高斯模糊滤镜，一旦 transform 变化触发整层重绘，
+   中低端机就会出现「点一下卡一下」。will-change + contain 把它提升为独立
+   合成层：平移与聚焦动画只做 GPU 位移，不再重排/重绘 SVG。 */
+.m-map-stage {
+  will-change: transform;
+  contain: layout paint;
+  backface-visibility: hidden;
+}
+.m-map-stage--anim {
+  transition: transform var(--m-dur-enter) var(--m-ease-out);
+}
+.m-map-stage--drag {
+  transition: none;
+}
+
+/* ── 选中省份后「其余变暗」（CSS 实现）────────────────────────────────────
+   旧实现把 dimmed 写进每条 path 的 fill/fillOpacity/stroke/opacity/filter 属性，
+   选中一次 = React 重渲染 34 条路径 + 34 个滤镜区域重新光栅化 —— 点省份掉帧的
+   主要来源之一。这里改成 svg 根上的一个类，绘制属性交给 CSS，React 不参与。
+   取值与旧实现逐项对齐：fillOpacity .14 / strokeOpacity .08 / width .8 / opacity .5。 */
+.m-map-dimmed .m-prov-path {
+  fill-opacity: 0.14;
+  stroke-opacity: 0.08;
+  stroke-width: 0.8;
+  opacity: 0.5;
+  filter: none;
+}
+/* 静态发光/纹理层在选中态隐藏，改由选中叠加层（SelectionLayer）单独绘制 */
+.m-map-dimmed .m-prov-glow,
+.m-map-dimmed .m-prov-texture {
+  display: none;
+}
+
+/* ── 省份悬停高亮（CSS 实现）──────────────────────────────────────────────
+   旧实现把 hoveredProvince 当 props 传给 MapPaths，鼠标在地图上每划过一条省界
+   就整棵 SVG（34 条路径）重渲染一次；现在悬停只改这一条路径自己的 filter，
+   React 侧不再参与。只在「有真实 hover 能力」的设备生效，避免触屏上 glow 粘住。 */
+@media (hover: hover) and (pointer: fine) {
+  .m-prov-path:hover {
+    filter: url(#visitedGlow);
+  }
+  /* 变暗态也要能悬停发光（旧实现 isHovered 优先于 dimmed） */
+  .m-map-dimmed .m-prov-path:hover {
+    filter: url(#visitedGlow);
+  }
+}
+
+/* ── 减少动效降级（设计规范 §7）──────────────────────────────────────────
+   关掉位移动画，只保留淡入淡出；退场时长同时降到 120ms 以内，避免"卡住"感。 */
+@media (prefers-reduced-motion: reduce) {
+  .m-prov-sheet--enter,
+  .m-prov-sheet--exit,
+  .m-prov-sheet--drag {
+    transition: opacity var(--m-dur-page) ease;
+  }
+  .m-map-stage--anim {
+    transition: none;
+  }
+}

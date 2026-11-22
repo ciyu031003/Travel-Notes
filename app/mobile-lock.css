@@ -1,0 +1,192 @@
+/* ==========================================================================
+   相册纪念日 / 上锁界面（1.30.1）：像素风锁屏移除后的新锁屏与纪念日设置页样式。
+   注意：本文件只允许新增类名与使用既有 --m-* / --ui-mobile-* 令牌；
+   如需定义新的 CSS 变量，必须先加到 app/mobile.css 并通知 lead（token 门禁只索引
+   tokens.css / globals.css / mobile.css，其它文件里定义的变量会被判为未定义）。
+   ========================================================================== */
+
+/* ── 锁屏页（相册未解锁的整页形态）─────────────────────────────────────
+   V6 语言：暖粉 / 奶油底 + 柔和光晕。不新增原始色值，只用既有 tone 令牌叠加
+   两层径向柔光（樱花粉在上、蜂蜜奶油在右下），比常规页面更“暗”一档、更聚焦。 */
+.lock-page {
+  position: relative;
+  min-height: 100dvh;
+  background:
+    radial-gradient(120% 55% at 50% -10%, var(--m-tone-blush-bg), transparent 62%),
+    radial-gradient(90% 50% at 100% 100%, var(--m-tone-sun-bg), transparent 60%),
+    var(--m-bg);
+  background-attachment: fixed;
+}
+
+/* ── 锁形徽标（圆形玻璃 + 柔光晕）────────────────────────────────────── */
+.lock-halo {
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 45%, var(--m-tone-blush-bg), transparent 68%);
+}
+
+.lock-emblem {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  flex: none;
+  border: 1px solid var(--m-line);
+  border-radius: 999px;
+  background: var(--m-surface);
+  color: var(--m-accent-strong);
+  box-shadow: var(--m-elev-2), var(--m-inset-hi);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.lock-emblem--sm {
+  width: 64px;
+  height: 64px;
+}
+
+/* ── 白色卡片 / 弹窗面板 ─────────────────────────────────────────────── */
+.lock-card {
+  border: 1px solid var(--m-line);
+  border-radius: var(--m-radius-card);
+  background: var(--m-surface-solid);
+  box-shadow: var(--m-elev-1);
+}
+
+/* ── 圆形玻璃图标按钮（返回 / 关闭）─────────────────────────────────── */
+.lock-glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--m-line);
+  border-radius: 999px;
+  background: var(--m-surface);
+  color: var(--m-text);
+  box-shadow: var(--m-elev-1), var(--m-inset-hi);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform 0.18s var(--m-ease-spring), background-color 0.18s ease;
+}
+
+.lock-glass-btn:active {
+  transform: scale(0.94);
+  background: var(--m-surface-2);
+}
+
+.lock-glass-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+
+/* ── 衬线大标题（V6 编辑式标题语言）────────────────────────────────── */
+.lock-serif {
+  font-family: var(--art-serif);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ── 日期输入（复用 .m-field-control / .m-field-input，这里只做居中等宽）── */
+.lock-date-input {
+  text-align: center;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 进出场动效：只动 opacity / transform ─────────────────────────────── */
+@keyframes lock-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes lock-pop {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.965);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes lock-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.lock-rise {
+  animation: lock-rise var(--m-dur-enter) var(--m-ease-out) both;
+}
+
+.lock-rise--2 {
+  animation-delay: 70ms;
+}
+
+.lock-rise--3 {
+  animation-delay: 140ms;
+}
+
+.lock-rise--4 {
+  animation-delay: 210ms;
+}
+
+.lock-dialog {
+  animation: lock-pop 0.26s var(--m-ease-spring) both;
+}
+
+/* ── 弹窗遮罩 ──────────────────────────────────────────────────────────
+   不透明度与背景模糊只写在这里（组件里只保留 .lock-scrim 类名），便于统一调参，
+   也避免以后有人在组件内补 rgba 字面量。底色用伪元素承载、颜色仍取令牌：
+   浅色主题取 --m-text（暖褐），暗色主题取 --m-bg（深底），零 rgb/rgba 字面量。 */
+.lock-scrim::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--m-text);
+  opacity: 0.46;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: lock-fade 0.2s var(--m-ease-out) both;
+}
+
+html.dark .lock-scrim::before {
+  background: var(--m-bg);
+  opacity: 0.72;
+}
+
+/* 面板压在遮罩伪元素之上 */
+.lock-scrim > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 减动效全量降级（规范 §7：prefers-reduced-motion 必须全覆盖） */
+@media (prefers-reduced-motion: reduce) {
+  .lock-rise,
+  .lock-rise--2,
+  .lock-rise--3,
+  .lock-rise--4,
+  .lock-dialog,
+  .lock-scrim::before,
+  .lock-glass-btn {
+    animation: none;
+    transition: none;
+  }
+}

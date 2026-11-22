@@ -2,6 +2,11 @@
    Mobile V6 — 甜途 1.29.3 × Editorial Journal
    Applied on top of app/mobile.css. Visual only; no business logic.
    ========================================================================= */
+/* 1.30.1 移动端三块专项样式（各自独立文件，避免并行改动互相覆盖 globals.css） */
+@import './mobile-nav.css';
+@import './mobile-lock.css';
+@import './mobile-sheet.css';
+
 @media (max-width: 767px) {
   :root {
     --m-radius-card: 20px;

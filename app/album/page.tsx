@@ -3,26 +3,62 @@
 import { useState, useEffect, useCallback } from 'react'
 import dynamicImport from 'next/dynamic'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import PixelDeskBackground from '@/components/album/PixelDeskBackground'
 import AlbumCoverBanner from '@/components/album/AlbumCoverBanner'
-import AlbumSpaceMode, { type SpaceChatPhoto } from '@/components/album/AlbumSpaceMode'
-import TravelArchiveView from '@/components/album/TravelArchiveView'
 import TravelBook from '@/components/album/travel-book/TravelBook'
-import PixelPhotoChat from '@/components/album/PixelPhotoChat'
-import AlbumComposer from '@/components/album/AlbumComposer'
 import AlbumHeader from '@/components/album/AlbumHeader'
 import AlbumBookshelf from '@/components/album/AlbumBookshelf'
-import AlbumUnlockScreen from '@/components/album/AlbumUnlockScreen'
 import AlbumGalleryGrid from '@/components/album/AlbumGalleryGrid'
 import AlbumPhotoWall from '@/components/album/AlbumPhotoWall'
-import AlbumStarMapOverlay from '@/components/album/AlbumStarMapOverlay'
 import type { AlbumViewMode } from '@/components/album/AlbumModeSwitch'
+import type { SpaceChatPhoto } from '@/components/album/AlbumSpaceMode'
 import { useAlbumData } from '@/hooks/use-album-data'
 import { formatDotDate } from '@/lib/modules/album/presentation'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 
+/**
+ * 渲染器加载占位（与页面自身的「正在翻开相册…」骨架同形，避免加载态闪变/高度跳变）
+ */
+function ModeLoading({ label }: { label: string }) {
+  return (
+    <div className="m2-screen flex min-h-dvh items-center justify-center bg-[var(--m-bg)]">
+      <div className="m2-card flex items-center gap-3 px-5 py-4 text-[13px] font-semibold text-[var(--m-muted)]">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--m-line-strong)] border-t-[var(--m-accent)]" />
+        {label}
+      </div>
+    </div>
+  )
+}
+
+/*
+ * 非默认模式的渲染器全部按需加载（移动端性能专项 D，2026-11-21）
+ * ---------------------------------------------------------------------------
+ * 相册默认模式是「旅行画册」（book），像素/银河/档案/星图这些渲染器在首屏**根本不渲染**，
+ * 此前却是静态 import：打开相册就要先下载 three 场景、像素桌面、照片聊天、阅读器主题等
+ * 一大坨代码。真机反馈「打开相册特别卡」= 首屏 JS 体积 + 主线程编译时间。
+ * 现在全部改成 ssr:false 动态导入：首屏只留 book 模式必需件，其余在真正进入该模式时再拉。
+ */
 // v3.1 M3-D2：Canvas/WebGL 重组件按需加载（首屏不打包；渲染时才拉取）
 const PhotoMorphViewer = dynamicImport(() => import('@/components/album/PhotoMorphViewer'), { ssr: false })
+// 银河模式（three 场景 + HUD/雷达）
+const AlbumSpaceMode = dynamicImport(() => import('@/components/album/AlbumSpaceMode'), {
+  ssr: false,
+  loading: () => <ModeLoading label="正在进入银河空间…" />,
+})
+// 像素模式整页视图（像素桌面背景 + 照片聊天）
+const PixelDeskBackground = dynamicImport(() => import('@/components/album/PixelDeskBackground'), { ssr: false })
+const PixelPhotoChat = dynamicImport(() => import('@/components/album/PixelPhotoChat'), {
+  ssr: false,
+  loading: () => <ModeLoading label="正在打开照片留言…" />,
+})
+// 未解锁皮肤（只在像素/银河模式且未解锁时出现）
+const AlbumUnlockScreen = dynamicImport(() => import('@/components/album/AlbumUnlockScreen'), {
+  ssr: false,
+  loading: () => <ModeLoading label="正在检查相册…" />,
+})
+// 点击后才出现的浮层：加载占位保持 null，避免给已渲染页面插入闪烁元素
+const TravelArchiveView = dynamicImport(() => import('@/components/album/TravelArchiveView'), { ssr: false, loading: () => null })
+const AlbumStarMapOverlay = dynamicImport(() => import('@/components/album/AlbumStarMapOverlay'), { ssr: false, loading: () => null })
+const AlbumComposer = dynamicImport(() => import('@/components/album/AlbumComposer'), { ssr: false, loading: () => null })
 
 
 /**
@@ -41,6 +77,10 @@ const PhotoMorphViewer = dynamicImport(() => import('@/components/album/PhotoMor
  * - 模式切换写 localStorage、WebGL 失败降级到 pixel。
  */
 export default function AlbumPage() {
+  // SSR 与客户端首帧必须一致（默认画册模式），挂载后再读本地偏好，避免 hydration mismatch
+  const [viewMode, setViewMode] = useState<AlbumViewMode>('book')
+  // 性能（2026-11-21）：默认的 book 模式不需要相册解锁数据，首屏就不请求 /api/album，
+  // 只有真正切到像素/银河模式时才拉 —— 打开相册少一次接口往返。
   const {
     cities,
     albums,
@@ -54,7 +94,7 @@ export default function AlbumPage() {
     totalPhotos,
     totalDays,
     starCities,
-  } = useAlbumData()
+  } = useAlbumData({ enabled: viewMode !== 'book' })
 
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
@@ -64,9 +104,6 @@ export default function AlbumPage() {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   // 深链直达：/album?book=<bookKey>（首页画册目录 → 直开某城市画册）
   const [initialBookKey, setInitialBookKey] = useState<string | null>(null)
-  // SSR 与客户端首帧必须一致（默认画册模式），挂载后再读本地偏好，避免 hydration mismatch
-  const [viewMode, setViewMode] = useState<AlbumViewMode>('book')
-
   useEffect(() => {
     try {
       const book = new URLSearchParams(window.location.search).get('book')
@@ -119,24 +156,21 @@ export default function AlbumPage() {
 
   const handleWebGLFail = useCallback(() => setViewMode('pixel'), [])
 
-  if (checkingLock) {
-    return (
-      <div className="m2-screen flex min-h-dvh items-center justify-center">
-        <div className="m2-card flex items-center gap-3 px-5 py-4 text-[13px] font-semibold text-[var(--m-muted)]">
-          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--m-line-strong)] border-t-[var(--m-accent)]" />
-          正在翻开相册…
-        </div>
-      </div>
-    )
-  }
-
-  // 旅行画册 2.0（Phase 2）：默认「旅行画册」模式，以 Travel 数据驱动，无需相册解锁
+  // 旅行画册 2.0（Phase 2）：默认「旅行画册」模式，以 Travel 数据驱动，无需相册解锁。
+  // 性能（2026-11-21）：book 模式的数据来自 TravelBook 自己的 /api/travel-book，
+  // **不依赖** useAlbumData 的 /api/album。因此把它提到 checkingLock 之前渲染 —— 打开相册
+  // 不再被另一个接口的往返阻塞（此前每次进 /album 都要等 /api/album 才出第一屏）。
   if (viewMode === 'book') {
     return (
       <div key="mode-book" className="motion-safe:animate-[fadeIn_.2s_ease-out]">
         <TravelBook onModeChange={changeMode} initialBookKey={initialBookKey} />
       </div>
     )
+  }
+
+  // 非 book 模式才需要相册解锁状态：此时再等 checkingLock
+  if (checkingLock) {
+    return <ModeLoading label="正在翻开相册…" />
   }
 
   if (!isUnlocked) {

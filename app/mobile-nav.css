@@ -1,0 +1,246 @@
+/* ==========================================================================
+   二级 / 三级页面顶部导航与标题（1.30.1）：统一页头、折叠栏与工具栏图标规格。
+   注意：本文件只允许新增类名与使用既有 --m-* / --ui-mobile-* 令牌；
+   如需定义新的 CSS 变量，必须先加到 app/mobile.css 并通知 lead（token 门禁只索引
+   tokens.css / globals.css / mobile.css，其它文件里定义的变量会被判为未定义）。
+   ========================================================================== */
+
+/* ── 1. 统一页头（LargeTitle）──────────────────────────────────────────────
+   V6 参考 ui-redesign-demo/v3/screens-v6/09-album：返回键独占一行（44px 圆形玻璃），
+   标题行只有 eyebrow + 衬线大标题 + 副标题，三者左缘对齐同一条 18px 栏距。
+   旧版把返回箭头塞进标题左侧，箭头无容器、按 baseline 对齐，永远贴不到标题中线 ——
+   这就是真机反馈「顶部文字与图标粗糙」的直接来源。 */
+.m-nav-header {
+  padding: 2px 18px 16px;
+}
+
+/* 工具行：左返回 / 右动作，两端对齐；高度固定 44 保证按钮不被文字行高带偏 */
+.m-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 8px;
+}
+/* 无返回键时占位：让 trailing 仍然靠右，不因缺少左侧元素而纵向抖动 */
+.m-nav-bar-gap {
+  display: block;
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+/* 圆形图标按钮（返回键 / trailing 动作共用一套规格）：
+   44×44 命中区 · --m-surface-solid 玻璃面 · 1px --m-line 描边 · --m-elev-1 柔和阴影 */
+.m-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 999px;
+  border: 1px solid var(--m-line);
+  background: var(--m-surface-solid);
+  color: var(--m-text);
+  box-shadow: var(--m-elev-1);
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--m-dur-press) var(--m-ease-out),
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.m-nav-icon:active {
+  transform: scale(0.94);
+  background: var(--m-surface-2);
+  box-shadow: none;
+  transition-duration: 100ms;
+}
+.m-nav-icon:focus-visible {
+  outline: 2px solid var(--m-accent);
+  outline-offset: 2px;
+}
+/* 折叠栏内的小一号：34px，嵌在 44px 栅格里（视觉更轻，命中区不变） */
+.m-nav-icon-bar {
+  width: 34px;
+  height: 34px;
+  box-shadow: none;
+}
+
+/* trailing 槽：图标按钮 + 可选文案（文案与图标同基线，不参与按钮外观） */
+.m-nav-trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+.m-nav-trailing-label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--m-muted);
+}
+
+/* 标题区 */
+.m-nav-heading {
+  min-width: 0;
+}
+.m-nav-eyebrow {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--m-accent-strong);
+}
+.m-nav-title {
+  margin-top: 4px;
+  font-family: var(--art-serif);
+  font-size: 32px;
+  line-height: 1.18;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+.m-nav-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--m-muted);
+}
+
+/* ── 2. 滚动折叠栏（.m-collapser 的 V6 版）────────────────────────────────
+   毛玻璃 + 0.5px hairline + 圆形返回 + 居中衬线小标题。
+   .m-collapser 本体在 mobile.css（层叠顺序在本文件之前），此处只做 V6 覆写。 */
+.m-collapser {
+  background: var(--m-surface);
+  border-bottom: 0.5px solid var(--m-hairline);
+  padding-left: 12px;
+  padding-right: 12px;
+}
+/* 毛玻璃退化时（低端机 / 用户偏好减少透明）加高不透明度：
+   否则滚动后折叠栏会"透出"大标题的残影（headless 截图里尤其明显）。
+   带 color-mix 的声明放在后面，老 WebView 不认识就退回上面的 --m-surface。 */
+@supports (background: color-mix(in srgb, white 90%, transparent)) {
+  .m-collapser {
+    background: color-mix(in srgb, var(--m-surface-solid) 92%, transparent);
+  }
+}
+html.low-end .m-collapser {
+  background: var(--m-surface-solid);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .m-collapser {
+    background: var(--m-surface-solid);
+  }
+}
+.m-collapser > .m-nav-icon-bar {
+  justify-self: center;
+}
+.m-collapser-title {
+  font-family: var(--art-serif);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--m-text);
+}
+
+/* ── 3. 常驻工具栏（三级页 / 详情页顶部 sticky 条）────────────────────────
+   /travel/[slug] 这类沉浸式详情页不用大标题，但顶栏仍要与其他页同一套材质：
+   毛玻璃 + 0.5px hairline + 44px 圆形返回 + 居中 15px 标题 + 44px 胶囊动作。 */
+.m-nav-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--m-surface);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 0.5px solid var(--m-hairline);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .m-nav-toolbar {
+    background: var(--m-surface-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+html.low-end .m-nav-toolbar {
+  background: var(--m-surface-solid);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.m-nav-toolbar-title {
+  min-width: 0;
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--m-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 工具栏内的文字动作（编辑 / 管理）：44px 命中区 + 与圆形按钮同高的胶囊 */
+.m-nav-toolbar-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--m-accent-soft);
+  color: var(--m-accent-strong);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  transition: transform var(--m-dur-press) var(--m-ease-out), background-color 160ms ease;
+}
+.m-nav-toolbar-action:active {
+  transform: scale(0.94);
+  transition-duration: 100ms;
+}
+.m-nav-toolbar-action:focus-visible {
+  outline: 2px solid var(--m-accent);
+  outline-offset: 2px;
+}
+
+/* ── 4. 眉标动作（页头右侧带文字的动作）────────────────────────────────── */
+.m-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--m-line);
+  background: var(--m-surface-solid);
+  box-shadow: var(--m-elev-1);
+  color: var(--m-muted);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  transition: transform var(--m-dur-press) var(--m-ease-out), background-color 160ms ease;
+}
+.m-nav-pill:active {
+  transform: scale(0.96);
+  background: var(--m-surface-2);
+  transition-duration: 100ms;
+}
+.m-nav-pill:focus-visible {
+  outline: 2px solid var(--m-accent);
+  outline-offset: 2px;
+}

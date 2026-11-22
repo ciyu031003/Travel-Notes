@@ -292,7 +292,12 @@ function SearchContent() {
       {/* m-safe-top：此前整页没有消费系统状态栏 inset，真机上大标题与搜索框
           会压在状态栏下面（首页 / 旅行圈 / 旅程的搜索入口都会落到这一页） */}
       <div className="m-mobile-page m-safe-top m-bottom-nav-safe bg-[var(--m-bg)] text-[var(--m-text)]">
-        <LargeTitle title="搜索" subtitle="输入关键词，找回每一段旅行足迹" back="/" />
+        <LargeTitle
+          title="搜索"
+          eyebrow="甜途 · 搜索"
+          subtitle="找回每一段旅程"
+          back="/"
+        />
         <div className="px-4 pt-1">
           {/* iOS 搜索栏 */}
           <div className="flex items-center gap-2.5 rounded-2xl bg-[var(--m-surface-2)] px-3.5 transition-all focus-within:ring-2 focus-within:ring-[var(--m-accent)]">
@@ -314,7 +319,7 @@ function SearchContent() {
                 type="button"
                 onClick={handleClear}
                 aria-label="清空搜索"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgb(255,255,255,0.55)] text-[var(--m-muted)] transition-transform active:scale-90 dark:bg-[rgb(255,255,255,0.14)]"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--m-surface-solid)] text-[var(--m-muted)] transition-transform active:scale-90"
               >
                 <Icon icon={X} size="sm" />
               </button>

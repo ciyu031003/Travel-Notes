@@ -86,9 +86,10 @@ export default function NotificationsList() {
       <div className="m-safe-top-16 relative mx-auto max-w-2xl px-4 pb-8 sm:px-6 sm:py-8">
         <LargeTitle
           title="我的通知"
+          eyebrow="甜途 · 动态"
           subtitle={unread > 0 ? `${unread} 条未读` : '赞、评论、收藏与关注'}
           back="/me"
-          trailing={<SocialThemeToggle />}
+          trailing={<SocialThemeToggle className="m-nav-icon" />}
         />
 
         {unread > 0 && !loading && (

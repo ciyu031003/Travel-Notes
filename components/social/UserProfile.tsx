@@ -3,15 +3,15 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, UserPlus, UserMinus, Ban } from 'lucide-react'
+import { Loader2, UserPlus, UserMinus, Ban } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialFilmCard from '@/components/social/SocialFilmCard'
 import { cn } from '@/lib/utils'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { apiUrl } from '@/lib/api-base'
 import { circlePostCommentsHref, circlePostHref } from '@/lib/routes'
-import { goBackOrHome } from '@/lib/navigation'
 
 interface Profile {
   id: number
@@ -117,21 +117,14 @@ export default function UserProfile({ userId }: { userId: number }) {
     <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-24 text-[var(--ui-social-text)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[360px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="relative mx-auto max-w-5xl px-4 py-6">
-        <header className="mb-6 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => goBackOrHome(router)}
-            aria-label="返回"
-            className="m-pressable flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]"
-          >
-            <Icon icon={ArrowLeft} size="md" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="m2-eyebrow">TRAVELER</p>
-            <h1 className="mt-0.5 text-[20px] font-bold leading-7 tracking-[-0.02em]">旅行者主页</h1>
-          </div>
-          <SocialThemeToggle />
-        </header>
+        {/* 统一页头（B）：与其它二级页同一套返回键 / 眉标 / 衬线标题 / 圆形 trailing */}
+        <LargeTitle
+          title="旅行者主页"
+          eyebrow="甜途 · 旅行圈"
+          subtitle="TA 的旅行档案"
+          back
+          trailing={<SocialThemeToggle className="m-nav-icon" />}
+        />
 
         <section className="flex flex-col gap-8 sm:flex-row sm:items-center">
           <SocialAvatar name={displayName(profile)} avatarUrl={profile.avatarUrl} size={96} className="text-3xl" />

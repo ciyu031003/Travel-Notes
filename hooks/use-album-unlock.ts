@@ -3,9 +3,11 @@
 import { useState, useCallback } from 'react'
 
 /**
- * 相册解锁状态机（AlbumUnlockModal / PixelUnlockModal / SpaceUnlockModal 三份
- * 同构逻辑的收敛，1.21.0）。三个弹窗保留各自刻意设计的视觉（旅行暖色 / 像素
- * 存档点 / 银河玻璃，见 check-design-tokens 的主题豁免名单），只共享状态与 API。
+ * 相册解锁状态机（1.21.0 收敛了三份同构逻辑）。
+ *
+ * 1.30.1 起「输入纪念日解锁」只剩一套现代界面（components/album/AlbumLockDialog，
+ * 锁屏页 AlbumUnlockScreen 与其它入口共用），像素存档点 / 银河玻璃两套皮肤已整体移除；
+ * 本 hook 的职责不变：口令 = 纪念日字符串，格式解析在 /api/verify-album-password。
  */
 export function useAlbumUnlock(options: {
   onClose: () => void

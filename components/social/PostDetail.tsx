@@ -442,22 +442,22 @@ export default function PostDetail({ postId }: { postId: number }) {
             type="button"
             onClick={() => { void hapticLight(); goBackOrHome(router, '/circle') }}
             aria-label="返回上一级"
-            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition-colors hover:text-[var(--ui-social-text)]"
+            className="m-nav-icon"
           >
             <Icon icon={ArrowLeft} size="md" />
           </button>
-          <span className="text-sm text-[var(--ui-social-muted)]">旅行圈</span>
+          <span className="m-nav-eyebrow">旅行圈</span>
           <div className="ml-auto flex items-center gap-2">
             {post.canEdit && (
               <button
                 type="button"
                 onClick={openEdit}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ui-social-accent)] px-4 py-2 text-sm font-medium text-[var(--ui-social-on-accent)] transition hover:bg-[var(--ui-social-accent-strong)] active:scale-95"
+                className="m-nav-toolbar-action"
               >
                 <Icon icon={Pencil} size="sm" />编辑
               </button>
             )}
-            <SocialThemeToggle />
+            <SocialThemeToggle className="m-nav-icon" />
           </div>
         </header>
 

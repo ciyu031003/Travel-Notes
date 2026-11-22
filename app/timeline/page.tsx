@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, Sparkles } from 'lucide-react'
+import { MapPin, Sparkles } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
 import TimelineCover from '@/components/timeline/TimelineCover'
 import AsyncState from '@/components/AsyncState'
@@ -75,6 +75,7 @@ export default function TimelinePage() {
         <div className="md:hidden">
           <LargeTitle
             title="走过的时光"
+            eyebrow="甜途 · 时光"
             subtitle={loading ? '正在翻阅…' : `${travelCount} 段旅程 · ${memoryCount} 段回忆`}
             back="/me"
           />
@@ -110,11 +111,11 @@ export default function TimelinePage() {
           <div className="relative mx-auto max-w-3xl">
             {years.map(({ year, entries }) => (
               <section key={year} className="relative mb-12 pl-8 md:pl-12">
-                <div className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-[var(--m-accent)] via-[var(--m-line-strong)] to-transparent" />
+                <div className="absolute bottom-0 left-0 top-0 w-px bg-[var(--m-line-strong)]" />
                 <h2 className="relative mb-6 flex items-center gap-3">
                   <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[var(--m-accent)] shadow-[0_0_0_4px_var(--m-bg)] md:-left-12" />
                   <span className="text-2xl font-bold tracking-tight text-[var(--m-text)] md:text-3xl">{year}</span>
-                  <span className="h-px flex-1 bg-gradient-to-r from-travel-sakura/70 to-transparent" />
+                  <span className="h-px flex-1 bg-[var(--m-line)]" />
                 </h2>
 
                 <Stagger className="space-y-5" delayBase={60} step={30}>
@@ -170,11 +171,11 @@ function TimelineSkeleton() {
     <div className="relative mx-auto max-w-3xl" aria-hidden="true">
       {[0, 1].map((s) => (
         <section key={s} className="relative mb-12 pl-8 md:pl-12">
-          <div className="absolute bottom-0 left-0 top-0 w-px bg-gradient-to-b from-travel-bloom/40 via-travel-sakura/30 to-transparent" />
+          <div className="absolute bottom-0 left-0 top-0 w-px bg-[var(--m-line)]" />
           <div className="relative mb-6 flex items-center gap-3">
-            <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-travel-accentSoft/60 ring-4 ring-white dark:ring-[#12161C] md:-left-12" />
+            <span className="absolute -left-8 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[var(--m-line-strong)] ring-4 ring-[var(--m-bg)] md:-left-12" />
             <span className="h-8 w-20 rounded-lg bg-travel-sakura/50 motion-safe:animate-pulse dark:bg-white/10" />
-            <span className="h-px flex-1 bg-gradient-to-r from-travel-sakura/50 to-transparent" />
+            <span className="h-px flex-1 bg-[var(--m-line)]" />
           </div>
           <div className="space-y-5">
             {(s === 0 ? [0, 1, 2] : [0, 1]).map((i) => (

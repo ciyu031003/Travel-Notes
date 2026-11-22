@@ -15,6 +15,7 @@ import {
   User,
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
+import { Heart } from '@/lib/mobile/icon-system'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { ListSection, ListRow } from '@/components/mobile/ListRow'
 import { apiUrl } from '@/lib/api-base'
@@ -37,6 +38,14 @@ import { performLogout } from '@/lib/client/logout'
  * 这一页只放**手机上真正会改**的几项：昵称/签名（走 `/api/me/profile`）、
  * 密码与邮箱（跳对应流程）、通知与数据（复用已有页面）、导出与退出。
  */
+
+/** 相册锁（纪念日）状态：账号设置页直接回显，避免用户点进去才知道有没有设 */
+type AlbumLockStatus =
+  | { state: 'loading' }
+  /** source=settings：账号里显式设过纪念日；source=record：未显式设置，服务端退回最早的纪念日记录 */
+  | { state: 'set'; date: string; source: 'settings' | 'record' }
+  | { state: 'unset' }
+  | { state: 'error' }
 
 interface MeInfo {
   username: string
@@ -71,6 +80,69 @@ export default function MeSettingsPage() {
     setNickname(data.nickname ?? '')
     setBio(data.bio ?? '')
   }, [data])
+
+  /**
+   * 相册锁状态：纪念相册（像素 / 银河）的解锁口令就是「纪念日」这一天的日期
+   * （见 /api/verify-album-password）。1.30.1 之前这个口令只能在 /me/album-lock
+   * 里改，账号设置里没有任何入口 —— 真机反馈「相册上锁了，不知道去哪改」。
+   * 这里在列表里直接回显当前口令，用户不用点进去就知道自己有没有设。
+   */
+  const [lock, setLock] = useState<AlbumLockStatus>({ state: 'loading' })
+
+  useEffect(() => {
+    let alive = true
+
+    const read = async () => {
+      const res = await fetch(apiUrl('/api/admin/settings/anniversary'), { credentials: 'include' })
+      // 401/403（会话失效 / 无权限）静默降级为「未设置」，不让整页凭空多一块错误；
+      // 真正的网络或 5xx 才走 error 分支，提示用户点进去自己看。
+      if (res.status === 401 || res.status === 403) {
+        if (alive) setLock({ state: 'unset' })
+        return
+      }
+      if (!res.ok) throw new Error('read failed')
+      const json = (await res.json()) as { anniversaryStart?: string | null }
+      const configured = typeof json?.anniversaryStart === 'string' ? json.anniversaryStart.slice(0, 10) : ''
+      if (configured) {
+        if (alive) setLock({ state: 'set', date: configured, source: 'settings' })
+        return
+      }
+
+      /**
+       * 「账号里没填纪念日」≠「相册不设锁」：服务端在 anniversaryStart 为空时
+       * 会退回最早的纪念日记录当口令（见 /api/verify-album-password）。
+       * 这里补一次列表查询，回显的才是用户真正要输的那一天。
+       */
+      const listRes = await fetch(apiUrl('/api/anniversaries'), { credentials: 'include' })
+      const listJson = listRes.ok
+        ? ((await listRes.json().catch(() => null)) as { anniversaries?: { date?: string }[] } | null)
+        : null
+      const dates = (Array.isArray(listJson?.anniversaries) ? listJson.anniversaries : [])
+        .map((item) => (typeof item?.date === 'string' ? item.date.slice(0, 10) : ''))
+        .filter(Boolean)
+        .sort()
+      if (!alive) return
+      setLock(dates.length > 0 ? { state: 'set', date: dates[0], source: 'record' } : { state: 'unset' })
+    }
+
+    read().catch(() => {
+      if (alive) setLock({ state: 'error' })
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const lockDescription =
+    lock.state === 'loading'
+      ? '纪念相册（像素 / 银河）口令 · 读取中…'
+      : lock.state === 'set'
+        ? lock.source === 'settings'
+          ? `纪念相册（像素 / 银河）口令：${lock.date}`
+          : `纪念相册（像素 / 银河）口令：${lock.date}（取自纪念日记录）`
+        : lock.state === 'unset'
+          ? '纪念相册（像素 / 银河）未设口令 · 点此设置'
+          : '纪念相册口令读取失败 · 点此查看与设置'
 
   const save = async () => {
     setSaving(true)
@@ -107,7 +179,7 @@ export default function MeSettingsPage() {
       {/* 左缘右滑返回由全局壳（LayoutContent）提供，页面不再重复挂载（一滑退两层 bug） */}
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[320px] bg-[radial-gradient(55%_60%_at_50%_-10%,rgba(232,179,106,0.09),transparent_65%)]" />
       <div className="m-safe-top-16 relative mx-auto max-w-2xl px-4 pb-8 sm:px-6 sm:py-8">
-        <LargeTitle title="账号设置" subtitle="资料、安全与账号" back="/me" />
+        <LargeTitle title="账号设置" eyebrow="甜途 · 设置" subtitle="资料、安全与账号" back="/me" />
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-20 text-[var(--ui-social-muted)]">
@@ -166,6 +238,17 @@ export default function MeSettingsPage() {
             <ListSection title="安全" className="mt-6">
               <ListRow icon={KeyRound} tone="sun" title="修改密码" description="定期更换更安全" href="/admin/change-password" />
               <ListRow icon={Mail} tone="clay" title="邮箱" description={info?.email || '未绑定（用于找回密码）'} href="/admin/settings" />
+            </ListSection>
+
+            {/* 相册与纪念日：纪念相册（像素 / 银河）的解锁口令 = 纪念日 */}
+            <ListSection title="相册与纪念日" className="mt-6">
+              <ListRow
+                icon={Heart}
+                tone="blush"
+                title="纪念日与相册锁"
+                description={lockDescription}
+                href="/me/album-lock"
+              />
             </ListSection>
 
             {/* 内容与数据 */}

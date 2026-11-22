@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
+  ArrowLeft,
   CalendarDays,
   Check,
   ChevronDown,
-  ChevronLeft,
   CloudOff,
   Images,
   LayoutGrid,
@@ -367,11 +367,11 @@ export default function TravelDetailMobile({
     <div className="min-h-dvh bg-[var(--m-bg)] pb-[calc(160px+env(safe-area-inset-bottom))] text-[var(--m-text)]">
       {/* 顶栏：返回 + 标题省略 + ⋯（编辑信息 / 删除 / 分享） */}
       <header
-        className="m-glass sticky top-0 z-40 flex items-center gap-1 px-2"
+        className="m-nav-toolbar sticky top-0 z-40"
         style={{ paddingTop: 'var(--m-safe-top)' }}
       >
-        <IconButton icon={ChevronLeft} label="返回旅行记录" variant="plain" onClick={onBack} />
-        <span className="m-body min-w-0 flex-1 truncate text-center font-medium">{travel.title}</span>
+        <IconButton icon={ArrowLeft} label="返回旅行记录" variant="plain" className="m-nav-icon" onClick={onBack} />
+        <span className="m-nav-toolbar-title">{travel.title}</span>
         {/*
           编辑入口重新设计：从"藏在 ⋯ 菜单里"改成顶栏上一个**可见的「编辑」**。
           真机反馈的"新建完以后能在哪个地方进一步修改，入口也没显示出来"就是这里。
@@ -380,13 +380,13 @@ export default function TravelDetailMobile({
           <button
             type="button"
             onClick={onEdit}
-            className="m-pressable flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[14px] font-medium text-[var(--m-accent-strong)]"
+            className="m-nav-toolbar-action"
           >
             <Icon icon={Pencil} size="sm" />
             编辑
           </button>
         )}
-        <IconButton icon={MoreHorizontal} label="更多操作" variant="plain" onClick={() => setMoreOpen(true)} />
+        <IconButton icon={MoreHorizontal} label="更多操作" variant="plain" className="m-nav-icon" onClick={() => setMoreOpen(true)} />
       </header>
 
       {/*

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Settings2, Feather, Heart } from 'lucide-react'
+import { Settings2, Heart, Sparkles } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
 import MomentsContent from '@/components/moments/MomentsContent'
 import ManageEntry from '@/components/layout/ManageEntry'
@@ -38,7 +38,7 @@ export default function MomentsPage() {
 
           <header className="mb-8 hidden text-center md:block">
             <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-travel-sakura/60 to-travel-bloom/30 px-4 py-1.5 text-sm font-medium text-travel-accent dark:from-travel-accent/25 dark:to-travel-bloom/20 dark:text-travel-accentSoft">
-              <Icon icon={Feather} size="sm" />
+              <Icon icon={Sparkles} size="sm" />
               <span>碎碎念</span>
             </div>
             <h1 className="mx-auto mt-4 max-w-xl text-2xl font-bold leading-snug text-travel-inkStrong sm:text-3xl dark:text-shell-text">
@@ -54,14 +54,16 @@ export default function MomentsPage() {
           <div className="md:hidden">
             <LargeTitle
               title="碎碎念"
-              subtitle="生活里的灵光、随想与小确幸"
+              eyebrow="甜途 · 随笔"
+              subtitle="生活里的灵光与随想"
               back="/me"
               trailing={
                 <ManageEntry
                   href="/admin/moments"
                   label="管理"
+                  title="管理碎碎念"
                   icon={<Icon icon={Settings2} size="sm" />}
-                  className="rounded-full px-2.5 py-1.5 text-xs text-[var(--m-muted)] transition-colors active:bg-[var(--m-accent-soft)] active:text-[var(--m-accent-strong)]"
+                  className="m-nav-pill"
                 />
               }
             />

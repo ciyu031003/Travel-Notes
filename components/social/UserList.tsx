@@ -3,14 +3,24 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, Users } from 'lucide-react'
+import { Loader2, Users } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
+import { LargeTitle } from '@/components/mobile/LargeTitle'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
-import { goBackOrHome } from '@/lib/navigation'
 import { circleUserHref } from '@/lib/routes'
 
-export default function UserList({ endpoint, title }: { endpoint: string; title: string }) {
+export default function UserList({
+  endpoint,
+  title,
+  eyebrow,
+  subtitle,
+}: {
+  endpoint: string
+  title: string
+  eyebrow?: string
+  subtitle?: string
+}) {
   const router = useRouter()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,21 +33,14 @@ export default function UserList({ endpoint, title }: { endpoint: string; title:
     <div className="min-h-dvh bg-[var(--ui-social-bg)] pb-28 text-[var(--ui-social-text)]">
       {/* m-safe-top：同「我的收藏」，避免标题栏与状态栏重叠 */}
       <div className="m-safe-top relative mx-auto max-w-2xl px-4 pb-6">
-        <header className="mb-8 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => goBackOrHome(router, '/me')}
-            aria-label="返回上一级"
-            className="m-pressable flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] transition-colors hover:text-[var(--ui-social-text)]"
-          >
-            <Icon icon={ArrowLeft} size="md" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="m2-eyebrow">PEOPLE</p>
-            <h1 className="mt-0.5 text-[26px] font-bold leading-[32px] tracking-[-0.03em]">{title}</h1>
-          </div>
-          <SocialThemeToggle />
-        </header>
+        {/* 统一页头（B）：与 /me 其它二级页同一套返回键 / 眉标 / 衬线标题 */}
+        <LargeTitle
+          title={title}
+          eyebrow={eyebrow}
+          subtitle={subtitle}
+          back="/me"
+          trailing={<SocialThemeToggle className="m-nav-icon" />}
+        />
         {loading ? (
           <div className="py-20 text-center text-[var(--ui-social-faint)]"><Icon icon={Loader2} size="md" className="mx-auto animate-spin" /></div>
         ) : users.length === 0 ? (

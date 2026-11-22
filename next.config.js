@@ -59,6 +59,9 @@ function resolveRemotePatterns() {
 
 const nextConfig = {
   reactStrictMode: true,
+  // 并行验证用：多个会话/构建同时跑同一份源码时，用独立 distDir 避免互相覆盖 .next
+  // （默认仍是 .next，不影响任何既有构建/部署流程）。
+  distDir: process.env.NEXT_DIST_DIR?.trim() || '.next',
   // 移动端本地壳（Stage 3.0b）：MOBILE_EXPORT=1 时做静态导出（输出到 out/，再由脚本拷到 www/）。
   // Web/服务器构建不设该变量，保持 SSR/ISR 正常。
   output: MOBILE_EXPORT ? 'export' : undefined,
@@ -75,6 +78,26 @@ const nextConfig = {
   // - 类型检查默认保留；极端低内存服务器可设置 SKIP_TSC=1 跳过（不推荐）
   typescript: {
     ignoreBuildErrors: process.env.SKIP_TSC === '1',
+  },
+  experimental: {
+    /**
+     * 客户端 Router Cache（移动端切页体感，2026-11-21 性能专项 D）
+     *
+     * Next 16 默认 staleTimes.dynamic = 0：动态路由（本项目首页 / 是 ƒ 动态渲染）
+     * 每次返回都重新发一次 RSC 请求并整页重渲染，移动端 tab 来回切时表现为
+     * 「白一下 / 顿一下」。这里给 30s 窗口：首页 ⇄ /travel ⇄ /circle ⇄ /me
+     * 在 30s 内复用已缓存的 RSC 负载（数据新鲜度仍由各页接口缓存 + 聚焦重取负责，
+     * 见 lib/client/use-api.ts、hooks/use-travel-list.ts）。
+     * static 保持框架默认（300s），不在此覆盖。
+     */
+    staleTimes: { dynamic: 30 },
+    /**
+     * 注意：optimizePackageImports 对 lucide-react / date-fns 已是 **Next 内置默认**
+     * （见 node_modules/next/dist/server/config.js 的默认列表），重复声明是空操作，
+     * 故此处不再列出。本项目其它 barrel 包（react-virtuoso / motion / gsap / three）
+     * 均为单文件发布、没有可深导入的子路径，声明后会把 pkg/Member 解析到不存在的
+     * 文件导致构建失败，因此也不加入 —— 对这几者的收益改由「按需 dynamic 导入」实现。
+     */
   },
 }
 

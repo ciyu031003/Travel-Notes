@@ -106,6 +106,10 @@
   --palette-mobile-safe-top-40: calc(var(--m-system-top) + 40px);
   --palette-mobile-safe-top-48: calc(var(--m-system-top) + 48px);
   --palette-mobile-icon-sm: 16px;
+  /* 图标 md/lg 档位：过去误接到 radius-card(18px)/radius-sheet(24px)，
+     md 实际渲染 18px 与《移动端设计规范》§5.2 的 20px 不符（B 轮实测发现）。 */
+  --palette-mobile-icon-md: 20px;
+  --palette-mobile-icon-lg: 24px;
   --palette-mobile-icon-stroke: 2;
   --palette-mobile-icon-stroke-lg: 1.75;
   --palette-mobile-tab-h: 64px;
@@ -540,8 +544,8 @@ html.dark [data-space='SOLO'] {
   --ui-mobile-safe-top-40: var(--palette-mobile-safe-top-40);
   --ui-mobile-safe-top-48: var(--palette-mobile-safe-top-48);
   --ui-mobile-icon-sm: var(--palette-mobile-icon-sm);
-  --ui-mobile-icon-md: var(--palette-mobile-radius-card);
-  --ui-mobile-icon-lg: var(--palette-mobile-radius-sheet);
+  --ui-mobile-icon-md: var(--palette-mobile-icon-md);
+  --ui-mobile-icon-lg: var(--palette-mobile-icon-lg);
   --ui-mobile-icon-stroke: var(--palette-mobile-icon-stroke);
   --ui-mobile-icon-stroke-lg: var(--palette-mobile-icon-stroke-lg);
   --ui-mobile-tab-h: var(--palette-mobile-tab-h);

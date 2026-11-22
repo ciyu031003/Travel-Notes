@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import TravelComposerForm from '@/components/travel/TravelComposerForm'
 import { travelDetailHref } from '@/lib/routes'
+import { invalidateTravelListSnapshot } from '@/hooks/use-travel-list'
 
 /**
  * 移动端新建旅行专用页（独立全屏页面，非弹窗）。
@@ -24,6 +25,9 @@ export default function TravelNewPage() {
     <TravelComposerForm
       onBack={() => router.replace('/travel')}
       onCreated={({ slug }) => {
+        // 列表快照必须失效：否则「新建 → 进详情 → 返回列表」会命中旧快照，
+        // 用户看不到刚建的那本（快照见 hooks/use-travel-list.ts）。
+        invalidateTravelListSnapshot()
         // 本地壳离线新建时也返回本地 slug：详情页会走本地兜底渲染，
         // 不再因为"云端还没有这本旅行"而显示「旅行不存在」。
         router.replace(slug ? travelDetailHref(slug) : '/travel')
