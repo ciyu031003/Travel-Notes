@@ -1,3 +1,57 @@
+## [1.30.1] - 2026-11-22
+
+> 本批四件事（真机反馈驱动）：① 账号设置里补上「相册纪念日」入口，并把占位的像素风
+> 锁屏整体砍掉、换成与移动端 UI 同语言的新锁屏；② 二级/三级页顶部标题与图标精修；
+> ③ 旅程页地图省份抽屉的弹出/切换不再突兀卡顿；④ 移动端全面性能优化（切页、打开相册、
+> 地图点击）。已发版为 **1.30.1 / build 65**。
+
+### Added
+
+- **「我的 → 账号设置」新增「相册与纪念日」区块**：直接回显纪念相册的真实生效口令
+  （未单独设置时会标注「取自纪念日记录」——服务端在 `anniversaryStart` 为空时会退回
+  最早的纪念日记录当口令，因此「没设置 ≠ 不设锁」），点进 `/me/album-lock` 修改。
+- 新增 `components/album/AlbumLockDialog.tsx`：全 App 唯一的解锁弹窗（锁屏页、其它入口共用）。
+
+### Changed
+
+- **像素风锁屏整体移除**：删除 `PixelUnlockModal`、`SpaceUnlockModal`、`AlbumUnlockModal`
+  与相册未解锁态的双皮肤分支（羊皮纸、zpix 像素字、MC 按钮、书角、星夜背景全部不再出现）；
+  新锁屏为 V6 暖粉奶油语言：眉标 + 衬线大标题 + 20px 圆角白卡 + 玫瑰 CTA + 44px 圆形玻璃按钮，
+  保留自动聚焦、错误 aria-live、ESC/返回键关闭、焦点圈定与「没有纪念日？直接进入」逃生口。
+- **二级/三级页统一 V6 页头**：44px 圆形玻璃返回键独占工具行 → eyebrow 小字 → 衬线大标题
+  → muted 副标题；滚动折叠栏同步重做（毛玻璃 + 0.5px hairline + 居中标题），并修掉短页面
+  「两个标题重影」。覆盖 /sync、/search、/moments、/timeline、关注·粉丝、收藏、通知、
+  旅行圈详情与用户主页、空间详情、`/travel/[slug]` 三级页 sticky 工具栏。
+- 页头/工具栏图标统一走 `Icon`（sm16 / md20 / lg24），5 个文件不再直接 import lucide。
+
+### Fixed
+
+- **全局图标尺寸 bug**：`--ui-mobile-icon-md` 误接到 18px 的 `--palette-mobile-radius-card`，
+  全站 md 档图标实际只有 18px（规范 20px）；补齐 `--palette-mobile-icon-md/lg` 并改正映射。
+- **新建旅行后回列表看不到新条目**：旅行列表加了 30s 快照后，「新建 → 详情 → 返回」会命中旧
+  快照；现在写入成功即失效快照，且快照只影响首帧渲染、后台照常对齐。
+- `useApi` 的「聚焦重取」此前读的是快照本身（等于没重取），改为绕过快照重取。
+
+### Performance
+
+- **省份抽屉**：恒定全高面板 + `translateY` 两个吸附位（去掉每帧布局的 `transition-[height]`）、
+  弹簧进出场、关闭播完退场动画再卸载、把手/标题栏拖拽跟手带甩动判定；半屏也能滚内容。
+  实测（390×844，4× CPU 降速）：点击→吸附稳定 1366ms → 841ms（-39%），抽屉窗口掉帧占比
+  19% → 5.5%，地图平移 long task 9 次/643ms → 3 次/222ms。
+- **地图**：投影/path/centroid/bounds 与城市点全部预计算缓存，`MapPaths` 拆静态/选中/城市点
+  分层 memo，「其余省份变暗」与悬停高亮改 CSS，点选不再重渲染 34 条带滤镜路径。
+- **切页**：`useApi` 快照优先 + 并发去重 + 聚焦重取；底部 tab 意图预取 + 空闲预热；
+  `experimental.staleTimes.dynamic = 30`，tab 回退不再白屏重取 RSC。
+- **相册**：首屏不再等 `/api/album`（默认「旅行画册」模式不需要），7 个非默认渲染器改为
+  `dynamic({ssr:false})`，阅读器改手写 loader（398ms → 90ms）；`/album` 首屏 JS 310KB→292KB，
+  LCP 552ms→368ms；打开画册墙 150ms→92ms、打开一本画册 231ms→90ms、/travel 回访 140ms→26ms。
+
+### Changed · 工程
+
+- `next.config.js` 支持 `NEXT_DIST_DIR`（并行构建/验证时不互相覆盖 `.next`，默认行为不变）。
+- 新增 `app/mobile-lock.css` / `app/mobile-nav.css` / `app/mobile-sheet.css`，由
+  `app/mobile-v6.css` 统一 `@import`（不占用 `globals.css`，避免多会话并行改同一文件）。
+
 ## [1.29.1] - 2026-10-27
 
 ### Fixed

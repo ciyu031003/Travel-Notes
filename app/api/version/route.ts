@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || 'V6 融合移动端 UI：品牌顶栏、编辑式首页、夜色模式、卡片/导航与画册壳层；功能与后端不变',
+    changelog: process.env.APP_CHANGELOG || '相册纪念日可在「我的 → 账号设置」设置，锁屏改版（移除像素风）；二级/三级页顶部标题与图标统一精修；旅程地图省份抽屉重做、开启与切换更顺滑；切页、相册加载与地图点击整体提速',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
