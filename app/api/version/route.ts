@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '相册纪念日可在「我的 → 账号设置」设置，锁屏改版（移除像素风）；二级/三级页顶部标题与图标统一精修；旅程地图省份抽屉重做、开启与切换更顺滑；切页、相册加载与地图点击整体提速',
+    changelog: process.env.APP_CHANGELOG || '启动与加载提速：字体子集化并把中文衬线移出首屏关键路径、品牌图 75KB→1.3KB、旅程地图 GeoJSON 改为首屏后懒加载；首页桌面树移出移动包（首屏 JS 476→268KB）；接口数据本地快照优先，热启动直接出内容；列表与相册改用缩略图变体（单图 8MB→24KB）；启动图与 WebView 底色改为品牌奶油色，不再闪白',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

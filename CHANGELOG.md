@@ -1,3 +1,43 @@
+## [1.30.2] - 2026-11-23
+
+> 本轮只做「打开/加载更快」，且尽量把成本挪进安装包（APK 从 15MB 起，仍有空间）：
+> 字体子集化 + 中文衬线移出关键路径、地图 GeoJSON 首屏后懒加载、首页桌面树移出移动包、
+> 接口数据本地快照优先、列表图片改缩略图变体、启动零白屏。已发版为 **1.30.2 / build 66**。
+
+### Performance
+
+- **字体**：`scripts/subset-fonts.mjs`（fontTools）把 7 个字体子集化（合计 298KB → 150KB，
+  Source Serif 105KB → 29KB），并给衬线体补上 `unicode-range` —— 此前 /album 首屏被
+  「中文也用这个拉丁字体」拖住，首帧要多等一次字体请求；现降到与其它页同级。
+  （实测过 `preload as=font` 与 `font-display: optional` 都更慢，已回退并在代码里留证。）
+- **品牌图**：`logo-512.png`（75KB、首屏被请求两次）→ `sharp` 生成 96/160 的 webp/png，
+  `BrandLogo` 用 `<picture>` + srcset，页面实际只请求 1.3KB 的 webp。
+- **首页 JS 瘦身**：桌面首页树（弹幕 / 碎片条 / 图表小件，移动端一直 CSS 隐藏却照样打包解析）
+  改为 `next/dynamic` 且移动静态壳不渲染它；首屏 JS **476KB → 268KB(gz)**。
+- **地图 GeoJSON 懒加载**：/travel 首屏原本立即拉 202KB(gz) 的 china geo chunk，现改为
+  内容画完 + 进入视口/空闲时才加载（固定高度骨架，CLS=0）；首页足迹地图同样按「露出即加载」。
+- **本地优先水合**：新增 `lib/client/persisted-cache.ts`（localStorage 快照，带 schema 版本 /
+  TTL / 大小预算 / 配额降级），`useApi`、`useTravelList`、`useAlbumData`、首页与画册墙
+  首帧先渲染上次的真实数据，再后台校准。断网打开可 445ms 出完整首页；退出登录清空全部快照。
+- **首屏接口瀑布**：`check-auth` 三处调用收口为一份共享探测并按视口门控（桌面专属 chrome
+  在手机上不再发请求）、弹幕/通知等延后到首帧后；首页内容出现前的接口 5 → 0（有快照时）。
+- **图片**：新增 `components/mobile/RemoteImage` + `lib/media/variant-url.ts`，旅程列表 /
+  相册照片墙 / 相册封面 / 时间线封面改用 `-thumbnail` 变体（服务端 `/api/uploads` 按需生成并
+  缓存，失败逐级回退原图）：单张 8.7MB → 24KB（约 1/363），模糊占位 + `loading=lazy` +
+  明确宽高，实测 CLS ≈ 0。
+- **启动观感**：Android 启动主题的 `windowBackground` 由 `@null` 改为品牌底色、
+  `core-splashscreen` 补 `windowSplashScreenBackground/postSplashScreenTheme`，
+  Capacitor `backgroundColor=#FFF6F8` —— 启动图 → 空壳 → 首帧全程同色，不再闪白。
+- **预连接/预取**：壳内对 API 域名输出 `preconnect`（credentials）+ `dns-prefetch`；
+  底部四 tab 的预取从「2.5s 超时的 idle」改为首帧后 200ms。
+- 打包瘦身：`build-mobile.cjs` 剔除未被引用的原始全量字体（约 148KB）。
+
+### Fixed
+
+- `/me/settings`：本地快照与网络校准会让 `/api/me` 数据到达两次，原先会覆盖用户正在输入的
+  昵称/签名；现在用户一旦编辑就不再被后台数据覆盖。
+- 退出登录未清理本地快照（换账号会先看到上一个账号的首页/旅程/相册内容）→ 一并清理。
+
 ## [1.30.1] - 2026-11-22
 
 > 本批四件事（真机反馈驱动）：① 账号设置里补上「相册纪念日」入口，并把占位的像素风

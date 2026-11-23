@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   启动期品牌色（2026-11-23 性能专项）。
-  背景取移动端页面底色 --m-bg（#FFF6F8），用于：
+  背景取移动端页面底色 m-bg（#FFF6F8），用于：
     ① 启动主题的 windowSplashScreenBackground（Android 12+ 系统启动屏底色）
     ② 无启动屏阶段的 windowBackground（避免 splash 消失后闪一下白/黑）
   与 android/app/src/main/res/values/ic_launcher_background.xml 的 #fefefa 同族。
