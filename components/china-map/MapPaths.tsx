@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useState } from 'react'
+import { MAP_STAGE_SHADOW_FILTER } from '@/lib/map-artifact'
 import { ChinaMapColors as colors, easyTapProvinceIds, type CityDot, type ProvincePath } from './types'
 import type { City } from '@/data/cities'
 
@@ -49,7 +50,7 @@ function MapPathsInner({
       viewBox={'0 0 ' + width + ' ' + height}
       className={selectedProvince ? 'w-full h-full m-map-dimmed' : 'w-full h-full'}
       style={{
-        filter: 'drop-shadow(0 16px 26px rgba(168,200,220,0.18))',
+        filter: MAP_STAGE_SHADOW_FILTER,
         pointerEvents: 'auto',
       }}
       role="img"

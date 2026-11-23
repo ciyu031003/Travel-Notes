@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "eslint app components hooks lib --max-warnings=460",
+    "map:artifact": "node scripts/gen-map-artifact.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

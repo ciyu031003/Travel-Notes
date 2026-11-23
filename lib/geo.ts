@@ -1,3 +1,13 @@
+/**
+ * ⚠️ F1（2026-11-23）起**客户端不再 import 本模块**。
+ *
+ * 地图几何（投影后的 path / 质心 / 包围盒 / 城市点位）已改为构建期预计算：
+ *   · 生成脚本：scripts/gen-map-artifact.mjs（npm run map:artifact）
+ *   · 客户端入口：lib/map-artifact.ts + public/map/china-paths.v1.json
+ * 本文件保留为「投影/裁剪逻辑的参考实现」（与生成脚本逐项一致），并被
+ * scripts/gen-map-artifact.mjs 的注释引用。任何客户端组件重新 import 它，
+ * 都会把 d3-geo + 582KB 的 data/china-geo.json 重新拖回客户端 bundle —— 不要这么做。
+ */
 import { geoArea, geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import rawChina from "@/data/china-geo.json";
 import { provinces } from "@/data/provinces";

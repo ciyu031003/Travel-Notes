@@ -1,13 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import {
-  chinaFeatures,
-  dashLineFeature,
-  makeProjection,
-  makePath,
-  provinceIdOf,
-} from '@/lib/geo'
+import { provinceGeometries, useMapArtifact } from '@/lib/map-artifact'
 
 const WIDTH = 1100
 const HEIGHT = 860
@@ -19,22 +13,24 @@ interface DoorMapProps {
 /**
  * 地图门的门面：中国地图线稿（真实地理数据，非插画）。
  * 颜色由父级通过 CSS 变量 --door-map-fill / --door-map-stroke 控制，便于明暗主题切换。
+ *
+ * F1（2026-11-23）：几何改为构建期产物（public/map/china-paths.v1.json），
+ * 不再 import lib/geo（582KB GeoJSON + d3-geo 曾被这一段门面图一起拖进客户端）。
+ * 产物到达前渲染空 SVG（本组件由 LoginDoor 动态挂载、门扇开合动画 1.1s，空帧不可见）。
  */
 export default function DoorMap({ className }: DoorMapProps) {
+  const artifact = useMapArtifact()
   const { paths, dashPath } = useMemo(() => {
-    const projection = makeProjection(WIDTH, HEIGHT, 24)
-    const pathGen = makePath(projection)
-    const provincePaths = chinaFeatures.map((feature) => ({
-      id: provinceIdOf(feature),
-      d: pathGen(feature as never) || '',
-    }))
-    const dash = dashLineFeature ? pathGen(dashLineFeature as never) || '' : ''
-    return { paths: provincePaths, dashPath: dash }
-  }, [])
+    if (!artifact) return { paths: [] as { id: string; d: string }[], dashPath: '' }
+    return {
+      paths: provinceGeometries(artifact).map((province) => ({ id: province.id, d: province.d })),
+      dashPath: artifact.dashLine || '',
+    }
+  }, [artifact])
 
   return (
     <svg
-      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      viewBox={'0 0 ' + WIDTH + ' ' + HEIGHT}
       preserveAspectRatio="xMidYMid slice"
       className={className}
       aria-hidden="true"

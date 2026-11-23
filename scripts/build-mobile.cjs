@@ -95,6 +95,21 @@ if (gradleVersion && (process.env.NEXT_PUBLIC_APP_VERSION || process.env.NEXT_PU
   }
 }
 
+/**
+ * 清理「上一次 dev server 留下的路由类型」再构建。
+ *
+ * 背景（2026-11-23 两次踩坑）：dev server 会在 distDir/dev/types 写出 validator.ts，
+ * 里面 import 了全部 app/api/** 路由；而静态导出前这些目录被 moveOut 移走，
+ * 于是 next build 的 TypeScript 阶段会报一堆 TS2307 而失败 —— 与源码无关。
+ * 每次构建前删掉 dev 产物，构建就与「是否刚跑过 dev」无关。
+ */
+for (const devTypes of [path.join(root, '.next', 'dev'), path.join(root, '.tmp', 'next-lead', 'dev')]) {
+  if (fs.existsSync(devTypes)) {
+    fs.rmSync(devTypes, { recursive: true, force: true })
+    console.log('[build-mobile] 已清理 dev 路由类型：' + path.relative(root, devTypes))
+  }
+}
+
 moveOut()
 try {
   execSync('npx next build', {

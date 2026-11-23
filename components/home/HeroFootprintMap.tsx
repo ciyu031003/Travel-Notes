@@ -1,39 +1,32 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { getProvinceByAdcode } from '@/data/provinces'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { postPhotoCount } from '@/lib/home/photo-count'
+import { loadMapArtifact, type ArtifactProvince, type MapArtifact } from '@/lib/map-artifact'
 import type { PostMeta } from '@/components/ChinaMap'
 
 const WIDTH = 1100
 const HEIGHT = 860
 
 /**
- * 地理数据按需加载（首屏 JS 瘦身 · E1 追加，2026-11-21）
+ * 几何数据按需加载（F1，2026-11-23：几何预计算进安装包）
  * ---------------------------------------------------------------------------
- * lib/geo 静态引入 569KB 的中国 GeoJSON + d3-geo，构建后是**约 202KB gz** 的独立 chunk
- * （实测：入口 HTML 首屏脚本 ~250KB gz，这一份就占了其中的大头，首页总 JS 因此到 ~476KB gz）。
- * 而这张插图在移动端首页位于「足迹卡片」里（首屏之下），桌面端也在 hero 下方 ——
- * 用户往往还没滚动到就先为它付了 202KB 的下载 + 解析/投影计算（4× CPU 节流下尤其明显）。
+ * 旧实现动态 import('@/lib/geo')：569KB 的中国 GeoJSON + d3-geo（约 202KB gz 的独立 chunk），
+ * 拿到后还要在客户端做投影 + 34 路径生成 + 每省质心计算。
  *
- * 现在改成两段式：
- *  ① IntersectionObserver 等宿主容器**进入视口（含 300px 预取余量）**；
- *  ② 再动态 import('@/lib/geo')，拿到数据后做投影与路径计算。
- * 未进入视口时只渲染一个同尺寸的空容器（父级卡片本身有渐变底色与覆盖条，视觉上不跳动、
- * 也不出现骨架闪烁）；进入视口后 SVG 直接画在同一个容器里，不产生布局位移。
+ * 现在几何在构建期算好（scripts/gen-map-artifact.mjs → public/map/china-paths.v1.json），
+ * 这里只 fetch 一次 JSON（模块级 Promise 去重，与 ChinaMap 共享同一次请求）：
+ * 拿到省份路径与质心直接用，客户端零投影。
  *
- * 另一个收益：桌面首页那棵树在移动端是 CSS 隐藏的（HomePageClient 同时挂了两棵树），
- * display:none 的元素不会被 IntersectionObserver 判定为 intersecting，所以移动端
- * **不会**因为隐藏的桌面树而偷偷加载这份地理数据。
+ * 仍然是两段式（这张插图在移动端首页位于「足迹卡片」里，首屏之下）：
+ *  ① IntersectionObserver 等宿主容器**进入视口**；
+ *  ② 再 fetch 产物，拿到后画 SVG。
+ * 未进入视口时只渲染同尺寸空容器（父级卡片本身有渐变底色，不跳动、不闪骨架）；
+ * display:none 的隐藏树不会被判定为 intersecting，所以移动端不会因桌面树偷偷加载。
  */
-type GeoModule = typeof import('@/lib/geo')
-
-/** 同一个页面里两棵树都会用到：模块级 Promise 保证只下载/求值一次 */
-let geoModulePromise: Promise<GeoModule> | null = null
-function loadGeoModule(): Promise<GeoModule> {
-  if (!geoModulePromise) geoModulePromise = import('@/lib/geo')
-  return geoModulePromise
-}
+type ArtifactProvinceWithName = ArtifactProvince & { name: string }
 
 /**
  * 地图调色板（本文件内集中声明一次）。
@@ -75,9 +68,9 @@ interface HeroFootprintMapProps {
  */
 export default function HeroFootprintMap({ posts, countBadges = true }: HeroFootprintMapProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
-  /** 是否已经进入（或接近）视口 —— 决定要不要去拉 202KB gz 的地理数据 */
+  /** 是否已经进入（或接近）视口 —— 决定要不要去拉几何产物 */
   const [nearViewport, setNearViewport] = useState(false)
-  const [geo, setGeo] = useState<GeoModule | null>(null)
+  const [artifact, setArtifact] = useState<MapArtifact | null>(null)
 
   // ① 视口门控：进入视口前不加载地理数据（首屏 JS 里不再包含它）
   useEffect(() => {
@@ -108,32 +101,34 @@ export default function HeroFootprintMap({ posts, countBadges = true }: HeroFoot
     return () => io.disconnect()
   }, [])
 
-  // ② 动态加载地理模块（同一个页面/两棵树共享同一个 Promise）
+  // ② 加载几何产物（模块级 Promise 去重：首页 hero 与 /travel 地图共用一次请求）
   useEffect(() => {
-    if (!nearViewport || geo) return
+    if (!nearViewport || artifact) return
     let cancelled = false
-    loadGeoModule()
-      .then((mod) => {
-        if (!cancelled) setGeo(mod)
-      })
-      .catch(() => {
-        // 拉取失败（弱网）：保持只有容器底色，不阻塞页面其它部分；下次进入页面会重试
-        geoModulePromise = null
-      })
+    loadMapArtifact().then(
+      (value) => {
+        if (!cancelled) setArtifact(value)
+      },
+      () => {
+        // 拉取失败：保持只有容器底色，不阻塞页面其它部分（模块级 Promise 已清空，下次进入重试）
+      },
+    )
     return () => {
       cancelled = true
     }
-  }, [nearViewport, geo])
+  }, [nearViewport, artifact])
 
   const derived = useMemo(() => {
-    if (!geo) return null
-    const { chinaFeatures, makeProjection, makePath, provinceIdOf } = geo
-    const projection = makeProjection(WIDTH, HEIGHT, 24)
-    const pathGen = makePath(projection)
-    const provincePaths = chinaFeatures.map((feature) => ({
-      id: provinceIdOf(feature),
-      d: pathGen(feature as never) || '',
-    }))
+    if (!artifact) return null
+    /** 省份 id -> 产物几何（adcode 映射回 id；名称仍来自 data/provinces） */
+    const geometryById = new Map<string, ArtifactProvinceWithName>()
+    const provincePaths: { id: string; d: string }[] = []
+    for (const province of artifact.provinces) {
+      const meta = getProvinceByAdcode(province.adcode)
+      if (!meta) continue
+      geometryById.set(meta.id, { ...province, name: meta.name })
+      provincePaths.push({ id: meta.id, d: province.d })
+    }
 
     const byProvince = new Map<string, { count: number; photos: number; first: number; name: string }>()
     for (const post of posts) {
@@ -159,16 +154,12 @@ export default function HeroFootprintMap({ posts, countBadges = true }: HeroFoot
     const dots: { id: string; x: number; y: number; count: number; photos: number; name: string }[] = []
     const centroids: [number, number][] = []
     for (const [id, info] of ordered) {
-      const feature = chinaFeatures.find((f) => provinceIdOf(f) === id)
-      if (!feature) continue
-      const c = pathGen.centroid(feature as never)
-      if (c && Number.isFinite(c[0]) && Number.isFinite(c[1])) {
-        // 四舍五入避免 SSR 与客户端浮点差异导致 hydration mismatch
-        const x = Math.round(c[0] * 100) / 100
-        const y = Math.round(c[1] * 100) / 100
-        centroids.push([x, y])
-        dots.push({ id, x, y, count: info.count, photos: info.photos, name: info.name })
-      }
+      const province = geometryById.get(id)
+      if (!province || !province.centroid) continue
+      // 质心在构建期已四舍五入到 2 位小数，SSR/客户端不会出现浮点差异
+      const [x, y] = province.centroid
+      centroids.push([x, y])
+      dots.push({ id, x, y, count: info.count, photos: info.photos, name: info.name })
     }
 
     let routeD = ''
@@ -219,7 +210,7 @@ export default function HeroFootprintMap({ posts, countBadges = true }: HeroFoot
     }
 
     return { provincePaths, litIds, routeD, dots, labelById, pillById: new Map(pills.map((p) => [p.id, p])) }
-  }, [geo, posts, countBadges])
+  }, [artifact, posts, countBadges])
 
   return (
     <div ref={hostRef} className="h-full w-full">

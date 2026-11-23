@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react'
 import {
-  chinaFeatures,
-  dashLineFeature,
-  makeProjection,
-  makePath,
-  provinceIdOf,
-} from '@/lib/geo'
+  cityPositionIndex,
+  provinceGeometries,
+  useMapArtifact,
+  type MapArtifact,
+  type ProvinceGeometry,
+} from '@/lib/map-artifact'
 import { getProvince } from '@/data/provinces'
 import { getCitiesByProvince, findCityByName, type City } from '@/data/cities'
 import { findProvinceByLocation } from '@/lib/province-map'
@@ -50,121 +50,49 @@ interface TouchState {
 }
 
 /* ============================================================================
- * 模块级几何缓存（性能）
+ * 静态几何：构建期预计算（F1，2026-11-23）
  * ----------------------------------------------------------------------------
- * 旧实现每次点击省份都重新 makeProjection + makePath + pathGen.bounds：
- * 34 个 feature 的投影、path d 串生成、包围盒全部重算一遍，单次十几毫秒 ——
- * 在真机（4x 降速基准里）就是"点一下卡一下"。
- * 这些数据只和「地图尺寸 + 静态 GeoJSON」有关，与 posts / 选中态无关，
- * 因此第一次用到时算一遍、之后全程复用。
+ * 旧实现由本文件在运行期做 d3-geo 投影（makeProjection/makePath + 34 个省份的
+ * path d / centroid / bounds + 每个省的城市投影与碰撞分散）。这些只和「地图尺寸 +
+ * 静态 GeoJSON」有关，却要连带 582KB 的 china-geo.json 与 d3-geo（约 202KB gz 的
+ * 独立 JS chunk）一起进客户端 —— 首屏/切页付下载 + 解析 + 投影计算。
+ *
+ * 现在全部在构建期算好（scripts/gen-map-artifact.mjs → public/map/china-paths.v1.json），
+ * 客户端只 fetch 一次 JSON（模块级 Promise 去重）再做数组/Map 组装：零投影、零路径生成，
+ * 点击省份也从「重算 34 个 feature」变成 O(1) 查表。
+ * 产物（约 363KB JSON / gzip 123KB，随安装包分发）到达前地图容器为空 —— 实测本地
+ * 读取 + JSON.parse 只需约 20ms / 0.4ms，比再塞一份 335KB 的静态底图 SVG 更快
+ * （静态 SVG 反而后到、还要多一次栅格化），故不保留静态底图。
  * ========================================================================== */
-type ProvinceBounds = [[number, number], [number, number]]
-
-interface ProvinceGeometry extends Omit<ProvincePath, 'lit'> {
-  bounds: ProvinceBounds | null
-}
-
 interface MapGeometry {
   provinces: ProvinceGeometry[]
   dashPath: string
   byId: Map<string, ProvinceGeometry>
+  /** 城市点位索引，键 "省份id:城市id"（产物已含碰撞分散与边界内缩） */
+  cityPos: Map<string, { x: number; y: number }>
 }
 
-let projectionCache: ReturnType<typeof makeProjection> | null = null
-let geometryCache: MapGeometry | null = null
+/** artifact 是模块级单例：WeakMap 缓存派生几何（桌面/移动两棵树或多处挂载只组装一次） */
+const geometryCache = new WeakMap<MapArtifact, MapGeometry>()
 
-function getProjection() {
-  if (!projectionCache) projectionCache = makeProjection(width, height, 24)
-  return projectionCache
-}
-
-function getGeometry(): MapGeometry {
-  if (geometryCache) return geometryCache
-  const pathGen = makePath(getProjection())
-  const provinces: ProvinceGeometry[] = chinaFeatures.map((feature) => {
-    const id = provinceIdOf(feature)
-    const province = getProvince(id)
-    const centroid = pathGen.centroid(feature as never)
-    const bounds = pathGen.bounds(feature as never)
-    const hasBounds = !!bounds && Number.isFinite(bounds[0][0]) && Number.isFinite(bounds[0][1])
-    return {
-      id,
-      d: pathGen(feature as never) || '',
-      name: province?.name || id,
-      nameEn: province?.nameEn || id,
-      centroid: centroid[0] || centroid[1] ? [centroid[0], centroid[1]] : null,
-      bounds: hasBounds ? (bounds as ProvinceBounds) : null,
-    }
-  })
-  const dashPath = dashLineFeature ? pathGen(dashLineFeature as never) || '' : ''
-  geometryCache = { provinces, dashPath, byId: new Map(provinces.map((p) => [p.id, p])) }
-  return geometryCache
-}
-
-interface CityDotBase {
-  city: City
-  x: number
-  y: number
-}
-
-/** 省份内城市的投影点（含一次性碰撞分散）：与 posts 无关，按省份缓存 */
-const cityDotBaseCache = new Map<string, CityDotBase[]>()
-
-/**
- * 城市点位的碰撞分散。
- * 旧实现固定 60 轮两两比较、且每次选中省份都重算；现在结果按省份缓存，
- * 并把迭代上限降到 24 轮（MIN_DIST 16px 的密集区通常 6~10 轮就收敛，
- * 60 轮对 20 个城市约 1.1 万次比较，纯属浪费）。
- */
-function getCityDotBase(provinceId: string): CityDotBase[] {
-  const cached = cityDotBaseCache.get(provinceId)
+function getGeometry(artifact: MapArtifact): MapGeometry {
+  const cached = geometryCache.get(artifact)
   if (cached) return cached
-  const projection = getProjection()
-  const dots: CityDotBase[] = []
-  for (const city of getCitiesByProvince(provinceId)) {
-    const projected = projection([city.lng, city.lat])
-    if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) continue
-    dots.push({ city, x: Number(projected[0].toFixed(2)), y: Number(projected[1].toFixed(2)) })
+  const provinces = provinceGeometries(artifact)
+  const geometry: MapGeometry = {
+    provinces,
+    dashPath: artifact.dashLine || '',
+    byId: new Map(provinces.map((province) => [province.id, province])),
+    cityPos: cityPositionIndex(artifact),
   }
-  const MIN_DIST = 16
-  const PAD = 40
-  if (dots.length > 1) {
-    for (let iter = 0; iter < 24; iter++) {
-      let moved = false
-      for (let i = 0; i < dots.length; i++) {
-        for (let j = i + 1; j < dots.length; j++) {
-          let dx = dots[j].x - dots[i].x
-          let dy = dots[j].y - dots[i].y
-          let dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < MIN_DIST) {
-            moved = true
-            if (dist === 0) {
-              dx = 1
-              dy = 0
-              dist = 1
-            }
-            const push = (MIN_DIST - dist) / 2
-            const nx = dx / dist
-            const ny = dy / dist
-            dots[i].x -= nx * push
-            dots[i].y -= ny * push
-            dots[j].x += nx * push
-            dots[j].y += ny * push
-          }
-        }
-      }
-      if (!moved) break
-    }
-  }
-  for (const dot of dots) {
-    dot.x = Math.max(PAD, Math.min(width - PAD, dot.x))
-    dot.y = Math.max(PAD, Math.min(height - PAD, dot.y))
-  }
-  cityDotBaseCache.set(provinceId, dots)
-  return dots
+  geometryCache.set(artifact, geometry)
+  return geometry
 }
 
 export default function ChinaMap({ posts, externalPanel = false, onProvinceSelect, onCitySelect, resetToken }: ChinaMapProps) {
+  /** 构建期几何产物（fetch 一次 + 模块级去重；到达前地图容器为空，见文件头注释） */
+  const artifact = useMapArtifact()
+  const geometry = artifact ? getGeometry(artifact) : null
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedCity, setSelectedCity] = useState<City | null>(null)
   const [showCityModal, setShowCityModal] = useState(false)
@@ -232,11 +160,11 @@ export default function ChinaMap({ posts, externalPanel = false, onProvinceSelec
     return cityPostMap
   }, [posts])
 
-  /** 静态几何 + 是否点亮（只有 posts 变化时才重建数组，d/centroid/bounds 复用缓存） */
+  /** 静态几何 + 是否点亮（artifact 到达/ posts 变化时才重建数组，d/centroid/bounds 直接来自产物） */
   const paths = useMemo<ProvincePath[]>(() => {
-    const geo = getGeometry()
+    if (!geometry) return []
     const litProvinceIds = new Set(postsByProvince.keys())
-    return geo.provinces.map((province) => ({
+    return geometry.provinces.map((province) => ({
       id: province.id,
       d: province.d,
       name: province.name,
@@ -244,8 +172,8 @@ export default function ChinaMap({ posts, externalPanel = false, onProvinceSelec
       centroid: province.centroid,
       lit: litProvinceIds.has(province.id),
     }))
-  }, [postsByProvince])
-  const dashPath = useMemo(() => getGeometry().dashPath, [])
+  }, [geometry, postsByProvince])
+  const dashPath = geometry?.dashPath ?? ''
   /** 选中省份的几何对象：引用来自 paths（稳定），选中叠加层据此单独渲染 */
   const selectedPath = useMemo(
     () => (selectedProvince ? paths.find((p) => p.id === selectedProvince) ?? null : null),
@@ -262,20 +190,24 @@ export default function ChinaMap({ posts, externalPanel = false, onProvinceSelec
     return citiesByPostLocation.get(key) || []
   }, [selectedCity, selectedProvince, citiesByPostLocation])
 
-  /** 城市圆点：投影/碰撞结果按省份缓存，这里只叠加「有没有记录」 */
+  /** 城市圆点：点位来自产物（已含投影 + 碰撞分散 + 边界内缩），这里只叠加「有没有记录」 */
   const cityDots = useMemo<CityDot[]>(() => {
-    if (!selectedProvince) return []
-    return getCityDotBase(selectedProvince).map((base) => {
-      const postsOfCity = citiesByPostLocation.get(base.city.name + '-' + selectedProvince)
-      return {
-        city: base.city,
-        x: base.x,
-        y: base.y,
+    if (!geometry || !selectedProvince) return []
+    const dots: CityDot[] = []
+    for (const city of getCitiesByProvince(selectedProvince)) {
+      const pos = geometry.cityPos.get(selectedProvince + ':' + city.id)
+      if (!pos) continue
+      const postsOfCity = citiesByPostLocation.get(city.name + '-' + selectedProvince)
+      dots.push({
+        city,
+        x: pos.x,
+        y: pos.y,
         hasPosts: !!postsOfCity && postsOfCity.length > 0,
         count: postsOfCity?.length ?? 0,
-      }
-    })
-  }, [selectedProvince, citiesByPostLocation])
+      })
+    }
+    return dots
+  }, [geometry, selectedProvince, citiesByPostLocation])
 
   // ── 鼠标悬停：事件委托 + 只在换省份时 setState（不再从 MapPaths 传 hover props）──
   const handleHoverOver = useCallback((event: React.MouseEvent) => {
@@ -501,7 +433,7 @@ export default function ChinaMap({ posts, externalPanel = false, onProvinceSelec
   const focusProvince = useCallback((provinceId: string) => {
     const rect = containerRef.current?.getBoundingClientRect()
     if (!rect || rect.width === 0 || rect.height === 0) return
-    const bounds = getGeometry().byId.get(provinceId)?.bounds
+    const bounds = geometry?.byId.get(provinceId)?.bounds
     if (!bounds) return
     const [topLeft, bottomRight] = bounds
     const vbW = Math.max(1, bottomRight[0] - topLeft[0])
@@ -526,7 +458,7 @@ export default function ChinaMap({ posts, externalPanel = false, onProvinceSelec
     setScale(s)
     setOffset({ x: ox, y: oy })
     setLocated(true)
-  }, [])
+  }, [geometry])
 
   const handleProvinceClick = useCallback(
     (provinceId: string) => {
@@ -626,15 +558,17 @@ export default function ChinaMap({ posts, externalPanel = false, onProvinceSelec
           touchAction: 'none',
         }}
       >
-        <MapPaths
-          paths={paths}
-          dashPath={dashPath}
-          selectedProvince={selectedProvince}
-          selectedPath={selectedPath}
-          cityDots={cityDots}
-          onProvinceClick={handleProvinceClick}
-          onCityClick={handleCityClick}
-        />
+        {geometry && (
+          <MapPaths
+            paths={paths}
+            dashPath={dashPath}
+            selectedProvince={selectedProvince}
+            selectedPath={selectedPath}
+            cityDots={cityDots}
+            onProvinceClick={handleProvinceClick}
+            onCityClick={handleCityClick}
+          />
+        )}
         <SouthChinaSeaInset />
       </div>
 

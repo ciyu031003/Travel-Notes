@@ -18,7 +18,10 @@ import type { ChinaMapProps } from '@/components/ChinaMap'
  *   1) 首帧只渲染与地图等高的骨架（父容器本身就是 h-[310px]，不会 CLS）；
  *   2) 骨架进入视口（IntersectionObserver，rootMargin 160px 提前量）后，
  *      再等两帧 rAF + requestIdleCallback 才开始下载地图 chunk —— 保证
- *      「正文已经画出来」才去占带宽；低端机长任务里 rIC 会顺延，最多 1.2s 超时兜底；
+ *      「正文已经画出来」才去占带宽；低端机长任务里 rIC 会顺延，最多 300ms 超时兜底；
+ *      （F1 之后地图几何已改成 363KB 的构建期 JSON、d3-geo 与 582KB GeoJSON 整体移出，
+ *      地图 chunk 只剩很薄的一层渲染代码 —— 原来 1.2s 的 idle 兜底是为了躲 202KB(gz)
+ *      的 geo chunk，现在没必要让首屏地图骨架干等，缩到 300ms。）
  *   3) 用户先摸/点到地图区域时立即挂载（点省份开抽屉不能被 idle 拖住）。
  *
  * 交互契约不变：省份点击仍走 onProvinceSelect → 父级 MobileProvinceDrawer，
@@ -39,10 +42,10 @@ function onIdle(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => {}
   const w = window as IdleWindow
   if (typeof w.requestIdleCallback === 'function') {
-    const id = w.requestIdleCallback(cb, { timeout: 1200 })
+    const id = w.requestIdleCallback(cb, { timeout: 300 })
     return () => w.cancelIdleCallback?.(id)
   }
-  const id = window.setTimeout(cb, 300)
+  const id = window.setTimeout(cb, 150)
   return () => window.clearTimeout(id)
 }
 
