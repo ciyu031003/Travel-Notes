@@ -1,18 +1,39 @@
 'use client'
 
-import { useMemo } from 'react'
-import {
-  chinaFeatures,
-  makeProjection,
-  makePath,
-  provinceIdOf,
-} from '@/lib/geo'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { findProvinceByLocation } from '@/lib/province-map'
 import { postPhotoCount } from '@/lib/home/photo-count'
 import type { PostMeta } from '@/components/ChinaMap'
 
 const WIDTH = 1100
 const HEIGHT = 860
+
+/**
+ * 地理数据按需加载（首屏 JS 瘦身 · E1 追加，2026-11-21）
+ * ---------------------------------------------------------------------------
+ * lib/geo 静态引入 569KB 的中国 GeoJSON + d3-geo，构建后是**约 202KB gz** 的独立 chunk
+ * （实测：入口 HTML 首屏脚本 ~250KB gz，这一份就占了其中的大头，首页总 JS 因此到 ~476KB gz）。
+ * 而这张插图在移动端首页位于「足迹卡片」里（首屏之下），桌面端也在 hero 下方 ——
+ * 用户往往还没滚动到就先为它付了 202KB 的下载 + 解析/投影计算（4× CPU 节流下尤其明显）。
+ *
+ * 现在改成两段式：
+ *  ① IntersectionObserver 等宿主容器**进入视口（含 300px 预取余量）**；
+ *  ② 再动态 import('@/lib/geo')，拿到数据后做投影与路径计算。
+ * 未进入视口时只渲染一个同尺寸的空容器（父级卡片本身有渐变底色与覆盖条，视觉上不跳动、
+ * 也不出现骨架闪烁）；进入视口后 SVG 直接画在同一个容器里，不产生布局位移。
+ *
+ * 另一个收益：桌面首页那棵树在移动端是 CSS 隐藏的（HomePageClient 同时挂了两棵树），
+ * display:none 的元素不会被 IntersectionObserver 判定为 intersecting，所以移动端
+ * **不会**因为隐藏的桌面树而偷偷加载这份地理数据。
+ */
+type GeoModule = typeof import('@/lib/geo')
+
+/** 同一个页面里两棵树都会用到：模块级 Promise 保证只下载/求值一次 */
+let geoModulePromise: Promise<GeoModule> | null = null
+function loadGeoModule(): Promise<GeoModule> {
+  if (!geoModulePromise) geoModulePromise = import('@/lib/geo')
+  return geoModulePromise
+}
 
 /**
  * 地图调色板（本文件内集中声明一次）。
@@ -53,7 +74,60 @@ interface HeroFootprintMapProps {
  * - 每个去过省份盖一枚小邮戳点，并在标记上标该省**照片张数**（参考站的「地图即索引」）
  */
 export default function HeroFootprintMap({ posts, countBadges = true }: HeroFootprintMapProps) {
-  const { provincePaths, litIds, routeD, dots, labelById, pillById } = useMemo(() => {
+  const hostRef = useRef<HTMLDivElement | null>(null)
+  /** 是否已经进入（或接近）视口 —— 决定要不要去拉 202KB gz 的地理数据 */
+  const [nearViewport, setNearViewport] = useState(false)
+  const [geo, setGeo] = useState<GeoModule | null>(null)
+
+  // ① 视口门控：进入视口前不加载地理数据（首屏 JS 里不再包含它）
+  useEffect(() => {
+    const el = hostRef.current
+    if (!el) return
+    if (typeof IntersectionObserver !== 'function') {
+      // 老 WebView 没有 IO：退回「挂载即加载」，保证地图一定画得出来
+      setNearViewport(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNearViewport(true)
+          io.disconnect()
+        }
+      },
+      /**
+       * threshold 0.5 而不是「碰到一点点就加载」：
+       * 移动端首页 390×844 下，足迹卡片的地图区从 y≈796 开始（底部只露出 48px）。
+       * 只要「露一条边」就加载，等于首屏还是得为这 202KB gz 付费；
+       * 要求露出一半（≈88px）之后才加载，用户真正往下滚动时图才进来 ——
+       * 未加载期间容器保持卡片自身的渐变底色与底部覆盖条，视觉上是「还没画图」而不是骨架闪烁。
+       */
+      { threshold: 0.5 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  // ② 动态加载地理模块（同一个页面/两棵树共享同一个 Promise）
+  useEffect(() => {
+    if (!nearViewport || geo) return
+    let cancelled = false
+    loadGeoModule()
+      .then((mod) => {
+        if (!cancelled) setGeo(mod)
+      })
+      .catch(() => {
+        // 拉取失败（弱网）：保持只有容器底色，不阻塞页面其它部分；下次进入页面会重试
+        geoModulePromise = null
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [nearViewport, geo])
+
+  const derived = useMemo(() => {
+    if (!geo) return null
+    const { chinaFeatures, makeProjection, makePath, provinceIdOf } = geo
     const projection = makeProjection(WIDTH, HEIGHT, 24)
     const pathGen = makePath(projection)
     const provincePaths = chinaFeatures.map((feature) => ({
@@ -136,7 +210,6 @@ export default function HeroFootprintMap({ posts, countBadges = true }: HeroFoot
     const labelById = new Map<string, 'l' | 'r'>()
     const placed: { x: number; y: number }[] = []
     for (const d of dots) {
-      // 自身要排除：否则「自己和自己的距离 = 0」会把所有省名判为拥挤
       const others = dots.filter((o) => o.id !== d.id).map((o) => ({ x: o.x, y: o.y }))
       const crowded = [...placed, ...pillSpots, ...others]
         .some((p) => Math.abs(p.x - d.x) < NEAR_X && Math.abs(p.y - d.y) < NEAR_Y)
@@ -146,97 +219,101 @@ export default function HeroFootprintMap({ posts, countBadges = true }: HeroFoot
     }
 
     return { provincePaths, litIds, routeD, dots, labelById, pillById: new Map(pills.map((p) => [p.id, p])) }
-  }, [posts, countBadges])
+  }, [geo, posts, countBadges])
 
   return (
-    <svg
-      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      preserveAspectRatio="xMidYMid slice"
-      className="h-full w-full"
-      aria-hidden="true"
-    >
-      <g strokeWidth="1" strokeLinejoin="round" strokeLinecap="round">
-        {provincePaths.map((p) => {
-          const lit = litIds.has(p.id)
-          return (
-            <path
-              key={p.id}
-              d={p.d}
-              fill={lit ? 'rgba(168,95,58,0.22)' : 'rgba(61,72,82,0.045)'}
-              stroke={lit ? 'rgba(168,95,58,0.65)' : 'rgba(61,72,82,0.26)'}
-              className={lit ? 'hero-map-lit' : undefined}
-              style={lit ? { filter: 'drop-shadow(0 0 4px rgba(228,180,120,0.45))' } : undefined}
-            />
-          )
-        })}
-      </g>
-
-      {routeD && (
-        <path
-          d={routeD}
-          fill="none"
-          stroke={MAP_COLORS.clay}
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeDasharray="6 6"
-          className="hero-route"
-        />
-      )}
-
-      {dots.map((d) => {
-        const pill = pillById.get(d.id)
-        return (
-          <g key={d.id}>
-            <circle cx={d.x} cy={d.y} r="8" fill={MAP_COLORS.deepClay} opacity="0.18" />
-            <circle cx={d.x} cy={d.y} r="3.6" fill={MAP_COLORS.clay} stroke={MAP_COLORS.paper} strokeWidth="1" />
-            {/* 张数药丸：地图标记自带张数（参考站 mytravelmap.cn 的标记语言），
-                文字与描边沿用地图既有配色，不引入新色 */}
-            {pill && (
-              <g>
-                <rect
-                  x={pill.x}
-                  y={pill.y}
-                  width={pill.w}
-                  height={24}
-                  rx={12}
-                  fill={MAP_COLORS.paper}
-                  stroke={MAP_COLORS.clay}
-                  strokeWidth={1.2}
-                  opacity={0.96}
+    <div ref={hostRef} className="h-full w-full">
+      {derived ? (
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          preserveAspectRatio="xMidYMid slice"
+          className="h-full w-full"
+          aria-hidden="true"
+        >
+          <g strokeWidth="1" strokeLinejoin="round" strokeLinecap="round">
+            {derived.provincePaths.map((p) => {
+              const lit = derived.litIds.has(p.id)
+              return (
+                <path
+                  key={p.id}
+                  d={p.d}
+                  fill={lit ? 'rgba(168,95,58,0.22)' : 'rgba(61,72,82,0.045)'}
+                  stroke={lit ? 'rgba(168,95,58,0.65)' : 'rgba(61,72,82,0.26)'}
+                  className={lit ? 'hero-map-lit' : undefined}
+                  style={lit ? { filter: 'drop-shadow(0 0 4px rgba(228,180,120,0.45))' } : undefined}
                 />
-                <text
-                  x={pill.x + pill.w / 2}
-                  y={pill.y + 16}
-                  textAnchor="middle"
-                  fontSize="14"
-                  fontWeight="700"
-                  fill={MAP_COLORS.ink}
-                >
-                  {pill.text}
-                </text>
-              </g>
-            )}
-            {labelById.has(d.id) && (
-              <text
-                x={labelById.get(d.id) === 'l' ? d.x - 13 : d.x + 13}
-                y={d.y + 5}
-                textAnchor={labelById.get(d.id) === 'l' ? 'end' : 'start'}
-                fontSize="15"
-                fontWeight="600"
-                fill={MAP_COLORS.ink}
-                style={{
-                  paintOrder: 'stroke',
-                  stroke: MAP_COLORS.paper,
-                  strokeWidth: 3,
-                  strokeLinejoin: 'round',
-                }}
-              >
-                {d.name}
-              </text>
-            )}
+              )
+            })}
           </g>
-        )
-      })}
-    </svg>
+
+          {derived.routeD && (
+            <path
+              d={derived.routeD}
+              fill="none"
+              stroke={MAP_COLORS.clay}
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeDasharray="6 6"
+              className="hero-route"
+            />
+          )}
+
+          {derived.dots.map((d) => {
+            const pill = derived.pillById.get(d.id)
+            return (
+              <g key={d.id}>
+                <circle cx={d.x} cy={d.y} r="8" fill={MAP_COLORS.deepClay} opacity="0.18" />
+                <circle cx={d.x} cy={d.y} r="3.6" fill={MAP_COLORS.clay} stroke={MAP_COLORS.paper} strokeWidth="1" />
+                {/* 张数药丸：地图标记自带张数（参考站 mytravelmap.cn 的标记语言），
+                    文字与描边沿用地图既有配色，不引入新色 */}
+                {pill && (
+                  <g>
+                    <rect
+                      x={pill.x}
+                      y={pill.y}
+                      width={pill.w}
+                      height={24}
+                      rx={12}
+                      fill={MAP_COLORS.paper}
+                      stroke={MAP_COLORS.clay}
+                      strokeWidth={1.2}
+                      opacity={0.96}
+                    />
+                    <text
+                      x={pill.x + pill.w / 2}
+                      y={pill.y + 16}
+                      textAnchor="middle"
+                      fontSize="14"
+                      fontWeight="700"
+                      fill={MAP_COLORS.ink}
+                    >
+                      {pill.text}
+                    </text>
+                  </g>
+                )}
+                {derived.labelById.has(d.id) && (
+                  <text
+                    x={derived.labelById.get(d.id) === 'l' ? d.x - 13 : d.x + 13}
+                    y={d.y + 5}
+                    textAnchor={derived.labelById.get(d.id) === 'l' ? 'end' : 'start'}
+                    fontSize="15"
+                    fontWeight="600"
+                    fill={MAP_COLORS.ink}
+                    style={{
+                      paintOrder: 'stroke',
+                      stroke: MAP_COLORS.paper,
+                      strokeWidth: 3,
+                      strokeLinejoin: 'round',
+                    }}
+                  >
+                    {d.name}
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+      ) : null}
+    </div>
   )
 }

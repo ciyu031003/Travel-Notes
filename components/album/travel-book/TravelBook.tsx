@@ -18,6 +18,11 @@ import { apiFetch } from '@/lib/client/api'
 import { Icon } from '@/components/mobile/Icon'
 import { ALBUM_MODES, type AlbumModeKey } from '@/lib/album-modes'
 import { formatDotDate } from '@/lib/modules/album/presentation'
+import {
+  readPersistedCache,
+  persistSoon,
+  useIsomorphicLayoutEffect,
+} from '@/lib/client/persisted-cache'
 
 /**
  * 画册阅读器按需加载（移动端性能专项 D，2026-11-21）
@@ -54,6 +59,20 @@ const WALL_SCROLL_KEY = 'album-wall-scroll-y'
 
 /** 画册墙摘要缓存（30s）：/album ⇄ 首页来回切时不重复拉目录，回墙即时渲染 */
 const BOOK_LIST_TTL_MS = 30_000
+
+/**
+ * 画册目录的**持久化**快照（E1，2026-11-21）
+ * ------------------------------------------------
+ * 相册页默认就是 book 模式，墙上陈列的全部是 /api/travel-book 的摘要；没有本地数据时
+ * 打开相册要先看「正在翻开旅行画册…」等一个往返（中端机 4G + 500ms 接口 ≈ 1s 起）。
+ * 这里把目录落 localStorage，挂载时在水合后、首帧绘制前同步读回来 —— 画册墙首开不空转。
+ *
+ * 与阅读器详情缓存（BOOK_DETAIL_TTL_MS，内存 2min）互不影响：那本仍走 apiFetch。
+ * 语义约束：**没有快照时必须还是原来的 loading 流程**（books 保持 null → 转圈 → 结果/错误）。
+ */
+const BOOK_LIST_CACHE_KEY = '/api/travel-book'
+/** 目录快照新鲜期：24h。内容变化由挂载时的 load() 校准 */
+const BOOK_LIST_PERSIST_TTL_MS = 24 * 60 * 60 * 1000
 /** 单本书详情缓存（2min）：同一本书反复开合、或按下时已预取，打开接近即时 */
 const BOOK_DETAIL_TTL_MS = 120_000
 
@@ -147,6 +166,12 @@ export default function TravelBook({
   initialBookKey?: string | null
 }) {
   const [books, setBooks] = useState<BookSummary[] | null>(null)
+  /** 与 state 同步的最近目录：load 失败时据此判断「是不是已经有本地快照在展示」 */
+  const booksRef = useRef<BookSummary[] | null>(null)
+  const applyBooks = useCallback((next: BookSummary[] | null) => {
+    booksRef.current = next
+    setBooks(next)
+  }, [])
   const [loadError, setLoadError] = useState('')
   const [openError, setOpenError] = useState('')
   const [openBook, setOpenBook] = useState<Book | null>(null)
@@ -269,15 +294,34 @@ export default function TravelBook({
       .then((j) => {
         if (requestId !== requestIdRef.current) return
         const list: BookSummary[] = Array.isArray(j?.books) ? j.books : []
-        setBooks(list)
+        applyBooks(list)
         setLoadError('')
+        // E1：落盘供下次启动同步水合（推迟到下一帧之后，序列化不卡渲染帧）
+        persistSoon(BOOK_LIST_CACHE_KEY, list)
       })
       .catch(() => {
         if (requestId !== requestIdRef.current) return
-        setBooks([])
+        // E1 本地优先：已有本地快照在展示时，一次网络失败不把画册墙清空成错误页。
+        // （没有快照时行为不变：books 置空 + 错误提示 + 重试按钮）
+        if (booksRef.current !== null) return
+        applyBooks([])
         setLoadError('旅行画册加载失败，请稍后重试。')
       })
-  }, [])
+  }, [applyBooks])
+
+  /**
+   * 水合后、首次绘制前：同步读画册目录的 localStorage 快照。
+   *
+   * 为什么放在 layout effect 而不是 useState 初始化器：服务端/静态导出的首帧 HTML 是
+   * 「正在翻开旅行画册…」的转圈态，渲染期就读快照会造成 hydration mismatch。
+   * 没有快照时这里什么都不做 —— books 保持 null，后续仍是原来的 loading → 结果/错误流程。
+   */
+  useIsomorphicLayoutEffect(() => {
+    if (booksRef.current !== null) return
+    const hit = readPersistedCache<BookSummary[]>(BOOK_LIST_CACHE_KEY, { ttlMs: BOOK_LIST_PERSIST_TTL_MS })
+    if (!hit || !Array.isArray(hit.value)) return
+    applyBooks(hit.value)
+  }, [applyBooks])
 
   useEffect(() => {
     aliveRef.current = true
@@ -324,10 +368,10 @@ export default function TravelBook({
   }, [])
 
   const retryLoad = useCallback(() => {
-    setBooks(null)
+    applyBooks(null)
     setLoadError('')
     load()
-  }, [load])
+  }, [load, applyBooks])
 
   const closeReader = useCallback(() => {
     setOpenBook(null)

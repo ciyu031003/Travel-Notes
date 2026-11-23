@@ -31,6 +31,7 @@ import { Icon } from '@/components/mobile/Icon'
 import { toast } from '@/lib/mobile/toast-store'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 import { totalPhotoCount } from '@/lib/home/photo-count'
+import { runAfterFirstPaint } from '@/lib/client/persisted-cache'
 
 /**
  * 首页 Hero 足迹地图：懒加载。
@@ -46,10 +47,20 @@ const HeroFootprintMapLazy = dynamicImport(() => import('@/components/home/HeroF
 /**
  * 功能菜单抽屉懒加载（P1-19）：它依赖 motion/react。首页自 P1-18 起走服务端渲染，
  * 静态引用会把 motion 拉回首屏脚本；改为 dynamic 后只在点开菜单时下载。
+ *
+ * E1 追加（2026-11-21 · 首屏 JS 瘦身）：之前虽然用了 dynamic，但组件**一挂载就渲染**，
+ * dynamic 会在首屏内容刚出来的同一刻去拉 motion chunk（实测 121KB raw / 40KB gz，
+ * 与首屏内容、图片抢同一条带宽）。现在改成「首次点开菜单才挂载」，并在首帧之后的空闲里
+ * **预取** chunk —— 既不进首屏关键路径，用户真的点开时模块也已经就绪。
  */
-const HomeMobileDrawer = dynamicImport(() => import('@/components/home/HomeMobileDrawer'), {
+const HomeMobileDrawer = dynamicImport(() => loadDrawerModule(), {
   ssr: false,
 })
+
+/** 抽屉模块的共享加载入口：dynamic 的首屏加载、空闲预取、按下预取都复用它（模块只求值一次） */
+function loadDrawerModule() {
+  return import('@/components/home/HomeMobileDrawer')
+}
 
 interface PostMeta {
   slug: string
@@ -242,6 +253,8 @@ export default function HomeMobile({
   const totalPhotos = totalPhotoCount(travelPosts)
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  /** 抽屉是否已经挂载过（首次点开才挂载 → motion chunk 不进首屏） */
+  const [drawerMounted, setDrawerMounted] = useState(false)
   const [isDark, setIsDark] = useState(false)
   const [dailyStamp, setDailyStamp] = useState('')
 
@@ -250,6 +263,24 @@ export default function HomeMobile({
     const d = new Date()
     setDailyStamp((d.getMonth() + 1) + '/' + String(d.getDate()).padStart(2, '0'))
   }, [])
+
+  /**
+   * 首帧之后（空闲）预取抽屉 chunk。
+   * 抽屉要等用户点「功能菜单」才挂载，但也不能让用户点下去才发现要下载 ——
+   * 这里在首屏内容稳定之后（rAF 之后 2.5s）悄悄把模块取回来，点开时是「已就绪」状态。
+   */
+  useEffect(() => {
+    // 2.5s：这时首屏内容早已上屏、图片也基本解码完，占用一点带宽不影响「内容出现」；
+    // 用户真去点菜单时模块已就绪（点击前的 pointerdown 还会再兜一次预取）。
+    return runAfterFirstPaint(() => {
+      void loadDrawerModule().catch(() => {})
+    }, { delayMs: 2500 })
+  }, [])
+
+  /** 手指按下/悬停就预取：从按下到抬手通常 80~150ms，足够把模块取回 */
+  const warmDrawer = () => {
+    void loadDrawerModule().catch(() => {})
+  }
 
   const toggleTheme = () => {
     const next = !isDark
@@ -302,7 +333,17 @@ export default function HomeMobile({
                 <button type="button" onClick={toggleTheme} aria-label={isDark ? '切换到暖色主题' : '切换到夜色主题'} className="v6-icon">
                   <Icon icon={isDark ? Sun : Moon} size="md" />
                 </button>
-                <button type="button" aria-label="打开功能菜单" onClick={() => setDrawerOpen(true)} className="v6-icon">
+                <button
+                  type="button"
+                  aria-label="打开功能菜单"
+                  onClick={() => {
+                    setDrawerMounted(true)
+                    setDrawerOpen(true)
+                  }}
+                  onPointerDown={warmDrawer}
+                  onPointerEnter={warmDrawer}
+                  className="v6-icon"
+                >
                   <Icon icon={Menu} size="md" />
                 </button>
               </div>
@@ -577,7 +618,8 @@ export default function HomeMobile({
         </div>
       </PullToRefresh>
 
-      <HomeMobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      {/* 首次点开才挂载：motion chunk 不进首屏关键路径（chunk 已在首帧后空闲预取） */}
+      {drawerMounted && <HomeMobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
     </div>
   )
 }

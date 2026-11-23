@@ -21,6 +21,7 @@ import {
 import BrandLogo from '@/components/brand/BrandLogo'
 import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
+import { checkAuthShared, runWhenViewportMatches } from '@/lib/client/check-auth'
 
 const NAV = [
   { href: '/', label: '首页概览', icon: Home, exact: true },
@@ -53,17 +54,32 @@ export default function DesktopChrome({ children }: { children: React.ReactNode 
       }
     }
     window.addEventListener('keydown', onShortcut)
-    let cancelled = false
-    fetch(apiUrl('/api/check-auth'), { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!cancelled && data?.authenticated) setUsername(data.username ?? null)
-      })
-      .catch(() => {})
     return () => {
-      cancelled = true
       themeObserver.disconnect()
       window.removeEventListener('keydown', onShortcut)
+    }
+  }, [])
+
+  /**
+   * 桌面侧栏的登录态（只有 lg 及以上才渲染 aside，用户名/退出按钮在侧栏底部）。
+   *
+   * E1：这段以前混在上面那个 effect 里「挂载即 fetch」，移动端整站每页都白跑一次
+   * /api/check-auth。现在按视口门控 —— 小屏不请求；桌面端也推迟到首帧之后，
+   * 并与 Navbar / 其它调用共享同一次请求（lib/client/check-auth，60s 缓存）。
+   * 不影响鉴权：会话校验在 middleware / 服务端，这里只是展示信息。
+   */
+  useEffect(() => {
+    let cancelled = false
+    const dispose = runWhenViewportMatches('(min-width: 1024px)', () => {
+      checkAuthShared()
+        .then((result) => {
+          if (!cancelled && result.authenticated) setUsername(result.username)
+        })
+        .catch(() => {})
+    })
+    return () => {
+      cancelled = true
+      dispose()
     }
   }, [])
 

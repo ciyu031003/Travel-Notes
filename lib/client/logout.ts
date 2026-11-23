@@ -14,6 +14,8 @@ import { apiUrl } from '@/lib/api-base'
 import { stopSyncEngine } from '@/lib/modules/offline/bootstrap'
 import { purgeOfflineForLogout } from '@/lib/modules/offline/reset'
 import { resetAccountScopeCache } from '@/lib/modules/offline/account-scope'
+import { clearPersistedCache } from '@/lib/client/persisted-cache'
+import { __resetUseApiSnapshots } from '@/lib/client/use-api'
 
 export async function performLogout(): Promise<void> {
   try {
@@ -24,6 +26,16 @@ export async function performLogout(): Promise<void> {
   } catch {}
   try {
     resetAccountScopeCache()
+  } catch {}
+  /**
+   * 本地优先水合（2026-11-23）引入的快照层必须跟着退出登录一起清：
+   *  · 隐私：换账号后新用户会先看到上一个账号的首页/旅程/相册内容（≤1 个 RTT）；
+   *  · 正确性：内存快照同样要清，否则 useEffect 首帧会拿旧数据渲染。
+   * 放在清库之后、注销会话之前（顺序无关，但都不需要 Cookie）。
+   */
+  try {
+    clearPersistedCache()
+    __resetUseApiSnapshots()
   } catch {}
   try {
     await fetch(apiUrl('/api/logout'), { method: 'POST', credentials: 'include' })

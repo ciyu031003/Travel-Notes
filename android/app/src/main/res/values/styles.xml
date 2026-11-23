@@ -9,14 +9,25 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!--
+      启动性能（2026-11-23）：
+      原实现把 windowBackground 留空（android:background @null），Splash 消失到 WebView 首帧之间
+      会露出系统白底，冷启动观感像「白屏闪一下」。
+      现在统一给品牌奶油底色：Splash 退场后直接过渡到 App 同色底，WebView 首帧画出即无缝。
+    -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/brand_bg</item>
         <item name="android:background">@null</item>
     </style>
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <!-- core-splashscreen（androidx）兼容属性：Android 12+ 系统启动屏与 WebView 之间不再闪白 -->
+        <item name="windowSplashScreenBackground">@color/brand_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

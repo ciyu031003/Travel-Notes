@@ -10,6 +10,13 @@ const config: CapacitorConfig = {
   appId: 'com.tiantu.app',
   appName: '甜途',
   webDir: 'www',
+  /**
+   * 启动观感（2026-11-23 性能专项）：WebView 自身的底色，默认白色 ——
+   * 冷启动时从启动图/Splash 过渡到 HTML 首帧之间会露出白底（「闪一下白」）。
+   * 这里改成移动端页面底色（--m-bg #FFF6F8），与原生 windowBackground 同色，
+   * 启动图 → 空壳 → 首帧 全程同色过渡。同时不影响任何页面自身的背景。
+   */
+  backgroundColor: '#FFF6F8',
   android: {
     /**
      * C1：禁止 WebView 混合内容。

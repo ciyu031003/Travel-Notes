@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom'
 import BrandLogo from '@/components/brand/BrandLogo'
 import { cn } from '@/lib/utils'
 import { apiUrl } from '@/lib/api-base'
+import { checkAuthShared, runWhenViewportMatches } from '@/lib/client/check-auth'
 import { useModalLayer } from '@/hooks/use-modal-layer'
 
 interface NavbarProps {
@@ -23,21 +24,30 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [username, setUsername] = useState<string | null>(null)
 
+  /**
+   * 登录态探测（只用来显示桌面导航栏的用户名/退出按钮）。
+   *
+   * E1（2026-11-21 · 首屏接口瀑布削减）：这里以前是「挂载即 fetch /api/check-auth」，
+   * 但 Navbar 在移动端也会被挂载（LayoutContent 用 hidden md:block 包着它），
+   * 小屏根本没有展示位 —— 每个页面白白多一次往返，还和 /api/home 抢带宽。
+   * 现在：① 小屏（<768px）不请求，只有真的出现桌面导航时才补一次；
+   *      ② 桌面端也推迟到首帧之后，且与全站其它调用共享同一次请求（lib/client/check-auth 60s 缓存）。
+   * 注意：这不是登录门禁 —— 会话校验在 middleware / 服务端，客户端只读状态，延后不影响任何鉴权。
+   */
   useEffect(() => {
-    checkAuth()
+    let cancelled = false
+    const dispose = runWhenViewportMatches('(min-width: 768px)', () => {
+      checkAuthShared()
+        .then((result) => {
+          if (!cancelled && result.authenticated) setUsername(result.username)
+        })
+        .catch(() => {})
+    })
+    return () => {
+      cancelled = true
+      dispose()
+    }
   }, [])
-
-  const checkAuth = async () => {
-    try {
-      const res = await fetch(apiUrl('/api/check-auth'))
-      if (res.ok) {
-        const data = await res.json()
-        if (data.authenticated) {
-          setUsername(data.username)
-        }
-      }
-    } catch {}
-  }
 
   const handleLogout = async () => {
     try {

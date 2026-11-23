@@ -99,11 +99,35 @@ export default function MobileBottomNav() {
     [router],
   )
 
-  // 空闲预热四个 tab（切页前用掉空闲算力，切页时不再等 chunk）
+  /**
+   * 首帧后 ~200ms 预热四个 tab（E2，2026-11-23）
+   * ---------------------------------------------------------------------------
+   * 旧实现只挂 requestIdleCallback(timeout 2500)：rIC 要等主线程真空闲，
+   * 低端机首屏长任务排队时实测要 4.6s 才跑（小于 2.5s 的"空闲"根本挤不进来），
+   * 用户在这之前点 tab 依然要吃冷启动的 chunk + RSC 往返。
+   * 现在改成确定时机：双 rAF（确保这一帧已经画出来）→ 200ms → 立刻预热；
+   * 留一个 idle 兜底（prefetch 内部按 href 去重，不会重复发请求）。
+   */
   useEffect(() => {
-    return onIdle(() => {
+    let idleCleanup = () => {}
+    let timer = 0
+    let frame = 0
+    const warm = () => {
       for (const tab of TABS) prefetch(tab.href)
+    }
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        timer = window.setTimeout(() => {
+          warm()
+          idleCleanup = onIdle(warm)
+        }, 200)
+      })
     })
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(timer)
+      idleCleanup()
+    }
   }, [prefetch])
 
   const isActive = (href: string) => {

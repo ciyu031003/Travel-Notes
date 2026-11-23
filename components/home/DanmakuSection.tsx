@@ -5,6 +5,8 @@ import { Pause, Play, Send, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { apiUrl } from '@/lib/api-base'
+import { checkAuthShared } from '@/lib/client/check-auth'
+import { runAfterFirstPaint } from '@/lib/client/persisted-cache'
 
 export interface Danmaku {
   id: string
@@ -58,32 +60,44 @@ export const DanmakuSection = forwardRef<DanmakuSectionHandle, DanmakuSectionPro
     setDanmakuText('')
   }
 
+  /**
+   * 弹幕数据 + 登录态（E1 · 首屏接口瀑布削减）。
+   *
+   * 这两次请求都**不参与首屏内容**：弹幕是一层装饰性浮层（飘字），用户名只用来决定
+   * 「历史留言里能不能删」。E1 之前它们跟着首页一起在挂载时发出，在弱网下与 /api/home
+   * 抢同一条带宽（首页一次打开 5 个接口，其中 3 个是 check-auth 的重复调用）。
+   * 现在统一推迟到首帧之后的空闲里；登录态走全站共享的 checkAuthShared（60s 缓存、并发去重）。
+   */
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch(apiUrl('/api/check-auth'))
-        if (res.ok) {
-          const data = await res.json()
-          if (data.authenticated) setUsername(data.username)
-        }
-      } catch {}
+    let cancelled = false
+    const dispose = runAfterFirstPaint(() => {
+      checkAuthShared()
+        .then((result) => {
+          if (!cancelled && result.authenticated) setUsername(result.username)
+        })
+        .catch(() => {})
+    })
+    return () => {
+      cancelled = true
+      dispose()
     }
-    checkAuth()
   }, [])
 
   useEffect(() => {
-    const fetchDanmakus = async () => {
-      try {
-        const res = await fetch(apiUrl('/api/danmaku'))
-        if (res.ok) {
-          const data = await res.json()
-          if (data.success && data.data?.danmakus) {
-            setDanmakus(data.data.danmakus)
-          }
-        }
-      } catch {}
+    let cancelled = false
+    const dispose = runAfterFirstPaint(() => {
+      fetch(apiUrl('/api/danmaku'))
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (cancelled) return
+          if (data?.success && data.data?.danmakus) setDanmakus(data.data.danmakus)
+        })
+        .catch(() => {})
+    })
+    return () => {
+      cancelled = true
+      dispose()
     }
-    fetchDanmakus()
   }, [])
 
   const addDanmaku = async () => {

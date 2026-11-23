@@ -7,6 +7,7 @@ import { Icon } from '@/components/mobile/Icon'
 import TravelLocationBadge from './TravelLocationBadge'
 import TravelTimeline from './TravelTimeline'
 import { formatDotDate } from '@/lib/modules/album/presentation'
+import { resolveVariantUrl } from '@/lib/media/variant-url'
 import type { AlbumCity } from '@/hooks/use-album-data'
 
 // Canvas 重组件继续按需加载（与拆分前一致：ssr:false，渲染时才拉）
@@ -86,8 +87,15 @@ export default function AlbumPhotoWall({
       <div className="h-[440px] lg:h-[calc(100vh-230px)]">
         <ErrorBoundary label="DriftWall">
           <DriftWall
+            /*
+             * 照片墙卡片只有 200×140 CSS 像素，却一直在拉 8–10MB 原图
+             * （漂流墙一次性渲染几十张，弱网下等于永久白屏）。
+             * 这里把 tile 的 image 换成 -thumbnail 变体（480px，约 30–60KB）；
+             * 点开的大图仍走 PhotoMorphViewer 的原图，清晰度不受影响。
+             * 旧图无变体时 DriftWall 内部 <img> 失败即为空白 tile，属可接受的降级。
+             */
             items={city.images.map((src, i) => ({
-              image: src,
+              image: resolveVariantUrl(src, 'thumbnail'),
               title: `${city.name} · ${i + 1}`,
               onClick: () => onOpenViewer(i),
             }))}

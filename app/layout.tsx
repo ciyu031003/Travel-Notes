@@ -18,6 +18,31 @@ import CrashReportListener from '@/components/CrashReportListener'
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'http://localhost:3000'
 
 /**
+ * 移动壳内的接口源（E2，2026-11-23）
+ * ---------------------------------------------------------------------------
+ * Android 壳里页面是从本地 assets 加载的（capacitor://localhost 之类），
+ * 接口走 NEXT_PUBLIC_API_BASE 指向的公网域名（生产是 https://travel-notes.yuanabd.cn）。
+ * 跨源首包要多付一次 DNS + TCP + TLS（弱网下 300~800ms），且 /api/check-auth 这类
+ * 请求就在首屏关键路径上。这里在 <head> 里提前建连（dns-prefetch 给不认 preconnect 的旧壳兜底）。
+ *
+ * Web 部署（服务器同源）NEXT_PUBLIC_API_BASE 为空 → 不输出任何预连接，零副作用。
+ * crossOrigin 用 use-credentials：接口全部是 credentials: 'include' 的带 Cookie 请求，
+ * 不带凭证预连接的连接不会被复用。
+ */
+function resolveApiOrigin(): string | null {
+  const raw = (process.env.NEXT_PUBLIC_API_BASE || '').trim().replace(/\/+$/, '')
+  if (!raw) return null
+  try {
+    const url = new URL(raw)
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    return url.origin
+  } catch {
+    return null
+  }
+}
+const apiOrigin = resolveApiOrigin()
+
+/**
  * P1-21：全局 metadata。
  *  · metadataBase：让子页面用相对路径写 canonical/og:image（Next 会拼成绝对 URL）；
  *  · title.template：各页 generateMetadata 只写自己的标题，后缀由这里统一拼；
@@ -93,6 +118,24 @@ export default function RootLayout({
             __html: `try{var n=navigator,dm=n.deviceMemory,hc=n.hardwareConcurrency;if((dm&&dm<=4)||(hc&&hc<=4)){document.documentElement.classList.add('low-end')}}catch(e){}`,
           }}
         />
+        {/* E2：壳内接口跨源 → 提前建连，省掉首个 /api 请求的 DNS+TCP+TLS 往返 */}
+        {apiOrigin && (
+          <>
+            <link rel="preconnect" href={apiOrigin} crossOrigin="use-credentials" />
+            <link rel="dns-prefetch" href={apiOrigin} />
+          </>
+        )}
+        {/*
+          E2：字体预加载 —— 实测后**没有**加，原因记录在这里，避免以后重复踩：
+          Source Serif 4 子集（29KB）虽然是所有移动页大标题的首选字体，但补齐 unicode-range
+          之后它已经不在首屏渲染的关键路径上（CJK 直接走系统回退）。给整个根布局加
+          <link rel="preload" as="font"> 会和 CSS/JS 抢同一条 0.8Mbps 带宽，实测（www 补丁模拟，
+          4×CPU + 0.8Mbps + API 500ms，3 次中位）：
+            /album  FCP 3116ms（不预加载） → 4800ms（default 优先级） → 4800ms（fetchPriority=low）
+            /travel FCP 1296ms（不预加载） → 1576ms（default 优先级） → 1520ms（fetchPriority=low）
+          因此这里保持不预加载；字体本身的收益来自「子集化 + unicode-range」（105KB→29KB 且
+          中文不再触发加载）。若后续测量口径变成「资源全本地（APK）」且想再试，加回一行即可。
+        */}
         <link rel="manifest" href="/manifest.json" />
         {/* theme-color 由 viewport 导出注入，运行时由 ThemeColorSync 随暗色切换同步 */}
         {/* favicon 由 app/icon.png / app/apple-icon.png 文件约定自动注入（源：public/brand/logo.png） */}

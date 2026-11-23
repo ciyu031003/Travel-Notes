@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import dynamicImport from 'next/dynamic'
 import { MapPin, Calendar, ArrowRight, Image as ImageIcon, WifiOff, CloudOff, Plus, Search } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/mobile/Button'
@@ -19,8 +17,9 @@ import { EmptyState } from '@/components/mobile/EmptyState'
 import { Stagger } from '@/components/mobile/Stagger'
 import { Icon } from '@/components/mobile/Icon'
 import { SegmentedControl } from '@/components/mobile/SegmentedControl'
-
-const ChinaMap = dynamicImport(() => import('@/components/ChinaMap'), { ssr: false })
+import RemoteImage from '@/components/mobile/RemoteImage'
+// E2：地图懒挂载壳（首帧只出等高骨架，正文画完后的空闲/触达才下载 geo chunk）
+import TravelMapLazy from '@/components/travel/TravelMapLazy'
 
 interface PostMeta {
   slug: string
@@ -173,7 +172,7 @@ export default function TravelMobileClient({
         <section className="px-4">
           <div className="m-enter m-card overflow-hidden">
             <div className="relative h-[310px] bg-[linear-gradient(165deg,#FFF8EF,#EAF2F4)]">
-              <ChinaMap
+              <TravelMapLazy
                 posts={posts}
                 externalPanel
                 onProvinceSelect={handleProvinceSelect}
@@ -243,13 +242,18 @@ export default function TravelMobileClient({
                     <Link href={travelDetailHref(post.slug)} className="m2-trip-row">
                       <span className="m2-trip-thumb">
                         {cover ? (
-                          <Image
+                          /*
+                           * 列表缩略图改走三级变体（-thumbnail 480px）：
+                           * 原图单张 8–10MB，0.8Mbps 下一张就要 80s+；变体约 30–60KB。
+                           * 旧图没有变体时 RemoteImage 会 onError 逐级回退到原图，功能不坏。
+                           */
+                          <RemoteImage
                             src={cover}
                             alt={post.title}
+                            variant="thumbnail"
+                            width={96}
+                            height={102}
                             fill
-                            sizes="96px"
-                            className="object-cover"
-                            onError={(e) => { e.currentTarget.style.display = 'none' }}
                           />
                         ) : (
                           <span className="flex h-full items-center justify-center">

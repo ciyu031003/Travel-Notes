@@ -6,6 +6,7 @@ import { Icon } from '@/components/mobile/Icon'
 import TravelFilmCard from './TravelFilmCard'
 import AddPhotoButton from './AddPhotoButton'
 import { useLocalMediaUrls } from '@/hooks/use-local-media-url'
+import { resolveVariantUrl } from '@/lib/media/variant-url'
 import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import type { AlbumItem } from '@/hooks/use-album-data'
 import {
@@ -120,10 +121,19 @@ export default function AlbumGalleryGrid({
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredAlbums.map((album) => (
+          {filteredAlbums.map((album) => {
+            /*
+             * 封面优先缩略变体（-thumbnail 480px）：卡片最高约 320px CSS 宽，
+             * 480px 足够 2x 屏；接口已下发变体时 resolveVariantUrl 原样返回（幂等）。
+             * 离线本地缓存命中优先（本地 URI 不需要也不会派生变体）。
+             */
+            const coverUrl = album.coverUrl
+              ? (localMediaMap[album.coverUrl] ?? resolveVariantUrl(album.coverUrl, 'thumbnail'))
+              : undefined
+            return (
             <div key={album.id} className="relative">
               <TravelFilmCard
-                coverUrl={album.coverUrl ? (localMediaMap[album.coverUrl] ?? album.coverUrl) : undefined}
+                coverUrl={coverUrl}
                 title={album.title}
                 dateRange={album.date ? formatDate(album.date) : undefined}
                 photoCount={album.mediaCount}
@@ -131,7 +141,8 @@ export default function AlbumGalleryGrid({
               />
               <AddPhotoButton albumId={album.id} onAdded={onRefresh} />
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </section>

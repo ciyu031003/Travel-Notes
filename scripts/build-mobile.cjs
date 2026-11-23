@@ -145,6 +145,15 @@ if (fs.existsSync(outDir)) {
    *    query-param 路由（/travel/detail?slug= 等），这些页面不会被正确渲染，删掉减小包体。
    */
   const prunePaths = [
+    // 字体（2026-11-23 性能专项）：globals.css 已全部指向 *.subset.woff2（体积减半、带 unicode-range），
+    // 原始全量字体仅为「回滚/再生成子集」保留在仓库里，不必进安装包（约 148KB）。
+    'fonts/SourceSerif4-Regular.otf.woff2',
+    'fonts/SourceSerif4-It.otf.woff2',
+    'fonts/inter-latin-400.woff2',
+    'fonts/inter-latin-500.woff2',
+    'fonts/inter-latin-600.woff2',
+    'fonts/playfair-latin-700.woff2',
+    'fonts/playfair-latin-900.woff2',
     'uploads',
     'circle/0.html',
     'circle/0.txt',

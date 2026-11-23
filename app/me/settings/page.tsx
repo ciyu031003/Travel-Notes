@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -75,8 +75,17 @@ export default function MeSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  /**
+   * 表单回填保护（本地优先水合引入的第二批 data）。
+   *
+   * 现在 /api/me 会「先快照（localStorage）→ 再网络校准」两次到达；若每次都无条件回填，
+   * 用户在这 100~600ms 里输入的昵称/签名会被第二次 data 覆盖掉（真机上表现为「刚打的字消失」）。
+   * 因此：只在「用户还没动过表单」时回填；一旦输入，就不再用后台数据覆盖。
+   */
+  const formTouchedRef = useRef(false)
   useEffect(() => {
     if (!data) return
+    if (formTouchedRef.current) return
     setNickname(data.nickname ?? '')
     setBio(data.bio ?? '')
   }, [data])
@@ -206,7 +215,10 @@ export default function MeSettingsPage() {
               <label className="mt-4 block text-xs text-[var(--ui-social-muted)]">昵称</label>
               <input
                 value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
+                onChange={(e) => {
+                  formTouchedRef.current = true
+                  setNickname(e.target.value)
+                }}
                 maxLength={24}
                 placeholder="输入 1-24 位昵称"
                 className="mt-1.5 w-full rounded-xl bg-[var(--ui-social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-social-accent)]"
@@ -215,7 +227,10 @@ export default function MeSettingsPage() {
               <label className="mt-4 block text-xs text-[var(--ui-social-muted)]">个性签名</label>
               <input
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(e) => {
+                  formTouchedRef.current = true
+                  setBio(e.target.value)
+                }}
                 maxLength={120}
                 placeholder="写一句话，成为你的旅行签名"
                 className="mt-1.5 w-full rounded-xl bg-[var(--ui-social-bg)] px-4 py-3 text-sm outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-social-accent)]"
