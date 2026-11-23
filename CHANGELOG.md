@@ -1,3 +1,32 @@
+## [1.30.3] - 2026-11-24
+
+> 继续「用安装包体积换加载速度」：把地图几何挪成**构建期产物**随包分发，客户端不再携带
+> d3-geo 与 582KB 中国 GeoJSON。已发版为 **1.30.3 / build 67**。
+
+### Performance
+
+- **地图几何预计算**：新增 `scripts/gen-map-artifact.mjs`（`npm run map:artifact`），构建期用
+  d3-geo 一次性算好 34 个省的 path `d`、质心、包围盒、南海虚线，以及 **374 个城市点位**
+  （含碰撞分散/边界内缩），产出 `public/map/china-paths.v1.json`（371KB / 126KB gzip）随
+  APK 分发。`ChinaMap` / 首页足迹小地图 / 登录门地图改为 fetch 产物 + `JSON.parse` 渲染：
+  - 客户端**零投影、零路径生成**，点省份从「重算 34 个 feature」变成 O(1) 查表；
+  - 客户端不再 import `lib/geo.ts` / `data/china-geo.json`：`/travel` 首屏 JS
+    **514KB → 313KB(gz)**，含 geo/d3 签名的两个 chunk（约 936KB 明文）归零；
+  - 静态 SVG 占位实测更慢（335KB SVG 解析+栅格化 vs 363KB JSON 直接渲染，JSON 先到
+    11ms），故只保留 artifact 直出，不额外垫图。
+- **地图骨架等待收敛**：`TravelMapLazy` 的 idle 兜底从 1.2s 收到 300ms（原来的长等待是
+  为了躲 202KB(gz) 的 geo chunk，现已不存在）—— 地图可交互 **1641ms → 825ms**。
+- `build-mobile.cjs` 构建前清理 dev server 遗留的路由类型（`.next/dev/types`），
+  避免「刚跑过 dev 再打壳」时的 TS2307 假失败。
+
+### Verified
+
+- 几何与改动前运行期 d3 算法逐项对照：34 省 path/虚线/centroid/bounds + 374 城市点最大偏差
+  **0.005**（2 位小数舍入），无缺失；截图 diff（390/1280，地图/选中/缩放/聚焦/首页小地图）
+  >32 阈值像素 **0%**。
+- 交互复测：点省份开抽屉、城市点数量与数据一致、缩放/回旅行位置、桌面 hover/滚轮、
+  首页足迹小地图、登录门地图均正常。
+
 ## [1.30.2] - 2026-11-23
 
 > 本轮只做「打开/加载更快」，且尽量把成本挪进安装包（APK 从 15MB 起，仍有空间）：

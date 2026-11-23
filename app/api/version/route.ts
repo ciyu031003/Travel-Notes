@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '启动与加载提速：字体子集化并把中文衬线移出首屏关键路径、品牌图 75KB→1.3KB、旅程地图 GeoJSON 改为首屏后懒加载；首页桌面树移出移动包（首屏 JS 476→268KB）；接口数据本地快照优先，热启动直接出内容；列表与相册改用缩略图变体（单图 8MB→24KB）；启动图与 WebView 底色改为品牌奶油色，不再闪白',
+    changelog: process.env.APP_CHANGELOG || '继续压启动与加载成本：地图几何改为构建期预计算产物随包分发（客户端不再带 d3-geo 与 582KB 中国 GeoJSON），/travel 首屏 JS 从 514KB 降到 313KB；地图骨架等待 1.2s 收到 300ms（地图可交互 1.6s→0.8s）；新增地图产物生成脚本与构建前 dev 类型清理，发版构建更稳',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
