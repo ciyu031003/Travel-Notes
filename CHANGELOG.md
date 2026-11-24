@@ -1,3 +1,30 @@
+## [1.30.5] - 2026-11-24
+
+> 接入 shadcn 注册表组件（经本地 shadcn MCP 检索）：**液态玻璃**表面 + **动态切换**胶囊。
+> 已发版为 **1.30.5 / build 69**。
+
+### Added
+
+- `components/ui/liquid-glass.tsx`（来自 `@aceternity/liquid-glass`）：按 Snell 定律生成
+  displacement map，用 `backdrop-filter: url(#…)` 做**真折射**；Chromium 走折射，
+  Safari/Firefox/系统减少透明度自动退化为磨砂或实底，尺寸变化会重建贴图。
+- 组件库扩展 `idleOnly`：滚动期间退化为 `blur(18px)`，停止滚动 150ms 后挂回折射
+  （4× 降速实测滚动帧间隔：纯折射 42.3ms/p95 154.7 → 23.2ms/p95 59.9；关掉折射基线 19.4ms）。
+- 分段控件（`SegmentedControl`）升级为**液态玻璃外壳 + motion spring 滑块**：旅程列表筛选、
+  旅程详情 tab、旅行圈 feed 自动生效。
+- **底部导航**：磨砂玻璃底（blur 20px + 半透明暖底 + 顶部 1px 高光），激活态玻璃胶囊用
+  `layoutId` 在四个 tab 之间滑动；导航是常驻 fixed 元素，因此刻意用磨砂而非折射
+  （实测折射 47ms/帧 → 磨砂 19.5ms/帧）。
+- **相册模式切换**（画册/像素/银河，含 `AlbumModeSwitch`）：玻璃容器 + 滑动玻璃胶囊。
+- 新增 `components.json` 与 `package.json` 的 `registries`（@kokonutui / @magicui / @aceternity /
+  @cult-ui / @animata），后续可直接用 shadcn MCP 检索、`npx shadcn add` 安装。
+
+### Verified
+
+- tsc 0 错、eslint 0 error、设计 token 门禁 541→504 且新组件无新增违规；
+- Playwright：静止时 `backdrop-filter=url(#lg-…)`、滚动切换为 `blur(18px)`、停下自动挂回；
+  底部胶囊滑动（x 86.8 → 311.2）、筛选与相册模式切换正常，无 console/pageerror。
+
 ## [1.30.4] - 2026-11-24
 
 > 真机反馈：堆叠相册想要"一叠卡片、手指左右滑就能切图"的手感。已发版为 **1.30.4 / build 68**。

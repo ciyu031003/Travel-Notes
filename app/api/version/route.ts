@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '堆叠相册改成 3D 卡片牌堆：旅行圈帖子与旅程相册顶部，照片叠成一叠卡片，手指左右滑动/拖拽即可循环切换，松手回弹；点顶卡或「看大图」按钮直接看全屏大图，桌面可用前后按钮与方向键',
+    changelog: process.env.APP_CHANGELOG || '接入液态玻璃视觉：底部导航磨砂玻璃 + 激活胶囊滑动、筛选/相册模式/旅程 tab 换成液态玻璃分段切换（静止真折射、滚动自动降级保证不卡），全部沿用原有交互与权限',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
