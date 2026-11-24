@@ -1,9 +1,12 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { CalendarDays, ImageIcon, Sparkles, Wallet } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
+import ExpenseDeck from '@/components/mobile/expense/ExpenseDeck'
+import { buildExpenseDeck } from '@/lib/expense-card/derive'
+import type { ExpenseDeckData } from '@/lib/expense-card/types'
 import { itineraryIconOf } from '@/lib/mobile/icon-system'
 import { dayFullLabel, formatMoney, formatTime, rangeDays } from './format'
 import type { ExpenseItem, TimelineDay, TravelInfoForDetail, ViewerPhotoLike } from './types'
@@ -34,6 +37,22 @@ export default function TravelOverviewTab({
   const memoryCount = days.reduce((s, d) => s + d.memories.length, 0)
   const total = expenseState?.total ?? 0
   const budget = expenseState?.budget ?? null
+  /** 账单卡片牌堆：从「总览 · 花销」随时可以重新翻看（归档时自动弹过一次） */
+  const [deck, setDeck] = useState<ExpenseDeckData | null>(null)
+
+  const openDeck = () => {
+    const companions = Array.isArray(travel.companions)
+      ? (travel.companions as { name?: string | null }[])
+      : []
+    const next = buildExpenseDeck({
+      travelId: travel.id,
+      travelTitle: travel.title,
+      expenses: expenseState?.expenses || [],
+      companions,
+      fallbackDate: travel.startDate,
+    })
+    if (next) setDeck(next)
+  }
 
   /** 行程摘要：取前 3 条，带上是第几天 */
   const upcoming = days
@@ -172,10 +191,20 @@ export default function TravelOverviewTab({
         <div className="flex items-center gap-2">
           <Icon icon={Wallet} size="sm" className="text-[var(--m-accent-strong)]" />
           <span className="m-body font-semibold text-[var(--m-text)]">花销</span>
+          {total > 0 && (
+            <button
+              type="button"
+              onClick={openDeck}
+              className="ml-auto flex items-center gap-1 text-[13px] font-medium text-[var(--m-accent-strong)]"
+            >
+              <Icon icon={Sparkles} size="sm" />
+              费用卡片
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onGoTab('expense')}
-            className="ml-auto text-[13px] font-medium text-[var(--m-accent-strong)]"
+            className={`${total > 0 ? 'ml-3' : 'ml-auto'} text-[13px] font-medium text-[var(--m-accent-strong)]`}
           >
             记一笔
           </button>
@@ -260,6 +289,9 @@ export default function TravelOverviewTab({
           点任意照片进入沉浸相册
         </p>
       )}
+
+      {/* 费用卡片牌堆（总览里重新翻看） */}
+      {deck && <ExpenseDeck deck={deck} onClose={() => setDeck(null)} />}
     </div>
   )
 }

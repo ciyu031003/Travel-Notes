@@ -1,0 +1,374 @@
+/* ============================================================================
+   费用卡片（2026-11-25）：旅程账单结算卡
+   ----------------------------------------------------------------------------
+   参考 "Gift card scratch interaction"（Ayodele）：整块高饱和纯色卡面 + 超大金额 +
+   底部一条"刮开"的银色涂层。这里是它的中文旅行版：一张卡 = 账本里的一笔花销，
+   卡面颜色按分类（交通/住宿/餐饮/门票/购物/其他），底部涂层刮开是人均分摊。
+   配色集中在本文件（组件里不写裸色值），类名 .ecard--<category>。
+   ============================================================================ */
+
+/* 刮涂层的金属配色：组件里不写裸色值（设计 token 门禁），canvas 绘制时从 :root 读 */
+:root {
+  --ec-scratch-1: #c9ced2;
+  --ec-scratch-2: #eef1f3;
+  --ec-scratch-3: #bfc5c9;
+  --ec-scratch-4: #e7eaec;
+  --ec-scratch-5: #aeb4b9;
+  --ec-scratch-hi: rgba(255, 255, 255, 0.3);
+  --ec-scratch-lo: rgba(120, 128, 134, 0.16);
+}
+
+.ecard {
+  --ec-bg: #b8452f;
+  --ec-ink: #fff7ef;
+  --ec-ink-soft: rgba(255, 247, 239, 0.78);
+  --ec-ink-faint: rgba(255, 247, 239, 0.55);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.6;
+  border-radius: 26px;
+  overflow: hidden;
+  background: var(--ec-bg);
+  color: var(--ec-ink);
+  box-shadow: 0 22px 48px -18px rgba(38, 26, 18, 0.45), 0 2px 0 rgba(255, 255, 255, 0.12) inset;
+  isolation: isolate;
+}
+
+/* 卡面柔光：右上角一团高光，避免纯色太平 */
+.ecard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 88% 6%, rgba(255, 255, 255, 0.22), transparent 58%),
+    radial-gradient(80% 70% at 8% 100%, rgba(0, 0, 0, 0.16), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 细网格纹理：像实体卡的压纹，浅到几乎无感但让纯色有材质 */
+.ecard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.04) 0 1px, transparent 1px 4px);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ecard--transport { --ec-bg: #cf3f24; }
+.ecard--hotel { --ec-bg: #5f53a3; }
+.ecard--food { --ec-bg: #d98a24; }
+.ecard--ticket { --ec-bg: #2f6b8f; }
+.ecard--shopping { --ec-bg: #b23f6d; }
+.ecard--other { --ec-bg: #6a6156; }
+
+.ecard-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: clamp(16px, 5.2%, 26px) clamp(16px, 5.6%, 28px) clamp(14px, 4.4%, 22px);
+}
+
+.ecard-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ecard-brand {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.ecard-trip {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ec-ink-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ecard-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--ec-ink);
+}
+
+.ecard-amount {
+  margin-top: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.ecard-amount-symbol {
+  font-size: clamp(22px, 6.4vw, 30px);
+  font-weight: 700;
+  transform: translateY(-0.18em);
+  opacity: 0.9;
+}
+
+.ecard-amount-value {
+  font-size: clamp(46px, 14.5vw, 64px);
+}
+
+.ecard-meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ec-ink-soft);
+}
+
+.ecard-meta-sep {
+  opacity: 0.45;
+}
+
+/* 刮开区：银色涂层（metal 质感）＋ 涂层下的真实内容 */
+.ecard-scratch {
+  position: relative;
+  margin-top: clamp(10px, 3.2%, 16px);
+  height: clamp(40px, 12%, 52px);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.ecard-scratch-reveal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ec-ink);
+  text-align: center;
+  /* 付款人 + 备注可能很长：最多两行，超出省略，别把卡撑破 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ecard-scratch-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  transition: opacity 420ms ease;
+}
+
+.ecard-scratch-canvas.is-gone {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ecard-scratch-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(46, 52, 58, 0.72);
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
+.ecard-scratch-label.is-hidden {
+  opacity: 0;
+}
+
+/* 多人同行：金额下方一行 AA 分摊（不压在刮涂层上，信息层级也更清楚） */
+.ecard-aa-line {
+  margin-top: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ec-ink-soft);
+}
+
+.ecard-aa-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ec-ink);
+}
+
+/* ===== 牌堆浮层 ===== */
+.ecdeck-backdrop {
+  position: fixed;
+  inset: 0;
+  /* 高于底部导航（m2-tabbar 130）与票据浮层，整屏接管手势 */
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--m-bg) 94%, transparent);
+  backdrop-filter: blur(20px) saturate(1.1);
+}
+
+.ecdeck-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 20px 6px;
+}
+
+.ecdeck-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--m-faint);
+}
+
+.ecdeck-title {
+  margin-top: 2px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--m-text);
+}
+
+.ecdeck-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--m-surface-solid) 86%, transparent);
+  color: var(--m-text);
+  box-shadow: var(--m-shadow-l1);
+}
+
+.ecdeck-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 8px 24px;
+}
+
+.ecdeck-stack {
+  position: relative;
+  width: min(100%, 360px);
+  aspect-ratio: 1.6;
+  perspective: 1400px;
+}
+
+.ecdeck-card {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.ecdeck-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px max(18px, env(safe-area-inset-bottom));
+}
+
+.ecdeck-total {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--m-text);
+}
+
+.ecdeck-total-label {
+  font-size: 11px;
+  color: var(--m-muted);
+}
+
+.ecdeck-total-value {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.ecdeck-perperson {
+  font-size: 11.5px;
+  color: var(--m-accent-strong);
+  font-weight: 600;
+}
+
+.ecdeck-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.ecdeck-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--m-text) 22%, transparent);
+  transition: width 220ms ease, background-color 220ms ease;
+}
+
+.ecdeck-dot.is-on {
+  width: 16px;
+  background: var(--m-accent);
+}
+
+.ecdeck-hint {
+  font-size: 10.5px;
+  color: var(--m-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecdeck-dot,
+  .ecard-scratch-canvas {
+    transition: none;
+  }
+}

@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '画册翻页手感优化：手机上随手左右滑即可翻页（带跟手位移反馈+触感振动）、掀角暗示、台面随翻页抬起与阴影加深、落定回弹微动画、翻页阴影加深',
+    changelog: process.env.APP_CHANGELOG || '旅程归档后弹出费用卡片牌堆：账本每一笔花销一张卡（分类配色+超大金额+时间备注），左右滑动切换、刮开涂层看 AA 分摊；总览页可重新翻看',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

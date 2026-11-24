@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -33,9 +33,12 @@ import { toast } from '@/lib/mobile/toast-store'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 import TicketReveal from '@/components/mobile/ticket/TicketReveal'
 import TicketFace from '@/components/mobile/ticket/TicketFace'
+import ExpenseDeck from '@/components/mobile/expense/ExpenseDeck'
 import { deriveTicket } from '@/lib/ticket/derive'
 import { readTicketOverride } from '@/lib/ticket/store'
 import type { TicketData } from '@/lib/ticket/types'
+import { buildExpenseDeck } from '@/lib/expense-card/derive'
+import type { ExpenseDeckData } from '@/lib/expense-card/types'
 import { totalPhotoCount } from '@/lib/home/photo-count'
 import { runAfterFirstPaint } from '@/lib/client/persisted-cache'
 
@@ -301,6 +304,10 @@ export default function HomeMobile({
   const restDrafts = draftTravels.slice(1)
   /** 完成归档后弹出的票据（旋转揭晓 + 烟花彩带） */
   const [revealTicket, setRevealTicket] = useState<TicketData | null>(null)
+  /** 票据关掉后接着弹的「账单费用卡片」牌堆（本次旅途每一笔花销一张卡） */
+  const [expenseDeck, setExpenseDeck] = useState<ExpenseDeckData | null>(null)
+  /** 刚归档的那段旅程：票据关闭后要拿它的 id 去拉账本 */
+  const archivedTravelRef = useRef<{ id: number; slug: string; title: string } | null>(null)
 
   /** 「完成并归档」：写入 confirmedAt → 该旅行进入最近旅行与画册，首页大入口消失 */
   const confirmDraft = async (id: number) => {
@@ -327,6 +334,7 @@ export default function HomeMobile({
         } catch {
           /* 昵称拿不到就用默认乘客名，不影响出票 */
         }
+        archivedTravelRef.current = { id: item.id, slug: item.slug, title: item.title }
         setRevealTicket(
           deriveTicket({
             travel: {
@@ -355,6 +363,34 @@ export default function HomeMobile({
       setConfirmingId(null)
     }
   }
+
+  /**
+   * 票据关掉后接着弹账单卡片：拉这次旅途的账本 → 一笔花销一张卡。
+   * 没有记账（或全部金额为 0）就什么都不弹，不打扰用户。
+   */
+  const openExpenseDeck = useCallback(async (): Promise<boolean> => {
+    const archived = archivedTravelRef.current
+    if (!archived) return false
+    archivedTravelRef.current = null
+    try {
+      const res = await fetch(apiUrl('/api/travels/' + archived.id + '/expenses'), { credentials: 'include' })
+      if (!res.ok) return false
+      const json = await res.json()
+      const deck = buildExpenseDeck({
+        travelId: archived.id,
+        travelTitle: archived.title,
+        expenses: json?.expenses || [],
+        // 首页拿不到同行者名单：AA 参与人退化为「每笔账的付款人 ∪ 我」（derive 内处理）
+        companions: [],
+      })
+      if (!deck) return false
+      setExpenseDeck(deck)
+      return true
+    } catch {
+      /* 账本拉取失败不影响归档结果，静默跳过 */
+      return false
+    }
+  }, [])
 
   /** 快捷入口：全部复用现有能力；没有进行中旅程时统一落到“新建旅程” */
   const quickHref = (hash: string) => (active ? `${travelDetailHref(active.slug)}${hash}` : '/travel/new')
@@ -677,8 +713,14 @@ export default function HomeMobile({
           ticket={revealTicket}
           onClose={() => {
             setRevealTicket(null)
-            // 看完票据再刷新首页：归档后的旅程进入「最近旅行」，进行中入口消失
-            void onRefresh()
+            /**
+             * 顺序很重要：先弹账单卡片，**刷新首页要等牌堆关掉之后**。
+             * 首页刷新是「骨架屏 → 新数据」，HomeMobile 会被卸载 —— 若先刷新，
+             * 刚挂上的牌堆会跟着被卸载（表现为"点了关闭就回首页，卡片没出现"）。
+             */
+            void openExpenseDeck().then((opened) => {
+              if (!opened) void onRefresh()
+            })
           }}
           onOpenTravel={() => {
             const slug = revealTicket.slug
@@ -692,6 +734,23 @@ export default function HomeMobile({
         >
           <TicketFace ticket={revealTicket} />
         </TicketReveal>
+      )}
+
+      {/* 票据之后：本次旅途的账单卡片牌堆（左右滑动看每一笔 / 刮开看人均） */}
+      {expenseDeck && (
+        <ExpenseDeck
+          deck={expenseDeck}
+          onClose={() => {
+            setExpenseDeck(null)
+            // 牌堆关掉再刷新首页：归档后的旅程进入「最近旅行」，进行中入口消失
+            void onRefresh()
+          }}
+          onOpenTravel={() => {
+            const slug = archivedTravelRef.current?.slug
+            setExpenseDeck(null)
+            if (slug) router.push(travelDetailHref(slug))
+          }}
+        />
       )}
     </div>
   )

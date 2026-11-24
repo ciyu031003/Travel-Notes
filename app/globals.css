@@ -4,6 +4,7 @@
 @import './mobile-v6.css';
 @import './web-v4.css';
 @import './ticket-art.css';
+@import './expense-card.css';
 
 /* Tailwind 4 配置接入（P2-31 三层 token + 既有 theme 配置都保留在 tailwind.config.js） */
 @config "../tailwind.config.js";
