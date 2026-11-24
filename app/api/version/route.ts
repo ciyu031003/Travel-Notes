@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '旅程完成即有纪念票：归档旅程后屏幕中间旋转弹出机票/高铁票/火车票，配烟花彩带；新增票据夹（四季×四段主题、按年归档、点票回旅程）；票面信息由旅程自动派生（出发到达/时间/航班车次/座位/票价）',
+    changelog: process.env.APP_CHANGELOG || '画册翻页手感优化：手机上随手左右滑即可翻页（带跟手位移反馈+触感振动）、掀角暗示、台面随翻页抬起与阴影加深、落定回弹微动画、翻页阴影加深',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

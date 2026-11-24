@@ -24,8 +24,13 @@ export const INSTANT_FLIPPING_TIME_MS = 1
 /** 时长上界：异常配置不该让翻页动到无法阅读 */
 export const MAX_FLIPPING_TIME_MS = 2000
 
-/** 翻页阴影最大不透明度（开启阴影时的档位值） */
-export const SHADOW_OPACITY_ON = 0.42
+/**
+ * 翻页阴影最大不透明度（开启阴影时的档位值）。
+ * 0.42 → 0.52（2026-11-25 翻页手感优化）：折角时纸页底下的投影更实，
+ * 书页离开台面的「厚度」才看得出来；库按帧改的只是这一层的 opacity，
+ * 数值变大不增加任何绘制次数。
+ */
+export const SHADOW_OPACITY_ON = 0.52
 
 /**
  * 视觉档的 flippingTime（语义值，允许 0 = 直切）→ 库可接受的动画时长（恒 > 0）。

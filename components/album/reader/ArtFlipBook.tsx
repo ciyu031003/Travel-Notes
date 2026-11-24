@@ -75,6 +75,12 @@ interface ArtFlipBookProps {
   flippingTime?: number
   /** 单页（竖排）模式：窄屏 true 一页一页翻；宽屏 false 双页展开（横屏照片真跨页） */
   portrait?: boolean
+  /**
+   * 翻页控制器状态回调：'read'（静止）/ 'flipping'（程序翻页）/ 'fold_corner'（悬停折角）
+   * / 'user_fold'（手指拖拽折角）。阅读器据此给台面加「抬起 + 阴影加深」的态，
+   * 让翻页过程有纸张离开台面的重量感（纯 CSS，不影响库的动画）。
+   */
+  onFlipStateChange?: (state: string) => void
   /** 页面切换回调 */
   onPageChange?: (pageIndex: number, spreadIndex?: number, spreadTotal?: number) => void
   /** 是否绘制翻页阴影（lite 档关掉以省 GPU） */
@@ -101,7 +107,8 @@ interface PageFlipUI {
 }
 interface PageFlipInstance {
   loadFromHTML: (els: NodeListOf<HTMLElement>) => void
-  on: (event: string, cb: () => void) => void
+  /** 事件回调收到的参数形状不统一（flip 无参、changeState 带 { data }），这里按需取 */
+  on: (event: string, cb: (event?: unknown) => void) => void
   destroy: () => void
   /** 翻页控制器状态：'read'（静止）/ 'flipping' / 'fold_corner' / 'user_fold' */
   getState?: () => string
@@ -177,7 +184,16 @@ function ensureRuntime(): Promise<PageFlipCtor> {
  * - 边缘点击、滑动翻页
  */
 const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function ArtFlipBook(
-  { pages, flippingTime = DEFAULT_FLIPPING_TIME_MS, portrait = true, drawShadow = true, onPageChange, mountKey = 0, onRuntimeMount },
+  {
+    pages,
+    flippingTime = DEFAULT_FLIPPING_TIME_MS,
+    portrait = true,
+    drawShadow = true,
+    onPageChange,
+    onFlipStateChange,
+    mountKey = 0,
+    onRuntimeMount,
+  },
   ref,
 ) {
   const pageFlipRef = useRef<PageFlipInstance | null>(null)
@@ -186,12 +202,14 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
   /** 重试计数：变化即重建容器（React 会连 DOM 一起换掉） */
   const [retryNonce, setRetryNonce] = useState(0)
   const onPageChangeRef = useRef(onPageChange)
+  const onFlipStateChangeRef = useRef(onFlipStateChange)
   const onRuntimeMountRef = useRef(onRuntimeMount)
   const disposedRef = useRef(false)
   /** 跳转重试用的定时器（卸载时清理，避免对已销毁的实例继续操作） */
   const jumpTimersRef = useRef<number[]>([])
 
   onPageChangeRef.current = onPageChange
+  onFlipStateChangeRef.current = onFlipStateChange
   onRuntimeMountRef.current = onRuntimeMount
 
   /**
@@ -244,7 +262,9 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
           mobileScrollSupport: false,
           clickEventForward: true,
           useMouseEvents: true,
-          swipeDistance: 24,
+          // 24 → 40（2026-11-25）：手机上顺手一划就翻页太容易误触，
+          // 40px 更接近「有意图的划动」，同时保留快速轻扫可翻页。
+          swipeDistance: 40,
           showPageCorners: true,
           disableFlipByClick: false,
         })
@@ -271,6 +291,12 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
         // 横竖屏切换会重建对开分组，必须重新上报，否则页码会停在校准前的旧值
         instance.on('changeOrientation', () => reportCurrent(instance as PageFlipInstance))
         instance.on('flip', () => reportCurrent(instance as PageFlipInstance))
+        // 折角/翻页过程状态：只往上抛，由阅读器决定怎么表现（CSS 台面抬起/阴影加深）
+        instance.on('changeState', (event) => {
+          const raw = event as { data?: string } | string | undefined
+          const state = typeof raw === 'string' ? raw : raw?.data
+          if (typeof state === 'string') onFlipStateChangeRef.current?.(state)
+        })
 
         pageFlipRef.current = instance
         onRuntimeMountRef.current?.()

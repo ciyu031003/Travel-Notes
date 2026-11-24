@@ -1686,6 +1686,108 @@ html.dark {
   filter: saturate(0.92) contrast(1.03) sepia(0.07);
 }
 
+/* ===== 翻页手感（2026-11-25）：台面抬起 / 落定回弹 / 书页叠边 / 掀角暗示 ===== */
+
+/* rig 需要相对定位：掀角暗示与翻页态都挂在它上面 */
+.art-flip-rig {
+  position: relative;
+}
+
+/* 书页叠边：台面右侧露出 2 条"下面还有纸"的细线（左侧同理），静态装饰；
+   用 box-shadow 而不是伪元素，避免和库的页元素抢层叠上下文 */
+.art-flipbook-container::before,
+.art-flipbook-container::after {
+  content: '';
+  position: absolute;
+  top: 1.5%;
+  bottom: 1.5%;
+  width: 3px;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 2px;
+  opacity: 0.55;
+}
+.art-flipbook-container::before {
+  left: -5px;
+  background: linear-gradient(to right, rgba(60, 45, 30, 0.05), rgba(60, 45, 30, 0.22));
+}
+.art-flipbook-container::after {
+  right: -5px;
+  background: linear-gradient(to left, rgba(60, 45, 30, 0.05), rgba(60, 45, 30, 0.22));
+}
+
+/* 折角 / 翻页中：台面轻微抬起、投影加深 —— 让人感到纸被"拿起来"了 */
+.art-flip-rig[data-flip-state='user_fold'] .art-flipbook-container,
+.art-flip-rig[data-flip-state='fold_corner'] .art-flipbook-container,
+.art-flip-rig[data-flip-state='flipping'] .art-flipbook-container {
+  box-shadow: 0 26px 44px rgba(29, 37, 21, 0.30);
+  transform: translateY(-2px);
+}
+.art-flip-rig .art-flipbook-container {
+  transition: box-shadow 220ms ease, transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+
+/* 手指横划时的跟手位移：整本书轻轻跟着走，松手回落（配合 BookReader 的 is-swiping） */
+.art-flip-rig.is-swiping .art-flipbook-container {
+  transition: none;
+  transform: translateY(-2px) translateX(var(--swipe-x, 0px));
+}
+.art-flip-rig.is-swiping .art-flipbook-container::before,
+.art-flip-rig.is-swiping .art-flipbook-container::after {
+  opacity: 0.35;
+}
+/* 落定回弹：翻页完成后 380ms 的极轻微下落，收尾不硬停（减少动态偏好下关闭） */
+.art-flip-rig.is-settling .art-flipbook-container {
+  animation: art-book-settle 380ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes art-book-settle {
+  0% { transform: translateY(-2px) scale(1.004); }
+  55% { transform: translateY(1px) scale(0.9985); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* 封面右下角的「可以掀起来」暗示：一小片反复卷起的纸角 */
+.art-flip-corner-hint {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: clamp(34px, 9%, 58px);
+  height: clamp(34px, 9%, 58px);
+  pointer-events: none;
+  z-index: 6;
+  border-bottom-right-radius: inherit;
+  border-bottom-left-radius: 3px;
+  border-top-right-radius: 3px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 253, 246, 0) 42%,
+    rgba(255, 253, 246, 0.92) 52%,
+    rgba(240, 232, 214, 0.98) 100%
+  );
+  box-shadow: -3px -3px 9px rgba(60, 45, 30, 0.18);
+  transform-origin: bottom right;
+  animation: art-corner-peel 2.8s ease-in-out infinite;
+}
+@keyframes art-corner-peel {
+  0%, 62%, 100% { transform: rotate(0deg) scale(1); opacity: 0.85; }
+  74% { transform: rotate(-7deg) scale(1.06); opacity: 1; }
+  86% { transform: rotate(-2deg) scale(1.02); opacity: 0.9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art-flip-rig .art-flipbook-container,
+  .art-flip-rig.is-settling .art-flipbook-container {
+    transition: none;
+    animation: none;
+  }
+  .art-flip-corner-hint {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+
 /* 单页模式（窄屏，page-flip portrait）兜底：
    若双页渲染期间跨页照片仍存在，退化为单页全图 contain，保证头脚完整不裁切 */
 @media (max-width: 640px) {

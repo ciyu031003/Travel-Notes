@@ -12,6 +12,7 @@ import { BookPageBody } from '../book/BookPageBody'
 import { useBookTheme, useBookTier, themeStyle } from '../book/themes/runtime'
 import { BOOK_THEME_METAS } from '../book/themes/types'
 import { preloadAdjacentSpreads } from '@/lib/modules/album/book/preload'
+import { hapticLight } from '@/lib/mobile/haptics'
 import { composeFromSourceBook } from '@/lib/modules/album/book/mapper'
 import { expandPages, paginate } from '@/lib/modules/album/book/paginate'
 
@@ -128,9 +129,22 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
   }, [spreads])
 
   const artFlipRef = useRef<ArtFlipBookHandle>(null)
+  /** 当前对开序号的无渲染副本（手势/事件回调里读最新值，避免闭包过期） */
+  const spreadIndexRef = useRef(0)
+  /** 正在进行的横向滑动手势（一次 pointer 序列只认第一条轨迹） */
+  const swipeRef = useRef<{ id: number; x: number; y: number; at: number; fromSpread: number; active?: boolean } | null>(null)
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [spreadIndex, setSpreadIndex] = useState(0)
   /** 是否已经翻过页：首次翻开提示只在「从未翻过」之前出现 */
   const [hasTurned, setHasTurned] = useState(false)
+  /**
+   * page-flip 控制器状态（read / flipping / fold_corner / user_fold）。
+   * 折角或翻页时给台面加「抬起 + 阴影加深」的态：书页离开台面才有重量感，
+   * 也顺带让用户的拖拽立刻得到视觉回应（原来整段时间台面毫无变化）。
+   */
+  const [flipState, setFlipState] = useState('read')
+  /** 每次翻页落定后的「纸页落定」微动画（is-settling 类，380ms 后自动摘掉） */
+  const [settling, setSettling] = useState(false)
   /** page-flip 实例创建次数：性能契约的可观测断言点（应为 1；仅布局模式切换时 +1） */
   const mountCountRef = useRef(0)
   /**
@@ -163,10 +177,20 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
       return (
         <div key={page.id} className={`art-flip-leaf${side ? ` art-flip-leaf--${side}` : ''}`}>
           <BookPageBody page={page} themeKey={themeKey} />
+          {/*
+            首次翻开时的「掀角」暗示：画在**封面页**右下角（不是台面上）。
+            画在台面上会随台面高度漂在书页之外（台面比书高一截），贴页才像真书的折角。
+            hasTurned 之后不再渲染，不会跟着后续页跑。
+          */}
+          {/* 双页模式的第一屏是「左页+右页」，掀角要在**右页**的外侧下角；
+              单页模式就只有 index 0 这一页。 */}
+          {index === (isWide ? 1 : 0) && !hasTurned && (
+            <span aria-hidden="true" className="art-flip-corner-hint" />
+          )}
         </div>
       )
     }),
-    [leaves, isWide, themeKey],
+    [leaves, isWide, themeKey, hasTurned],
   )
 
   const handleRuntimeMount = useCallback(() => {
@@ -205,7 +229,20 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
         return
       }
     }
+    if (reportedSpread !== spreadIndexRef.current) {
+      spreadIndexRef.current = reportedSpread
+      // 纸页落定：一次很短的「下落回弹」，让翻页收尾不是硬停
+      setSettling(true)
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
+      settleTimerRef.current = setTimeout(() => setSettling(false), 380)
+      void hapticLight()
+    }
     setSpreadIndex(reportedSpread)
+  }, [])
+
+  // 卸载时清掉落定定时器（阅读器随时可能被返回键关掉）
+  useEffect(() => () => {
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
   }, [])
 
   // 邻页预热：当前跨页 ±1 的图离屏 decode()，翻到时已是解码好的位图（不拉全书）
@@ -305,6 +342,87 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onBack, spreads.length, showThemes, goToSpread])
+
+  /**
+   * 「随手左右滑」翻页（2026-11-25 翻页手感优化）。
+   *
+   * 为什么库自己的 swipe 不够：page-flip 的手势模型是**从书页角折起来**——
+   * 手指落在页面中部横划时，它当成"没有角可折"而不动作。真机上大部分人的直觉
+   * 是像刷短视频一样在页面中间划一下，于是出现"划了但书不动"。
+   *
+   * 这里的策略（完全避开与库的拖拽打架）：
+   *   · 只接管**页面中部**、横向位移 ≥ 48px、30° 以内、700ms 内完成的轻扫；
+   *   · 手势起点在书页左右边缘 40px 内视为"折角"，交给库自己处理；
+   *   · 手势过程中页码已经变化（库自己翻了/回弹了）就不再二次翻页；
+   *   · 纵向滑动（滚动/切页外的滚动条）一律不接管。
+   */
+  const onStagePointerDown = useCallback((e: React.PointerEvent) => {
+    // 只在触屏/手写笔上接管「随手划」：桌面上鼠标拖动常用于选字/拖图，
+    // 桌面另有「点右半页 / 方向键 / 底部按钮」三种翻页方式，不需要这条手势。
+    if (e.pointerType === 'mouse') return
+    if (e.button !== 0) return
+    swipeRef.current = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      at: performance.now(),
+      fromSpread: spreadIndexRef.current,
+    }
+  }, [])
+
+  /**
+   * 拖动过程中的即时反馈：手指横向移动时让整本书跟手平移（最多 16px）。
+   * 没有这一步，中部横划在松手前画面毫无变化，用户会以为"没反应"。
+   * 直接用 CSS 变量写样式，不 setState —— 每帧一次 React 渲染在低端机上会掉帧。
+   */
+  const onStagePointerMove = useCallback((e: React.PointerEvent) => {
+    const g = swipeRef.current
+    if (!g || g.id !== e.pointerId) return
+    if (e.pointerType === 'mouse') return
+    const dx = e.clientX - g.x
+    const dy = e.clientY - g.y
+    if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.25) return
+    g.active = true
+    const rig = rigRef.current
+    if (!rig) return
+    rig.classList.add('is-swiping')
+    rig.style.setProperty('--swipe-x', (Math.max(-16, Math.min(16, dx * 0.07))).toFixed(2) + 'px')
+  }, [])
+
+  /** 结束一次手势：清掉跟手位移（transition 会把书页弹回原位） */
+  const resetSwipe = useCallback(() => {
+    const rig = rigRef.current
+    if (rig) {
+      rig.classList.remove('is-swiping')
+      rig.style.removeProperty('--swipe-x')
+    }
+  }, [])
+
+  const onStagePointerUp = useCallback((e: React.PointerEvent) => {
+    const g = swipeRef.current
+    if (!g || g.id !== e.pointerId) return
+    swipeRef.current = null
+    resetSwipe()
+    const dx = e.clientX - g.x
+    const dy = e.clientY - g.y
+    const dt = performance.now() - g.at
+    if (dt > 700) return
+    if (spreadIndexRef.current !== g.fromSpread) return
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.25) return
+    const box = rigRef.current?.querySelector('.art-flipbook-container')?.getBoundingClientRect()
+    if (box) {
+      // 折角区：库用「边缘拖拽」的语义，交给它（不然一次拖拽会既折角又滑页）
+      if (g.x > box.right - 40 || g.x < box.left + 40) return
+    }
+    if (dx < 0) artFlipRef.current?.flipNext()
+    else artFlipRef.current?.flipPrev()
+    void hapticLight()
+  }, [resetSwipe])
+
+  const onStagePointerCancel = useCallback(() => {
+    swipeRef.current = null
+    resetSwipe()
+  }, [resetSwipe])
 
   const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/70 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20'
   const isCover = spreadIndex === 0
@@ -409,11 +527,16 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
       <main
         ref={stageRef}
         className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-2 landscape:py-1 sm:px-4 sm:py-3"
+        onPointerDown={onStagePointerDown}
+        onPointerMove={onStagePointerMove}
+        onPointerUp={onStagePointerUp}
+        onPointerCancel={onStagePointerCancel}
       >
         <div
           ref={rigRef}
           data-rig-version={rigVersion}
-          className={`art-flip-rig${isWide ? '' : ' art-flip-rig--single'}`}
+          className={`art-flip-rig${isWide ? '' : ' art-flip-rig--single'}${settling ? ' is-settling' : ''}`}
+          data-flip-state={flipState}
         >
           {/* mountKey 由 (bookKey, 布局模式) 组成：只有真正换了页面集合才重建整本书。
               主题与视觉档都不在 mountKey 里 —— 换主题不重建。
@@ -427,6 +550,7 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
             ref={artFlipRef}
             pages={leafNodes}
             onPageChange={handlePageChange}
+            onFlipStateChange={setFlipState}
             portrait={!isWide}
             flippingTime={profile.flippingTime}
             drawShadow={profile.drawShadow}
