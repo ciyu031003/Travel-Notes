@@ -13,7 +13,7 @@ import SocialBar from './SocialBar'
 import CommentPanel from './CommentPanel'
 import SocialAvatar from '@/components/social/SocialAvatar'
 import PhotoViewer from '@/components/album/PhotoViewer'
-import StackedGallery from '@/components/mobile/StackedGallery'
+import PhotoDeck from '@/components/mobile/PhotoDeck'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { apiUrl } from '@/lib/api-base'
@@ -477,7 +477,9 @@ export default function PostDetail({ postId }: { postId: number }) {
         <div className={cn(hasGallery && 'md:grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] md:items-start md:gap-10')}>
           {gallery.length > 0 && (
             <div className="circle-story-stack">
-              <StackedGallery
+              {/* 2026-11-24：换成 3D 卡片牌堆（拖拽/左右滑动＝切换，点顶卡看大图）。
+                  与下方「旅行照片」列表共用 gallery 数组，下标不会错位。 */}
+              <PhotoDeck
                 images={gallery}
                 alt={post.title}
                 onOpen={(i) => setViewerIndex(i)}

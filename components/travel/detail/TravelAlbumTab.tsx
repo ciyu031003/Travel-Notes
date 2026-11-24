@@ -6,6 +6,7 @@ import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { Icon } from '@/components/mobile/Icon'
 import { Loader } from '@/components/mobile/Loader'
+import PhotoDeck from '@/components/mobile/PhotoDeck'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
 import { base64ToBytes, extFromMime, pickImage, type PickedImage } from '@/lib/media/pick-image'
@@ -134,7 +135,21 @@ export default function TravelAlbumTab({
           <p className="mt-1 text-xs text-[var(--m-faint)]">把这次旅行的照片传上来，画册会自动排版</p>
         </div>
       ) : (
-        <div className="mt-5 space-y-6">
+        <>
+          {/*
+            顶部牌堆（2026-11-24）：把整段旅程的照片叠成一叠卡片，左右滑动/拖拽切换，
+            点顶卡直接进全屏查看器；下方仍是按天「一张张」的照片列表。
+            与下方网格共用 allPhotos 数组，onOpenViewer 的下标不会错位。
+          */}
+          <div className="mt-5">
+            <PhotoDeck
+              images={allPhotos.map((p) => p.url)}
+              alt="旅行照片"
+              onOpen={(i) => onOpenViewer(allPhotos, i)}
+            />
+          </div>
+
+          <div className="mt-6 space-y-6">
           {dayGroups.map((g) => (
             <section key={g.day.id}>
               <div className="m-section-title">
@@ -189,7 +204,8 @@ export default function TravelAlbumTab({
               </div>
             </section>
           )}
-        </div>
+          </div>
+        </>
       )}
 
       <BottomSheet open={showUpload} onClose={() => setShowUpload(false)} title="上传照片">
