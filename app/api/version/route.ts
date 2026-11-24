@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '继续压启动与加载成本：地图几何改为构建期预计算产物随包分发（客户端不再带 d3-geo 与 582KB 中国 GeoJSON），/travel 首屏 JS 从 514KB 降到 313KB；地图骨架等待 1.2s 收到 300ms（地图可交互 1.6s→0.8s）；新增地图产物生成脚本与构建前 dev 类型清理，发版构建更稳',
+    changelog: process.env.APP_CHANGELOG || '堆叠相册改成 3D 卡片牌堆：旅行圈帖子与旅程相册顶部，照片叠成一叠卡片，手指左右滑动/拖拽即可循环切换，松手回弹；点顶卡或「看大图」按钮直接看全屏大图，桌面可用前后按钮与方向键',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
