@@ -131,11 +131,12 @@
   .v6-quote-stamp b { font-size: 11px; line-height: 1.15; font-weight: 700; }
 
   /* tabbar / FAB: keep existing 4+FAB, align to V6 */
+  /* 2026-11-24 液态玻璃：底色/模糊交给 <LiquidGlass>（shadcn @aceternity/liquid-glass），
+     这里只留边框与投影；深色主题同理。玻璃层是 nav 内 absolute 第一层，内容由 .m2-tab-grid 抬到上层。 */
   .m2-tabbar {
-    background: rgba(255, 250, 247, .94);
+    background: transparent;
     border-top: 1px solid var(--m-line);
     box-shadow: 0 -10px 30px rgba(140, 67, 91, .06);
-    backdrop-filter: blur(20px);
   }
   .m2-tab-item.is-active { color: var(--m-accent-strong); }
   .m2-tab-fab {

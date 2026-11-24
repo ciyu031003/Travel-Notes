@@ -16,6 +16,7 @@ import {
 import { apiUrl } from '@/lib/api-base'
 import { apiFetch } from '@/lib/client/api'
 import { Icon } from '@/components/mobile/Icon'
+import { LiquidGlass } from '@/components/ui/liquid-glass'
 import { ALBUM_MODES, type AlbumModeKey } from '@/lib/album-modes'
 import { formatDotDate } from '@/lib/modules/album/presentation'
 import {
@@ -444,8 +445,21 @@ const firstBook = books && books.length > 0 ? books[0] : null
           </div>
         </div>
 
-        {/* 三种既有呈现模式：书页 / 银河 / 像素。只换入口样式，不改变切换逻辑 */}
-        <div className="m2-seg mt-3">
+        {/* 三种既有呈现模式：书页 / 银河 / 像素。只换入口样式，不改变切换逻辑。
+            2026-11-24：外壳换成液态玻璃（shadcn @aceternity/liquid-glass），
+            选中块的实色也改成磨砂玻璃片，与底部导航/分段控件同一套视觉语言。 */}
+        <LiquidGlass
+          radius={16}
+          bevelDepth={10}
+          scale={22}
+          aberration={2.5}
+          frost={0.3}
+          tint={0.2}
+          idleOnly
+          className="mt-3 ring-1 ring-[var(--m-line)]"
+          contentClassName="relative"
+        >
+        <div className="m2-seg m2-seg--glass">
           {ALBUM_MODES.map((m) => {
             const isCurrent = m.key === 'book'
             return (
@@ -464,6 +478,7 @@ const firstBook = books && books.length > 0 ? books[0] : null
             )
           })}
         </div>
+        </LiquidGlass>
       </header>
 
       <main className="mx-auto w-full max-w-[430px] px-[18px] pb-10 pt-4">

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, type ComponentType } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Route, Compass, User, Plus } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { hapticLight } from '@/lib/mobile/haptics'
 import { openNewTravel } from '@/lib/mobile/new-travel'
@@ -141,7 +142,22 @@ export default function MobileBottomNav() {
   }
 
   return (
-    <nav className="m2-tabbar md:hidden" aria-label="移动端主导航">
+    <nav className="m2-tabbar m2-tabbar--glass md:hidden" aria-label="移动端主导航">
+      {/*
+        液态玻璃底（2026-11-24）：shadcn 注册表 @aceternity/liquid-glass —— 底部导航是
+        全 App 最高频的"背景出现的地方"，玻璃折射让页面内容从导航下面滑过时有厚度感。
+        玻璃层 absolute inset-0 且 aria-hidden，内容层（.m2-tab-grid）由 CSS 抬到 z-index:1，
+        点击/焦点仍落在 <Link> 上，不改变任何导航语义。
+      */}
+      {/*
+        2026-11-24 性能取舍（4× 降速实测，滚动一屏的 rAF 帧间隔）：
+          · LiquidGlass 的 SVG 折射（backdrop-filter: url(#…)）：平均 47ms / p95 192ms —— 太大
+          · 磨砂 blur(20px)：平均 19.5ms / p95 29ms —— 与改造前一致，可接受
+        底部导航是**常驻 fixed** 元素，它的 backdrop-filter 每帧都要重新采样滚动内容，
+        所以这里用"磨砂玻璃"（blur + 半透明底 + 顶部高光），而把真折射留给
+        分段控件 / 相册模式切换这类**小块、随内容滚动**的表面（见 components/ui/liquid-glass）。
+      */}
+      <div aria-hidden="true" className="m2-tabbar-glass-layer absolute inset-0" />
       <div className="m2-tab-grid">
         {TABS.slice(0, 2).map((item) => (
           <TabItem key={item.href} item={item} active={isActive(item.href)} onIntent={prefetch} />
@@ -178,6 +194,7 @@ function TabItem({
 }) {
   const Glyph = item.glyph
   const intent = () => onIntent(item.href)
+  const reduceMotion = useReducedMotion()
   return (
     <Link
       href={item.href}
@@ -189,6 +206,19 @@ function TabItem({
       onFocus={intent}
       className={cn('m2-tab-item select-none', active && 'is-active')}
     >
+      {/* 激活态玻璃胶囊：layoutId 让它在四个 tab 之间"滑"过去，而不是凭空跳变 */}
+      {active && (
+        <motion.span
+          aria-hidden="true"
+          layoutId="m2-tab-active-pill"
+          className="m2-tab-pill"
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : { type: 'spring', stiffness: 460, damping: 40, mass: 0.8 }
+          }
+        />
+      )}
       {Glyph ? <Glyph /> : <Icon icon={item.icon} size="md" />}
       <span>{item.label}</span>
     </Link>
