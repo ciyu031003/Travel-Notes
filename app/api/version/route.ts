@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '接入液态玻璃视觉：底部导航磨砂玻璃 + 激活胶囊滑动、筛选/相册模式/旅程 tab 换成液态玻璃分段切换（静止真折射、滚动自动降级保证不卡），全部沿用原有交互与权限',
+    changelog: process.env.APP_CHANGELOG || '旅程完成即有纪念票：归档旅程后屏幕中间旋转弹出机票/高铁票/火车票，配烟花彩带；新增票据夹（四季×四段主题、按年归档、点票回旅程）；票面信息由旅程自动派生（出发到达/时间/航班车次/座位/票价）',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

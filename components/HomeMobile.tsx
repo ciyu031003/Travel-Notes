@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import dynamicImport from 'next/dynamic'
@@ -30,6 +31,11 @@ import { Skeleton } from '@/components/mobile/Skeleton'
 import { Icon } from '@/components/mobile/Icon'
 import { toast } from '@/lib/mobile/toast-store'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
+import TicketReveal from '@/components/mobile/ticket/TicketReveal'
+import TicketFace from '@/components/mobile/ticket/TicketFace'
+import { deriveTicket } from '@/lib/ticket/derive'
+import { readTicketOverride } from '@/lib/ticket/store'
+import type { TicketData } from '@/lib/ticket/types'
 import { totalPhotoCount } from '@/lib/home/photo-count'
 import { runAfterFirstPaint } from '@/lib/client/persisted-cache'
 
@@ -232,6 +238,8 @@ function MobileMoments({ moments }: { moments: HomeMoment[] }) {
 }
 
 export default function HomeMobile({
+  // 这里用 router 只做"票据揭晓 → 查看旅程 / 票据夹"的跳转（与底部导航同一套路由）
+
   travelPosts,
   draftTravels = [],
   provincesVisitedCount,
@@ -248,6 +256,7 @@ export default function HomeMobile({
   recentMoments?: HomeMoment[]
   onRefresh?: () => Promise<unknown> | void
 }) {
+  const router = useRouter()
   const quote = dailyQuote()
   const recent = travelPosts.slice(0, 6)
   const totalPhotos = totalPhotoCount(travelPosts)
@@ -290,6 +299,8 @@ export default function HomeMobile({
   }
   const active = draftTravels[0] ?? null
   const restDrafts = draftTravels.slice(1)
+  /** 完成归档后弹出的票据（旋转揭晓 + 烟花彩带） */
+  const [revealTicket, setRevealTicket] = useState<TicketData | null>(null)
 
   /** 「完成并归档」：写入 confirmedAt → 该旅行进入最近旅行与画册，首页大入口消失 */
   const confirmDraft = async (id: number) => {
@@ -298,6 +309,45 @@ export default function HomeMobile({
       const res = await fetch(apiUrl(`/api/travels/${id}/confirm`), { method: 'POST', credentials: 'include' })
       if (!res.ok) throw new Error('confirm failed')
       toast.success('已归档，已加入旅行画册与最近旅行')
+      /**
+       * 完成一次旅程 = 生成一张纪念票（需求：屏幕中间旋转弹出 + 烟花彩带）。
+       * 票面数据全部由这段旅程派生（lib/ticket/derive），乘客名取当前用户昵称；
+       * 用户在票面上改过的字段（localStorage）优先，保证与票据夹里一致。
+       */
+      const item = draftTravels.find((t) => t.id === id)
+      if (item) {
+        let passenger = '旅行者'
+        try {
+          const meRes = await fetch(apiUrl('/api/me'), { credentials: 'include' })
+          if (meRes.ok) {
+            const me = await meRes.json()
+            const profile = me?.data ?? me
+            passenger = profile?.nickname || profile?.username || passenger
+          }
+        } catch {
+          /* 昵称拿不到就用默认乘客名，不影响出票 */
+        }
+        setRevealTicket(
+          deriveTicket({
+            travel: {
+              id: item.id,
+              slug: item.slug,
+              title: item.title,
+              location: item.location,
+              startDate: item.startDate,
+              endDate: item.endDate,
+            },
+            passenger,
+            override: readTicketOverride(item.id),
+          }),
+        )
+        /**
+         * 注意：这里**不立即 onRefresh()**。
+         * 首页的刷新是「先骨架再落数据」：一刷新 HomeMobile 会被卸载，刚弹出的票据跟着消失。
+         * 正确顺序：先让用户看完票据（旋转+彩带），关闭时再刷新首页（此时该旅程已进「最近旅行」）。
+         */
+        return
+      }
       await onRefresh()
     } catch {
       toast.error('归档失败，请重试')
@@ -620,6 +670,29 @@ export default function HomeMobile({
 
       {/* 首次点开才挂载：motion chunk 不进首屏关键路径（chunk 已在首帧后空闲预取） */}
       {drawerMounted && <HomeMobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
+
+      {/* 完成归档 → 票据旋转揭晓（烟花/彩带） */}
+      {revealTicket && (
+        <TicketReveal
+          ticket={revealTicket}
+          onClose={() => {
+            setRevealTicket(null)
+            // 看完票据再刷新首页：归档后的旅程进入「最近旅行」，进行中入口消失
+            void onRefresh()
+          }}
+          onOpenTravel={() => {
+            const slug = revealTicket.slug
+            setRevealTicket(null)
+            router.push(travelDetailHref(slug))
+          }}
+          onOpenArchive={() => {
+            setRevealTicket(null)
+            router.push('/tickets')
+          }}
+        >
+          <TicketFace ticket={revealTicket} />
+        </TicketReveal>
+      )}
     </div>
   )
 }

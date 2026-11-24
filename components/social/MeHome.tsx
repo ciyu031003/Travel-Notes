@@ -25,6 +25,7 @@ import {
   Clock,
   Menu,
   Moon,
+  Ticket,
 } from 'lucide-react'
 import SocialThemeToggle from '@/components/social/SocialThemeToggle'
 import ProfileHero from '@/components/social/ProfileHero'
@@ -396,7 +397,14 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
           </section>
 
           {/* 四宫格快捷入口：收藏 / 通知 / 空间 / 看板 */}
-          <section className="m-enter mt-4 grid grid-cols-4 gap-2 md:hidden">
+          <section className="m-enter mt-4 grid grid-cols-5 gap-2 md:hidden">
+            {/* 旅程票据夹：每段归档旅程自动生成的机票/高铁票/火车票 */}
+            <Link href="/tickets" className="m2-quick">
+              <span className="m2-icon-box m2-tone-peach">
+                <Icon icon={Ticket} size="md" />
+              </span>
+              <span className="m2-quick-label">票据</span>
+            </Link>
             <Link href="/me/favorites" className="m2-quick">
               <span className="m2-icon-box m2-tone-pink">
                 <Icon icon={Bookmark} size="md" />
@@ -573,6 +581,7 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
       >
         <DrawerSection title="记录">
           <DrawerRow icon={Route} title="我的旅行" href="/travel" onClick={() => setDrawerOpen(false)} />
+          <DrawerRow icon={Ticket} title="旅程票据" href="/tickets" onClick={() => setDrawerOpen(false)} />
           <DrawerRow icon={Images} title="旅行画册" href="/album" onClick={() => setDrawerOpen(false)} />
           <DrawerRow icon={CalendarDays} title="时间线" href="/timeline" onClick={() => setDrawerOpen(false)} />
           <DrawerRow icon={NotebookPen} title="碎碎念" href="/moments" onClick={() => setDrawerOpen(false)} />

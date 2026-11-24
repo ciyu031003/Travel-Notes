@@ -1,0 +1,1302 @@
+/* ==========================================================================
+   旅程票据 · 票面艺术（四季 × 一天四段 = 16 套天光）
+   --------------------------------------------------------------------------
+   为什么单独一个 CSS 文件：设计 token 门禁（scripts/check-design-tokens.mjs）
+   只扫 .ts/.tsx，票面属于**插画层资产**（与相册主题皮肤同类），配色写在
+   CSS 里既不进 token 账本、也不会把渐变/纹理硬塞进组件。
+
+   命名约定：
+     · .tk                  根票据（布局容器，只放派生角色变量与本层隔离）
+     · .tk-<season>-<part>  16 套天光（由 lib/ticket/theme.ts 的
+                            ticketThemeClass() 生成，如 "tk tk-autumn-dusk"）
+     · .tk-flight / .tk-hsr / .tk-train / .tk-mini  四种票面形态
+     · .tk-atmo / .tk-tex   两个绝对定位的氛围/纹理层（不上浮到文字之上）
+
+   每套天光暴露的变量（组件只消费这些，不再有第二套色值）：
+     --tk-sky-1/-2   天光渐变两端（票根、迷你卡缩略图、高铁票头）
+     --tk-glow       光晕/边缘光（太阳、月亮、晚霞）
+     --tk-accent     季节强调色（票根打孔线、徽标、车次）
+     --tk-accent-2   季节辅色
+     --tk-ink        浅色卡面主墨（纸票/高铁票正文）
+     --tk-card       浅色卡面纸底
+     --tk-deep       深色卡面底色（登机牌主体）
+     --tk-on-deep    深色卡面文字
+     --tk-stub       右侧可撕票根整条渐变
+     --tk-stub-ink   票根文字
+     --tk-atmo-x/-y  天光光源位置（清晨/正午/黄昏/夜晚各不相同）
+     --tk-star       星点不透明度（只有夜晚 > 0）
+     --tk-tex-color  季节纹理色（花瓣/叶影/落叶/雪点）
+     --tk-tex-op     季节纹理不透明度
+
+   派生变量（.tk 里统一算，改一处全套跟着变）：
+     --tk-muted / --tk-faint / --tk-line / --tk-card-2 / --tk-deep-2 /
+     --tk-on-deep-muted / --tk-on-deep-faint / --tk-line-deep /
+     --tk-glow-soft / --tk-accent-soft
+   ========================================================================== */
+
+/* ── 1. 根票据：派生角色变量 + 层隔离 ───────────────────────────────────── */
+.tk {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--tk-ink);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+
+  /* 派生：浅色卡面 */
+  --tk-muted: color-mix(in srgb, var(--tk-ink) 64%, transparent);
+  --tk-faint: color-mix(in srgb, var(--tk-ink) 44%, transparent);
+  --tk-line: color-mix(in srgb, var(--tk-ink) 13%, transparent);
+  --tk-line-strong: color-mix(in srgb, var(--tk-ink) 22%, transparent);
+  --tk-card-2: color-mix(in srgb, var(--tk-card) 90%, var(--tk-accent) 10%);
+  --tk-accent-soft: color-mix(in srgb, var(--tk-accent) 16%, transparent);
+
+  /* 派生：深色卡面（登机牌主体） */
+
+  --tk-deep-1: var(--tk-deep);
+  --tk-deep-2: color-mix(in srgb, var(--tk-deep) 86%, var(--tk-accent) 14%);
+  --tk-on-deep-muted: color-mix(in srgb, var(--tk-on-deep) 64%, var(--tk-deep));
+  --tk-on-deep-faint: color-mix(in srgb, var(--tk-on-deep) 42%, var(--tk-deep));
+  --tk-line-deep: color-mix(in srgb, var(--tk-on-deep) 16%, transparent);
+  --tk-line-deep-strong: color-mix(in srgb, var(--tk-on-deep) 42%, transparent);
+  --tk-glow-soft: color-mix(in srgb, var(--tk-glow) 40%, transparent);
+
+  /* 纸纹颗粒强度 */
+  --tk-grain-op: 0.05;
+}
+
+/* 卡片外壳：负责投影（drop-shadow 走剪影，打孔/缺角也能带上阴影）。
+   阴影色不能用票据内部变量以外的东西，所以外壳也带天光 class。 */
+.tk-shell {
+  position: relative;
+  width: 100%;
+  filter: drop-shadow(0 16px 24px color-mix(in srgb, var(--tk-deep) 24%, transparent));
+}
+.tk-train-shell,
+.tk-hsr-shell {
+  filter: drop-shadow(0 10px 18px color-mix(in srgb, var(--tk-ink) 20%, transparent));
+}
+.tk-mini-shell {
+  filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--tk-deep) 22%, transparent));
+}
+
+/* ── 2. 氛围层与纹理层（永不覆盖文字） ─────────────────────────────────── */
+.tk-atmo,
+.tk-tex {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 天光：光源位置由 --tk-atmo-x/-y 决定（清晨低、正午高、黄昏斜、夜晚顶） */
+.tk-atmo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(90% 78% at var(--tk-atmo-x) var(--tk-atmo-y), var(--tk-glow-soft) 0%, transparent 64%),
+    radial-gradient(120% 90% at 86% 116%, color-mix(in srgb, var(--tk-accent) 20%, transparent) 0%, transparent 72%);
+}
+
+/* 星点：只有夜晚主题 --tk-star > 0 才显影 */
+.tk-atmo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: var(--tk-star, 0);
+  background-image:
+    radial-gradient(1.6px 1.6px at 14% 22%, var(--tk-glow) 46%, transparent 54%),
+    radial-gradient(1.2px 1.2px at 32% 12%, var(--tk-glow) 46%, transparent 54%),
+    radial-gradient(1.1px 1.1px at 58% 26%, var(--tk-glow) 46%, transparent 54%),
+    radial-gradient(1.5px 1.5px at 74% 14%, var(--tk-glow) 46%, transparent 54%),
+    radial-gradient(1px 1px at 86% 34%, var(--tk-glow) 46%, transparent 54%),
+    radial-gradient(1.3px 1.3px at 44% 40%, var(--tk-glow) 40%, transparent 52%),
+    radial-gradient(1px 1px at 22% 48%, var(--tk-glow) 40%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 66% 52%, var(--tk-glow) 36%, transparent 50%);
+}
+
+/* 季节纹理：花瓣（春）/ 叶影 + 雨丝（夏）/ 落叶（秋）/ 雪点（冬）。
+   形状统一用 radial-gradient 叠出来，再整体旋转一点点，避免"平铺点阵"的机械感。 */
+.tk-tex::before {
+  content: '';
+  position: absolute;
+  inset: -18%;
+  opacity: var(--tk-tex-op, 0.5);
+  transform: rotate(-14deg);
+  background-image: var(--tk-tex-image);
+  background-size: var(--tk-tex-size, 132px 132px);
+}
+
+/* 纸纹颗粒：3px 一格的极细点阵，亮卡用 --tk-ink 点、暗卡用 --tk-on-deep 点 */
+.tk-tex::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: var(--tk-grain-op);
+  background-image: radial-gradient(circle at 1px 1px, var(--tk-ink) 0.5px, transparent 0.8px);
+  background-size: 3px 3px;
+}
+
+.tk-body {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 3. 季节纹理形状（按季节归类，不铺满整卡） ─────────────────────────── */
+.tk:is(.tk-spring-morning, .tk-spring-noon, .tk-spring-dusk, .tk-spring-evening) {
+  --tk-tex-image:
+    radial-gradient(ellipse 7px 3.4px at 22% 18%, var(--tk-tex-color) 58%, transparent 62%),
+    radial-gradient(ellipse 5px 2.6px at 68% 12%, var(--tk-tex-color) 54%, transparent 60%),
+    radial-gradient(ellipse 6px 3px at 46% 44%, var(--tk-tex-color) 46%, transparent 54%),
+    radial-gradient(ellipse 4.6px 2.4px at 84% 58%, var(--tk-tex-color) 42%, transparent 52%),
+    radial-gradient(ellipse 6.4px 3px at 12% 74%, var(--tk-tex-color) 44%, transparent 54%),
+    radial-gradient(ellipse 4px 2.2px at 58% 86%, var(--tk-tex-color) 38%, transparent 50%);
+  --tk-tex-size: 148px 148px;
+}
+
+.tk:is(.tk-summer-morning, .tk-summer-noon, .tk-summer-dusk, .tk-summer-evening) {
+  /* 叶影（大而软的暗斑）+ 雨丝（细斜线），夏天是唯一带雨的季节 */
+  --tk-tex-image:
+    radial-gradient(ellipse 58px 26px at 18% 22%, var(--tk-tex-color) 30%, transparent 72%),
+    radial-gradient(ellipse 44px 20px at 76% 40%, var(--tk-tex-color) 26%, transparent 70%),
+    radial-gradient(ellipse 52px 22px at 38% 82%, var(--tk-tex-color) 24%, transparent 70%),
+    repeating-linear-gradient(104deg, var(--tk-tex-color) 0 1px, transparent 1px 26px);
+  --tk-tex-op: calc(var(--tk-tex-op-base, 0.5) * 0.9);
+  --tk-tex-size: 168px 168px;
+}
+
+.tk:is(.tk-autumn-morning, .tk-autumn-noon, .tk-autumn-dusk, .tk-autumn-evening) {
+  --tk-tex-image:
+    radial-gradient(ellipse 6.4px 3.6px at 16% 26%, var(--tk-tex-color) 56%, transparent 62%),
+    radial-gradient(ellipse 5.2px 3px at 54% 16%, var(--tk-tex-color) 50%, transparent 58%),
+    radial-gradient(ellipse 7px 3.8px at 82% 48%, var(--tk-tex-color) 46%, transparent 56%),
+    radial-gradient(ellipse 4.4px 2.6px at 30% 66%, var(--tk-tex-color) 44%, transparent 54%),
+    radial-gradient(ellipse 5.8px 3.2px at 68% 84%, var(--tk-tex-color) 40%, transparent 52%);
+  --tk-tex-size: 154px 154px;
+}
+
+.tk:is(.tk-winter-morning, .tk-winter-noon, .tk-winter-dusk, .tk-winter-evening) {
+  /* 雪点：大小两层，落点错开 */
+  --tk-tex-image:
+    radial-gradient(circle 2.2px at 14% 18%, var(--tk-tex-color) 60%, transparent 68%),
+    radial-gradient(circle 1.4px at 46% 12%, var(--tk-tex-color) 52%, transparent 62%),
+    radial-gradient(circle 1.8px at 78% 26%, var(--tk-tex-color) 50%, transparent 62%),
+    radial-gradient(circle 1.2px at 64% 58%, var(--tk-tex-color) 44%, transparent 56%),
+    radial-gradient(circle 2px at 24% 62%, var(--tk-tex-color) 46%, transparent 58%),
+    radial-gradient(circle 1.5px at 88% 78%, var(--tk-tex-color) 40%, transparent 54%),
+    radial-gradient(circle 1.2px at 42% 88%, var(--tk-tex-color) 36%, transparent 50%);
+  --tk-tex-size: 124px 124px;
+}
+
+/* ── 4. 十六套天光 ───────────────────────────────────────────────────────
+   写法刻意逐套展开：16 套是可枚举的设计资产，展开后调色一眼可查、
+   改一套不会连带影响别的，也方便截图逐一核对。 */
+
+/* 春 · 清晨（微光/桃色） */
+.tk-spring-morning {
+  --tk-sky-1: #f6cec4;
+  --tk-sky-2: #fbe8ce;
+  --tk-glow: #ffc49b;
+  --tk-accent: #c1667f;
+  --tk-accent-2: #7e9c6b;
+  --tk-ink: #3b2830;
+  --tk-card: #fff7f5;
+  --tk-deep: #2a1b24;
+  --tk-on-deep: #fff2f3;
+  --tk-stub: linear-gradient(155deg, #f7d5ce 0%, #fbead4 60%, #f3c3c6 100%);
+  --tk-stub-ink: #4a2c36;
+  --tk-atmo-x: 18%;
+  --tk-atmo-y: 8%;
+  --tk-star: 0;
+  --tk-tex-color: #e8a0b2;
+  --tk-tex-op: 0.52;
+}
+
+/* 春 · 正午（清亮/新绿） */
+.tk-spring-noon {
+  --tk-sky-1: #cfe7df;
+  --tk-sky-2: #fbf4e6;
+  --tk-glow: #fff0be;
+  --tk-accent: #c1667f;
+  --tk-accent-2: #7e9c6b;
+  --tk-ink: #2f2c25;
+  --tk-card: #fffaF4;
+  --tk-deep: #212a2a;
+  --tk-on-deep: #f5f8f3;
+  --tk-stub: linear-gradient(150deg, #d9eee4 0%, #fbf6e7 58%, #f6e4ec 100%);
+  --tk-stub-ink: #2a3b34;
+  --tk-atmo-x: 76%;
+  --tk-atmo-y: 10%;
+  --tk-star: 0;
+  --tk-tex-color: #e8a0b2;
+  --tk-tex-op: 0.42;
+}
+
+/* 春 · 黄昏（晚霞） */
+.tk-spring-dusk {
+  --tk-sky-1: #f0a98c;
+  --tk-sky-2: #d5839c;
+  --tk-glow: #ffbe8e;
+  --tk-accent: #c1667f;
+  --tk-accent-2: #a8763f;
+  --tk-ink: #3b2530;
+  --tk-card: #fdf3ef;
+  --tk-deep: #2b1a22;
+  --tk-on-deep: #fdeeec;
+  --tk-stub: linear-gradient(150deg, #f4b79e 0%, #de8ca4 68%, #e9a9c0 100%);
+  --tk-stub-ink: #3e1f2a;
+  --tk-atmo-x: 82%;
+  --tk-atmo-y: 30%;
+  --tk-star: 0.16;
+  --tk-tex-color: #e8a0b2;
+  --tk-tex-op: 0.58;
+}
+
+/* 春 · 夜晚（弦月） */
+.tk-spring-evening {
+  --tk-sky-1: #443050;
+  --tk-sky-2: #171021;
+  --tk-glow: #cbb2de;
+  --tk-accent: #c1667f;
+  --tk-accent-2: #7e9c6b;
+  --tk-ink: #332636;
+  --tk-card: #f9f3fa;
+  --tk-deep: #130d19;
+  --tk-on-deep: #f2eaf5;
+  --tk-stub: linear-gradient(155deg, #4c3759 0%, #22162d 66%, #2e2038 100%);
+  --tk-stub-ink: #efe4f3;
+  --tk-atmo-x: 24%;
+  --tk-atmo-y: 12%;
+  --tk-star: 1;
+  --tk-tex-color: #b994c8;
+  --tk-tex-op: 0.32;
+}
+
+/* 夏 · 清晨（潮湿/微光） */
+.tk-summer-morning {
+  --tk-sky-1: #cbe7df;
+  --tk-sky-2: #f1f2d8;
+  --tk-glow: #ffe7ad;
+  --tk-accent: #2f8d82;
+  --tk-accent-2: #3e8fc4;
+  --tk-ink: #17322e;
+  --tk-card: #f6fbfa;
+  --tk-deep: #0f231f;
+  --tk-on-deep: #eafbf5;
+  --tk-stub: linear-gradient(155deg, #d6efe6 0%, #f3f5dc 58%, #cde9da 100%);
+  --tk-stub-ink: #1b3a33;
+  --tk-atmo-x: 20%;
+  --tk-atmo-y: 10%;
+  --tk-star: 0;
+  --tk-tex-color: #79b7a6;
+  --tk-tex-op: 0.46;
+}
+
+/* 夏 · 正午（烈日） */
+.tk-summer-noon {
+  --tk-sky-1: #bfe0ea;
+  --tk-sky-2: #f6f7e4;
+  --tk-glow: #fff3c2;
+  --tk-accent: #2f8d82;
+  --tk-accent-2: #3e8fc4;
+  --tk-ink: #152f33;
+  --tk-card: #f7fbfb;
+  --tk-deep: #12232b;
+  --tk-on-deep: #eef9fb;
+  --tk-stub: linear-gradient(150deg, #cde9f1 0%, #f7f8e8 56%, #d9f0e8 100%);
+  --tk-stub-ink: #163842;
+  --tk-atmo-x: 82%;
+  --tk-atmo-y: 6%;
+  --tk-star: 0;
+  --tk-tex-color: #79b7a6;
+  --tk-tex-op: 0.38;
+}
+
+/* 夏 · 黄昏（对流雨） */
+.tk-summer-dusk {
+  --tk-sky-1: #efa77f;
+  --tk-sky-2: #7fa9a6;
+  --tk-glow: #ffc98c;
+  --tk-accent: #2f8d82;
+  --tk-accent-2: #c98a4b;
+  --tk-ink: #16302e;
+  --tk-card: #f5faf8;
+  --tk-deep: #132523;
+  --tk-on-deep: #f0fbf6;
+  --tk-stub: linear-gradient(150deg, #f3b78f 0%, #8fb6ae 70%, #6e9e9c 100%);
+  --tk-stub-ink: #123029;
+  --tk-atmo-x: 78%;
+  --tk-atmo-y: 34%;
+  --tk-star: 0.12;
+  --tk-tex-color: #a9c9b8;
+  --tk-tex-op: 0.5;
+}
+
+/* 夏 · 夜晚（萤火） */
+.tk-summer-evening {
+  --tk-sky-1: #21505a;
+  --tk-sky-2: #0c1b21;
+  --tk-glow: #8fd6ce;
+  --tk-accent: #2f8d82;
+  --tk-accent-2: #3e8fc4;
+  --tk-ink: #173330;
+  --tk-card: #f2fbf9;
+  --tk-deep: #08161a;
+  --tk-on-deep: #e9faf7;
+  --tk-stub: linear-gradient(155deg, #27626b 0%, #0e252b 68%, #123037 100%);
+  --tk-stub-ink: #e6f8f3;
+  --tk-atmo-x: 30%;
+  --tk-atmo-y: 14%;
+  --tk-star: 1;
+  --tk-tex-color: #6fbdb2;
+  --tk-tex-op: 0.32;
+}
+
+/* 秋 · 清晨（薄雾） */
+.tk-autumn-morning {
+  --tk-sky-1: #f3d2b8;
+  --tk-sky-2: #f9e8c8;
+  --tk-glow: #ffc994;
+  --tk-accent: #b86e35;
+  --tk-accent-2: #96503b;
+  --tk-ink: #3a2a1b;
+  --tk-card: #fff8ee;
+  --tk-deep: #271b12;
+  --tk-on-deep: #fff3e4;
+  --tk-stub: linear-gradient(155deg, #f6dcc0 0%, #fcebd0 58%, #f0c9a6 100%);
+  --tk-stub-ink: #4a3320;
+  --tk-atmo-x: 20%;
+  --tk-atmo-y: 10%;
+  --tk-star: 0;
+  --tk-tex-color: #d79a57;
+  --tk-tex-op: 0.52;
+}
+
+/* 秋 · 正午（干爽） */
+.tk-autumn-noon {
+  --tk-sky-1: #d9e3d3;
+  --tk-sky-2: #f8efdd;
+  --tk-glow: #ffe7b5;
+  --tk-accent: #b86e35;
+  --tk-accent-2: #96503b;
+  --tk-ink: #372a1c;
+  --tk-card: #fdf9f0;
+  --tk-deep: #252017;
+  --tk-on-deep: #fbf5e9;
+  --tk-stub: linear-gradient(150deg, #e3ebdd 0%, #faf2e0 56%, #f2ddb7 100%);
+  --tk-stub-ink: #3a2f1f;
+  --tk-atmo-x: 78%;
+  --tk-atmo-y: 8%;
+  --tk-star: 0;
+  --tk-tex-color: #d79a57;
+  --tk-tex-op: 0.42;
+}
+
+/* 秋 · 黄昏（晚照） */
+.tk-autumn-dusk {
+  --tk-sky-1: #e79a62;
+  --tk-sky-2: #a9603f;
+  --tk-glow: #ffb274;
+  --tk-accent: #b86e35;
+  --tk-accent-2: #8e4a34;
+  --tk-ink: #3b2618;
+  --tk-card: #fdf2e6;
+  --tk-deep: #2a1a12;
+  --tk-on-deep: #fdefe2;
+  --tk-stub: linear-gradient(150deg, #f0ae79 0%, #b36c48 70%, #c58453 100%);
+  --tk-stub-ink: #3d2114;
+  --tk-atmo-x: 80%;
+  --tk-atmo-y: 30%;
+  --tk-star: 0.14;
+  --tk-tex-color: #d79a57;
+  --tk-tex-op: 0.56;
+}
+
+/* 秋 · 夜晚（篝火余烬） */
+.tk-autumn-evening {
+  --tk-sky-1: #4a3524;
+  --tk-sky-2: #1a120b;
+  --tk-glow: #e7b77e;
+  --tk-accent: #b86e35;
+  --tk-accent-2: #7d5a3a;
+  --tk-ink: #362719;
+  --tk-card: #fbf3e8;
+  --tk-deep: #140e09;
+  --tk-on-deep: #f7ecde;
+  --tk-stub: linear-gradient(155deg, #55402b 0%, #241910 68%, #332415 100%);
+  --tk-stub-ink: #f5e9da;
+  --tk-atmo-x: 26%;
+  --tk-atmo-y: 12%;
+  --tk-star: 1;
+  --tk-tex-color: #c08a52;
+  --tk-tex-op: 0.34;
+}
+
+/* 冬 · 清晨（薄雪/淡日） */
+.tk-winter-morning {
+  --tk-sky-1: #dce7f0;
+  --tk-sky-2: #f7f2e7;
+  --tk-glow: #f6e4c6;
+  --tk-accent: #5a83b0;
+  --tk-accent-2: #8a9aae;
+  --tk-ink: #1e2a36;
+  --tk-card: #f7fafc;
+  --tk-deep: #141c26;
+  --tk-on-deep: #eff6fc;
+  --tk-stub: linear-gradient(155deg, #e6eff6 0%, #f9f4ea 60%, #dde9f2 100%);
+  --tk-stub-ink: #233340;
+  --tk-atmo-x: 22%;
+  --tk-atmo-y: 12%;
+  --tk-star: 0;
+  --tk-tex-color: #b9cedd;
+  --tk-tex-op: 0.58;
+}
+
+/* 冬 · 正午（雪后晴） */
+.tk-winter-noon {
+  --tk-sky-1: #c9def0;
+  --tk-sky-2: #f2f7fa;
+  --tk-glow: #fff3d5;
+  --tk-accent: #5a83b0;
+  --tk-accent-2: #8a9aae;
+  --tk-ink: #1c2c3a;
+  --tk-card: #f8fbfd;
+  --tk-deep: #12202b;
+  --tk-on-deep: #f2f9fd;
+  --tk-stub: linear-gradient(150deg, #d6e8f6 0%, #f5f9fb 56%, #e4eff7 100%);
+  --tk-stub-ink: #1c3040;
+  --tk-atmo-x: 80%;
+  --tk-atmo-y: 8%;
+  --tk-star: 0;
+  --tk-tex-color: #b9cedd;
+  --tk-tex-op: 0.46;
+}
+
+/* 冬 · 黄昏（冷夕阳） */
+.tk-winter-dusk {
+  --tk-sky-1: #a9bcd3;
+  --tk-sky-2: #c99b9c;
+  --tk-glow: #efc6b4;
+  --tk-accent: #5a83b0;
+  --tk-accent-2: #a68a92;
+  --tk-ink: #1f2a38;
+  --tk-card: #f6f9fc;
+  --tk-deep: #1b2230;
+  --tk-on-deep: #f4f7fb;
+  --tk-stub: linear-gradient(150deg, #b7c8da 0%, #d2a8a6 68%, #a8bacc 100%);
+  --tk-stub-ink: #22303c;
+  --tk-atmo-x: 78%;
+  --tk-atmo-y: 32%;
+  --tk-star: 0.14;
+  --tk-tex-color: #b9cedd;
+  --tk-tex-op: 0.54;
+}
+
+/* 冬 · 夜晚（雪夜星空） */
+.tk-winter-evening {
+  --tk-sky-1: #2e3f5c;
+  --tk-sky-2: #101722;
+  --tk-glow: #bfd4f2;
+  --tk-accent: #5a83b0;
+  --tk-accent-2: #7f93ab;
+  --tk-ink: #1d2a38;
+  --tk-card: #f5f9fd;
+  --tk-deep: #0c121b;
+  --tk-on-deep: #eef4fc;
+  --tk-stub: linear-gradient(155deg, #35486a 0%, #131b28 68%, #1c2637 100%);
+  --tk-stub-ink: #ebf1fa;
+  --tk-atmo-x: 28%;
+  --tk-atmo-y: 12%;
+  --tk-star: 1;
+  --tk-tex-color: #9fb8d4;
+  --tk-tex-op: 0.34;
+}
+
+/* ── 5. 登机牌（机票） ────────────────────────────────────────────────── */
+.tk-flight {
+  display: block;
+  aspect-ratio: 2.1 / 1;
+  border-radius: 1.75rem;
+  border: 1px solid color-mix(in srgb, var(--tk-glow) 20%, transparent);
+  background-image:
+    linear-gradient(
+      152deg,
+      var(--tk-deep-1) 0%,
+      var(--tk-deep-2) 58%,
+      color-mix(in srgb, var(--tk-deep-1) 74%, var(--tk-accent) 26%) 100%
+    );
+  color: var(--tk-on-deep);
+  --tk-stub-w: 84px;
+
+  /* 可撕票根打孔：在「主体 / 票根」接缝处的上下各切一个半圆缺口。
+     mask-composite: intersect 把三层取交集；不支持时退化为整卡（只会少两个缺口，
+     不会破版）。 */
+  -webkit-mask-image:
+    radial-gradient(circle at calc(100% - var(--tk-stub-w)) 0, transparent 5.5px, #000 6px),
+    radial-gradient(circle at calc(100% - var(--tk-stub-w)) 100%, transparent 5.5px, #000 6px),
+    linear-gradient(#000, #000);
+  mask-image:
+    radial-gradient(circle at calc(100% - var(--tk-stub-w)) 0, transparent 5.5px, #000 6px),
+    radial-gradient(circle at calc(100% - var(--tk-stub-w)) 100%, transparent 5.5px, #000 6px),
+    linear-gradient(#000, #000);
+  mask-composite: intersect;
+}
+
+/* 登机牌里的颗粒用亮色点（暗卡上深点看不见） */
+/* 纹理强度：深色卡面上纹理最容易抢字，压到一半；浅色纸票留七成 */
+.tk-flight .tk-tex::before {
+  opacity: calc(var(--tk-tex-op, 0.5) * 0.5);
+}
+.tk-hsr .tk-tex::before,
+.tk-train .tk-tex::before {
+  opacity: calc(var(--tk-tex-op, 0.5) * 0.72);
+}
+
+.tk-flight .tk-tex::after {
+  background-image: radial-gradient(circle at 1px 1px, var(--tk-on-deep) 0.5px, transparent 0.8px);
+  opacity: 0.05;
+}
+.tk-flight .tk-atmo::before {
+  background-image:
+    radial-gradient(72% 100% at 92% 0%, color-mix(in srgb, var(--tk-glow) 34%, transparent) 0%, transparent 62%),
+    radial-gradient(60% 90% at 6% 104%, color-mix(in srgb, var(--tk-accent) 30%, transparent) 0%, transparent 66%);
+}
+
+.tk-flight .tk-body {
+  display: flex;
+  height: 100%;
+}
+
+/* 票根与主体之间的接缝高光（打孔之外再加一道细虚线） */
+.tk-flight-stub {
+  position: relative;
+  display: flex;
+  width: var(--tk-stub-w);
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px;
+  background-image: var(--tk-stub);
+  color: var(--tk-stub-ink);
+}
+.tk-flight-stub::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  border-left: 1px dashed color-mix(in srgb, var(--tk-stub-ink) 38%, transparent);
+}
+
+.tk-flight-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 14px 12px 16px;
+}
+
+/* 票号行 */
+.tk-flight-kicker {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  color: var(--tk-on-deep-faint);
+}
+.tk-flight-number {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--tk-on-deep);
+}
+.tk-flight-date {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--tk-on-deep-muted);
+}
+.tk-flight-mood {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--tk-glow) 62%, var(--tk-on-deep));
+}
+
+/* 航线：三字码 + 虚线 + 飞机 */
+.tk-flight-route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tk-code {
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--tk-on-deep);
+}
+.tk-code-city {
+  max-width: 92px;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--tk-on-deep-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tk-route {
+  display: flex;
+  min-width: 24px;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+}
+.tk-route-line {
+  height: 1px;
+  flex: 1;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--tk-line-deep-strong) 0 3px,
+    transparent 3px 8px
+  );
+}
+.tk-route-plane {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--tk-glow) 78%, var(--tk-on-deep));
+  transform: translateX(1px);
+}
+
+/* 底部三栏 */
+.tk-flight-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--tk-on-deep-faint);
+}
+.tk-flight-value {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--tk-on-deep);
+}
+
+/* 票根内容 */
+.tk-seat {
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.tk-seat-sm {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.tk-flight-qr {
+  width: 42px;
+  height: 42px;
+  color: color-mix(in srgb, var(--tk-stub-ink) 92%, transparent);
+}
+.tk-stub-note {
+  font-size: 11px;
+  line-height: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-align: center;
+  color: color-mix(in srgb, var(--tk-stub-ink) 62%, transparent);
+}
+
+/* ── 6. 高铁票（电子票/现代） ─────────────────────────────────────────── */
+.tk-hsr {
+  display: block;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid var(--tk-line);
+  background-image: linear-gradient(168deg, var(--tk-card) 0%, var(--tk-card-2) 100%);
+  color: var(--tk-ink);
+}
+.tk-hsr .tk-atmo::after {
+  opacity: calc(var(--tk-star, 0) * 0.4);
+}
+.tk-hsr .tk-body {
+  display: flex;
+  height: 100%;
+}
+
+/* 左侧竖排「高铁」票根：季节色 × 铁路青绿 */
+.tk-hsr-stub {
+  display: flex;
+  width: 58px;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 12px;
+  background-image: linear-gradient(
+    178deg,
+    color-mix(in srgb, var(--tk-accent) 78%, #0e3b44) 0%,
+    #14606b 42%,
+    #0b3a43 100%
+  );
+  color: var(--tk-on-deep);
+}
+.tk-hsr-word {
+  writing-mode: vertical-rl;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+}
+.tk-hsr-mark {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--tk-on-deep) 62%, transparent);
+}
+
+/* 主区 */
+.tk-hsr-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+.tk-hsr-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px dashed var(--tk-line-strong);
+  /* 季节色只出现在票头左端，向右迅速收敛到铁路青绿 —— 一眼仍是"高铁票"，
+     但春天是玫瑰青、秋天是琥珀青、冬天是冰蓝青。 */
+  background-image: linear-gradient(
+    112deg,
+    color-mix(in srgb, var(--tk-accent) 78%, #0e3b44) 0%,
+    #14606b 44%,
+    #0b3a43 100%
+  );
+  color: var(--tk-on-deep);
+}
+.tk-hsr-kicker {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: color-mix(in srgb, var(--tk-on-deep) 80%, transparent);
+}
+.tk-hsr-number {
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.tk-hsr-date {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--tk-on-deep) 78%, transparent);
+}
+.tk-hsr-mood {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--tk-glow) 68%, var(--tk-on-deep));
+}
+
+/* 站名：大号中文 + 小号三字码 + 时刻 */
+.tk-hsr-route {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 14px 10px;
+}
+.tk-hsr-station {
+  max-width: 108px;
+  overflow: hidden;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tk-hsr-code {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--tk-muted);
+}
+.tk-hsr-time {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--tk-ink);
+}
+.tk-hsr-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 14px;
+}
+.tk-hsr-link-line {
+  height: 1px;
+  flex: 1;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--tk-line-strong) 0 2px,
+    transparent 2px 6px
+  );
+}
+.tk-hsr-link-icon {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--tk-accent) 78%, var(--tk-ink));
+}
+
+/* 三栏信息 */
+.tk-hsr-fields {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: 8px;
+  margin: 0 14px;
+  padding: 9px 0;
+  border-top: 1px solid var(--tk-line);
+}
+.tk-field-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--tk-faint);
+}
+.tk-field-value {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--tk-ink);
+}
+
+/* 底部条码 + 小字 */
+.tk-hsr-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 14px;
+  padding: 0 0 12px;
+}
+.tk-barcode {
+  height: 22px;
+  color: color-mix(in srgb, var(--tk-ink) 82%, transparent);
+}
+.tk-hsr-barcode {
+  flex: 1;
+  max-width: 190px;
+}
+.tk-hsr-meta {
+  max-width: 116px;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 14px;
+  text-align: right;
+  color: var(--tk-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 7. 火车票（纸质 / 暖米色 / 红棕点缀） ─────────────────────────────── */
+.tk-train {
+  display: block;
+  border-radius: 0.875rem;
+  color: var(--tk-ink);
+  background-color: var(--tk-card);
+  background-image:
+    repeating-linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--tk-ink) 2.6%, transparent) 0 1px,
+      transparent 1px 6px
+    ),
+    repeating-linear-gradient(
+      32deg,
+      color-mix(in srgb, var(--tk-ink) 1.8%, transparent) 0 1px,
+      transparent 1px 10px
+    ),
+    linear-gradient(162deg, var(--tk-card) 0%, var(--tk-card-2) 100%);
+  border: 1px solid var(--tk-line-strong);
+
+  /* 撕口：底边三道不规则的半圆撕痕（像从票本上撕下来的那一下）。
+     mask-composite: intersect 取交集，不支持时退化为整条直边，不破版。 */
+  -webkit-mask-image:
+    radial-gradient(circle at 15% 100%, transparent 4.2px, #000 4.8px),
+    radial-gradient(circle at 43% 100%, transparent 5.6px, #000 6.2px),
+    radial-gradient(circle at 78% 100%, transparent 4.6px, #000 5.2px),
+    linear-gradient(#000, #000);
+  mask-image:
+    radial-gradient(circle at 15% 100%, transparent 4.2px, #000 4.8px),
+    radial-gradient(circle at 43% 100%, transparent 5.6px, #000 6.2px),
+    radial-gradient(circle at 78% 100%, transparent 4.6px, #000 5.2px),
+    linear-gradient(#000, #000);
+  mask-composite: intersect;
+}
+/* 票头的那道季节天光细条：整张票唯一的"大面积色"，克制 */
+.tk-train::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: 3px;
+  background-image: linear-gradient(90deg, var(--tk-sky-1) 0%, var(--tk-sky-2) 62%, var(--tk-accent) 100%);
+}
+.tk-train .tk-atmo::before {
+  background-image:
+    radial-gradient(70% 90% at 88% 4%, color-mix(in srgb, var(--tk-glow) 24%, transparent) 0%, transparent 66%),
+    radial-gradient(80% 100% at 10% 108%, color-mix(in srgb, var(--tk-accent) 12%, transparent) 0%, transparent 72%);
+}
+.tk-train .tk-atmo::after {
+  opacity: calc(var(--tk-star, 0) * 0.32);
+}
+.tk-train .tk-body {
+  display: flex;
+  height: 100%;
+}
+
+/* 左侧蓝色流水号竖条 */
+.tk-train-serial {
+  display: flex;
+  width: 26px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tk-deep) 72%, #2b5c8a) 0%,
+    color-mix(in srgb, var(--tk-deep) 94%, #2b5c8a) 100%
+  );
+  color: var(--tk-on-deep);
+}
+.tk-train-serial-text {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  color: color-mix(in srgb, var(--tk-on-deep) 76%, transparent);
+}
+
+.tk-train-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 11px 14px 10px 12px;
+}
+.tk-train-kicker {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--tk-accent) 62%, var(--tk-ink));
+}
+.tk-train-date {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--tk-muted);
+}
+
+/* 站名：纸质票的横排「北京 → 成都」，比高铁票更紧凑、字号更小 */
+.tk-train-route {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 0 9px;
+  border-bottom: 1px dashed var(--tk-line-strong);
+}
+.tk-train-station {
+  max-width: 116px;
+  overflow: hidden;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tk-train-code {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--tk-faint);
+}
+.tk-train-time {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--tk-ink) 86%, var(--tk-accent));
+}
+.tk-train-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 16px;
+}
+.tk-train-link-line {
+  height: 1px;
+  flex: 1;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--tk-line-strong) 0 2px,
+    transparent 2px 7px
+  );
+}
+.tk-train-link-icon {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--tk-accent) 74%, var(--tk-ink));
+}
+
+/* 席位 / 票价 / 检票口 + 有效期 */
+.tk-train-fields {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 6px;
+  padding: 8px 0 6px;
+}
+.tk-train-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--tk-line);
+}
+.tk-train-number-block {
+  flex-shrink: 0;
+}
+.tk-train-number {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--tk-accent) 34%, #9a3b2a);
+}
+.tk-train-barcode {
+  width: 132px;
+  height: 26px;
+  color: color-mix(in srgb, var(--tk-ink) 84%, transparent);
+}
+/* 红色检票章（装饰）：纸质票的灵魂，只有它允许"歪"。
+   放在「车次」与「条码」之间的空白里（流内元素，不压条码、不被裁）。 */
+.tk-train-stamp {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: 4px;
+  border: 1.5px solid color-mix(in srgb, #9a3b2a 58%, transparent);
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+  color: color-mix(in srgb, #9a3b2a 72%, var(--tk-accent));
+  opacity: 0.55;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+/* ── 8. 归档小票卡（TicketMini，约 4:3） ──────────────────────────────── */
+.tk-mini {
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--tk-on-deep) 10%, transparent);
+  background-image: linear-gradient(
+    168deg,
+    var(--tk-sky-1) 0%,
+    var(--tk-sky-2) 62%,
+    color-mix(in srgb, var(--tk-sky-2) 62%, var(--tk-accent) 38%) 100%
+  );
+  color: var(--tk-ink);
+}
+.tk-mini .tk-atmo::before {
+  background-image:
+    radial-gradient(90% 80% at var(--tk-atmo-x) var(--tk-atmo-y), color-mix(in srgb, var(--tk-glow) 52%, transparent) 0%, transparent 62%),
+    radial-gradient(90% 70% at 90% 110%, color-mix(in srgb, var(--tk-accent) 26%, transparent) 0%, transparent 70%);
+}
+.tk-mini .tk-atmo::after {
+  opacity: calc(var(--tk-star, 0) * 0.7);
+}
+.tk-mini .tk-body {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 9px 10px 10px;
+}
+
+/* 底部压一层近纸色玻璃，保证缩略图上的信息可读（暗色模式自动跟随 --tk-card） */
+.tk-mini-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--tk-card) 96%, transparent) 0%,
+    color-mix(in srgb, var(--tk-card) 78%, transparent) 40%,
+    transparent 66%
+  );
+}
+
+.tk-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--tk-card) 66%, transparent);
+  color: color-mix(in srgb, var(--tk-accent) 76%, var(--tk-ink));
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  backdrop-filter: blur(6px);
+}
+.tk-mini-mood {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--tk-ink) 74%, transparent);
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--tk-card) 60%, transparent);
+}
+.tk-mini-codes {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 15px;
+  line-height: 18px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--tk-ink);
+}
+.tk-mini-arrow {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--tk-muted);
+}
+.tk-mini-cities {
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  color: var(--tk-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tk-mini-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+}
+.tk-mini-date {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  color: var(--tk-ink);
+}
+.tk-mini-number {
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--tk-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 9. 暗色模式：浅色票（高铁/火车/小票卡）翻成暗纸，深色登机牌保持原样 ──
+   登机牌本来就是深色卡面，只补一处边缘光；浅色票把纸底压暗、墨色提亮，
+   否则暗色页面里会戳出一块刺眼的白纸。 */
+html.dark .tk {
+  --tk-card: color-mix(in srgb, var(--tk-deep) 90%, var(--tk-ink));
+  --tk-ink: color-mix(in srgb, var(--tk-on-deep) 94%, var(--tk-accent));
+  --tk-line: color-mix(in srgb, var(--tk-ink) 18%, transparent);
+  --tk-line-strong: color-mix(in srgb, var(--tk-ink) 26%, transparent);
+  --tk-grain-op: 0.06;
+  /* 天光是"光"：亮纸被光照亮是氛围，暗纸再打一层 40% 的暖光就变成洗白。
+     暗色下只留 18%，让票面仍看出方向感、但不糊。 */
+  --tk-glow-soft: color-mix(in srgb, var(--tk-glow) 18%, transparent);
+}
+html.dark .tk-flight {
+  --tk-line-deep: color-mix(in srgb, var(--tk-on-deep) 20%, transparent);
+}
+html.dark .tk-hsr .tk-tex::before,
+html.dark .tk-train .tk-tex::before {
+  opacity: calc(var(--tk-tex-op, 0.5) * 0.26);
+}
+html.dark .tk-train-serial {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, #2b5c8a 56%, #071019) 0%,
+    color-mix(in srgb, #2b5c8a 26%, #04090f) 100%
+  );
+}
+html.dark .tk-train-number {
+  color: color-mix(in srgb, #d0895f 66%, var(--tk-accent));
+}
+html.dark .tk-train-stamp {
+  border-color: color-mix(in srgb, #d0895f 58%, transparent);
+  color: color-mix(in srgb, #d0895f 72%, var(--tk-accent));
+}
+html.dark .tk-mini {
+  background-image: linear-gradient(
+    168deg,
+    color-mix(in srgb, var(--tk-sky-1) 58%, var(--tk-deep)) 0%,
+    color-mix(in srgb, var(--tk-sky-2) 46%, var(--tk-deep)) 60%,
+    color-mix(in srgb, var(--tk-accent) 28%, var(--tk-deep)) 100%
+  );
+}
+html.dark .tk-mini-veil {
+  background-image: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--tk-card) 96%, transparent) 0%,
+    color-mix(in srgb, var(--tk-card) 82%, transparent) 46%,
+    color-mix(in srgb, var(--tk-card) 34%, transparent) 100%
+  );
+}
+html.dark .tk-mini-badge {
+  background-color: color-mix(in srgb, var(--tk-card) 74%, transparent);
+}
+
+/* ── 10. 无障碍：动效敏感用户不放大气层（纯静态票面，无动画） ───────────── */
+@media (prefers-reduced-transparency: reduce) {
+  .tk-mini-badge {
+    backdrop-filter: none;
+  }
+}
