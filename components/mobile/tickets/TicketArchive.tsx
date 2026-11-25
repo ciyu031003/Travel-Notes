@@ -3,12 +3,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plane, Sparkles, Ticket } from 'lucide-react'
+import { ArrowLeft, Info, Plane, SlidersHorizontal, Sparkles, Ticket } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { Loader } from '@/components/mobile/Loader'
 import TicketMini from '@/components/mobile/ticket/TicketMini'
+import TicketEditSheet, { type TicketEditTravel } from '@/components/mobile/tickets/TicketEditSheet'
 import { apiUrl } from '@/lib/api-base'
+import { toast } from '@/lib/mobile/toast-store'
 import { deriveTicket } from '@/lib/ticket/derive'
+import { clearTicketOverride, writeTicketOverride } from '@/lib/ticket/store'
 import type { TicketData, TicketOverride } from '@/lib/ticket/types'
 import { travelDetailHref } from '@/lib/routes'
 
@@ -22,7 +25,10 @@ import { travelDetailHref } from '@/lib/routes'
  * 用户对票面的微调（交通方式/出发到达/时间/座位）存在 localStorage（lib/ticket/store），
  * 归档页与完成动画共用同一套派生函数，票面因此永远一致。
  *
- * 交互：点票卡 → 对应旅程详情页（需求 3）。
+ * 交互：
+ *  1) 点票卡 → 对应旅程详情页；
+ *  2) 点卡片右上角「调整票面」→ TicketEditSheet 编辑面板，保存后写覆盖层并重算列表
+ *     （票面是纪念卡，覆盖层只影响展示，不写回旅程数据）。
  */
 
 interface TravelItem {
@@ -35,10 +41,30 @@ interface TravelItem {
   tags?: string[]
 }
 
+/** 一张票 + 它的派生入参：编辑面板要用同一份入参重新派生预览，不能只传票面结果 */
+interface TicketRow {
+  ticket: TicketData
+  travel: TicketEditTravel
+  /** 旅程链里的出发地（上一段的目的地） */
+  originCity?: string
+}
+
 const TRANSPORT_LABEL = { flight: '机票', hsr: '高铁票', train: '火车票' } as const
 
 function yearOf(date: string): string {
   return date.slice(0, 4)
+}
+
+/** 归档列表项 → deriveTicket 的 travel 入参（与列表派生保持同一份数据，字段一个不多一个不少） */
+function travelInputOf(item: TravelItem): TicketEditTravel {
+  return {
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    location: item.location ?? null,
+    startDate: item.date ?? null,
+    tags: item.tags ?? [],
+  }
 }
 
 export default function TicketArchive() {
@@ -47,6 +73,7 @@ export default function TicketArchive() {
   const [passenger, setPassenger] = useState('旅行者')
   const [overrides, setOverrides] = useState<Record<string, TicketOverride>>({})
   const [error, setError] = useState('')
+  const [editingId, setEditingId] = useState<number | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -97,7 +124,7 @@ export default function TicketArchive() {
   }, [])
 
   /** 旅程链：按时间升序，后一段的出发地默认是上一段的目的地 */
-  const tickets = useMemo<TicketData[]>(() => {
+  const rows = useMemo<TicketRow[]>(() => {
     if (!travels) return []
     const withDate = [...travels].sort((a, b) => {
       const at = a.date ? new Date(a.date).getTime() : 0
@@ -105,26 +132,22 @@ export default function TicketArchive() {
       return at - bt
     })
     let originCity: string | undefined
-    const chain: TicketData[] = []
+    const chain: TicketRow[] = []
     for (const t of withDate) {
+      const travel = travelInputOf(t)
       const ticket = deriveTicket({
-        travel: {
-          id: t.id,
-          slug: t.slug,
-          title: t.title,
-          location: t.location ?? null,
-          startDate: t.date ?? null,
-          tags: t.tags ?? [],
-        },
+        travel,
         passenger,
         originCity,
         override: overrides[String(t.id)],
       })
-      chain.push(ticket)
+      chain.push({ ticket, travel, originCity })
       originCity = ticket.to.city
     }
     return chain.reverse()
   }, [travels, passenger, overrides])
+
+  const tickets = useMemo(() => rows.map((row) => row.ticket), [rows])
 
   const grouped = useMemo(() => {
     const map = new Map<string, TicketData[]>()
@@ -143,7 +166,40 @@ export default function TicketArchive() {
     return counts
   }, [tickets])
 
+  /** 正在编辑的那一行（票 + 派生入参）；行随覆盖层重算，编辑面板因此永远显示最新票面 */
+  const editing = useMemo(
+    () => (editingId == null ? null : rows.find((row) => row.ticket.travelId === editingId) ?? null),
+    [editingId, rows],
+  )
+
   const loading = travels === null
+
+  const openEditor = (travelId: number) => {
+    setEditingId(travelId)
+  }
+
+  const handleSave = (patch: TicketOverride) => {
+    if (!editing) return
+    const travelId = editing.ticket.travelId
+    const next = writeTicketOverride(travelId, patch)
+    setOverrides((prev) => ({ ...prev, [String(travelId)]: next }))
+    setEditingId(null)
+    toast.success('票面已更新')
+  }
+
+  /** 恢复默认票面：清掉该票的覆盖层，列表立刻回到旅程派生的原始票面 */
+  const handleReset = () => {
+    if (!editing) return
+    const travelId = editing.ticket.travelId
+    clearTicketOverride(travelId)
+    setOverrides((prev) => {
+      if (!(String(travelId) in prev)) return prev
+      const next = { ...prev }
+      delete next[String(travelId)]
+      return next
+    })
+    toast.success('已恢复默认票面')
+  }
 
   return (
     <div className="m-mobile-page m2-screen text-[var(--m-text)]">
@@ -171,6 +227,13 @@ export default function TicketArchive() {
             <span className="inline-flex items-center gap-1"><Icon icon={Plane} size="sm" />机票 {summary.flight}</span>
             <span className="inline-flex items-center gap-1"><Icon icon={Ticket} size="sm" />高铁 {summary.hsr}</span>
             <span className="inline-flex items-center gap-1"><Icon icon={Ticket} size="sm" />火车 {summary.train}</span>
+          </p>
+        )}
+
+        {tickets.length > 0 && (
+          <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-4 text-[var(--m-faint)]">
+            <Icon icon={Info} size="sm" className="mt-px shrink-0" />
+            <span>可调整票面：改完只影响展示（票面是纪念卡，不改旅程本身）</span>
           </p>
         )}
       </header>
@@ -208,14 +271,34 @@ export default function TicketArchive() {
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-3">
                   {list.map((ticket) => (
-                    <Link
-                      key={ticket.travelId}
-                      href={travelDetailHref(ticket.slug)}
-                      aria-label={'打开 ' + ticket.title + ' 的' + TRANSPORT_LABEL[ticket.transport]}
-                      className="block transition active:scale-[0.98]"
-                    >
-                      <TicketMini ticket={ticket} />
-                    </Link>
+                    // 卡片与「调整票面」是**兄弟节点**而不是把 button 塞进 Link：
+                    // 交互元素不能嵌套在 <a> 里（键盘/读屏会乱），这里绝对定位浮在卡片右上角。
+                    <div key={ticket.travelId} className="relative pt-6">
+                      <Link
+                        href={travelDetailHref(ticket.slug)}
+                        aria-label={'打开 ' + ticket.title + ' 的' + TRANSPORT_LABEL[ticket.transport]}
+                        className="block transition active:scale-[0.98]"
+                      >
+                        <TicketMini ticket={ticket} />
+                      </Link>
+                      <button
+                        type="button"
+                        title="调整票面"
+                        aria-label={'调整「' + ticket.title + '」的票面'}
+                        onClick={(event) => {
+                          // 外层是 Link（卡片整块可点）：必须同时掐掉默认行为与冒泡，
+                          // 否则点「调整」会顺带跳到旅程详情页。
+                          event.preventDefault()
+                          event.stopPropagation()
+                          openEditor(ticket.travelId)
+                        }}
+                        className="m-press absolute right-0 top-0 z-10 flex h-11 w-11 items-start justify-end text-[var(--m-muted)]"
+                      >
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--m-line)] bg-[color-mix(in_srgb,var(--m-surface-solid)_90%,transparent)] text-[var(--m-text)] shadow-[var(--m-shadow-l1)] backdrop-blur-sm">
+                          <Icon icon={SlidersHorizontal} size="sm" />
+                        </span>
+                      </button>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -228,6 +311,19 @@ export default function TicketArchive() {
           </div>
         )}
       </main>
+
+      {editing && (
+        <TicketEditSheet
+          open
+          ticket={editing.ticket}
+          travel={editing.travel}
+          passenger={passenger}
+          originCity={editing.originCity}
+          onClose={() => setEditingId(null)}
+          onSave={handleSave}
+          onReset={handleReset}
+        />
+      )}
     </div>
   )
 }

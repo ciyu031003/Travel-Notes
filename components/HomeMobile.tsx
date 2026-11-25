@@ -80,6 +80,8 @@ interface PostMeta {
   images?: string[]
   tags?: string[]
   location?: string
+  /** 同行者（AA 分摊参与人）；/api/travels 下发，账单卡片用它算人均 */
+  companions?: unknown
   localOnly?: boolean
 }
 
@@ -373,15 +375,33 @@ export default function HomeMobile({
     if (!archived) return false
     archivedTravelRef.current = null
     try {
-      const res = await fetch(apiUrl('/api/travels/' + archived.id + '/expenses'), { credentials: 'include' })
-      if (!res.ok) return false
-      const json = await res.json()
+      /**
+       * 两路并行：账本 + 旅行列表（列表里带 companions）。
+       * 首页的 draftTravels 是"进行中"的摘要，没有同行者名单；归档后这段旅程会出现在
+       * /api/travels 里，按 slug 匹配就能拿到 AA 的真实参与人。
+       * 列表拿不到（离线/慢网）时退回「付款人 ∪ 我」，卡片照常出。
+       */
+      const [expenseRes, travelsRes] = await Promise.all([
+        fetch(apiUrl('/api/travels/' + archived.id + '/expenses'), { credentials: 'include' }),
+        fetch(apiUrl('/api/travels'), { credentials: 'include' }).catch(() => null),
+      ])
+      if (!expenseRes.ok) return false
+      const json = await expenseRes.json()
+      let companions: { name?: string | null }[] = []
+      try {
+        const travelsJson = travelsRes && travelsRes.ok ? await travelsRes.json() : null
+        const post = (travelsJson?.posts || []).find(
+          (p: { slug?: string; id?: number }) => p?.slug === archived.slug || p?.id === 1_000_000 + archived.id,
+        )
+        if (post && Array.isArray(post.companions)) companions = post.companions
+      } catch {
+        /* 同行者拿不到就退化为付款人，不影响出票 */
+      }
       const deck = buildExpenseDeck({
         travelId: archived.id,
         travelTitle: archived.title,
         expenses: json?.expenses || [],
-        // 首页拿不到同行者名单：AA 参与人退化为「每笔账的付款人 ∪ 我」（derive 内处理）
-        companions: [],
+        companions,
       })
       if (!deck) return false
       setExpenseDeck(deck)

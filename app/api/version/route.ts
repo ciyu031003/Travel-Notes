@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '旅程归档后弹出费用卡片牌堆：账本每一笔花销一张卡（分类配色+超大金额+时间备注），左右滑动切换、刮开涂层看 AA 分摊；总览页可重新翻看',
+    changelog: process.env.APP_CHANGELOG || '票据可编辑（出发地/交通方式/车次/时间/座位）+ AA 使用完整同行者名单（服务端下发 companions）+ 旅行详情页悬浮 dock（shadcn floating-dock）+ 设置页深夜模式开关（kokonutui switch-button）+ 预算 Meter（BoardUI 规格）+ 修 dev 下条件挂载弹层被返回键秒关',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

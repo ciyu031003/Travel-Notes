@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { CalendarDays, ImageIcon, Sparkles, Wallet } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
+import BudgetMeter, { toneForBudget } from '@/components/mobile/BudgetMeter'
 import ExpenseDeck from '@/components/mobile/expense/ExpenseDeck'
 import { buildExpenseDeck } from '@/lib/expense-card/derive'
 import type { ExpenseDeckData } from '@/lib/expense-card/types'
@@ -216,12 +217,20 @@ export default function TravelOverviewTab({
           )}
         </div>
         {budget != null && (
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--m-surface-2)]">
-            <div
-              className="h-full rounded-full bg-[var(--m-accent)]"
-              style={{ width: `${budget > 0 ? Math.min(100, Math.round((total / budget) * 100)) : 0}%` }}
-            />
-          </div>
+          <BudgetMeter
+            className="mt-2.5"
+            label="预算使用"
+            valueLabel={'¥' + formatMoney(total) + ' / ¥' + formatMoney(budget)}
+            value={total}
+            max={budget}
+            tone={toneForBudget(budget > 0 ? (total / budget) * 100 : 0)}
+            size="md"
+            description={
+              total > budget
+                ? '已超出预算 ¥' + formatMoney(total - budget)
+                : '还剩 ¥' + formatMoney(budget - total)
+            }
+          />
         )}
 
         {/*

@@ -10,11 +10,13 @@ import {
   ChevronDown,
   CloudOff,
   Images,
+  ImagePlus,
   LayoutGrid,
   MoreHorizontal,
   PenLine,
   Pencil,
   RefreshCw,
+  Ticket,
   User,
   Users,
   Wallet,
@@ -22,8 +24,8 @@ import {
 } from 'lucide-react'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
+import { FloatingDock } from '@/components/ui/floating-dock'
 import { IconButton } from '@/components/mobile/IconButton'
 import { Loader } from '@/components/mobile/Loader'
 import { SegmentedControl } from '@/components/mobile/SegmentedControl'
@@ -222,6 +224,15 @@ export default function TravelDetailMobile({
   const [viewer, setViewer] = useState<{ photos: ViewerPhoto[]; index: number } | null>(null)
   const [composing, setComposing] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  /**
+   * 底部悬浮 dock 的「传照片 / 记花费」请求信号。
+   *
+   * dock 的三个快捷动作都**复用各 tab 里已有的面板**，而不是再造一套上传/记账表单：
+   * 自增信号 → 相应 tab 打开自己的抽屉（见 TravelAlbumTab.uploadRequest /
+   * TravelExpenseTab.addRequest）。这样一处上传、一处表单，状态不会分叉。
+   */
+  const [uploadRequest, setUploadRequest] = useState(0)
+  const [expenseRequest, setExpenseRequest] = useState(0)
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), [])
 
@@ -343,6 +354,80 @@ export default function TravelDetailMobile({
   const companions = Array.isArray(travel.companions) ? (travel.companions as { name?: string; relation?: string }[]) : []
 
   const canWrite = serverKnown
+
+  /**
+   * 悬浮 dock 的快捷动作（替代原底部那条全宽「记录一笔」按钮）。
+   *
+   * 为什么换成 dock：真机反馈的痛点是「上传图片的入口也找不到」「花销怎么记」——
+   * 原来底部只有一个"记录一笔"，另外两个高频动作藏在 tab 里还要再点一次。
+   * dock 把三个写操作 + 票据夹并列摆在同一层，且**保留了「记录一笔」的强调权重**
+   * （accent 项），所以主路径没有变慢：点第一项仍然是原文案 + 原抽屉。
+   *
+   * 待同步（pendingSync）时三个写操作一起禁用，与各 tab 的 DisabledHint 口径一致；
+   * 票据夹是只读归档，任何时候都能看。
+   */
+  const openComposer = useCallback(() => {
+    if (!canWrite) return
+    void hapticLight()
+    setComposing(true)
+  }, [canWrite])
+
+  const openPhotoUpload = useCallback(() => {
+    if (!canWrite) return
+    void hapticLight()
+    setTab('album')
+    setUploadRequest((n) => n + 1)
+  }, [canWrite])
+
+  const openExpenseAdd = useCallback(() => {
+    if (!canWrite) return
+    void hapticLight()
+    setTab('expense')
+    setExpenseRequest((n) => n + 1)
+  }, [canWrite])
+
+  const openTickets = useCallback(() => {
+    void hapticLight()
+    router.push('/tickets')
+  }, [router])
+
+  const dockItems = useMemo(
+    () => [
+      {
+        id: 'memory',
+        title: '记一笔',
+        description: canWrite ? '记录一笔回忆' : '待同步后可记录',
+        icon: <Icon icon={PenLine} size="md" />,
+        accent: true,
+        disabled: !canWrite,
+        onSelect: openComposer,
+      },
+      {
+        id: 'photo',
+        title: '传照片',
+        description: canWrite ? '给这次旅行上传照片' : '待同步后可上传',
+        icon: <Icon icon={ImagePlus} size="md" />,
+        disabled: !canWrite,
+        onSelect: openPhotoUpload,
+      },
+      {
+        id: 'expense',
+        title: '记花费',
+        description: canWrite ? '记一笔花销' : '待同步后可记账',
+        icon: <Icon icon={Wallet} size="md" />,
+        disabled: !canWrite,
+        onSelect: openExpenseAdd,
+      },
+      {
+        id: 'tickets',
+        title: '票据',
+        description: '打开旅程票据夹',
+        icon: <Icon icon={Ticket} size="md" />,
+        onSelect: openTickets,
+      },
+    ],
+    [canWrite, openComposer, openExpenseAdd, openPhotoUpload, openTickets],
+  )
 
   /** 把某张照片设为封面（沉浸视图右上角触发） */
   const setCover = async (photo: ViewerPhotoLike) => {
@@ -573,6 +658,7 @@ export default function TravelDetailMobile({
               extraImages={restImages}
               onChanged={reload}
               onOpenViewer={(photos, index) => setViewer({ photos: photos as ViewerPhoto[], index })}
+              uploadRequest={uploadRequest}
             />
           ) : (
             <DisabledHint />
@@ -589,6 +675,7 @@ export default function TravelDetailMobile({
               loading={expenseLoading}
               state={expenses}
               onChanged={reload}
+              addRequest={expenseRequest}
             />
           ) : (
             <DisabledHint />
@@ -597,37 +684,30 @@ export default function TravelDetailMobile({
       </main>
 
       {/*
-        底部主操作：记录一笔（写文字 + 传照片一步完成）。
-        ⚠️ 必须抬到底部导航条**之上**：LayoutContent 对 /travel* 会挂 MobileBottomNav
-        （fixed bottom-0 z-40）。此前写成 bottom-0 z-30，会被导航条整块盖住，
+        底部悬浮快捷 dock：记一笔 / 传照片 / 记花费 / 票据（shadcn @aceternity/floating-dock 适配版）。
+
+        注意：必须抬到底部导航条**之上** —— LayoutContent 对 /travel* 会挂 MobileBottomNav
+        （fixed bottom-0 z-40）。早先写成 bottom-0 z-30 时会被导航条整块盖住，
         表现就是"详情页底部那个按钮点不到"。
         高度用 --m-tab-h token（不再硬编码 64px），并在键盘弹出时再上抬。
+
+        原先是全宽「记录一笔」按钮：主路径不变（dock 第一项就是它，仍是强调色、
+        仍打开同一个 MemoryComposer），只是把「传照片 / 记花费 / 票据」从二级入口提到同级。
+        因此也去掉了给全宽按钮兜底的渐变遮罩（dock 自身是实心/毛玻璃底，不需要）。
       */}
       <div
-        className={`fixed inset-x-0 z-30 px-4 pb-2 pt-3 transition-[transform,opacity] duration-200 ease-out ${
+        className={`pointer-events-none fixed inset-x-0 z-30 px-4 pb-2 pt-3 transition-[transform,opacity] duration-200 ease-out ${
           recordBarHidden || composing
-            ? 'pointer-events-none translate-y-3 scale-90 opacity-0'
+            ? 'translate-y-3 scale-90 opacity-0'
             : 'translate-y-0 scale-100 opacity-100'
         }`}
         style={{
           // 64px 硬编码改为 --m-tab-h token（导航条高度已是 token，两处不再各写各的）；
-          // 软键盘弹出时整块再上抬 keyboardInset，避免「记录一笔」被键盘遮住。
+          // 软键盘弹出时整块再上抬 keyboardInset，避免 dock 被键盘遮住。
           bottom: `calc(var(--m-tab-h) + env(safe-area-inset-bottom)${keyboardInset ? ' + ' + keyboardInset + 'px' : ''})`,
-          background: 'linear-gradient(to top, var(--m-bg) 72%, transparent)',
         }}
       >
-        <Button
-          block
-          size="lg"
-          icon={PenLine}
-          disabled={!canWrite}
-          onClick={() => {
-            void hapticLight()
-            setComposing(true)
-          }}
-        >
-          {canWrite ? '记录一笔' : '待同步后可记录'}
-        </Button>
+        <FloatingDock label="旅行快捷操作" items={dockItems} />
       </div>
 
       {/* 沉浸相册（二级视图，带关闭按钮；不再吞掉详情页） */}

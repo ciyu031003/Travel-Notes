@@ -10,6 +10,7 @@ import {
   Loader2,
   LogOut,
   Mail,
+  Moon,
   Save,
   ShieldCheck,
   User,
@@ -22,6 +23,8 @@ import { apiUrl } from '@/lib/api-base'
 import { useApi } from '@/lib/client/use-api'
 import { isMobileShell } from '@/lib/routes'
 import { toast } from '@/lib/mobile/toast-store'
+import { hapticLight } from '@/lib/mobile/haptics'
+import SwitchButton from '@/components/ui/switch-button'
 import { useSessionRedirect } from '@/hooks/use-session-redirect'
 import IcpLicense from '@/components/IcpLicense'
 import { APP_VERSION, APP_BUILD_NUMBER } from '@/lib/app-version'
@@ -141,6 +144,37 @@ export default function MeSettingsPage() {
       alive = false
     }
   }, [])
+
+  /**
+   * 外观 · 深夜模式。
+   *
+   * 这个开关**不是新造的状态**：甜途本来就有全站明暗主题（`html.dark` +
+   * `localStorage.theme`）—— 首屏由 app/layout.tsx 的内联脚本恢复，
+   * Navbar / SocialThemeToggle 也写同一处。此前它只藏在顶栏图标里，
+   * 「设置」里反而没有入口；这里接上 SwitchButton，写的是同一个 key、同一份 class，
+   * 所以改完立刻全站生效（ThemeColorSync 会顺手同步 meta theme-color）。
+   */
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  useEffect(() => {
+    const root = document.documentElement
+    const read = () => setTheme(root.classList.contains('dark') ? 'dark' : 'light')
+    read()
+    const observer = new MutationObserver(read)
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+
+  const changeTheme = (next: 'light' | 'dark') => {
+    setTheme(next)
+    // html.dark / colorScheme 由 SwitchButton 在同一个 apply 里打上，这里只负责持久化；
+    // 两边写的是同一个 key（'theme'），与 Navbar / SocialThemeToggle 完全一致。
+    try {
+      localStorage.setItem('theme', next)
+    } catch {
+      // 隐私模式下 localStorage 不可写：主题本次会话仍然生效，只是不记忆
+    }
+    void hapticLight()
+  }
 
   const lockDescription =
     lock.state === 'loading'
@@ -263,6 +297,24 @@ export default function MeSettingsPage() {
                 title="纪念日与相册锁"
                 description={lockDescription}
                 href="/me/album-lock"
+              />
+            </ListSection>
+
+            {/* 外观：全站明暗主题的真实开关（同一个 localStorage.theme / html.dark） */}
+            <ListSection title="外观" className="mt-6">
+              <ListRow
+                icon={Moon}
+                tone="accent"
+                title="深夜模式"
+                description="深色界面，夜里看不刺眼（全站生效）"
+                showChevron={false}
+                trailing={
+                  <SwitchButton
+                    theme={theme}
+                    onThemeChange={changeTheme}
+                    className="shrink-0"
+                  />
+                }
               />
             </ListSection>
 

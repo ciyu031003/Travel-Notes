@@ -41,17 +41,37 @@ export function useCloseOnBack(open: boolean, onClose: () => void, enabled = tru
   onCloseRef.current = onClose
   const enabledRef = useRef(enabled)
   enabledRef.current = enabled
+  /** 本次卸载排队的「回退一条历史」定时器；若紧接着又重新 setup（StrictMode 模拟卸载）就取消它 */
+  const pendingBackRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!open || !enabledRef.current) return
     const id = Symbol('overlay')
     overlayStack.push(id)
-    try {
-      window.history.pushState({ ...window.history.state, overlayClose: true }, '')
-      pushedRef.current = true
-      pushedLocationRef.current = window.location.pathname + window.location.search
-    } catch {
-      pushedRef.current = false
+    /**
+     * StrictMode 模拟卸载（2026-11-25）：
+     * 开发模式下 React 会把「挂载」的 effect 跑两遍（setup → cleanup → setup）。
+     * 若 cleanup 里同步 history.back()，那条 popstate 会落在第二次 setup 之后，
+     * 于是刚打开的弹层被自己的 useCloseOnBack 当成"用户按了返回"立刻关掉
+     * （**条件挂载**的弹层最明显：MemoryComposer 从详情页 / 行程页打开都会闪关）。
+     *
+     * 做法：把回退延迟到下一个任务。模拟卸载会立刻重新执行本 effect，
+     * 这里的 clearTimeout 就地取消那次回退，并复用已压入的历史项（不再重复 push）；
+     * 真实卸载没有下一次 setup，定时器照常回退 —— 与原有语义一致。
+     */
+    const simulatedRemount = pendingBackRef.current !== null
+    if (pendingBackRef.current !== null) {
+      window.clearTimeout(pendingBackRef.current)
+      pendingBackRef.current = null
+    }
+    if (!simulatedRemount) {
+      try {
+        window.history.pushState({ ...window.history.state, overlayClose: true }, '')
+        pushedRef.current = true
+        pushedLocationRef.current = window.location.pathname + window.location.search
+      } catch {
+        pushedRef.current = false
+      }
     }
 
     const onPop = () => {
@@ -78,7 +98,6 @@ export function useCloseOnBack(open: boolean, onClose: () => void, enabled = tru
         // 仍持有自己压入的那条历史且位于栈顶 → 回退消化掉，保持历史栈干净；
         // 监听器已先移除，随后触发的 popstate 不会再次调用 onClose。
         if (pushedRef.current && i === overlayStack.length) {
-          pushedRef.current = false
           /**
            * 2026-10-19 真机 bug（抽屉入口全回首页）的第二层根因：
            * 抽屉打开时压了一条同 URL 历史；若本次关闭是因为**弹层内导航**
@@ -90,9 +109,18 @@ export function useCloseOnBack(open: boolean, onClose: () => void, enabled = tru
           const currentLocation = window.location.pathname + window.location.search
           const navigating = Date.now() - overlayNavigationAt < 10_000
           if (!navigating && pushedLocation !== null && pushedLocation === currentLocation) {
-            window.history.back()
+            // 延迟一个任务再回退：StrictMode 的模拟卸载会在下一次 setup 里 clearTimeout 取消它，
+            // 真实卸载没有下一次 setup，回退照常发生（语义不变）。
+            pendingBackRef.current = window.setTimeout(() => {
+              pendingBackRef.current = null
+              pushedRef.current = false
+              pushedLocationRef.current = null
+              window.history.back()
+            }, 0)
+          } else {
+            pushedRef.current = false
+            pushedLocationRef.current = null
           }
-          pushedLocationRef.current = null
         }
       }
     }

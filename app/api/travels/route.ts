@@ -42,6 +42,12 @@ export async function GET(_request: NextRequest) {
       videos: [] as unknown[],
       tags: t.tags ?? [],
       location: t.location ?? undefined,
+      /**
+       * 同行者（AA 参与人来源）。2026-11-26：首页「完成归档 → 账单卡片」这条链路
+       * 只能看到付款人，分摊会少算同行者；这里把 companions 一起下发（不额外查库，
+       * listTravels 已经是整行取回），客户端按 slug/id 匹配后传给 buildExpenseDeck。
+       */
+      companions: t.companions ?? null,
       confirmed: Boolean(t.confirmedAt),
       type: 'travel',
       published: true,

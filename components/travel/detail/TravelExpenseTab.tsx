@@ -163,6 +163,7 @@ export default function TravelExpenseTab({
   loading,
   state,
   onChanged,
+  addRequest = 0,
 }: {
   travelId: number
   slug: string
@@ -172,6 +173,11 @@ export default function TravelExpenseTab({
   loading: boolean
   state: { expenses: ExpenseItem[]; total: number; budget: number | null } | null
   onChanged: () => void
+  /**
+   * 外部"要记一笔花销"的请求信号（详情页底部悬浮 dock 的「记花费」）。
+   * 每次自增即打开既有的「记一笔花销」抽屉，复用同一份表单与接口。
+   */
+  addRequest?: number
 }) {
   const [showAdd, setShowAdd] = useState(false)
   /** AA 结果：null = 还没点过「一键计算 AA」（此时页面只有原始记账数据） */
@@ -183,6 +189,11 @@ export default function TravelExpenseTab({
   useEffect(() => {
     setAaResult(null)
   }, [state?.total, state?.expenses.length])
+
+  // dock 的「记花费」：信号变化即打开记账抽屉（首次挂载的 0 不触发）
+  useEffect(() => {
+    if (addRequest > 0) setShowAdd(true)
+  }, [addRequest])
 
   const total = state?.total ?? 0
   const budget = state?.budget ?? null

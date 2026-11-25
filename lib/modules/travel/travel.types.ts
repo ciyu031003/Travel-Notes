@@ -22,6 +22,8 @@ export interface TravelSummary {
   photos: string[]
   tags: string[] | null
   location: string | null
+  /** 同行者 JSON（AA 分摊参与人）；首页账单卡片的「每人多少」用它算 */
+  companions: unknown | null
   updatedAt: string | null
   visibility: string
   spaceId: number | null

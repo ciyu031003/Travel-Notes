@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Camera, ImagePlus, Upload, X } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
@@ -31,6 +31,7 @@ export default function TravelAlbumTab({
   extraImages,
   onChanged,
   onOpenViewer,
+  uploadRequest = 0,
 }: {
   travelId: number
   days: TimelineDay[]
@@ -40,11 +41,22 @@ export default function TravelAlbumTab({
   extraImages: string[]
   onChanged: () => void
   onOpenViewer: (photos: ViewerPhotoLike[], index: number) => void
+  /**
+   * 外部"要上传照片"的请求信号（详情页底部悬浮 dock 的「传照片」）。
+   * 每次自增就打开上传抽屉 —— 比自建一个重复的上传入口更省事，
+   * 也不会让两处上传状态各走一套。
+   */
+  uploadRequest?: number
 }) {
   const [uploading, setUploading] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const [picked, setPicked] = useState<PickedImage[]>([])
   const [targetDayId, setTargetDayId] = useState<number | null>(days[0]?.id ?? null)
+
+  // dock 的「传照片」：信号变化即打开上传抽屉（首次挂载的 0 不触发）
+  useEffect(() => {
+    if (uploadRequest > 0) setShowUpload(true)
+  }, [uploadRequest])
 
   /** 逐天照片（时间线已按天聚合去重） */
   const dayGroups = useMemo(
