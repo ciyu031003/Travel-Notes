@@ -14,6 +14,8 @@ import { apiUrl } from '@/lib/api-base'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
 import { hapticError, hapticSuccess } from '@/lib/mobile/haptics'
 import IcpLicense from '@/components/IcpLicense'
+// 桌面端（≥1024）登录页专属皮肤：暖象牙玻璃面板（只包登录列，不覆盖整屏视频）
+import './web-login.css'
 
 const allCities = [
   '北京', '上海', '广州', '深圳', '杭州', '成都', '西安', '南京', '武汉',
@@ -241,172 +243,187 @@ function LoginPageContent() {
   return (
     <>
 ﻿      <LoginDoor>
-        <div className="flex min-h-dvh items-center justify-center px-[18px] pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] md:py-10">
-          <div className="w-full max-w-[430px]">
-            <header className="mb-5 flex items-center gap-3">
-              <BrandLogo size={46} rounded="rounded-[16px]" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-[23px] font-bold tracking-[-0.03em] text-[var(--m-text)]">甜途</p>
-                  {isAuthed && (
-                    <Link
-                      href="/"
-                      className="rounded-full bg-[var(--m-tone-mint-bg)] px-2.5 py-1 text-[10px] font-bold text-[var(--m-tone-mint-fg)]"
-                    >
-                      已登录 · 进入空间
-                    </Link>
-                  )}
+        <div className="flex min-h-dvh items-center justify-center px-[18px] pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] md:py-10 lg:py-2">
+          <div className="web-login-column w-full max-w-[430px]">
+            <div className="web-login-panel">
+              {/* 桌面专属：Ink & Ivory 细眉（<1024 不渲染，移动端视觉不变） */}
+              <div className="web-login-eyebrow-row hidden lg:flex" aria-hidden="true">
+                <span className="web-login-eyebrow">Travel Notes</span>
+                <span className="web-login-eyebrow-rule" />
+                <span className="web-login-eyebrow-dot" />
+              </div>
+              <header className="mb-5 flex items-center gap-3">
+                <BrandLogo size={46} rounded="rounded-[16px]" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="web-login-brand-title web-login-onscreen text-[23px] font-bold tracking-[-0.03em] text-[var(--m-text)]">甜途</p>
+                    {isAuthed && (
+                      <Link
+                        href="/"
+                        className="rounded-full bg-[var(--m-tone-mint-bg)] px-2.5 py-1 text-[10px] font-bold text-[var(--m-tone-mint-fg)]"
+                      >
+                        已登录 · 进入空间
+                      </Link>
+                    )}
+                  </div>
+                  <p className="web-login-tagline web-login-onscreen mt-0.5 truncate text-[12px] text-[var(--m-muted)]">把走过的路，变成值得记住的故事。</p>
                 </div>
-                <p className="mt-0.5 truncate text-[12px] text-[var(--m-muted)]">把走过的路，变成值得记住的故事。</p>
-              </div>
-            </header>
+              </header>
 
-            <div className="m2-card rounded-[22px] p-5 shadow-[0_24px_70px_-24px_rgba(74,20,43,0.45)] backdrop-blur-2xl">
-              <div className="m2-seg mb-5" role="tablist" aria-label="登录或注册">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === 'login'}
-                  onClick={() => switchMode('login')}
-                  className={`m2-seg-btn ${mode === 'login' ? 'is-active' : ''}`}
-                >
-                  登录
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === 'register'}
-                  onClick={() => switchMode('register')}
-                  className={`m2-seg-btn ${mode === 'register' ? 'is-active' : ''}`}
-                >
-                  注册
-                </button>
-              </div>
+              <div className="m2-card rounded-[22px] p-5 shadow-[0_24px_70px_-24px_rgba(74,20,43,0.45)] backdrop-blur-2xl">
+                <div className="m2-seg mb-5" role="tablist" aria-label="登录或注册">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === 'login'}
+                    onClick={() => switchMode('login')}
+                    className={`m2-seg-btn ${mode === 'login' ? 'is-active' : ''}`}
+                  >
+                    登录
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === 'register'}
+                    onClick={() => switchMode('register')}
+                    className={`m2-seg-btn ${mode === 'register' ? 'is-active' : ''}`}
+                  >
+                    注册
+                  </button>
+                </div>
 
-              <form onSubmit={mode === 'login' ? handleSubmit : handleRegister} className="space-y-4">
-                <Field
-                  label="用户名"
-                  required
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  leadingIcon={UserRound}
-                  placeholder="请输入用户名"
-                  autoComplete="username"
-                  name="username"
-                />
-
-                <Field
-                  label="密码"
-                  required
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  leadingIcon={Lock}
-                  placeholder={mode === 'login' ? '请输入密码' : '至少 8 位字符'}
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  name="password"
-                  trailing={
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--m-faint)] transition-colors active:bg-[var(--m-surface-2)]"
-                      aria-label={showPassword ? '隐藏密码' : '显示密码'}
-                    >
-                      {showPassword ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
-                    </button>
-                  }
-                />
-
-                {mode === 'register' && (
+                <form onSubmit={mode === 'login' ? handleSubmit : handleRegister} className="space-y-4">
                   <Field
-                    label="确认密码"
+                    label="用户名"
+                    required
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    leadingIcon={UserRound}
+                    placeholder="请输入用户名"
+                    autoComplete="username"
+                    name="username"
+                  />
+
+                  <Field
+                    label="密码"
                     required
                     type={showPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     leadingIcon={Lock}
-                    placeholder="请再次输入密码"
-                    autoComplete="new-password"
-                    name="confirmPassword"
+                    placeholder={mode === 'login' ? '请输入密码' : '至少 8 位字符'}
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                    name="password"
+                    trailing={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--m-faint)] transition-colors active:bg-[var(--m-surface-2)]"
+                        aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                      >
+                        {showPassword ? <Icon icon={EyeOff} size="sm" /> : <Icon icon={Eye} size="sm" />}
+                      </button>
+                    }
                   />
-                )}
 
-                {error && (
-                  <div role="alert" className="flex items-start gap-2 rounded-[12px] bg-[color-mix(in_srgb,var(--danger-soft)_10%,white)] px-3.5 py-3 text-[13px] leading-5 text-[var(--danger-soft)]">
-                    <Icon icon={X} size="sm" className="mt-0.5 shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between gap-2">
-                  <label className="flex min-h-11 cursor-pointer items-center gap-2.5">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-5 w-5 rounded accent-[var(--m-accent)]"
+                  {mode === 'register' && (
+                    <Field
+                      label="确认密码"
+                      required
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      leadingIcon={Lock}
+                      placeholder="请再次输入密码"
+                      autoComplete="new-password"
+                      name="confirmPassword"
                     />
-                    <span className="text-[12px] text-[var(--m-muted)]">记住我 (5小时)</span>
-                  </label>
-                  <Link
-                    href="/forgot-password"
-                    className="flex min-h-11 items-center px-1 text-[12px] font-bold text-[var(--m-accent-strong)]"
+                  )}
+
+                  {error && (
+                    <div role="alert" className="flex items-start gap-2 rounded-[12px] bg-[color-mix(in_srgb,var(--danger-soft)_10%,white)] px-3.5 py-3 text-[13px] leading-5 text-[var(--danger-soft)]">
+                      <Icon icon={X} size="sm" className="mt-0.5 shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="flex min-h-11 cursor-pointer items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="h-5 w-5 rounded accent-[var(--m-accent)]"
+                      />
+                      <span className="text-[12px] text-[var(--m-muted)]">记住我 (5小时)</span>
+                    </label>
+                    <Link
+                      href="/forgot-password"
+                      className="flex min-h-11 items-center px-1 text-[12px] font-bold text-[var(--m-accent-strong)]"
+                    >
+                      忘记密码？
+                    </Link>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    block
+                    size="lg"
+                    icon={ArrowRight}
+                    iconPosition="trailing"
+                    loading={mode === 'login' ? loading : isRegistering}
+                    disabled={loading || isRegistering}
                   >
-                    忘记密码？
-                  </Link>
+                    {mode === 'login' ? '登录并进入' : '注册并进入'}
+                  </Button>
+                </form>
+
+                <div className="my-4 flex items-center gap-3" aria-hidden="true">
+                  <span className="h-px flex-1 bg-[var(--m-line)]" />
+                  <span className="text-[10px] font-semibold tracking-[0.12em] text-[var(--m-faint)]">OR</span>
+                  <span className="h-px flex-1 bg-[var(--m-line)]" />
                 </div>
 
-                <Button
-                  type="submit"
-                  block
-                  size="lg"
-                  icon={ArrowRight}
-                  iconPosition="trailing"
-                  loading={mode === 'login' ? loading : isRegistering}
-                  disabled={loading || isRegistering}
-                >
-                  {mode === 'login' ? '登录并进入' : '注册并进入'}
+                <Button type="button" block variant="secondary" icon={Lock} onClick={() => setShowAlbumLock(true)}>
+                  相册解锁
                 </Button>
-              </form>
 
-              <div className="my-4 flex items-center gap-3" aria-hidden="true">
-                <span className="h-px flex-1 bg-[var(--m-line)]" />
-                <span className="text-[10px] font-semibold tracking-[0.12em] text-[var(--m-faint)]">OR</span>
-                <span className="h-px flex-1 bg-[var(--m-line)]" />
+                <div className="mt-4 rounded-[16px] bg-[var(--m-surface-2)] p-3">
+                  <div tabIndex={0} className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+                    {cityThumbnails.map((city, i) => (
+                      <span
+                        key={i}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] text-[10px] font-semibold text-[var(--m-accent-strong)]"
+                      >
+                        {city}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-center text-[11px] text-[var(--m-faint)]">
+                    {cityThumbnails.length} 座城市的记忆邮戳
+                  </p>
+                </div>
               </div>
 
-              <Button type="button" block variant="secondary" icon={Lock} onClick={() => setShowAlbumLock(true)}>
-                相册解锁
-              </Button>
-
-              <div className="mt-4 rounded-[16px] bg-[var(--m-surface-2)] p-3">
-                <div tabIndex={0} className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
-                  {cityThumbnails.map((city, i) => (
-                    <span
-                      key={i}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--m-line-strong)] bg-[var(--m-surface-solid)] text-[10px] font-semibold text-[var(--m-accent-strong)]"
-                    >
-                      {city}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-2 text-center text-[11px] text-[var(--m-faint)]">
-                  {cityThumbnails.length} 座城市的记忆邮戳
+              {/*
+                页脚（版权 + 备案号）：直接压在明亮视频上，原样式在亮/暗两套下都读不清。
+                <1024 由 .web-login-footer 提供一块**局部**深色玻璃铭牌（只包住这两行，
+                不是整屏遮罩）；≥1024 它在暖象牙玻璃面板内，改用墨色小字提高对比度。
+              */}
+              <div className="web-login-footer">
+                <p className="web-login-onscreen mt-4 flex items-center justify-center gap-1.5 text-[11px] text-[var(--m-muted)]">
+                  Made with <Icon icon={Heart} size="sm" className="fill-current text-[var(--m-accent)]" /> by 甜途
                 </p>
+
+                {/* 备案号：App 首屏（登录页）即可见的显著位置 */}
+                <IcpLicense
+                  className="web-login-onscreen mt-1 text-center text-[10px] text-[var(--m-faint)]"
+                  numberClassName="text-[var(--m-muted)]"
+                  linkClassName="text-[var(--m-faint)]"
+                />
               </div>
             </div>
-
-            <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-[var(--m-muted)]">
-              Made with <Icon icon={Heart} size="sm" className="fill-current text-[var(--m-accent)]" /> by 甜途
-            </p>
-
-            {/* 备案号：App 首屏（登录页）即可见的显著位置 */}
-            <IcpLicense
-              className="mt-1 text-center text-[10px] text-[var(--m-faint)]"
-              numberClassName="text-[var(--m-muted)]"
-              linkClassName="text-[var(--m-faint)]"
-            />
           </div>
         </div>
       </LoginDoor>

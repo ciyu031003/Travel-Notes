@@ -14,6 +14,7 @@ import { deriveTicket } from '@/lib/ticket/derive'
 import { clearTicketOverride, writeTicketOverride } from '@/lib/ticket/store'
 import type { TicketData, TicketOverride } from '@/lib/ticket/types'
 import { travelDetailHref } from '@/lib/routes'
+import WebTicketLine from '@/components/web/tickets/WebTicketLine'
 
 /**
  * 票据夹（归档页）
@@ -275,8 +276,27 @@ export default function TicketArchive() {
     void syncOverride(travelId, null)
   }
 
+  /**
+   * 清掉「只看这段旅程」的筛选：移动端 banner 与 Web 版筛选条共用，
+   * 避免两处各写一份 replaceState。
+   */
+  const clearTravelFilter = () => {
+    setTravelFilter(null)
+    try {
+      window.history.replaceState(null, '', '/tickets')
+    } catch {
+      /* 忽略 */
+    }
+  }
+
   return (
-    <div className="m-mobile-page m2-screen text-[var(--m-text)]">
+    <>
+      {/*
+        移动端 DOM 原样保留（只在 <1024 可见）：
+        桌面端由 <WebTicketLine> 接管（吊绳时间线），两者共用上面同一份 rows，
+        所以不会重复请求、也不会出现"改了票面两个版本不一致"。
+      */}
+      <div className="m-mobile-page m2-screen wt-mobile-only text-[var(--m-text)]">
       <header className="m2-gutter m-safe-top pb-3">
         <div className="flex items-center gap-2.5">
           <button
@@ -305,14 +325,7 @@ export default function TicketArchive() {
             </span>
             <button
               type="button"
-              onClick={() => {
-                setTravelFilter(null)
-                try {
-                  window.history.replaceState(null, '', '/tickets')
-                } catch {
-                  /* 忽略 */
-                }
-              }}
+              onClick={clearTravelFilter}
               className="shrink-0 text-[13px] font-semibold text-[var(--m-accent-strong)]"
             >
               查看全部
@@ -408,7 +421,12 @@ export default function TicketArchive() {
           </div>
         )}
       </main>
+      </div>
 
+      {/*
+        编辑面板放在移动端容器**外面**：桌面会把 .wt-mobile-only 整块 display:none，
+        面板虽然走 portal，但挂载点被隐藏就再也点不出来（从 Web 吊绳点「调整票面」会失效）。
+      */}
       {editing && (
         <TicketEditSheet
           open
@@ -421,6 +439,16 @@ export default function TicketArchive() {
           onReset={handleReset}
         />
       )}
-    </div>
+
+      {/* 桌面端（≥1024）：吊绳时间线；<1024 时 CSS 整块隐藏，移动端视觉一行未动 */}
+      <WebTicketLine
+        rows={rows}
+        loading={loading}
+        error={error}
+        filterTitle={travelFilter ? (filteredTravel ? filteredTravel.title : '这一段旅程') : null}
+        onClearFilter={clearTravelFilter}
+        onEditTicket={openEditor}
+      />
+    </>
   )
 }

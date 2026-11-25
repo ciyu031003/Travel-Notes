@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import {
   X, MapPin, ArrowRight, Plus, Camera, ChevronLeft, Pencil, Image as ImageIcon,
 } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import type { City } from '@/data/cities'
+import CoverThumb from './CoverThumb'
 import type { PostMeta } from './types'
 
 export default function CityModal({
@@ -98,18 +98,9 @@ export default function CityModal({
                     className="flex gap-3 p-3 rounded-lg border border-travel-dim/60 hover:border-travel-bloom hover:bg-travel-sakura/20 transition-all group"
                   >
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-travel-sakura to-travel-mist">
-                      {(post.cover || post.images?.[0]) && (
-                        <Image
-                          src={post.cover || post.images?.[0] || ''}
-                          alt={post.title}
-                          fill
-                          sizes="64px"
-                          className="object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none'
-                          }}
-                        />
-                      )}
+                      {/* 封面可能是 /uploads 相对路径、COS 绝对 URL 或空值：
+                          CoverThumb 统一归一化 + 逐级回退 + 图标兜底（不再出现空色块/破图标） */}
+                      <CoverThumb src={post.cover || post.images?.[0]} alt={post.title} className="object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-travel-ink text-sm truncate">{post.title}</h3>

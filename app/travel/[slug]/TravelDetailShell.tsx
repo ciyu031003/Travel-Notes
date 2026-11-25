@@ -26,6 +26,7 @@ import { getSyncEngine, startSyncEngine } from '@/lib/modules/offline/bootstrap'
 import { getOfflineInitError } from '@/lib/modules/offline/native/sqlite-db'
 import { goBackOrHome } from '@/lib/navigation'
 import TravelDetailMobile from './TravelDetailMobile'
+import TravelCoverHero from './TravelCoverHero'
 import TravelPhotoViewer, { type ViewerPhoto } from './TravelPhotoViewer'
 import type { TravelInfoForDetail } from '@/components/travel/detail/types'
 
@@ -310,6 +311,8 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
   const detailDate = travel?.startDate ?? legacy?.date ?? ''
   const detailTags = travel?.tags ?? null
   const contentHtml = travel?.contentHtml ?? legacy?.contentHtml ?? ''
+  /** 导语（描述）：桌面端标题下展示，避免"正文为空时整页只剩标题" */
+  const detailLede = ((travel?.description || legacy?.description || '') as string).trim()
   const pendingSync = Boolean(travel?.pendingSync) || (offlineLocal && !travel?.id)
 
   const gridPhotos: ViewerPhoto[] = images.map((u) => ({ url: u }))
@@ -405,6 +408,23 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
       {/* 桌面端：原有文章式排版（保持不动，降低回归面） */}
       {isMobile === false && (
       <div>
+        {/*
+          顶部封面（≥1024 才有）：修「点城市 → 打开文章 → 上方图片空白」。
+          数据源 coverUrl → cover → images[0] → 正文首图逐级回退，失败有占位兜底；
+          <1024 由 CSS 隐藏，旧的 4 列小网格在 ≥1024 收起（lg:hidden），避免两套图并存。
+        */}
+        <TravelCoverHero
+          title={detailTitle}
+          coverUrl={(travel?.coverUrl as string | null | undefined) ?? null}
+          cover={(travel?.cover as string | null | undefined) ?? null}
+          images={images}
+          contentHtml={contentHtml}
+          onOpenPhoto={(index) => {
+            const photos: ViewerPhoto[] = images.map((u) => ({ url: u }))
+            setViewer({ photos, index })
+          }}
+        />
+
         <div className="container-custom flex flex-wrap items-center gap-2 pt-6">
           <Link
             href={travelRecordHref(slug)}
@@ -425,9 +445,10 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
           )}
         </div>
 
-        {/* 相册：桌面端改为普通网格 + 点击进沉浸视图（原先直接铺满全屏、且无关闭） */}
+        {/* 相册：桌面端改为普通网格 + 点击进沉浸视图（原先直接铺满全屏、且无关闭）。
+            ≥1024 由顶部封面英雄区承担（含缩略条），这里只保留 <1024 的旧网格。 */}
         {images.length > 0 && (
-          <div className="container-custom mt-6">
+          <div className="container-custom mt-6 lg:hidden">
             <div className="grid grid-cols-4 gap-2 lg:grid-cols-6">
               {images.slice(0, 12).map((url, i) => (
                 <button
@@ -457,6 +478,8 @@ export default function TravelDetailShell({ slugProp }: { slugProp?: string }) {
           <article className="mx-auto max-w-3xl pb-16 pt-6">
             <header className="mb-8 text-center">
               <h1 className="mb-4 text-3xl font-bold text-travel-ink md:text-4xl">{detailTitle}</h1>
+              {/* 导语：桌面端（≥1024）在标题下补一句描述，正文为空时页面也不至于只剩标题 */}
+              {detailLede ? <p className="tch-lede">{detailLede}</p> : null}
               {travel?.travelType && <TravelTypePill type={travel.travelType} />}
               {Array.isArray(travel?.companions) && (travel.companions as { name?: string; relation?: string }[]).length > 0 && (
                 <div className="mt-3 flex flex-wrap justify-center gap-1.5">

@@ -1,0 +1,21 @@
+/* =========================================================================
+   地图弹层封面缩略图 · 兜底占位
+   -------------------------------------------------------------------------
+   CoverThumb 在「没有封面 / 归一化失败 / 变体与原图都加载失败」时渲染这里的小图标，
+   避免出现空色块或破图标。颜色全部走项目 token，不写裸色值。
+   父容器需要 position:relative（CityModal / ProvinceCityPanel 的缩略图框都是）。
+   ========================================================================= */
+.chm-thumb-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ui-travel-bloom);
+  opacity: 0.72;
+}
+
+.chm-thumb-fallback svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}

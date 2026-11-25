@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { X, MapPin, Sparkles, Plus } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import type { City } from '@/data/cities'
+import CoverThumb from './CoverThumb'
 import type { PostMeta } from './types'
 
 export default function ProvinceCityPanel({
@@ -82,22 +82,8 @@ export default function ProvinceCityPanel({
                   className="flex items-center gap-3 p-2 rounded-lg bg-travel-cream/80 hover:bg-white transition-colors group"
                 >
                   <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-travel-sakura to-travel-mist flex-shrink-0">
-                    {(post.cover || post.images?.[0]) ? (
-                      <Image
-                        src={post.cover || post.images?.[0] || ''}
-                        alt={post.title}
-                        fill
-                        sizes="48px"
-                        className="object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none'
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Icon icon={MapPin} size="sm" className="text-white/50" />
-                      </div>
-                    )}
+                    {/* 与 CityModal 同一套：归一化 + 变体回退 + 图标兜底 */}
+                    <CoverThumb src={post.cover || post.images?.[0]} alt={post.title} className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-travel-ink truncate group-hover:text-travel-bloom">{post.title}</p>

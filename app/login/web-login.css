@@ -1,0 +1,232 @@
+/* =========================================================================
+   Web Login · Ink & Ivory（桌面端专属 · ≥1024px）
+   -------------------------------------------------------------------------
+   登录页背景是 /videos/clover.mp4 原片 —— 两层全屏樱花粉朦胧遮罩已删除
+   （见 components/login/LoginDoor.tsx 的注释）。
+
+   本文件只做两件事，且**都不覆盖整屏视频**：
+     1. ≥1024：把登录列（标题 + 卡片 + 页脚备案）包成一块「暖象牙玻璃」面板
+        （rgba 半透明 + backdrop-blur(20px) + 1px 低对比描边 + 玫瑰金细线）。
+        视频在面板两侧与上下完整可见，不再是全屏色雾。
+     2. <1024：版式一个像素都不动，只给直接压在视频上的文字加一层柔和描边阴影
+        —— 移除粉色薄雾后视频更亮，这是必要的最小可读性补偿（Web 与 App 壳共用）。
+
+   Token 口径（与 Web 其它页一致）：深色墨 #12141a / 浅色暖象牙 #f4efe4 /
+   玫瑰金 #d98e7f / 金 #e3b341；文字暖白或墨黑。
+   颜色/渐变/阴影全部收敛在本文件，组件内不写裸色值。
+   ========================================================================= */
+
+/* ── 主题变量：只在登录列内生效，不污染全局 ───────────────────────────────── */
+.web-login-column {
+  --wl-ivory: #f4efe4;
+  --wl-ink: #12141a;
+  --wl-rose: #d98e7f;
+  --wl-gold: #e3b341;
+  --wl-glass: rgba(244, 239, 228, 0.72);
+  --wl-glass-line: rgba(18, 20, 26, 0.1);
+  --wl-glass-glow: rgba(255, 255, 255, 0.55);
+  --wl-shadow: 0 44px 90px -46px rgba(18, 20, 26, 0.62), 0 12px 28px -18px rgba(18, 20, 26, 0.28);
+  --wl-text: #14161b;
+  --wl-text-soft: rgba(20, 22, 27, 0.66);
+  --wl-halo: rgba(255, 253, 246, 0.72);
+  position: relative;
+}
+
+html.dark .web-login-column {
+  --wl-glass: rgba(18, 20, 26, 0.62);
+  --wl-glass-line: rgba(244, 239, 228, 0.14);
+  --wl-glass-glow: rgba(255, 255, 255, 0.08);
+  --wl-shadow: 0 48px 96px -40px rgba(0, 0, 0, 0.76), 0 14px 30px -18px rgba(0, 0, 0, 0.5);
+  --wl-text: #f6f1e7;
+  --wl-text-soft: rgba(246, 241, 231, 0.7);
+  --wl-halo: rgba(8, 9, 12, 0.66);
+}
+
+/* ── 桌面：暖象牙玻璃面板（局部，不是整屏遮罩）───────────────────────────── */
+@media (min-width: 1024px) {
+  /*
+    桌面壳在 body 上留了 24px 顶隙（首个 body 子节点占位），视频从 y=24 才开始，
+    于是最上方会露出一条 body 底色。登录页整屏是视频门面，这里把 body 底色换成
+    与视频两端协调的象牙/墨色，让那条缝与画面融为一体（不改任何布局）。
+  */
+  body:has(.web-login-column) {
+    background-color: #f4efe4;
+  }
+  html.dark body:has(.web-login-column) {
+    background-color: #101218;
+  }
+
+  /* 双类名：确定性覆盖 Tailwind 的 max-w-[430px]，不依赖样式表先后顺序 */
+  .web-login-column.web-login-column {
+    max-width: 31rem;
+    width: 100%;
+  }
+
+  .web-login-panel {
+    position: relative;
+    padding: 1.5rem 1.75rem 1.125rem;
+    border-radius: 24px;
+    border: 1px solid var(--wl-glass-line);
+    background: linear-gradient(180deg, var(--wl-glass), var(--wl-glass));
+    -webkit-backdrop-filter: blur(20px) saturate(118%);
+    backdrop-filter: blur(20px) saturate(118%);
+    box-shadow: var(--wl-shadow), inset 0 1px 0 var(--wl-glass-glow);
+    animation: web-login-panel-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* 玫瑰金细线 + 金点：Ink & Ivory 的强调细节（纯装饰） */
+  .web-login-panel::before {
+    content: '';
+    position: absolute;
+    inset: -1px -1px auto;
+    height: 2px;
+    border-radius: 24px 24px 0 0;
+    background: linear-gradient(
+      90deg,
+      transparent 6%,
+      var(--wl-rose) 38%,
+      var(--wl-gold) 62%,
+      transparent 94%
+    );
+    opacity: 0.75;
+  }
+
+  .web-login-eyebrow-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.55rem;
+  }
+  .web-login-eyebrow {
+    font-family: var(--art-serif, Georgia, serif);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--wl-rose);
+    white-space: nowrap;
+  }
+  .web-login-eyebrow-rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: linear-gradient(90deg, var(--wl-glass-line), transparent);
+  }
+  .web-login-eyebrow-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--wl-gold);
+    box-shadow: 0 0 0 3px rgba(227, 179, 65, 0.16);
+  }
+
+  /* 桌面标题放大：明显大于移动端（衬线 + 负字距） */
+  .web-login-panel .web-login-brand-title {
+    font-family: var(--art-serif, Georgia, serif);
+    font-size: clamp(1.5rem, 1.9vw, 1.75rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: var(--wl-text);
+  }
+  /* 面板内 header 收紧一点，保证 1440×900 一屏放得下（不出现滚动） */
+  .web-login-panel header {
+    margin-bottom: 0.7rem;
+  }
+  .web-login-panel .web-login-tagline {
+    font-size: 0.8125rem;
+    line-height: 1.65;
+    color: var(--wl-text-soft);
+  }
+  /* 面板内的卡片：让白卡浮在玻璃上，而不是糊成一片；桌面上略微收紧内边距，
+     保证 1440×900 一屏放下（登录页不该出现滚动条） */
+  .web-login-panel .m2-card {
+    border-radius: 20px;
+    padding: 1rem 1.15rem 1.05rem;
+  }
+  /* 页脚：面板内不再需要描边阴影；改用墨色小字（暖象牙玻璃底上对比度足够） */
+  .web-login-panel .web-login-onscreen {
+    text-shadow: none;
+  }
+  .web-login-panel .web-login-footer,
+  .web-login-panel .web-login-footer a,
+  .web-login-panel .web-login-footer span {
+    color: var(--wl-text-soft);
+  }
+  .web-login-panel .web-login-footer {
+    margin-top: 0.5rem;
+  }
+}
+
+/* ── 矮屏笔记本（1024×800 / 1280×720）：进一步收紧，登录页尽量一屏放下 ───────── */
+@media (min-width: 1024px) and (max-height: 880px) {
+  .web-login-eyebrow-row {
+    display: none;
+  }
+  .web-login-panel {
+    padding: 1.15rem 1.5rem 0.95rem;
+  }
+  .web-login-panel header {
+    margin-bottom: 0.6rem;
+  }
+  .web-login-panel .web-login-brand-title {
+    font-size: 1.375rem;
+  }
+  .web-login-panel .web-login-footer {
+    margin-top: 0.35rem;
+  }
+}
+
+@keyframes web-login-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── 窄屏（<1024）：版式不动，只补可读性补偿 ───────────────────────────────── */
+@media (max-width: 1023px) {
+  .web-login-onscreen {
+    text-shadow: 0 1px 2px var(--wl-halo), 0 0 14px var(--wl-halo);
+  }
+
+  /*
+    页脚（版权 / ICP 备案号）直接压在最亮的视频区域上，纯描边阴影在 10px 小字上不够。
+    这里给这两行加一块**局部**深色玻璃铭牌：只有页脚那一小块（高度随内容），
+    不是整屏遮罩、也不是从底部拉起的渐变带 —— 视频其余部分依旧原片可见。
+  */
+  .web-login-footer {
+    margin-top: 0.9rem;
+    padding: 0.7rem 0.85rem 0.55rem;
+    border-radius: 16px;
+    border: 1px solid rgba(246, 241, 231, 0.12);
+    background: linear-gradient(180deg, rgba(9, 10, 14, 0.6), rgba(9, 10, 14, 0.68));
+    -webkit-backdrop-filter: blur(10px) saturate(115%);
+    backdrop-filter: blur(10px) saturate(115%);
+    box-shadow: 0 12px 30px -18px rgba(0, 0, 0, 0.6);
+  }
+  /* 铭牌上统一用暖白字（含备案号里的数值/链接），保证 4.5:1 以上对比度 */
+  .web-login-footer,
+  .web-login-footer a,
+  .web-login-footer span,
+  .web-login-footer p {
+    color: #f4efe4;
+    text-decoration-color: rgba(244, 239, 228, 0.55);
+  }
+  .web-login-footer .web-login-onscreen {
+    margin-top: 0;
+  }
+  .web-login-footer .web-login-onscreen + .web-login-onscreen,
+  .web-login-footer > :not(:first-child) {
+    margin-top: 0.35rem;
+  }
+}
+
+/* ── 减少动态效果：一次性入场动画全关 ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .web-login-panel {
+    animation: none;
+  }
+}

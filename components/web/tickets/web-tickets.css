@@ -1,0 +1,1341 @@
+/* =========================================================================
+   W3 · Web 票据「吊绳收纳」· Ink & Ivory（桌面端 ≥1024 专属）
+   -------------------------------------------------------------------------
+   为什么单独一个 CSS 文件（而不是写进 app/globals.css）：
+     · 桌面 Web 皮肤是一个独立的重设计层，和移动端视觉互不干扰；
+     · 颜色 / 渐变 / 阴影全部集中在此（组件里没有裸色值，符合设计 token 门禁）；
+     · 作用域全部锁在 .wt-* 之下，移动端（<1024）零影响。
+
+   设计语言（Ink & Ivory）：
+     亮色画布 #f4efe4 暖象牙 / 墨黑文字；暗色画布 #12141a 墨色 / 暖白文字；
+     强调色 玫瑰金 #d98e7f、金 #e3b341（小字用加深变体保证对比度）；
+     版式：内容最大宽 1440 / 大留白 / 1px 低对比分隔线 / 卡片圆角 20–24 /
+           玻璃面板 rgba + backdrop-blur(20px)；
+     字体：标题走项目衬线（--art-serif），正文无衬线；
+     动效：滚动一次性渐入 + 轻微悬挂摆动 + hover 抬升 + 3D 倾斜（票面自带）；
+     prefers-reduced-motion：全部关掉。
+
+   结构：
+     .wt-page            页面（含画布底色）
+       .wt-shell         最大宽 1440 的内容栅格
+       .wt-hero          标题 + 总览玻璃面板
+       .wt-lines         吊绳时间线（每年一根绳）
+         .wt-line        一年一根绳：年份头 + 横向可滚动的票据串
+         .wt-hang        一张被夹在绳上的票（夹子 / 日期+旅程签 / 票面）
+       .wt-foot          页脚说明
+     .wt-spot            点击票据后的「大票 + 详情」浮层
+   ========================================================================= */
+
+/* ── 0. 断点闸门：Web 版只在 ≥1024 出现；<1024 维持移动端原样 ──────────── */
+.wt-page {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .wt-page {
+    display: block;
+  }
+  /* 移动端票据夹（TicketArchive 的原有 DOM）在桌面让位给吊绳版 */
+  .wt-mobile-only {
+    display: none !important;
+  }
+}
+
+/* ── 1. 画布与 token ───────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .wt-page {
+    /* 亮色 = 暖象牙 */
+    --wt-canvas: #f4efe4;
+    --wt-canvas-top: #fbf7ee;
+    --wt-canvas-bottom: #ece5d7;
+    --wt-halo: rgba(217, 142, 127, 0.16);
+    --wt-halo-2: rgba(227, 179, 65, 0.1);
+    --wt-grain: rgba(60, 46, 28, 0.5);
+
+    --wt-ink: #1f1c17;
+    --wt-text: #322e27;
+    --wt-muted: #6b6357;
+    --wt-faint: #8d8477;
+
+    --wt-line: rgba(31, 28, 23, 0.1);
+    --wt-line-strong: rgba(31, 28, 23, 0.2);
+    --wt-rose: #d98e7f;
+    --wt-rose-ink: #a04e40;
+    --wt-gold: #e3b341;
+    --wt-gold-ink: #86620f;
+
+    --wt-glass: rgba(255, 253, 248, 0.66);
+    --wt-glass-edge: rgba(255, 255, 255, 0.7);
+    --wt-plate: rgba(252, 248, 240, 0.96);
+    --wt-label-bg: #fffdf8;
+    --wt-shadow: rgba(72, 54, 32, 0.16);
+    --wt-scrim: rgba(38, 32, 24, 0.34);
+
+    --wt-rope: #7d6749;
+    --wt-rope-hi: #c3a67c;
+    --wt-wood-hi: #e8caa0;
+    --wt-wood: #cfa87b;
+    --wt-wood-lo: #a8804f;
+    --wt-wood-edge: rgba(255, 250, 240, 0.55);
+    --wt-wood-shade: rgba(74, 50, 22, 0.34);
+    --wt-metal-hi: #f2ecdf;
+    --wt-metal: #b9ae99;
+    --wt-metal-lo: #7d7364;
+    --wt-metal-ring: rgba(56, 46, 30, 0.28);
+
+    /* 衬线：项目既有 --art-serif（Source Serif 4 / Songti / Noto Serif），
+       兜底链补 Windows 常见中文衬线，避免落到黑体 */
+    --wt-display: var(--art-serif, 'Source Serif 4', 'Songti SC', 'Noto Serif CJK SC',
+        'Source Han Serif SC', 'SimSun', Georgia, serif);
+    --wt-ease: cubic-bezier(0.22, 0.9, 0.24, 1);
+
+    /* 一张吊票的宽度：1024 时约 276，1440 时 389，超宽屏封顶 392 */
+    --wt-card-w: clamp(268px, 27vw, 392px);
+    --wt-gap: clamp(28px, 3.2vw, 56px);
+    --wt-rope-h: 48px;
+  }
+
+  /* 暗色 = 墨色（项目统一用 html.dark） */
+  html.dark .wt-page {
+    --wt-canvas: #12141a;
+    --wt-canvas-top: #191d25;
+    --wt-canvas-bottom: #0c0e12;
+    --wt-halo: rgba(217, 142, 127, 0.12);
+    --wt-halo-2: rgba(227, 179, 65, 0.09);
+    --wt-grain: rgba(240, 232, 218, 0.34);
+
+    --wt-ink: #f6f1e6;
+    --wt-text: #e9e3d7;
+    --wt-muted: #a69d8f;
+    --wt-faint: #7e766a;
+
+    --wt-line: rgba(246, 241, 230, 0.1);
+    --wt-line-strong: rgba(246, 241, 230, 0.24);
+    --wt-rose: #d98e7f;
+    --wt-rose-ink: #eab2a4;
+    --wt-gold: #e3b341;
+    --wt-gold-ink: #eccb78;
+
+    --wt-glass: rgba(255, 255, 255, 0.045);
+    --wt-glass-edge: rgba(255, 255, 255, 0.08);
+    --wt-plate: rgba(22, 25, 32, 0.96);
+    --wt-label-bg: #1b1f27;
+    --wt-shadow: rgba(0, 0, 0, 0.62);
+    --wt-scrim: rgba(6, 7, 10, 0.62);
+
+    --wt-rope: #6d5f4c;
+    --wt-rope-hi: #a08a67;
+    --wt-wood-hi: #7c6650;
+    --wt-wood: #5e4c3a;
+    --wt-wood-lo: #423528;
+    --wt-wood-edge: rgba(255, 244, 226, 0.14);
+    --wt-wood-shade: rgba(0, 0, 0, 0.46);
+    --wt-metal-hi: #ded5c3;
+    --wt-metal: #8b8170;
+    --wt-metal-lo: #4f483c;
+    --wt-metal-ring: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ── 2. 页面外壳 ──────────────────────────────────────────────────────── */
+.wt-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  background-color: var(--wt-canvas);
+  background-image:
+    radial-gradient(120% 66% at 82% -8%, var(--wt-halo) 0%, transparent 58%),
+    radial-gradient(86% 56% at 0% 2%, var(--wt-halo-2) 0%, transparent 52%),
+    linear-gradient(180deg, var(--wt-canvas-top) 0%, var(--wt-canvas) 44%, var(--wt-canvas-bottom) 100%);
+  color: var(--wt-text);
+  overflow-x: clip;
+}
+/* 极细纸纹：给大面积画布一点颗粒，避免"纯色块"感 */
+.wt-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, var(--wt-grain) 0.5px, transparent 0.9px);
+  background-size: 4px 4px;
+  opacity: 0.22;
+}
+.wt-page::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(90deg, transparent, var(--wt-line-strong), transparent);
+}
+.wt-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(44px, 4.6vw, 88px) clamp(32px, 4.4vw, 64px) 88px;
+}
+/* 内联图标：跟随字号缩放（组件里不写尺寸类，见设计 token 门禁第 5 条） */
+.wt-svg {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+.wt-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── 3. Hero ──────────────────────────────────────────────────────────── */
+.wt-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 384px;
+  gap: clamp(32px, 4vw, 80px);
+  align-items: end;
+}
+.wt-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--wt-muted);
+}
+.wt-eyebrow::before {
+  content: '';
+  width: 26px;
+  height: 1px;
+  background-color: var(--wt-rose);
+}
+.wt-title {
+  margin: 24px 0 0;
+  font-family: var(--wt-display);
+  font-size: clamp(40px, 4.6vw, 66px);
+  line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--wt-ink);
+}
+.wt-title em {
+  /* 中文合成斜体观感差：靠玫瑰金 + 衬线体量做强调，不 slant */
+  font-style: normal;
+  color: var(--wt-rose-ink);
+}
+.wt-lede {
+  margin: 20px 0 0;
+  max-width: 48ch;
+  font-size: 15px;
+  line-height: 1.95;
+  color: var(--wt-muted);
+}
+.wt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+}
+.wt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 46px;
+  padding: 0 22px;
+  border: 1px solid var(--wt-line-strong);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--wt-ink);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.42s var(--wt-ease),
+    border-color 0.42s var(--wt-ease),
+    background-color 0.42s var(--wt-ease),
+    box-shadow 0.42s var(--wt-ease);
+}
+.wt-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--wt-gold);
+}
+.wt-btn:focus-visible {
+  outline: 2px solid var(--wt-rose-ink);
+  outline-offset: 3px;
+}
+.wt-btn-primary {
+  border-color: var(--wt-ink);
+  background-color: var(--wt-ink);
+  color: var(--wt-canvas);
+}
+.wt-btn-primary:hover {
+  border-color: var(--wt-ink);
+  box-shadow: 0 16px 32px -16px var(--wt-shadow);
+}
+.wt-btn .wt-svg {
+  transition: transform 0.42s var(--wt-ease);
+}
+.wt-btn:hover .wt-svg {
+  transform: translateX(3px);
+}
+
+/* 入场：hero 首屏不做 IO，直接一次性淡入上浮 */
+@keyframes wt-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.wt-hero-copy > * {
+  animation: wt-enter 0.9s var(--wt-ease) both;
+}
+.wt-hero-copy > *:nth-child(2) {
+  animation-delay: 0.07s;
+}
+.wt-hero-copy > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.wt-hero-copy > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.wt-summary {
+  animation: wt-enter 1s var(--wt-ease) 0.16s both;
+}
+
+/* ── 4. 总览玻璃面板 ──────────────────────────────────────────────────── */
+.wt-summary {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 26px 22px;
+  border: 1px solid var(--wt-line);
+  border-radius: 24px;
+  background-color: var(--wt-glass);
+  box-shadow:
+    0 30px 70px -46px var(--wt-shadow),
+    inset 0 1px 0 var(--wt-glass-edge);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  backdrop-filter: blur(20px) saturate(1.25);
+}
+.wt-summary::before {
+  content: '';
+  position: absolute;
+  top: -88px;
+  right: -64px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background-image: radial-gradient(circle, var(--wt-halo) 0%, transparent 70%);
+  pointer-events: none;
+}
+.wt-summary-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wt-summary-label {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--wt-muted);
+}
+.wt-summary-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--wt-rose);
+  box-shadow: 0 0 0 4px var(--wt-halo);
+}
+.wt-stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 22px;
+}
+.wt-stat {
+  padding: 0 14px;
+  border-left: 1px solid var(--wt-line);
+}
+.wt-stat:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.wt-stat-num {
+  display: block;
+  font-family: var(--wt-display);
+  font-size: 34px;
+  line-height: 1;
+  color: var(--wt-ink);
+  font-variant-numeric: tabular-nums;
+}
+.wt-stat-num-sm {
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.wt-stat-label {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--wt-faint);
+}
+.wt-modes {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--wt-line);
+  list-style: none;
+}
+.wt-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border: 1px solid var(--wt-line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--wt-text);
+  font-variant-numeric: tabular-nums;
+}
+.wt-mode b {
+  font-weight: 600;
+}
+.wt-mode[data-zero='true'] {
+  color: var(--wt-faint);
+  opacity: 0.6;
+}
+.wt-mode .wt-svg {
+  color: var(--wt-gold-ink);
+}
+.wt-mode[data-zero='true'] .wt-svg {
+  color: var(--wt-faint);
+}
+.wt-summary-note {
+  position: relative;
+  margin: 16px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--wt-faint);
+}
+
+/* ── 5. 筛选提示 ──────────────────────────────────────────────────────── */
+.wt-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 34px;
+  padding: 8px 10px 8px 18px;
+  border: 1px solid var(--wt-line);
+  border-radius: 999px;
+  background-color: var(--wt-glass);
+  font-size: 13px;
+  color: var(--wt-muted);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.wt-filter b {
+  color: var(--wt-ink);
+  font-weight: 600;
+}
+.wt-filter-btn {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background-color: var(--wt-ink);
+  color: var(--wt-canvas);
+  font-size: 12px;
+  cursor: pointer;
+}
+.wt-filter-btn:focus-visible {
+  outline: 2px solid var(--wt-rose-ink);
+  outline-offset: 2px;
+}
+
+/* ── 6. 吊绳时间线 ────────────────────────────────────────────────────── */
+.wt-hero-rule {
+  height: 1px;
+  margin: clamp(34px, 3.6vw, 56px) 0 0;
+  background-image: linear-gradient(90deg, var(--wt-line-strong), transparent 70%);
+}
+.wt-lines {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(44px, 4.6vw, 76px);
+  margin-top: clamp(34px, 3.6vw, 56px);
+}
+.wt-line {
+  position: relative;
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.95s var(--wt-ease),
+    transform 0.95s var(--wt-ease);
+}
+.wt-line.is-in {
+  opacity: 1;
+  transform: none;
+}
+.wt-line-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.wt-year {
+  margin: 0;
+  font-family: var(--wt-display);
+  font-size: clamp(26px, 2.5vw, 36px);
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--wt-ink);
+  font-variant-numeric: tabular-nums;
+}
+.wt-year-meta {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--wt-faint);
+}
+.wt-line-rule {
+  flex: 1;
+  height: 1px;
+  background-image: linear-gradient(90deg, var(--wt-line-strong), transparent 88%);
+}
+
+/* 横向滚动：一年里的票多于屏幕宽度时，绳子本身可以拖着看 */
+.wt-rope-wrap {
+  position: relative;
+}
+.wt-rope-scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0 2px;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: var(--wt-line-strong) transparent;
+}
+/* 右侧渐隐：暗示"绳子还在往右延伸"，而不是被裁断 */
+.wt-line-fade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 96px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s var(--wt-ease);
+  background-image: linear-gradient(90deg, transparent, var(--wt-canvas) 86%);
+}
+.wt-line.is-scrollable .wt-line-fade {
+  opacity: 0.92;
+}
+.wt-line-hint {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 2px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--wt-faint);
+  transition: opacity 0.4s var(--wt-ease);
+}
+.wt-line-hint.is-dimmed {
+  opacity: 0.4;
+}
+.wt-rope-scroller::-webkit-scrollbar {
+  height: 5px;
+}
+.wt-rope-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wt-rope-scroller::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: var(--wt-line-strong);
+}
+.wt-rope-canvas {
+  position: relative;
+  display: flex;
+  min-width: max-content;
+  padding: 0 26px;
+}
+.wt-rope {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  width: 100%;
+  height: var(--wt-rope-h);
+  overflow: visible;
+  z-index: 1;
+  pointer-events: none;
+}
+.wt-rope-core {
+  fill: none;
+  stroke: var(--wt-rope);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+.wt-rope-twist {
+  fill: none;
+  stroke: var(--wt-rope-hi);
+  stroke-width: 1.3;
+  stroke-dasharray: 2 7;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+/* 绳子两端的小铜环（钉在画面两侧） */
+.wt-anchor {
+  position: absolute;
+  top: 12px;
+  z-index: 2;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-image: radial-gradient(circle at 34% 28%, var(--wt-metal-hi), var(--wt-metal) 62%, var(--wt-metal-lo));
+  box-shadow:
+    inset 0 0 0 1px var(--wt-metal-ring),
+    0 4px 10px -4px var(--wt-shadow);
+}
+.wt-anchor-l {
+  left: -2px;
+}
+.wt-anchor-r {
+  right: -2px;
+}
+
+/* ── 7. 挂在绳上的票 ──────────────────────────────────────────────────── */
+.wt-hangs {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wt-gap);
+  margin: 0;
+  padding: 34px 0 44px;
+  list-style: none;
+}
+.wt-hang {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--wt-card-w);
+  scroll-snap-align: start;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.8s var(--wt-ease),
+    transform 0.8s var(--wt-ease);
+}
+.wt-line.is-in .wt-hang {
+  opacity: 1;
+  transform: none;
+}
+.wt-line.is-in .wt-hang:nth-child(2) {
+  transition-delay: 0.09s;
+}
+.wt-line.is-in .wt-hang:nth-child(3) {
+  transition-delay: 0.18s;
+}
+.wt-line.is-in .wt-hang:nth-child(4) {
+  transition-delay: 0.27s;
+}
+.wt-line.is-in .wt-hang:nth-child(5) {
+  transition-delay: 0.36s;
+}
+.wt-hang-inner {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 20px;
+}
+.wt-hang-inner:focus-visible {
+  outline: 2px solid var(--wt-rose-ink);
+  outline-offset: 10px;
+}
+/* 夹子：压在绳子与标签的接缝上（纯装饰） */
+.wt-clip {
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  z-index: 4;
+  width: 32px;
+  height: 50px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.wt-clip-body {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 32px;
+  height: 45px;
+  border-radius: 6px 6px 10px 10px;
+  background-image: linear-gradient(180deg, var(--wt-wood-hi) 0%, var(--wt-wood) 56%, var(--wt-wood-lo) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--wt-wood-edge),
+    inset -3px 0 5px var(--wt-wood-shade),
+    0 10px 16px -8px var(--wt-shadow);
+}
+/* 金属弹簧 */
+.wt-clip-body::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 9px;
+  width: 12px;
+  height: 12px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background-image: radial-gradient(circle at 34% 28%, var(--wt-metal-hi), var(--wt-metal) 58%, var(--wt-metal-lo));
+  box-shadow: inset 0 0 0 1px var(--wt-metal-ring);
+}
+/* 木夹中缝（两片夹体） */
+.wt-clip-body::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  bottom: 5px;
+  width: 1px;
+  transform: translateX(-50%);
+  background-image: linear-gradient(180deg, transparent, var(--wt-wood-shade));
+}
+/* 悬挂摆动：围绕夹子（顶部）极轻地晃，肉眼只感到"活着" */
+@keyframes wt-swing {
+  from {
+    transform: rotate(-0.42deg);
+  }
+  to {
+    transform: rotate(0.5deg);
+  }
+}
+.wt-swing {
+  display: block;
+  transform-origin: 50% -14px;
+  animation: wt-swing 8.4s ease-in-out infinite alternate;
+}
+.wt-hang:nth-child(3n + 2) .wt-swing {
+  animation-duration: 9.8s;
+  animation-delay: -2.7s;
+}
+.wt-hang:nth-child(3n) .wt-swing {
+  animation-duration: 7.6s;
+  animation-delay: -5.2s;
+}
+.wt-lift {
+  display: block;
+  transition: transform 0.5s var(--wt-ease);
+}
+.wt-hang-inner:hover .wt-lift {
+  transform: translateY(-7px);
+}
+/* hover 时停止摆动，避免"点上去一直在动" */
+.wt-hang-inner:hover .wt-swing {
+  animation-play-state: paused;
+}
+
+/* 日期 + 旅程签（票上方） */
+.wt-label {
+  position: relative;
+  display: block;
+  padding: 17px 52px 15px 18px;
+  border: 1px solid var(--wt-line);
+  border-radius: 14px;
+  background-color: var(--wt-label-bg);
+  box-shadow: 0 12px 26px -20px var(--wt-shadow);
+  transition:
+    border-color 0.45s var(--wt-ease),
+    box-shadow 0.45s var(--wt-ease);
+}
+.wt-hang-inner:hover .wt-label {
+  border-color: var(--wt-line-strong);
+  box-shadow: 0 18px 36px -22px var(--wt-shadow);
+}
+.wt-label-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  color: var(--wt-muted);
+  font-variant-numeric: tabular-nums;
+}
+.wt-label-date::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--wt-rose);
+}
+/* 目的地：与日期同一行（"2026.03.12 · 大理"），是这段旅程最短的概括之一；
+   旅程标题在下一行用衬线体压轴。 */
+.wt-label-city {
+  display: inline-block;
+  margin-left: 9px;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--wt-muted);
+}
+.wt-label-city::before {
+  content: '·';
+  margin-right: 7px;
+  color: var(--wt-faint);
+}
+.wt-label-days {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 3px 9px;
+  border: 1px solid var(--wt-line);
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--wt-gold-ink);
+  vertical-align: 2px;
+}
+.wt-label-title {
+  display: block;
+  margin-top: 9px;
+  font-family: var(--wt-display);
+  font-size: 20px;
+  line-height: 1.35;
+  color: var(--wt-ink);
+}
+/* 右上角的"展开"提示：hover / 键盘聚焦才出现（默认不抢日期的注意力） */
+.wt-label-hint {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--wt-line);
+  border-radius: 50%;
+  color: var(--wt-muted);
+  opacity: 0;
+  transform: translateY(3px);
+  transition:
+    opacity 0.4s var(--wt-ease),
+    transform 0.4s var(--wt-ease),
+    color 0.4s var(--wt-ease),
+    border-color 0.4s var(--wt-ease);
+}
+.wt-hang-inner:hover .wt-label-hint,
+.wt-hang-inner:focus-visible .wt-label-hint {
+  opacity: 1;
+  transform: none;
+  border-color: var(--wt-line-strong);
+  color: var(--wt-ink);
+}
+.wt-ticket {
+  display: block;
+  margin-top: 10px;
+}
+/* 票面自带 TicketTilt（3D 倾斜 + 高光跟随），这里只保证铺满吊票宽度 */
+.wt-ticket .tk-tilt {
+  width: 100%;
+}
+
+/* 绳尾：空夹子 + "下一站"。不放进绳子本身 —— 否则某一年的票一多，
+   这片 CTA 会被横向滚动推到视口外（用户看到的是一条被切掉的白块）。 */
+.wt-next {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px clamp(24px, 3vw, 48px);
+  margin-top: clamp(40px, 4vw, 64px);
+  padding-top: 44px;
+}
+.wt-next::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--wt-line-strong) 0 7px,
+    transparent 7px 15px
+  );
+}
+.wt-next .wt-clip {
+  top: -20px;
+  left: 54px;
+}
+.wt-next-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wt-next-title {
+  margin: 0;
+  font-family: var(--wt-display);
+  font-size: clamp(20px, 1.8vw, 26px);
+  line-height: 1.35;
+  color: var(--wt-ink);
+}
+.wt-next-lede {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--wt-faint);
+}
+.wt-ghost-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--wt-faint);
+}
+/* 空夹子：虚线轮廓 + 一点点纸感，表示"这里还空着" */
+.wt-clip-empty .wt-clip-body {
+  background-image: none;
+  background-color: var(--wt-glass);
+  border: 1px dashed var(--wt-line-strong);
+  box-shadow: none;
+  opacity: 0.9;
+}
+.wt-clip-empty .wt-clip-body::before,
+.wt-clip-empty .wt-clip-body::after {
+  display: none;
+}
+
+/* ── 8. 空态 / 错误 / 骨架 ────────────────────────────────────────────── */
+.wt-empty,
+.wt-error {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: clamp(32px, 4vw, 64px);
+  align-items: center;
+  margin-top: clamp(34px, 3.6vw, 56px);
+  padding: clamp(34px, 4vw, 64px);
+  border: 1px solid var(--wt-line);
+  border-radius: 24px;
+  background-color: var(--wt-glass);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  backdrop-filter: blur(20px) saturate(1.15);
+}
+/* 错误态没有配图/配绳，收成单栏，别留一大片空白 */
+.wt-error {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 720px;
+}
+.wt-empty-title,
+.wt-error-title {
+  margin: 20px 0 0;
+  font-family: var(--wt-display);
+  font-size: clamp(28px, 2.8vw, 40px);
+  line-height: 1.2;
+  font-weight: 400;
+  color: var(--wt-ink);
+}
+.wt-empty-lede,
+.wt-error-lede {
+  margin: 16px 0 0;
+  max-width: 42ch;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--wt-muted);
+}
+.wt-empty-rope {
+  position: relative;
+  height: 132px;
+  overflow: visible;
+}
+/* 空绳上的那枚空夹子 + 吊牌：夹子在绳上，牌子垂在夹子下面 */
+.wt-empty-clip {
+  top: -4px;
+  left: 26%;
+}
+.wt-empty-rope .wt-rope {
+  height: 48px;
+}
+.wt-empty-tag {
+  position: absolute;
+  left: 26%;
+  top: 56px;
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border: 1px dashed var(--wt-line-strong);
+  border-radius: 12px;
+  background-color: var(--wt-label-bg);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--wt-faint);
+  white-space: nowrap;
+}
+@keyframes wt-pulse {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+.wt-skel {
+  display: block;
+  border-radius: 14px;
+  background-image: linear-gradient(100deg, var(--wt-line), transparent 70%);
+  animation: wt-pulse 2.4s ease-in-out infinite;
+}
+.wt-skel-year {
+  width: 86px;
+  height: 26px;
+}
+.wt-skel-card {
+  width: var(--wt-card-w);
+  height: 232px;
+  border-radius: 18px;
+}
+.wt-hang .wt-skel-card {
+  margin-top: 40px;
+}
+
+/* ── 9. 页脚 ──────────────────────────────────────────────────────────── */
+.wt-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: clamp(48px, 5vw, 76px);
+  padding-top: 24px;
+  border-top: 1px solid var(--wt-line);
+  font-size: 12px;
+  color: var(--wt-faint);
+}
+.wt-foot p {
+  margin: 0;
+}
+.wt-foot-links {
+  display: flex;
+  gap: 22px;
+}
+.wt-foot-link {
+  color: var(--wt-muted);
+  text-decoration: none;
+  transition: color 0.3s var(--wt-ease);
+}
+.wt-foot-link:hover {
+  color: var(--wt-ink);
+}
+
+/* ── 10. 大票浮层（点击票据） ──────────────────────────────────────────── */
+@keyframes wt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes wt-spot-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.wt-spot {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 3vw, 48px);
+}
+.wt-spot-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background-color: var(--wt-scrim);
+  -webkit-backdrop-filter: blur(18px) saturate(0.92);
+  backdrop-filter: blur(18px) saturate(0.92);
+  animation: wt-fade 0.32s var(--wt-ease) both;
+  cursor: pointer;
+}
+.wt-spot-plate {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 452px) minmax(0, 372px);
+  gap: clamp(26px, 3vw, 52px);
+  align-items: center;
+  width: 100%;
+  max-width: 1010px;
+  max-height: calc(100dvh - 64px);
+  padding: clamp(26px, 3vw, 44px);
+  overflow-y: auto;
+  border: 1px solid var(--wt-line-strong);
+  border-radius: 24px;
+  background-color: var(--wt-plate);
+  box-shadow: 0 48px 130px -46px var(--wt-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(1.1);
+  backdrop-filter: blur(24px) saturate(1.1);
+  animation: wt-spot-in 0.5s var(--wt-ease) both;
+}
+.wt-spot-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--wt-line);
+  border-radius: 50%;
+  background-color: var(--wt-glass);
+  color: var(--wt-text);
+  cursor: pointer;
+  transition:
+    transform 0.35s var(--wt-ease),
+    border-color 0.35s var(--wt-ease);
+}
+.wt-spot-close:hover {
+  transform: rotate(90deg);
+  border-color: var(--wt-line-strong);
+}
+.wt-spot-close:focus-visible {
+  outline: 2px solid var(--wt-rose-ink);
+  outline-offset: 3px;
+}
+.wt-spot-ticket {
+  position: relative;
+}
+.wt-spot-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--wt-muted);
+}
+.wt-spot-eyebrow::before {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background-color: var(--wt-rose);
+}
+.wt-spot-title {
+  margin: 16px 0 0;
+  font-family: var(--wt-display);
+  font-size: clamp(26px, 2.4vw, 34px);
+  line-height: 1.24;
+  font-weight: 400;
+  color: var(--wt-ink);
+}
+.wt-spot-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--wt-muted);
+  font-variant-numeric: tabular-nums;
+}
+.wt-spot-route b {
+  font-weight: 600;
+  color: var(--wt-text);
+}
+.wt-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 24px 0 0;
+  border-top: 1px solid var(--wt-line);
+}
+.wt-meta > div {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--wt-line);
+}
+.wt-meta dt {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--wt-faint);
+}
+.wt-meta dd {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: var(--wt-text);
+  font-variant-numeric: tabular-nums;
+}
+.wt-spot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+.wt-spot-actions .wt-btn {
+  height: 42px;
+  padding: 0 18px;
+  font-size: 12px;
+}
+.wt-spot-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--wt-line);
+}
+.wt-spot-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--wt-line);
+  border-radius: 50%;
+  background-color: transparent;
+  color: var(--wt-text);
+  cursor: pointer;
+  transition: border-color 0.3s var(--wt-ease), color 0.3s var(--wt-ease);
+}
+.wt-spot-nav-btn:hover:enabled {
+  border-color: var(--wt-gold);
+  color: var(--wt-ink);
+}
+.wt-spot-nav-btn:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+.wt-spot-nav-btn:focus-visible {
+  outline: 2px solid var(--wt-rose-ink);
+  outline-offset: 3px;
+}
+.wt-spot-count {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--wt-faint);
+  font-variant-numeric: tabular-nums;
+}
+.wt-spot-hint {
+  margin: 14px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--wt-faint);
+}
+
+/* ── 11. 中等桌面（1024–1279）：单栏收窄，避免拥挤 ─────────────────────── */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  /* 窄桌面：内容区只剩 ~700px，hero 收成单栏并把节奏压紧，
+     让第一根绳（以及第一张票）尽量留在首屏内。 */
+  .wt-shell {
+    padding-top: 34px;
+    padding-bottom: 64px;
+  }
+  .wt-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .wt-title {
+    margin-top: 18px;
+  }
+  .wt-lede {
+    margin-top: 14px;
+    line-height: 1.8;
+  }
+  .wt-actions {
+    margin-top: 20px;
+  }
+  .wt-summary {
+    max-width: 460px;
+    padding: 20px 20px 18px;
+  }
+  .wt-stats {
+    margin-top: 16px;
+  }
+  .wt-modes {
+    margin-top: 16px;
+    padding-top: 12px;
+  }
+  .wt-summary-note {
+    margin-top: 12px;
+  }
+  .wt-hero-rule {
+    margin-top: 26px;
+  }
+  .wt-lines {
+    margin-top: 26px;
+  }
+  .wt-empty,
+  .wt-error {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wt-empty-rope {
+    height: 80px;
+  }
+  .wt-spot-plate {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+    max-width: 560px;
+  }
+}
+
+/* ── 12. 减动效：一次性全关（内容是"看得见"的前提，不能靠动画出现）────── */
+@media (prefers-reduced-motion: reduce) {
+  .wt-page *,
+  .wt-page *::before,
+  .wt-page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .wt-line,
+  .wt-hang {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .wt-hang-inner:hover .wt-lift,
+  .wt-btn:hover,
+  .wt-ghost-inner:hover,
+  .wt-spot-close:hover {
+    transform: none !important;
+  }
+}

@@ -11,6 +11,8 @@ import AlbumGalleryGrid from '@/components/album/AlbumGalleryGrid'
 import AlbumPhotoWall from '@/components/album/AlbumPhotoWall'
 import type { AlbumViewMode } from '@/components/album/AlbumModeSwitch'
 import type { SpaceChatPhoto } from '@/components/album/AlbumSpaceMode'
+import WebAlbumWall from '@/components/web/album/WebAlbumWall'
+import { useDesktopViewport } from '@/components/web/album/useDesktopViewport'
 import { useAlbumData } from '@/hooks/use-album-data'
 import { formatDotDate } from '@/lib/modules/album/presentation'
 import { isNativePlatform } from '@/lib/modules/offline/platform'
@@ -79,6 +81,8 @@ const AlbumComposer = dynamicImport(() => import('@/components/album/AlbumCompos
 export default function AlbumPage() {
   // SSR 与客户端首帧必须一致（默认画册模式），挂载后再读本地偏好，避免 hydration mismatch
   const [viewMode, setViewMode] = useState<AlbumViewMode>('book')
+  /** 桌面视口（≥1024px）：决定相册页渲染 Web 版画册墙还是原有移动端旅行画册 */
+  const isDesktop = useDesktopViewport()
   // 性能（2026-11-21）：默认的 book 模式不需要相册解锁数据，首屏就不请求 /api/album，
   // 只有真正切到像素/银河模式时才拉 —— 打开相册少一次接口往返。
   const {
@@ -161,8 +165,18 @@ export default function AlbumPage() {
   // **不依赖** useAlbumData 的 /api/album。因此把它提到 checkingLock 之前渲染 —— 打开相册
   // 不再被另一个接口的往返阻塞（此前每次进 /album 都要等 /api/album 才出第一屏）。
   if (viewMode === 'book') {
+    // Web 相册（桌面专属，W2）：≥1024px 走 3D 卡片画册墙，<1024 保持原有移动端旅行画册。
+    // isDesktop 为 null 时是 SSR/水合首帧（matchMedia 尚无值）：仍渲染移动端分支以保证
+    // 移动端视觉与行为完全不变；桌面分支挂 .wa-hide-on-desktop 让这一帧不可见，避免闪一下移动版。
+    if (isDesktop) {
+      return (
+        <div key="mode-book-web" className="wa-hide-on-mobile">
+          <WebAlbumWall onModeChange={changeMode} initialBookKey={initialBookKey} />
+        </div>
+      )
+    }
     return (
-      <div key="mode-book" className="motion-safe:animate-[fadeIn_.2s_ease-out]">
+      <div key="mode-book" className="wa-hide-on-desktop motion-safe:animate-[fadeIn_.2s_ease-out]">
         <TravelBook onModeChange={changeMode} initialBookKey={initialBookKey} />
       </div>
     )

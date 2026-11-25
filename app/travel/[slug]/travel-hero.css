@@ -1,0 +1,188 @@
+/* =========================================================================
+   Web 旅行/文章详情 · 顶部封面英雄区（桌面端专属 · ≥1024px）
+   -------------------------------------------------------------------------
+   修的 bug：地图 → 省份 → 城市 → 点开文章，顶部图片空白。
+   根因：桌面分支只把 images 铺成 4 列小网格（单张封面 = 183px 缩在左上角），
+         而 cover / coverUrl 这条「真封面」链路根本没被渲染；旧文章没有 cover 时整块空白。
+
+   这里给 ≥1024 一张真正的顶部封面：coverUrl → cover → images[0] → 正文首图，
+   逐级回退，全部失败 / 加载失败时渲染**设计过的占位**（不是留白，也不是破图标）。
+
+   <1024 完全不渲染（.tch-root 默认 display:none），移动端视觉一个像素都不动。
+   Ink & Ivory：墨 #12141a / 暖象牙 #f4efe4 / 玫瑰金 #d98e7f / 金 #e3b341。
+   颜色/渐变/阴影/字号全部收敛在本文件。
+   ========================================================================= */
+
+/* 默认不渲染：只有桌面断点才出现（<1024 的版式一个像素都不动） */
+.tch-root,
+.tch-lede {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .tch-root {
+    --tch-ink: #12141a;
+    --tch-ivory: #f4efe4;
+    --tch-rose: #d98e7f;
+    --tch-gold: #e3b341;
+    --tch-line: rgba(18, 20, 26, 0.1);
+    --tch-line-soft: rgba(18, 20, 26, 0.06);
+    --tch-ink-soft: rgba(18, 22, 27, 0.62);
+
+    display: block;
+    max-width: 90rem; /* 1440 */
+    margin: 1.5rem auto 0;
+    padding-inline: 2rem;
+  }
+
+  /* ── 封面主体 ─────────────────────────────────────────────────────────── */
+  .tch-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    aspect-ratio: 16 / 7;
+    min-height: 20rem;
+    max-height: 33rem;
+    border: 1px solid var(--tch-line);
+    background:
+      radial-gradient(120% 90% at 12% -10%, rgba(217, 142, 127, 0.22), transparent 58%),
+      radial-gradient(90% 70% at 100% 0%, rgba(227, 179, 65, 0.18), transparent 55%),
+      linear-gradient(150deg, #1a1d24 0%, #12141a 52%, #191b22 100%);
+    box-shadow: 0 44px 90px -50px rgba(18, 20, 26, 0.62), 0 14px 32px -22px rgba(18, 20, 26, 0.4);
+  }
+
+  .tch-image {
+    object-fit: cover;
+  }
+
+  /* 图内局部暗角（只在这张封面里，让底部过渡到页面；不影响页面其它区域） */
+  .tch-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      rgba(9, 10, 14, 0.5) 0%,
+      rgba(9, 10, 14, 0.14) 34%,
+      rgba(9, 10, 14, 0) 62%
+    );
+  }
+
+  /* 右上角张数徽标（玻璃胶囊） */
+  .tch-count {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.32rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(244, 239, 228, 0.24);
+    background: rgba(9, 10, 14, 0.42);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #f4efe4;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── 兜底占位：没有封面 / 加载失败 ──────────────────────────────────────── */
+  .tch-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .tch-placeholder-art {
+    width: 15rem;
+    max-width: 42%;
+    height: auto;
+    color: rgba(244, 239, 228, 0.5);
+  }
+  .tch-placeholder-art .tch-art-line {
+    stroke: currentColor;
+    stroke-width: 1.4;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tch-placeholder-art .tch-art-gold {
+    stroke: var(--tch-gold);
+    stroke-width: 1.6;
+    fill: none;
+    stroke-linecap: round;
+  }
+  .tch-placeholder-art .tch-art-rose {
+    fill: rgba(217, 142, 127, 0.28);
+    stroke: var(--tch-rose);
+    stroke-width: 1.2;
+  }
+  .tch-placeholder-title {
+    margin: 0.4rem 0 0;
+    font-family: var(--art-serif, Georgia, serif);
+    font-size: 1.125rem;
+    letter-spacing: 0.02em;
+    color: #f4efe4;
+  }
+  .tch-placeholder-sub {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: rgba(244, 239, 228, 0.62);
+  }
+
+  /* ── 照片缩略条（≥1024 取代原来的 4 列小网格）─────────────────────────── */
+  .tch-strip {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .tch-thumb {
+    position: relative;
+    flex: 0 0 auto;
+    width: 5.5rem;
+    height: 3.75rem;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--tch-line);
+    background: var(--tch-ivory);
+    cursor: pointer;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+  .tch-thumb:hover {
+    transform: translateY(-3px);
+    border-color: rgba(227, 179, 65, 0.55);
+    box-shadow: 0 14px 26px -14px rgba(18, 20, 26, 0.45);
+  }
+  .tch-thumb-img {
+    object-fit: cover;
+  }
+
+  /* ── 标题下的导语（桌面端才显示；正文为空时也不至于只剩标题）────────────── */
+  .tch-lede {
+    display: block;
+    max-width: 44rem;
+    margin: 1.1rem auto 0;
+    font-size: 1rem;
+    line-height: 1.9;
+    color: var(--tch-ink-soft);
+    text-align: center;
+  }
+}
+
+/* 减少动态效果：hover 抬升全关 */
+@media (prefers-reduced-motion: reduce) {
+  .tch-thumb {
+    transition: none;
+  }
+  .tch-thumb:hover {
+    transform: none;
+  }
+}

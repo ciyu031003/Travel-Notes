@@ -121,10 +121,17 @@ export default function LoginDoor({ children }: LoginDoorProps) {
           src="/videos/clover.mp4"
         />
       )}
-      {/* 可读性遮罩（中部加深，保证登录卡与输入框在花哨视频上可读） */}
-      {/* 粉色薄雾：保留开场视频的氛围，但把整体拉到甜途樱花粉的柔和色温 */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,240,245,0.86)_0%,rgba(255,232,240,0.72)_46%,rgba(255,246,248,0.90)_100%)] dark:bg-[linear-gradient(180deg,rgba(36,10,20,0.94)_0%,rgba(50,15,30,0.82)_46%,rgba(28,8,17,0.95)_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(90%_55%_at_15%_10%,rgba(255,183,201,0.28),transparent_60%),radial-gradient(80%_50%_at_88%_80%,rgba(205,189,244,0.22),transparent_60%)]" />
+      {/*
+        注意：这里曾经盖着两层**全屏**遮罩（180° 樱粉/白渐变 alpha 0.72–0.90 + 两团粉紫径向渐变），
+        把 2.9MB 的四叶草原片糊成一片朦胧粉雾，用户明确要求「让 MP4 正常高清显示」。
+        现在整屏遮罩全部删除 —— 视频原片直接可见。
+        卡片可读性改由「局部」处理承担，绝不再覆盖整屏：
+          · 桌面（≥1024）：app/login/web-login.css 把登录列包成一块暖象牙玻璃面板
+            （rgba + backdrop-blur(20px)，只包住登录列本身，视频在两侧完整可见）；
+          · 窄屏（<1024，Web 与 App 壳共用）：版式一个像素不动，只给标题/页脚文字加柔和
+            描边阴影（视频比原粉色薄雾亮，这是必要的最小可读性补偿）。
+        记住：不要再往这里加任何 absolute inset-0 的整屏渐变/暗角。
+      */}
 
       {/* 登录内容 */}
       <div
