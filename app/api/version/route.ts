@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '票据插画背景（四季×四时段 16 套纯 CSS/SVG 动态插画，替代「春·清晨」文字）+ 票据 3D 悬浮（分层视差/高光跟随/mix-blend knockout）+ 票据夹按旅程筛选 + 票面跨设备同步（服务端）+ 画册封面卡「手指捏住」3D 倾斜高光 + BoardUI switch/主题开关真装',
+    changelog: process.env.APP_CHANGELOG || '登录页恢复 MP4 高清（去掉樱花粉朦胧层，页脚改局部玻璃铭牌）；Web 端上线 Ink & Ivory 桌面主题（吊绳票据时间线、3D 卡片相册、桌面首页重做 + 性能优化、地图文章封面修复）',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,
