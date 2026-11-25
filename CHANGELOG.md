@@ -1,3 +1,45 @@
+## [1.30.9] - 2026-11-26
+
+> 票据可编辑、AA 用真实同行者名单、旅行详情页悬浮 dock、设置页深夜模式开关、
+> 预算进度 Meter、修掉一个 dev 下弹层秒关的老问题。已发版为 **1.30.9 / build 73**。
+
+### Added
+
+- **票据「调整票面」**（`components/mobile/tickets/TicketEditSheet.tsx`）：票据夹每张卡
+  右上角「调整」→ 底部面板，可改交通方式（机票/高铁/火车，票号前缀与座位格式联动）、
+  出发地、到达地、航班号/车次、出发时刻、座位、检票口；面板内含实时票面预览，
+  保存写 localStorage 覆盖层并立即重算整条票面链；「恢复默认」清空覆盖。
+- **旅行详情页悬浮 dock**（`components/ui/floating-dock.tsx`，取自 `@aceternity/floating-dock`
+  的注册表实现，图标改走项目 Icon、**不引入 @tabler/icons-react**）：记一笔 / 传照片 /
+  记花费 / 票据 四个动作，悬停放大 + 气泡标签，触控 58×48，滚动自动收起，
+  位于底部导航之上（实测重叠 0px）。
+- **设置页「外观 · 深夜模式」**（`components/ui/switch-button.tsx`，取自
+  `@kokonutui/switch-button`）：接全站既有 `localStorage.theme` + `html.dark`，
+  role=switch，太阳/月亮形变 + View Transitions 扩散，reduced-motion 下瞬时切换。
+- **预算进度 Meter**（`components/mobile/BudgetMeter.tsx`）：按 BoardUI `meter` 的规格
+  本地实现（role=meter + aria-valuemin/max/now/valuetext、label/数值行、四档 tone、
+  transform 缓动填充），替换旅行总览原来的裸进度条，并按占用比例给
+  绿（<80%）/ 琥珀（80–100%）/ 红（超支）三档语义色与「还剩/超出」说明。
+- **AA 更准**：`/api/travels` 现在下发 `companions`（服务端已部署），首页归档后弹出的
+  账单牌堆按真实同行者名单分摊，不再退化成「付款人 ∪ 我」。
+
+### Fixed
+
+- **dev 下条件挂载弹层被返回键秒关**（`hooks/use-close-on-back.ts`）：React StrictMode
+  的 effect 双调用让 cleanup 里的 `history.back()` 落在第二次 mount 之后，把刚打开的
+  「记一笔」抽屉顶掉。改为 `setTimeout(0)` 延迟回退 + 下次 setup 取消并复用历史项；
+  导出 API 与嵌套栈语义不变，生产构建行为不变。
+
+### Verified
+
+- tsc 0 错 · eslint 0 error · 设计 token 无新增命中（charIcon 4→3、rawGradient 58→57）；
+- 票据编辑：改交通方式 → 票号 TN→G、座位自动换格式，保存后 localStorage 覆盖 + 票卡即时更新，
+  reload 仍生效，恢复默认回派生值，点「调整」不触发旅程跳转；
+- 账单：mocked `/api/travels` 带 3 位同行者 → 牌堆显示「3 人同行 · 每人 ¥666.67」，
+  单笔人均 ¥166.67（此前只按付款人算）；
+- dock：390 宽下 4 个动作 58×48、与底部导航重叠 0px；switch：`aria-checked` 翻转且
+  `theme` 跨刷新持久化；生产构建冒烟（next build + start）全绿、console 0 error。
+
 ## [1.30.8] - 2026-11-25
 
 > 旅程归档后接着弹「账单费用卡片」：账本里**每一笔花销一张卡**，屏幕中央牌堆叠放，
