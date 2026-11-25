@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef } from 'react'
+import { useFocusTrap, useInertBackground } from '@/hooks/use-focus-trap'
 import TicketFace from '@/components/mobile/ticket/TicketFace'
 import { travelDetailHref } from '@/lib/routes'
 import type { TicketData } from '@/lib/ticket/types'
@@ -18,7 +19,8 @@ import { GATE_LABEL, TRANSPORT_LABEL } from './labels'
  * 交互（桌面键盘优先）：
  *  · Esc 关闭；
  *  · ← / → 在票据之间前后切换（不关闭浮层，像翻一叠票）；
- *  · Tab 被限制在浮层内（role=dialog + aria-modal）；
+ *  · Tab 被限制在浮层内、背景吊绳置 inert（role=dialog + aria-modal 只负责宣告，
+ *    真正的拦截在 hooks/use-focus-trap：舞台浮层与这里共用同一份行为）；
  *  · 打开时锁 body 滚动，关闭后把焦点还给触发它的那张票。
  */
 export interface WebTicketSpotlightProps {
@@ -33,8 +35,6 @@ export interface WebTicketSpotlightProps {
   onEdit: () => void
 }
 
-const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-
 export default function WebTicketSpotlight({
   ticket,
   index,
@@ -47,6 +47,11 @@ export default function WebTicketSpotlight({
   const plateRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const restoreRef = useRef<HTMLElement | null>(null)
+
+  // 无障碍（P1-2）：Tab 圈定在票面浮层内 + 背景（吊绳/画册墙）置 inert。
+  // 逻辑与相册 3D 舞台共用 hooks/use-focus-trap，不再各写一份。
+  useFocusTrap(plateRef)
+  useInertBackground(plateRef)
 
   // 挂载：记住触发元素 → 锁滚动 → 焦点给关闭键；卸载：全部还原
   useEffect(() => {
@@ -63,7 +68,7 @@ export default function WebTicketSpotlight({
     }
   }, [])
 
-  // 键盘：Esc 关闭 / ← → 翻票 / Tab 圈定
+  // 键盘：Esc 关闭 / ← → 翻票（Tab 圈定已抽到 hooks/use-focus-trap）
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -80,22 +85,6 @@ export default function WebTicketSpotlight({
         event.preventDefault()
         onNext?.()
         return
-      }
-      if (event.key !== 'Tab') return
-      const plate = plateRef.current
-      if (!plate) return
-      const focusables = Array.from(plate.querySelectorAll<HTMLElement>(FOCUSABLE))
-      if (focusables.length === 0) return
-      const first = focusables[0]
-      const last = focusables[focusables.length - 1]
-      const active = document.activeElement
-      const inside = active instanceof HTMLElement && plate.contains(active)
-      if (event.shiftKey && (!inside || active === first)) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && (!inside || active === last)) {
-        event.preventDefault()
-        first.focus()
       }
     }
     window.addEventListener('keydown', onKeyDown)

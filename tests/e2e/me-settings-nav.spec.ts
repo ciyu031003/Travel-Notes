@@ -74,7 +74,7 @@ test('设置子页返回键可用；底部 tab 在次级页面始终在位', asy
   await expect(page.getByRole('heading', { name: '数据与同步' }).first()).toBeVisible({ timeout: 25_000 })
 
   // 底部 tab 必须在（这是用户在移动端唯一的"退路"）
-  await expect(page.getByRole('navigation', { name: '移动端导航' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: '移动端主导航' })).toBeVisible()
 
   // 返回键回得到「我的」
   await page.getByRole('button', { name: '返回' }).click()
@@ -86,7 +86,7 @@ for (const path of ['/me/settings', '/sync', '/moments', '/timeline', '/search']
     await page.goto(path)
     await expectPageHealthy(page)
     await expect(page.getByRole('button', { name: '返回' })).toBeVisible({ timeout: 25_000 })
-    await expect(page.getByRole('navigation', { name: '移动端导航' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: '移动端主导航' })).toBeVisible()
   })
 }
 
@@ -96,6 +96,6 @@ test('/admin 也挂底部 tab（避免从「我的」误入后台后无路可退
   await page.waitForTimeout(2500)
   const pathname = new URL(page.url()).pathname
   if (pathname.startsWith('/admin')) {
-    await expect(page.getByRole('navigation', { name: '移动端导航' })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('navigation', { name: '移动端主导航' })).toBeVisible({ timeout: 20_000 })
   }
 })

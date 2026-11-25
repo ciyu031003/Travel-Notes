@@ -14,7 +14,8 @@ test('登录页 UI 登录 → 进入应用 → 退出登录', async ({ page }) =
 
   await page.locator('input[type="text"]').fill(E2E_USER.username)
   await page.locator('input[type="password"]').fill(E2E_USER.password)
-  await page.getByRole('button', { name: '解锁', exact: true }).click()
+  // 登录提交按钮的现状文案是「登录并进入」（旧版是「解锁」）；这里对齐产品文案
+  await page.getByRole('button', { name: '登录并进入', exact: true }).click()
 
   // 登录成功：默认 redirect=/ ，应用首页渲染（本地 dev 的 / 即应用首页）
   await page.waitForURL(u => !u.pathname.startsWith('/login'), { timeout: 20_000 })
@@ -27,7 +28,10 @@ test('登录页 UI 登录 → 进入应用 → 退出登录', async ({ page }) =
   await expect(drawerTrigger).toBeVisible({ timeout: 30_000 })
   await drawerTrigger.click()
   await expect(page.getByRole('dialog', { name: '记录与设置' })).toBeVisible({ timeout: 15_000 })
-  const logout = page.getByRole('button', { name: /退出登录/ })
+  // 退出按钮有两处（桌面侧栏 + 「记录与设置」弹层里的移动版），这里限定在弹层内
+  const logout = page
+    .getByRole('dialog', { name: '记录与设置' })
+    .getByRole('button', { name: /退出登录/ })
   await expect(logout).toBeVisible({ timeout: 20_000 })
   await logout.click()
   await page.waitForURL(u => u.pathname.startsWith('/login'), { timeout: 20_000 })

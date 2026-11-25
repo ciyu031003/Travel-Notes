@@ -300,18 +300,18 @@ export default function TravelClient({ posts, offline = false }: TravelClientPro
                     <h3 className="font-semibold text-travel-ink mb-2 group-hover:text-travel-ink line-clamp-1">
                       {post.title}
                     </h3>
-                    <div className="flex items-center gap-3 text-xs text-travel-ink/80 mb-2">
+                    <div className="flex items-center gap-3 text-xs text-travel-ink/85 mb-2">
                       <span className="flex items-center gap-1">
                         <Icon icon={Calendar} size="sm" />
                         {formatDate(post.date)}
                       </span>
                     </div>
                     {post.description && (
-                      <p className="text-sm text-travel-ink/60 line-clamp-2">
+                      <p className="text-sm text-travel-ink/85 line-clamp-2">
                         {post.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-1 mt-3 text-travel-bloom text-sm font-medium">
+                    <div className="flex items-center gap-1 mt-3 text-travel-sand text-sm font-medium group-hover:text-travel-ink">
                       <span>阅读游记</span>
                       <Icon icon={ArrowRight} size="sm" className="group-hover:translate-x-1 transition-transform" />
                     </div>

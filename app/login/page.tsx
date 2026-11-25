@@ -243,7 +243,12 @@ function LoginPageContent() {
   return (
     <>
 ﻿      <LoginDoor>
-        <div className="flex min-h-dvh items-center justify-center px-[18px] pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] md:py-10 lg:py-2">
+        {/* id=main-content：app/layout 的「跳到主内容」链接在登录页也要有落点
+            （Lighthouse skip-link 审计：登录页自成一体，没有 LayoutContent 的 main） */}
+        <div
+          id="main-content"
+          className="flex min-h-dvh items-center justify-center px-[18px] pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] md:py-10 lg:py-2"
+        >
           <div className="web-login-column w-full max-w-[430px]">
             <div className="web-login-panel">
               {/* 桌面专属：Ink & Ivory 细眉（<1024 不渲染，移动端视觉不变） */}
@@ -252,9 +257,14 @@ function LoginPageContent() {
                 <span className="web-login-eyebrow-rule" />
                 <span className="web-login-eyebrow-dot" />
               </div>
+              {/* 登录页的一级标题：既是页面语义标题，也是登录页 a11y/E2E 的稳定锚点
+                  （此前登录页没有 h1；文案沿用「登录你的旅行记忆空间」，视觉上不占版面） */}
+              <h1 className="sr-only">登录你的旅行记忆空间</h1>
               <header className="mb-5 flex items-center gap-3">
                 <BrandLogo size={46} rounded="rounded-[16px]" />
-                <div className="min-w-0 flex-1">
+                {/* <1024 时这里是直接压在视频上的文字块：web-login.css 给它一块局部玻璃铭牌
+                    （与页脚同款，只包文字、不覆盖视频），≥1024 在面板内则完全不加样式 */}
+                <div className="web-login-head-plate min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="web-login-brand-title web-login-onscreen text-[23px] font-bold tracking-[-0.03em] text-[var(--m-text)]">甜途</p>
                     {isAuthed && (

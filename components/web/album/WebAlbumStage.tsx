@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
+import { useFocusTrap, useInertBackground } from '@/hooks/use-focus-trap'
 import type { Book, BookChapter, BookPhoto } from '@/components/album/travel-book/TravelBook'
 import { TRAVEL_TYPE_LABELS, formatDotDate } from '@/lib/modules/album/presentation'
 import {
@@ -32,6 +33,8 @@ import {
  *  · 拖牌：按住当前卡左右拖动，卡面跟随指针 rotateY，松手超过阈值就翻到上一张/下一张；
  *  · 扇形（fan）：把整摞牌摊成一把扇子（每张独立角度/位移），点哪张就回牌堆并定位；
  *  · 键盘：← / → 切换、Esc 关闭、Home / End 首尾；
+ *  · 焦点：舞台是 role=dialog + aria-modal，Tab 圈定在舞台内、背景画册墙置 inert，
+ *    关闭后焦点还给触发它的那张卡片（见 hooks/use-focus-trap）；
  *  · 有照片的书 → 一幕一张大图；没有照片的书（当前种子数据就是）→ 章节卡退化成
  *    「象牙纸面 + 大号衬线数字」的排版卡，仍然是一本完整的画册，而不是空白页。
  * 颜色/阴影/动效全部在 web-album.css。
@@ -256,6 +259,11 @@ export default function WebAlbumStage({
   const [mode, setMode] = useState<'stack' | 'fan'>('stack')
   const [dragDx, setDragDx] = useState(0)
   const [dragging, setDragging] = useState(false)
+
+  // 无障碍（P1-2）：role=dialog + aria-modal 只对读屏宣告，不真的拦住 Tab ——
+  // Tab 必须圈定在舞台内，背景的画册墙同时置 inert（鼠标/读屏也到不了）。
+  useFocusTrap(rootRef)
+  useInertBackground(rootRef)
 
   const slides = useMemo(() => (book ? buildSlides(book, fallbackTitle) : []), [book, fallbackTitle])
   const count = slides.length

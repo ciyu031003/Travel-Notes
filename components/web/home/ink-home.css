@@ -96,6 +96,17 @@ html.dark .wh-root {
 .wh-hero-glow,
 .wh-art { display: none; }
 
+/* 首页封面图（InkHome.tsx <CoverArt>：纯 img 渲染，见组件内注释）。
+   容器负责定位与圆角裁切（.wh-journey-feature / .wh-book 都是 position: relative），
+   这里只让图片等比铺满整块容器。 */
+.wh-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* ════════════════════════════════════════════════════════════════════════
    768–1023：单列可读退化层（不参与桌面设计语言；移动端 <768 不渲染本树）
    ════════════════════════════════════════════════════════════════════════ */
@@ -174,6 +185,8 @@ html.dark .wh-root {
     grid-auto-rows: auto;
     gap: 16px;
     margin-top: 26px;
+    /* 与 hero / 每日一言 / 页脚同宽（父容器 .wh-shell 已限宽，这里不再收窄） */
+    max-width: none;
   }
   .wh-span-5,
   .wh-span-7,
@@ -504,6 +517,9 @@ html.dark .wh-root {
     grid-auto-rows: minmax(0, auto);
     gap: 22px;
     margin-top: 18px;
+    /* P1-7：此前 BentoGrid 自带的 max-w-7xl(1280) 把四区块压得比同页 hero 窄；
+       宽度口径统一交给 .wh-shell（--wh-max 1440 - 左右 48 padding）。 */
+    max-width: none;
   }
   .wh-span-5 { grid-column: span 5; }
   .wh-span-7 { grid-column: span 7; }

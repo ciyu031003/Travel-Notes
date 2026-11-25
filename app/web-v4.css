@@ -125,7 +125,9 @@
   }
   .web-mini-profile > span:last-child { display: flex; flex-direction: column; min-width: 0; }
   .web-mini-profile b { font-size: 11.5px; color: var(--v4-ink); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .web-mini-profile small { font-size: 9px; color: var(--v4-muted); margin-top: 2px; }
+  /* a11y：9px 小字在 #ece3d6 底上原来只有 4.37:1（axe serious），
+     颜色压深到 4.6+；字号保持 9px 以维持壳层版式 */
+  .web-mini-profile small { font-size: 9px; color: #575f62; margin-top: 2px; }
   .web-logout {
     display: flex; align-items: center; gap: 9px;
     width: 100%; min-height: 38px; padding: 0 10px; margin-top: 8px;
@@ -253,9 +255,23 @@
   .v4-home-page .shadow-\[0_10px_28px_-12px_rgba\(90\,102\,112\,0\.18\)\] { box-shadow: 0 14px 36px -18px rgba(80,67,52,.16); }
 
   /* wider editorial type on desktop page headers (some routes have no <main>) */
-  .web-content-offset h1, #main-content h1 { font-family: var(--v4-serif); font-weight: 500; letter-spacing: .015em; text-wrap: balance; }
-  .web-content-offset h2, #main-content h2 { font-family: var(--v4-serif); font-weight: 500; letter-spacing: .01em; text-wrap: balance; }
-  #main-content .font-display { letter-spacing: .01em; }
+  /*
+    P1-6：Home(.wh-root) / 票据(.wt-page) / 画册(.wa-root) 三套 Web 皮肤各自在
+    自己的 CSS 里声明了标题字体与字距（例：.wh-hero-copy h1 的 -0.012em、
+    .wt-title 的 weight 400、.wa-hero-title 的 -0.02em）。旧写法用 ID 选择器 +
+    裸标签选择器把这三棵子树一起收编，等于静默压平它们的排版（.wt-title 被抬到 500、
+    首页大标题被拉回 .015em）。这里显式跳过这三棵子树：主题外的页面标题口径不变，
+    主题内的标题交还给各自的 CSS。
+
+    写法：:not() 里再套 :where() —— 选择器"权重"保持原样（.web-content-offset h1 仍是
+    0,1,1；#main-content h1 仍是 1,0,1），只改匹配集合。若直接写 :not(.wh-root *)，
+    新增的属性选择器会把权重抬到 0,4,1 / 1,3,1，反过来压掉别的页面用 2~3 个类写的标题排版。
+  */
+  .web-content-offset h1:not(:where(.wh-root *)):not(:where(.wt-page *)):not(:where(.wa-root *)),
+  #main-content h1:not(:where(.wh-root *)):not(:where(.wt-page *)):not(:where(.wa-root *)) { font-family: var(--v4-serif); font-weight: 500; letter-spacing: .015em; text-wrap: balance; }
+  .web-content-offset h2:not(:where(.wh-root *)):not(:where(.wt-page *)):not(:where(.wa-root *)),
+  #main-content h2:not(:where(.wh-root *)):not(:where(.wt-page *)):not(:where(.wa-root *)) { font-family: var(--v4-serif); font-weight: 500; letter-spacing: .01em; text-wrap: balance; }
+  #main-content .font-display:not(:where(.wh-root *)):not(:where(.wt-page *)):not(:where(.wa-root *)) { letter-spacing: .01em; }
   #main-content .container-page h2 { text-wrap: balance; }
 
   /* profile page desktop width + compact archive banner */

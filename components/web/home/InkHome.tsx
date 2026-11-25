@@ -1,10 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import dynamicImport from 'next/dynamic'
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type Ref } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode, type Ref } from 'react'
 import { apiUrl } from '@/lib/api-base'
+import { normalizeCoverUrl } from '@/components/china-map/cover-url'
 import { travelDetailHref } from '@/lib/routes'
 import { albumDeepLink } from '@/lib/album-deep-link'
 import { totalPhotoCount } from '@/lib/home/photo-count'
@@ -104,6 +104,45 @@ function relativeTime(iso: string): string {
   if (diff < day) return Math.max(1, Math.floor(diff / 3600000)) + ' 小时前'
   if (diff < 30 * day) return Math.floor(diff / day) + ' 天前'
   return new Date(iso).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
+}
+
+/**
+ * 首页封面（最近旅程主图 / 画册叠放封面）—— 归一化 + 纯 img + 失败兜底。
+ *
+ * 为什么不用 next/image：封面在数据层（lib/home/home-data.ts）是**原样透传**的，
+ * 同一条记录可能是「对象存储绝对 URL / 站内相对路径 / 未处理的裸存储键」三态之一。
+ * next/image 一旦拿到 images.remotePatterns 白名单外的域名会**直接抛错**，把它放进
+ * 首页就等于给整页装上错误边界（开发环境白屏，生产环境 /next/image 400 变破图）；
+ * 裸存储键则必然 404。这里沿用 Web 画册（components/web/album）的既定策略：
+ *   normalizeCoverUrl 归一化脏值 → 纯 img（懒加载 + 异步解码）→ onError 回退占位，
+ * 任何一步失败都只影响这一张图，页面其余部分照常渲染。
+ * 颜色/渐变/尺寸全部在 ink-home.css（.wh-cover-img / 容器自身的 --wh-grad-media）。
+ */
+function CoverArt({
+  src,
+  alt,
+  fallback = null,
+}: {
+  src?: string | null
+  alt: string
+  fallback?: ReactNode
+}) {
+  const url = normalizeCoverUrl(src)
+  // 记录「失败的那个地址」而不是布尔值：数据刷新换了封面时自动复活，不需要 effect 复位
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  if (!url || failedSrc === url) return <>{fallback}</>
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- 白名单外域名/裸存储键会让 next/image 抛错并打白整个首页
+    <img
+      src={url}
+      alt={alt}
+      className="wh-cover-img"
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+      onError={() => setFailedSrc(url)}
+    />
+  )
 }
 
 function daysUntil(date: string, recurring: boolean): number {
@@ -305,15 +344,8 @@ export default function InkHome({
                   {featured ? (
                     <>
                       <Link href={travelDetailHref(featured.slug)} className="wh-journey-feature">
-                        {featured.cover ? (
-                          <Image
-                            src={featured.cover}
-                            alt={featured.title}
-                            fill
-                            sizes="(min-width: 1440px) 720px, (min-width: 1024px) 52vw, 92vw"
-                            className="object-cover"
-                          />
-                        ) : null}
+                        {/* 无封面 / 加载失败时留空，由 .wh-journey-feature 的 --wh-grad-media 渐变兜底 */}
+                        <CoverArt src={featured.cover} alt={featured.title} />
                         <span className="wh-journey-scrim" aria-hidden="true" />
                         <span className="wh-journey-caption">
                           <b>{featured.title}</b>
@@ -371,19 +403,15 @@ export default function InkHome({
                       <div className="wh-books">
                         {visibleBooks.map((book) => (
                           <Link key={book.bookKey} href={albumDeepLink(book.bookKey)} className="wh-book" title={book.title}>
-                            {book.coverThumb ? (
-                              <Image
-                                src={book.coverThumb}
-                                alt={book.title}
-                                fill
-                                sizes="(min-width: 1440px) 220px, 18vw"
-                                className="object-cover"
-                              />
-                            ) : (
-                              <span className="wh-book-blank" aria-hidden="true">
-                                <IconAlbum />
-                              </span>
-                            )}
+                            <CoverArt
+                              src={book.coverThumb}
+                              alt={book.title}
+                              fallback={
+                                <span className="wh-book-blank" aria-hidden="true">
+                                  <IconAlbum />
+                                </span>
+                              }
+                            />
                           </Link>
                         ))}
                       </div>

@@ -128,8 +128,10 @@ export default function LoginDoor({ children }: LoginDoorProps) {
         卡片可读性改由「局部」处理承担，绝不再覆盖整屏：
           · 桌面（≥1024）：app/login/web-login.css 把登录列包成一块暖象牙玻璃面板
             （rgba + backdrop-blur(20px)，只包住登录列本身，视频在两侧完整可见）；
-          · 窄屏（<1024，Web 与 App 壳共用）：版式一个像素不动，只给标题/页脚文字加柔和
-            描边阴影（视频比原粉色薄雾亮，这是必要的最小可读性补偿）。
+          · 窄屏（<1024，Web 与 App 壳共用）：版式一个像素不动；视频比原粉色薄雾亮，
+            只给直接压视频的两块**文字**加局部深色玻璃铭牌（页脚 + 头部「甜途」两行，
+            见 app/login/web-login.css 的 .web-login-head-plate / .web-login-footer）——
+            铭牌只包文字、不覆盖视频，P1-5 修复了亮帧上白字读不出来的问题。
         记住：不要再往这里加任何 absolute inset-0 的整屏渐变/暗角。
       */}
 

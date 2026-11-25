@@ -14,7 +14,23 @@ import { deriveTicket } from '@/lib/ticket/derive'
 import { clearTicketOverride, writeTicketOverride } from '@/lib/ticket/store'
 import type { TicketData, TicketOverride } from '@/lib/ticket/types'
 import { travelDetailHref } from '@/lib/routes'
-import WebTicketLine from '@/components/web/tickets/WebTicketLine'
+import dynamicImport from 'next/dynamic'
+import WebTicketLineBoot from '@/components/web/tickets/WebTicketLineBoot'
+import { useDesktopViewport } from '@/hooks/use-desktop-viewport'
+
+/**
+ * 桌面吊绳票据夹（≥1024 专属）按需加载（P1-4）
+ * ---------------------------------------------------------------------------
+ * 它背后是 603 行吊绳树 + TicketTilt 指针绑定 + web-tickets.css（~40KB）。
+ * 之前静态 import：**移动端票据夹**打开就先把这一整坨下载、解析、编译一遍，
+ * 而移动端根本不渲染它 —— web-tickets.css 的断点闸门（.wt-page / .wt-mobile-only）
+ * 只是 display:none，代码该下还是照下。改成 ssr:false 动态导入 + 只在 isDesktop
+ * 时渲染，移动端 bundle 与首屏都不再为桌面付钱。
+ */
+const WebTicketLine = dynamicImport(() => import('@/components/web/tickets/WebTicketLine'), {
+  ssr: false,
+  loading: () => <WebTicketLineBoot />,
+})
 
 /**
  * 票据夹（归档页）
@@ -84,6 +100,13 @@ function travelInputOf(item: TravelItem): TicketEditTravel {
 
 export default function TicketArchive() {
   const router = useRouter()
+  /**
+   * 桌面视口（≥1024）：决定挂吊绳版还是移动版票据夹，**只能挂一个**。
+   * 之前两棵树同时挂载（Web 只是 CSS 隐藏）→ 页面里有两个 h1，移动端还白跑
+   * 一整棵吊绳树（含 TicketTilt 的指针绑定）。null = SSR/首帧，按移动端渲染
+   * （移动端 DOM 与改动前一致），桌面那一帧由 WebTicketLineBoot 占位。
+   */
+  const isDesktop = useDesktopViewport()
   const [travels, setTravels] = useState<TravelItem[] | null>(null)
   const [passenger, setPassenger] = useState('旅行者')
   const [overrides, setOverrides] = useState<Record<string, TicketOverride>>({})
@@ -292,11 +315,15 @@ export default function TicketArchive() {
   return (
     <>
       {/*
-        移动端 DOM 原样保留（只在 <1024 可见）：
-        桌面端由 <WebTicketLine> 接管（吊绳时间线），两者共用上面同一份 rows，
-        所以不会重复请求、也不会出现"改了票面两个版本不一致"。
+        移动端票据夹（只在 <1024 出现）：与桌面吊绳版**互斥挂载**，共用上面同一份
+        rows —— 不会重复请求，也不会出现「改了票面两个版本不一致」。
+        isDesktop 为 null（SSR / 水合首帧）时按移动端渲染：<1024 的 DOM 与改动前逐字一致。
+        lg:hidden 是给桌面首帧用的静态断点闸门：.wt-mobile-only 那份规则在吊绳版的
+        web-tickets.css 里，代码块没到之前还不存在 —— 少了它，桌面首帧会闪一下竖排的
+        移动版票据夹（<1024 上 lg:hidden 完全不生效）。
       */}
-      <div className="m-mobile-page m2-screen wt-mobile-only text-[var(--m-text)]">
+      {isDesktop !== true && (
+      <div className="m-mobile-page m2-screen wt-mobile-only text-[var(--m-text)] lg:hidden">
       <header className="m2-gutter m-safe-top pb-3">
         <div className="flex items-center gap-2.5">
           <button
@@ -422,6 +449,7 @@ export default function TicketArchive() {
         )}
       </main>
       </div>
+      )}
 
       {/*
         编辑面板放在移动端容器**外面**：桌面会把 .wt-mobile-only 整块 display:none，
@@ -440,15 +468,25 @@ export default function TicketArchive() {
         />
       )}
 
-      {/* 桌面端（≥1024）：吊绳时间线；<1024 时 CSS 整块隐藏，移动端视觉一行未动 */}
-      <WebTicketLine
-        rows={rows}
-        loading={loading}
-        error={error}
-        filterTitle={travelFilter ? (filteredTravel ? filteredTravel.title : '这一段旅程') : null}
-        onClearFilter={clearTravelFilter}
-        onEditTicket={openEditor}
-      />
+      {/*
+        桌面端（≥1024）：吊绳时间线。与移动端树**互斥挂载**（isDesktop 只有一个 true）：
+        · true  → 吊绳版（动态代码块；加载中先显示同形骨架）；
+        · null  → 首帧断点未知：移动端树照旧（<1024 可见），桌面由骨架占位，
+                  不会出现「两棵树同时在 DOM 里」的双 h1；
+        · false → 完全不挂载（<1024 连代码块都不下载）。
+      */}
+      {isDesktop === true ? (
+        <WebTicketLine
+          rows={rows}
+          loading={loading}
+          error={error}
+          filterTitle={travelFilter ? (filteredTravel ? filteredTravel.title : '这一段旅程') : null}
+          onClearFilter={clearTravelFilter}
+          onEditTicket={openEditor}
+        />
+      ) : (
+        <WebTicketLineBoot />
+      )}
     </>
   )
 }

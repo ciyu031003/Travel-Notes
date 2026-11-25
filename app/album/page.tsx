@@ -11,7 +11,7 @@ import AlbumGalleryGrid from '@/components/album/AlbumGalleryGrid'
 import AlbumPhotoWall from '@/components/album/AlbumPhotoWall'
 import type { AlbumViewMode } from '@/components/album/AlbumModeSwitch'
 import type { SpaceChatPhoto } from '@/components/album/AlbumSpaceMode'
-import WebAlbumWall from '@/components/web/album/WebAlbumWall'
+import AlbumWallBoot, { AlbumWallError } from '@/components/web/album/AlbumWallBoot'
 import { useDesktopViewport } from '@/components/web/album/useDesktopViewport'
 import { useAlbumData } from '@/hooks/use-album-data'
 import { formatDotDate } from '@/lib/modules/album/presentation'
@@ -61,6 +61,13 @@ const AlbumUnlockScreen = dynamicImport(() => import('@/components/album/AlbumUn
 const TravelArchiveView = dynamicImport(() => import('@/components/album/TravelArchiveView'), { ssr: false, loading: () => null })
 const AlbumStarMapOverlay = dynamicImport(() => import('@/components/album/AlbumStarMapOverlay'), { ssr: false, loading: () => null })
 const AlbumComposer = dynamicImport(() => import('@/components/album/AlbumComposer'), { ssr: false, loading: () => null })
+// 桌面画册墙（Web W2）：只有 ≥1024 才挂载。代码块 + web-album.css（~40KB）因此全部留在
+// 桌面侧，移动端首屏不再为它下载/编译（P1-4）。ssr:false：它在服务端没有可用信息
+// （data 全在客户端取），加载期间先显示与画册墙同形的骨架，避免高度跳变。
+const WebAlbumWall = dynamicImport(() => import('@/components/web/album/WebAlbumWall'), {
+  ssr: false,
+  loading: () => <AlbumWallBoot />,
+})
 
 
 /**
@@ -166,15 +173,29 @@ export default function AlbumPage() {
   // 不再被另一个接口的往返阻塞（此前每次进 /album 都要等 /api/album 才出第一屏）。
   if (viewMode === 'book') {
     // Web 相册（桌面专属，W2）：≥1024px 走 3D 卡片画册墙，<1024 保持原有移动端旅行画册。
-    // isDesktop 为 null 时是 SSR/水合首帧（matchMedia 尚无值）：仍渲染移动端分支以保证
-    // 移动端视觉与行为完全不变；桌面分支挂 .wa-hide-on-desktop 让这一帧不可见，避免闪一下移动版。
+    //
+    // 首帧契约（P0 修复）：
+    //  · isDesktop === null（SSR / 水合首帧，matchMedia 还没有值）→ 只渲染中性骨架。
+    //    这一帧**不能**再押某一侧：押移动端要靠 .wa-hide-on-desktop 藏起来，而那个类
+    //    只在 @media (min-width:1024px) 里 display:none —— 桌面首帧就是整页空白
+    //    （禁用 JS 时永久空白）。骨架是纯 CSS、不依赖断点，任何宽度都有东西可看。
+    //  · wa-hide-on-desktop 只在确定是移动端时加（防御：真跑在 <1024 时不留残影）；
+    //    桌面分支外面包 ErrorBoundary —— 画册墙渲染期抛错只降级成一块提示，
+    //    不会把整页卸载成白屏（与页面里其它重渲染器的约定一致）。
+    if (isDesktop === null) {
+      return <AlbumWallBoot key="mode-book-boot" />
+    }
+
     if (isDesktop) {
       return (
         <div key="mode-book-web" className="wa-hide-on-mobile">
-          <WebAlbumWall onModeChange={changeMode} initialBookKey={initialBookKey} />
+          <ErrorBoundary label="WebAlbumWall" fallback={<AlbumWallError />}>
+            <WebAlbumWall onModeChange={changeMode} initialBookKey={initialBookKey} />
+          </ErrorBoundary>
         </div>
       )
     }
+
     return (
       <div key="mode-book" className="wa-hide-on-desktop motion-safe:animate-[fadeIn_.2s_ease-out]">
         <TravelBook onModeChange={changeMode} initialBookKey={initialBookKey} />

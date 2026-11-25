@@ -193,6 +193,28 @@ html.dark .web-login-column {
   }
 
   /*
+    P1-5：头部「甜途 + 副标题」同样直接压在视频上，此前只有描边阴影 —— 遇到亮帧
+    （白云 / 白花 / 逆光）就基本读不出来。这里给这两行加一块**局部**深色玻璃铭牌：
+    与页脚铭牌同款（同色系、同 blur），只包住文字块（高度随内容），
+    视频其余部分依旧是原片高清可见，也没有任何整屏遮罩。
+    文字改用暖白 + 去掉描边阴影（铭牌已经提供了对比底）。
+  */
+  .web-login-head-plate {
+    padding: 0.5rem 0.7rem 0.55rem;
+    border-radius: 14px;
+    border: 1px solid rgba(246, 241, 231, 0.12);
+    background: linear-gradient(180deg, rgba(9, 10, 14, 0.6), rgba(9, 10, 14, 0.68));
+    -webkit-backdrop-filter: blur(10px) saturate(115%);
+    backdrop-filter: blur(10px) saturate(115%);
+    box-shadow: 0 12px 30px -18px rgba(0, 0, 0, 0.6);
+  }
+  .web-login-head-plate .web-login-brand-title,
+  .web-login-head-plate .web-login-tagline {
+    color: #f4efe4;
+    text-shadow: none;
+  }
+
+  /*
     页脚（版权 / ICP 备案号）直接压在最亮的视频区域上，纯描边阴影在 10px 小字上不够。
     这里给这两行加一块**局部**深色玻璃铭牌：只有页脚那一小块（高度随内容），
     不是整屏遮罩、也不是从底部拉起的渐变带 —— 视频其余部分依旧原片可见。

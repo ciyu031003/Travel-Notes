@@ -230,7 +230,9 @@
   --palette-tw-travel-accent-rgb: 168 95 58;
   --palette-tw-travel-accent-strong-rgb: 138 74 43;
   --palette-tw-travel-accent-soft-rgb: 201 126 85;
-  --palette-tw-travel-sand-rgb: 125 103 84;
+  /* a11y：text-travel-sand 作正文时在暖米底 (#f1ebe2) 上只有 4.49:1（axe serious，差 0.01），
+     压深到 5.4:1；只是把同一色相调深，视觉仍是暖砂色 */
+  --palette-tw-travel-sand-rgb: 113 93 76;
   --palette-tw-travel-sand-soft-rgb: 194 175 154;
   --palette-tw-travel-sand-light-rgb: 228 214 196;
   --palette-tw-travel-parchment-rgb: 253 245 237;
