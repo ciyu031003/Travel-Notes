@@ -1,3 +1,46 @@
+## [1.30.10] - 2026-11-26
+
+> 票据视觉大改：16 套四季×时段**插画式动态背景**（不再写「春 · 清晨」）+ 3D 悬浮；
+> 票据夹可按旅程筛选、票面**跨设备同步**；画册封面卡「手指捏住」3D 倾斜高光；
+> BoardUI 的 theme-toggle / switch **真装**（react-aria）。已发版为 **1.30.10 / build 74**。
+
+### Changed
+
+- **票面插画（替换季节文字）**：新增 `components/mobile/ticket/TicketScene.tsx`，用分层
+  CSS/SVG 画 16 套天光 —— 春（花枝/花瓣飘落/露水高光）、夏（浓叶冠层/光斑/热浪）、
+  秋（银杏枫叶/金色斜光）、冬（枯枝积雪/雪粒）；时段靠光源位置/云带/星月灯火区分
+  （清晨低角柔光薄雾、正午顶光放射束、黄昏暖橙紫+飞鸟、夜晚深蓝+月牙星点+灯火）。
+  纯 CSS 动画、无 canvas rAF，`prefers-reduced-motion` 下静止；登机牌整卡铺画+深色 scrim，
+  高铁票头改实色青绿+插画小窗，纸质票顶部 40px 天光带（优先保证文字对比度 ≥4.4）。
+- **票据 3D 悬浮**：新增 `TicketTilt.tsx` —— 鼠标跟随/触屏按住（>6px 才算手势）倾斜 ≤7°，
+  分层 translateZ 视差（插画 0 / 正文 20 / 票根 30 / 高光 46），radial 高光跟随指针
+  （soft-light/screen 混合），票根 `BOARDING PASS` 用 mix-blend-mode 做 knockout 贴纸；
+  松手弹簧回正，拖拽后吞掉 click，reduced-motion 不挂手势。
+- **票据夹按旅程筛选**：`/tickets?travel=<slug|id>`（旅行详情 dock 的「票据」与票据揭晓的
+  「收进票据夹」都带上它），顶部显示「只看《旅程》的票」+「查看全部」。
+- **票面跨设备同步**：Travel 新增 `ticketOverride` JSON 列（迁移
+  `20261126000000_add_travel_ticket_override`），新增 `PUT/GET /api/travels/[id]/ticket`
+  （白名单净化 + guardTravelWrite），`/api/travels` 一并下发；票据夹以服务端为准、localStorage
+  兜底，保存/恢复默认都会回写云端，换设备打开票面一致。
+- **画册封面卡「手指捏住」**：新增 `components/album/thumb/TiltCoverCard.tsx` —— 拖动时
+  3D 倾斜 ≤10° + scale(1.02) + 高光跟随（`mix-blend-mode: screen`），松手欠阻尼弹簧回正；
+  纵向/滚动手势不接管，点击 <6px 仍打开画册；桌面 hover 轻倾斜；reduced-motion 全关。
+- **BoardUI 真装**：`react-aria-components` + `@remixicon/react` 已安装，BoardUI 的
+  `theme-toggle` 接到首页顶栏（44×44）、`switch` 接到设置页「外观 · 深夜模式」；
+  只通过 `app/boardui-scope.css` 在组件容器内做 token 作用域映射，**全局 --m-* 体系零改动**；
+  首页首屏新增 react-aria chunk 43KB raw（≈14KB gz）、remixicon 被 tree-shake，APK 仅 +32KB。
+
+### Verified
+
+- tsc 0 错 · eslint 0 error · 设计 token 整体收敛（fontSize 171→157、magicRadius 8→6、
+  rgba 59→58；新文件 0 命中）；
+- 票据：16 套插画图鉴截图、文字对比度实测 4.39–19.3、3D tilt 半程/回正截图、reduced-motion 静止；
+- 票据夹：`?travel=` 只显示 1 张并可「查看全部」；清空 localStorage 后 reload 仍显示云端
+  覆盖（G8888 高铁 FOC→HGH）；PUT/GET/list 全 200；**服务端已部署**（迁移已应用、列已建）；
+- 画册：触屏捏住 rx/ry≤10°、高光 0.9、松手回正、纵向滚动不接管、点击仍开画册；
+- BoardUI：首页 ThemeToggle 44×44 切换暗色并持久化、设置页 switch aria-checked 翻转；
+- 生产 APK：versionCode 74 / versionName 1.30.10 / 同证书 / 15,650,306 B。
+
 ## [1.30.9] - 2026-11-26
 
 > 票据可编辑、AA 用真实同行者名单、旅行详情页悬浮 dock、设置页深夜模式开关、
