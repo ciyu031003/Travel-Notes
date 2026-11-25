@@ -1,6 +1,6 @@
 {
   "name": "travel-notes",
-  "version": "1.30.9",
+  "version": "1.30.10",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -38,6 +38,7 @@
     "@capacitor/screen-orientation": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
     "@prisma/client": "^7.10.1",
+    "@remixicon/react": "^4.9.0",
     "@tailwindcss/typography": "^0.5.10",
     "archiver": "^7.0.1",
     "autoprefixer": "^10.4.0",
@@ -63,6 +64,7 @@
     "prisma": "^7.10.1",
     "qrcode": "^1.5.4",
     "react": "^19.3.1",
+    "react-aria-components": "^1.22.1",
     "react-dom": "^19.3.1",
     "react-virtuoso": "^4.18.19",
     "rehype-highlight": "^7.0.0",

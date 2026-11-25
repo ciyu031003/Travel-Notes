@@ -46,6 +46,29 @@ export function ticketSerial(ticket: TicketData): string {
   return 'E' + String((hash32(ticketArtSeed(ticket)) % 900000) + 100000)
 }
 
+/* ── 插画天光的读屏描述 ───────────────────────────────────────────────
+   票面不再显示「春 · 清晨」这类文字标签（用户明确要求用背景表达），但读屏
+   用户依然需要知道这张票是哪个季节/天光 —— 所以把标签降级成 sr-only 文本，
+   和插画一起描述。文字标签只是从视觉层消失，信息不丢。 */
+const SEASON_SCENE: Record<TicketData['season'], string> = {
+  spring: '花枝与飘落的花瓣、枝头露水',
+  summer: '烈日与浓密树叶、地面光斑',
+  autumn: '银杏叶与飘落的落叶、金色斜光',
+  winter: '雪粒与霜白枯枝、雪原',
+}
+
+const DAYPART_SCENE: Record<TicketData['dayPart'], string> = {
+  morning: '清晨低角度的柔光与薄雾',
+  noon: '正午顶光与清晰的远山影子',
+  dusk: '黄昏的暖橙紫渐变与飞鸟',
+  evening: '夜晚的深蓝星空与月亮灯火',
+}
+
+/** 票面插画的一句读屏描述（视觉上不渲染） */
+export function ticketSceneAlt(season: TicketData['season'], dayPart: TicketData['dayPart']): string {
+  return SEASON_SCENE[season] + '，' + DAYPART_SCENE[dayPart] + '。'
+}
+
 /* 图标取自 icon-system 的「出行方式」映射（唯一入口），不在票面里另选图标 */
 export const TRANSPORT_META: Record<TicketTransport, { icon: LucideIcon; label: string }> = {
   flight: { icon: TRANSPORT_ICON.PLANE, label: '机票' },

@@ -17,6 +17,7 @@ import { apiUrl } from '@/lib/api-base'
 import { apiFetch } from '@/lib/client/api'
 import { Icon } from '@/components/mobile/Icon'
 import { LiquidGlass } from '@/components/ui/liquid-glass'
+import TiltCoverCard from '@/components/album/thumb/TiltCoverCard'
 import { ALBUM_MODES, type AlbumModeKey } from '@/lib/album-modes'
 import { formatDotDate } from '@/lib/modules/album/presentation'
 import {
@@ -590,15 +591,15 @@ const firstBook = books && books.length > 0 ? books[0] : null
                   {(books || []).map((book) => {
                     const cover = book.coverThumb || book.coverPreview
                     return (
-                      <button
+                      // 封面卡「手指捏住」3D 倾斜（T2）：按住拖动跟随倾斜 + 高光跟随，
+                      // 位移 < 6px 才当点击打开画册；prefetch 入口与拆出前一致。
+                      <TiltCoverCard
                         key={book.bookKey || book.travelId}
-                        type="button"
-                        onClick={() => openBookByKey(book)}
-                        onPointerEnter={prefetchReader}
-                        onPointerDown={() => prefetchBook(book)}
-                        onTouchStart={() => prefetchBook(book)}
-                        className="m2-book-cover block text-left shadow-[var(--m-shadow-l2)] transition active:scale-[0.985]"
-                        aria-label={`打开《${book.title}》旅行画册`}
+                        className="m2-book-cover block text-left"
+                        ariaLabel={`打开《${book.title}》旅行画册`}
+                        onOpen={() => openBookByKey(book)}
+                        onPressStart={() => prefetchBook(book)}
+                        onHoverStart={prefetchReader}
                       >
                         {cover ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -621,7 +622,7 @@ const firstBook = books && books.length > 0 ? books[0] : null
                             {book.startDate ? formatDotDate(book.startDate) : '待记录'} · {book.photoCount} 张
                           </span>
                         </span>
-                      </button>
+                      </TiltCoverCard>
                     )
                   })}
                 </div>

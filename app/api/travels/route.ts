@@ -48,6 +48,8 @@ export async function GET(_request: NextRequest) {
        * listTravels 已经是整行取回），客户端按 slug/id 匹配后传给 buildExpenseDeck。
        */
       companions: t.companions ?? null,
+      // 票面覆盖（用户调过的出发地/交通方式/车次…），票据夹据此跨设备还原票面
+      ticketOverride: t.ticketOverride ?? null,
       confirmed: Boolean(t.confirmedAt),
       type: 'travel',
       published: true,

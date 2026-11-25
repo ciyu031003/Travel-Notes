@@ -5,6 +5,9 @@
 @import './web-v4.css';
 @import './ticket-art.css';
 @import './expense-card.css';
+/* BoardUI switch / theme-toggle 的作用域 token 层（只包住这两个组件的容器，
+   不改动任何既有 --m-* / --ui-* token；详见文件头注释） */
+@import './boardui-scope.css';
 
 /* Tailwind 4 配置接入（P2-31 三层 token + 既有 theme 配置都保留在 tailwind.config.js） */
 @config "../tailwind.config.js";

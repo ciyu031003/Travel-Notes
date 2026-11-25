@@ -38,10 +38,13 @@
 .tk {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
   color: var(--tk-ink);
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
+  /* 3D 悬浮的前提：卡面自己不能有 overflow/mask/filter —— 它们会把
+     preserve-3d 压平。裁剪与缺口改由各个子层（.tk-skin / .tk-scene /
+     .tk-flight-stub）各自承担，见 §11。 */
+  transform-style: preserve-3d;
 
   /* 派生：浅色卡面 */
   --tk-muted: color-mix(in srgb, var(--tk-ink) 64%, transparent);
@@ -65,19 +68,30 @@
   --tk-grain-op: 0.05;
 }
 
-/* 卡片外壳：负责投影（drop-shadow 走剪影，打孔/缺角也能带上阴影）。
-   阴影色不能用票据内部变量以外的东西，所以外壳也带天光 class。 */
+/* 卡片外壳：3D 悬浮的中间层。
+   投影不再用 filter: drop-shadow —— filter 会把 preserve-3d 压平、视差失效，
+   统一改由 TicketTilt 的 .tk-tilt-shadow 图层提供（见 §12），静态观感不变。 */
 .tk-shell {
   position: relative;
   width: 100%;
-  filter: drop-shadow(0 16px 24px color-mix(in srgb, var(--tk-deep) 24%, transparent));
+  transform-style: preserve-3d;
 }
+
+/* 卡面底：渐变/描边/缺口全部搬到这里（不参与 3D 分层，位于 z=0） */
+.tk-skin {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-color: var(--tk-card);
+}
+.tk-flight-shell,
+.tk-hsr-shell,
 .tk-train-shell,
-.tk-hsr-shell {
-  filter: drop-shadow(0 10px 18px color-mix(in srgb, var(--tk-ink) 20%, transparent));
-}
 .tk-mini-shell {
-  filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--tk-deep) 22%, transparent));
+  /* 类名保留给父级/测试用；视觉已由 .tk-tilt-shadow 接管 */
+  transform-style: preserve-3d;
 }
 
 /* ── 2. 氛围层与纹理层（永不覆盖文字） ─────────────────────────────────── */
@@ -86,7 +100,17 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
   pointer-events: none;
+  transform-style: flat;
+}
+/* 分层视差：插画 z=0 → 氛围/纹理微抬 → 正文/票根更高（§12 统一给数值） */
+.tk-atmo {
+  transform: translateZ(1px);
+}
+.tk-tex {
+  transform: translateZ(2px);
 }
 
 /* 天光：光源位置由 --tk-atmo-x/-y 决定（清晨低、正午高、黄昏斜、夜晚顶） */
@@ -141,6 +165,8 @@
 .tk-body {
   position: relative;
   z-index: 1;
+  transform-style: preserve-3d;
+  transform: translateZ(20px);
 }
 
 /* ── 3. 季节纹理形状（按季节归类，不铺满整卡） ─────────────────────────── */
@@ -518,28 +544,34 @@
   display: block;
   aspect-ratio: 2.1 / 1;
   border-radius: 1.75rem;
-  border: 1px solid color-mix(in srgb, var(--tk-glow) 20%, transparent);
-  background-image:
-    linear-gradient(
-      152deg,
-      var(--tk-deep-1) 0%,
-      var(--tk-deep-2) 58%,
-      color-mix(in srgb, var(--tk-deep-1) 74%, var(--tk-accent) 26%) 100%
-    );
   color: var(--tk-on-deep);
   --tk-stub-w: 84px;
 
   /* 可撕票根打孔：在「主体 / 票根」接缝处的上下各切一个半圆缺口。
      mask-composite: intersect 把三层取交集；不支持时退化为整卡（只会少两个缺口，
-     不会破版）。 */
-  -webkit-mask-image:
+     不会破版）。
+     ⚠️ 掩膜挂在**画到边缘的子层**（skin / scene / 票根）上，不再挂在卡面本体：
+     卡面本体一旦带 mask，浏览器就把 preserve-3d 压平成 flat，3D 视差会失效。 */
+  --tk-card-mask:
     radial-gradient(circle at calc(100% - var(--tk-stub-w)) 0, transparent 5.5px, #000 6px),
     radial-gradient(circle at calc(100% - var(--tk-stub-w)) 100%, transparent 5.5px, #000 6px),
     linear-gradient(#000, #000);
-  mask-image:
-    radial-gradient(circle at calc(100% - var(--tk-stub-w)) 0, transparent 5.5px, #000 6px),
-    radial-gradient(circle at calc(100% - var(--tk-stub-w)) 100%, transparent 5.5px, #000 6px),
-    linear-gradient(#000, #000);
+}
+.tk-flight > .tk-skin {
+  background-image: linear-gradient(
+    152deg,
+    var(--tk-deep-1) 0%,
+    var(--tk-deep-2) 58%,
+    color-mix(in srgb, var(--tk-deep-1) 74%, var(--tk-accent) 26%) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--tk-glow) 20%, transparent);
+}
+.tk-flight > .tk-skin,
+.tk-flight > .tk-scene,
+.tk-flight > .tk-body > .tk-flight-stub {
+  -webkit-mask-image: var(--tk-card-mask);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--tk-card-mask);
   mask-composite: intersect;
 }
 
@@ -577,17 +609,42 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 8px;
-  background-image: var(--tk-stub);
+  padding: 9px 7px 10px;
   color: var(--tk-stub-ink);
+  /* 票根 = 一条竖着的"天光窗"：底色不再铺死，改成季节色半透明层，
+     插画从后面透出来；knockout 贴纸就压在这层上。 */
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tk-sky-1) 30%, transparent) 0%,
+    color-mix(in srgb, var(--tk-sky-2) 44%, transparent) 54%,
+    color-mix(in srgb, var(--tk-sky-2) 74%, transparent) 100%
+  );
+  transform: translateZ(30px);
+  transform-style: preserve-3d;
+}
+.tk-flight-stub > * {
+  position: relative;
+  z-index: 1;
 }
 .tk-flight-stub::before {
   content: '';
   position: absolute;
-  top: 10px;
-  bottom: 10px;
+  z-index: 0;
+  top: 9px;
+  bottom: 9px;
   left: 0;
-  border-left: 1px dashed color-mix(in srgb, var(--tk-stub-ink) 38%, transparent);
+  border-left: 1px dashed color-mix(in srgb, var(--tk-stub-ink) 34%, transparent);
+}
+/* 票根下半段的可读性 wash：座位/二维码落在近纸色上 */
+.tk-flight-stub::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-image: var(--tk-stub);
+  opacity: 0.4;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0 30%, #000 48%);
+  mask-image: linear-gradient(180deg, transparent 0 30%, #000 48%);
 }
 
 .tk-flight-main {
@@ -620,14 +677,6 @@
   font-weight: 500;
   color: var(--tk-on-deep-muted);
 }
-.tk-flight-mood {
-  font-size: 11px;
-  line-height: 14px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: color-mix(in srgb, var(--tk-glow) 62%, var(--tk-on-deep));
-}
-
 /* 航线：三字码 + 虚线 + 飞机 */
 .tk-flight-route {
   display: flex;
@@ -702,6 +751,14 @@
   font-weight: 700;
   letter-spacing: 0.02em;
 }
+.tk-flight-qr-plate {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  background-color: color-mix(in srgb, var(--tk-sky-1) 76%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tk-stub-ink) 12%, transparent);
+}
 .tk-flight-qr {
   width: 42px;
   height: 42px;
@@ -719,11 +776,12 @@
 /* ── 6. 高铁票（电子票/现代） ─────────────────────────────────────────── */
 .tk-hsr {
   display: block;
-  overflow: hidden;
   border-radius: 1.5rem;
-  border: 1px solid var(--tk-line);
-  background-image: linear-gradient(168deg, var(--tk-card) 0%, var(--tk-card-2) 100%);
   color: var(--tk-ink);
+}
+.tk-hsr > .tk-skin {
+  background-image: linear-gradient(168deg, var(--tk-card) 0%, var(--tk-card-2) 100%);
+  border: 1px solid var(--tk-line);
 }
 .tk-hsr .tk-atmo::after {
   opacity: calc(var(--tk-star, 0) * 0.4);
@@ -749,6 +807,7 @@
     #0b3a43 100%
   );
   color: var(--tk-on-deep);
+  transform: translateZ(22px);
 }
 .tk-hsr-word {
   writing-mode: vertical-rl;
@@ -775,14 +834,12 @@
   flex-direction: column;
 }
 .tk-hsr-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px 14px 10px;
+  position: relative;
+  display: block;
+  /* 右侧留出 100px 给"插画小窗"：实色青绿负责白字对比度，
+     小窗负责季节与天光 —— 两者不再互相伤害。 */
+  padding: 11px 104px 11px 14px;
   border-bottom: 1px dashed var(--tk-line-strong);
-  /* 季节色只出现在票头左端，向右迅速收敛到铁路青绿 —— 一眼仍是"高铁票"，
-     但春天是玫瑰青、秋天是琥珀青、冬天是冰蓝青。 */
   background-image: linear-gradient(
     112deg,
     color-mix(in srgb, var(--tk-accent) 78%, #0e3b44) 0%,
@@ -791,11 +848,44 @@
   );
   color: var(--tk-on-deep);
 }
+.tk-hsr-head-text {
+  min-width: 0;
+}
+.tk-hsr-head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+/* 插画小窗：一枚贴在票头上的风景"邮票" */
+.tk-hsr-art {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  bottom: 9px;
+  width: 84px;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--tk-on-deep) 26%, transparent),
+    0 5px 10px color-mix(in srgb, #07171c 34%, transparent);
+}
+.tk-hsr-art .tk-scene {
+  --tk-scene-h: 100%;
+  --tk-sc-air-tile: 34px;
+  --tk-sc-air-boost: 1.5;
+  border-radius: inherit;
+}
+.tk-hsr-art .tk-scene-flora {
+  display: none;
+}
 .tk-hsr-kicker {
   font-size: 11px;
   line-height: 14px;
   font-weight: 500;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
+  white-space: nowrap;
   color: color-mix(in srgb, var(--tk-on-deep) 80%, transparent);
 }
 .tk-hsr-number {
@@ -810,14 +900,6 @@
   font-weight: 500;
   color: color-mix(in srgb, var(--tk-on-deep) 78%, transparent);
 }
-.tk-hsr-mood {
-  font-size: 11px;
-  line-height: 14px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: color-mix(in srgb, var(--tk-glow) 68%, var(--tk-on-deep));
-}
-
 /* 站名：大号中文 + 小号三字码 + 时刻 */
 .tk-hsr-route {
   display: flex;
@@ -923,8 +1005,23 @@
 /* ── 7. 火车票（纸质 / 暖米色 / 红棕点缀） ─────────────────────────────── */
 .tk-train {
   display: block;
+  /* 顶部 40px 留给「插画天光带」：像纸质票上沿贴的一张风景小窗，
+     正文从 40px 以下开始，纸面依旧干净。 */
+  padding-top: 40px;
   border-radius: 0.875rem;
   color: var(--tk-ink);
+  --tk-train-band: 40px;
+
+  /* 撕口：底边三道不规则的半圆撕痕（像从票本上撕下来的那一下）。
+     mask-composite: intersect 取交集，不支持时退化为整条直边，不破版。
+     同登机牌：掩膜挂在子层，卡面本体保持无 mask 才能 preserve-3d。 */
+  --tk-card-mask:
+    radial-gradient(circle at 15% 100%, transparent 4.2px, #000 4.8px),
+    radial-gradient(circle at 43% 100%, transparent 5.6px, #000 6.2px),
+    radial-gradient(circle at 78% 100%, transparent 4.6px, #000 5.2px),
+    linear-gradient(#000, #000);
+}
+.tk-train > .tk-skin {
   background-color: var(--tk-card);
   background-image:
     repeating-linear-gradient(
@@ -939,31 +1036,13 @@
     ),
     linear-gradient(162deg, var(--tk-card) 0%, var(--tk-card-2) 100%);
   border: 1px solid var(--tk-line-strong);
-
-  /* 撕口：底边三道不规则的半圆撕痕（像从票本上撕下来的那一下）。
-     mask-composite: intersect 取交集，不支持时退化为整条直边，不破版。 */
-  -webkit-mask-image:
-    radial-gradient(circle at 15% 100%, transparent 4.2px, #000 4.8px),
-    radial-gradient(circle at 43% 100%, transparent 5.6px, #000 6.2px),
-    radial-gradient(circle at 78% 100%, transparent 4.6px, #000 5.2px),
-    linear-gradient(#000, #000);
-  mask-image:
-    radial-gradient(circle at 15% 100%, transparent 4.2px, #000 4.8px),
-    radial-gradient(circle at 43% 100%, transparent 5.6px, #000 6.2px),
-    radial-gradient(circle at 78% 100%, transparent 4.6px, #000 5.2px),
-    linear-gradient(#000, #000);
-  mask-composite: intersect;
 }
-/* 票头的那道季节天光细条：整张票唯一的"大面积色"，克制 */
-.tk-train::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 2;
-  height: 3px;
-  background-image: linear-gradient(90deg, var(--tk-sky-1) 0%, var(--tk-sky-2) 62%, var(--tk-accent) 100%);
+.tk-train > .tk-skin,
+.tk-train > .tk-scene {
+  -webkit-mask-image: var(--tk-card-mask);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--tk-card-mask);
+  mask-composite: intersect;
 }
 .tk-train .tk-atmo::before {
   background-image:
@@ -1132,14 +1211,16 @@
   display: block;
   aspect-ratio: 4 / 3;
   border-radius: 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--tk-on-deep) 10%, transparent);
+  color: var(--tk-ink);
+}
+.tk-mini > .tk-skin {
   background-image: linear-gradient(
     168deg,
     var(--tk-sky-1) 0%,
     var(--tk-sky-2) 62%,
     color-mix(in srgb, var(--tk-sky-2) 62%, var(--tk-accent) 38%) 100%
   );
-  color: var(--tk-ink);
+  border: 1px solid color-mix(in srgb, var(--tk-on-deep) 10%, transparent);
 }
 .tk-mini .tk-atmo::before {
   background-image:
@@ -1161,7 +1242,7 @@
 .tk-mini-veil {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
   background-image: linear-gradient(
     to top,
@@ -1184,14 +1265,6 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   backdrop-filter: blur(6px);
-}
-.tk-mini-mood {
-  font-size: 11px;
-  line-height: 14px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: color-mix(in srgb, var(--tk-ink) 74%, transparent);
-  text-shadow: 0 1px 2px color-mix(in srgb, var(--tk-card) 60%, transparent);
 }
 .tk-mini-codes {
   display: flex;
@@ -1274,7 +1347,7 @@ html.dark .tk-train-stamp {
   border-color: color-mix(in srgb, #d0895f 58%, transparent);
   color: color-mix(in srgb, #d0895f 72%, var(--tk-accent));
 }
-html.dark .tk-mini {
+html.dark .tk-mini > .tk-skin {
   background-image: linear-gradient(
     168deg,
     color-mix(in srgb, var(--tk-sky-1) 58%, var(--tk-deep)) 0%,
@@ -1298,5 +1371,1017 @@ html.dark .tk-mini-badge {
 @media (prefers-reduced-transparency: reduce) {
   .tk-mini-badge {
     backdrop-filter: none;
+  }
+}
+
+/* ==========================================================================
+   11. 插画天光层（TicketScene）—— 16 套 = 4 季 × 4 时段
+   --------------------------------------------------------------------------
+   用户要求：票面别再写「春 · 清晨」，改用背景把"季节 + 天光"画出来。
+   于是每张票背上一层**分层插画**：
+
+     base   天空渐变 / 日轮·月亮 / 云带 / 远山剪影 / 花枝剪影 / 地平线辉光
+     scrim  可读性压暗（只有登机牌需要；浅色票靠纸底 + 蒙版淡出）
+     air    飘落物（花瓣/光斑/落叶/雪粒）+ 露水 + 星点 + 灯火 + 飞鸟
+
+   季节靠**形状**表达（花枝/浓叶/银杏/枯枝 + 对应飘落物），
+   时段靠**光照结构**表达（光源位置/高度、云带厚薄、飞鸟/星月/露水）。
+   动画只做 CSS transform/opacity，8~44s 的慢循环，且只在
+   prefers-reduced-motion: no-preference 下声明（减动效用户 = 静止插画）。
+
+   容器查询单位（cqh）让同一套参数在大票 / 小票 / 天光带上都成比例。
+   ========================================================================== */
+
+/* ── 11.0 十六套插画配色（季节 = 地形与植被色，时段 = 天空与光色） ─────── */
+/* 春 · 清晨：桃花色的低空 + 嫩绿丘陵 + 湿雾 */
+.tk-spring-morning {
+  --tk-sc-top: #f9dcd6;
+  --tk-sc-low: #fdeacb;
+  --tk-sc-far: #cddcc1;
+  --tk-sc-near: #9fbd93;
+  --tk-sc-haze: #ffeef0;
+  --tk-sc-air-op: 0.58;
+}
+/* 春 · 正午：清亮天蓝 + 新绿 */
+.tk-spring-noon {
+  --tk-sc-top: #bfe6ef;
+  --tk-sc-low: #eff4d9;
+  --tk-sc-far: #bcd9a4;
+  --tk-sc-near: #86b374;
+  --tk-sc-haze: #f4fbe8;
+  --tk-sc-air-op: 0.38;
+}
+/* 春 · 黄昏：紫调高空压着橙金地平线 */
+.tk-spring-dusk {
+  --tk-sc-top: #6d5384;
+  --tk-sc-low: #ffb27a;
+  --tk-sc-far: #b7788d;
+  --tk-sc-near: #63394c;
+  --tk-sc-haze: #ffc79b;
+  --tk-sc-air-op: 0.55;
+}
+/* 春 · 夜晚：深紫夜空 + 月牙 */
+.tk-spring-evening {
+  --tk-sc-top: #241a35;
+  --tk-sc-low: #3a2a51;
+  --tk-sc-far: #4b3865;
+  --tk-sc-near: #171022;
+  --tk-sc-haze: #6d5890;
+  --tk-sc-air-op: 0.42;
+  --tk-knock-blend: difference;
+}
+/* 夏 · 清晨：潮润的青绿 + 淡金地平线 */
+.tk-summer-morning {
+  --tk-sc-top: #cbe9e0;
+  --tk-sc-low: #f5f2cd;
+  --tk-sc-far: #7cad8c;
+  --tk-sc-near: #3f7a63;
+  --tk-sc-haze: #e9f7ec;
+  --tk-sc-air-op: 0.5;
+}
+/* 夏 · 正午：最饱和的蓝 + 最烈的光 */
+.tk-summer-noon {
+  --tk-sc-top: #8ec9ec;
+  --tk-sc-low: #e7f6d4;
+  --tk-sc-far: #4f9b6a;
+  --tk-sc-near: #22583a;
+  --tk-sc-haze: #fff8d2;
+  --tk-sc-air-op: 0.55;
+}
+/* 夏 · 黄昏：对流雨的紫灰压着橙 */
+.tk-summer-dusk {
+  --tk-sc-top: #7a6394;
+  --tk-sc-low: #ffab72;
+  --tk-sc-far: #467a6c;
+  --tk-sc-near: #1d4742;
+  --tk-sc-haze: #ffa07d;
+  --tk-sc-air-op: 0.52;
+}
+/* 夏 · 夜晚：墨绿夜空 + 萤火 */
+.tk-summer-evening {
+  --tk-sc-top: #0e2732;
+  --tk-sc-low: #1d4745;
+  --tk-sc-far: #245a54;
+  --tk-sc-near: #081d21;
+  --tk-sc-haze: #4f9e93;
+  --tk-sc-air-op: 0.5;
+  --tk-knock-blend: difference;
+}
+/* 秋 · 清晨：暖米色薄雾 + 金褐丘陵 */
+.tk-autumn-morning {
+  --tk-sc-top: #f6e2c6;
+  --tk-sc-low: #fbeed0;
+  --tk-sc-far: #c7a06a;
+  --tk-sc-near: #8a6a44;
+  --tk-sc-haze: #fff0d8;
+  --tk-sc-air-op: 0.6;
+}
+/* 秋 · 正午：干爽的灰绿天 + 金黄地表 */
+.tk-autumn-noon {
+  --tk-sc-top: #cfe0da;
+  --tk-sc-low: #f7ecd2;
+  --tk-sc-far: #c09a5c;
+  --tk-sc-near: #7d613c;
+  --tk-sc-haze: #fff5dc;
+  --tk-sc-air-op: 0.46;
+}
+/* 秋 · 黄昏：橙红晚照 + 长影 */
+.tk-autumn-dusk {
+  --tk-sc-top: #a96b6e;
+  --tk-sc-low: #ffb168;
+  --tk-sc-far: #a25c3c;
+  --tk-sc-near: #5c3524;
+  --tk-sc-haze: #ffc08a;
+  --tk-sc-air-op: 0.6;
+}
+/* 秋 · 夜晚：炭褐天 + 篝火余温 */
+.tk-autumn-evening {
+  --tk-sc-top: #1c1611;
+  --tk-sc-low: #3d2a19;
+  --tk-sc-far: #4a3521;
+  --tk-sc-near: #16100a;
+  --tk-sc-haze: #8a5f33;
+  --tk-sc-air-op: 0.44;
+  --tk-knock-blend: difference;
+}
+/* 冬 · 清晨：冷白薄雪 + 淡日 */
+.tk-winter-morning {
+  --tk-sc-top: #dfe9f4;
+  --tk-sc-low: #f7efe2;
+  --tk-sc-far: #b9c8d8;
+  --tk-sc-near: #8fa3b6;
+  --tk-sc-haze: #f4f9ff;
+  --tk-sc-air-op: 0.62;
+}
+/* 冬 · 正午：雪后晴空 + 最冷的蓝 */
+.tk-winter-noon {
+  --tk-sc-top: #a8cfe8;
+  --tk-sc-low: #eff6fa;
+  --tk-sc-far: #a9c2d6;
+  --tk-sc-near: #7d98ae;
+  --tk-sc-haze: #ffffff;
+  --tk-sc-air-op: 0.52;
+}
+/* 冬 · 黄昏：冷夕阳（蓝灰 + 淡玫瑰） */
+.tk-winter-dusk {
+  --tk-sc-top: #8e9ec0;
+  --tk-sc-low: #e8b6a8;
+  --tk-sc-far: #9aa8bd;
+  --tk-sc-near: #5f6b80;
+  --tk-sc-haze: #dfc2c6;
+  --tk-sc-air-op: 0.56;
+}
+/* 冬 · 夜晚：雪夜星空 + 灯火 */
+.tk-winter-evening {
+  --tk-sc-top: #0e1726;
+  --tk-sc-low: #22344f;
+  --tk-sc-far: #2c4058;
+  --tk-sc-near: #0a1018;
+  --tk-sc-haze: #6e88ad;
+  --tk-sc-air-op: 0.56;
+  --tk-knock-blend: difference;
+}
+
+/* ── 11.1 场景框架：一块可被容器查询的插画画布 ─────────────────────────── */
+.tk-scene {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--tk-scene-h, 100%);
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  transform: translateZ(0);
+  container-type: size;
+  /* 派生插画色：光体取票面光晕，花枝取"地面色 + 墨色"，飘落物取季节纹理色 */
+  --tk-sc-orb: color-mix(in srgb, var(--tk-glow) 74%, var(--tk-accent));
+  --tk-sc-flora: color-mix(in srgb, var(--tk-sc-near) 66%, var(--tk-ink));
+  --tk-sc-air: var(--tk-tex-color);
+  --tk-sc-orb-w: 22;
+  --tk-sc-air-tile: 86px;
+  --tk-sc-air-boost: 1;
+}
+
+.tk-scene-base,
+.tk-scene-air {
+  position: absolute;
+  inset: 0;
+}
+.tk-scene-base {
+  z-index: 0;
+}
+.tk-scene-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.tk-scene-air {
+  z-index: 2;
+}
+
+/* 天空：从"高空天光"过渡到"地平线光"，四季四段各自不同 */
+.tk-scene-sky {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    180deg,
+    var(--tk-sc-top) 0%,
+    color-mix(in srgb, var(--tk-sc-top) 58%, var(--tk-sc-low)) 44%,
+    var(--tk-sc-low) 74%,
+    color-mix(in srgb, var(--tk-sc-low) 62%, var(--tk-sc-near)) 100%
+  );
+}
+
+/* 日轮 / 月牙：位置与体积由时段决定 */
+.tk-scene-orb {
+  position: absolute;
+  left: var(--tk-sc-orb-x, 18%);
+  top: var(--tk-sc-orb-y, 34%);
+  width: calc(var(--tk-sc-orb-w) * 1cqh);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background-color: var(--tk-sc-orb);
+  box-shadow:
+    0 0 calc(var(--tk-sc-orb-w) * 2.2cqh) color-mix(in srgb, var(--tk-sc-orb) 50%, transparent),
+    0 0 calc(var(--tk-sc-orb-w) * 5cqh) color-mix(in srgb, var(--tk-sc-orb) 24%, transparent);
+  transform: translate(-50%, -50%);
+  opacity: var(--tk-sc-orb-op, 1);
+}
+.tk-scene-orb::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 520%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--tk-sc-orb) 42%, transparent) 0%,
+    color-mix(in srgb, var(--tk-sc-orb) 12%, transparent) 42%,
+    transparent 70%
+  );
+}
+/* 夜晚：用径向蒙版切出月牙 */
+.tk-scene[data-part='evening'] .tk-scene-orb {
+  -webkit-mask-image: radial-gradient(circle at 66% 34%, transparent 0 50%, #000 52%);
+  mask-image: radial-gradient(circle at 66% 34%, transparent 0 50%, #000 52%);
+}
+/* 时段各自的光源：位置 + 体积（cqh = 画布高度百分比，大票小票都成比例） */
+.tk-scene[data-part='morning'] {
+  --tk-sc-orb-x: 16%;
+  --tk-sc-orb-y: 38%;
+  --tk-sc-orb-w: 20;
+}
+.tk-scene[data-part='noon'] {
+  --tk-sc-orb-x: 80%;
+  --tk-sc-orb-y: 13%;
+  --tk-sc-orb-w: 16;
+  --tk-sc-orb-op: 1;
+}
+.tk-scene[data-part='dusk'] {
+  --tk-sc-orb-x: 84%;
+  --tk-sc-orb-y: 42%;
+  --tk-sc-orb-w: 26;
+}
+.tk-scene[data-part='evening'] {
+  --tk-sc-orb-x: 29%;
+  --tk-sc-orb-y: 22%;
+  --tk-sc-orb-w: 17;
+  --tk-sc-orb-op: 0.94;
+}
+
+/* 正午的放射光束：只在 noon 出现，是"顶光"的结构特征 */
+.tk-scene-rays {
+  position: absolute;
+  inset: -30%;
+  opacity: 0;
+  background-image: repeating-conic-gradient(
+    from 0deg at var(--tk-sc-orb-x, 80%) var(--tk-sc-orb-y, 13%),
+    color-mix(in srgb, var(--tk-sc-orb) 30%, transparent) 0deg 1.6deg,
+    transparent 1.6deg 10deg
+  );
+  -webkit-mask-image: radial-gradient(
+    circle at var(--tk-sc-orb-x, 80%) var(--tk-sc-orb-y, 13%),
+    #000 0 2%,
+    transparent 40%
+  );
+  mask-image: radial-gradient(
+    circle at var(--tk-sc-orb-x, 80%) var(--tk-sc-orb-y, 13%),
+    #000 0 2%,
+    transparent 40%
+  );
+}
+.tk-scene[data-part='noon'] .tk-scene-rays {
+  opacity: 0.62;
+}
+/* 正午的明暗：近处地面压暗、天空提饱和 —— 靠"明暗"而不是"更亮"读成正午 */
+.tk-scene[data-part='noon'] .tk-hills-near {
+  filter: brightness(0.86) saturate(1.06);
+}
+.tk-scene[data-part='noon'] .tk-scene-sky {
+  filter: saturate(1.08);
+}
+
+/* 云带 / 雾带：清晨低而厚、正午高而薄、黄昏长条、夜晚几乎隐形 */
+.tk-scene-cloud {
+  position: absolute;
+  left: -14%;
+  width: 128%;
+  height: 24%;
+  border-radius: 50%;
+  background-image: radial-gradient(
+    52% 100% at 50% 60%,
+    color-mix(in srgb, var(--tk-sc-haze) 66%, transparent) 0%,
+    transparent 72%
+  );
+  filter: blur(5px);
+}
+.tk-scene-cloud-1 {
+  top: var(--tk-sc-cloud-1, 56%);
+}
+.tk-scene-cloud-2 {
+  top: var(--tk-sc-cloud-2, 70%);
+  left: 6%;
+  width: 106%;
+  opacity: 0.78;
+}
+.tk-scene[data-part='morning'] {
+  --tk-sc-cloud-1: 46%;
+  --tk-sc-cloud-2: 60%;
+}
+.tk-scene[data-part='noon'] {
+  --tk-sc-cloud-1: 18%;
+  --tk-sc-cloud-2: 32%;
+}
+.tk-scene[data-part='dusk'] {
+  --tk-sc-cloud-1: 34%;
+  --tk-sc-cloud-2: 50%;
+}
+.tk-scene[data-part='evening'] {
+  --tk-sc-cloud-1: 48%;
+  --tk-sc-cloud-2: 64%;
+}
+
+/* 地平线辉光：光源贴地那一段的"亮带"，是清晨/黄昏最像画的地方 */
+.tk-scene-horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 52%;
+  opacity: 0.55;
+  background-image: radial-gradient(
+    82% 100% at 50% 100%,
+    color-mix(in srgb, var(--tk-sc-low) 72%, transparent) 0%,
+    transparent 74%
+  );
+}
+.tk-scene[data-part='morning'] .tk-scene-horizon {
+  opacity: 0.7;
+}
+.tk-scene[data-part='dusk'] .tk-scene-horizon {
+  opacity: 0.85;
+}
+.tk-scene[data-part='evening'] .tk-scene-horizon {
+  opacity: 0.3;
+}
+
+/* 远山 / 地面：四季轮廓不同（丘陵 / 树冠层 / 层叠山脊 / 雪山） */
+.tk-scene-hills {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  width: 100%;
+  height: 46%;
+}
+.tk-hills-far {
+  fill: color-mix(in srgb, var(--tk-sc-far) 84%, var(--tk-sc-haze));
+}
+.tk-hills-near {
+  fill: var(--tk-sc-near);
+}
+
+/* 花枝剪影：季节的植物语言，从左上角伸进画面 */
+.tk-scene-flora {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 58%;
+  transform-origin: 0 0;
+}
+.tk-flora-line {
+  stroke: var(--tk-sc-flora);
+}
+.tk-flora-blossom {
+  fill: color-mix(in srgb, var(--tk-sc-air) 84%, var(--tk-sc-low));
+}
+.tk-flora-canopy {
+  fill: color-mix(in srgb, var(--tk-sc-near) 76%, var(--tk-sc-far));
+}
+.tk-flora-leaf {
+  fill: color-mix(in srgb, var(--tk-sc-near) 88%, var(--tk-sc-far));
+}
+.tk-flora-ginkgo {
+  fill: color-mix(in srgb, var(--tk-sc-air) 86%, var(--tk-sc-low));
+}
+.tk-flora-snow {
+  fill: color-mix(in srgb, white 84%, var(--tk-sc-far));
+}
+
+/* 黄昏的飞鸟（三只，慢慢横穿画面） */
+.tk-scene-birds {
+  position: absolute;
+  right: 4%;
+  top: 14%;
+  width: 40%;
+  height: 18%;
+  opacity: 0.82;
+}
+.tk-scene-bird {
+  fill: none;
+  stroke: color-mix(in srgb, var(--tk-sc-near) 62%, var(--tk-sc-haze));
+  stroke-width: 1.1;
+  stroke-linecap: round;
+}
+
+/* 夏 · 正午：地面热浪（只给"烈日"这一套） */
+.tk-scene-heat {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 42%;
+  height: 36%;
+  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--tk-sc-haze) 42%, transparent) 0 2px,
+    transparent 2px 10px
+  );
+  filter: blur(3px);
+}
+
+/* 飘落物：花瓣 / 光斑 / 落叶 / 雪粒，两层（远小近大） */
+.tk-scene-fall {
+  position: absolute;
+  inset: -30% -14%;
+  opacity: calc(var(--tk-sc-air-op, 0.5) * var(--tk-sc-air-boost, 1));
+}
+.tk-scene-fall::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--tk-sc-air-image);
+  background-size: var(--tk-sc-air-tile) var(--tk-sc-air-tile);
+  background-repeat: repeat;
+}
+.tk-scene-fall-2 {
+  opacity: calc(var(--tk-sc-air-op, 0.5) * var(--tk-sc-air-boost, 1) * 0.6);
+}
+.tk-scene-fall-2::before {
+  background-size: calc(var(--tk-sc-air-tile) * 1.7) calc(var(--tk-sc-air-tile) * 1.7);
+}
+
+/* 清晨的露水高光：花枝上/叶尖的亮点（用户原话点名"花瓣上有露水"） */
+.tk-scene-dew {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 56%;
+  opacity: 0.75;
+  mix-blend-mode: screen;
+  background-image:
+    radial-gradient(2.2px 3.2px at 23% 26%, color-mix(in srgb, white 94%, var(--tk-sc-air)) 58%, transparent 74%),
+    radial-gradient(1.8px 2.6px at 37% 14%, color-mix(in srgb, white 90%, var(--tk-sc-air)) 54%, transparent 72%),
+    radial-gradient(2.4px 3.4px at 52% 30%, color-mix(in srgb, white 92%, var(--tk-sc-air)) 52%, transparent 72%),
+    radial-gradient(1.6px 2.2px at 66% 12%, color-mix(in srgb, white 86%, var(--tk-sc-air)) 48%, transparent 68%),
+    radial-gradient(2px 2.8px at 78% 34%, color-mix(in srgb, white 88%, var(--tk-sc-air)) 46%, transparent 66%);
+}
+
+/* 夜晚的星点 + 灯火 */
+.tk-scene-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.85;
+  background-image:
+    radial-gradient(1.3px 1.3px at 14% 14%, color-mix(in srgb, white 92%, var(--tk-sc-low)) 46%, transparent 56%),
+    radial-gradient(1px 1px at 28% 26%, color-mix(in srgb, white 84%, var(--tk-sc-low)) 44%, transparent 54%),
+    radial-gradient(1.5px 1.5px at 44% 9%, color-mix(in srgb, white 90%, var(--tk-sc-low)) 42%, transparent 54%),
+    radial-gradient(1px 1px at 58% 22%, color-mix(in srgb, white 78%, var(--tk-sc-low)) 40%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 70% 8%, color-mix(in srgb, white 86%, var(--tk-sc-low)) 40%, transparent 52%),
+    radial-gradient(1px 1px at 82% 20%, color-mix(in srgb, white 74%, var(--tk-sc-low)) 38%, transparent 50%),
+    radial-gradient(1.4px 1.4px at 92% 12%, color-mix(in srgb, white 80%, var(--tk-sc-low)) 36%, transparent 50%);
+}
+.tk-scene-lights {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  opacity: 0.9;
+  mix-blend-mode: screen;
+  background-image:
+    radial-gradient(circle 2.4px at 12% 76%, color-mix(in srgb, var(--tk-glow) 94%, transparent) 0%, transparent 70%),
+    radial-gradient(circle 1.8px at 26% 84%, color-mix(in srgb, var(--tk-glow) 84%, transparent) 0%, transparent 70%),
+    radial-gradient(circle 2.8px at 42% 72%, color-mix(in srgb, var(--tk-glow) 90%, transparent) 0%, transparent 70%),
+    radial-gradient(circle 1.6px at 56% 86%, color-mix(in srgb, var(--tk-glow) 78%, transparent) 0%, transparent 70%),
+    radial-gradient(circle 2.2px at 70% 78%, color-mix(in srgb, var(--tk-glow) 88%, transparent) 0%, transparent 70%),
+    radial-gradient(circle 1.7px at 84% 88%, color-mix(in srgb, var(--tk-glow) 76%, transparent) 0%, transparent 70%);
+}
+/* 正午的空气抖动（只有 noon 有，薄薄一层） */
+.tk-scene-shimmer {
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: 52%;
+  height: 22%;
+  opacity: 0.32;
+  mix-blend-mode: soft-light;
+  background-image: repeating-linear-gradient(
+    178deg,
+    color-mix(in srgb, var(--tk-sc-haze) 58%, transparent) 0 1px,
+    transparent 1px 7px
+  );
+}
+
+/* 飘落物的**形状**：季节语言的核心差别（花瓣 / 光斑 / 落叶 / 雪粒） */
+.tk-scene[data-scene='spring'] {
+  --tk-sc-air: var(--tk-tex-color);
+  --tk-sc-air-image:
+    radial-gradient(ellipse 3.4px 1.9px at 18% 22%, color-mix(in srgb, var(--tk-sc-air) 80%, transparent) 68%, transparent 76%),
+    radial-gradient(ellipse 2.6px 1.5px at 62% 12%, color-mix(in srgb, var(--tk-sc-air) 64%, transparent) 60%, transparent 72%),
+    radial-gradient(ellipse 4px 2.1px at 82% 44%, color-mix(in srgb, var(--tk-sc-air) 58%, transparent) 54%, transparent 70%),
+    radial-gradient(ellipse 2.2px 1.3px at 34% 58%, color-mix(in srgb, var(--tk-sc-air) 50%, transparent) 50%, transparent 64%),
+    radial-gradient(ellipse 3px 1.7px at 74% 76%, color-mix(in srgb, var(--tk-sc-air) 46%, transparent) 46%, transparent 60%),
+    radial-gradient(ellipse 2px 1.2px at 12% 84%, color-mix(in srgb, var(--tk-sc-air) 40%, transparent) 42%, transparent 58%);
+}
+.tk-scene[data-scene='summer'] {
+  --tk-sc-air: color-mix(in srgb, var(--tk-sc-orb) 72%, var(--tk-tex-color));
+  --tk-sc-air-image:
+    radial-gradient(circle 5px at 22% 26%, color-mix(in srgb, var(--tk-sc-air) 34%, transparent) 0%, transparent 68%),
+    radial-gradient(circle 3.4px at 68% 18%, color-mix(in srgb, var(--tk-sc-air) 28%, transparent) 0%, transparent 64%),
+    radial-gradient(circle 2.6px at 86% 56%, color-mix(in srgb, var(--tk-sc-air) 44%, transparent) 0%, transparent 66%),
+    radial-gradient(circle 1.8px at 40% 70%, color-mix(in srgb, var(--tk-sc-air) 52%, transparent) 0%, transparent 66%),
+    radial-gradient(circle 2.2px at 14% 52%, color-mix(in srgb, var(--tk-sc-air) 38%, transparent) 0%, transparent 64%),
+    radial-gradient(circle 1.5px at 58% 84%, color-mix(in srgb, var(--tk-sc-air) 34%, transparent) 0%, transparent 60%);
+}
+.tk-scene[data-scene='autumn'] {
+  --tk-sc-air: var(--tk-tex-color);
+  --tk-sc-air-image:
+    radial-gradient(ellipse 5.2px 2.4px at 16% 20%, color-mix(in srgb, var(--tk-sc-air) 78%, transparent) 62%, transparent 74%),
+    radial-gradient(ellipse 3.6px 1.8px at 58% 12%, color-mix(in srgb, var(--tk-sc-air) 64%, transparent) 56%, transparent 70%),
+    radial-gradient(ellipse 6px 2.8px at 80% 46%, color-mix(in srgb, var(--tk-sc-air) 58%, transparent) 52%, transparent 68%),
+    radial-gradient(ellipse 3px 1.6px at 34% 62%, color-mix(in srgb, var(--tk-sc-air) 50%, transparent) 48%, transparent 64%),
+    radial-gradient(ellipse 4.4px 2px at 68% 80%, color-mix(in srgb, var(--tk-sc-air) 44%, transparent) 44%, transparent 58%);
+}
+.tk-scene[data-scene='winter'] {
+  --tk-sc-air: color-mix(in srgb, white 62%, var(--tk-tex-color));
+  --tk-sc-air-image:
+    radial-gradient(circle 2.4px at 12% 16%, color-mix(in srgb, var(--tk-sc-air) 86%, transparent) 0%, transparent 70%),
+    radial-gradient(circle 1.6px at 38% 30%, color-mix(in srgb, var(--tk-sc-air) 72%, transparent) 0%, transparent 66%),
+    radial-gradient(circle 2px at 66% 12%, color-mix(in srgb, var(--tk-sc-air) 68%, transparent) 0%, transparent 66%),
+    radial-gradient(circle 1.4px at 84% 40%, color-mix(in srgb, var(--tk-sc-air) 60%, transparent) 0%, transparent 62%),
+    radial-gradient(circle 2.2px at 26% 62%, color-mix(in srgb, var(--tk-sc-air) 54%, transparent) 0%, transparent 62%),
+    radial-gradient(circle 1.5px at 54% 78%, color-mix(in srgb, var(--tk-sc-air) 46%, transparent) 0%, transparent 58%),
+    radial-gradient(circle 1.8px at 78% 68%, color-mix(in srgb, var(--tk-sc-air) 42%, transparent) 0%, transparent 56%);
+}
+
+/* ── 11.2 每套票面形态的插画强度（同一套画，四种"装裱"） ───────────────── */
+/* 登机牌：整卡铺满（深色卡面 + 压暗 scrim，白字永远落在深色上） */
+.tk-flight .tk-scene {
+  --tk-scene-h: 100%;
+}
+/* 登机牌顶栏同时有票号（左）和日期（右），中间是空的：正午的日轮放这里 */
+.tk-flight .tk-scene[data-part='noon'] {
+  --tk-sc-orb-x: 52%;
+  --tk-sc-orb-y: 17%;
+  --tk-sc-orb-w: 15;
+}
+.tk-flight .tk-scene-scrim {
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tk-deep) 54%, transparent) 0%,
+      color-mix(in srgb, var(--tk-deep) 44%, transparent) 17%,
+      color-mix(in srgb, var(--tk-deep) 16%, transparent) 29%,
+      color-mix(in srgb, var(--tk-deep) 42%, transparent) 52%,
+      color-mix(in srgb, var(--tk-deep) 74%, transparent) 100%
+    ),
+    linear-gradient(
+      96deg,
+      color-mix(in srgb, var(--tk-deep) 62%, transparent) 0%,
+      color-mix(in srgb, var(--tk-deep) 34%, transparent) 46%,
+      color-mix(in srgb, var(--tk-deep) 10%, transparent) 100%
+    );
+}
+/* 插画仍在文字底下时，给白字一层极淡的墨色外发光保住对比度 */
+.tk-flight .tk-flight-main {
+  text-shadow: 0 1px 10px color-mix(in srgb, var(--tk-deep) 72%, transparent);
+}
+
+/* 高铁：票头一条"天光玻璃带"（插画从青绿里透出来，纸面正文保持干净） */
+/* 高铁的插画是票头右侧的小窗（.tk-hsr-art），这里只调窗口内的构图：
+   小窗很窄，日轮/月亮往中间收一点，避免被圆角切掉。 */
+.tk-hsr .tk-scene[data-part='morning'] {
+  --tk-sc-orb-x: 34%;
+  --tk-sc-orb-y: 40%;
+  --tk-sc-orb-w: 30;
+}
+.tk-hsr .tk-scene[data-part='noon'] {
+  --tk-sc-orb-x: 62%;
+  --tk-sc-orb-y: 24%;
+  --tk-sc-orb-w: 26;
+}
+.tk-hsr .tk-scene[data-part='dusk'] {
+  --tk-sc-orb-x: 64%;
+  --tk-sc-orb-y: 46%;
+  --tk-sc-orb-w: 34;
+}
+.tk-hsr .tk-scene[data-part='evening'] {
+  --tk-sc-orb-x: 40%;
+  --tk-sc-orb-y: 30%;
+  --tk-sc-orb-w: 26;
+}
+
+/* 纸质火车票：顶部 40px 的天光带（像票本上沿贴的一格风景） */
+.tk-train .tk-scene {
+  --tk-scene-h: var(--tk-train-band);
+  --tk-sc-air-tile: 40px;
+  --tk-sc-air-boost: 1.5;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.tk-train .tk-scene-flora {
+  display: none;
+}
+.tk-train .tk-scene[data-part='noon'] {
+  --tk-sc-orb-w: 26;
+}
+.tk-train .tk-scene::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background-color: color-mix(in srgb, var(--tk-ink) 14%, transparent);
+}
+
+/* 归档小票卡：整卡缩略插画（文字压在底部纸色 veil 上） */
+.tk-mini .tk-scene {
+  --tk-scene-h: 100%;
+  --tk-sc-air-tile: 58px;
+}
+/* 浅色票的纸面不再需要大面积氛围光：插画已经负责"气氛" */
+.tk-hsr .tk-atmo,
+.tk-train .tk-atmo {
+  opacity: 0.14;
+}
+.tk-hsr .tk-tex::before,
+.tk-train .tk-tex::before {
+  opacity: calc(var(--tk-tex-op, 0.5) * 0.22);
+}
+
+/* ── 11.3 慢动画（只在允许动效时声明：减动效 = 完全静止的插画） ─────────── */
+@keyframes tk-scene-fall-a {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, var(--tk-sc-air-tile), 0);
+  }
+}
+@keyframes tk-scene-fall-b {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, calc(var(--tk-sc-air-tile) * 1.7), 0);
+  }
+}
+@keyframes tk-scene-sway {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(0.7deg);
+  }
+}
+@keyframes tk-scene-drift {
+  from {
+    transform: translate3d(-3%, 0, 0);
+  }
+  to {
+    transform: translate3d(3%, 0, 0);
+  }
+}
+@keyframes tk-scene-glow {
+  from {
+    opacity: 0.72;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    scale: 1.06;
+  }
+}
+@keyframes tk-scene-twinkle {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 0.95;
+  }
+}
+@keyframes tk-scene-lanterns {
+  from {
+    opacity: 0.55;
+    transform: translate3d(0, 1.5px, 0);
+  }
+  to {
+    opacity: 0.95;
+    transform: translate3d(0, -1.5px, 0);
+  }
+}
+@keyframes tk-scene-birds {
+  from {
+    transform: translate3d(8%, 0, 0);
+  }
+  to {
+    transform: translate3d(-16%, -4%, 0);
+  }
+}
+@keyframes tk-scene-heat {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.34;
+  }
+  to {
+    transform: translate3d(0, -6%, 0);
+    opacity: 0.62;
+  }
+}
+@keyframes tk-scene-orb {
+  from {
+    filter: brightness(0.96);
+  }
+  to {
+    filter: brightness(1.08);
+  }
+}
+@keyframes tk-scene-rays {
+  from {
+    transform: rotate(0deg);
+    opacity: 0.3;
+  }
+  to {
+    transform: rotate(8deg);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 飘落物：13s / 19s 两个周期，远小近大，形成缓慢的纵深 */
+  .tk-scene-fall-1::before {
+    animation: tk-scene-fall-a 13s linear infinite;
+  }
+  .tk-scene-fall-2::before {
+    animation: tk-scene-fall-b 19s linear infinite;
+  }
+  .tk-scene-fall {
+    animation: tk-scene-drift 36s ease-in-out infinite alternate;
+  }
+  /* 云带：20~40s 的横向视差 */
+  .tk-scene-cloud-1 {
+    animation: tk-scene-drift 34s ease-in-out infinite alternate;
+  }
+  .tk-scene-cloud-2 {
+    animation: tk-scene-drift 42s ease-in-out infinite alternate-reverse;
+  }
+  /* 花枝：极轻微的摇曳（0.7°，慢到几乎察觉不到但让画面"活"） */
+  .tk-scene-flora {
+    animation: tk-scene-sway 26s ease-in-out infinite alternate;
+  }
+  /* 光体呼吸 */
+  .tk-scene-orb::after {
+    animation: tk-scene-glow 24s ease-in-out infinite alternate;
+  }
+  .tk-scene[data-part='noon'] .tk-scene-rays {
+    animation: tk-scene-rays 30s ease-in-out infinite alternate;
+  }
+  .tk-scene-orb {
+    animation: tk-scene-orb 22s ease-in-out infinite alternate;
+  }
+  .tk-scene-dew {
+    animation: tk-scene-twinkle 9s ease-in-out infinite alternate;
+  }
+  .tk-scene-stars {
+    animation: tk-scene-twinkle 7s ease-in-out infinite alternate;
+  }
+  .tk-scene-lights {
+    animation: tk-scene-lanterns 11s ease-in-out infinite alternate;
+  }
+  .tk-scene-birds {
+    animation: tk-scene-birds 40s linear infinite alternate;
+  }
+  .tk-scene-heat {
+    animation: tk-scene-heat 9s ease-in-out infinite alternate;
+  }
+  .tk-scene-shimmer {
+    animation: tk-scene-heat 12s ease-in-out infinite alternate;
+  }
+}
+
+/* ==========================================================================
+   12. 票据 3D 悬浮（TicketTilt）：贴纸手感 + 高光跟随 + 分层视差
+   --------------------------------------------------------------------------
+   DOM：.tk-tilt（perspective）> .tk-tilt-inner（preserve-3d + rotate）
+        > 阴影层 / 票面 / 高光层
+   3D 分层（真正 translateZ 不同，倾斜时产生视差）：
+        插画 .tk-scene 0 → 氛围 1px → 纹理 2px → 正文/三字码 .tk-body 16px
+        → 票根 22px（相对 body）→ 高光 36px
+   ========================================================================== */
+.tk-tilt {
+  position: relative;
+  width: 100%;
+  perspective: 900px;
+  perspective-origin: 50% 50%;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* 拖拽倾斜时不能把票面文字当成可选中文本（mousedown+move 会拉出蓝色选区） */
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* 大票（详情页 / 完成浮层 / 编辑预览）独占手势：竖滑交给滚动，横拖算倾斜 */
+.tk-tilt[data-tilt-kind='flight'],
+.tk-tilt[data-tilt-kind='hsr'],
+.tk-tilt[data-tilt-kind='train'] {
+  touch-action: pan-y;
+}
+
+.tk-tilt-inner {
+  position: relative;
+  width: 100%;
+  isolation: isolate;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tk-tilt-rx, 0deg)) rotateY(var(--tk-tilt-ry, 0deg));
+  transition: transform 760ms cubic-bezier(0.16, 1.16, 0.3, 1);
+  will-change: transform;
+}
+.tk-tilt.is-tilting .tk-tilt-inner {
+  transform: rotateX(var(--tk-tilt-rx, 0deg)) rotateY(var(--tk-tilt-ry, 0deg)) scale(1.012);
+  transition: transform 110ms ease-out;
+}
+
+/* 静态投影层：替代原来的 filter: drop-shadow（filter 会压平 preserve-3d） */
+.tk-tilt-shadow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 1.25rem;
+  box-shadow:
+    0 18px 30px color-mix(in srgb, #17111c 24%, transparent),
+    0 4px 10px color-mix(in srgb, #17111c 14%, transparent);
+  transform: translateZ(-2px);
+  transition: box-shadow 420ms ease;
+}
+.tk-tilt[data-tilt-kind='flight'] .tk-tilt-shadow {
+  border-radius: 1.75rem;
+}
+.tk-tilt[data-tilt-kind='hsr'] .tk-tilt-shadow {
+  border-radius: 1.5rem;
+}
+.tk-tilt[data-tilt-kind='train'] .tk-tilt-shadow {
+  border-radius: 0.875rem;
+}
+.tk-tilt.is-tilting .tk-tilt-shadow {
+  box-shadow:
+    0 28px 44px color-mix(in srgb, #17111c 30%, transparent),
+    0 6px 14px color-mix(in srgb, #17111c 18%, transparent);
+}
+
+/* 高光 / 光斑：radial-gradient + mix-blend-mode，跟着指针走 */
+.tk-tilt-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 1.25rem;
+  background-image: radial-gradient(
+    42% 52% at var(--tk-glare-x, 50%) var(--tk-glare-y, 50%),
+    color-mix(in srgb, white 44%, transparent) 0%,
+    color-mix(in srgb, white 12%, transparent) 38%,
+    transparent 66%
+  );
+  mix-blend-mode: soft-light;
+  opacity: 0;
+  transform: translateZ(46px);
+  transition: opacity 340ms ease;
+}
+.tk-tilt-glare::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: radial-gradient(
+    12% 16% at var(--tk-glare-x, 50%) var(--tk-glare-y, 50%),
+    color-mix(in srgb, white 86%, transparent) 0%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+.tk-tilt[data-tilt-kind='flight'] .tk-tilt-glare {
+  border-radius: 1.75rem;
+}
+.tk-tilt[data-tilt-kind='hsr'] .tk-tilt-glare {
+  border-radius: 1.5rem;
+}
+.tk-tilt[data-tilt-kind='train'] .tk-tilt-glare {
+  border-radius: 0.875rem;
+}
+.tk-tilt.is-tilting .tk-tilt-glare {
+  opacity: 1;
+}
+
+/* ── 12.1 knockout 贴纸：黑色板 + 白字 + multiply ────────────────────────
+   贴纸盖在票根的天光窗上，白字与背景相乘 → 文字位置"挖空"露出插画，
+   黑底色把周围压暗成一张贴纸。只贴在票根这一小块，不铺满整张票，
+   避免把可读性一起 blend 掉。夜晚四套票根偏暗，改用 difference（反相挖空）。 */
+.tk-knock {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 3px 4px;
+  border-radius: 3px;
+  background-color: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  mix-blend-mode: var(--tk-knock-blend, multiply);
+  transform: rotate(-3deg);
+}
+
+/* ==========================================================================
+   13. 暗色模式：插画是"光"，暗色页面里只收一点亮度，别把纸面洗白
+   ========================================================================== */
+html.dark .tk-flight .tk-scene {
+  opacity: 0.92;
+}
+html.dark .tk-mini .tk-scene {
+  opacity: 0.86;
+}
+html.dark .tk-train .tk-scene,
+html.dark .tk-hsr .tk-scene {
+  opacity: 0.94;
+}
+html.dark .tk-flight .tk-scene-scrim {
+  background-image:
+    linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--tk-deep) 90%, transparent) 0%,
+      color-mix(in srgb, var(--tk-deep) 70%, transparent) 44%,
+      color-mix(in srgb, var(--tk-deep) 40%, transparent) 100%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tk-deep) 22%, transparent) 0%,
+      transparent 24%,
+      color-mix(in srgb, var(--tk-deep) 54%, transparent) 64%,
+      color-mix(in srgb, var(--tk-deep) 82%, transparent) 100%
+    );
+}
+
+/* ==========================================================================
+   14. 无障碍：减动效 → 插画静止、不倾斜、不跟随，只留静态投影
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .tk-tilt-inner {
+    transform: none;
+    transition: none;
+  }
+  .tk-tilt.is-tilting .tk-tilt-inner {
+    transform: none;
+  }
+  .tk-tilt-glare {
+    display: none;
+  }
+  .tk-tilt-shadow {
+    box-shadow:
+      0 14px 24px color-mix(in srgb, #17111c 22%, transparent),
+      0 3px 8px color-mix(in srgb, #17111c 12%, transparent);
   }
 }

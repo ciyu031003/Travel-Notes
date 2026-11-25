@@ -96,6 +96,7 @@ export function mapTravelSummary(t: any): TravelSummary {
     tags: t.tags ? safeParseTags(t.tags) : null,
     location: t.location ?? null,
     companions: t.companions ?? null,
+    ticketOverride: t.ticketOverride ?? null,
     updatedAt: iso(t.updatedAt),
     visibility: t.visibility ?? 'SPACE',
     spaceId: t.spaceId ?? null,

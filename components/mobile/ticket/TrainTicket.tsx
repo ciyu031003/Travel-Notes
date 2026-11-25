@@ -1,9 +1,10 @@
 import { cn } from '@/lib/utils'
 import { Icon } from '@/components/mobile/Icon'
 import { TRANSPORT_ICON } from '@/lib/mobile/icon-system'
-import { ticketMoodLabel, ticketThemeClass } from '@/lib/ticket/theme'
+import { ticketThemeClass } from '@/lib/ticket/theme'
 import type { TicketData } from '@/lib/ticket/types'
-import { TicketBarcode, ticketArtSeed, ticketSerial } from './ticketBits'
+import TicketScene from './TicketScene'
+import { TicketBarcode, ticketArtSeed, ticketSceneAlt, ticketSerial } from './ticketBits'
 
 /**
  * 火车票（同一个文件两个变体：高铁 / 普速纸质票）
@@ -11,12 +12,13 @@ import { TicketBarcode, ticketArtSeed, ticketSerial } from './ticketBits'
  * 为什么两个变体放一起：它们是"同一种票的两代形态"，共享 props、共享季节天光、
  * 只换皮。视觉上刻意做成两套语言，一眼可分：
  *
- *   · hsr（高铁）：浅色卡面 + 季节色 × 铁路青绿的**彩色票头**，左侧竖排「高铁」
- *     票根，大号站名 + 车厢座位 + 底部条形码 —— 电子客票 / 现代。
- *   · train（普速）：暖米色**纸**，左缘蓝色流水号竖条、红色车次与检票章、
- *     右侧两道撕口缺口、纸纤维纹理 —— 纸质票 / 旧。
+ *   · hsr（高铁）：浅色卡面 + **天光玻璃票头**（季节插画从青绿里透出来）+
+ *     左侧竖排「高铁」票根，大号站名 + 车厢座位 + 底部条形码 —— 电子客票 / 现代。
+ *   · train（普速）：暖米色**纸**，票顶一条 40px 的**插画天光带**（风景窗），
+ *     左缘蓝色流水号竖条、红色车次与检票章、右侧两道撕口缺口 —— 纸质票 / 旧。
  *
- * 两者都不整卡铺季节壁纸：季节色只出现在票头、流水号竖条、票根与氛围层。
+ * 季节与天光不再用「春 · 清晨」文字标签，改由 <TicketScene> 的分层插画表达；
+ * 浅色票的插画只出现在票头/天光带（外加低透明度的飘落物），纸面正文保持干净。
  */
 
 export type TrainTicketVariant = 'hsr' | 'train'
@@ -44,6 +46,8 @@ function HsrTicket({ ticket, className }: { ticket: TicketData; className?: stri
         data-ticket="hsr"
         data-ticket-theme={ticket.season + '-' + ticket.dayPart}
       >
+        <span className="sr-only">{ticketSceneAlt(ticket.season, ticket.dayPart)}</span>
+        <div className="tk-skin" aria-hidden="true" />
         <div className="tk-atmo" aria-hidden="true" />
         <div className="tk-tex" aria-hidden="true" />
 
@@ -55,14 +59,18 @@ function HsrTicket({ ticket, className }: { ticket: TicketData; className?: stri
           </div>
 
           <div className="tk-hsr-main">
+            {/* 票头 = 铁路青绿实色（白字必须稳）+ 右端一格"插画小窗"：
+                季节与天光从这扇窗读出来，而不是压在文字底下。 */}
             <header className="tk-hsr-head">
-              <div className="min-w-0">
-                <p className="tk-hsr-kicker">HIGH-SPEED RAIL · 电子客票</p>
-                <p className="tk-hsr-number mt-1 truncate">{ticket.number}</p>
+              <div className="tk-hsr-head-text">
+                <p className="tk-hsr-kicker">HIGH-SPEED RAIL</p>
+                <div className="tk-hsr-head-row">
+                  <p className="tk-hsr-number truncate">{ticket.number}</p>
+                  <p className="tk-hsr-date">{ticket.date}</p>
+                </div>
               </div>
-              <div className="shrink-0 text-right">
-                <p className="tk-hsr-date">{ticket.date}</p>
-                <p className="tk-hsr-mood mt-1">{ticketMoodLabel(ticket.season, ticket.dayPart)}</p>
+              <div className="tk-hsr-art" aria-hidden="true">
+                <TicketScene season={ticket.season} dayPart={ticket.dayPart} />
               </div>
             </header>
 
@@ -127,6 +135,9 @@ function PaperTrainTicket({ ticket, className }: { ticket: TicketData; className
         data-ticket="train"
         data-ticket-theme={ticket.season + '-' + ticket.dayPart}
       >
+        <span className="sr-only">{ticketSceneAlt(ticket.season, ticket.dayPart)}</span>
+        <div className="tk-skin" aria-hidden="true" />
+        <TicketScene season={ticket.season} dayPart={ticket.dayPart} />
         <div className="tk-atmo" aria-hidden="true" />
         <div className="tk-tex" aria-hidden="true" />
 

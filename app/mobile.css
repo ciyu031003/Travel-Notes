@@ -2149,3 +2149,108 @@ html.dark .m2-tabbar-glass-layer {
   background: color-mix(in srgb, var(--m-surface-solid) 82%, transparent);
   box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
 }
+
+/* ─── 画册墙封面卡「手指捏住」3D 倾斜（T2，2026-11-25）────────────────────
+   交互逻辑在 components/album/thumb/TiltCoverCard.tsx：它只往卡上写
+   --tilt-rx / --tilt-ry / --tilt-scale / --tilt-depth / --tilt-sx / --tilt-sy，
+   颜色与渐变全部留在这里（组件里不写裸色值）。
+
+   几个刻意的取舍：
+   · perspective 放进卡片自己的 transform（620px），不新增包裹层 ——
+     画册墙的两列 grid、3/4 aspect-ratio、点击热区一个像素都没动；
+   · 阴影用 --tilt-depth 插值：depth=0 时与原 .m2-book-cover 的
+     「6px 10px 22px -12px」完全同值，抬起后偏移归零、模糊变大 → 像卡片被举离墙面；
+   · 高光 = 一枚窄径向光斑（反光条）+ 一层大范围柔光，mix-blend-mode: screen
+     压在原图上；再用 ::after 的 soft-light 斜向亮带随 --tilt-sx 左右滑动；
+   · touch-action: pan-y —— 竖向滚动仍然归浏览器，横向才轮到卡片。 */
+.album-tilt-card {
+  --tilt-rx: 0deg;
+  --tilt-ry: 0deg;
+  --tilt-scale: 1;
+  --tilt-depth: 0;
+  --tilt-sx: 50%;
+  --tilt-sy: 50%;
+  position: relative;
+  transform:
+    perspective(620px)
+    rotateX(var(--tilt-rx))
+    rotateY(var(--tilt-ry))
+    translate3d(0, calc(var(--tilt-depth) * -3px), 0)
+    scale(var(--tilt-scale));
+  transform-origin: 50% 50%;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    calc(6px - var(--tilt-depth) * 6px) calc(10px + var(--tilt-depth) * 16px)
+      calc(22px + var(--tilt-depth) * 24px) calc(-12px - var(--tilt-depth) * 2px)
+      rgba(95, 30, 57, 0.55),
+    0 0 0 1px rgba(255, 255, 255, calc(var(--tilt-depth) * 0.34)) inset;
+}
+/* 被捏住的卡要压在邻居之上，否则 3D 倾斜的角会钻到隔壁封面下面 */
+.album-tilt-card.is-held {
+  z-index: 6;
+  will-change: transform;
+}
+/* 封面图不参与指针/原生拖拽，否则图片的 HTML5 drag 会打断 pointermove */
+.album-tilt-card img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.album-tilt-card:focus-visible {
+  outline: 2px solid var(--m-accent);
+  outline-offset: 3px;
+}
+
+.album-tilt-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  /* 高光整体封顶 0.9：再高就会把封面照片洗白（深色星空封面最明显） */
+  opacity: calc(var(--tilt-depth) * 0.9);
+  background:
+    radial-gradient(
+      ellipse 34% 11% at var(--tilt-sx) var(--tilt-sy),
+      rgba(255, 255, 255, 0.62) 0%,
+      rgba(255, 255, 255, 0.20) 45%,
+      rgba(255, 255, 255, 0) 78%
+    ),
+    radial-gradient(
+      circle at var(--tilt-sx) var(--tilt-sy),
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 30%,
+      rgba(255, 255, 255, 0) 55%
+    );
+}
+/* 斜向反光条：跟着指针横向平移，用 soft-light 叠出「玻璃面」而不是糊一层白 */
+.album-tilt-sheen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: soft-light;
+  background: linear-gradient(
+    112deg,
+    transparent calc(var(--tilt-sx) * 0.7 - 26%),
+    rgba(255, 255, 255, 0.42) calc(var(--tilt-sx) * 0.7 - 8%),
+    transparent calc(var(--tilt-sx) * 0.7 + 12%)
+  );
+}
+
+/* 系统开了「减少动态效果」：不倾斜、不高光、不动画（组件侧也不再接管手势） */
+@media (prefers-reduced-motion: reduce) {
+  .album-tilt-card {
+    transform: none;
+    box-shadow: 6px 10px 22px -12px rgba(95, 30, 57, 0.55);
+  }
+  .album-tilt-card.is-held {
+    will-change: auto;
+  }
+  .album-tilt-sheen {
+    display: none;
+  }
+}

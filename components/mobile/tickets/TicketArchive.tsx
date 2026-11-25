@@ -39,6 +39,12 @@ interface TravelItem {
   date?: string | null
   confirmed?: boolean
   tags?: string[]
+  /**
+   * 服务端保存的票面覆盖（跨设备同步）。
+   * 与 localStorage 同一份结构（TicketOverride），服务端有值时优先 ——
+   * 本机覆盖只在"还没同步上去/离线"时兜底。
+   */
+  ticketOverride?: TicketOverride | null
 }
 
 /** 一张票 + 它的派生入参：编辑面板要用同一份入参重新派生预览，不能只传票面结果 */
@@ -55,10 +61,18 @@ function yearOf(date: string): string {
   return date.slice(0, 4)
 }
 
+/**
+ * 列表里的 id 是「post id」= 1_000_000 + travelId（见 /api/travels）。
+ * 票面派生/覆盖层/同步接口都要用**真实的 travelId**，否则写回会 404。
+ */
+function travelIdOf(item: TravelItem): number {
+  return item.id >= 1_000_000 ? item.id - 1_000_000 : item.id
+}
+
 /** 归档列表项 → deriveTicket 的 travel 入参（与列表派生保持同一份数据，字段一个不多一个不少） */
 function travelInputOf(item: TravelItem): TicketEditTravel {
   return {
-    id: item.id,
+    id: travelIdOf(item),
     slug: item.slug,
     title: item.title,
     location: item.location ?? null,
@@ -74,6 +88,21 @@ export default function TicketArchive() {
   const [overrides, setOverrides] = useState<Record<string, TicketOverride>>({})
   const [error, setError] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
+  /**
+   * 按旅程筛票据：/tickets?travel=<slug|id>
+   * 旅行详情页的「票据」入口与票据揭晓的「收进票据夹」都会带上它，
+   * 这样点进来先看到的是这一趟的票，而不是全部票。
+   * 用 window.location.search 而不是 useSearchParams：静态导出下无需 Suspense 边界。
+   */
+  const [travelFilter, setTravelFilter] = useState<string | null>(null)
+  useEffect(() => {
+    try {
+      const raw = new URLSearchParams(window.location.search).get('travel')
+      if (raw) setTravelFilter(decodeURIComponent(raw))
+    } catch {
+      /* 忽略 */
+    }
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -90,6 +119,17 @@ export default function TicketArchive() {
         )
         if (!alive) return
         setTravels(list)
+        // 服务端覆盖层并入本地：服务端有值时优先（跨设备），localStorage 兜底
+        const serverOverrides: Record<string, TicketOverride> = {}
+        for (const item of list) {
+          if (item.ticketOverride && typeof item.ticketOverride === 'object') {
+            serverOverrides[String(travelIdOf(item))] = item.ticketOverride
+          }
+        }
+        if (Object.keys(serverOverrides).length > 0) {
+          // 服务端优先：跨设备改过的票面，换手机打开也一致
+          setOverrides((prev) => ({ ...prev, ...serverOverrides }))
+        }
         if (meRes && meRes.ok) {
           const me = await meRes.json().catch(() => null)
           const profile = me?.data ?? me
@@ -120,7 +160,8 @@ export default function TicketArchive() {
     } catch {
       /* 忽略 */
     }
-    setOverrides(next)
+    // 本机覆盖不覆盖已经拿到的服务端值（服务端是跨设备真相；本机只在没有服务端值时兜底）
+    setOverrides((prev) => ({ ...next, ...prev }))
   }, [])
 
   /** 旅程链：按时间升序，后一段的出发地默认是上一段的目的地 */
@@ -139,15 +180,28 @@ export default function TicketArchive() {
         travel,
         passenger,
         originCity,
-        override: overrides[String(t.id)],
+        // 覆盖层按**真实 travelId** 存（travel.id 已在 travelInputOf 里归一化）
+        override: overrides[String(travel.id)],
       })
       chain.push({ ticket, travel, originCity })
       originCity = ticket.to.city
     }
-    return chain.reverse()
-  }, [travels, passenger, overrides])
+    const ordered = chain.reverse()
+    if (!travelFilter) return ordered
+    // 按旅程筛：slug 或数字 id 都认（dock 传 slug，旧链接可能传 id）
+    const matched = ordered.filter(
+      (row) => row.ticket.slug === travelFilter || String(row.ticket.travelId) === travelFilter,
+    )
+    return matched.length > 0 ? matched : ordered
+  }, [travels, passenger, overrides, travelFilter])
 
   const tickets = useMemo(() => rows.map((row) => row.ticket), [rows])
+
+  /** 当前筛选命中的旅程（用于标题与「查看全部」入口） */
+  const filteredTravel = useMemo(
+    () => (travelFilter ? rows.find((row) => row.ticket.slug === travelFilter || String(row.ticket.travelId) === travelFilter)?.travel ?? null : null),
+    [travelFilter, rows],
+  )
 
   const grouped = useMemo(() => {
     const map = new Map<string, TicketData[]>()
@@ -178,6 +232,24 @@ export default function TicketArchive() {
     setEditingId(travelId)
   }
 
+  /**
+   * 票面覆盖写云端（跨设备同步）：本地先落盘保证"立刻就生效"，
+   * 网络失败时只提示——本机已经改好了，下次联网再改一次即可。
+   */
+  const syncOverride = async (travelId: number, override: TicketOverride | null) => {
+    try {
+      const res = await fetch(apiUrl('/api/travels/' + travelId + '/ticket'), {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ override }),
+      })
+      if (!res.ok) throw new Error('HTTP ' + res.status)
+    } catch {
+      toast.error('已保存到本机，云端同步失败，稍后可重试')
+    }
+  }
+
   const handleSave = (patch: TicketOverride) => {
     if (!editing) return
     const travelId = editing.ticket.travelId
@@ -185,6 +257,7 @@ export default function TicketArchive() {
     setOverrides((prev) => ({ ...prev, [String(travelId)]: next }))
     setEditingId(null)
     toast.success('票面已更新')
+    void syncOverride(travelId, next)
   }
 
   /** 恢复默认票面：清掉该票的覆盖层，列表立刻回到旅程派生的原始票面 */
@@ -199,6 +272,7 @@ export default function TicketArchive() {
       return next
     })
     toast.success('已恢复默认票面')
+    void syncOverride(travelId, null)
   }
 
   return (
@@ -215,13 +289,36 @@ export default function TicketArchive() {
           </button>
           <div className="min-w-0 flex-1">
             <p className="m2-eyebrow">TRAVEL TICKETS</p>
-            <h1 className="mt-0.5 truncate text-[18px] font-bold tracking-[-0.02em] text-[var(--m-text)]">旅程票据</h1>
+            <h1 className="mt-0.5 truncate text-[18px] font-bold tracking-[-0.02em] text-[var(--m-text)]">
+              {filteredTravel && tickets.length === 1 ? filteredTravel.title : '旅程票据'}
+            </h1>
           </div>
           <span className="shrink-0 rounded-full bg-[var(--m-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--m-accent-strong)]">
             {tickets.length} 张
           </span>
         </div>
 
+        {travelFilter && (
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-[var(--m-accent-soft)] px-3 py-2">
+            <span className="min-w-0 truncate text-[13px] text-[var(--m-accent-strong)]">
+              {filteredTravel ? '只看《' + filteredTravel.title + '》的票' : '只看这一段旅程'}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setTravelFilter(null)
+                try {
+                  window.history.replaceState(null, '', '/tickets')
+                } catch {
+                  /* 忽略 */
+                }
+              }}
+              className="shrink-0 text-[13px] font-semibold text-[var(--m-accent-strong)]"
+            >
+              查看全部
+            </button>
+          </div>
+        )}
         {tickets.length > 0 && (
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[var(--m-muted)]">
             <span className="inline-flex items-center gap-1"><Icon icon={Plane} size="sm" />机票 {summary.flight}</span>

@@ -24,6 +24,8 @@ export interface TravelSummary {
   location: string | null
   /** 同行者 JSON（AA 分摊参与人）；首页账单卡片的「每人多少」用它算 */
   companions: unknown | null
+  /** 票面覆盖（跨设备同步；null = 用户没调过，用自动派生票面） */
+  ticketOverride: unknown | null
   updatedAt: string | null
   visibility: string
   spaceId: number | null

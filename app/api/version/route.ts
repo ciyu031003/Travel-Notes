@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '票据可编辑（出发地/交通方式/车次/时间/座位）+ AA 使用完整同行者名单（服务端下发 companions）+ 旅行详情页悬浮 dock（shadcn floating-dock）+ 设置页深夜模式开关（kokonutui switch-button）+ 预算 Meter（BoardUI 规格）+ 修 dev 下条件挂载弹层被返回键秒关',
+    changelog: process.env.APP_CHANGELOG || '票据插画背景（四季×四时段 16 套纯 CSS/SVG 动态插画，替代「春·清晨」文字）+ 票据 3D 悬浮（分层视差/高光跟随/mix-blend knockout）+ 票据夹按旅程筛选 + 票面跨设备同步（服务端）+ 画册封面卡「手指捏住」3D 倾斜高光 + BoardUI switch/主题开关真装',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

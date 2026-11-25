@@ -20,8 +20,6 @@ import {
   Plus,
   Plane,
   CheckCircle2,
-  Moon,
-  Sun,
 } from 'lucide-react'
 import { travelDetailHref } from '@/lib/routes'
 import { apiUrl } from '@/lib/api-base'
@@ -29,6 +27,8 @@ import { albumDeepLink } from '@/lib/album-deep-link'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Skeleton } from '@/components/mobile/Skeleton'
 import { Icon } from '@/components/mobile/Icon'
+// 顶栏明暗主题入口：BoardUI 的 ThemeToggle（真装源码，见 components/application/theme）
+import { ThemeToggle } from '@/components/application/theme/theme-toggle'
 import { toast } from '@/lib/mobile/toast-store'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 import TicketReveal from '@/components/mobile/ticket/TicketReveal'
@@ -269,11 +269,9 @@ export default function HomeMobile({
   const [drawerOpen, setDrawerOpen] = useState(false)
   /** 抽屉是否已经挂载过（首次点开才挂载 → motion chunk 不进首屏） */
   const [drawerMounted, setDrawerMounted] = useState(false)
-  const [isDark, setIsDark] = useState(false)
   const [dailyStamp, setDailyStamp] = useState('')
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'))
     const d = new Date()
     setDailyStamp((d.getMonth() + 1) + '/' + String(d.getDate()).padStart(2, '0'))
   }, [])
@@ -296,12 +294,6 @@ export default function HomeMobile({
     void loadDrawerModule().catch(() => {})
   }
 
-  const toggleTheme = () => {
-    const next = !isDark
-    document.documentElement.classList.toggle('dark', next)
-    try { localStorage.setItem('theme', next ? 'dark' : 'light') } catch {}
-    setIsDark(next)
-  }
   const active = draftTravels[0] ?? null
   const restDrafts = draftTravels.slice(1)
   /** 完成归档后弹出的票据（旋转揭晓 + 烟花彩带） */
@@ -436,9 +428,9 @@ export default function HomeMobile({
                 <Link href="/search" aria-label="搜索旅行、城市与回忆" className="v6-icon">
                   <Icon icon={Search} size="md" />
                 </Link>
-                <button type="button" onClick={toggleTheme} aria-label={isDark ? '切换到暖色主题' : '切换到夜色主题'} className="v6-icon">
-                  <Icon icon={isDark ? Sun : Moon} size="md" />
-                </button>
+                {/* BoardUI ThemeToggle（collapsed 皮肤）：写同一个 localStorage.theme +
+                    html.dark，跨刷新与其它入口一致；v6-icon 保持 44px 圆形触控位 */}
+                <ThemeToggle collapsed className="v6-icon boardui-scope" />
                 <button
                   type="button"
                   aria-label="打开功能菜单"
@@ -748,8 +740,10 @@ export default function HomeMobile({
             router.push(travelDetailHref(slug))
           }}
           onOpenArchive={() => {
+            const slug = revealTicket.slug
             setRevealTicket(null)
-            router.push('/tickets')
+            // 带上这段旅程：票据夹先显示这一趟的票
+            router.push('/tickets?travel=' + encodeURIComponent(slug))
           }}
         >
           <TicketFace ticket={revealTicket} />

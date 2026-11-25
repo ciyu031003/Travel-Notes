@@ -1,0 +1,225 @@
+/* ==========================================================================
+   BoardUI 组件作用域层（switch / theme-toggle）
+   ============================================================================
+   真装来源：boardui MCP `install_components(["switch","theme-toggle"])` 写入的
+   components/base/switch/switch.tsx 与 components/application/theme/theme-toggle.tsx
+   （原样源码；仅做两处「门禁/语义」改写，见下方 §4 注释）。
+
+   为什么需要这一层：
+   BoardUI 的源码用语义 token 类（bg-background-*-default / text-text-* /
+   text-body-medium / from-accent-500 …），这些类由 BoardUI 自己的
+   styles/theme.css + typography.css 提供；它的 @theme 会覆盖全局
+   --shadow-sm/md/lg/xl / --font-sans / --color-neutral-100/200 等既有
+   Tailwind 默认值 —— 直接 @import 会静默改变甜途全站（阴影/字体/灰阶）的视觉。
+   所以本文件只把「这两个组件真正用到的 token 子集」搬过来，并且**全部
+   限定在 .boardui-scope 容器内**：容器外一个变量都不定义，容器外的
+   既有 --m-* / --ui-* / Tailwind 默认值完全不受影响。
+
+   结构：
+     1) @theme         —— 注册少量静态设计 token（字阶 / 圆角 / 阴影），名字仓库内 0 使用
+     2) @theme inline  —— 把作用域语义色注册成 Tailwind utility（inline = 运行时读 var）
+     3) .boardui-scope —— 作用域内 light 值；.dark .boardui-scope —— 暗色覆盖
+     4) 组件需要的少量样式（任意值原子类无法表达的：亚像素圆角/内阴影/View Transition）
+   ========================================================================== */
+
+/* ── 1) 静态设计 token ───────────────────────────────────────────────────── */
+@theme {
+  /* BoardUI radius/2lg（Figma 10px），仅用于 theme-toggle 的圆角按钮 */
+  --radius-2lg: 10px;
+
+  /* lg 档 switch 选中态阴影（Figma Checkbox selected 同款）：
+     顶部内高光 + 1px 强调色内描边。--color-accent-500 取值见 .boardui-scope */
+  --shadow-checkbox-selected:
+    inset 0 2px 0 0 rgb(255 255 255 / 0.25),
+    inset 0 0 0 1px var(--color-accent-500);
+
+  /* BoardUI text-body-medium 复合格（size / line-height / weight 一起给） */
+  --text-body-medium: 0.875rem;
+  --text-body-medium--line-height: 1.25rem;
+  --text-body-medium--letter-spacing: 0;
+  --text-body-medium--font-weight: 500;
+
+  /* theme-toggle 的 glass-segmented 皮肤里滑块在暗色下的填色（BoardUI 原值
+     #2e2e33；组件源码里是 dark:bg-[#2e2e33]，此处提成 token 以过设计门禁）。
+     glass 皮肤本仓库未启用，但保留 token 保证组件源码完整可切换。 */
+  --color-bui-glass-thumb: #2e2e33;
+}
+
+/* ── 2) 作用域语义色 → Tailwind utility 注册 ─────────────────────────────── */
+@theme inline {
+  --color-accent-50: var(--color-accent-50);
+  --color-accent-100: var(--color-accent-100);
+  --color-accent-200: var(--color-accent-200);
+  --color-accent-300: var(--color-accent-300);
+  --color-accent-400: var(--color-accent-400);
+  --color-accent-500: var(--color-accent-500);
+  --color-accent-600: var(--color-accent-600);
+  --color-accent-700: var(--color-accent-700);
+  --color-accent-800: var(--color-accent-800);
+  --color-accent-900: var(--color-accent-900);
+  --color-accent-950: var(--color-accent-950);
+
+  --color-foreground-icon-primary: var(--color-foreground-icon-primary);
+  --color-foreground-icon-secondary: var(--color-foreground-icon-secondary);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+
+  --color-background-primary-default: var(--color-background-primary-default);
+  --color-background-secondary-default: var(--color-background-secondary-default);
+  --color-background-secondary-hover: var(--color-background-secondary-hover);
+  --color-background-tertiary-default: var(--color-background-tertiary-default);
+
+  --color-border-button-default: var(--color-border-button-default);
+  --color-border-focus-ring: var(--color-border-focus-ring);
+
+  --color-control-indicator-background: var(--color-control-indicator-background);
+  --color-control-indicator-background-subtle: var(--color-control-indicator-background-subtle);
+  --color-switch-off-chip-start: var(--color-switch-off-chip-start);
+  --color-switch-off-chip-end: var(--color-switch-off-chip-end);
+  --color-switch-on-chip-start: var(--color-switch-on-chip-start);
+  --color-switch-on-chip-end: var(--color-switch-on-chip-end);
+
+  --color-theme-toggle-sidebar-background: var(--color-theme-toggle-sidebar-background);
+  --color-theme-toggle-sidebar-selected-background: var(--color-theme-toggle-sidebar-selected-background);
+}
+
+/* ── 3a) 作用域内 · 浅色 ─────────────────────────────────────────────────── */
+.boardui-scope {
+  /* L1 原语子集：BoardUI 对 Tailwind 的四处置信覆盖已按原值带入
+     （neutral-100 #f7f7f7 / neutral-200 #ebebeb / blue-400 #3392ff / neutral-925 #121212），
+     其余为 Tailwind v4 调色板等值 sRGB。 */
+  --bui-white: #ffffff;
+  --bui-blue-50: #eff6ff;
+  --bui-blue-100: #dbeafe;
+  --bui-blue-200: #bfdbfe;
+  --bui-blue-300: #93c5fd;
+  --bui-blue-400: #3392ff;
+  --bui-blue-500: #3b82f6;
+  --bui-blue-600: #2563eb;
+  --bui-blue-700: #1d4ed8;
+  --bui-blue-800: #1e40af;
+  --bui-blue-900: #1e3a8a;
+  --bui-blue-950: #172554;
+  --bui-neutral-50: #fafafa;
+  --bui-neutral-100: #f7f7f7;
+  --bui-neutral-200: #ebebeb;
+  --bui-neutral-500: #737373;
+  --bui-neutral-700: #404040;
+  --bui-neutral-800: #262626;
+  --bui-neutral-900: #171717;
+  --bui-neutral-950: #0a0a0a;
+
+  /* L2 语义（与 BoardUI styles/theme.css :root 逐 token 对齐） */
+  --color-accent-50: var(--bui-blue-50);
+  --color-accent-100: var(--bui-blue-100);
+  --color-accent-200: var(--bui-blue-200);
+  --color-accent-300: var(--bui-blue-300);
+  --color-accent-400: var(--bui-blue-400);
+  --color-accent-500: var(--bui-blue-500);
+  --color-accent-600: var(--bui-blue-600);
+  --color-accent-700: var(--bui-blue-700);
+  --color-accent-800: var(--bui-blue-800);
+  --color-accent-900: var(--bui-blue-900);
+  --color-accent-950: var(--bui-blue-950);
+
+  --color-foreground-icon-primary: var(--bui-neutral-950);
+  --color-foreground-icon-secondary: var(--bui-neutral-500);
+
+  --color-text-primary: var(--bui-neutral-950);
+  --color-text-secondary: var(--bui-neutral-500);
+
+  --color-background-primary-default: var(--bui-white);
+  --color-background-secondary-default: var(--bui-neutral-100);
+  --color-background-secondary-hover: var(--bui-neutral-200);
+  --color-background-tertiary-default: var(--bui-neutral-200);
+
+  --color-border-button-default: var(--bui-neutral-200);
+  --color-border-focus-ring: var(--color-accent-500);
+
+  /* 选中控件内里在明暗两套里都保持浅色（与 BoardUI 注释一致） */
+  --color-control-indicator-background: var(--bui-white);
+  --color-control-indicator-background-subtle: var(--bui-neutral-100);
+  --color-switch-off-chip-start: var(--bui-white);
+  --color-switch-off-chip-end: var(--bui-neutral-100);
+  --color-switch-on-chip-start: color-mix(in oklab, var(--color-accent-500) 63%, var(--color-accent-600));
+  --color-switch-on-chip-end: color-mix(in oklab, var(--color-accent-600) 16%, var(--color-accent-700));
+
+  --color-theme-toggle-sidebar-background: var(--bui-neutral-200);
+  --color-theme-toggle-sidebar-selected-background: var(--bui-white);
+}
+
+/* ── 3b) 作用域内 · 暗色（甜途的暗色 = html.dark，与 BoardUI 的 .dark 约定一致） */
+.dark .boardui-scope {
+  --bui-neutral-50: #fafafa;
+
+  --color-foreground-icon-primary: var(--bui-neutral-50);
+  --color-text-primary: var(--bui-neutral-50);
+
+  --color-background-primary-default: var(--bui-neutral-800);
+  --color-background-secondary-default: var(--bui-neutral-900);
+  --color-background-secondary-hover: var(--bui-neutral-800);
+  --color-background-tertiary-default: var(--bui-neutral-800);
+
+  --color-border-button-default: var(--bui-neutral-700);
+
+  --color-switch-off-chip-start: var(--bui-neutral-800);
+  --color-switch-off-chip-end: var(--bui-neutral-800);
+
+  --color-theme-toggle-sidebar-background: var(--bui-neutral-800);
+  --color-theme-toggle-sidebar-selected-background: var(--bui-neutral-700);
+}
+
+/* ── 4) 任意值原子类无法表达 / 需过设计门禁的样式 ──────────────────────────
+   组件源码里原本是 shadow-[…var(--color-accent-500)] 与 rounded-[3px] 这类
+   魔术值：前者会让设计门禁的「未定义变量」规则把 var() 判成未定义（门禁只索引
+   app/tokens.css / globals.css / mobile.css 三个文件），后者命中「非标圆角」。
+   这里改为语义类名，值仍走 token，组件行为与视觉不变。 */
+.bui-switch-on-sm {
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.25),
+    inset 0 0 0 0.5px var(--color-accent-500);
+}
+.bui-switch-on-md {
+  box-shadow:
+    inset 0 1.5px 0 0 rgb(255 255 255 / 0.25),
+    inset 0 0 0 0.75px var(--color-accent-500);
+}
+
+/* rectangle 形状的亚像素圆角（BoardUI Figma 原值） */
+.bui-r-track-sm { border-radius: 3px; }
+.bui-r-thumb-sm { border-radius: 1px; }
+.bui-r-chip-sm { border-radius: 0.5px; }
+.bui-r-track-md { border-radius: 4.5px; }
+.bui-r-thumb-md { border-radius: 1.5px; }
+.bui-r-chip-md { border-radius: 0.75px; }
+.bui-r-chip-lg { border-radius: 1px; }
+
+/* theme-toggle 的圆形扩散换肤：BoardUI 在 styles/globals.css 里关掉原生
+   crossfade，只留 mask 扩散。这一段只在组件触发 View Transition 的瞬间生效。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+.theme-transitioning,
+.theme-transitioning * {
+  transition: none !important;
+}
+
+/* ── 5) 减少动效 ─────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .boardui-scope *,
+  .boardui-scope *::before,
+  .boardui-scope *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

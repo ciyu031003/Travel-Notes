@@ -388,8 +388,9 @@ export default function TravelDetailMobile({
 
   const openTickets = useCallback(() => {
     void hapticLight()
-    router.push('/tickets')
-  }, [router])
+    // 带上当前旅程：票据夹先显示这一趟的票（点「查看全部」再回到全部票）
+    router.push('/tickets?travel=' + encodeURIComponent(travel.slug))
+  }, [router, travel.slug])
 
   const dockItems = useMemo(
     () => [

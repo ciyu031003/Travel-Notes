@@ -24,7 +24,8 @@ import { useApi } from '@/lib/client/use-api'
 import { isMobileShell } from '@/lib/routes'
 import { toast } from '@/lib/mobile/toast-store'
 import { hapticLight } from '@/lib/mobile/haptics'
-import SwitchButton from '@/components/ui/switch-button'
+// BoardUI 的 Switch（真装源码 components/base/switch/switch.tsx，react-aria-components 驱动）
+import { Switch } from '@/components/base/switch/switch'
 import { useSessionRedirect } from '@/hooks/use-session-redirect'
 import IcpLicense from '@/components/IcpLicense'
 import { APP_VERSION, APP_BUILD_NUMBER } from '@/lib/app-version'
@@ -151,8 +152,10 @@ export default function MeSettingsPage() {
    * 这个开关**不是新造的状态**：甜途本来就有全站明暗主题（`html.dark` +
    * `localStorage.theme`）—— 首屏由 app/layout.tsx 的内联脚本恢复，
    * Navbar / SocialThemeToggle 也写同一处。此前它只藏在顶栏图标里，
-   * 「设置」里反而没有入口；这里接上 SwitchButton，写的是同一个 key、同一份 class，
-   * 所以改完立刻全站生效（ThemeColorSync 会顺手同步 meta theme-color）。
+   * 「设置」里反而没有入口；这里接上 BoardUI 的 Switch（真装源码，
+   * components/base/switch/switch.tsx，react-aria-components 驱动），
+   * 写的是同一个 key、同一份 class，所以改完立刻全站生效
+   * （ThemeColorSync 会顺手同步 meta theme-color）。
    */
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   useEffect(() => {
@@ -166,8 +169,11 @@ export default function MeSettingsPage() {
 
   const changeTheme = (next: 'light' | 'dark') => {
     setTheme(next)
-    // html.dark / colorScheme 由 SwitchButton 在同一个 apply 里打上，这里只负责持久化；
-    // 两边写的是同一个 key（'theme'），与 Navbar / SocialThemeToggle 完全一致。
+    // BoardUI Switch 只负责「请求切换」，全站状态（html.dark / colorScheme /
+    // localStorage.theme）由这里统一落地 —— 与 Navbar / SocialThemeToggle 同一套语义。
+    const root = document.documentElement
+    root.classList.toggle('dark', next === 'dark')
+    root.style.colorScheme = next
     try {
       localStorage.setItem('theme', next)
     } catch {
@@ -175,6 +181,20 @@ export default function MeSettingsPage() {
     }
     void hapticLight()
   }
+
+  /**
+   * react-aria 的 Switch 用原生 <input type=checkbox role="switch"> 的 checked
+   * 表达开关态（这也符合 ARIA 规范），但甜途规范与冒烟自测都要求 role=switch 上
+   * 同时能读到 aria-checked。react-aria 会过滤掉外部传入的 aria-checked，
+   * 所以挂载/切换后把当前状态同步到原生 input 上，读屏与自动化口径一致。
+   */
+  const themeSwitchRef = useRef<HTMLLabelElement | null>(null)
+  // 不写依赖数组：开关本身是数据到位后才挂载的（首屏先是骨架屏），
+  // 只在 [theme] 变化时同步会漏掉「首帧浅色 + 开关后挂载」这一种情况。
+  useEffect(() => {
+    const input = themeSwitchRef.current?.querySelector<HTMLInputElement>('input[role="switch"]')
+    input?.setAttribute('aria-checked', theme === 'dark' ? 'true' : 'false')
+  })
 
   const lockDescription =
     lock.state === 'loading'
@@ -309,10 +329,16 @@ export default function MeSettingsPage() {
                 description="深色界面，夜里看不刺眼（全站生效）"
                 showChevron={false}
                 trailing={
-                  <SwitchButton
-                    theme={theme}
-                    onThemeChange={changeTheme}
-                    className="shrink-0"
+                  // BoardUI Switch：react-aria Switch（role="switch" + aria-checked），
+                  // min-h-11 / min-w-11 保证 44px 触控目标；语义 token 由
+                  // app/boardui-scope.css 的 .boardui-scope 容器提供（不影响全站 token）。
+                  <Switch
+                    ref={themeSwitchRef}
+                    aria-label="深夜模式"
+                    size="md"
+                    isSelected={theme === 'dark'}
+                    onChange={(selected) => changeTheme(selected === true ? 'dark' : 'light')}
+                    className="boardui-scope min-h-11 min-w-11 shrink-0 justify-end"
                   />
                 }
               />
