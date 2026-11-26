@@ -1,0 +1,228 @@
+/* ==========================================================================
+   底部 Tab 栏 · 真实液态玻璃 + 云朵背景（G2，2026-11-27）
+   --------------------------------------------------------------------------
+   目标：底部 Tab 栏不再是「一条白色/深色底板」，而是**悬浮的液态玻璃胶囊**——
+   背后有云带与晚霞，页面内容从胶囊下面滚过时有厚度感。
+
+   三层结构（都在 <nav class="m2-tabbar m2-tabbar--glass"> 的 stacking context 内）
+     z-0  .m2-tabbar-sky          云带 .lg-cloud-band + 低透明度晚霞（玻璃的 backdrop）
+     z-1  .m2-tabbar-glass-layer  真实玻璃：全 App **唯一**带 backdrop-filter 的底部表面
+     z-2  .m2-tab-grid            图标 / 文字 / 中央「+」
+   backdrop 说明：玻璃层采样「它下面已经画好的像素」= 云带 + 滚到胶囊后的页面内容，
+   再 blur(26px) saturate(180%)。所以看到的是"云在玻璃后面流"，而不是一块半透明色。
+   玻璃层必须**自己**没有祖先 backdrop-filter（否则 backdrop root 被截断，只剩纯色），
+   nav 因此保持透明无模糊 —— 整个底部栏只有这一层做 backdrop-filter，性能口径不变。
+
+   颜色一律走 app/glass.css 的 --lg-* token（亮/暗两套）；暗色下云带自动翻成暗紫、
+   rim 自动收成细白线，不会出现"夜里一条白板"。
+
+   兜底：prefers-reduced-transparency → 不透明但保留 tint；
+        prefers-reduced-motion → 不缩放；html.low-end → 关掉常驻 fixed 的 backdrop-filter
+        （云带本身已经是模糊过的位图，观感不塌）。
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  /* ── 0. 容器：透明 + 无模糊 ─────────────────────────────────────────────
+     · 旧版 .m2-tabbar 自带 92% 白底 + blur(20px)，正是"一块白底板"的来源；
+     · mobile-v6.css 还给 html.dark .m2-tabbar 压了 94% 不透明的夜板（夜里一条板），
+       这里用 .m2-tabbar--glass 提高特异性显式解除，两条都清掉。 */
+  .m2-tabbar.m2-tabbar--glass {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+  html.dark .m2-tabbar.m2-tabbar--glass {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* ── 1. 云带 + 晚霞：画在玻璃**下面**，作为玻璃的 backdrop ───────────────
+     胶囊同形裁切（overflow + 同半径），云不会漏到胶囊外面变成一团白雾。 */
+  .m2-tabbar-sky {
+    position: absolute;
+    inset: 0 10px calc(8px + env(safe-area-inset-bottom));
+    z-index: 0;
+    overflow: hidden;
+    border-radius: 28px;
+    pointer-events: none;
+    /* 晚霞：只在胶囊下半部铺暖色（peach → pink → lavender），玻璃才有色可透，
+       不会在纯灰/纯白底上发脏；两侧各压一团，中间留给云。 */
+    background-image:
+      radial-gradient(95% 150% at 2% 112%, var(--lg-sunset-1) 0%, transparent 70%),
+      radial-gradient(95% 145% at 98% 110%, var(--lg-sunset-2) 0%, transparent 68%),
+      radial-gradient(120% 120% at 50% 128%, var(--lg-sunset-3) 0%, transparent 72%);
+    opacity: 0.92;
+  }
+  /* 云带：直接复用 .lg-cloud-band 的"模糊椭圆"做法，但把云团排成一条压扁的
+     云浪 —— 原版云团都在箱子下方 120% 处、又放大到出血，落在 56px 高的胶囊里
+     只剩下一条平滑渐变；这里重排成四个高度不同的云峰，让"云"有轮廓可看。 */
+  .m2-tabbar-sky .m2-tabbar-cloud {
+    inset: -22% -8% -8%;
+    opacity: 0.92;
+    filter: blur(9px) saturate(125%);
+    /* 云色掺一点晚霞紫：纯白的云在浅色页面/白色玻璃上没有对比，看不出"云"；
+       掺 22% --lg-sunset-3 后是"被晚霞打透的云"，亮/暗两套 token 都自动跟着变。 */
+    --m2-cloud-ink: color-mix(in srgb, var(--lg-cloud) 78%, var(--lg-sunset-3) 22%);
+    background-image:
+      radial-gradient(30% 118% at 8% 122%, var(--m2-cloud-ink) 0%, transparent 72%),
+      radial-gradient(26% 104% at 33% 128%, var(--m2-cloud-ink) 0%, transparent 70%),
+      radial-gradient(34% 132% at 61% 118%, var(--m2-cloud-ink) 0%, transparent 74%),
+      radial-gradient(26% 110% at 88% 130%, var(--m2-cloud-ink) 0%, transparent 70%);
+  }
+  /* 夜里云带本就是暗紫（--lg-cloud / --lg-sunset-* 的暗色 token），再压一点，
+     免得把胶囊连同上面的图标一起提亮 */
+  html.dark .m2-tabbar-sky {
+    opacity: 0.62;
+  }
+
+  /* ── 2. 玻璃层 ─────────────────────────────────────────────────────────
+     tint 斜向渐变 + rim 亮边 + 内高光 + 双投影，与 .lg-card 同一套语言；
+     圆角只在胶囊（整体悬浮版），不是"贴底一条"。 */
+  .m2-tabbar-glass-layer {
+    position: absolute;
+    inset: 0 10px calc(8px + env(safe-area-inset-bottom));
+    z-index: 1;
+    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid var(--lg-edge);
+    /* tint 仍是 --lg-tint-a/b 的斜向渐变，但按比例掺回透明：
+       胶囊只有 56px 高，如果整条 0.66 的白铺满，云和下面滚过的内容全被糊平，
+       就退回"一块白色底板"了。掺透明后玻璃只在左上角偏亮，符合真实玻璃的折射梯度。 */
+    background-image: linear-gradient(
+      154deg,
+      color-mix(in srgb, var(--lg-tint-a) 64%, transparent) 0%,
+      color-mix(in srgb, var(--lg-tint-b) 72%, transparent) 56%,
+      var(--lg-tint-deep) 100%
+    );
+    box-shadow: var(--lg-shadow-near), var(--lg-shadow-far), var(--lg-inner);
+    /* 只写标准属性：LightningCSS（@tailwindcss/postcss）会按目标自动补 -webkit- 前缀。
+       手写 "-webkit-backdrop-filter" 反而会被它当作同一条声明去重、把标准属性删掉，
+       于是 Chromium 侧 blur 静默消失（本仓库其它手写前缀的玻璃规则就有这个坑）。 */
+    backdrop-filter: blur(26px) saturate(180%);
+    pointer-events: none;
+  }
+  /* 斜向镜面高光：玻璃"有厚度"的关键，别用纯白填充替代 */
+  .m2-tabbar-glass-layer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background-image: linear-gradient(
+      150deg,
+      var(--lg-sheen) 0%,
+      transparent 26%,
+      transparent 76%,
+      var(--lg-sheen) 100%
+    );
+    opacity: 0.5;
+    mix-blend-mode: soft-light;
+  }
+  /* 顶边 1px 亮线（--lg-rim）：玻璃的"棱" */
+  .m2-tabbar-glass-layer::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    pointer-events: none;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--lg-rim) 14%,
+      var(--lg-rim) 86%,
+      transparent 100%
+    );
+  }
+
+  /* ── 3. 内容层 ─────────────────────────────────────────────────────────
+     定位元素（玻璃层）永远画在非定位内容之上，内容层统一抬到 z-2，
+     「+」再抬到 z-3 —— 中央 FAB 不会再被玻璃糊掉半截。 */
+  .m2-tab-grid {
+    z-index: 2;
+  }
+  .m2-tabbar--glass .m2-tab-item {
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s ease, color 0.18s ease;
+  }
+  .m2-tabbar--glass .m2-tab-item:active {
+    transform: scale(0.94);
+  }
+  /* 选中态：玻璃胶囊指示器（.lg-chip 的语言）+ 主色图标/文字；
+     不再叠第二层 backdrop-filter（胶囊已经在玻璃里，再糊一次只会发灰）。 */
+  .m2-tabbar--glass .m2-tab-item .m2-tab-pill {
+    inset: 6px;
+    z-index: 0;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--lg-rim) 82%, var(--m-accent) 18%);
+    /* 玻璃胶囊指示器：玻璃 tint 掺一点主色 —— 在图标的强白玻璃上才"显形"，
+       同时保持半透明（不是一块实心白/黑），也自带选中色语义。 */
+    background-image: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--lg-tint-a) 66%, var(--m-accent) 14%) 0%,
+      color-mix(in srgb, var(--lg-tint-b) 62%, var(--m-accent) 8%) 100%
+    );
+    box-shadow:
+      0 4px 14px -10px color-mix(in srgb, var(--m-accent-strong) 62%, transparent),
+      var(--lg-inner);
+    backdrop-filter: none;
+  }
+
+  /* ── 4. 中央「+」：完整浮在玻璃之上 ─────────────────────────────────────
+     旧版用「页面底色」画 4px 外圈把圆从导航里托出来；换成玻璃后那一下会在
+     玻璃上凿出一个实心洞。这里改成玻璃高光圈（--lg-rim/--lg-edge）+ 强调色投影，
+     外圈跟着玻璃走，按钮才像"浮"在玻璃上。 */
+  .m2-tabbar--glass .m2-tab-fab-wrap {
+    z-index: 3;
+    padding-bottom: 10px;
+    pointer-events: auto;
+  }
+  .m2-tabbar--glass .m2-tab-fab {
+    width: 52px;
+    height: 52px;
+    box-shadow:
+      0 16px 30px -12px color-mix(in srgb, var(--m-accent-strong) 72%, transparent),
+      0 6px 14px -8px color-mix(in srgb, var(--m-accent-strong) 48%, transparent),
+      0 0 0 3px color-mix(in srgb, var(--lg-rim) 62%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--lg-edge) 52%, transparent),
+      var(--lg-inner);
+  }
+
+  /* ── 5. 低端机 / 无障碍兜底 ───────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .m2-tabbar--glass .m2-tab-item {
+      transition: none;
+    }
+    .m2-tabbar--glass .m2-tab-item:active {
+      transform: none;
+    }
+    .m2-tabbar--glass .m2-tab-fab {
+      transition: none;
+    }
+    .m2-tabbar--glass .m2-tab-fab:active {
+      transform: none;
+    }
+  }
+  /* 减少透明：退化成不透明玻璃，但保留 tint / rim（不下滑成纯白板） */
+  @media (prefers-reduced-transparency: reduce) {
+    .m2-tabbar-sky {
+      display: none;
+    }
+    .m2-tabbar-glass-layer {
+      backdrop-filter: none;
+      background-color: var(--m-surface-solid);
+      box-shadow: var(--lg-shadow-near), var(--lg-inner);
+    }
+    .m2-tabbar--glass .m2-tab-item .m2-tab-pill {
+      background-image: none;
+      background-color: color-mix(in srgb, var(--m-surface-solid) 86%, var(--m-accent) 14%);
+    }
+  }
+  /* 低端机：常驻 fixed 的 backdrop-filter 每帧都要重采样滚动内容，是滚动掉帧的大头；
+     云带本身已经是一张模糊过的位图，关掉 blur 观感不塌。 */
+  html.low-end .m2-tabbar-glass-layer {
+    backdrop-filter: none;
+    background-color: color-mix(in srgb, var(--m-surface-solid) 62%, transparent);
+  }
+}

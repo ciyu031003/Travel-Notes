@@ -4,6 +4,10 @@
    所有移动端专属 token 统一以 --m- 前缀命名，避免污染 Web 端变量。
    ========================================================================== */
 
+/* 底部 Tab 栏的液态玻璃（G2，2026-11-27）：整块视觉单独成文件，
+   这里只保留「定位 / 布局」骨架（见下方 .m2-tabbar 段）。 */
+@import './tabbar-glass.css';
+
 @media (max-width: 767px) {
   /* 禁 Android 12+ 的拉伸 overscroll（页面到顶整体拉伸是"一眼 WebView"的信号） */
   html,
@@ -1783,33 +1787,47 @@ html.dark body {
   background: var(--m-surface-2);
 }
 
-/* ── 底部 Tabbar（5 槽 + 中央 FAB）────────────────────────────── */
+/* ── 底部 Tabbar（5 槽 + 中央 FAB）──────────────────────────────
+   2026-11-27 液态玻璃（G2）：nav 退化成「定位 + 布局」容器 —— 背景透明、无边框、
+   **没有** backdrop-filter（整个底部栏只有玻璃层做一次模糊，见 app/tabbar-glass.css）。
+   视觉上是左右各 10px、底部 safe-area + 8px 的悬浮玻璃胶囊，总高 64px = --m-tab-h，
+   页面底部留白的口径不变（.m-bottom-nav-safe 仍是 64 + 28）。
+   定位不再用 translateX(-50%)：transform 会给 fixed 祖先多加一层合成，backdrop-filter
+   在 transform 祖先下的采样行为各家浏览器不一致，改用 left/right + margin auto 居中。 */
 .m2-tabbar {
   position: fixed;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: 0;
   z-index: 40;
   width: 100%;
   max-width: 430px;
-  transform: translateX(-50%);
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--m-line);
-  background: color-mix(in srgb, var(--m-surface-solid) 92%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  margin-inline: auto;
+  padding: 0 10px calc(8px + env(safe-area-inset-bottom));
+  background: transparent;
+  border: 0;
+  /* 胶囊之外的透明区域不该吃掉页面点击：指针事件只在内容层打开 */
+  pointer-events: none;
 }
 .m2-tab-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: end;
   /*
-    2026-11-26 修：玻璃层（.m2-tabbar-glass-layer）是 nav 里的 absolute 第一层，
-    定位元素永远画在非定位内容之上 —— 于是中间「+」浮出导航条的那一截被半透明玻璃
-    糊住（真机截图里就是"加号被白色底板盖住、只剩半个"）。
-    这里把内容层显式抬到玻璃层之上；FAB 再自身抬一层，保证它完整压在玻璃上。
+    层级（都在 nav 的 stacking context 里）：
+      0 .m2-tabbar-sky          云带 / 晚霞（被玻璃 blur 的那层"背景内容"）
+      1 .m2-tabbar-glass-layer  玻璃（唯一的 backdrop-filter）
+      2 .m2-tab-grid            图标 / 文字
+      3 .m2-tab-fab-wrap        中央「+」
+    定位元素（玻璃层）永远画在非定位内容之上，所以内容层显式抬到 z-2，
+    「+」再抬一层 —— 之前"加号被底板盖住半截"的 bug 就是这条没做全。
   */
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  height: 56px;
+  /* 行高必须锁死：行若被「+」的负 margin 撑到 60px，四个 tab 的触控区会溢出胶囊底边 4px */
+  grid-template-rows: 56px;
+  pointer-events: none;
 }
 .m2-tab-item {
   display: flex;
@@ -1817,11 +1835,16 @@ html.dark body {
   align-items: center;
   justify-content: center;
   gap: 3px;
+  width: 100%;
+  height: 100%;
   min-height: 52px;
+  border-radius: 999px;
   font-size: 11px;
   line-height: 14px;
   font-weight: 650;
   color: var(--m-faint);
+  /* 44×44 触控下限由 56px 胶囊行高 + 列宽保证；胶囊外的指针事件透传给页面 */
+  pointer-events: auto;
 }
 .m2-tab-item.is-active { color: var(--m-accent-strong); }
 .m2-tab-fab-wrap {
@@ -1831,13 +1854,16 @@ html.dark body {
   gap: 2px;
   margin-top: -18px;
   position: relative;
-  z-index: 2;
+  z-index: 3;
   font-size: 11px;
   line-height: 14px;
   font-weight: 700;
   color: var(--m-accent-strong);
-  /* 点按热区比圆更大一点，拇指更容易命中（视觉不变） */
-  padding-bottom: 2px;
+  /* 2026-11-27 液态玻璃：胶囊行高 56px，圆自己往胶囊上方"浮"出去；
+     padding-bottom 让「出发」两个字与另外四个 label 同一条基线（不再顶到胶囊底边）。
+     点按热区比圆更大一点，拇指更容易命中（视觉不变）。 */
+  padding-bottom: 10px;
+  pointer-events: auto;
 }
 .m2-tab-fab {
   display: flex;
@@ -2150,21 +2176,12 @@ html.low-end .m-liquid-glass::after { display: none; }
   -webkit-backdrop-filter: blur(10px) saturate(1.2);
 }
 
-/* ─── 液态玻璃底部导航 · 磨砂层（2026-11-24）───────────────────────────────
-   真折射（backdrop-filter: url(#…)）在常驻 fixed 的导航上是 47ms/帧的大头（4× CPU 实测），
-   这里退一步用磨砂：blur(20px) + 半透明暖底 + 顶部 1px 高光，视觉仍是"玻璃"，
-   帧开销回到 19.5ms（与 V6 原生实现同级）。真折射留给分段控件等小块表面。 */
-.m2-tabbar-glass-layer {
-  background: color-mix(in srgb, var(--m-surface-solid) 74%, transparent);
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent);
-  pointer-events: none;
-}
-html.dark .m2-tabbar-glass-layer {
-  background: color-mix(in srgb, var(--m-surface-solid) 82%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
-}
+/* ─── 液态玻璃底部导航 · 玻璃层（2026-11-27 G2）─────────────────────────
+   磨砂层已升级为「悬浮玻璃胶囊 + 云朵背景」，视觉（tint / rim / 内高光 / 双投影 /
+   backdrop-filter / 暗色 / 无障碍兜底）**全部搬到 app/tabbar-glass.css**，
+   并在本文件顶部 @import —— 那里是这段视觉的唯一事实源，别在这里再加底/模糊，
+   否则会退回到"一块白板"。真折射（backdrop-filter: url(#…)）的取舍见该文件头注释；
+   4× CPU 实测下 SVG 折射 47ms/帧、blur 19.5ms/帧，这里仍只用 blur(26px)。 */
 
 /* ─── 画册墙封面卡「手指捏住」3D 倾斜（T2，2026-11-25）────────────────────
    交互逻辑在 components/album/thumb/TiltCoverCard.tsx：它只往卡上写

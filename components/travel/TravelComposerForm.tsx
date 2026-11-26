@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, Plus, X } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Check, ChevronDown, MapPin, Plus, Sparkles, X } from '@/lib/mobile/icon-system'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
 import { toast } from '@/lib/mobile/toast-store'
@@ -256,6 +256,12 @@ export default function TravelComposerForm({
   /** 同行者角色构成（朋友 2 · 家人 1）——聚会/团建这类多角色出行一眼看清 */
   const roleMix = roleMixOf(draft.companions)
 
+  /** 顶栏那一句极短副标题：只报当前进度（目的地 / 天数），不写说明文案 */
+  const headerSub =
+    [draft.location.trim(), rangeInfo.days ? rangeInfo.days + '天' + rangeInfo.nights + '晚' : '']
+      .filter(Boolean)
+      .join(' · ') || '三步就出发'
+
   const handleSubmit = async () => {
     const r = await submit()
     if (!r.ok) return
@@ -277,38 +283,38 @@ export default function TravelComposerForm({
   }
 
   return (
-    <div className="min-h-dvh overflow-x-hidden bg-[var(--m-bg)] text-[var(--m-text)]">
-      {/* 顶栏：返回 + 居中标题。不放多余动作，把注意力留给表单 */}
-      <header
-        className="m-safe-top-8 sticky top-0 z-20 flex items-center gap-2 px-2 pb-2 backdrop-blur-md"
-        style={{ background: 'color-mix(in srgb, var(--m-bg) 86%, transparent)' }}
-      >
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="返回"
-          className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--m-text)] transition active:scale-95"
-        >
-          <Icon icon={ArrowLeft} size="md" />
-        </button>
-        <h1 className="flex-1 text-center text-[17px] font-semibold">新建旅行</h1>
-        <span className="h-11 w-11" aria-hidden="true" />
+    <div className="tn-page">
+      {/* ── 悬浮玻璃返回栏：滚动时仍是这块玻璃，不会突然变成一条白条 ── */}
+      <header className="tn-topbar-wrap">
+        <div className="tn-topbar lg-card">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="返回"
+            className="tn-back lg-chip"
+          >
+            <Icon icon={ArrowLeft} size="sm" />
+          </button>
+          <div className="tn-topbar-copy">
+            <h1 className="tn-topbar-title">新建旅行</h1>
+            <p className="tn-topbar-sub">{headerSub}</p>
+          </div>
+        </div>
       </header>
 
-      <main className="px-4 pb-[calc(176px+env(safe-area-inset-bottom))]">
+      <div className="tn-main">
         <form
           onSubmit={(e) => { e.preventDefault(); void handleSubmit() }}
-          className="space-y-4"
+          className="tn-form"
         >
-          {/* ── ① 去哪 ─────────────────────────────────── */}
-          <section ref={locationRef} className="m2-form-section">
-            <label htmlFor="travel-location" className="text-[13px] font-semibold text-[var(--m-muted)]">
+          {/* ── ① 去哪座城市 ─────────────────────────────── */}
+          <section ref={locationRef} className="tn-card lg-card--float lg-card">
+            <label htmlFor="travel-location" className="tn-eyebrow">
+              <Icon icon={MapPin} size="sm" tone="accent" />
               去哪？
             </label>
-            <div className="relative mt-2">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--m-faint)]">
-                <Icon icon={MapPin} size="sm" />
-              </span>
+            <div className="tn-field">
+              <span className="tn-field-icon"><Icon icon={MapPin} size="sm" /></span>
               <input
                 id="travel-location"
                 ref={locInputRef}
@@ -319,14 +325,14 @@ export default function TravelComposerForm({
                 maxLength={120}
                 autoComplete="off"
                 enterKeyHint="next"
-                className="w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] py-3.5 pl-10 pr-10 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
+                className="tn-input"
               />
               {draft.location && (
                 <button
                   type="button"
                   onClick={() => { patch({ location: '' }); locInputRef.current?.focus() }}
                   aria-label="清空目的地"
-                  className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--m-faint)] active:scale-95"
+                  className="tn-field-clear"
                 >
                   <Icon icon={X} size="sm" />
                 </button>
@@ -335,16 +341,16 @@ export default function TravelComposerForm({
 
             {/* 联想：用既有城市库（与画册 findCityByName 同一份数据） */}
             {locSuggestions.length > 0 && (
-              <ul className="mt-2 overflow-hidden rounded-2xl border border-[var(--m-line)]">
-                {locSuggestions.map((s, i) => (
-                  <li key={s.value}>
+              <ul className="tn-suggest">
+                {locSuggestions.map((s) => (
+                  <li key={s.value} className="tn-suggest-item">
                     <button
                       type="button"
                       onClick={() => { patch({ location: s.value }); setLocFocus(false) }}
-                      className={`flex w-full items-center justify-between px-3.5 py-3 text-left text-[15px] text-[var(--m-text)] active:bg-[var(--m-accent-soft)] ${i > 0 ? 'border-t border-[var(--m-line)]' : ''}`}
+                      className="tn-suggest-btn"
                     >
                       <span>{s.label}</span>
-                      <span className="text-[12px] text-[var(--m-faint)]">{s.nameEn}</span>
+                      <span className="tn-suggest-en">{s.nameEn}</span>
                     </button>
                   </li>
                 ))}
@@ -352,58 +358,63 @@ export default function TravelComposerForm({
             )}
           </section>
 
-          {/* ── ② 什么时候 ─────────────────────────────── */}
-          <section className="m2-form-section">
-            <span className="text-[13px] font-semibold text-[var(--m-muted)]">什么时候？</span>
+          {/* ── ② 什么时候去 ─────────────────────────────── */}
+          <section className="tn-card lg-card--float lg-card">
+            <span className="tn-eyebrow">
+              <Icon icon={CalendarDays} size="sm" tone="accent" />
+              什么时候去
+            </span>
             <button
               type="button"
               onClick={() => setShowPicker(true)}
-              className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3.5 text-left active:scale-[0.99]"
+              className="tn-field tn-field--tap"
             >
-              <span className="text-[var(--m-faint)]"><Icon icon={CalendarDays} size="sm" /></span>
-              <span className="min-w-0 flex-1">
+              <span className="tn-field-icon"><Icon icon={CalendarDays} size="sm" /></span>
+              <span className="tn-date-copy">
                 {compactRange ? (
                   <>
-                    <span className="block text-[16px] tabular-nums text-[var(--m-text)]">{compactRange}</span>
-                    <span className="mt-0.5 block truncate text-[12px] text-[var(--m-muted)]">
-                      {rangeInfo.days != null && `共 ${rangeInfo.days} 天 ${rangeInfo.nights} 晚`}
-                      {subtitle ? ` · ${subtitle}` : ''}
+                    <span className="tn-date-value">{compactRange}</span>
+                    <span className="tn-date-sub">
+                      {rangeInfo.days != null ? '共 ' + rangeInfo.days + ' 天 ' + rangeInfo.nights + ' 晚' : ''}
+                      {subtitle ? ' · ' + subtitle : ''}
                     </span>
                   </>
                 ) : (
-                  <span className="text-[16px] text-[var(--m-faint)]">选择开始与结束日期</span>
+                  <span className="tn-date-empty">选择开始与结束日期</span>
                 )}
               </span>
-              <span className="text-[var(--m-faint)]"><Icon icon={ChevronDown} size="sm" /></span>
+              <Icon icon={ChevronDown} size="sm" className="tn-date-chev" />
             </button>
             {validation.dateError && (
-              <p className="mt-2 text-[12px] text-[var(--m-danger,#d9534f)]">{validation.dateError}</p>
+              <p role="alert" className="tn-note tn-note--danger">{validation.dateError}</p>
             )}
           </section>
 
-          {/* ── ③ 名字（必填，但由前两项自动长出来） ──────── */}
-          <section className="m2-form-section">
-            <label htmlFor="travel-title" className="text-[13px] font-semibold text-[var(--m-muted)]">
+          {/* ── ③ 旅行名字（必填，但由前两项自动长出来） ──────── */}
+          <section className="tn-card lg-card--float lg-card">
+            <label htmlFor="travel-title" className="tn-eyebrow">
+              <Icon icon={Sparkles} size="sm" tone="accent" />
               给这段旅程起个名字
             </label>
-            <input
-              id="travel-title"
-              value={draft.title}
-              onChange={(e) => patch({ title: e.target.value })}
-              placeholder="例如 新疆 6 日"
-              maxLength={60}
-              enterKeyHint="done"
-              className="mt-2 w-full rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3.5 text-[16px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
-            />
+            <div className="tn-field">
+              <input
+                id="travel-title"
+                value={draft.title}
+                onChange={(e) => patch({ title: e.target.value })}
+                placeholder="例如 新疆 6 日"
+                maxLength={60}
+                enterKeyHint="done"
+                className="tn-input"
+              />
+            </div>
             {suggestions.length > 1 && (
-              <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                <span className="text-[12px] text-[var(--m-faint)]">换个说法</span>
+              <div className="tn-chips">
                 {suggestions.slice(1).map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => patch({ title: s })}
-                    className="rounded-full border border-[var(--m-line)] px-3 py-1.5 text-[13px] text-[var(--m-muted)] active:scale-95"
+                    className="tn-chip"
                   >
                     {s}
                   </button>
@@ -412,30 +423,32 @@ export default function TravelComposerForm({
             )}
           </section>
 
-          {/* ── ④ 花销（可选）：只记原始账，分摊留给详情页的「一键计算 AA」 ── */}
-          <section className="m-card overflow-hidden">
+          {/* ── ④ 旅途花销（可选）：只记原始账，分摊留给详情页的「一键计算 AA」 ── */}
+          <section className="tn-card lg-card--float tn-card--panel lg-card">
             <button
               type="button"
               onClick={() => setShowExpenses((v) => !v)}
               aria-expanded={showExpenses}
-              className="flex w-full items-center gap-2 px-4 py-4 text-left"
+              className="tn-panel-head"
             >
-              <span className="text-[13px] font-semibold text-[var(--m-muted)]">旅途花销</span>
-              <span className="text-[12px] text-[var(--m-faint)]">可选</span>
-              {!showExpenses && draftExpenses.length > 0 && (
-                <span className="ml-auto truncate text-[12px] text-[var(--m-accent-strong)]">
-                  ¥{draftExpenseTotal.toFixed(2)} · {draftExpenses.length} 笔
+              <span className="tn-panel-title">旅途花销</span>
+              <span className="tn-opt">可选</span>
+              <span className="tn-panel-tail">
+                {!showExpenses && draftExpenses.length > 0 && (
+                  <span className="tn-panel-summary">
+                    ¥{draftExpenseTotal.toFixed(2)} · {draftExpenses.length} 笔
+                  </span>
+                )}
+                <span className={showExpenses ? 'tn-panel-chev tn-panel-chev--open' : 'tn-panel-chev'}>
+                  <Icon icon={ChevronDown} size="sm" />
                 </span>
-              )}
-              <span className={`ml-auto shrink-0 text-[var(--m-faint)] transition-transform ${showExpenses ? 'rotate-180' : ''}`}>
-                <Icon icon={ChevronDown} size="sm" />
               </span>
             </button>
 
             {showExpenses && (
-              <div className="space-y-3 border-t border-[var(--m-line)] px-4 py-4">
+              <div className="tn-panel-body">
                 {/* 分类：横向滚动，一屏放不下也不挤压 */}
-                <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
+                <div className="tn-cat-row">
                   {EXPENSE_CATEGORIES.map((c) => {
                     const active = expCategory === c
                     return (
@@ -444,11 +457,7 @@ export default function TravelComposerForm({
                         type="button"
                         onClick={() => setExpCategory(c)}
                         aria-pressed={active}
-                        className={`shrink-0 rounded-full border px-3 py-1.5 text-[12px] transition active:scale-95 ${
-                          active
-                            ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]'
-                            : 'border-[var(--m-line)] text-[var(--m-muted)]'
-                        }`}
+                        className={active ? 'tn-chip tn-chip--sm tn-chip--active' : 'tn-chip tn-chip--sm'}
                       >
                         {EXPENSE_LABELS[c]}
                       </button>
@@ -457,36 +466,38 @@ export default function TravelComposerForm({
                 </div>
 
                 {/* 金额 + 备注 */}
-                <div className="flex gap-2">
-                  <div className="relative w-[104px] shrink-0">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[var(--m-faint)]">¥</span>
+                <div className="tn-row">
+                  <div className="tn-field tn-field--amount">
+                    <span className="tn-currency">¥</span>
                     <input
                       value={expAmount}
                       onChange={(e) => setExpAmount(e.target.value)}
                       inputMode="decimal"
                       placeholder="0.00"
                       enterKeyHint="done"
-                      className="w-full rounded-xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] py-2.5 pl-7 pr-2 text-[16px] tabular-nums text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
+                      className="tn-input tn-input--num"
                     />
                   </div>
-                  <input
-                    value={expNote}
-                    onChange={(e) => setExpNote(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key !== 'Enter') return
-                      e.preventDefault()
-                      addDraftExpense()
-                    }}
-                    placeholder="备注，例如 环湖包车"
-                    maxLength={200}
-                    enterKeyHint="done"
-                    className="min-w-0 flex-1 rounded-xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3 py-2.5 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
-                  />
+                  <div className="tn-field tn-field--grow">
+                    <input
+                      value={expNote}
+                      onChange={(e) => setExpNote(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter') return
+                        e.preventDefault()
+                        addDraftExpense()
+                      }}
+                      placeholder="备注，例如 环湖包车"
+                      maxLength={200}
+                      enterKeyHint="done"
+                      className="tn-input"
+                    />
+                  </div>
                 </div>
 
                 {/* 付款人：我 + 同行者快选 */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[12px] text-[var(--m-faint)]">谁付的</span>
+                <div className="tn-inline">
+                  <span className="tn-inline-label">谁付的</span>
                   {payerOptions.map((name) => {
                     const active = expPayer === name
                     return (
@@ -495,11 +506,7 @@ export default function TravelComposerForm({
                         type="button"
                         onClick={() => setExpPayer(name)}
                         aria-pressed={active}
-                        className={`min-h-[30px] rounded-full px-3 text-[12px] font-medium transition active:scale-95 ${
-                          active
-                            ? 'bg-[var(--m-accent)] text-white'
-                            : 'bg-[var(--m-surface-2)] text-[var(--m-muted)]'
-                        }`}
+                        className={active ? 'tn-pill tn-pill--on' : 'tn-pill'}
                       >
                         {name}
                       </button>
@@ -511,7 +518,7 @@ export default function TravelComposerForm({
                   type="button"
                   onClick={addDraftExpense}
                   disabled={!expAmount.trim()}
-                  className="flex h-[42px] w-full items-center justify-center gap-1.5 rounded-xl bg-[var(--m-accent-soft)] text-[14px] font-medium text-[var(--m-accent-strong)] transition active:scale-[0.99] disabled:opacity-40"
+                  className="tn-add"
                 >
                   <Icon icon={Plus} size="sm" />
                   记下这一笔
@@ -519,33 +526,27 @@ export default function TravelComposerForm({
 
                 {draftExpenses.length > 0 && (
                   <>
-                    <ul className="divide-y divide-[var(--m-line)] overflow-hidden rounded-xl bg-[var(--m-surface-2)]">
+                    <ul className="tn-exp-list">
                       {draftExpenses.map((e) => (
-                        <li key={e.id} className="flex items-center gap-2 px-3 py-2.5">
-                          <span className="shrink-0 rounded-md bg-[var(--m-surface-solid)] px-1.5 py-0.5 text-[11px] text-[var(--m-muted)]">
-                            {EXPENSE_LABELS[e.category]}
-                          </span>
-                          <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--m-text)]">
-                            {e.note || EXPENSE_LABELS[e.category]}
-                          </span>
-                          <span className="shrink-0 text-[11px] text-[var(--m-faint)]">{e.payer}</span>
-                          <span className="shrink-0 text-[13px] font-semibold tabular-nums text-[var(--m-text)]">
-                            ¥{e.amount.toFixed(2)}
-                          </span>
+                        <li key={e.id} className="tn-exp-item">
+                          <span className="tn-exp-cat">{EXPENSE_LABELS[e.category]}</span>
+                          <span className="tn-exp-note">{e.note || EXPENSE_LABELS[e.category]}</span>
+                          <span className="tn-exp-payer">{e.payer}</span>
+                          <span className="tn-exp-amt">¥{e.amount.toFixed(2)}</span>
                           <button
                             type="button"
                             onClick={() => removeDraftExpense(e.id)}
                             aria-label="删除这笔花销"
-                            className="shrink-0 p-1 text-[var(--m-faint)] transition active:scale-90"
+                            className="tn-exp-del"
                           >
                             <Icon icon={X} size="sm" />
                           </button>
                         </li>
                       ))}
                     </ul>
-                    <p className="text-right text-[12px] text-[var(--m-muted)]">
+                    <p className="tn-total">
                       共 {draftExpenses.length} 笔 · 合计{' '}
-                      <span className="font-semibold text-[var(--m-text)]">¥{draftExpenseTotal.toFixed(2)}</span>
+                      <span className="tn-total-num">¥{draftExpenseTotal.toFixed(2)}</span>
                     </p>
                   </>
                 )}
@@ -553,30 +554,32 @@ export default function TravelComposerForm({
             )}
           </section>
 
-          {/* ── ⑤ 更多（可选，默认收起） ─────────────────── */}
-          <section className="m-card overflow-hidden">
+          {/* ── ⑤ 更多信息（可选，默认收起） ─────────────────── */}
+          <section className="tn-card lg-card--float tn-card--panel lg-card">
             <button
               type="button"
               onClick={() => setShowMore((v) => !v)}
               aria-expanded={showMore}
-              className="flex w-full items-center gap-2 px-4 py-4 text-left"
+              className="tn-panel-head"
             >
-              <span className="text-[13px] font-semibold text-[var(--m-muted)]">更多</span>
-              <span className="text-[12px] text-[var(--m-faint)]">可选</span>
-              {!showMore && moreSummary && (
-                <span className="ml-auto truncate text-[12px] text-[var(--m-accent-strong)]">{moreSummary}</span>
-              )}
-              <span className={`ml-auto shrink-0 text-[var(--m-faint)] transition-transform ${showMore ? 'rotate-180' : ''}`}>
-                <Icon icon={ChevronDown} size="sm" />
+              <span className="tn-panel-title">更多信息</span>
+              <span className="tn-opt">可选</span>
+              <span className="tn-panel-tail">
+                {!showMore && moreSummary && (
+                  <span className="tn-panel-summary">{moreSummary}</span>
+                )}
+                <span className={showMore ? 'tn-panel-chev tn-panel-chev--open' : 'tn-panel-chev'}>
+                  <Icon icon={ChevronDown} size="sm" />
+                </span>
               </span>
             </button>
 
             {showMore && (
-              <div className="space-y-5 border-t border-[var(--m-line)] px-4 py-4">
-                {/* 类型：2 列网格 + 图标语义 + 一句说明（原先 7 个胶囊挤一行、无说明） */}
+              <div className="tn-panel-body">
+                {/* 类型：2 列网格 + 图标语义 */}
                 <div>
-                  <p className="text-[13px] font-semibold text-[var(--m-muted)]">这次旅行是？</p>
-                  <div className="mt-2.5 grid grid-cols-2 gap-2">
+                  <p className="tn-group-title">这次旅行是？</p>
+                  <div className="tn-grid-2">
                     {TRAVEL_TYPE_OPTIONS.map((t) => {
                       const active = draft.travelType === t.value
                       return (
@@ -588,16 +591,9 @@ export default function TravelComposerForm({
                             patch({ travelType: t.value })
                           }}
                           aria-pressed={active}
-                          className={`flex min-h-[56px] flex-col items-start justify-center rounded-2xl border px-3 py-2 text-left transition active:scale-[0.98] ${
-                            active
-                              ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)]'
-                              : 'border-[var(--m-line)]'
-                          }`}
+                          className={active ? 'tn-choice tn-choice--active' : 'tn-choice'}
                         >
-                          <span className={`text-[14px] font-medium ${active ? 'text-[var(--m-accent-strong)]' : 'text-[var(--m-text)]'}`}>
-                            {t.label}
-                          </span>
-                          <span className="mt-0.5 text-[11px] text-[var(--m-faint)]">{t.hint}</span>
+                          {t.label}
                         </button>
                       )
                     })}
@@ -606,31 +602,33 @@ export default function TravelComposerForm({
 
                 {/* 同行者：单输入框 + 行内追加 + 常用关系快捷 */}
                 <div>
-                  <p className="text-[13px] font-semibold text-[var(--m-muted)]">
+                  <p className="tn-group-title">
                     和谁一起去的？
-                    <span className="ml-1 font-normal text-[var(--m-faint)]">最多 {MAX_COMPANIONS} 人</span>
+                    <span className="tn-group-hint">最多 {MAX_COMPANIONS} 人</span>
                   </p>
-                  <div className="mt-2.5 flex gap-2">
-                    <input
-                      value={companionName}
-                      onChange={(e) => setCompanionName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter') return
-                        e.preventDefault()
-                        addCompanion(companionName, companionRelation)
-                        setCompanionName('')
-                      }}
-                      placeholder="姓名或称呼"
-                      maxLength={40}
-                      enterKeyHint="done"
-                      disabled={atCompanionLimit}
-                      className="min-w-0 flex-1 rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)] disabled:opacity-50"
-                    />
+                  <div className="tn-row tn-mt">
+                    <div className="tn-field tn-field--grow">
+                      <input
+                        value={companionName}
+                        onChange={(e) => setCompanionName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key !== 'Enter') return
+                          e.preventDefault()
+                          addCompanion(companionName, companionRelation)
+                          setCompanionName('')
+                        }}
+                        placeholder="姓名或称呼"
+                        maxLength={40}
+                        enterKeyHint="done"
+                        disabled={atCompanionLimit}
+                        className="tn-input"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => { addCompanion(companionName, companionRelation); setCompanionName('') }}
                       disabled={!companionName.trim() || atCompanionLimit}
-                      className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)] active:scale-95 disabled:opacity-40"
+                      className="tn-addbtn"
                       aria-label="添加同行者"
                     >
                       <Icon icon={Plus} size="sm" />
@@ -638,18 +636,14 @@ export default function TravelComposerForm({
                   </div>
 
                   {/* 常用关系：一键套用，省掉每个人都要现打关系 */}
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="tn-chips tn-mt">
                     {COMMON_RELATIONS.map((r) => (
                       <button
                         key={r}
                         type="button"
                         onClick={() => setCompanionRelation(companionRelation === r ? '' : r)}
                         aria-pressed={companionRelation === r}
-                        className={`rounded-full border px-2.5 py-1 text-[12px] transition ${
-                          companionRelation === r
-                            ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]'
-                            : 'border-[var(--m-line)] text-[var(--m-faint)]'
-                        }`}
+                        className={companionRelation === r ? 'tn-chip tn-chip--sm tn-chip--active' : 'tn-chip tn-chip--sm'}
                       >
                         {r}
                       </button>
@@ -663,26 +657,23 @@ export default function TravelComposerForm({
                         光看"5 位同行"不知道都是谁，这里按关系汇总。
                       */}
                       {roleMix.length > 0 && (
-                        <p className="mt-2.5 text-[12px] text-[var(--m-accent-strong)]">
-                          {roleMix.map((r) => `${r.relation} ${r.count}`).join(' · ')}
+                        <p className="tn-role tn-mt">
+                          {roleMix.map((r) => r.relation + ' ' + r.count).join(' · ')}
                           {roleMix.length > 1 && (
-                            <span className="ml-1.5 text-[var(--m-faint)]">（多角色同行）</span>
+                            <span className="tn-role-more">（多角色同行）</span>
                           )}
                         </p>
                       )}
-                      <div className="mt-2 flex flex-wrap gap-1.5">
+                      <div className="tn-chips tn-mt">
                         {draft.companions.map((c, i) => (
-                          <span
-                            key={`${c.name}-${i}`}
-                            className="m-enter inline-flex items-center gap-1 rounded-full border border-[var(--m-line)] px-3 py-1.5 text-[13px] text-[var(--m-text)]"
-                          >
-                            {c.name}
-                            {c.relation ? <span className="text-[var(--m-faint)]">· {c.relation}</span> : null}
+                          <span key={c.name + '-' + i} className="tn-chip tn-chip--ent m-enter">
+                            <span className="tn-trunc">{c.name}</span>
+                            {c.relation ? <span className="tn-group-hint">· {c.relation}</span> : null}
                             <button
                               type="button"
                               onClick={() => removeCompanion(i)}
-                              aria-label={`移除 ${c.name}`}
-                              className="m-pressable ml-0.5 rounded-full p-0.5 text-[var(--m-faint)]"
+                              aria-label={'移除 ' + c.name}
+                              className="tn-chip-x"
                             >
                               <Icon icon={X} size="sm" />
                             </button>
@@ -695,23 +686,25 @@ export default function TravelComposerForm({
 
                 {/* 描述 */}
                 <div>
-                  <label htmlFor="travel-desc" className="text-[13px] font-semibold text-[var(--m-muted)]">一句话描述</label>
-                  <textarea
-                    id="travel-desc"
-                    value={draft.description}
-                    onChange={(e) => patch({ description: e.target.value })}
-                    rows={3}
-                    placeholder="想记住的理由（可选）"
-                    className="mt-2.5 w-full resize-none rounded-2xl border border-[var(--m-line)] bg-[var(--m-surface-solid)] px-3.5 py-3 text-[15px] text-[var(--m-text)] outline-none placeholder:text-[var(--m-faint)] focus-visible:border-[var(--m-accent)]"
-                  />
+                  <label htmlFor="travel-desc" className="tn-group-title">一句话描述</label>
+                  <div className="tn-field tn-field--area tn-mt">
+                    <textarea
+                      id="travel-desc"
+                      value={draft.description}
+                      onChange={(e) => patch({ description: e.target.value })}
+                      rows={3}
+                      placeholder="想记住的理由（可选）"
+                      className="tn-input tn-input--area"
+                    />
+                  </div>
                 </div>
 
                 {/* 可见性与归属：三档 + 空间选择。
                     原先只有「仅自己 / 公开」两个选项、且只写 isPublic —— 而 visibility
                     一直吃 schema 默认的 SPACE，用户勾「仅自己」实际是"空间成员可见"。 */}
                 <div>
-                  <p className="text-[13px] font-semibold text-[var(--m-muted)]">谁能看到</p>
-                  <div className="mt-2.5 flex gap-2">
+                  <p className="tn-group-title">谁能看到</p>
+                  <div className="tn-row-3">
                     {[
                       { v: 'PRIVATE' as const, label: '仅自己', hint: '默认' },
                       { v: 'SPACE' as const, label: '空间可见', hint: '空间成员' },
@@ -724,59 +717,42 @@ export default function TravelComposerForm({
                           type="button"
                           onClick={() => patch({ visibility: o.v })}
                           aria-pressed={active}
-                          className={`flex-1 rounded-2xl border px-3 py-2.5 text-left transition active:scale-[0.98] ${
-                            active ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)]' : 'border-[var(--m-line)]'
-                          }`}
+                          className={active ? 'tn-choice tn-choice--col tn-choice--active' : 'tn-choice tn-choice--col'}
                         >
-                          <span className={`block text-[14px] font-medium ${active ? 'text-[var(--m-accent-strong)]' : 'text-[var(--m-text)]'}`}>
-                            {o.label}
-                          </span>
-                          <span className="mt-0.5 block text-[11px] text-[var(--m-faint)]">{o.hint}</span>
+                          <span>{o.label}</span>
+                          <span className="tn-choice-hint">{o.hint}</span>
                         </button>
                       )
                     })}
                   </div>
 
                   {/* 一键加入某个空间（可选）：建好就在空间里，成员直接能看能改 */}
-                  <div className="mt-3">
-                    <p className="text-[13px] font-semibold text-[var(--m-muted)]">放到哪个空间</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => patch({ spaceId: null })}
-                        aria-pressed={draft.spaceId === null}
-                        className={`rounded-full border px-3.5 py-2 text-[13px] transition active:scale-[0.97] ${
-                          draft.spaceId === null
-                            ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]'
-                            : 'border-[var(--m-line)] text-[var(--m-muted)]'
-                        }`}
-                      >
-                        不放进空间
-                      </button>
-                      {mySpaces.map((s) => {
-                        const active = draft.spaceId === s.id
-                        return (
-                          <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => patch({ spaceId: s.id, visibility: 'SPACE' })}
-                            aria-pressed={active}
-                            className={`max-w-[12rem] truncate rounded-full border px-3.5 py-2 text-[13px] transition active:scale-[0.97] ${
-                              active
-                                ? 'border-[var(--m-accent)] bg-[var(--m-accent-soft)] text-[var(--m-accent-strong)]'
-                                : 'border-[var(--m-line)] text-[var(--m-muted)]'
-                            }`}
-                          >
-                            {s.name}
-                          </button>
-                        )
-                      })}
-                      {mySpaces.length === 0 && !spacesLoading && (
-                        <span className="py-2 text-[12px] text-[var(--m-faint)]">
-                          还没有共享空间
-                        </span>
-                      )}
-                    </div>
+                  <div className="tn-chips tn-mt">
+                    <button
+                      type="button"
+                      onClick={() => patch({ spaceId: null })}
+                      aria-pressed={draft.spaceId === null}
+                      className={draft.spaceId === null ? 'tn-chip tn-chip--sm tn-chip--active' : 'tn-chip tn-chip--sm'}
+                    >
+                      不放进空间
+                    </button>
+                    {mySpaces.map((s) => {
+                      const active = draft.spaceId === s.id
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => patch({ spaceId: s.id, visibility: 'SPACE' })}
+                          aria-pressed={active}
+                          className={active ? 'tn-chip tn-chip--sm tn-chip--active' : 'tn-chip tn-chip--sm'}
+                        >
+                          <span className="tn-trunc">{s.name}</span>
+                        </button>
+                      )
+                    })}
+                    {mySpaces.length === 0 && !spacesLoading && (
+                      <span className="tn-group-hint">还没有共享空间</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -784,37 +760,36 @@ export default function TravelComposerForm({
           </section>
 
           {error && (
-            <p role="alert" className="px-1 text-[13px] text-[var(--m-danger,#d9534f)]">{error}</p>
+            <p role="alert" className="tn-form-error">{error}</p>
           )}
 
-          {/* ── 主 CTA：固定在底部导航之上，随滚动收起 / 展开 ───────────────
-                位置 = 底部 Tab 高度 + 系统安全区 +（软键盘弹起时的占用高度） */}
+          {/* ── 主 CTA：悬浮玻璃条 + 玻璃主按钮 ─────────────────
+                位置 = 底部 Tab 高度 + 系统安全区 +（软键盘弹起时的占用高度）+ 让开中央 FAB */}
           <div
-            className={`fixed inset-x-0 z-30 px-4 pb-3 pt-3 transition-[transform,opacity] duration-200 ease-out ${
-              ctaHidden ? 'pointer-events-none translate-y-2 scale-95 opacity-0' : 'translate-y-0 scale-100 opacity-100'
-            }`}
+            className={ctaHidden ? 'tn-cta tn-cta--hidden' : 'tn-cta'}
             style={{
-              background: 'linear-gradient(to top, var(--m-bg) 72%, transparent)',
-              bottom: `calc(var(--m-tab-h) + env(safe-area-inset-bottom) + ${keyboardInset}px)`,
+              bottom: 'calc(var(--m-tab-h) + env(safe-area-inset-bottom) + ' + keyboardInset + 'px + 20px)',
             }}
           >
-            {!validation.canSubmit && validation.blocker && (
-              <p className="mb-2 text-center text-[12px] text-[var(--m-faint)]">{validation.blocker}</p>
-            )}
-            {/* v4 M5 接入：页面主 CTA 收敛到统一 Button（lg=52px，与原 h-[52px] 等高） */}
-            <Button
-              type="submit"
-              block
-              size="lg"
-              icon={succeeded ? Check : undefined}
-              loading={submitting}
-              disabled={succeeded || !validation.canSubmit}
-            >
-              {succeeded ? '已创建' : submitting ? '正在创建…' : '开始记录'}
-            </Button>
+            <div className="tn-cta-dock">
+              {!validation.canSubmit && validation.blocker && (
+                <p className="tn-cta-blocker">{validation.blocker}</p>
+              )}
+              <Button
+                type="submit"
+                block
+                size="lg"
+                className="lg-action tn-cta-btn"
+                icon={succeeded ? Check : undefined}
+                loading={submitting}
+                disabled={succeeded || !validation.canSubmit}
+              >
+                {succeeded ? '已创建' : submitting ? '正在创建…' : '开始记录'}
+              </Button>
+            </div>
           </div>
         </form>
-      </main>
+      </div>
 
       {/* 保持挂载（用 open 控制）：BottomSheet 的退场弹簧动画需要组件在场 */}
       <DateRangePicker

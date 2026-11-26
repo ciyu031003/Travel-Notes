@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '空间支持上传自定义背景图：主图铺满空间详情 Hero、方形缩略图显示在「我的」页空间图标、列表卡片同样生效；可更换/移除，移除回到类型渐变',
+    changelog: process.env.APP_CHANGELOG || '真实液态玻璃：新建旅行页整体重构（晚霞云朵背景 + 3D 悬浮玻璃卡 + 玻璃输入行 + 悬浮 CTA），底部 Tab 栏改为悬浮玻璃胶囊（云带做 backdrop、选中玻璃胶囊、+ 完整浮起）',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

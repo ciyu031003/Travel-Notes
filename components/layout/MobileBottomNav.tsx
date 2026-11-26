@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, type ComponentType } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Route, Compass, User, Plus } from 'lucide-react'
+import { NAV_ICON, Plus } from '@/lib/mobile/icon-system'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { hapticLight } from '@/lib/mobile/haptics'
@@ -16,7 +16,8 @@ import { Icon } from '@/components/mobile/Icon'
  * 结构对齐最新 Demo：四个主导航 + 中央「记录」胶囊 FAB（5 槽等分）。
  *  · 中央 FAB 复用既有 openNewTravel（与列表页右上角「新建」同一逻辑），
  *    不新增任何业务能力，只是把最高频入口放到拇指热区。
- *  · 激活态 = 图标 + 文字同时转为樱粉主色，不使用放大/浮起等干扰性动效。
+ *  · 激活态 = 玻璃胶囊指示器（.lg-chip 语言，layoutId 在四槽之间滑过去）
+ *    + 图标/文字同时转为樱粉主色；不使用放大/浮起等干扰性动效。
  *  · 44×44 触控下限、aria-current、aria-label 全部保留。
  *
  * 切页体感（移动端性能专项 D，2026-11-21）
@@ -60,11 +61,18 @@ function JourneyGlyph({ className }: { className?: string }) {
   )
 }
 
-const TABS = [
-  { href: '/', label: '首页', icon: Home },
-  { href: '/travel', label: '旅程', icon: Route, glyph: JourneyGlyph },
-  { href: '/circle', label: '旅行圈', icon: Compass },
-  { href: '/me', label: '我的', icon: User },
+/**
+ * 图标统一走 lib/mobile/icon-system 的语义表（NAV_ICON），不在组件里
+ * `import { Home } from 'lucide-react'` —— 那是 token 门禁第 4 条会拦的写法，
+ * 也保证同屏图标只有一个事实源。
+ */
+type NavIcon = (typeof NAV_ICON)[string]
+
+const TABS: { href: string; label: string; icon: NavIcon; glyph?: ComponentType<{ className?: string }> }[] = [
+  { href: '/', label: '首页', icon: NAV_ICON.home },
+  { href: '/travel', label: '旅程', icon: NAV_ICON.travel, glyph: JourneyGlyph },
+  { href: '/circle', label: '旅行圈', icon: NAV_ICON.circle },
+  { href: '/me', label: '我的', icon: NAV_ICON.me },
 ]
 
 /** 空闲调度：requestIdleCallback 不可用时退化为 setTimeout（Safari/WKWebView 无 rIC） */
@@ -144,20 +152,32 @@ export default function MobileBottomNav() {
   return (
     <nav className="m2-tabbar m2-tabbar--glass md:hidden" aria-label="移动端主导航">
       {/*
-        液态玻璃底（2026-11-24）：shadcn 注册表 @aceternity/liquid-glass —— 底部导航是
-        全 App 最高频的"背景出现的地方"，玻璃折射让页面内容从导航下面滑过时有厚度感。
-        玻璃层 absolute inset-0 且 aria-hidden，内容层（.m2-tab-grid）由 CSS 抬到 z-index:1，
-        点击/焦点仍落在 <Link> 上，不改变任何导航语义。
-      */}
-      {/*
-        2026-11-24 性能取舍（4× 降速实测，滚动一屏的 rAF 帧间隔）：
+        液态玻璃底（2026-11-27 重做，G2）：从「白色底板 + 磨砂」改成**悬浮玻璃胶囊 + 云朵背景**。
+        ---------------------------------------------------------------------------
+        三层结构（纯装饰层全部 aria-hidden，点击/焦点仍落在 <Link> 上，导航语义零改动）：
+          1. .m2-tabbar-sky         云带 + 晚霞色 —— DOM 先渲染、z-index 更低，是玻璃的"背景内容"；
+          2. .m2-tabbar-glass-layer 真实玻璃（blur(26px) saturate(180%) + tint + rim + 内高光 + 大软影）；
+          3. .m2-tab-grid           图标/文字/中央「+」，z-index 盖在玻璃之上。
+        玻璃层会把它下面已经画好的像素（这层云带 + 从胶囊下滚过的页面内容）再 blur 一次，
+        所以看到的是"云在玻璃后面流"，而不是一块半透明色块。
+        云带为什么放进 nav 里：nav 是 fixed 浮在页面之上的，只有把云带画在玻璃层**下面**，
+        它的像素才会进入玻璃的 backdrop；放在 page 上会被 fixed 层挡住、采不到。
+
+        性能取舍（2026-11-24 4× 降速实测的 rAF 帧间隔，口径沿用）：
           · LiquidGlass 的 SVG 折射（backdrop-filter: url(#…)）：平均 47ms / p95 192ms —— 太大
-          · 磨砂 blur(20px)：平均 19.5ms / p95 29ms —— 与改造前一致，可接受
-        底部导航是**常驻 fixed** 元素，它的 backdrop-filter 每帧都要重新采样滚动内容，
-        所以这里用"磨砂玻璃"（blur + 半透明底 + 顶部高光），而把真折射留给
-        分段控件 / 相册模式切换这类**小块、随内容滚动**的表面（见 components/ui/liquid-glass）。
+          · 磨砂 blur：平均 19.5ms / p95 29ms —— 与改造前一致，可接受
+        底部导航是**常驻 fixed** 元素，backdrop-filter 每帧都要重采样滚动内容，
+        所以整个底部栏只让玻璃层做**一次** blur(26px)（nav 自身已无 backdrop-filter），
+        真折射留给分段控件这类小块表面（见 components/ui/liquid-glass）。
+        低端机（html.low-end）与 prefers-reduced-transparency 的降级在 app/tabbar-glass.css。
       */}
-      <div aria-hidden="true" className="m2-tabbar-glass-layer absolute inset-0" />
+      {/* 1. 云带 + 晚霞：玻璃背后的"内容"，玻璃 blur 的就是它 */}
+      <div aria-hidden="true" className="m2-tabbar-sky">
+        <span className="m2-tabbar-cloud lg-cloud-band" />
+      </div>
+      {/* 2. 玻璃：全 App 唯一带 backdrop-filter 的底部表面 */}
+      <div aria-hidden="true" className="m2-tabbar-glass-layer" />
+      {/* 3. 内容层：链接、激活胶囊、中央「+」 */}
       <div className="m2-tab-grid">
         {TABS.slice(0, 2).map((item) => (
           <TabItem key={item.href} item={item} active={isActive(item.href)} onIntent={prefetch} />
@@ -188,7 +208,7 @@ function TabItem({
   active,
   onIntent,
 }: {
-  item: { href: string; label: string; icon: typeof Home; glyph?: ComponentType<{ className?: string }> }
+  item: { href: string; label: string; icon: NavIcon; glyph?: ComponentType<{ className?: string }> }
   active: boolean
   onIntent: (href: string) => void
 }) {

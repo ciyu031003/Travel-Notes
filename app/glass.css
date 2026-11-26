@@ -1,0 +1,180 @@
+/* ==========================================================================
+   Liquid Glass 语言（2026-11-27）
+   --------------------------------------------------------------------------
+   用户诉求：新建旅行页与底部 Tab 栏不要再是"一块白底板"，要真实的液态玻璃：
+   背景是模糊的晚霞 / 云朵，玻璃只是把背景"磨"一下，而不是把背景盖住。
+
+   这一层只提供**共用原语**，具体页面各自扩展（travel-new.css / mobile.css）：
+     .lg-scene        页面级晚霞云朵背景（含两团模糊云、颗粒噪点）
+     .lg-card         玻璃卡片（真实折射感：fill + rim + 内高光 + 外投影）
+     .lg-card--float  3D 悬浮版（轻微透视倾斜 + 极慢浮动，reduced-motion 停）
+     .lg-chip         小玻璃胶囊（标签/统计）
+     .lg-action       玻璃主按钮
+     .lg-cloud-band   给 Tab 栏用的云带（模糊云朵，被玻璃再 blur 一次）
+
+   颜色全部走 token，亮/暗两套；组件里不写裸色。
+   ========================================================================== */
+
+:root {
+  /* 玻璃填充（上亮下暗的双层渐变，模拟真实玻璃的折射梯度） */
+  --lg-tint-a: rgba(255, 252, 249, 0.66);
+  --lg-tint-b: rgba(255, 241, 246, 0.34);
+  --lg-tint-deep: rgba(255, 255, 255, 0.22);
+  /* 边缘：外圈亮线 + 内圈白高光，是"厚度"的来源 */
+  --lg-rim: rgba(255, 255, 255, 0.72);
+  --lg-edge: rgba(196, 168, 180, 0.34);
+  --lg-sheen: rgba(255, 255, 255, 0.55);
+  /* 投影：近距离软影 + 远距离大影，让玻璃"浮"起来 */
+  --lg-shadow-near: 0 2px 6px rgba(122, 84, 98, 0.10);
+  --lg-shadow-far: 0 24px 48px -20px rgba(122, 84, 98, 0.34);
+  --lg-inner: inset 0 1px 0 rgba(255, 255, 255, 0.92), inset 0 -1px 0 rgba(255, 255, 255, 0.24);
+  /* 晚霞底色 */
+  --lg-sunset-1: rgba(255, 209, 176, 0.92);
+  --lg-sunset-2: rgba(255, 184, 205, 0.86);
+  --lg-sunset-3: rgba(196, 189, 255, 0.72);
+  --lg-sunset-base-1: #fff8f2;
+  --lg-sunset-base-2: #fdeef4;
+  --lg-sunset-base-3: #f5eefb;
+  --lg-cloud: rgba(255, 255, 255, 0.85);
+}
+
+html.dark {
+  --lg-tint-a: rgba(43, 33, 41, 0.62);
+  --lg-tint-b: rgba(30, 23, 32, 0.42);
+  --lg-tint-deep: rgba(255, 255, 255, 0.05);
+  --lg-rim: rgba(255, 255, 255, 0.18);
+  --lg-edge: rgba(255, 255, 255, 0.10);
+  --lg-sheen: rgba(255, 255, 255, 0.16);
+  --lg-shadow-near: 0 2px 6px rgba(0, 0, 0, 0.35);
+  --lg-shadow-far: 0 24px 48px -20px rgba(0, 0, 0, 0.65);
+  --lg-inner: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  --lg-sunset-1: rgba(74, 44, 52, 0.85);
+  --lg-sunset-2: rgba(58, 38, 58, 0.85);
+  --lg-sunset-3: rgba(40, 36, 66, 0.9);
+  --lg-sunset-base-1: #1b1418;
+  --lg-sunset-base-2: #171219;
+  --lg-sunset-base-3: #14121c;
+  --lg-cloud: rgba(120, 108, 128, 0.35);
+}
+
+/* ── 页面级晚霞 + 云朵背景 ───────────────────────────────────────────────── */
+.lg-scene {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--lg-sunset-base-2);
+  background-image:
+    radial-gradient(120% 78% at 12% -6%, var(--lg-sunset-1) 0%, transparent 58%),
+    radial-gradient(96% 68% at 92% 2%, var(--lg-sunset-2) 0%, transparent 62%),
+    radial-gradient(130% 92% at 50% 104%, var(--lg-sunset-3) 0%, transparent 66%),
+    linear-gradient(178deg, var(--lg-sunset-base-1) 0%, var(--lg-sunset-base-2) 46%, var(--lg-sunset-base-3) 100%);
+}
+
+/* 云：两团被强模糊的白色椭圆 + 一层极细噪点，像"被光打透的云" */
+.lg-clouds {
+  position: absolute;
+  inset: -12% -8%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(38% 26% at 22% 24%, var(--lg-cloud) 0%, transparent 62%),
+    radial-gradient(30% 20% at 68% 14%, var(--lg-cloud) 0%, transparent 64%),
+    radial-gradient(46% 30% at 82% 46%, var(--lg-cloud) 0%, transparent 66%),
+    radial-gradient(34% 22% at 36% 66%, var(--lg-cloud) 0%, transparent 68%);
+  filter: blur(26px) saturate(120%);
+  opacity: 0.85;
+}
+.lg-clouds--deep {
+  filter: blur(52px) saturate(130%);
+  opacity: 0.55;
+}
+/* 云带：给 Tab 栏/底部玻璃用的一条水平云带（模糊后当作玻璃的"背景内容"） */
+.lg-cloud-band {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(26% 120% at 18% 120%, var(--lg-cloud) 0%, transparent 70%),
+    radial-gradient(30% 140% at 52% 130%, var(--lg-cloud) 0%, transparent 72%),
+    radial-gradient(24% 120% at 86% 120%, var(--lg-cloud) 0%, transparent 70%);
+  filter: blur(16px) saturate(130%);
+  opacity: 0.9;
+}
+
+/* ── 玻璃卡片 ───────────────────────────────────────────────────────────── */
+.lg-card {
+  position: relative;
+  border-radius: 26px;
+  background-image: linear-gradient(158deg, var(--lg-tint-a) 0%, var(--lg-tint-b) 62%, var(--lg-tint-deep) 100%);
+  border: 1px solid var(--lg-rim);
+  box-shadow: var(--lg-shadow-near), var(--lg-shadow-far), var(--lg-inner);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+/* 顶部一道斜向镜面高光：玻璃"有厚度"的关键，别用纯白填充替代 */
+.lg-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: linear-gradient(150deg, var(--lg-sheen) 0%, transparent 26%, transparent 74%, var(--lg-sheen) 100%);
+  opacity: 0.6;
+  mix-blend-mode: soft-light;
+}
+.lg-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 3D 悬浮：极轻的透视倾斜 + 5s 缓慢起伏，克制不晕 */
+.lg-card--float {
+  transform: perspective(1400px) rotateX(0.9deg) translateZ(0);
+  transform-style: preserve-3d;
+  animation: lg-float 5.6s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes lg-float {
+  from { transform: perspective(1400px) rotateX(0.9deg) translateY(0); }
+  to   { transform: perspective(1400px) rotateX(0.2deg) translateY(-4px); }
+}
+
+/* 小玻璃胶囊 */
+.lg-chip {
+  border-radius: 999px;
+  background-image: linear-gradient(160deg, var(--lg-tint-a) 0%, var(--lg-tint-b) 100%);
+  border: 1px solid var(--lg-rim);
+  box-shadow: var(--lg-shadow-near), var(--lg-inner);
+  backdrop-filter: blur(14px) saturate(170%);
+}
+
+/* 玻璃主按钮：渐变玻璃底 + 高光 + 内阴影，不用纯色块 */
+.lg-action {
+  position: relative;
+  border-radius: 999px;
+  color: var(--ui-social-on-accent, #fff);
+  background-image: linear-gradient(160deg, color-mix(in srgb, var(--m-accent) 88%, white) 0%, var(--m-accent-strong) 100%);
+  border: 1px solid color-mix(in srgb, var(--m-accent) 60%, white);
+  box-shadow: 0 14px 30px -14px color-mix(in srgb, var(--m-accent-strong) 70%, transparent), var(--lg-inner);
+  backdrop-filter: blur(10px) saturate(160%);
+}
+.lg-action::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, transparent 42%);
+  mix-blend-mode: soft-light;
+}
+
+/* 无障碍 / 低端机：减少透明时退化成不透明玻璃（保留取景，不下滑到纯白） */
+@media (prefers-reduced-transparency: reduce) {
+  .lg-card,
+  .lg-chip {
+    backdrop-filter: none;
+    background-image: none;
+    background-color: var(--m-surface-solid);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg-card--float { animation: none; transform: none; }
+}

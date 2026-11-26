@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import TravelComposerForm from '@/components/travel/TravelComposerForm'
 import { travelDetailHref } from '@/lib/routes'
 import { invalidateTravelListSnapshot } from '@/hooks/use-travel-list'
+import './travel-new.css'
 
 /**
  * 移动端新建旅行专用页（独立全屏页面，非弹窗）。
@@ -17,21 +18,35 @@ import { invalidateTravelListSnapshot } from '@/hooks/use-travel-list'
  * 四个 HTML，**没有** `/travel/<slug>`。此前这里硬编码拼路径，导致真机
  * 「开始记录」之后落在一个导出里不存在的地址 —— 用户反馈的
  * 「新建完以后没有后续动作、也进不去」的直接根因之一。
+ *
+ * 视觉（2026-11-27）：整页背景不再是白底板，而是**页面级晚霞云朵**——
+ * 两层模糊云 + 颗粒噪点固定在视口后面，上面所有玻璃卡片只是把背景「磨」一下
+ * （背景层见 app/glass.css 的 .lg-scene / .lg-clouds，本页的排版见 travel-new.css）。
+ * 背景层必须留在页面内容之外（fixed、pointer-events:none），这样滚动时云留在原地，
+ * 玻璃才有东西可以折射。
  */
 export default function TravelNewPage() {
   const router = useRouter()
 
   return (
-    <TravelComposerForm
-      onBack={() => router.replace('/travel')}
-      onCreated={({ slug }) => {
-        // 列表快照必须失效：否则「新建 → 进详情 → 返回列表」会命中旧快照，
-        // 用户看不到刚建的那本（快照见 hooks/use-travel-list.ts）。
-        invalidateTravelListSnapshot()
-        // 本地壳离线新建时也返回本地 slug：详情页会走本地兜底渲染，
-        // 不再因为"云端还没有这本旅行"而显示「旅行不存在」。
-        router.replace(slug ? travelDetailHref(slug) : '/travel')
-      }}
-    />
+    <div className="tn-shell">
+      {/* 背景：晚霞 + 两团云。fixed 铺满视口，滚动时不动；纯装饰，读屏忽略 */}
+      <div className="tn-scene lg-scene" aria-hidden="true">
+        <div className="lg-clouds" />
+        <div className="lg-clouds lg-clouds--deep" />
+      </div>
+
+      <TravelComposerForm
+        onBack={() => router.replace('/travel')}
+        onCreated={({ slug }) => {
+          // 列表快照必须失效：否则「新建 → 进详情 → 返回列表」会命中旧快照，
+          // 用户看不到刚建的那本（快照见 hooks/use-travel-list.ts）。
+          invalidateTravelListSnapshot()
+          // 本地壳离线新建时也返回本地 slug：详情页会走本地兜底渲染，
+          // 不再因为"云端还没有这本旅行"而显示「旅行不存在」。
+          router.replace(slug ? travelDetailHref(slug) : '/travel')
+        }}
+      />
+    </div>
   )
 }

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import './tokens.css';
 @import './mobile.css';
+@import './glass.css';
 @import './mobile-v6.css';
 @import './web-v4.css';
 @import './ticket-art.css';
