@@ -60,7 +60,6 @@ export default function AppUpdatePrompt() {
               style={{ width: `${Math.max(percent, 2)}%` }}
             />
           </div>
-          <p className="mt-2 text-[12px] text-[var(--m-faint)]">下载完成后会自动打开安装界面</p>
         </div>
       )}
 
@@ -69,9 +68,6 @@ export default function AppUpdatePrompt() {
           <p className="flex items-center gap-2 text-[14px] font-medium text-[var(--m-accent-strong)]">
             <Icon icon={Settings2} size="sm" />
             需要先允许安装应用
-          </p>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--m-accent-strong)]">
-            安卓要求为「甜途」单独开启「安装未知应用」。点下面的按钮去开启，返回后会自动继续下载。
           </p>
         </div>
       )}

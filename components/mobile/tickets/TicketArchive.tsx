@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Info, Plane, SlidersHorizontal, Sparkles, Ticket } from 'lucide-react'
+import { ArrowLeft, Plane, SlidersHorizontal, Ticket } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { Loader } from '@/components/mobile/Loader'
 import { FlightTicket, TrainTicket } from '@/components/mobile/ticket'
@@ -367,12 +367,6 @@ export default function TicketArchive() {
           </p>
         )}
 
-        {tickets.length > 0 && (
-          <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-4 text-[var(--m-faint)]">
-            <Icon icon={Info} size="sm" className="mt-px shrink-0" />
-            <span>可调整票面：改完只影响展示（票面是纪念卡，不改旅程本身）</span>
-          </p>
-        )}
       </header>
 
       <main className="m2-gutter pb-10">
@@ -391,9 +385,6 @@ export default function TicketArchive() {
               <Icon icon={Ticket} size="lg" />
             </span>
             <p className="mt-3 text-[15px] font-bold text-[var(--m-text)]">还没有票据</p>
-            <p className="mt-1 text-[11px] leading-5 text-[var(--m-muted)]">
-              完成并归档一段旅程后，系统会自动为你生成机票 / 高铁票 / 火车票。
-            </p>
             <Link href="/travel/new" className="m-btn m-btn-primary m-btn-sm mt-5 inline-flex">
               记录一段旅程
             </Link>
@@ -448,10 +439,6 @@ export default function TicketArchive() {
               </section>
             ))}
 
-            <p className="flex items-center justify-center gap-1.5 pt-2 text-[11px] text-[var(--m-faint)]">
-              <Icon icon={Sparkles} size="sm" />
-              每完成一段旅程，票据会自动归档到这里
-            </p>
           </div>
         )}
       </main>

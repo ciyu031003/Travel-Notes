@@ -22,11 +22,11 @@ const INPUT_DISABLED_CLASS =
 const HINT_CLASS = 'mt-1 text-xs text-warm-500 dark:text-warm-400'
 
 /** 每个 Tab 统一的标题 + 说明 */
-export function FormSection({ title, description }: { title: string; description: string }) {
+export function FormSection({ title, description }: { title: string; description?: string }) {
   return (
     <div>
       <h3 className="text-base font-semibold text-warm-900 dark:text-white mb-1">{title}</h3>
-      <p className="text-sm text-warm-500 dark:text-warm-400">{description}</p>
+      {description && <p className="text-sm text-warm-500 dark:text-warm-400">{description}</p>}
     </div>
   )
 }

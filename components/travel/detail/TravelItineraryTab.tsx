@@ -87,7 +87,6 @@ export default function TravelItineraryTab({
     return (
       <div className="px-4 py-10 text-center">
         <p className="text-sm text-[var(--m-muted)]">还没有可安排的日期</p>
-        <p className="mt-1 text-xs text-[var(--m-faint)]">补一个日期，就能按天安排行程</p>
         <Button className="mt-4" icon={Plus} onClick={() => setAddingDay(true)}>
           添加一天
         </Button>

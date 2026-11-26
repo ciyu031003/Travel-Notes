@@ -196,9 +196,6 @@ export default function TravelTimeline({ travelId }: { travelId: number }) {
       <section className="mt-14" aria-label="按天回顾">
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-travel-line/70 py-10 text-center">
           <p className="text-sm text-travel-ink/55">还没有分天记录</p>
-          <p className="max-w-xs text-xs text-travel-ink/40">
-            直接记一笔就会自动开第一天；左上角「编辑信息」里的日期区间能决定一共几天。
-          </p>
           <button
             type="button"
             onClick={() => setComposingDay({ id: null, label: '第一天', date: null })}

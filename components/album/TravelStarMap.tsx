@@ -457,11 +457,6 @@ export default function TravelStarMap({ cities, stats, className, onSelectCity }
           className="block h-full w-full touch-none outline-none focus-visible:ring-1 focus-visible:ring-album-accent/40"
         />
 
-        {/* 手势提示 */}
-        <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] tracking-[0.2em] text-album-text3">
-          双指缩放 · 拖拽平移 · 双击复位
-        </div>
-
         {/* 选中城市信息卡（点击进入该城市相册档案） */}
         {selected && (
           <div className="absolute z-10 -translate-x-1/2" style={{ left: selected.x, top: selected.y }}>

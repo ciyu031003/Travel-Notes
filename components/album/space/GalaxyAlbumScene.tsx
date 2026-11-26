@@ -232,9 +232,6 @@ export default function GalaxyAlbumScene({
                     </button>
                   ))}
                 </div>
-                <p className="mt-2.5 text-xs text-album-text2 text-center">
-                  点击照片开启该照片专属的星河留言
-                </p>
               </GlassPanel>
             </div>
           )}

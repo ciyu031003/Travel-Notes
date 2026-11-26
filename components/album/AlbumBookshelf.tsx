@@ -90,11 +90,6 @@ export default function AlbumBookshelf({
           )}
         </div>
 
-        <div className="p-3 border-t border-pixel-ink bg-pixel-panel text-xs text-album-warm text-center leading-relaxed">
-          每一本相册收录一座城市的回忆，
-          <br />
-          点击照片即可在书中留言
-        </div>
       </div>
     </aside>
   )

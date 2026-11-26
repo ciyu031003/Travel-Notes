@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Bell,
@@ -405,9 +404,6 @@ export default function MeSettingsPage() {
               退出登录
             </button>
 
-            <p className="mt-4 text-center text-[11px] text-[var(--ui-social-muted)]">
-              想改头像与档案头图？回<Link href="/me" className="mx-1 underline underline-offset-2">我的</Link>页直接点即可
-            </p>
           </>
         )}
       </div>

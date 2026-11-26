@@ -261,9 +261,7 @@ export default function TravelExpenseTab({
                 : `已超预算 ¥${formatMoney(Math.abs(remaining ?? 0))}`}
             </p>
           </>
-        ) : (
-          <p className="mt-2 text-[12px] text-[var(--m-faint)]">设一个预算，就能看到「还能花多少」</p>
-        )}
+        ) : null}
       </section>
 
       {/* 分类汇总 */}
@@ -357,11 +355,6 @@ export default function TravelExpenseTab({
         </div>
 
         <div className="m-card mt-3 p-4">
-          <p className="text-[12px] leading-5 text-[var(--m-muted)]">
-            默认只记账、不分摊。确认每笔花销的付款人后，点下面的按钮才会计算总额、人均、
-            每人应收 / 应付和转账明细。
-          </p>
-
           <Button
             block
             size="lg"
@@ -405,7 +398,7 @@ export default function TravelExpenseTab({
               {aaResult.missingPayerCount > 0 && (
                 <p className="rounded-xl bg-[var(--m-tone-sun-bg)] px-3 py-2 text-[11px] leading-5 text-[var(--m-tone-sun-fg)]">
                   有 {aaResult.missingPayerCount} 笔（¥{formatMoney(aaResult.missingPayerAmount)}）没填付款人：
-                  已计入总额，但无法归属到具体的人，建议补上付款人再算一次。
+                  已计入总额，但无法归属到具体的人。
                 </p>
               )}
 
@@ -697,9 +690,6 @@ function AddExpenseSheet({
               })}
             </div>
           )}
-          <p className="mt-1.5 text-[11px] text-[var(--m-faint)]">
-            AA 结算会按这里的付款人 + 同行者名单分摊
-          </p>
         </div>
         <FieldTextarea
           label="备注"
@@ -709,7 +699,7 @@ function AddExpenseSheet({
           onChange={(e) => setNote(e.target.value)}
         />
         {days.length === 0 && (
-          <p className="m-caption text-[var(--m-faint)]">提示：这本旅行还没有日期，花销仍会记在旅行名下</p>
+          <p className="m-caption text-[var(--m-faint)]">这本旅行还没有日期</p>
         )}
 
         {error && (
@@ -771,7 +761,6 @@ function BudgetSheet({
           type="number"
           inputMode="decimal"
           placeholder="例如 5000"
-          hint="留空并点「清空预算」可取消预算"
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />

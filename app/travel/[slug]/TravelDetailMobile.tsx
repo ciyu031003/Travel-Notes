@@ -604,10 +604,7 @@ export default function TravelDetailMobile({
         <div className="mx-4 mt-3 rounded-2xl bg-[var(--m-accent-soft)] px-3.5 py-3 text-[12px] text-[var(--m-accent-strong)]">
           <div className="flex items-start gap-2">
             <Icon icon={CloudOff} size="sm" className="mt-0.5 shrink-0" />
-            <span>
-              这本旅行还在本地待同步，所以暂时不能添加行程、照片与花销。
-              联网后会自动上传；也可点右侧按钮立即重试。
-            </span>
+            <span>这本旅行还在本地待同步，暂时不能添加行程、照片与花销。</span>
           </div>
           <button
             type="button"
@@ -898,7 +895,7 @@ export default function TravelDetailMobile({
 
           {!spacesLoading && mySpaces.length === 0 && (
             <p className="rounded-[var(--m-radius-control)] bg-[var(--m-surface-2)] px-3.5 py-3 text-[13px] text-[var(--m-muted)]">
-              你还没有共享空间。可以先到「我的 → 我的空间」创建一个情侣 / 家庭 / 朋友空间，再把旅行放进去。
+              你还没有共享空间
             </p>
           )}
         </div>
@@ -912,7 +909,6 @@ function DisabledHint() {
     <div className="m-card px-5 py-8 text-center">
       <Icon icon={CloudOff} size="lg" tone="faint" className="mx-auto" />
       <p className="mt-3 text-sm text-[var(--m-muted)]">这本旅行还在本地待同步</p>
-      <p className="mt-1 text-xs text-[var(--m-faint)]">联网后会自动上传，同步完成即可编辑</p>
     </div>
   )
 }

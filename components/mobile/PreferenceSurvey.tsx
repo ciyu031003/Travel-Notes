@@ -179,7 +179,6 @@ export function PreferenceSurvey() {
           <Icon icon={Sparkles} size="md" className="mt-0.5 shrink-0 text-[var(--m-accent-strong)]" />
           {stepTitle}
         </h2>
-        <p className="m-caption mt-1.5 text-[var(--m-faint)]">帮我们把默认值设成你喜欢的样子，随时可以跳过</p>
 
         {step === 0 && (
           <div className="mt-5 flex flex-col gap-2">
@@ -239,9 +238,6 @@ export function PreferenceSurvey() {
                 />
               ))}
             </div>
-            <p className="m-caption mt-3 text-[var(--m-faint)]">
-              选中后，行程页会提醒你留意这些点（不会自动改你的行程）
-            </p>
           </div>
         )}
       </div>

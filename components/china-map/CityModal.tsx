@@ -138,10 +138,7 @@ export default function CityModal({
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-travel-sakura to-travel-bloom flex items-center justify-center">
                 <Icon icon={Camera} size="lg" tone="inverse" />
               </div>
-              <h3 className="font-semibold text-travel-ink mb-2">在 {city.name} 添加旅行记录</h3>
-              <p className="text-sm text-travel-ink/60 mb-4">
-                点击下方按钮前往后台创建新的旅行文章，系统会自动关联到该城市
-              </p>
+              <h3 className="font-semibold text-travel-ink mb-4">在 {city.name} 添加旅行记录</h3>
               <Link
                 href={`/admin/new?location=${encodeURIComponent(city.name)}`}
                 onClick={onClose}

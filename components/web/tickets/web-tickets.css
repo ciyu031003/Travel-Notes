@@ -232,13 +232,6 @@
   font-style: normal;
   color: var(--wt-rose-ink);
 }
-.wt-lede {
-  margin: 20px 0 0;
-  max-width: 48ch;
-  font-size: 15px;
-  line-height: 1.95;
-  color: var(--wt-muted);
-}
 .wt-actions {
   display: flex;
   flex-wrap: wrap;
@@ -911,12 +904,6 @@
   line-height: 1.35;
   color: var(--wt-ink);
 }
-.wt-next-lede {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--wt-faint);
-}
 .wt-ghost-kicker {
   margin: 0;
   font-size: 11px;
@@ -966,7 +953,6 @@
   font-weight: 400;
   color: var(--wt-ink);
 }
-.wt-empty-lede,
 .wt-error-lede {
   margin: 16px 0 0;
   max-width: 42ch;
@@ -1042,11 +1028,11 @@
   font-size: 12px;
   color: var(--wt-faint);
 }
-.wt-foot p {
-  margin: 0;
-}
 .wt-foot-links {
   display: flex;
+  /* 说明文字删掉后 footer 只剩链接这一个子节点：space-between 会把它推到左边，
+     margin-left: auto 让链接仍然落在右侧（与上方分隔线收尾一致）。 */
+  margin-left: auto;
   gap: 22px;
 }
 .wt-foot-link {
@@ -1277,10 +1263,6 @@
   }
   .wt-title {
     margin-top: 18px;
-  }
-  .wt-lede {
-    margin-top: 14px;
-    line-height: 1.8;
   }
   .wt-actions {
     margin-top: 20px;

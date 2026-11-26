@@ -323,7 +323,7 @@ export default function TravelCircleFeed() {
           <div className="mb-5 flex items-center gap-2.5 rounded-2xl bg-[var(--ui-social-accent-soft)] px-4 py-3">
             <Icon icon={Compass} size="sm" className="shrink-0 text-[var(--ui-social-accent)]" />
             <p className="min-w-0 flex-1 text-xs leading-relaxed text-[var(--ui-social-accent)]">
-              你现在是访客，可以随意翻看公开的旅行。登录后能点赞、评论，也能分享自己的旅途。
+              你现在是访客，登录后能点赞、评论和分享。
             </p>
             <Link
               href="/login?redirect=%2Fcircle"
@@ -366,7 +366,6 @@ export default function TravelCircleFeed() {
             <div className="relative">
               <Icon icon={Compass} size="lg" tone="accent" className="mx-auto" />
               <p className="mt-4 text-base text-[var(--ui-social-text)]">这里还没有故事。</p>
-              <p className="mt-2 text-sm text-[var(--ui-social-muted)]">去看看自己的旅途，也许下一段故事就从那里开始。</p>
               <button type="button" onClick={() => router.push('/travel')} className="mt-6 rounded-full bg-[var(--ui-social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)]">去我的旅行</button>
             </div>
           </div>
@@ -374,13 +373,7 @@ export default function TravelCircleFeed() {
             <EmptyState
               icon={Compass}
               title={activeType ? '这个类型下还没有故事' : '这里还没有故事'}
-              description={
-                activeType
-                  ? '换一个同行关系，或把你的同类旅行公开出来。'
-                  : loggedIn
-                    ? '把你的旅行公开出来，它就是这里的第一篇。'
-                    : '登录后可以翻看大家公开的旅行记录。'
-              }
+              description={!loggedIn && !activeType ? '登录后可以翻看大家公开的旅行记录。' : undefined}
               action={
                 activeType ? (
                   <Button variant="secondary" onClick={() => changeType('')}>

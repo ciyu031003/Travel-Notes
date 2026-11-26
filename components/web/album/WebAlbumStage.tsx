@@ -464,7 +464,7 @@ export default function WebAlbumStage({
           </div>
         ) : count === 0 ? (
           <div className="wa-stage-empty">
-            <p>这本画册还没有内容。等旅程写满，再回来翻开它。</p>
+            <p>这本画册还没有内容。</p>
           </div>
         ) : (
           <div

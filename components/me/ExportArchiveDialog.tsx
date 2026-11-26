@@ -216,9 +216,6 @@ export default function ExportArchiveDialog({ onClose }: { onClose: () => void }
             </div>
           )}
 
-          <p className="m-caption mt-4 text-[var(--m-muted)]">
-            点击导出后会让你选择保存位置；若系统不支持选择，则由浏览器下载并询问保存。
-          </p>
         </div>
 
         <div className="flex gap-3 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4">

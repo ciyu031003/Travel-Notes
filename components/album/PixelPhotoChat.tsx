@@ -198,7 +198,6 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
                     {date && <span className="text-xs text-pixel-muted mt-0.5 block">{date}</span>}
                   </div>
                 </div>
-                <p className="text-xs text-album-warm mt-1.5 font-bold">点击照片预览大图 · 留言仅与当前照片绑定</p>
               </div>
 
               {/* 聊天记录区（横线纸） */}
@@ -310,9 +309,6 @@ export default function PixelPhotoChat({ image, imageKey, cityName, date, onBack
 
                 <p className="text-xs text-album-warm mt-3 font-bold">
                   {messages.length > 0 ? `已收集 ${messages.length} 条留言` : '等待第一条留言'}
-                </p>
-                <p className="text-xs text-pixel-muted mt-1.5 leading-relaxed max-w-[240px]">
-                  点击左侧照片或底片可预览大图，也可以返回相册继续翻阅其它记忆。
                 </p>
               </div>
 

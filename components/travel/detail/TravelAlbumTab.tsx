@@ -144,7 +144,6 @@ export default function TravelAlbumTab({
         <div className="m-card mt-4 px-5 py-10 text-center">
           <Icon icon={Camera} size="lg" tone="faint" className="mx-auto" />
           <p className="mt-3 text-sm text-[var(--m-muted)]">还没有照片</p>
-          <p className="mt-1 text-xs text-[var(--m-faint)]">把这次旅行的照片传上来，画册会自动排版</p>
         </div>
       ) : (
         <>
@@ -270,7 +269,7 @@ export default function TravelAlbumTab({
               </button>
             )}
           </div>
-          <p className="m-caption text-[var(--m-faint)]">一次最多 9 张；上传后可在沉浸视图里点「设为封面」</p>
+          <p className="m-caption text-[var(--m-faint)]">一次最多 9 张</p>
 
           <Button block size="lg" loading={uploading} icon={uploading ? undefined : Upload} onClick={doUpload}>
             {uploading ? '上传中…' : `上传 ${picked.length} 张`}

@@ -71,9 +71,6 @@ export default function ZoomControls({
       <div className="hidden md:block px-1 pt-1 text-center text-xs text-travel-ink/60 bg-travel-cream/80 rounded">
         {Math.round(scale * 100)}%
       </div>
-      <div className="hidden md:block text-xs text-travel-ink/50 bg-travel-cream/80 px-3 py-2 rounded-lg backdrop-blur pointer-events-none whitespace-nowrap">
-        滚轮缩放 · 拖拽移动
-      </div>
     </div>
   )
 }

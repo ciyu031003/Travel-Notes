@@ -131,16 +131,6 @@ export default function SpaceAlbumHUD({
             <Icon icon={ChevronRight} size="sm" />
           </button>
 
-          <div className="hidden lg:flex items-center gap-1.5 px-2 text-xs text-album-text2 select-none whitespace-nowrap">
-            <span>拖拽环视</span>
-            <span className="text-album-text3">·</span>
-            <span>滚轮切换</span>
-            <span className="text-album-text3">·</span>
-            <span>点击放大</span>
-            <span className="text-album-text3">·</span>
-            <span>Ctrl+滚轮缩放</span>
-          </div>
-
           <button
             type="button"
             onClick={onZoomOut}

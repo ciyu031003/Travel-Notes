@@ -81,9 +81,9 @@ const TRANSPORTS: TransportOption[] = [
     value: 'flight',
     label: '机票',
     icon: Plane,
-    numberHint: '航班号，如 CA 204（自动大写）',
+    numberHint: '如 CA 204',
     numberPlaceholder: 'CA 204',
-    seatHint: '座位格式：数字 + 字母，如 14A',
+    seatHint: '如 14A',
     seatPlaceholder: '14A',
     gateLabel: '登机口',
     gatePlaceholder: 'B12',
@@ -92,9 +92,9 @@ const TRANSPORTS: TransportOption[] = [
     value: 'hsr',
     label: '高铁',
     icon: TrainFront,
-    numberHint: '车次，如 G 1372（自动大写）',
+    numberHint: '如 G 1372',
     numberPlaceholder: 'G 1372',
-    seatHint: '座位格式：车厢 + 排号字母，如 06 车 12F',
+    seatHint: '如 06 车 12F',
     seatPlaceholder: '06 车 12F',
     gateLabel: '检票口',
     gatePlaceholder: 'A3',
@@ -103,9 +103,9 @@ const TRANSPORTS: TransportOption[] = [
     value: 'train',
     label: '火车',
     icon: Train,
-    numberHint: '车次，如 K 1024（自动大写）',
+    numberHint: '如 K 1024',
     numberPlaceholder: 'K 1024',
-    seatHint: '座位格式：车厢 + 座位号，如 08 车 045 号',
+    seatHint: '如 08 车 045 号',
     seatPlaceholder: '08 车 045 号',
     gateLabel: '检票口',
     gatePlaceholder: 'A3',
@@ -239,7 +239,6 @@ export default function TicketEditSheet({
         <div>
           <div className="flex items-baseline justify-between gap-2">
             <p className="m-field-label">票面预览</p>
-            <p className="text-[11px] text-[var(--m-faint)]">保存后同步到票据夹</p>
           </div>
           <div className="mx-auto mt-2 max-w-[420px]" data-ticket-preview>
             <TicketFace ticket={previewTicket} />
@@ -364,10 +363,6 @@ export default function TicketEditSheet({
           </div>
           <p className="m-field-hint mt-1.5">{transport.seatHint}</p>
         </div>
-
-        <p className="text-[11px] leading-4 text-[var(--m-faint)]">
-          票面是纪念卡：这里只改展示，不会改动旅程本身的记录。
-        </p>
 
         {/*
           操作区 sticky 在滚动区底部：表单比视口高（预览 + 六个字段 + 提示），

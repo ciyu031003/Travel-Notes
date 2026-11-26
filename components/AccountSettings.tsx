@@ -134,10 +134,6 @@ export default function AccountSettings() {
         </div>
 
         <div className="border-t border-travel-line dark:border-shell-line pt-6">
-          <p className="text-sm text-travel-sand dark:text-shell-muted mb-4">
-            如需修改密码，请填写以下字段；留空则表示不修改密码。
-          </p>
-
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-travel-ink dark:text-shell-text mb-2">

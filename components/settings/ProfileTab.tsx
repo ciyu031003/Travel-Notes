@@ -100,7 +100,6 @@ export default function ProfileTab({ onMessage }: SettingsTabProps) {
         show={showPassword}
         onToggle={() => setShowPassword(!showPassword)}
         placeholder="必须输入当前密码以验证身份"
-        hint="修改用户名需要验证您的当前密码"
         autoComplete="current-password"
         required
       />

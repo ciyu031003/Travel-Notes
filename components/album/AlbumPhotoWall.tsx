@@ -61,7 +61,7 @@ export default function AlbumPhotoWall({
         </button>
         <p className="text-xs text-album-warm flex items-center gap-1.5">
           <Icon icon={Sparkles} size="sm" className="text-album-accent" />
-          {formatDate(city.date)} · 点击照片开启留言
+          {formatDate(city.date)}
         </p>
       </div>
 
@@ -77,7 +77,7 @@ export default function AlbumPhotoWall({
             {
               label: formatDate(city.date),
               title: city.name,
-              subtitle: `${city.images.length} 张照片 · 点击照片开启留言`,
+              subtitle: `${city.images.length} 张照片`,
             },
           ]}
         />

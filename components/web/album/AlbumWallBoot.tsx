@@ -90,7 +90,7 @@ export function AlbumWallError() {
       >
         <p className="text-[15px] font-semibold">桌面画册墙没能打开</p>
         <p className="mt-2 text-[13px] leading-6 text-[var(--m-muted)]">
-          相册的其它内容不受影响。可以刷新重试，或把窗口缩窄到移动版画册。
+          相册的其它内容不受影响。
         </p>
         <button
           type="button"

@@ -158,7 +158,6 @@ function NextStop() {
       <div className="wt-next-copy">
         <p className="wt-ghost-kicker">NEXT STOP</p>
         <p className="wt-next-title">留一个空夹子，等下一次出发</p>
-        <p className="wt-next-lede">每完成并归档一段旅程，绳上就会多一张票。</p>
       </div>
       <Link className="wt-btn" href="/travel/new">
         记录一段旅程
@@ -271,7 +270,7 @@ function SummaryPanel({ summary }: { summary: Summary }) {
         ))}
       </ul>
 
-      <p className="wt-summary-note">在路上 {summary.days} 天 · 每归档一段旅程，绳上就多一张票。</p>
+      <p className="wt-summary-note">在路上 {summary.days} 天</p>
     </aside>
   )
 }
@@ -282,10 +281,6 @@ function EmptyLine() {
       <div>
         <p className="wt-eyebrow">EMPTY LINE</p>
         <h2 className="wt-empty-title">吊绳还空着</h2>
-        <p className="wt-empty-lede">
-          完成并归档一段旅程后，系统会自动为它生成机票 / 高铁票 / 火车票 ——
-          像夹照片一样，一张张挂到这条绳上。
-        </p>
         <div className="wt-actions">
           <Link className="wt-btn wt-btn-primary" href="/travel/new">
             记录一段旅程
@@ -398,10 +393,6 @@ export default function WebTicketLine({
               <br />
               <em>挂成一条线</em>
             </h1>
-            <p className="wt-lede">
-              机票、高铁票、火车票会自动归档。这里用一根吊绳按时间把它们串起来 ——
-              新的年份在上，同一年从左到右就是时间向前。点开任意一张，能看到完整票面与那段旅程。
-            </p>
             <div className="wt-actions">
               <Link className="wt-btn wt-btn-primary" href="/travel/new">
                 记录一段旅程
@@ -446,7 +437,6 @@ export default function WebTicketLine({
         )}
 
         <footer className="wt-foot">
-          <p>票面由旅程自动派生；「调整票面」只影响展示，不改动旅程本身。</p>
           <div className="wt-foot-links">
             <Link className="wt-foot-link" href="/travel">
               全部旅程

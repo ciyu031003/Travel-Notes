@@ -200,7 +200,7 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
           </div>
         ) : travel.pendingSync ? (
           <div className="m2-card p-8 text-center text-[13px] leading-6 text-[var(--m-muted)]">
-            这本旅行还在本地待同步，联网后会自动上传。同步完成即可在这里记录。
+            这本旅行还在本地待同步
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
@@ -267,7 +267,6 @@ export default function TravelRecordPage({ slugProp = '' }: { slugProp?: string 
                   </button>
                 )}
               </div>
-              <p className="text-[11px] leading-5 text-[var(--m-faint)]">照片仅与这条回忆绑定，可在旅行详情里查看。</p>
             </section>
 
             <section className="m2-form-section">

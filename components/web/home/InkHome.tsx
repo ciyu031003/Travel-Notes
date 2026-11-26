@@ -473,11 +473,11 @@ export default function InkHome({
                   ) : (
                     <div className="wh-empty">
                       <IconTicket />
-                      <span>完成一段旅程，票根会出现在这里</span>
+                      <span>还没有票根</span>
                     </div>
                   )}
                   <div className="wh-card-foot">
-                    <span>{travelPosts.length} 张票根 · 随旅程自动生成</span>
+                    <span>{travelPosts.length} 张票根</span>
                     <Link href="/tickets" className="wh-card-more">
                       整理票根
                       <IconArrowRight />

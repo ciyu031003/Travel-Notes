@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { CalendarDays, ImageIcon, Sparkles, Wallet } from 'lucide-react'
+import { CalendarDays, Sparkles, Wallet } from 'lucide-react'
 import { Button } from '@/components/mobile/Button'
 import { Icon } from '@/components/mobile/Icon'
 import BudgetMeter, { toneForBudget } from '@/components/mobile/BudgetMeter'
@@ -112,7 +112,6 @@ export default function TravelOverviewTab({
         <div className="m-card px-5 py-8 text-center">
           <Icon icon={Sparkles} size="lg" tone="faint" className="mx-auto" />
           <p className="mt-3 text-sm text-[var(--m-muted)]">这趟旅程还没有内容</p>
-          <p className="mt-1 text-xs text-[var(--m-faint)]">安排行程、上传照片、记一笔花销，都会出现在这里</p>
           <div className="mt-5 flex justify-center gap-2">
             <Button size="sm" onClick={() => onGoTab('itinerary')}>安排行程</Button>
             <Button size="sm" variant="secondary" onClick={() => onGoTab('album')}>上传照片</Button>
@@ -290,13 +289,6 @@ export default function TravelOverviewTab({
             ))}
           </div>
         </section>
-      )}
-
-      {photos.length > 0 && (
-        <p className="flex items-center justify-center gap-1.5 text-center text-[12px] text-[var(--m-faint)]">
-          <Icon icon={ImageIcon} size="sm" />
-          点任意照片进入沉浸相册
-        </p>
       )}
 
       {/* 费用卡片牌堆（总览里重新翻看） */}

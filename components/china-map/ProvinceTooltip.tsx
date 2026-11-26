@@ -56,7 +56,6 @@ export default function ProvinceTooltip({
           <div className="flex items-center gap-2 mb-1.5">
             <span className={`inline-block h-2 w-2 rounded-sm ${hasPosts ? 'bg-travel-bloom' : 'bg-[#B9BEC3]'}`} />
             <span className="font-semibold text-travel-ink text-sm">{p?.name}</span>
-            <span className="text-xs text-travel-ink/40">点击查看城市</span>
           </div>
           {hasPosts && firstPost ? (
             <>

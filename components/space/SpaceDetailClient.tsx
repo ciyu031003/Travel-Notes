@@ -111,7 +111,7 @@ export default function SpaceDetailClient({ slugProp }: { slugProp?: string }) {
     return (
       <MessageState
         title="你还不是这个空间的成员"
-        description="空间内容只对成员开放。如果你有邀请码，可以在空间列表里输入加入。"
+        description="用邀请码加入后就能看到内容。"
         action={<Button href="/space">回空间列表</Button>}
       />
     )

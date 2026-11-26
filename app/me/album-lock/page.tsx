@@ -126,15 +126,11 @@ export default function AlbumLockPage() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[15px] font-semibold">相册解锁口令</p>
-              <p className="mt-1 text-[13px] leading-5 text-[var(--m-muted)]">
-                纪念相册上锁后，输入下面这个日期的年 / 月 / 日就能打开。改完立即生效，
-                下次进相册用新日期解锁。
-              </p>
               {/* 作用范围（2026-11-21）：相册默认是「旅行画册」，不需要解锁；
                   纪念日只锁像素 / 银河两种纪念相册视图。不写清楚的话，用户改完
                   纪念日回到默认画册，会以为设置没生效。 */}
               <p className="mt-1.5 text-[13px] leading-5 text-[var(--m-muted)]">
-                只作用于「像素 / 银河」两种纪念相册视图；默认的旅行画册不需要解锁。
+                只作用于「像素 / 银河」两种纪念相册视图
               </p>
               <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--m-surface-2)] px-2.5 py-1 text-[11px] font-medium text-[var(--m-muted)]">
                 <Icon icon={CalendarHeart} size="sm" />
@@ -142,12 +138,6 @@ export default function AlbumLockPage() {
                   ? `当前口令：${effective.date}${effective.source === 'record' ? '（取自纪念日记录）' : ''}`
                   : '当前未设置纪念日（像素 / 银河相册不设锁）'}
               </p>
-              {effective?.source === 'record' && (
-                <p className="mt-1.5 text-[13px] leading-5 text-[var(--m-muted)]">
-                  你还没在这里单独设置过纪念日，相册目前用的是纪念日记录里最早的一天。
-                  在下面保存一个新日期后，就会以新日期为准。
-                </p>
-              )}
             </div>
           </div>
         </section>
@@ -163,7 +153,6 @@ export default function AlbumLockPage() {
             placeholder="修改纪念日需要验证身份"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            hint="仅用于本次校验，不会保存"
           />
 
           {error && (
@@ -186,9 +175,6 @@ export default function AlbumLockPage() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-semibold">去纪念相册验证</span>
-            <span className="mt-0.5 block text-[13px] text-[var(--m-muted)]">
-              在相册里切到「像素 / 银河」视图，用新口令试一次解锁
-            </span>
           </span>
         </Link>
       </div>

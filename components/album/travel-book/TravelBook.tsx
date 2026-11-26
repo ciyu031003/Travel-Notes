@@ -508,9 +508,6 @@ const firstBook = books && books.length > 0 ? books[0] : null
               <Icon icon={Camera} size="lg" />
             </span>
             <p className="mt-3 text-[15px] font-bold text-[var(--m-text)]">还没有旅行画册</p>
-            <p className="mt-1 text-[12px] leading-5 text-[var(--m-muted)]">
-              去记录一次旅行，走过的城市会自动变成一本画册。
-            </p>
           </div>
         ) : (
           <>

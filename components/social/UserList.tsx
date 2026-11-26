@@ -49,9 +49,6 @@ export default function UserList({
               <Icon icon={Users} size="lg" />
             </span>
             <p className="mt-4 text-[15px] font-semibold">还没有{title.replace('我的', '')}</p>
-            <p className="mt-1.5 max-w-[260px] text-[12px] leading-5 text-[var(--ui-social-muted)]">
-              去旅行圈逛逛，遇到喜欢的旅行者可以关注或互动。
-            </p>
             <button type="button" onClick={() => router.push('/circle')} className="m-btn m-btn-primary mt-5">
               去旅行圈
             </button>

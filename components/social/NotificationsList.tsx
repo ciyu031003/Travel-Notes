@@ -115,7 +115,6 @@ export default function NotificationsList() {
             <EmptyState
               icon={Bell}
               title="暂无通知"
-              description="有人赞、评论或收藏你的旅行时，会出现在这里。"
             />
           </div>
         ) : (

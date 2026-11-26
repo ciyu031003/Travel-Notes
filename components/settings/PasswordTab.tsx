@@ -84,7 +84,7 @@ export default function PasswordTab({ onMessage }: SettingsTabProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
-      <FormSection title="修改密码" description="定期更换密码有助于保护账号安全" />
+      <FormSection title="修改密码" />
 
       <PasswordField
         label="当前密码"

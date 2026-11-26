@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, useDragControls, useMotionValue, useReducedMotion, useTransform, type PanInfo } from 'motion/react'
-import { ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { hapticLight } from '@/lib/mobile/haptics'
 import ExpenseCard from './ExpenseCard'
@@ -197,10 +197,6 @@ export default function ExpenseDeck({ deck, onClose, onOpenTravel }: ExpenseDeck
             <span key={i} className={'ecdeck-dot' + (i === topIndex ? ' is-on' : '')} />
           ))}
         </div>
-        <p className="ecdeck-hint flex items-center gap-1">
-          <Icon icon={Sparkles} size="sm" />
-          左右滑动切换 · 刮开涂层看人均
-        </p>
         <div className="mt-1 flex w-full items-center justify-center gap-2">
           <button
             type="button"

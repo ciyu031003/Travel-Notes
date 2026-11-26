@@ -80,9 +80,6 @@ export default function FavoritesGrid() {
               <Icon icon={BookMarked} size="lg" />
             </span>
             <p className="mt-4 text-[15px] font-semibold">还没有收藏任何旅行</p>
-            <p className="mt-1.5 max-w-[260px] text-[12px] leading-5 text-[var(--ui-social-muted)]">
-              在旅行圈遇到心动的故事，点一下收藏，就会出现在这里。
-            </p>
             <button
               type="button"
               onClick={() => router.push('/circle')}

@@ -94,7 +94,7 @@ export default function TravelTab({ onMessage }: SettingsTabProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
-      <FormSection title="旅行设置" description="设置纪念日开始日期，旅行地图页面将自动计算天数" />
+      <FormSection title="旅行设置" />
 
       <TextField
         label="纪念日"
@@ -103,7 +103,6 @@ export default function TravelTab({ onMessage }: SettingsTabProps) {
         onChange={setAnniversaryStart}
         icon={CalendarDays}
         placeholder="选择日期"
-        hint="选择开始日期，系统将自动计算天数"
       />
 
       {/* 预览卡渐变统一走受控 token（--m-grad-hero）：拆分前这段在 app/admin/ 的豁免目录里，

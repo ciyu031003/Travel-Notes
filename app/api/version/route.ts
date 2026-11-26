@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '旅行详情顶部改为可左右滑动的堆叠相册；详情页去掉底部主导航、只保留悬浮 dock（下滑收起/回顶复现）；修复底部导航中央「+」被玻璃层遮盖；票据夹改一行一列完整展示',
+    changelog: process.env.APP_CHANGELOG || '全站文案瘦身：移动端与 Web 端删掉 60+ 处解释机制/教操作的说明性文字（票据、旅行详情、相册、设置、空态等），只留标题/数据/按钮/一行空态引导',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

@@ -20,7 +20,7 @@ export default function EmailStatusCard({
     return (
       <div className="bg-warm-50 dark:bg-warm-700 rounded-xl p-4">
         <p className="text-sm text-warm-500 dark:text-warm-400">
-          尚未绑定邮箱。绑定邮箱后，忘记密码时可通过邮箱验证找回。
+          尚未绑定邮箱
         </p>
       </div>
     )

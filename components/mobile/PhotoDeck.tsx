@@ -265,14 +265,9 @@ export default function PhotoDeck({
           </div>
         )}
 
-        {/* 手势提示 + 明确的"看大图"入口（按钮比"点照片"可靠，也不会与拖拽抢手势） */}
+        {/* 「看大图」入口（按钮比"点照片"可靠，也不会与拖拽抢手势） */}
         {total > 1 && (
           <div className="absolute inset-x-0 bottom-3 z-50 flex items-center justify-center gap-2 px-3">
-            <span className="pointer-events-none inline-flex items-center gap-1.5 rounded-full bg-black/35 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur-md">
-              <Icon icon={ChevronLeft} size="sm" />
-              左右滑动切换
-              <Icon icon={ChevronRight} size="sm" />
-            </span>
             <button
               type="button"
               aria-label="查看大图"

@@ -67,7 +67,6 @@ export default function AnniversarySection({
           style={{ color: TravelInfoColors.ink, opacity: 0.5 }}
         >
           <p className="text-sm">还没有设置纪念日</p>
-          <p className="text-xs mt-1">请联系管理员在后台设置</p>
         </div>
       )}
     </section>

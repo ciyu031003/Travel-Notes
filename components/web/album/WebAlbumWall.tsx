@@ -235,10 +235,7 @@ export default function WebAlbumWall({
             <h1 className="wa-hero-title font-display">
               旅行<em>画册</em>
             </h1>
-            <p className="wa-hero-sub">
-              海风、山径与深夜的街。每一段旅程都在这里被装订成一册 ——
-              悬停让封面侧过身，翻开就是一整段记忆。
-            </p>
+            <p className="wa-hero-sub">海风、山径与深夜的街。每一段旅程都在这里被装订成一册。</p>
             <div className="wa-hero-actions">
               {firstBook ? (
                 <button
@@ -301,7 +298,6 @@ export default function WebAlbumWall({
               </ul>
 
               <div className="wa-panel-hint">
-                <p>卡片会随指针倾斜，点开是沉浸式相册。</p>
                 <p className="wa-keys">
                   <kbd>←</kbd>
                   <kbd>→</kbd>
@@ -348,9 +344,6 @@ export default function WebAlbumWall({
                   <br />
                   第一本画册在等你
                 </h2>
-                <p className="wa-empty-text">
-                  去记录一次旅行 —— 走过的城市会自动装订成一本画册，照片、章节与行程都会排好版，回来这里翻开它。
-                </p>
                 <Link href="/travel" className="wa-btn wa-btn--primary">
                   新建一段旅程
                   <IconArrowRight size={17} />
@@ -381,18 +374,12 @@ export default function WebAlbumWall({
                   />
                 ))}
               </div>
-              <div className="wa-wall-hint">
-                <span>共 {totals.books} 本画册 · 点开任意一本进入沉浸式相册</span>
-                {totals.photos === 0 ? <span>给旅程加上照片后，相册会按章节铺满大图</span> : null}
-                <span>想按地点重看？左侧「旅行与足迹」有完整地图</span>
-              </div>
             </>
           )}
         </main>
 
         <footer className="wa-foot">
           <span>甜途 · 旅行记忆空间</span>
-          <span>桌面画册墙 · 指针倾斜 / 3D 牌堆</span>
         </footer>
       </div>
 

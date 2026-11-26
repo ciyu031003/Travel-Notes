@@ -434,10 +434,6 @@ export default function TravelComposerForm({
 
             {showExpenses && (
               <div className="space-y-3 border-t border-[var(--m-line)] px-4 py-4">
-                <p className="text-[12px] leading-relaxed text-[var(--m-faint)]">
-                  先记下金额和付款人，这里不做分摊；回到旅程详情点「一键计算 AA」才会算应收应付。
-                </p>
-
                 {/* 分类：横向滚动，一屏放不下也不挤压 */}
                 <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
                   {EXPENSE_CATEGORIES.map((c) => {
@@ -777,7 +773,7 @@ export default function TravelComposerForm({
                       })}
                       {mySpaces.length === 0 && !spacesLoading && (
                         <span className="py-2 text-[12px] text-[var(--m-faint)]">
-                          还没有共享空间（「我的 → 我的空间」可创建）
+                          还没有共享空间
                         </span>
                       )}
                     </div>

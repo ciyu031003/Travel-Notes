@@ -61,7 +61,6 @@ export default function PolaroidWall({ images, cityName, date, onPhotoClick }: P
                 {/* 悬停提示 */}
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                   <Icon icon={MessageCircle} size="md" className="text-album-accentStrong" />
-                  <span className="text-album-accentStrong text-xs font-bold tracking-wider">点击开启留言</span>
                 </div>
               </div>
 

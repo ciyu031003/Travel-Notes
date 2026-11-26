@@ -426,10 +426,6 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
 
   const navBtn = 'inline-flex items-center gap-1 rounded-full bg-travel-sakura/70 px-3 py-1.5 text-xs font-medium text-travel-ink transition-colors hover:bg-travel-sakura dark:bg-white/10 dark:text-shell-text dark:hover:bg-white/20'
   const isCover = spreadIndex === 0
-  // 首次翻开提示：与 page-flip 的实际命中区域一致 —— 双页模式点右半页向前
-  // （左半页向后），单页模式左右滑动 / 点页面右侧向前。
-  const showFlipHint = isCover && !hasTurned
-  const flipHint = isWide ? '点击右半页或按 → 翻页' : '左右滑动翻页'
   const total = spreads.length
   const currentLabel = `${String(spreadIndex + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`
   const currentThemeMeta = BOOK_THEME_METAS.find((m) => m.key === themeKey) ?? BOOK_THEME_METAS[0]
@@ -591,17 +587,6 @@ export default function BookReader({ book, onBack }: { book: Book; onBack: () =>
             className="shrink-0 font-display text-xs tabular-nums text-travel-ink/80 dark:text-shell-muted"
           >
             {currentLabel}
-          </span>
-          {/*
-            首次翻开提示：行高常驻固定高度，只在封面且从未翻页时填字。
-            这样提示出现/消失不会改变底栏高度 —— 否则台面高度会变，
-            书页要跟着重新丈量（视觉上抖一下）。
-          */}
-          <span
-            aria-hidden="true"
-            className="h-3 shrink-0 text-[11px] leading-3 text-travel-ink/45 dark:text-shell-faint"
-          >
-            {showFlipHint ? flipHint : ''}
           </span>
         </div>
         <button type="button" onClick={() => artFlipRef.current?.flipNext()} className={navBtn}>

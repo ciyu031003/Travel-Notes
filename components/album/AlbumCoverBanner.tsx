@@ -38,7 +38,6 @@ export default function AlbumCoverBanner({
 
         <div className="text-right hidden sm:block select-none">
           <p className="text-xs text-album-accent font-bold">{cityCount} 座城市 · {photoCount} 张照片</p>
-          <p className="text-xs text-album-warm mt-1">点击照片，留下你的留言</p>
         </div>
       </div>
     </div>

@@ -96,9 +96,6 @@ export default function ProvinceCityPanel({
         )}
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-3 text-xs font-medium text-travel-ink/50">
-            <span>点击城市添加旅行记录</span>
-          </div>
           <div className="px-3 pb-3 space-y-1">
             {cities.map((city) => {
               const key = `${city.name}-${provinceInfo.id}`
