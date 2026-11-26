@@ -1,3 +1,32 @@
+## [1.30.16] - 2026-11-27
+
+> **真实液态玻璃**：新建旅行页与底部 Tab 栏不再是"白板"，背景换成模糊晚霞 + 云朵，
+> 玻璃只把背景磨一遍（真实 backdrop blur），并带 3D 悬浮与内高光。已发版为 **1.30.16 / build 80**。
+
+### Added
+
+- 新共享玻璃语言 app/glass.css：.lg-scene（晚霞云朵背景）/ .lg-clouds / .lg-cloud-band /
+  .lg-card（tint 渐变 + rim 亮边 + 内高光 + 双投影 + backdrop blur(22px) saturate(180%)）/
+  .lg-card--float（perspective 3D 轻倾斜 + 5.6s 慢浮动）/ .lg-chip / .lg-action；亮暗两套 token。
+- 新建旅行页（/travel/new）整体重构：晚霞云朵固定背景（两层云 54s/78s 反向漂移）、
+  玻璃悬浮返回栏、五张错峰 3D 悬浮玻璃卡（去哪 / 什么时候去 / 名字 / 旅途花销 / 更多信息）、
+  玻璃输入行（聚焦 accent 细环）、底部悬浮玻璃 CTA 条（让开 Tab 与中央 FAB 与键盘）。
+- 底部 Tab 栏改为悬浮玻璃胶囊：云带画在玻璃**下面**（先渲染、z-index 更低）作为 backdrop 内容，
+  玻璃层唯一 backdrop-filter blur(26px) saturate(180%) + rim + 内高光 + 双投影；选中态玻璃胶囊 + 主色图标；
+  中间「+」完整浮在胶囊上方（修过的那条 z-index 层级保持）。
+
+### Fixed
+
+- 修掉 CSS 管线去重坑：同时手写 backdrop-filter 与 -webkit-backdrop-filter 会被 LightningCSS 合并到只剩
+  前缀版，Chromium 不认 → 玻璃静默变成半透明白板。现在统一只写标准属性（前缀交给管线补）。
+
+### Verified
+
+- 新建旅行页 390×844 亮/暗截图：5 张卡 backdrop-filter 实测 blur(22px) saturate(1.8)，滚动时返回栏贴顶不白条，
+  placeholder/正文对比度亮 5.05/10.53、暗 5.22/8.31；城市联想、日期面板、花销、CTA 全通；
+- Tab 栏：navBG 透明、胶囊圆角 28px、「+」露出 22px 且 elementFromPoint 命中按钮、6 条路由无横向溢出；
+- tsc 0 · eslint 0 error · token：hexColor 61→59、lucideImport 84→82、rawGradient 53→52、fontSize 145→124（收敛）。
+
 ## [1.30.15] - 2026-11-27
 
 > 「我的空间」支持**上传自定义背景图**：主图铺满空间详情 Hero，方形缩略图显示在「我的」页空间左侧小图标；
