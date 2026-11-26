@@ -18,6 +18,10 @@ export interface SpaceRecord {
   slug: string
   description: string | null
   coverMediaId: number | null
+  /** 用户上传的空间背景（Hero 大图）；null = 用类型渐变 */
+  coverUrl: string | null
+  /** 背景的方形缩略图（「我的」页空间图标） */
+  coverThumbUrl: string | null
   /** 空间类型（情侣/家人/朋友/个人/其他）—— 创建时可指定 */
   spaceType: string
   createdAt: string
@@ -175,6 +179,8 @@ export class PrismaSpaceRepository {
       spaceType: String(space.spaceType),
       createdAt: space.createdAt.toISOString(),
       updatedAt: space.updatedAt.toISOString(),
+      coverUrl: space.coverUrl ?? null,
+      coverThumbUrl: space.coverThumbUrl ?? null,
       memberCount: space._count.members,
       myRole,
       members: space.members.map(toMemberPreview),
@@ -197,6 +203,8 @@ export class PrismaSpaceRepository {
       spaceType: String(space.spaceType),
       createdAt: space.createdAt.toISOString(),
       updatedAt: space.updatedAt.toISOString(),
+      coverUrl: space.coverUrl ?? null,
+      coverThumbUrl: space.coverThumbUrl ?? null,
       memberCount: 0,
       myRole: 'VIEWER',
     }
@@ -237,6 +245,8 @@ export class PrismaSpaceRepository {
       spaceType: String(row.space.spaceType),
       createdAt: row.space.createdAt.toISOString(),
       updatedAt: row.space.updatedAt.toISOString(),
+      coverUrl: row.space.coverUrl ?? null,
+      coverThumbUrl: row.space.coverThumbUrl ?? null,
       memberCount: row.space._count.members,
       myRole: toRole(row.role),
       members: row.space.members.map(toMemberPreview),

@@ -15,6 +15,10 @@ export interface SpaceCardData {
   slug: string
   description: string | null
   spaceType: string | null
+  /** 用户上传的空间背景（列表卡片封面）；null = 类型渐变 */
+  coverUrl?: string | null
+  /** 背景方形缩略图（「我的」页小图标） */
+  coverThumbUrl?: string | null
   myRole: string
   memberCount: number
   members?: SpaceMemberPreview[]
@@ -53,7 +57,10 @@ export function SpaceCard({ space, className }: { space: SpaceCardData; classNam
       )}
     >
       {/* 封面：类型渐变 + 类型徽标 + 空间名（配色由 SpaceThemeScope 注入的 data-space 决定） */}
-      <div className="space-cover space-card-cover flex h-[92px] flex-col justify-between px-4 pb-3 pt-3">
+      <div
+        className={cn('space-cover space-card-cover flex h-[92px] flex-col justify-between px-4 pb-3 pt-3', space.coverUrl && 'has-photo')}
+        style={space.coverUrl ? ({ '--space-photo': `url("${space.coverUrl}")` } as React.CSSProperties) : undefined}
+      >
         <div className="flex items-start justify-between gap-2">
           <span className="space-chip">
             <Icon icon={spaceTypeIconOf(space.spaceType)} size="sm" />

@@ -64,6 +64,8 @@ export async function getSpaceOverview(
       description: space.description,
       spaceType: space.spaceType,
       myRole: space.myRole,
+      coverUrl: space.coverUrl ?? null,
+      coverThumbUrl: space.coverThumbUrl ?? null,
       memberCount: space.memberCount,
       members: (space.members ?? []).map((m) => ({
         username: m.username,

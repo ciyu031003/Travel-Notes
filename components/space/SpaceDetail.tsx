@@ -92,6 +92,58 @@ export default function SpaceDetail({
   const isOwner = space.myRole === 'OWNER'
   const canEdit = space.myRole === 'OWNER' || space.myRole === 'MEMBER'
 
+  // 空间背景图：用户上传后立刻在 Hero 预览（本地状态兜一层，等 onChanged 重新取数）
+  const [coverPreview, setCoverPreview] = useState<string | null>(space.coverUrl ?? null)
+  const [coverBusy, setCoverBusy] = useState(false)
+  const coverInputRef = useRef<HTMLInputElement | null>(null)
+
+  const uploadCover = async (file: File | null) => {
+    if (!file) return
+    setCoverBusy(true)
+    setError('')
+    try {
+      const form = new FormData()
+      form.append('cover', file)
+      const res = await fetch(apiUrl('/api/spaces/' + space.id + '/cover'), {
+        method: 'POST',
+        credentials: 'include',
+        body: form,
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error || '背景上传失败')
+      setCoverPreview(json.coverUrl || null)
+      toast.success('背景已更新')
+      void hapticLight()
+      if (onChanged) onChanged()
+      else router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '背景上传失败')
+    } finally {
+      setCoverBusy(false)
+      if (coverInputRef.current) coverInputRef.current.value = ''
+    }
+  }
+
+  const removeCover = async () => {
+    setCoverBusy(true)
+    setError('')
+    try {
+      const res = await fetch(apiUrl('/api/spaces/' + space.id + '/cover'), {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('移除失败')
+      setCoverPreview(null)
+      toast.success('已恢复类型配色')
+      if (onChanged) onChanged()
+      else router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '移除失败')
+    } finally {
+      setCoverBusy(false)
+    }
+  }
+
   // 空间设置（改名 / 改类型 / 改简介）
   const [editName, setEditName] = useState(space.name)
   const [editDesc, setEditDesc] = useState(space.description || '')
@@ -194,7 +246,13 @@ export default function SpaceDetail({
 
       <div className="mx-auto w-full max-w-[900px]">
         {/* ── ① Hero：类型主题渐变的唯一大面积用武之地；顶部必须让开系统状态栏 ── */}
-        <header className="space-hero m-safe-top-16 relative overflow-hidden rounded-b-3xl px-5 pb-9 md:mt-8 md:rounded-3xl md:px-8">
+        <header
+          className={cn(
+            'space-hero m-safe-top-16 relative overflow-hidden rounded-b-3xl px-5 pb-9 md:mt-8 md:rounded-3xl md:px-8',
+            space.coverUrl && 'has-photo',
+          )}
+          style={space.coverUrl ? ({ '--space-photo': `url("${space.coverUrl}")` } as React.CSSProperties) : undefined}
+        >
           {/* 克制的装饰：两圈发丝环 + 一枚柔光，只做景深，不承载信息 */}
           <span
             aria-hidden="true"
@@ -507,6 +565,45 @@ export default function SpaceDetail({
       {/* ── 空间设置（仅 OWNER） ── */}
       <BottomSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title="空间设置">
         <div className="space-y-4">
+          {/* 背景图：用户上传的图片作为 Hero 与「我的」页空间图标 */}
+          <div>
+            <p className="mb-1.5 text-[13px] font-medium text-[var(--ui-social-text)]">背景图</p>
+            <div className="space-photo-setting">
+              <div
+                className={cn('space-photo-preview', !coverPreview && 'space-hero')}
+                style={coverPreview ? { backgroundImage: `url("${coverPreview}")` } : undefined}
+                aria-hidden="true"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] text-[var(--ui-social-muted)]">
+                  {coverPreview ? '已用你上传的图片作为背景' : '默认使用空间类型的渐变背景'}
+                </p>
+                <div className="space-photo-actions mt-2">
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => void uploadCover(e.target.files?.[0] ?? null)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={coverBusy}
+                    onClick={() => coverInputRef.current?.click()}
+                  >
+                    {coverPreview ? '更换图片' : '上传图片'}
+                  </Button>
+                  {coverPreview && (
+                    <Button size="sm" variant="ghost" disabled={coverBusy} onClick={() => void removeCover()}>
+                      移除
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <Field
             label="空间名称"
             name="edit-space-name"

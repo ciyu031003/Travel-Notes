@@ -494,9 +494,19 @@ export default function MeHome({ initial }: { initial: MeProfile }) {
                   <article key={space.id} className="m-enter m2-card overflow-hidden">
                     <Link href={spaceDetailHref(space.slug)} className="m2-trip-row">
                       <span className="m2-trip-thumb space-hero flex items-center justify-center">
-                        <span className="text-[var(--ui-space-accent-text)]">
-                          <Icon icon={spaceTypeIconOf(space.spaceType)} size="lg" />
-                        </span>
+                        {space.coverThumbUrl || space.coverUrl ? (
+                          // 用户上传的空间背景：等比例缩放铺满方形图标（「我的」页左侧小图标）
+                          <img
+                            src={space.coverThumbUrl || space.coverUrl || ''}
+                            alt=""
+                            loading="lazy"
+                            className="space-thumb-photo"
+                          />
+                        ) : (
+                          <span className="text-[var(--ui-space-accent-text)]">
+                            <Icon icon={spaceTypeIconOf(space.spaceType)} size="lg" />
+                          </span>
+                        )}
                       </span>
                       <span className="min-w-0 flex-1 py-1">
                         <span className="flex items-center gap-2">

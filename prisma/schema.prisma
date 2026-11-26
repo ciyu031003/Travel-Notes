@@ -377,6 +377,10 @@ model Space {
   coverMediaId Int?      @unique
   spaceType    SpaceType @default(COUPLE)
   coverMedia   Media?    @relation("SpaceCover", fields: [coverMediaId], references: [id])
+  /// 用户上传的空间背景（Hero 大图），null = 用空间类型渐变
+  coverUrl      String? @db.VarChar(500)
+  /// 同一张背景的方形缩略图（「我的」页空间小图标，等比例缩放裁切）
+  coverThumbUrl String? @db.VarChar(500)
   createdAt    DateTime  @default(now()) @db.Timestamp(3)
   updatedAt    DateTime  @updatedAt @db.Timestamp(3)
 

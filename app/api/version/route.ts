@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '我的空间全面升级：五类空间独立配色 + 空间列表/详情整体重构 + 修复顶部返回栏压状态栏 + 新增空间旅行计划（多人规划/共享清单/一键转旅行记录）+ 旅行圈「全部用户/我关注的」切换',
+    changelog: process.env.APP_CHANGELOG || '空间支持上传自定义背景图：主图铺满空间详情 Hero、方形缩略图显示在「我的」页空间图标、列表卡片同样生效；可更换/移除，移除回到类型渐变',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

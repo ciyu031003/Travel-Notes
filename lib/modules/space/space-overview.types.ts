@@ -58,6 +58,10 @@ export interface SpaceOverviewSpace {
   description: string | null
   spaceType: string
   myRole: string
+  /** 用户上传的空间背景（Hero 大图）；null = 用类型渐变 */
+  coverUrl?: string | null
+  /** 背景的方形缩略图（「我的」页空间图标） */
+  coverThumbUrl?: string | null
   memberCount: number
   members: Array<{ username: string; nickname: string | null; avatarUrl: string | null; role: string }>
   createdAt: string

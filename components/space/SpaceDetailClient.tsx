@@ -40,12 +40,14 @@ export default function SpaceDetailClient({ slugProp }: { slugProp?: string }) {
   const [data, setData] = useState<SpaceDetailData | null>(null)
   const [message, setMessage] = useState('')
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!slug) {
       setState('notfound')
       return
     }
-    setState('loading')
+    // silent=true：后台刷新（例如刚换完背景图）—— 不要退回骨架屏，
+    // 否则 SpaceDetail 会被卸载，正在开的「空间设置」面板会突然关掉。
+    if (!silent) setState('loading')
     try {
       const res = await fetch(apiUrl(`/api/spaces/by-slug/${encodeURIComponent(slug)}`), {
         credentials: 'include',
@@ -137,7 +139,7 @@ export default function SpaceDetailClient({ slugProp }: { slugProp?: string }) {
   return (
     <SpaceThemeScope type={data.space.spaceType}>
       {/* 左缘右滑返回由全局壳（LayoutContent）提供，页面不再重复挂载（一滑退两层 bug） */}
-      <SpaceDetail data={data} onChanged={() => void load()} />
+      <SpaceDetail data={data} onChanged={() => void load(true)} />
     </SpaceThemeScope>
   )
 }

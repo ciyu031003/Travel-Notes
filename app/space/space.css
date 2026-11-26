@@ -95,3 +95,57 @@
 .space-route > *:not([data-space]) {
   padding-top: calc(var(--m-system-top) + 8px);
 }
+
+/* ── 6. 用户上传的空间背景（2026-11-27）───────────────────────────────────────
+   两种表面共用：详情 Hero（.space-hero）与列表卡片封面（.space-cover）。
+   叠层顺序 = 类型色薄纱在上、照片在下：
+     · 照片保留"这是我选的那张"的辨识度；
+     · 薄纱用类型色压一层，正文仍是深色的 --ui-space-accent-text，对比度不掉；
+     · 照片通过内联 --space-photo 传入（组件里不写 url()/渐变，门禁友好）。
+   照片一律 object-fit: cover 的等价实现（background-size: cover）—— 等比例缩放后居中裁切。 */
+.space-cover.has-photo,
+[data-space] .space-hero.has-photo,
+.space-hero.has-photo[data-space] {
+  background-image:
+    linear-gradient(
+      var(--ui-space-gradient-angle, 140deg),
+      color-mix(in srgb, var(--ui-space-hero-a) 62%, transparent) 0%,
+      color-mix(in srgb, var(--ui-space-hero-b) 42%, transparent) 100%
+    ),
+    var(--space-photo);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat;
+}
+/* 「我的」页空间小图标：照片直接铺满方形，等比例裁切；没有照片时仍是类型渐变 + 图标 */
+.space-thumb-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* 设置面板里的背景预览块 */
+.space-photo-setting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 18px;
+  padding: 10px;
+  background: var(--ui-social-surface-50);
+  border: 1px solid var(--ui-social-line);
+}
+.space-photo-preview {
+  width: 76px;
+  height: 52px;
+  flex: none;
+  border-radius: 12px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--ui-space-hairline);
+}
+.space-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
