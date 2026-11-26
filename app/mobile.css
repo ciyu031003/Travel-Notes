@@ -1802,6 +1802,14 @@ html.dark body {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: end;
+  /*
+    2026-11-26 修：玻璃层（.m2-tabbar-glass-layer）是 nav 里的 absolute 第一层，
+    定位元素永远画在非定位内容之上 —— 于是中间「+」浮出导航条的那一截被半透明玻璃
+    糊住（真机截图里就是"加号被白色底板盖住、只剩半个"）。
+    这里把内容层显式抬到玻璃层之上；FAB 再自身抬一层，保证它完整压在玻璃上。
+  */
+  position: relative;
+  z-index: 1;
 }
 .m2-tab-item {
   display: flex;
@@ -1821,22 +1829,30 @@ html.dark body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  margin-top: -13px;
+  margin-top: -18px;
+  position: relative;
+  z-index: 2;
   font-size: 11px;
   line-height: 14px;
   font-weight: 700;
   color: var(--m-accent-strong);
+  /* 点按热区比圆更大一点，拇指更容易命中（视觉不变） */
+  padding-bottom: 2px;
 }
 .m2-tab-fab {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--m-grad-cta);
   color: #fff;
-  box-shadow: 0 10px 24px -9px rgba(217, 87, 121, 0.8), 0 0 0 4px var(--m-bg);
+  /* 双层"描边"：外圈用页面底色把圆从导航里"托"出来，内圈一道极淡描边收边 */
+  box-shadow:
+    0 12px 26px -10px rgba(217, 87, 121, 0.85),
+    0 0 0 4px var(--m-bg),
+    0 0 0 5px color-mix(in srgb, var(--m-line) 60%, transparent);
   transition: transform 0.12s ease;
 }
 .m2-tab-fab:active { transform: scale(0.92); }

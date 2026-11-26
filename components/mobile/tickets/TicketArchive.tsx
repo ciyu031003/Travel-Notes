@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Info, Plane, SlidersHorizontal, Sparkles, Ticket } from 'lucide-react'
 import { Icon } from '@/components/mobile/Icon'
 import { Loader } from '@/components/mobile/Loader'
-import TicketMini from '@/components/mobile/ticket/TicketMini'
+import { FlightTicket, TrainTicket } from '@/components/mobile/ticket'
 import TicketEditSheet, { type TicketEditTravel } from '@/components/mobile/tickets/TicketEditSheet'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
@@ -323,7 +323,7 @@ export default function TicketArchive() {
         移动版票据夹（<1024 上 lg:hidden 完全不生效）。
       */}
       {isDesktop !== true && (
-      <div className="m-mobile-page m2-screen wt-mobile-only text-[var(--m-text)] lg:hidden">
+      <div className="m-mobile-page m2-screen wt-mobile-only pb-[calc(var(--m-tab-h)+28px)] text-[var(--m-text)] lg:hidden">
       <header className="m2-gutter m-safe-top pb-3">
         <div className="flex items-center gap-2.5">
           <button
@@ -406,7 +406,9 @@ export default function TicketArchive() {
                   <span>{year} 年</span>
                   <span className="text-xs text-[var(--m-muted)]">{list.length} 张</span>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-3">
+                {/* 一行一列：票据只有一部分可读的话（两列 4:3 小卡）看不清，
+                    用户要求「全部显示、不要一行两列」，所以单列铺满、整张票完整展示 */}
+                <div className="mt-2 flex flex-col gap-3">
                   {list.map((ticket) => (
                     // 卡片与「调整票面」是**兄弟节点**而不是把 button 塞进 Link：
                     // 交互元素不能嵌套在 <a> 里（键盘/读屏会乱），这里绝对定位浮在卡片右上角。
@@ -414,9 +416,14 @@ export default function TicketArchive() {
                       <Link
                         href={travelDetailHref(ticket.slug)}
                         aria-label={'打开 ' + ticket.title + ' 的' + TRANSPORT_LABEL[ticket.transport]}
-                        className="block transition active:scale-[0.98]"
+                        className="block transition active:scale-[0.99]"
                       >
-                        <TicketMini ticket={ticket} />
+                        {/* 一行一列、整张票完整展示（不再 4:3 缩略卡两列并排） */}
+                        {ticket.transport === 'flight' ? (
+                          <FlightTicket ticket={ticket} />
+                        ) : (
+                          <TrainTicket ticket={ticket} variant={ticket.transport === 'train' ? 'train' : 'hsr'} />
+                        )}
                       </Link>
                       <button
                         type="button"

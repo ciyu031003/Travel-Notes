@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '登录页恢复 MP4 高清（去掉樱花粉朦胧层，页脚改局部玻璃铭牌）；Web 端上线 Ink & Ivory 桌面主题（吊绳票据时间线、3D 卡片相册、桌面首页重做 + 性能优化、地图文章封面修复）',
+    changelog: process.env.APP_CHANGELOG || '旅行详情顶部改为可左右滑动的堆叠相册；详情页去掉底部主导航、只保留悬浮 dock（下滑收起/回顶复现）；修复底部导航中央「+」被玻璃层遮盖；票据夹改一行一列完整展示',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import {
   ArrowLeft,
   CalendarDays,
@@ -30,6 +29,7 @@ import { IconButton } from '@/components/mobile/IconButton'
 import { Loader } from '@/components/mobile/Loader'
 import { SegmentedControl } from '@/components/mobile/SegmentedControl'
 import { TravelTypePill } from '@/components/mobile/Pills'
+import StackedGallery from '@/components/mobile/StackedGallery'
 import MemoryComposer from '@/components/travel/MemoryComposer'
 import TravelItineraryTab from '@/components/travel/detail/TravelItineraryTab'
 import TravelAlbumTab from '@/components/travel/detail/TravelAlbumTab'
@@ -338,6 +338,12 @@ export default function TravelDetailMobile({
     if (base.some((p) => mediaKeyOf(p.url) === key)) return base
     return [{ id: travel.coverMediaId ?? undefined, url: heroCover }, ...base]
   }, [allPhotos, heroCover, travel.coverMediaId])
+
+  /**
+   * 顶部堆叠相册的照片（与查看器同一数组/顺序，下标必须一致）：
+   * 真机反馈"顶部只能看一张，想左右翻" —— 现在跟旅行圈记录一样堆叠 + 左右滑动切换。
+   */
+  const heroPhotos = useMemo(() => viewerPhotos.map((photo) => photo.url), [viewerPhotos])
   const daysCount = rangeDays(travel.startDate, travel.endDate)
   const rangeText = compactRange(travel.startDate, travel.endDate)
 
@@ -484,35 +490,46 @@ export default function TravelDetailMobile({
         图片 404 时也不会把长标题当 alt 文本渲染出来。
       */}
       <section>
-        {heroCover ? (
+        {heroCover && heroPhotos.length > 0 ? (
           /*
-            打开旅行先看到的是"图片 + 下面的评价与规划"，**不是一上来就整屏滑动图片**。
-            想沉浸看图的用户点这里（或右上角「全屏查看」）进二级查看器，可上下滑动。
+            顶部改为**堆叠相册**（与旅行圈记录同款）：可以左右滑动切换照片，
+            点击当前卡（或右上角「全屏查看」）进沉浸查看器。
+            旧实现只有单张大封面 —— 真机反馈"看不了别的照片，得先点全屏"。
           */
-          <button
-            type="button"
-            aria-label="全屏查看旅行照片"
-            onClick={() => setViewer({ photos: viewerPhotos, index: 0 })}
-            className="relative block h-[264px] w-full overflow-hidden bg-[var(--m-bg-soft)] text-left"
-          >
-            <Image src={heroCover} alt={travel.title} fill sizes="100vw" className="object-cover" priority />
-            <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(58,20,36,0.84),rgba(58,20,36,0.16)_64%,rgba(58,20,36,0.04)_100%)]" />
-            {/* 右上角：全屏查看（图片上一个明确的按钮，符合真机要求） */}
-            <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[12px] font-medium text-white backdrop-blur-md">
-              <Icon icon={Maximize2} size="sm" />
-              全屏查看
-            </span>
+          <div className="relative">
+            <StackedGallery
+              images={heroPhotos}
+              alt={travel.title}
+              aspectRatio="16 / 10"
+              className="px-3 pt-1"
+              onOpen={(index) => setViewer({ photos: viewerPhotos, index })}
+            />
+            {/* 底部渐隐：白色标题压在亮图上也清楚；pointer-events-none 不挡左右滑动 */}
+            {/* 叠层要显式 z-index：堆叠卡片自身 zIndex 最高到 100，普通流层会被压在下面 */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-[100] h-2/5 bg-[linear-gradient(to_top,rgba(58,20,36,0.82),rgba(58,20,36,0.12)_58%,transparent_100%)]"
+            />
             {allPhotos.length > 0 && (
-              <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white backdrop-blur-md">
+              <span className="pointer-events-none absolute left-5 top-4 z-[110] rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white backdrop-blur-md">
                 {allPhotos.length} 张
               </span>
             )}
-            <span className="absolute inset-x-0 bottom-0 block px-4 pb-2.5">
+            <button
+              type="button"
+              aria-label="全屏查看旅行照片"
+              onClick={() => setViewer({ photos: viewerPhotos, index: 0 })}
+              className="absolute right-5 top-4 z-[110] inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[12px] font-medium text-white backdrop-blur-md transition active:scale-95"
+            >
+              <Icon icon={Maximize2} size="sm" />
+              全屏查看
+            </button>
+            <span className="pointer-events-none absolute inset-x-0 bottom-0 z-[110] block px-4 pb-2.5">
               <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]">
                 {travel.title}
               </h1>
             </span>
-          </button>
+          </div>
         ) : (
           <div className="px-4 pt-1">
             <h1 className="text-[24px] font-bold leading-tight text-[var(--m-text)]">{travel.title}</h1>
@@ -687,25 +704,26 @@ export default function TravelDetailMobile({
       {/*
         底部悬浮快捷 dock：记一笔 / 传照片 / 记花费 / 票据（shadcn @aceternity/floating-dock 适配版）。
 
-        注意：必须抬到底部导航条**之上** —— LayoutContent 对 /travel* 会挂 MobileBottomNav
-        （fixed bottom-0 z-40）。早先写成 bottom-0 z-30 时会被导航条整块盖住，
-        表现就是"详情页底部那个按钮点不到"。
-        高度用 --m-tab-h token（不再硬编码 64px），并在键盘弹出时再上抬。
+        2026-11-26：旅行详情页改成「无底部主导航」的沉浸页 —— LayoutContent 对
+        /travel/[slug] 不再挂 MobileBottomNav，只保留这一条悬浮 dock，所以底部偏移
+        从 var(--m-tab-h) 改成「安全区 + 10px」。
+        滚动行为：下滑时整块向下滑出（translate-y-130% + 透明），回到顶部（scrollY ≤ 8）
+        再滑回来 —— 逻辑在下面的 recordBarHidden 滚动监听里。
 
         原先是全宽「记录一笔」按钮：主路径不变（dock 第一项就是它，仍是强调色、
         仍打开同一个 MemoryComposer），只是把「传照片 / 记花费 / 票据」从二级入口提到同级。
         因此也去掉了给全宽按钮兜底的渐变遮罩（dock 自身是实心/毛玻璃底，不需要）。
       */}
       <div
-        className={`pointer-events-none fixed inset-x-0 z-30 px-4 pb-2 pt-3 transition-[transform,opacity] duration-200 ease-out ${
+        className={`fixed inset-x-0 z-30 px-4 pb-2 pt-3 transition-[transform,opacity] duration-250 ease-out ${
           recordBarHidden || composing
-            ? 'translate-y-3 scale-90 opacity-0'
-            : 'translate-y-0 scale-100 opacity-100'
+            ? 'pointer-events-none translate-y-[130%] opacity-0'
+            : 'translate-y-0 opacity-100'
         }`}
         style={{
-          // 64px 硬编码改为 --m-tab-h token（导航条高度已是 token，两处不再各写各的）；
+          // 旅行详情页**不再挂底部主导航**（见 LayoutContent），所以这里只留安全区 + 10px；
           // 软键盘弹出时整块再上抬 keyboardInset，避免 dock 被键盘遮住。
-          bottom: `calc(var(--m-tab-h) + env(safe-area-inset-bottom)${keyboardInset ? ' + ' + keyboardInset + 'px' : ''})`,
+          bottom: `calc(env(safe-area-inset-bottom) + 10px${keyboardInset ? ' + ' + keyboardInset + 'px' : ''})`,
         }}
       >
         <FloatingDock label="旅行快捷操作" items={dockItems} />

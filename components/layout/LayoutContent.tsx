@@ -42,6 +42,13 @@ export default function LayoutContent({
   const isAdminAuthPage = pathname === '/admin/login' || pathname === '/admin/setup'
 
   /**
+   * 旅行详情页是「沉浸式阅读页」：2026-11-26 起移动端不再挂底部主导航（首页/旅程/+/旅行圈/我的），
+   * 只保留页面自己的悬浮 dock（记一笔/传照片/记花费/票据）—— 真机反馈两块底部 bar 叠在一起太挤。
+   * 判定：/travel/<slug> 且不是 /travel/new（新建页仍需要主导航兜底）。
+   */
+  const isTravelDetailPage = /^\/travel\/[^/]+$/.test(pathname) && pathname !== '/travel/new'
+
+  /**
    * 这些页面是"沉浸式全屏流"，**自带返回/关闭**，因此不挂底部 tab：
    *  · 登录 / 忘记密码：本来就不该有 tab
    *  · 画册阅读：全屏翻页，有自己的返回
@@ -71,7 +78,7 @@ export default function LayoutContent({
             <Footer />
           </div>
         </MobilePageTransition>
-        <MobileBottomNav />
+        {!isTravelDetailPage && <MobileBottomNav />}
         {/* 全局左缘右滑返回：所有常规页面共享；组件内部按应用内历史栈判断能否退 */}
         <EdgeSwipeBack />
       </>

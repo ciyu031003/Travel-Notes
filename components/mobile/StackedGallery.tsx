@@ -35,6 +35,8 @@ interface StackedGalleryProps {
   images: string[]
   alt: string
   className?: string
+  /** 宽高比（默认 4/5；旅行详情顶部用 16/10 的宽幅堆叠） */
+  aspectRatio?: string
   /** 点击当前卡片（父级通常打开全屏查看器） */
   onOpen?: (index: number) => void
 }
@@ -44,7 +46,7 @@ const SWITCH_THRESHOLD = 42
 /** 离场位移：略微超过 100% 保证完全离开视口，不留边 */
 const LEAVE_X = 104
 
-export default function StackedGallery({ images, alt, className, onOpen }: StackedGalleryProps) {
+export default function StackedGallery({ images, alt, className, aspectRatio = "4 / 5", onOpen }: StackedGalleryProps) {
   const [index, setIndex] = useState(0)
   const [dir, setDir] = useState<1 | -1>(1)
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null)
@@ -160,7 +162,8 @@ export default function StackedGallery({ images, alt, className, onOpen }: Stack
   return (
     <div className={cn("relative select-none", className)} data-no-swipeback>
       <div
-        className="relative aspect-[4/5] w-full touch-pan-y"
+        style={{ aspectRatio }}
+        className="relative w-full touch-pan-y"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
