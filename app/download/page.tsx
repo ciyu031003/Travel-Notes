@@ -194,9 +194,7 @@ export default function DownloadPage() {
                 </span>
                 <div>
                   <strong>你正在使用甜途 App</strong>
-                  <p>
-                    当前版本 v{version}（build {buildNumber}）。新版本会通过应用内更新提示，无需回到这里下载。
-                  </p>
+                  <p>当前版本 v{version}（build {buildNumber}）。</p>
                 </div>
               </div>
             ) : (
@@ -478,7 +476,7 @@ export default function DownloadPage() {
                     <h3>{step.title}</h3>
                     <p>
                       {i === 0
-                        ? step.desc + '，文件' + sizeText + '，建议在 Wi-Fi 下下载。'
+                        ? step.desc + '，文件' + sizeText + '。'
                         : step.desc}
                     </p>
                   </div>
@@ -507,7 +505,7 @@ export default function DownloadPage() {
                   <dd>travel-notes.yuanabd.cn</dd>
                 </div>
               </dl>
-              <p>扫码或在手机上打开本页，直接下载安装包；安装完成后用同一账号登录即可。</p>
+              <p>扫码或在手机上打开本页，直接下载安装包。</p>
               <button type="button" className={s.qrCopyBtn} onClick={copyLink}>
                 {copied ? <Check size={15} strokeWidth={2.4} /> : <Copy size={15} strokeWidth={2} />}
                 {copied ? '已复制下载链接' : '复制下载链接'}
@@ -550,7 +548,6 @@ export default function DownloadPage() {
                   <dd>官网直连 · 支持断点续传</dd>
                 </div>
               </dl>
-              <p>版本信息由发布清单实时提供；应用内「我的 → 关于」可查看当前构建号。</p>
             </aside>
           </div>
         </section>
