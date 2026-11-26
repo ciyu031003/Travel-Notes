@@ -28,8 +28,9 @@ function joinedText(iso: string): string {
  * TeamSettings/`（Apache-2.0）：成员行 = 头像 + 名字 + 角色 + 行内操作。
  * 视觉全部重做为本项目的移动端 token（项目规范禁用裸 hex 与冷色）。
  *
- * 权限：只有 OWNER 能调整角色 / 移除成员；「最后一个主人」由服务端兜底拒否
- * （`spaceService.updateMemberRole`），前端只做显隐，不做安全假设。
+ * S2 视觉调整：成员行从「独立小卡」改成「软底行」，只在行内做层次；
+ * 角色控件收成胶囊 select，与新的卡片体系（2xl + 发丝线）一致。
+ * 交互契约不变：只有 OWNER 能调角色/移除，最后一个主人由服务端兜底拒绝。
  */
 export function SpaceMemberList({
   spaceId,
@@ -88,17 +89,17 @@ export function SpaceMemberList({
   }
 
   if (members.length === 0) {
-    return <p className="py-4 text-center text-[13px] text-[var(--ui-social-faint)]">还没有成员</p>
+    return <p className="py-6 text-center text-[13px] text-[var(--ui-social-faint)]">还没有成员</p>
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {members.map((m) => {
         const canManage = isOwner && m.role !== 'OWNER'
         return (
           <div
             key={m.id}
-            className="rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface-60)] px-3 py-2.5"
+            className="rounded-2xl bg-[var(--ui-social-surface-50)] px-3 py-2.5"
           >
             <div className="flex items-center gap-2.5">
               <SpaceAvatar member={m} size="md" />
@@ -118,7 +119,7 @@ export function SpaceMemberList({
                   disabled={busy === m.username}
                   onChange={(e) => void changeRole(m.username, e.target.value)}
                   aria-label={`调整 ${m.username} 的角色`}
-                  className="h-9 rounded-[10px] bg-[var(--ui-social-surface)] px-2 text-[13px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-space-accent)] disabled:opacity-50"
+                  className="h-8 flex-none rounded-full bg-[var(--ui-social-surface)] px-2.5 text-[13px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-space-accent)] disabled:opacity-50"
                 >
                   {ROLE_ORDER.map((r) => (
                     <option key={r} value={r}>
@@ -127,7 +128,7 @@ export function SpaceMemberList({
                   ))}
                 </select>
               ) : (
-                <span className="flex-none rounded-full bg-[var(--ui-social-surface2)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ui-social-muted)]">
+                <span className="flex-none rounded-full bg-[var(--ui-social-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ui-social-muted)]">
                   {spaceRoleLabelOf(m.role)}
                 </span>
               )}
@@ -138,7 +139,7 @@ export function SpaceMemberList({
                   aria-label={`移除 ${m.username}`}
                   disabled={busy === m.username}
                   onClick={() => void remove(m.username)}
-                  className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[var(--ui-social-faint)] transition hover:text-[var(--danger-soft)] disabled:opacity-50"
+                  className="m-pressable flex h-8 w-8 flex-none items-center justify-center rounded-full text-[var(--ui-social-faint)] hover:text-[var(--danger-soft)] disabled:opacity-50"
                 >
                   <Icon icon={UserMinus} size="sm" />
                 </button>
@@ -149,12 +150,12 @@ export function SpaceMemberList({
       })}
 
       {isOwner && (
-        <div className="rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface-50)] px-3 py-2.5">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--ui-social-muted)]">
+        <div className="mt-3 rounded-2xl bg-[var(--ui-social-surface-50)] px-3 py-3">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.08em] text-[var(--ui-social-muted)]">
             <Icon icon={ShieldCheck} size="sm" className="shrink-0" />
             角色区别
           </p>
-          <dl className="mt-1.5 space-y-1">
+          <dl className="mt-2 space-y-1.5">
             {ROLE_ORDER.map((r) => (
               <div key={r} className="flex gap-2 text-[11px] leading-4">
                 <dt className="w-8 flex-none font-medium text-[var(--ui-social-muted)]">
@@ -164,7 +165,7 @@ export function SpaceMemberList({
               </div>
             ))}
           </dl>
-          <p className="mt-1.5 text-[11px] leading-4 text-[var(--ui-social-faint)]">
+          <p className="mt-2 text-[11px] leading-4 text-[var(--ui-social-faint)]">
             空间至少保留一位主人，最后一位主人不能被降级或移除。
           </p>
         </div>

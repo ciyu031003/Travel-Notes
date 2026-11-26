@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useCallback, useEffect, useState } from 'react'
 import { Copy, Check, Gift, Ban, Clock, Link2 } from '@/lib/mobile/icon-system'
@@ -29,6 +29,10 @@ function daysLeft(iso: string): number {
  * 角色 + 有效期选择、生成后展示码与链接、下方邀请记录带 PENDING/USED/EXPIRED 三态。
  * 视觉重做为移动端 token；并把 admin 版里缺失的「复制邀请链接」保留下来
  * （分享链接比让用户手抄 8 位码更符合移动端习惯）。
+ *
+ * S2 视觉调整：生成区收成一张软底卡（角色/有效期/按钮同组），生成结果用主题色
+ * accent-soft 卡片凸显邀请码；记录行去掉独立描边，改软底 + 三态弱化处理。
+ * 交互与接口调用与重构前完全一致（不改契约）。
  */
 export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
   const [invites, setInvites] = useState<Invite[]>([])
@@ -106,42 +110,44 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
   const pending = invites.filter((i) => i.status === 'PENDING')
 
   return (
-    <div className="space-y-3">
-      {/* 生成：角色 + 有效期 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          aria-label="邀请角色"
-          className="h-11 flex-1 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface)] px-3 text-[13px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-space-accent)]"
-        >
-          <option value="MEMBER">{SPACE_ROLE_LABELS.MEMBER}（可一起编辑）</option>
-          <option value="VIEWER">{SPACE_ROLE_LABELS.VIEWER}（只能查看）</option>
-        </select>
-        <select
-          value={days}
-          onChange={(e) => setDays(parseInt(e.target.value, 10))}
-          aria-label="有效期"
-          className="h-11 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface)] px-3 text-[13px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-space-accent)]"
-        >
-          <option value={1}>1 天</option>
-          <option value={3}>3 天</option>
-          <option value={7}>7 天</option>
-          <option value={30}>30 天</option>
-        </select>
-        <Button icon={Gift} loading={generating} onClick={() => void generate()}>
+    <div className="space-y-4">
+      {/* 生成：角色 + 有效期 + 主操作，同在一张软底卡里 */}
+      <div className="rounded-2xl bg-[var(--ui-social-surface-50)] p-3.5">
+        <p className="text-[11px] font-semibold tracking-[0.08em] text-[var(--ui-social-muted)]">新建邀请</p>
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            aria-label="邀请角色"
+            className="h-11 min-w-0 flex-1 rounded-2xl bg-[var(--ui-social-surface)] px-3 text-[13px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-space-accent)]"
+          >
+            <option value="MEMBER">{SPACE_ROLE_LABELS.MEMBER}（可一起编辑）</option>
+            <option value="VIEWER">{SPACE_ROLE_LABELS.VIEWER}（只能查看）</option>
+          </select>
+          <select
+            value={days}
+            onChange={(e) => setDays(parseInt(e.target.value, 10))}
+            aria-label="有效期"
+            className="h-11 flex-none rounded-2xl bg-[var(--ui-social-surface)] px-3 text-[13px] text-[var(--ui-social-text)] outline-none ring-1 ring-[var(--ui-social-line)] focus-visible:ring-[var(--ui-space-accent)]"
+          >
+            <option value={1}>1 天</option>
+            <option value={3}>3 天</option>
+            <option value={7}>7 天</option>
+            <option value={30}>30 天</option>
+          </select>
+        </div>
+        <Button block className="mt-2.5" icon={Gift} loading={generating} onClick={() => void generate()}>
           生成邀请码
         </Button>
       </div>
 
       {/* 生成结果：码 + 链接 */}
       {generated && (
-        <div className="rounded-[var(--m-radius-control)] bg-[var(--ui-space-accent-soft)] p-3.5">
-          <p className="text-[13px] text-[var(--ui-space-accent-text)]">
-            把下面的邀请码或链接发给对方（{role === 'VIEWER' ? '只能查看' : '可一起编辑'}，
-            {days} 天内有效）
+        <div className="rounded-2xl bg-[var(--ui-space-accent-soft)] p-3.5">
+          <p className="text-[13px] leading-5 text-[var(--ui-space-accent-text)]">
+            把邀请码或链接发给对方（{role === 'VIEWER' ? '只能查看' : '可一起编辑'}，{days} 天内有效）
           </p>
-          <p className="mt-2 select-all text-center font-mono text-[18px] font-bold tracking-[0.28em] text-[var(--ui-space-accent-strong)]">
+          <p className="mt-2 select-all text-center font-mono text-[18px] font-bold tracking-[0.2em] text-[var(--ui-space-accent-strong)]">
             {generated}
           </p>
           <div className="mt-3 flex gap-2">
@@ -169,10 +175,10 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
 
       {/* 邀请记录 */}
       <div>
-        <p className="mb-2 text-[13px] font-semibold tracking-[0.08em] text-[var(--ui-social-muted)]">
+        <p className="mb-2 flex items-baseline justify-between px-0.5 text-[13px] font-medium text-[var(--ui-social-text)]">
           邀请记录
           {pending.length > 0 && (
-            <span className="ml-1.5 tabular-nums text-[var(--ui-social-faint)]">{pending.length} 个待使用</span>
+            <span className="text-[11px] tabular-nums text-[var(--ui-social-faint)]">{pending.length} 个待使用</span>
           )}
         </p>
         {loading ? (
@@ -186,7 +192,7 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
             {invites.map((inv) => (
               <div
                 key={inv.id}
-                className="flex items-center justify-between gap-2 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface-60)] px-3 py-2.5"
+                className="flex items-center justify-between gap-2 rounded-2xl bg-[var(--ui-social-surface-50)] px-3 py-2.5"
               >
                 <div className="min-w-0">
                   <p className="text-[13px] text-[var(--ui-social-text)]">
@@ -213,7 +219,7 @@ export function SpaceInvitePanel({ spaceId }: { spaceId: number }) {
                     type="button"
                     aria-label="撤销邀请"
                     onClick={() => void revoke(inv.id)}
-                    className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[var(--ui-social-faint)] transition hover:text-[var(--danger-soft)]"
+                    className="m-pressable flex h-9 w-9 flex-none items-center justify-center rounded-full text-[var(--ui-social-faint)] hover:text-[var(--danger-soft)]"
                   >
                     <Icon icon={Ban} size="sm" />
                   </button>

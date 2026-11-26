@@ -1,0 +1,97 @@
+/* ==========================================================================
+   空间模块视觉层（2026-11 「我的空间」重构）
+
+   · 只消费 tokens.css 的 --ui-space-* / --ui-social-* / --ui-mobile-* 语义令牌，
+     不在组件里写裸色值；五套配色全部来自 app/tokens.css 的 [data-space='X'] 块。
+   · .space-cover 是「五套配色」唯一的大面积载体（卡片封面 / 类型选择器色块）。
+     渐变 = 同色相 hero 双端 + 一层 accent 柔光，避免纯线性渐变在浅色下发灰。
+   · 安全区：详情路由壳给「非 hero 状态」（加载 / 无权限 / 404 / 错误）补
+     --m-system-top；hero 自己用 .m-safe-top-16 避让，两边不叠加。
+   ========================================================================== */
+
+/* ── 1. 类型封面 ────────────────────────────────────────────────────────── */
+.space-cover {
+  background-image: linear-gradient(
+    var(--ui-space-gradient-angle, 135deg),
+    var(--ui-space-hero-a) 0%,
+    var(--ui-space-hero-b) 100%
+  );
+  /* 先给不支持 color-mix 的老 WebView 退化成纯渐变，再用增强层覆盖 */
+  background-image:
+    radial-gradient(
+      130% 150% at 8% -20%,
+      color-mix(in srgb, var(--ui-space-hero-a) 92%, transparent) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      100% 140% at 96% 120%,
+      color-mix(in srgb, var(--ui-space-accent) 24%, transparent) 0%,
+      transparent 66%
+    ),
+    linear-gradient(
+      var(--ui-space-gradient-angle, 135deg),
+      var(--ui-space-hero-a) 0%,
+      var(--ui-space-hero-b) 100%
+    );
+}
+
+/* 类型作用域内的 .space-hero（详情页 hero / 编辑预览条）沿用同一套渐变方向，
+   让「列表卡片 → 详情 hero」是同一块颜色的放大版；作用域外的 .space-hero
+   （我的页旅行缩略图）不受影响，仍是中性沙色 150deg。 */
+[data-space] .space-hero,
+.space-hero[data-space] {
+  background-image: linear-gradient(
+    var(--ui-space-gradient-angle, 150deg),
+    var(--ui-space-hero-a) 0%,
+    var(--ui-space-hero-b) 100%
+  );
+}
+
+/* ── 2. 类型徽标（封面上的玻璃胶囊：图标 + 类型名）────────────────────── */
+.space-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ui-space-accent-text);
+  background: var(--ui-social-surface-80);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-space-hairline) 60%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+/* 只有我 / 默认 这类次要徽标：低一档视觉重量，仍保证可读 */
+.space-chip-quiet {
+  color: var(--ui-space-accent-text);
+  background: var(--ui-social-surface-50);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-space-hairline) 45%, transparent);
+}
+
+/* ── 3. 空间卡片 ────────────────────────────────────────────────────────── */
+/* 底抬升一档；hover/active 由全局 .m-card-pressable 接管（悬停升到 elev-2、
+   按下 0.985 弹簧回弹），这里只补桌面端的克制阴影。 */
+.space-card {
+  box-shadow: var(--ui-mobile-elev-1);
+}
+.space-card:focus-visible {
+  outline: 2px solid var(--ui-space-accent);
+  outline-offset: 2px;
+}
+/* 桌面 ≥1024：卡片在 2 栏窄容器里出现，压缩封面高度，
+   不让移动端的 92px 封面在小卡片里显得臃肿 */
+@media (min-width: 1024px) {
+  .space-card-cover {
+    height: 76px;
+  }
+}
+
+/* ── 4. 详情路由壳的安全区 ──────────────────────────────────────────────── */
+/* 空间详情 hero 是 data-space 子树（自带 .m-safe-top-16）；
+   其余状态是普通 m-gutter 文案页，由这里补状态栏高度，返回栏不再压到状态栏下。 */
+.space-route > *:not([data-space]) {
+  padding-top: calc(var(--m-system-top) + 8px);
+}

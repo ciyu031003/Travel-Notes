@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react'
+// 空间模块视觉层；路由壳负责给「加载 / 无权限 / 404 / 错误」这些非 hero 状态
+// 补系统状态栏高度（见 app/space/space.css 的 .space-route 规则）。
+import '../space.css'
 
 /**
  * 静态导出（Capacitor 移动端壳）需要为动态段声明可预渲染的参数。
@@ -15,5 +18,7 @@ export function generateStaticParams() {
 }
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return <>{children}</>
+  // .space-route > *:not([data-space])：hero（SpaceThemeScope 子树）自己用
+  // .m-safe-top-16 避让状态栏，其余平铺状态由壳补 --m-system-top —— 两者不叠加。
+  return <div className="space-route">{children}</div>
 }

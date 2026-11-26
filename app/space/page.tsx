@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import SpaceListClient from '@/components/space/SpaceListClient'
+// 空间模块视觉层（封面渐变 / 类型徽标 / 卡片阴影 / 详情路由壳安全区）
+import './space.css'
 
 export const metadata: Metadata = {
   title: '我的空间',

@@ -37,14 +37,17 @@ function relativeTime(iso: string): string {
  * 数据来源是既有 `AuditLog`（有 `spaceId` + `[spaceId, createdAt]` 索引），
  * **零改库**就拿到了「一起经营」的可见痕迹 —— 这是本方案里性价比最高的一环。
  * 空间操作（创建/邀请/改权限/改设置）本来就在写审计日志；内容类操作逐步补写。
+ *
+ * S2 视觉调整：行的分隔线交给外层容器（divide-y），行内只保留「谁 + 做了什么 +
+ * 时间」；资源图标收进时间行，避免每行出现两个抢视线的图标。
  */
 export function SpaceActivityFeed({ items }: { items: SpaceActivityItem[] }) {
   return (
-    <ol className="space-y-0.5">
+    <ol className="divide-y divide-[var(--ui-social-line)]">
       {items.map((it) => {
         const { verb, subject, isQuoted } = activityPredicateOf(it.action, it.resourceType, it.metadata)
         return (
-          <li key={it.id} className="flex items-start gap-2.5 py-2">
+          <li key={it.id} className="flex items-start gap-2.5 py-3">
             <SpaceAvatar
               member={{ username: it.username, nickname: null, avatarUrl: null, role: 'MEMBER' }}
               size="sm"

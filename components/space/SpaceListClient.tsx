@@ -26,7 +26,10 @@ import { SpaceTypePicker } from './SpaceTypePicker'
  *
  * 主题作用域：页面本身保持中性（品牌色），**每张卡片自带自己的 data-space**。
  * 这是「五套主题不像五个 App」的关键 —— 列表里同时出现五种配色仍然是一个 App，
- * 因为中性层、间距、圆角、字号完全一致，只有卡片内部的 7 个空间令牌不同。
+ * 因为中性层、间距、圆角、字号完全一致，只有卡片内部的 8 个空间令牌不同。
+ *
+ * 安全区：根节点消费 `m-safe-top`（= 系统状态栏 + 页首留白）。此前这里是 `pt-2`，
+ * 真机上返回键与「我的空间」大标题会压在状态栏下面 —— 这是本轮修掉的核心 bug。
  */
 export default function SpaceListClient({ initialSpaces }: { initialSpaces?: SpaceCardData[] }) {
   const router = useRouter()
@@ -99,8 +102,8 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
       showToast('空间已创建，去邀请伙伴一起记录吧')
       await load()
       if (j.slug) router.push(spaceDetailHref(j.slug))
-    } catch (err: any) {
-      setError(err.message || '创建失败')
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : '创建失败')
     } finally {
       setSubmitting(false)
     }
@@ -125,8 +128,8 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
       setJoinOpen(false)
       showToast(`已加入「${j.spaceName || '空间'}」`)
       await load()
-    } catch (err: any) {
-      setError(err.message || '加入失败')
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : '加入失败')
     } finally {
       setJoining(false)
     }
@@ -138,11 +141,12 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
   const personal = spaces.filter((s) => (s.memberCount ?? 0) <= 1)
 
   return (
-    <div className="m-gutter pb-24 pt-2">
-      <LargeTitle title="我的空间" back="/me" subtitle="一起记录，各自上色" />
+    <div className="m-gutter m-safe-top m-bottom-nav-safe lg:mx-auto lg:max-w-3xl">
+      {/* 页头：与其它二级页同源（眉标 + 衬线大标题 + 一句副标题），不再铺长说明 */}
+      <LargeTitle title="我的空间" eyebrow="甜途 · 空间" subtitle="一起记录，各自上色" back="/me" />
 
       {/* 主操作区：一屏只有一个实心 CTA（创建），加入走次级按钮 */}
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 lg:max-w-md">
         <Button icon={Plus} block onClick={() => { setError(''); setCreateOpen(true) }}>
           创建空间
         </Button>
@@ -164,10 +168,10 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
         <LoaderBlock label="正在加载空间…" />
       ) : spaces.length === 0 ? (
         <EmptyState
-          className="mt-10"
+          className="mt-12"
           icon={Sparkles}
           title="还没有空间"
-          description="创建一个空间，把旅行、相册和回忆放进去，邀请 TA 一起经营。"
+          description="旅行、相册和回忆，都可以放进一个空间。"
           action={
             <Button icon={Plus} onClick={() => setCreateOpen(true)}>
               创建第一个空间
@@ -177,9 +181,9 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
       ) : (
         <>
           {shared.length > 0 && (
-            <section className="mt-6">
+            <section className="mt-7">
               <SpaceSectionHeader title="共享空间" count={shared.length} />
-              <div className="mt-3 space-y-3">
+              <div className="mt-3 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3.5 lg:space-y-0">
                 {shared.map((s) => (
                   <SpaceThemeScope key={s.id} type={s.spaceType}>
                     <SpaceCard space={s} />
@@ -190,9 +194,9 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
           )}
 
           {personal.length > 0 && (
-            <section className="mt-6">
+            <section className="mt-7">
               <SpaceSectionHeader title="只有我" count={personal.length} />
-              <div className="mt-3 space-y-3">
+              <div className="mt-3 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3.5 lg:space-y-0">
                 {personal.map((s) => (
                   <SpaceThemeScope key={s.id} type={s.spaceType}>
                     <SpaceCard space={{ ...s, isDefault: !s.description || s.description.includes('自动创建') }} />
@@ -214,8 +218,8 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
               onChange={setSpaceType}
               disabled={submitting}
             />
-            <p className="mt-2 text-[13px] text-[var(--m-muted)]">
-              选好类型后，这个空间会用它自己的配色 —— 五种都清新淡雅，明暗两套都做了对比度校核。
+            <p className="mt-2 text-[11px] text-[var(--m-muted)]">
+              每种空间有自己的配色，创建后也可以在空间设置里改。
             </p>
           </div>
 

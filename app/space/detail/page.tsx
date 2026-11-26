@@ -26,9 +26,13 @@ export default function SpaceDetailQueryPage() {
 
   if (!slug) {
     return (
-      <div className="m-gutter pt-2">
-        <LargeTitle title="空间" eyebrow="甜途 · 空间" subtitle="正在读取空间信息" back="/space" />
-        <LoaderBlock label="正在打开空间…" />
+      // space-route：与 /space/[slug] 同一个安全区壳（状态栏 + 8px），
+      // 否则原生壳里「加载中 / 无权限 / 404」平铺态会压到系统状态栏（真机反馈的同一个问题）
+      <div className="space-route">
+        <div className="m-gutter pt-2">
+          <LargeTitle title="空间" eyebrow="甜途 · 空间" subtitle="正在读取空间信息" back="/space" />
+          <LoaderBlock label="正在打开空间…" />
+        </div>
       </div>
     )
   }

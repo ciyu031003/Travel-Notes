@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '全站文案瘦身：移动端与 Web 端删掉 60+ 处解释机制/教操作的说明性文字（票据、旅行详情、相册、设置、空态等），只留标题/数据/按钮/一行空态引导',
+    changelog: process.env.APP_CHANGELOG || '我的空间全面升级：五类空间独立配色 + 空间列表/详情整体重构 + 修复顶部返回栏压状态栏 + 新增空间旅行计划（多人规划/共享清单/一键转旅行记录）+ 旅行圈「全部用户/我关注的」切换',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

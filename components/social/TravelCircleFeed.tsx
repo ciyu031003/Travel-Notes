@@ -27,8 +27,18 @@ const TABS = [
   { key: 'recommended', label: '推荐' },
   { key: 'latest', label: '最新' },
   { key: 'hot', label: '热门' },
-  { key: 'following', label: '关注' },
 ]
+
+/**
+ * 两大来源（2026-11-27 用户要求）：
+ *   · 全部用户 —— 全站公开的旅行文章/记录（latest / recommended / hot 三种排序）
+ *   · 我关注的 —— 只看自己关注的人发布的（API 的 tab=following）
+ * 之前「关注」只是四个排序 tab 之一，容易和「最新」混淆；现在提成一级切换。
+ */
+const SCOPES = [
+  { key: 'all', label: '全部用户' },
+  { key: 'following', label: '我关注的' },
+] as const
 
 /**
  * 同行关系筛选 —— **真实筛选**（travelType 透传到 /api/social/posts）。
@@ -108,6 +118,8 @@ function relationLabel(p: Post): string | undefined {
 export default function TravelCircleFeed() {
   const router = useRouter()
   const [tab, setTab] = useState('latest')
+  /** 内容来源：全部用户 / 我关注的（决定请求 tab=latest 还是 tab=following） */
+  const [scope, setScope] = useState<'all' | 'following'>('all')
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -170,9 +182,16 @@ export default function TravelCircleFeed() {
 
   useEffect(() => { load('latest', 1, false) }, [load])
 
-  const switchTab = (t: string) => { setTab(t); load(t, 1, false, activeType) }
-  const changeType = (type: string) => { setActiveType(type); load(tab, 1, false, type) }
-  const loadMore = () => { if (hasMore && !loadingMore && !loading) load(tab, page + 1, true, activeType) }
+  /** 实际请求的 tab：关注来源时固定 following，其余用排序 tab */
+  const feedTab = (s: 'all' | 'following' = scope, t: string = tab) => (s === 'following' ? 'following' : t)
+
+  const switchTab = (t: string) => { setTab(t); if (scope === 'all') load(t, 1, false, activeType) }
+  const switchScope = (s: 'all' | 'following') => {
+    setScope(s)
+    load(feedTab(s), 1, false, activeType)
+  }
+  const changeType = (type: string) => { setActiveType(type); load(feedTab(), 1, false, type) }
+  const loadMore = () => { if (hasMore && !loadingMore && !loading) load(feedTab(), page + 1, true, activeType) }
 
   // 无限滚动：哨兵进入视口自动加载下一页（手动「加载更多」保留作兜底）
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -278,14 +297,45 @@ export default function TravelCircleFeed() {
           </div>
         )}
 
-        <div className="mb-4 md:hidden">
+        {/* 内容来源：全部用户 / 我关注的 */}
+        <div className="mb-3 md:hidden">
           <SegmentedControl
-            value={tab}
-            options={TABS.map((t) => ({ value: t.key, label: t.label }))}
-            onChange={switchTab}
+            value={scope}
+            options={SCOPES.map((s) => ({ value: s.key, label: s.label }))}
+            onChange={(v) => switchScope(v as 'all' | 'following')}
           />
         </div>
 
+        {scope === 'all' && (
+          <div className="mb-4 md:hidden">
+            <SegmentedControl
+              value={tab}
+              options={TABS.map((t) => ({ value: t.key, label: t.label }))}
+              onChange={switchTab}
+            />
+          </div>
+        )}
+
+        <div className="m-safe-inset-top-10 sticky z-20 mb-3 -mx-4 hidden gap-2 px-4 pb-1 pt-1 backdrop-blur-sm md:flex">
+          {SCOPES.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => switchScope(s.key)}
+              aria-pressed={scope === s.key}
+              className={cn(
+                'shrink-0 rounded-full px-5 py-2 text-sm font-semibold transition active:scale-95',
+                scope === s.key
+                  ? 'bg-[var(--ui-social-accent)] text-[var(--ui-social-on-accent)] shadow-[0_8px_18px_-8px_var(--ui-social-accent)]'
+                  : 'bg-[var(--ui-social-surface)] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] hover:text-[var(--ui-social-text)]',
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {scope === 'all' && (
         <div className="m-safe-inset-top-10 sticky z-20 mb-4 -mx-4 hidden gap-2 overflow-x-auto px-4 pb-2 pt-1 backdrop-blur-sm md:flex [mask-image:linear-gradient(to_right,transparent,black_8px,black_calc(100%-8px),transparent)]">
           {TABS.map((t) => (
             <button key={t.key} type="button" onClick={() => switchTab(t.key)}
@@ -295,6 +345,7 @@ export default function TravelCircleFeed() {
             </button>
           ))}
         </div>
+        )}
 
         {/*
           同行关系筛选（C1 精修）：替换早期纯装饰的话题 chips —— 那排「海边/周末旅行」
@@ -365,17 +416,41 @@ export default function TravelCircleFeed() {
             <div className="absolute inset-0 bg-[radial-gradient(40%_50%_at_50%_30%,rgba(232,179,106,0.08),transparent_70%)]" />
             <div className="relative">
               <Icon icon={Compass} size="lg" tone="accent" className="mx-auto" />
-              <p className="mt-4 text-base text-[var(--ui-social-text)]">这里还没有故事。</p>
-              <button type="button" onClick={() => router.push('/travel')} className="mt-6 rounded-full bg-[var(--ui-social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)]">去我的旅行</button>
+              <p className="mt-4 text-base text-[var(--ui-social-text)]">
+                {scope === 'following' ? '关注的人还没有发布旅行。' : '这里还没有故事。'}
+              </p>
+              <button
+                type="button"
+                onClick={() => (scope === 'following' ? switchScope('all') : router.push('/travel'))}
+                className="mt-6 rounded-full bg-[var(--ui-social-accent)] px-6 py-2.5 text-sm font-medium text-[var(--ui-social-on-accent)]"
+              >
+                {scope === 'following' ? '看全部用户' : '去我的旅行'}
+              </button>
             </div>
           </div>
           <div className="md:hidden">
             <EmptyState
               icon={Compass}
-              title={activeType ? '这个类型下还没有故事' : '这里还没有故事'}
-              description={!loggedIn && !activeType ? '登录后可以翻看大家公开的旅行记录。' : undefined}
+              title={
+                scope === 'following'
+                  ? '关注的人还没有发布旅行'
+                  : activeType
+                    ? '这个类型下还没有故事'
+                    : '这里还没有故事'
+              }
+              description={
+                scope === 'following'
+                  ? '去旅行圈关注喜欢的旅行者，他们的新故事会出现在这里。'
+                  : !loggedIn && !activeType
+                    ? '登录后可以翻看大家公开的旅行记录。'
+                    : undefined
+              }
               action={
-                activeType ? (
+                scope === 'following' ? (
+                  <Button variant="secondary" onClick={() => switchScope('all')}>
+                    看全部用户
+                  </Button>
+                ) : activeType ? (
                   <Button variant="secondary" onClick={() => changeType('')}>
                     看全部
                   </Button>
@@ -399,7 +474,7 @@ export default function TravelCircleFeed() {
             */}
             <div className="mb-4 flex items-center gap-3">
               <span className="text-sm font-semibold tracking-wide text-[var(--ui-social-text)]">
-                {tab === 'following' ? '关注的旅途' : '最新旅途'}
+                {scope === 'following' ? '关注的旅途' : tab === 'recommended' ? '推荐旅途' : tab === 'hot' ? '热门旅途' : '最新旅途'}
               </span>
               <span className="h-px flex-1 bg-[var(--ui-social-line)]" />
               {total > 0 && <span className="text-xs tabular-nums text-[var(--ui-social-muted)]">共 {total} 篇</span>}

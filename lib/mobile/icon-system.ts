@@ -424,6 +424,9 @@ export {
   CheckCircle2,
   XCircle,
   Loader2,
+  // 空间旅行计划（S3）：计划卡片/清单分类
+  Plane,
+  ShoppingBag,
   // 相册页（P2-32）
   BookOpen,
   BookMarked,

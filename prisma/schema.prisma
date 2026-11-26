@@ -358,6 +358,16 @@ enum SpaceType {
   OTHER
 }
 
+/// 旅行计划状态（空间内「一起规划下一次旅行」）
+enum SpacePlanStatus {
+  /// 规划中
+  PLANNING
+  /// 已敲定
+  CONFIRMED
+  /// 已完成（通常已转成旅行记录）
+  DONE
+}
+
 /// 情侣共同生活的数字空间（核心业务模型）
 model Space {
   id           Int       @id @default(autoincrement())
@@ -373,6 +383,7 @@ model Space {
   members       SpaceMember[]
   invites       SpaceInvite[]
   travels       Travel[]
+  travelPlans   SpaceTravelPlan[]
   memories      Memory[]
   albums        Album[]
   media         Media[]        @relation("MediaSpace")
@@ -463,6 +474,8 @@ model Travel {
   memories   Memory[]
   expenses   Expense[]
   travelPost TravelPost?
+  /// 反向：这条旅行由哪个空间旅行计划一键转换而来（一对一，见 SpaceTravelPlan.convertedTravelId）
+  sourcePlan SpaceTravelPlan?
   albums     Album[]     @relation("AlbumTravel")
 
   @@unique([spaceId, slug])
@@ -966,4 +979,42 @@ model ClientErrorLog {
 
   @@index([createdAt])
   @@index([kind, createdAt])
+}
+
+/// 空间旅行计划（S3）：多人一起规划下一次旅行。
+///
+/// 与 Travel 的关系是**规划 → 记录**：计划本身不是旅行记录，只有「一键转成旅行记录」
+/// 时才用它的信息创建一条 Travel 草稿，并回填 convertedTravelId（一对一，@unique）。
+/// 该字段同时是**转换幂等锚点**：重复点击转换直接返回已有旅行，不会重复建。
+///
+/// createdBy/createdById 刻意不建 User 外键（与 AuditLog 同思路）：
+/// 发起人只用于展示与「创建者可删」判权，用户被删也不应连带删除计划。
+model SpaceTravelPlan {
+  id                Int             @id @default(autoincrement())
+  spaceId           Int
+  title             String          @db.VarChar(200)
+  destination       String?         @db.VarChar(200)
+  startDate         DateTime?       @db.Timestamp(3)
+  endDate           DateTime?       @db.Timestamp(3)
+  /// 预算（人民币元，规划阶段展示；转换时写入 Travel.budget）
+  budget            Float?
+  note              String?         @db.Text
+  status            SpacePlanStatus @default(PLANNING)
+  /// 共享清单 JSON：[{ id, text, kind: 'TODO'|'PACK'|'PLACE', done, doneBy?, doneAt? }]
+  tasks             Json?
+  /// 发起人 userId（登录取自会话）；老 token 无 userId 时只写 createdBy
+  createdById       Int?
+  /// 发起人 username（展示 + 「创建者可删」回退判权）
+  createdBy         String?         @db.VarChar(255)
+  /// 一键转成的旅行草稿 id（一对一；null = 还没转）
+  convertedTravelId Int?            @unique
+  createdAt         DateTime        @default(now()) @db.Timestamp(3)
+  updatedAt         DateTime        @updatedAt @db.Timestamp(3)
+
+  space           Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  convertedTravel Travel? @relation(fields: [convertedTravelId], references: [id], onDelete: SetNull)
+
+  @@index([spaceId, status])
+  @@index([spaceId, startDate])
+  @@index([updatedAt])
 }

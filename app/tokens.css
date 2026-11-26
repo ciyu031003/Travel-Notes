@@ -355,80 +355,115 @@ html.dark {
   --palette-dark-accent-weak: rgba(228, 180, 120, 0.12);
 }
 
+/* 五套空间配色（2026-11 重构）：色相彼此拉开 ≥40°，亮/暗各一套。
+   · hero-a/b：头图渐变两端（浅色是高明度低彩度的同色相，暗色是深宝石色，不发灰）；
+   · accent：只作装饰（选中环 / 大色块），不可承载正文（对白字 <4.5，参照 Radix 9 级）；
+   · accent-strong：亮色下压深、暗色下提亮，是**承载文字/数字**的那一档（≥4.5）；
+   · accent-text：压在 hero 上的标题/正文色，与 hero-a/b 均 ≥4.5；
+   · hairline：纯装饰发丝线（不承担控件边界，控件边界仍走 --ui-social-line）。 */
 [data-space='COUPLE'] {
-  --palette-space-couple-accent: #86EAD4;
-  --palette-space-couple-accent-strong: #027864;
-  --palette-space-couple-accent-soft: #DDF9F2;
-  --palette-space-couple-accent-text: #16433C;
-  --palette-space-couple-hairline: #9CE0D0;
-  --palette-space-couple-hero-a: #F2FBF9;
-  --palette-space-couple-hero-b: #C8F4E9;
+  /* 玫瑰 / 胭脂 · 色相 345° */
+  --palette-space-couple-accent: #E4698F;
+  --palette-space-couple-accent-strong: #A82D57;
+  --palette-space-couple-accent-soft: #FFE8EF;
+  --palette-space-couple-accent-text: #450F1E;
+  --palette-space-couple-hairline: #F6C6D6;
+  --palette-space-couple-hero-a: #FFF4F7;
+  --palette-space-couple-hero-b: #FFD9E4;
 }
 
 html.dark [data-space='COUPLE'] {
-  --palette-space-couple-dark-accent-strong: #58D5BA;
-  --palette-space-couple-dark-accent-soft: #003A38;
-  --palette-space-couple-dark-accent-text: #C4F5E1;
-  --palette-space-couple-dark-hairline: #105650;
-  --palette-space-couple-dark-hero-a: #004744;
-  --palette-space-couple-dark-hero-b: #092C2B;
+  --palette-space-couple-dark-accent: #F08FAE;
+  --palette-space-couple-dark-accent-strong: #F4A6BE;
+  --palette-space-couple-dark-accent-soft: #3B1420;
+  --palette-space-couple-dark-accent-text: #FBE1E9;
+  --palette-space-couple-dark-hairline: #5A2334;
+  --palette-space-couple-dark-hero-a: #481220;
+  --palette-space-couple-dark-hero-b: #2A0A12;
 }
 
 [data-space='FAMILY'] {
-  --palette-space-family-accent: #5B5BD6;
-  --palette-space-family-accent-strong: #5753C6;
-  --palette-space-family-accent-soft: #F0F1FE;
-  --palette-space-family-accent-text: #272962;
-  --palette-space-family-hairline: #CBCDFF;
-  --palette-space-family-hero-a: #F8F8FF;
-  --palette-space-family-hero-b: #E6E7FF;
+  /* 琥珀 / 赤陶 · 色相 28° */
+  --palette-space-family-accent: #DF8944;
+  --palette-space-family-accent-strong: #98531A;
+  --palette-space-family-accent-soft: #FFF0DE;
+  --palette-space-family-accent-text: #3F210A;
+  --palette-space-family-hairline: #F5D9B8;
+  --palette-space-family-hero-a: #FFF8EE;
+  --palette-space-family-hero-b: #FFE3C6;
 }
 
 html.dark [data-space='FAMILY'] {
-  --palette-space-family-dark-accent-strong: #B1A9FF;
-  --palette-space-family-dark-accent-soft: #262A65;
-  --palette-space-family-dark-accent-text: #E0DFFE;
-  --palette-space-family-dark-hairline: #3D3E82;
-  --palette-space-family-dark-hero-a: #303374;
-  --palette-space-family-dark-hero-b: #202248;
+  --palette-space-family-dark-accent: #F0B274;
+  --palette-space-family-dark-accent-strong: #F3BF85;
+  --palette-space-family-dark-accent-soft: #3A2310;
+  --palette-space-family-dark-accent-text: #FCE8D2;
+  --palette-space-family-dark-hairline: #5E3B1C;
+  --palette-space-family-dark-hero-a: #4A2A0E;
+  --palette-space-family-dark-hero-b: #291506;
 }
 
 [data-space='FRIENDS'] {
-  --palette-space-friends-accent: #7CE2FE;
-  --palette-space-friends-accent-strong: #00749E;
-  --palette-space-friends-accent-soft: #E1F6FD;
-  --palette-space-friends-accent-text: #1D3E56;
-  --palette-space-friends-hairline: #A9DAED;
+  /* 湖蓝 / 青碧 · 色相 196° */
+  --palette-space-friends-accent: #2E9BBC;
+  --palette-space-friends-accent-strong: #12607A;
+  --palette-space-friends-accent-soft: #E4F5FB;
+  --palette-space-friends-accent-text: #0B3543;
+  --palette-space-friends-hairline: #BFE4F0;
   --palette-space-friends-hero-a: #F1FAFD;
-  --palette-space-friends-hero-b: #D1F0FA;
+  --palette-space-friends-hero-b: #CDEDF7;
 }
 
 html.dark [data-space='FRIENDS'] {
-  --palette-space-friends-dark-accent-strong: #75C7F0;
-  --palette-space-friends-dark-accent-soft: #113555;
-  --palette-space-friends-dark-accent-text: #C2F3FF;
-  --palette-space-friends-dark-hairline: #1B537B;
-  --palette-space-friends-dark-hero-a: #154467;
-  --palette-space-friends-dark-hero-b: #112840;
+  --palette-space-friends-dark-accent: #7FD2E8;
+  --palette-space-friends-dark-accent-strong: #9ADCF0;
+  --palette-space-friends-dark-accent-soft: #0E3744;
+  --palette-space-friends-dark-accent-text: #DCF3FA;
+  --palette-space-friends-dark-hairline: #1B4E5F;
+  --palette-space-friends-dark-hero-a: #0E3746;
+  --palette-space-friends-dark-hero-b: #071F27;
 }
 
 [data-space='SOLO'] {
-  --palette-space-solo-accent: #AB4ABA;
-  --palette-space-solo-accent-strong: #953EA3;
-  --palette-space-solo-accent-soft: #FBEBFB;
-  --palette-space-solo-accent-text: #53195D;
-  --palette-space-solo-hairline: #E9C2EC;
-  --palette-space-solo-hero-a: #FDF7FD;
-  --palette-space-solo-hero-b: #F7DEF8;
+  /* 暮紫 / 夜空 · 色相 258° */
+  --palette-space-solo-accent: #7C69D8;
+  --palette-space-solo-accent-strong: #48389C;
+  --palette-space-solo-accent-soft: #EFEAFF;
+  --palette-space-solo-accent-text: #231B44;
+  --palette-space-solo-hairline: #D6CDF3;
+  --palette-space-solo-hero-a: #F7F4FF;
+  --palette-space-solo-hero-b: #E0D9F9;
 }
 
 html.dark [data-space='SOLO'] {
-  --palette-space-solo-dark-accent-strong: #E796F3;
-  --palette-space-solo-dark-accent-soft: #451D47;
-  --palette-space-solo-dark-accent-text: #F4D4F4;
-  --palette-space-solo-dark-hairline: #5E3061;
-  --palette-space-solo-dark-hero-a: #512454;
-  --palette-space-solo-dark-hero-b: #351A35;
+  --palette-space-solo-dark-accent: #B4A5F0;
+  --palette-space-solo-dark-accent-strong: #C4B8F6;
+  --palette-space-solo-dark-accent-soft: #251E46;
+  --palette-space-solo-dark-accent-text: #E8E2FB;
+  --palette-space-solo-dark-hairline: #3B3170;
+  --palette-space-solo-dark-hero-a: #251D4A;
+  --palette-space-solo-dark-hero-b: #130F2A;
+}
+
+[data-space='OTHER'] {
+  /* 苔绿 / 中性 · 色相 88°（原 OTHER 直接复用根兜底的灰砂色，与 SOLO 的紫无法区分） */
+  --palette-space-other-accent: #7C905E;
+  --palette-space-other-accent-strong: #4A5D33;
+  --palette-space-other-accent-soft: #F0F4E6;
+  --palette-space-other-accent-text: #252D19;
+  --palette-space-other-hairline: #D5DEC1;
+  --palette-space-other-hero-a: #F6F8F0;
+  --palette-space-other-hero-b: #E4E9D6;
+}
+
+html.dark [data-space='OTHER'] {
+  --palette-space-other-dark-accent: #BFD193;
+  --palette-space-other-dark-accent-strong: #CEDA9F;
+  --palette-space-other-dark-accent-soft: #262E1B;
+  --palette-space-other-dark-accent-text: #E9EFD9;
+  --palette-space-other-dark-hairline: #414D2B;
+  --palette-space-other-dark-hero-a: #28301A;
+  --palette-space-other-dark-hero-b: #141A0D;
 }
 
 /* 来源：原 app/globals.css @layer base（P2-31 迁移至此）。空间类型皮肤的设计约束：
@@ -826,6 +861,8 @@ html.dark {
 }
 
 [data-space='COUPLE'] {
+  /* 每类空间的头图渐变方向也不同：色相 + 方向双重区分 */
+  --ui-space-gradient-angle: 132deg;
   --ui-space-accent: var(--palette-space-couple-accent);
   --ui-space-accent-strong: var(--palette-space-couple-accent-strong);
   --ui-space-accent-soft: var(--palette-space-couple-accent-soft);
@@ -837,7 +874,7 @@ html.dark {
 }
 
 html.dark [data-space='COUPLE'] {
-  --ui-space-accent: var(--palette-space-couple-accent);
+  --ui-space-accent: var(--palette-space-couple-dark-accent);
   --ui-space-accent-strong: var(--palette-space-couple-dark-accent-strong);
   --ui-space-accent-soft: var(--palette-space-couple-dark-accent-soft);
   --ui-space-accent-text: var(--palette-space-couple-dark-accent-text);
@@ -848,6 +885,8 @@ html.dark [data-space='COUPLE'] {
 }
 
 [data-space='FAMILY'] {
+  /* 每类空间的头图渐变方向也不同：色相 + 方向双重区分 */
+  --ui-space-gradient-angle: 116deg;
   --ui-space-accent: var(--palette-space-family-accent);
   --ui-space-accent-strong: var(--palette-space-family-accent-strong);
   --ui-space-accent-soft: var(--palette-space-family-accent-soft);
@@ -859,7 +898,7 @@ html.dark [data-space='COUPLE'] {
 }
 
 html.dark [data-space='FAMILY'] {
-  --ui-space-accent: var(--palette-space-family-accent);
+  --ui-space-accent: var(--palette-space-family-dark-accent);
   --ui-space-accent-strong: var(--palette-space-family-dark-accent-strong);
   --ui-space-accent-soft: var(--palette-space-family-dark-accent-soft);
   --ui-space-accent-text: var(--palette-space-family-dark-accent-text);
@@ -870,6 +909,8 @@ html.dark [data-space='FAMILY'] {
 }
 
 [data-space='FRIENDS'] {
+  /* 每类空间的头图渐变方向也不同：色相 + 方向双重区分 */
+  --ui-space-gradient-angle: 154deg;
   --ui-space-accent: var(--palette-space-friends-accent);
   --ui-space-accent-strong: var(--palette-space-friends-accent-strong);
   --ui-space-accent-soft: var(--palette-space-friends-accent-soft);
@@ -881,7 +922,7 @@ html.dark [data-space='FAMILY'] {
 }
 
 html.dark [data-space='FRIENDS'] {
-  --ui-space-accent: var(--palette-space-friends-accent);
+  --ui-space-accent: var(--palette-space-friends-dark-accent);
   --ui-space-accent-strong: var(--palette-space-friends-dark-accent-strong);
   --ui-space-accent-soft: var(--palette-space-friends-dark-accent-soft);
   --ui-space-accent-text: var(--palette-space-friends-dark-accent-text);
@@ -892,6 +933,8 @@ html.dark [data-space='FRIENDS'] {
 }
 
 [data-space='SOLO'] {
+  /* 每类空间的头图渐变方向也不同：色相 + 方向双重区分 */
+  --ui-space-gradient-angle: 142deg;
   --ui-space-accent: var(--palette-space-solo-accent);
   --ui-space-accent-strong: var(--palette-space-solo-accent-strong);
   --ui-space-accent-soft: var(--palette-space-solo-accent-soft);
@@ -903,7 +946,7 @@ html.dark [data-space='FRIENDS'] {
 }
 
 html.dark [data-space='SOLO'] {
-  --ui-space-accent: var(--palette-space-solo-accent);
+  --ui-space-accent: var(--palette-space-solo-dark-accent);
   --ui-space-accent-strong: var(--palette-space-solo-dark-accent-strong);
   --ui-space-accent-soft: var(--palette-space-solo-dark-accent-soft);
   --ui-space-accent-text: var(--palette-space-solo-dark-accent-text);
@@ -914,25 +957,27 @@ html.dark [data-space='SOLO'] {
 }
 
 [data-space='OTHER'] {
-  --ui-space-accent: var(--palette-space-accent);
-  --ui-space-accent-strong: var(--palette-space-accent-strong);
-  --ui-space-accent-soft: var(--palette-space-accent-soft);
-  --ui-space-accent-text: var(--palette-space-accent-text);
+  /* 每类空间的头图渐变方向也不同：色相 + 方向双重区分 */
+  --ui-space-gradient-angle: 104deg;
+  --ui-space-accent: var(--palette-space-other-accent);
+  --ui-space-accent-strong: var(--palette-space-other-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-other-accent-soft);
+  --ui-space-accent-text: var(--palette-space-other-accent-text);
   --ui-space-on-accent: var(--palette-mobile-surface-solid);
-  --ui-space-hairline: var(--palette-space-hairline);
-  --ui-space-hero-a: var(--palette-space-hero-a);
-  --ui-space-hero-b: var(--palette-space-hero-b);
+  --ui-space-hairline: var(--palette-space-other-hairline);
+  --ui-space-hero-a: var(--palette-space-other-hero-a);
+  --ui-space-hero-b: var(--palette-space-other-hero-b);
 }
 
 html.dark [data-space='OTHER'] {
-  --ui-space-accent: var(--palette-dark-space-accent);
-  --ui-space-accent-strong: var(--palette-dark-space-accent-strong);
-  --ui-space-accent-soft: var(--palette-dark-space-accent-soft);
-  --ui-space-accent-text: var(--palette-dark-space-accent-text);
+  --ui-space-accent: var(--palette-space-other-dark-accent);
+  --ui-space-accent-strong: var(--palette-space-other-dark-accent-strong);
+  --ui-space-accent-soft: var(--palette-space-other-dark-accent-soft);
+  --ui-space-accent-text: var(--palette-space-other-dark-accent-text);
   --ui-space-on-accent: var(--palette-dark-social-bg);
-  --ui-space-hairline: var(--palette-dark-space-hairline);
-  --ui-space-hero-a: var(--palette-dark-space-hero-a);
-  --ui-space-hero-b: var(--palette-dark-space-hero-b);
+  --ui-space-hairline: var(--palette-space-other-dark-hairline);
+  --ui-space-hero-a: var(--palette-space-other-dark-hero-a);
+  --ui-space-hero-b: var(--palette-space-other-dark-hero-b);
 }
 
 /* ── L3 · Skin API（显式 opt-in，当前无组件使用；只重绑 --ui-* + 共享别名）── */
