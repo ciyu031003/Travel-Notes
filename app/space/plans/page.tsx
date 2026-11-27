@@ -12,6 +12,10 @@ import type { SpaceOverview } from '@/lib/modules/space/space-overview.types'
 import { SpaceThemeScope } from '@/components/space/SpaceThemeScope'
 import { SpacePlanSection } from '@/components/space/plans/SpacePlanSection'
 import { SpacePlanDetail } from '@/components/space/plans/SpacePlanDetail'
+import { SpacePlanSkeleton } from '@/components/space/plans/SpacePlanSkeleton'
+// 空间模块视觉层：计划页不在 /space/[slug] 的 layout 下，需要自己引入才拿到
+// .space-plan-progress / .plan-task-label 这些动效类（Next 会去重，不会重复注入）
+import '../space.css'
 
 type LoadState = 'loading' | 'ready' | 'denied' | 'notfound' | 'unauthenticated' | 'error'
 
@@ -106,10 +110,13 @@ export default function SpacePlansPage() {
   }
 
   if (state === 'loading') {
+    // 用与真实卡片同构的骨架，避免「转圈 → 整块内容」的高度跳变（详情页同款处理）
     return (
-      <div className="m-gutter pt-2">
+      <div className="m-gutter pb-24 pt-2">
         <LargeTitle title="旅行计划" eyebrow="甜途 · 旅行计划" back={spaceDetailHref(slug)} />
-        <LoaderBlock label="正在打开旅行计划…" />
+        <div className="mt-6">
+          <SpacePlanSkeleton rows={3} />
+        </div>
       </div>
     )
   }

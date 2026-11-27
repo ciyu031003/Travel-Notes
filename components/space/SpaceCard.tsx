@@ -32,7 +32,7 @@ export interface SpaceCardData {
 }
 
 /**
- * 空间卡片（2026-11 重构）。
+ * 空间卡片（2026-11 重构 · U1 微交互精修）。
  *
  * 视觉分工：
  *  · 封面（.space-cover）是五套配色的唯一大面积载体，高度 92px，只放
@@ -41,6 +41,11 @@ export interface SpaceCardData {
  *    列表里五张彩色卡片同时出现仍然是一个 App；
  *  · 卡片不自带实心 CTA（实心 CTA 由页面级按钮承担，一屏最多一个）；
  *  · 交互走全局 .m-card-pressable（悬停升一档阴影 / 按下 0.985 弹簧），不自绘。
+ *
+ * U1 微交互（全部是 compositor 友好的 transform / filter，写在 app/space/space.css）：
+ *  · 悬停：封面轻微提亮饱和（.space-card:hover .space-card-cover）+ 右箭头右移 2px；
+ *  · 按下：沿用全局 .m-card-pressable 的 0.985 弹簧，不叠加第二套缩放（会抖）；
+ *  · 触摸设备没有真 hover，以上 hover 规则都在 @media (hover: hover) 里。
  */
 export function SpaceCard({ space, className }: { space: SpaceCardData; className?: string }) {
   const stats: Array<[number, string]> = [
@@ -105,7 +110,10 @@ export function SpaceCard({ space, className }: { space: SpaceCardData; classNam
             <span className="text-[11px] tabular-nums text-[var(--ui-social-faint)]">
               {space.memberCount} 位
             </span>
-            <Icon icon={ChevronRight} size="sm" className="text-[var(--ui-social-faint)]" />
+            {/* 悬停时右移 2px：一个"可以点进去"的暗示，不做位移动画（只 transform） */}
+            <span className="space-card-chevron text-[var(--ui-social-faint)]">
+              <Icon icon={ChevronRight} size="sm" />
+            </span>
           </span>
         </div>
       </div>

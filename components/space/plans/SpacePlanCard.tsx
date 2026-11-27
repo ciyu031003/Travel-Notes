@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { motion } from 'motion/react'
 import {
   CalendarDays,
   ChevronRight,
@@ -10,6 +11,7 @@ import {
 } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
 import { Pill } from '@/components/mobile/Pills'
+import { SPACE_DUR, SPACE_EASE_OUT } from '../space-motion'
 import {
   PLAN_STATUS_ICONS,
   PLAN_STATUS_TONES,
@@ -40,7 +42,9 @@ export function SpacePlanCard({ plan, spaceSlug }: { plan: SpacePlan; spaceSlug:
       className="m-card-pressable block rounded-2xl bg-[var(--ui-social-surface)] p-3.5 ring-1 ring-[var(--ui-space-hairline)]"
     >
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-[var(--ui-space-accent-soft)] text-[var(--ui-space-accent-strong)]">
+        {/* 状态色：规划中=空间主题色 / 已敲定=日光黄 / 已完成=中性灰。
+            色值都在 space.css 的 .space-plan-tile 里，组件只传 data-status。 */}
+        <span className="space-plan-tile flex h-10 w-10 flex-none items-center justify-center rounded-xl" data-status={plan.status}>
           <Icon icon={PlanIconOf(plan)} size="md" />
         </span>
         <div className="min-w-0 flex-1">
@@ -80,7 +84,10 @@ export function SpacePlanCard({ plan, spaceSlug }: { plan: SpacePlan; spaceSlug:
         </span>
       </div>
 
-      {/* 清单进度：有清单才显示，空清单不占一行 */}
+      {/* 清单进度：有清单才显示，空清单不占一行。
+          U1：进度用 scaleX 表达（transform），进场从 0 长到当前值；
+          改进度时（勾选后回到列表）也是同一条 transform 过渡 —— 不碰 width，
+          8 张卡片同时刷新也不会触发一次重排。减动效时 motion 直接落到终值。 */}
       {plan.taskCount > 0 && (
         <div className="mt-3">
           <div className="flex items-center justify-between text-[11px] text-[var(--ui-social-muted)]">
@@ -90,16 +97,18 @@ export function SpacePlanCard({ plan, spaceSlug }: { plan: SpacePlan; spaceSlug:
             <span className="tabular-nums">{progress}%</span>
           </div>
           <div
-            className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[var(--ui-social-surface2)]"
+            className="space-plan-progress mt-1"
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progress}
             aria-label={`清单完成 ${progress}%`}
           >
-            <span
-              className="block h-full rounded-full bg-[var(--ui-space-accent-strong)] transition-[width] duration-300"
-              style={{ width: `${progress}%` }}
+            <motion.span
+              className="space-plan-progress-fill"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: progress / 100 }}
+              transition={{ duration: SPACE_DUR.slow, ease: SPACE_EASE_OUT }}
             />
           </div>
         </div>

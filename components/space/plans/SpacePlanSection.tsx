@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertCircle, Plane, Plus, RefreshCw } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
-import { Loader } from '@/components/mobile/Loader'
 import { apiUrl } from '@/lib/api-base'
 import { SpaceSection } from '../SpaceSection'
+import { SpaceStagger, SpaceStaggerItem } from '../SpaceReveal'
 import { SpacePlanCard } from './SpacePlanCard'
+import { SpacePlanSkeleton } from './SpacePlanSkeleton'
 import { SpacePlanComposer } from './SpacePlanComposer'
 import { errorMessageOf, type SpacePlan } from './plan-types'
 
@@ -76,9 +77,7 @@ export function SpacePlanSection({
       }
     >
       {loading ? (
-        <div className="flex items-center justify-center py-6">
-          <Loader variant="ring" />
-        </div>
+        <SpacePlanSkeleton rows={2} />
       ) : error ? (
         <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-[var(--ui-social-line)] px-4 py-4">
           <span className="flex-none text-[var(--ui-social-faint)]">
@@ -113,9 +112,11 @@ export function SpacePlanSection({
           ) : null}
         </div>
       ) : (
-        <div className="space-y-2">
+        <SpaceStagger className="space-y-2">
           {plans.map((plan) => (
-            <SpacePlanCard key={plan.id} plan={plan} spaceSlug={spaceSlug} />
+            <SpaceStaggerItem key={plan.id}>
+              <SpacePlanCard plan={plan} spaceSlug={spaceSlug} />
+            </SpaceStaggerItem>
           ))}
           {canEdit && (
             <button
@@ -127,7 +128,7 @@ export function SpacePlanSection({
               再发起一个计划
             </button>
           )}
-        </div>
+        </SpaceStagger>
       )}
 
       {canEdit && (

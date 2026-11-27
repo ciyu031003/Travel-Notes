@@ -1,0 +1,102 @@
+/* ==========================================================================
+   记录此刻（/travel/[slug]/record）· 动效与微交互（2026-11-28）
+   --------------------------------------------------------------------------
+   这一页的排版仍走 mobile-v6.css 的 m2-* 组件；本文件只补"这一页特有的动效"：
+     .rc-spin          加载指示器（仅在 reduced-motion 关闭时旋转）
+     .rc-photo-fx      新增照片的一次性光环（只动 opacity/transform）
+     .rc-photo-x       缩略图右上角删除键（玻璃暗底，不再是裸黑）
+     .rc-mood          心情胶囊的按压回弹与状态过渡
+     .rc-submit         提交按钮内的不定进度条（绝对定位，不改按钮高度）
+   颜色一律取 --m-* token，时长/缓动取 app/motion-tokens.css 的 --motion-*。
+   ========================================================================== */
+
+.rc-spin {
+  animation: rc-spin 900ms linear infinite;
+}
+@keyframes rc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── 照片 ─────────────────────────────────────────────────────────────── */
+.rc-photo-fx {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 2px solid var(--m-accent);
+  background-color: color-mix(in srgb, var(--m-accent) 18%, transparent);
+  animation: rc-photo-in 700ms var(--motion-ease-out) both;
+}
+@keyframes rc-photo-in {
+  0%   { opacity: 0; transform: scale(1.06); }
+  22%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.rc-photo-x {
+  background-color: color-mix(in srgb, var(--m-text) 55%, transparent);
+  color: var(--m-on-accent);
+  transition: transform var(--motion-fast) var(--motion-ease-out), filter var(--motion-fast) linear;
+  touch-action: manipulation;
+}
+.rc-photo-x:active {
+  transform: scale(0.92);
+  filter: brightness(1.08);
+}
+
+/* ── 心情 ─────────────────────────────────────────────────────────────── */
+.rc-mood {
+  transition: transform var(--motion-fast) var(--motion-ease-standard),
+    background-color var(--motion-fast) linear, border-color var(--motion-fast) linear,
+    color var(--motion-fast) linear, filter var(--motion-fast) linear;
+  touch-action: manipulation;
+}
+.rc-mood:active {
+  transform: scale(0.95);
+  filter: brightness(0.97);
+}
+
+/* ── 提交按钮：不定进度条 ─────────────────────────────────────────────── */
+.rc-submit {
+  position: relative;
+  overflow: hidden;
+}
+.rc-submit-load {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 5px;
+  height: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--m-on-accent) 28%, transparent);
+  pointer-events: none;
+}
+.rc-submit-load-bar {
+  position: absolute;
+  inset: 0;
+  width: 44%;
+  border-radius: inherit;
+  background-color: var(--m-on-accent);
+  animation: rc-load 1.05s var(--motion-ease-standard) infinite;
+}
+@keyframes rc-load {
+  from { transform: translateX(-110%); }
+  to   { transform: translateX(340%); }
+}
+
+/* ── 减少动效：新增的动画/过渡全部登记 ─────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rc-spin,
+  .rc-photo-fx,
+  .rc-submit-load-bar {
+    animation: none !important;
+  }
+  .rc-mood,
+  .rc-photo-x {
+    transition: none !important;
+  }
+  .rc-mood:active,
+  .rc-photo-x:active {
+    transform: none;
+  }
+}

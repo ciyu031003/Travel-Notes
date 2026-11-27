@@ -1,0 +1,751 @@
+/* ==========================================================================
+   相册 · 书本 / 翻页 / 动态交互精修（2026-11-28 · U3）
+   --------------------------------------------------------------------------
+   只做体验层：不改数据、不改业务结构、不产生布局位移。
+   约定：
+     · 动画只作用于 transform / opacity / filter；纸页厚度与阴影全部用
+       box-shadow + 伪元素**预渲染**，动画期间不新建绘制层；
+     · 时长与缓动一律取 app/motion-tokens.css 的三档 token（--motion-*）；
+     · 暗色靠 .dark 下覆盖颜色，不新增结构；
+     · prefers-reduced-motion: reduce 时所有位移/旋转退化为淡入淡出。
+   结构对应：
+     · 书本开合三段式  → components/album/book/BookOpenChoreography.tsx
+     · 书脊 / 翻页高光 → components/album/reader/ArtFlipBook.tsx 的页元素
+     · 胶片条 / 指示器 → components/album/reader/BookFilmstrip.tsx
+     · tilt / 长按放大 → components/album/reader/usePressZoom.ts
+   ========================================================================== */
+
+/* ==========================================================================
+   1. 书本开合三段式（封面上抬侧倾 → 扉页扫入 → 内页展开；关闭为逆向）
+   ========================================================================== */
+
+.book-choreo {
+  --choreo-w: min(74vw, 330px);
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  perspective: 1500px;
+  perspective-origin: 50% 44%;
+  touch-action: none;
+  /* 台面：主题纸色的暖色光，四周压暗把视线收到书上 */
+  background:
+    radial-gradient(120% 82% at 50% 16%, color-mix(in srgb, var(--book-paper, #f7f6f0) 88%, #ffffff) 0%, transparent 62%),
+    radial-gradient(140% 120% at 50% 50%, color-mix(in srgb, var(--book-cloth, #7d8572) 16%, var(--book-paper, #f7f6f0)) 0%, color-mix(in srgb, var(--book-ink, #292c26) 22%, var(--book-paper, #f7f6f0)) 100%);
+}
+.dark .book-choreo {
+  background:
+    radial-gradient(120% 82% at 50% 16%, color-mix(in srgb, var(--book-paper, #f7f6f0) 26%, #101210) 0%, transparent 60%),
+    radial-gradient(140% 120% at 50% 50%, #12140f 0%, #080a07 100%);
+}
+@media (min-width: 768px) {
+  .book-choreo { --choreo-w: min(42vw, 400px); }
+}
+
+.book-choreo__stage {
+  position: relative;
+  width: var(--choreo-w);
+  height: calc(var(--choreo-w) * 1.28);
+  transform-style: preserve-3d;
+  /* 书在台面上的位置：略微俯视，封面才有"立起来"的重量感 */
+  transform: rotateX(6deg);
+}
+
+/* 内页堆：书芯。三层伪元素当纸厚，动画期间只是跟着父层平移，不重绘阴影 */
+.book-choreo__board,
+.book-choreo__pages {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px 7px 7px 4px;
+  background: var(--book-paper, #f7f6f0);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--book-ink, #292c26) 8%, transparent),
+    0 26px 40px -18px color-mix(in srgb, var(--book-ink, #292c26) 46%, transparent),
+    0 54px 80px -46px color-mix(in srgb, var(--book-ink, #292c26) 60%, transparent);
+}
+.book-choreo__board::before,
+.book-choreo__board::after {
+  content: '';
+  position: absolute;
+  inset: 3px -3px -3px 6px;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--book-paper, #f7f6f0) 84%, var(--book-ink, #292c26));
+  z-index: -1;
+}
+.book-choreo__board::after {
+  inset: 6px -6px -6px 10px;
+  background: color-mix(in srgb, var(--book-paper, #f7f6f0) 70%, var(--book-ink, #292c26));
+  z-index: -2;
+}
+
+/* 扉页：一张纸从左侧"落下"并扫过一道高光 */
+.book-choreo__flyleaf {
+  position: absolute;
+  inset: 8px 6px 8px 12px;
+  border-radius: 3px;
+  transform-origin: left center;
+  background:
+    linear-gradient(105deg, color-mix(in srgb, var(--book-paper, #f7f6f0) 92%, #ffffff) 0%, var(--book-paper, #f7f6f0) 46%, color-mix(in srgb, var(--book-paper, #f7f6f0) 88%, var(--book-ink, #292c26)) 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--book-ink, #292c26) 8%, transparent);
+  z-index: 2;
+  opacity: 0;
+}
+.book-choreo__flyleaf::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(100deg, transparent 24%, color-mix(in srgb, #ffffff 82%, transparent) 48%, transparent 72%);
+  opacity: 0;
+}
+
+/* 封面：绕左书脊旋转。backface-visibility: hidden 让它转过 90° 后自然"翻过去" */
+.book-choreo__cover {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: 4px 7px 7px 4px;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--book-cloth, #7d8572) 82%, var(--book-paper, #f7f6f0));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--book-ink, #292c26) 16%, transparent),
+    0 18px 34px -18px color-mix(in srgb, var(--book-ink, #292c26) 58%, transparent);
+}
+/* 书脊：左侧一条压暗的皮革/布面 */
+.book-choreo__spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 7%;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--book-ink, #292c26) 40%, var(--book-cloth, #7d8572)) 0%,
+    color-mix(in srgb, var(--book-ink, #292c26) 18%, var(--book-cloth, #7d8572)) 62%,
+    color-mix(in srgb, var(--book-ink, #292c26) 26%, var(--book-cloth, #7d8572)) 100%);
+}
+/* 封面上的照片窗：小幅内嵌，像贴上去的相片 */
+.book-choreo__cover-art {
+  position: absolute;
+  inset: 13% 10% 34% 17%;
+  overflow: hidden;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--book-ink, #292c26) 12%, var(--book-paper, #f7f6f0));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--book-ink, #292c26) 22%, transparent),
+    0 6px 14px -8px color-mix(in srgb, var(--book-ink, #292c26) 70%, transparent);
+}
+.book-choreo__cover-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.book-choreo__cover-art--empty {
+  display: grid;
+  place-items: center;
+  font-family: var(--art-serif, var(--book-serif, Georgia, serif));
+  font-size: 32px;
+  color: color-mix(in srgb, var(--book-ink, #292c26) 46%, transparent);
+}
+/* 封面文字块：标题 + 时间地点 */
+.book-choreo__cover-text {
+  position: absolute;
+  inset: auto 9% 8% 17%;
+  color: var(--book-paper, #f7f6f0);
+  font-family: var(--art-serif, var(--book-serif, Georgia, serif));
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--book-ink, #292c26) 60%, transparent);
+}
+.book-choreo__cover-kicker {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  opacity: 0.72;
+}
+.book-choreo__cover-title {
+  display: block;
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.28;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.book-choreo__cover-meta {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.78;
+}
+/* 封面高光：一条斜向反光，随开合角度扫过（纯 opacity 动画） */
+.book-choreo__cover-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(102deg, transparent 28%, color-mix(in srgb, #ffffff 34%, transparent) 46%, transparent 62%);
+  opacity: 0.5;
+}
+/* 全屏纸幕：开合时淡出/淡入，让"书"和"阅读器"交叉过渡 */
+.book-choreo__veil {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--book-paper, #f7f6f0) 86%, transparent);
+  pointer-events: none;
+}
+.dark .book-choreo__veil {
+  background: color-mix(in srgb, #0b0d0a 80%, transparent);
+}
+
+/* ---- 开启：封面 0° → -158°（中段带一次"上抬"），扉页落下，纸幕淡出 ---- */
+.book-choreo[data-phase='opening'] .book-choreo__cover {
+  animation: choreo-cover-open 620ms var(--motion-ease-standard) 40ms both;
+}
+.book-choreo[data-phase='opening'] .book-choreo__cover-sheen {
+  animation: choreo-sheen 620ms var(--motion-ease-standard) 40ms both;
+}
+.book-choreo[data-phase='opening'] .book-choreo__flyleaf {
+  animation:
+    choreo-flyleaf-in 520ms var(--motion-ease-out) 150ms both,
+    choreo-paper-out 240ms var(--motion-ease-in) 500ms both;
+}
+/* 书芯与扉页在阅读器浮现前先淡出：两本书的影子不叠在一起（否则会看到"重影"） */
+.book-choreo[data-phase='opening'] .book-choreo__board,
+.book-choreo[data-phase='opening'] .book-choreo__pages {
+  animation: choreo-paper-out 240ms var(--motion-ease-in) 500ms both;
+}
+.book-choreo[data-phase='opening'] .book-choreo__flyleaf::after {
+  animation: choreo-flyleaf-sheen 460ms var(--motion-ease-out) 190ms both;
+}
+.book-choreo[data-phase='opening'] .book-choreo__veil {
+  animation: choreo-veil-out 420ms var(--motion-ease-out) 200ms both;
+}
+.book-choreo[data-phase='opening'] {
+  animation: choreo-shell-out 300ms var(--motion-ease-out) 580ms both;
+}
+/* ---- 关闭：逆向（封面 -158° → 0°，扉页翻回，纸幕淡入） ---- */
+.book-choreo[data-phase='closing'] .book-choreo__cover {
+  animation: choreo-cover-close 500ms var(--motion-ease-standard) both;
+}
+.book-choreo[data-phase='closing'] .book-choreo__cover-sheen {
+  animation: choreo-sheen 500ms var(--motion-ease-standard) both;
+}
+.book-choreo[data-phase='closing'] .book-choreo__flyleaf {
+  animation: choreo-flyleaf-out 320ms var(--motion-ease-in) both;
+}
+.book-choreo[data-phase='closing'] .book-choreo__veil {
+  animation: choreo-veil-in 240ms var(--motion-ease-in) both;
+}
+.book-choreo[data-phase='closed'] .book-choreo__cover {
+  transform: rotateY(0deg);
+}
+
+@keyframes choreo-cover-open {
+  0%   { transform: rotateY(0deg) translateZ(8px); }
+  22%  { transform: rotateY(-13deg) translateZ(20px); }
+  100% { transform: rotateY(-158deg) translateZ(0); }
+}
+@keyframes choreo-cover-close {
+  0%   { transform: rotateY(-158deg) translateZ(0); }
+  82%  { transform: rotateY(-8deg) translateZ(14px); }
+  100% { transform: rotateY(0deg) translateZ(8px); }
+}
+@keyframes choreo-sheen {
+  0%   { opacity: 0.15; transform: translate3d(14%, 0, 0); }
+  55%  { opacity: 0.6; }
+  100% { opacity: 0.1; transform: translate3d(-18%, 0, 0); }
+}
+@keyframes choreo-flyleaf-in {
+  0%   { opacity: 0; transform: rotateY(-96deg); }
+  40%  { opacity: 1; }
+  100% { opacity: 1; transform: rotateY(0deg); }
+}
+@keyframes choreo-flyleaf-out {
+  0%   { opacity: 1; transform: rotateY(0deg); }
+  100% { opacity: 0; transform: rotateY(-92deg); }
+}
+@keyframes choreo-flyleaf-sheen {
+  0%   { opacity: 0; transform: translate3d(-40%, 0, 0) skewX(-10deg); }
+  60%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translate3d(46%, 0, 0) skewX(-10deg); }
+}
+@keyframes choreo-veil-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes choreo-veil-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes choreo-shell-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes choreo-paper-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---- 内页展开：开合期间阅读器本体从 0.972 缩放回到 1（只动 transform/opacity） ---- */
+.book-reader[data-choreo='opening'] .art-flip-rig {
+  animation: reader-inner-reveal 560ms var(--motion-ease-out) 180ms both;
+}
+.book-reader[data-choreo='closing'] .art-flip-rig {
+  animation: reader-inner-collapse 360ms var(--motion-ease-in) both;
+}
+@keyframes reader-inner-reveal {
+  0%   { opacity: 0; transform: scale(0.968); }
+  55%  { opacity: 1; }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes reader-inner-collapse {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.972); }
+}
+/* 开合期间不要出现"落定回弹"叠在开合动画上 */
+.book-reader[data-choreo='opening'] .art-flip-rig.is-settling .art-flipbook-container,
+.book-reader[data-choreo='closing'] .art-flip-rig.is-settling .art-flipbook-container {
+  animation: none;
+}
+
+/* ==========================================================================
+   2. 书脊 / 纸页弯折 / 翻页高光 / 连翻惯性
+   ========================================================================== */
+
+/* 书脊：双页对开时中缝的"谷"。多层渐变叠加 = 折痕 + 两侧受光的弧度 */
+.art-flip-rig:not(.art-flip-rig--single)::before {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  top: 3.5%;
+  bottom: 3.5%;
+  left: 50%;
+  width: 4.2%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  border-radius: 3px;
+  opacity: 0.72;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--art-ink, #292c26) 10%, transparent) 24%,
+      color-mix(in srgb, var(--art-ink, #292c26) 26%, transparent) 48%,
+      color-mix(in srgb, var(--art-ink, #292c26) 30%, transparent) 52%,
+      color-mix(in srgb, var(--art-ink, #292c26) 10%, transparent) 76%,
+      transparent 100%);
+  mix-blend-mode: multiply;
+  transition: opacity var(--motion-base) var(--motion-ease-out);
+}
+/* 翻页/折角时书脊受挤压：谷更深一点（只是透明度变化） */
+.art-flip-rig[data-flip-state='flipping']::before,
+.art-flip-rig[data-flip-state='user_fold']::before,
+.art-flip-rig[data-flip-state='fold_corner']::before {
+  opacity: 1;
+}
+/* 暗色：纸页变暗后书脊要用"加光"而不是压暗 */
+.dark .art-flip-rig:not(.art-flip-rig--single)::before {
+  mix-blend-mode: screen;
+  opacity: 0.5;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, #ffffff 6%, transparent) 26%,
+      color-mix(in srgb, #ffffff 12%, transparent) 48%,
+      color-mix(in srgb, #000000 26%, transparent) 54%,
+      color-mix(in srgb, #ffffff 6%, transparent) 76%,
+      transparent 100%);
+}
+
+/* 纸页弯折感：每个页元素自己带一层边缘阴影（跟着库的 3D 变换一起动，
+   所以弯折的"坡面"上也有明暗，而不是只有一条直边） */
+.art-flipbook-container .art-flip-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--art-ink, #292c26) 12%, transparent) 0%, transparent 9%),
+    linear-gradient(270deg, color-mix(in srgb, var(--art-ink, #292c26) 14%, transparent) 0%, transparent 9%),
+    linear-gradient(180deg, color-mix(in srgb, var(--art-ink, #292c26) 8%, transparent) 0%, transparent 6%),
+    linear-gradient(0deg, color-mix(in srgb, var(--art-ink, #292c26) 10%, transparent) 0%, transparent 7%);
+  opacity: calc(var(--page-bend, 1) * 0.9);
+}
+/* 折角中的那一页，阴影压得更实（库只改这一个页元素的状态，不重排） */
+.art-flip-rig[data-flip-state='user_fold'] .art-flip-page[style*='z-index: 2']::after {
+  opacity: 1;
+}
+
+/* 翻页高光：一条斜光扫过书页。只在 flipping 时跑一次，动画结束 opacity 归零 */
+.art-flip-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.art-flip-sweep::before {
+  content: '';
+  position: absolute;
+  top: -18%;
+  bottom: -18%;
+  left: 0;
+  width: 44%;
+  opacity: 0;
+  transform: translate3d(-160%, 0, 0) skewX(-9deg);
+  background: linear-gradient(96deg, transparent 0%, color-mix(in srgb, #ffffff 46%, transparent) 46%, color-mix(in srgb, #ffffff 12%, transparent) 60%, transparent 100%);
+}
+.art-flip-rig[data-flip-state='flipping'] .art-flip-sweep::before {
+  animation: art-page-sweep 620ms var(--motion-ease-out) both;
+}
+.art-flip-rig.is-rushing .art-flip-sweep::before {
+  animation-duration: 400ms;
+}
+@keyframes art-page-sweep {
+  0%   { opacity: 0; transform: translate3d(-160%, 0, 0) skewX(-9deg); }
+  22%  { opacity: 0.85; }
+  100% { opacity: 0; transform: translate3d(260%, 0, 0) skewX(-9deg); }
+}
+
+/* 连翻惯性：书被"带起来"一点点，投影加深，收尾时自然落回（960ms 后摘掉类） */
+.art-flip-rig.is-rushing .art-flipbook-container {
+  box-shadow: 0 30px 48px color-mix(in srgb, #1d2515 34%, transparent);
+  transform: translateY(-3px) scale(1.005);
+}
+/* 连翻中不要每页都跑落定回弹（会抖），惯性期间用统一的轻抬代替 */
+.art-flip-rig.is-rushing.is-settling .art-flipbook-container {
+  animation: none;
+}
+
+/* ==========================================================================
+   3. 照片卡 3D tilt / 长按放大
+   ========================================================================== */
+
+/* tilt：鼠标在书页上移动时整本书朝指针微微倾斜（最大约 3°），离开即回正。
+   这里用 !important 是刻意的：globals.css 里「翻页态 data-flip-state → 台面抬起」
+   的规则在本文件之后声明、特异性相同，会在一次翻页刚结束的几百毫秒里盖掉 tilt 的
+   transform（现象：鼠标动了书不跟，等落定回弹结束才恢复）。手势态优先于装饰态。 */
+.art-flip-rig.is-tilting .art-flipbook-container {
+  transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0) !important;
+  transition: transform var(--motion-base) var(--motion-ease-out);
+}
+.art-flip-rig.is-tilting .art-flipbook-container::before,
+.art-flip-rig.is-tilting .art-flipbook-container::after {
+  opacity: 0.42;
+}
+
+/* 长按放大：以按点为原点 scale（只动 transform，不触发重排；松手回位）。
+   同样用 !important 压过翻页态装饰（理由见上面的 tilt）。 */
+.art-flip-rig.is-zoomed .art-flipbook-container {
+  transform: scale(var(--zoom-scale, 1.62)) !important;
+  transform-origin: var(--zoom-ox, 50%) var(--zoom-oy, 50%);
+  transition: transform var(--motion-base) var(--motion-ease-standard);
+  box-shadow: 0 34px 58px color-mix(in srgb, #1d2515 38%, transparent);
+  z-index: 7;
+}
+.art-flip-rig.is-zoomed::before {
+  opacity: 0.4;
+}
+.art-flip-rig.is-zoomed .art-flip-corner-hint {
+  opacity: 0;
+}
+/* 放大期间书页容器不接收指针事件：长按结束松手时 page-flip 的"点击翻页"不会误触发。
+   指针事件仍落在 main 上，pointerup/leave 照常能结束放大。 */
+.art-flip-rig.is-zoomed .art-flipbook-container {
+  pointer-events: none;
+}
+/* 放大/倾斜状态下书本要"浮"起来：给一个 hover 提示（桌面） */
+@media (hover: hover) {
+  .art-flip-rig .art-flipbook-container { cursor: grab; }
+}
+.art-flip-rig.is-zoomed .art-flipbook-container { cursor: zoom-out; }
+/* 长按放大时禁掉图片系统的长按菜单，否则会弹"存储图片"盖住预览 */
+.book-reader .art-flip-page img {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ==========================================================================
+   4. 缩略图胶片条（跟随当前页的指示器 + 点击平滑跳页）
+   ========================================================================== */
+
+.book-filmstrip-wrap {
+  position: relative;
+  width: 100%;
+  padding: 0 2px;
+}
+.book-filmstrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 5px 4px 6px;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  /* 两端渐隐：滚动内容不会硬切在容器边上 */
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
+.book-filmstrip::-webkit-scrollbar {
+  display: none;
+}
+.book-filmstrip__item {
+  position: relative;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 38px;
+  border-radius: 3px;
+  overflow: hidden;
+  scroll-snap-align: center;
+  background: color-mix(in srgb, var(--art-ink, #292c26) 8%, var(--art-paper, #f7f6f0));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--art-ink, #292c26) 22%, transparent);
+  opacity: 0.56;
+  transition:
+    opacity var(--motion-fast) var(--motion-ease-out),
+    transform var(--motion-fast) var(--motion-ease-out),
+    box-shadow var(--motion-fast) var(--motion-ease-out);
+}
+.book-filmstrip__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.book-filmstrip__item[data-empty='true'] {
+  display: grid;
+  place-items: center;
+  font-family: var(--art-serif, var(--book-serif, Georgia, serif));
+  font-size: 11px;
+  color: color-mix(in srgb, var(--art-ink, #292c26) 55%, transparent);
+}
+.book-filmstrip__item[aria-current='true'],
+.book-filmstrip__item:hover,
+.book-filmstrip__item:focus-visible {
+  opacity: 1;
+}
+.book-filmstrip__item[aria-current='true'] {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--art-ink, #292c26) 52%, transparent);
+}
+.book-filmstrip__item:focus-visible {
+  outline: 2px solid var(--m-accent, #d4788f);
+  outline-offset: 1px;
+}
+/* 当前页指示器：一个交给 motion layoutId 的玻璃框（位置/尺寸由 motion 补间） */
+.book-filmstrip__pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--m-accent, #d4788f) 76%, transparent),
+    0 4px 10px -4px color-mix(in srgb, var(--m-accent, #d4788f) 60%, transparent);
+}
+.book-filmstrip__count {
+  flex: 0 0 auto;
+  padding-left: 2px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--m-muted, #8a7d72) 90%, transparent);
+}
+
+/* ==========================================================================
+   5. 阅读器内的"长按提示"气泡（首次进入提示一次，不长期占位）
+   ========================================================================== */
+
+.book-gesture-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 8;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--m-muted, #8a7d72);
+  background: color-mix(in srgb, var(--art-paper, #f7f6f0) 78%, transparent);
+  box-shadow: 0 6px 18px -10px color-mix(in srgb, var(--art-ink, #292c26) 60%, transparent);
+  animation: book-hint-in 420ms var(--motion-ease-out) both;
+}
+@keyframes book-hint-in {
+  0%   { opacity: 0; transform: translate(-50%, 8px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ==========================================================================
+   6. 模式切换（画册 / 像素 / 银河）：整屏场景的交叉淡入 + 缩放
+   ========================================================================== */
+
+.album-mode-scene {
+  min-height: 100dvh;
+  /* 动画期间只提升合成层，不触发重排 */
+  will-change: opacity, transform;
+}
+.album-mode-scene--settled {
+  will-change: auto;
+}
+
+/* ==========================================================================
+   7. 无障碍：reduce-motion 退化（无位移 / 无旋转 / 无缩放，只留淡入淡出）
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .book-choreo[data-phase] .book-choreo__cover,
+  .book-choreo[data-phase] .book-choreo__cover-sheen,
+  .book-choreo[data-phase] .book-choreo__flyleaf,
+  .book-choreo[data-phase] .book-choreo__flyleaf::after {
+    animation: none !important;
+    transform: none !important;
+  }
+  /* reduced：不做旋转 / 位移，整块覆盖层只做一次淡出（开启）或淡入（关闭）。
+     这就是「交叉淡入 + 直接切换」里的那一层过渡。 */
+  .book-choreo[data-phase='opening'] {
+    animation: choreo-veil-out 220ms linear both;
+  }
+  .book-choreo[data-phase='closing'] {
+    animation: choreo-veil-in 200ms linear both;
+  }
+  .book-choreo__flyleaf {
+    display: none;
+  }
+  .book-reader[data-choreo] .art-flip-rig {
+    animation-name: none !important;
+  }
+  .book-reader[data-choreo='opening'] .art-flip-rig {
+    animation: choreo-veil-out 220ms linear 120ms both;
+  }
+  .book-reader[data-choreo='closing'] .art-flip-rig {
+    animation: choreo-veil-in 200ms linear both;
+  }
+  .art-flip-rig.is-tilting .art-flipbook-container,
+  .art-flip-rig.is-zoomed .art-flipbook-container {
+    transform: none !important;
+  }
+  .art-flip-sweep {
+    display: none;
+  }
+  .art-flip-rig.is-rushing .art-flipbook-container {
+    transform: none;
+  }
+  .book-filmstrip {
+    scroll-behavior: auto;
+  }
+  .book-gesture-hint {
+    animation: none;
+  }
+}
+/* 视觉档 reduced（用户偏好在阅读器里的等价物，与媒体查询同效） */
+.book-reader[data-book-tier='reduced'] .art-flip-sweep,
+.book-reader[data-book-tier='reduced'] .book-filmstrip__pill {
+  display: none;
+}
+.book-reader[data-book-tier='lite'] .art-flip-rig:not(.art-flip-rig--single)::before {
+  display: none;
+}
+.book-reader[data-book-tier='lite'] .art-flipbook-container .art-flip-page::after {
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   8. 画面级过渡：合书回到画册墙 / 阅读器内主题切换的交叉淡入
+   ========================================================================== */
+
+/* 合书后回到画册墙：整面墙淡入（只动 opacity，320ms 与合书动画接得上） */
+.album-wall-reenter {
+  animation: album-wall-in 320ms var(--motion-ease-out) both;
+}
+@keyframes album-wall-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* 阅读器内切换主题（画报 / 胶片 / 手记）：纸色的交叉淡入。
+   page-flip 的实例与页面集合刻意**不重建**（见 BookReader 主题契约），
+   所以用一层纸色薄幕盖一下，让"版式换了"这件事有过渡而不是硬切。
+   位置不变 = 当前照片位置不变。 */
+.book-theme-fade {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background: var(--book-paper, #f7f6f0);
+  animation: book-theme-fade 280ms var(--motion-ease-out) both;
+}
+@keyframes book-theme-fade {
+  0% { opacity: 0; }
+  34% { opacity: 0.78; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .album-wall-reenter {
+    animation: none;
+  }
+  .book-theme-fade {
+    animation: book-theme-fade 160ms linear both;
+  }
+}
+
+
+/* 扉页上的印刷内容：书名页。压在扫光层之下，翻过封面时正好露出 */
+.book-choreo__flyleaf-text {
+  position: absolute;
+  inset: 16% 12% 14% 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  color: color-mix(in srgb, var(--book-ink, #292c26) 74%, transparent);
+  font-family: var(--art-serif, var(--book-serif, Georgia, serif));
+}
+.book-choreo__flyleaf-rule {
+  width: 38%;
+  height: 1px;
+  background: color-mix(in srgb, var(--book-ink, #292c26) 26%, transparent);
+}
+.book-choreo__flyleaf-kicker {
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  opacity: 0.7;
+}
+.book-choreo__flyleaf-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 12em;
+}
+.book-choreo__flyleaf-meta {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+}
+
+
+/* 胶片条的显隐：只在"矮屏横屏"（手机横屏）收起，桌面大屏保留。
+   不要用 Tailwind 的 landscape: 变体 —— 它在 1280×900 这类桌面横屏上也会命中，
+   于是桌面阅读器整条缩略图条消失（实测）。 */
+.book-filmstrip-host {
+  width: 100%;
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .book-filmstrip-host {
+    display: none;
+  }
+}
+

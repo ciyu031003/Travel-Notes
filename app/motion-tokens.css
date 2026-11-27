@@ -1,0 +1,24 @@
+/* ==========================================================================
+   动效 token（2026-11-28）
+   --------------------------------------------------------------------------
+   全站只认这三档时长 + 两条缓动，避免每个模块各写一套 duration/easing。
+   用法：transition-duration: var(--motion-base); transition-timing-function: var(--motion-ease-out);
+   JS（motion）里可读 getComputedStyle(document.documentElement).getPropertyValue('--motion-base-ms')。
+   ========================================================================== */
+:root {
+  /* 时长：微反馈 / 常规过渡 / 大块进入 */
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 360ms;
+  /* 毫秒数字版，给 motion 的 duration（毫秒）直接取用 */
+  --motion-fast-ms: 140;
+  --motion-base-ms: 220;
+  --motion-slow-ms: 360;
+  /* 缓动：进场用 ease-out（快起慢收），退场用 ease-in，位移/缩放统一 standard */
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  /* 常用位移量：列表错峰上浮 / 页面切换 */
+  --motion-rise: 12px;
+  --motion-stagger: 60ms;
+}

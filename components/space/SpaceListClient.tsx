@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { MotionConfig, motion } from 'motion/react'
 import { Plus, KeyRound, Sparkles } from '@/lib/mobile/icon-system'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
 import { Button } from '@/components/mobile/Button'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { EmptyState } from '@/components/mobile/EmptyState'
 import { Field, FieldTextarea } from '@/components/mobile/Field'
-import { LoaderBlock } from '@/components/mobile/Loader'
 import { toast } from '@/lib/mobile/toast-store'
 import { apiUrl } from '@/lib/api-base'
 import { spaceDetailHref } from '@/lib/routes'
@@ -16,6 +16,8 @@ import { SPACE_TYPE_NAME_HINTS, SPACE_ROLE_LABELS } from '@/lib/mobile/space-sys
 import { SpaceCard, SpaceSectionHeader, type SpaceCardData } from './SpaceCard'
 import { SpaceThemeScope } from './SpaceThemeScope'
 import { SpaceTypePicker } from './SpaceTypePicker'
+import { SpaceStagger, SpaceStaggerItem } from './SpaceReveal'
+import { SPACE_DUR, SPACE_EASE_OUT } from './space-motion'
 
 /**
  * 我的空间（列表 / 切换器 / 创建 / 加入）。
@@ -30,6 +32,13 @@ import { SpaceTypePicker } from './SpaceTypePicker'
  *
  * 安全区：根节点消费 `m-safe-top`（= 系统状态栏 + 页首留白）。此前这里是 `pt-2`，
  * 真机上返回键与「我的空间」大标题会压在状态栏下面 —— 这是本轮修掉的核心 bug。
+ *
+ * U1 页面切换（"统一节奏"的一半）：
+ *  · 进入细节：标题/CTA 只做 220ms 淡入，卡片按 60ms 错峰上浮 12px；
+ *  · 返回：路由壳（MobilePageTransition）已经做 pop 滑出，本页**不再叠第二层滑动**，
+ *    只保留「卡片上浮」这一种语言 —— 返回时看到的是列表安静地重新排好，
+ *    而不是又演一遍进场。对比详情页的 Hero 渐入，这就是"轻"的那一档。
+ *  · 减动效：<MotionConfig reducedMotion="user"> 让 y 位移自动失效，只剩淡入。
  */
 export default function SpaceListClient({ initialSpaces }: { initialSpaces?: SpaceCardData[] }) {
   const router = useRouter()
@@ -141,136 +150,176 @@ export default function SpaceListClient({ initialSpaces }: { initialSpaces?: Spa
   const personal = spaces.filter((s) => (s.memberCount ?? 0) <= 1)
 
   return (
-    <div className="m-gutter m-safe-top m-bottom-nav-safe lg:mx-auto lg:max-w-3xl">
-      {/* 页头：与其它二级页同源（眉标 + 衬线大标题 + 一句副标题），不再铺长说明 */}
-      <LargeTitle title="我的空间" eyebrow="甜途 · 空间" subtitle="一起记录，各自上色" back="/me" />
+    <MotionConfig reducedMotion="user">
+      <div className="m-gutter m-safe-top m-bottom-nav-safe lg:mx-auto lg:max-w-3xl">
+        {/* 页头：与其它二级页同源（眉标 + 衬线大标题 + 一句副标题），不再铺长说明 */}
+        <LargeTitle title="我的空间" eyebrow="甜途 · 空间" subtitle="一起记录，各自上色" back="/me" />
 
-      {/* 主操作区：一屏只有一个实心 CTA（创建），加入走次级按钮 */}
-      <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 lg:max-w-md">
-        <Button icon={Plus} block onClick={() => { setError(''); setCreateOpen(true) }}>
-          创建空间
-        </Button>
-        <Button
-          variant="secondary"
-          icon={KeyRound}
-          onClick={() => { setError(''); setJoinOpen(true) }}
-          aria-label="输入邀请码加入空间"
+        {/* 主操作区：一屏只有一个实心 CTA（创建），加入走次级按钮。
+            这里只做 220ms 淡入（无位移）—— 与详情页的 Hero 渐入同一档时长，
+            但少一层位移，读起来更"轻"。 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: SPACE_DUR.base, ease: SPACE_EASE_OUT }}
+          className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 lg:max-w-md"
         >
-          邀请码加入
-        </Button>
-      </div>
-
-      {error && !createOpen && !joinOpen && (
-        <p className="mt-3 text-center text-[13px] text-[var(--danger-soft)]">{error}</p>
-      )}
-
-      {loading ? (
-        <LoaderBlock label="正在加载空间…" />
-      ) : spaces.length === 0 ? (
-        <EmptyState
-          className="mt-12"
-          icon={Sparkles}
-          title="还没有空间"
-          description="旅行、相册和回忆，都可以放进一个空间。"
-          action={
-            <Button icon={Plus} onClick={() => setCreateOpen(true)}>
-              创建第一个空间
-            </Button>
-          }
-        />
-      ) : (
-        <>
-          {shared.length > 0 && (
-            <section className="mt-7">
-              <SpaceSectionHeader title="共享空间" count={shared.length} />
-              <div className="mt-3 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3.5 lg:space-y-0">
-                {shared.map((s) => (
-                  <SpaceThemeScope key={s.id} type={s.spaceType}>
-                    <SpaceCard space={s} />
-                  </SpaceThemeScope>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {personal.length > 0 && (
-            <section className="mt-7">
-              <SpaceSectionHeader title="只有我" count={personal.length} />
-              <div className="mt-3 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3.5 lg:space-y-0">
-                {personal.map((s) => (
-                  <SpaceThemeScope key={s.id} type={s.spaceType}>
-                    <SpaceCard space={{ ...s, isDefault: !s.description || s.description.includes('自动创建') }} />
-                  </SpaceThemeScope>
-                ))}
-              </div>
-            </section>
-          )}
-        </>
-      )}
-
-      {/* ── 创建空间 ── */}
-      <BottomSheet open={createOpen} onClose={() => setCreateOpen(false)} title="创建空间">
-        <form onSubmit={create} className="space-y-4">
-          <div>
-            <p className="mb-2 text-[13px] font-medium text-[var(--m-text)]">这是什么空间？</p>
-            <SpaceTypePicker
-              value={spaceType}
-              onChange={setSpaceType}
-              disabled={submitting}
-            />
-            <p className="mt-2 text-[11px] text-[var(--m-muted)]">
-              每种空间有自己的配色，创建后也可以在空间设置里改。
-            </p>
-          </div>
-
-          <Field
-            label="空间名称"
-            name="space-name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={SPACE_TYPE_NAME_HINTS[spaceType] || '给这个空间起个名字'}
-            maxLength={200}
-          />
-
-          <FieldTextarea
-            label="简介"
-            name="space-desc"
-            hint="可选，一句话说明这个空间用来记录什么"
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="例如：2026 年全家的出行记录"
-            maxLength={500}
-          />
-
-          {error && <p className="text-[13px] text-[var(--danger-soft)]">{error}</p>}
-
-          <Button type="submit" block size="lg" loading={submitting} disabled={!name.trim()}>
+          <Button icon={Plus} block onClick={() => { setError(''); setCreateOpen(true) }}>
             创建空间
           </Button>
-        </form>
-      </BottomSheet>
-
-      {/* ── 邀请码加入 ── */}
-      <BottomSheet open={joinOpen} onClose={() => setJoinOpen(false)} title="输入邀请码加入">
-        <form onSubmit={join} className="space-y-4">
-          <Field
-            label="邀请码"
-            name="join-code"
-            required
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            placeholder="形如 7XK2-M9PQ"
-            className="text-center"
-            hint={`${SPACE_ROLE_LABELS.MEMBER}可一起编辑旅行与相册`}
-          />
-          {error && <p className="text-[13px] text-[var(--danger-soft)]">{error}</p>}
-          <Button type="submit" block size="lg" loading={joining} disabled={!joinCode.trim()}>
-            加入空间
+          <Button
+            variant="secondary"
+            icon={KeyRound}
+            onClick={() => { setError(''); setJoinOpen(true) }}
+            aria-label="输入邀请码加入空间"
+          >
+            邀请码加入
           </Button>
-        </form>
-      </BottomSheet>
+        </motion.div>
+
+        {error && !createOpen && !joinOpen && (
+          <p className="mt-3 text-center text-[13px] text-[var(--danger-soft)]">{error}</p>
+        )}
+
+        {loading ? (
+          <SpaceListSkeleton />
+        ) : spaces.length === 0 ? (
+          <EmptyState
+            className="mt-12"
+            icon={Sparkles}
+            title="还没有空间"
+            description="旅行、相册和回忆，都可以放进一个空间。"
+            action={
+              <Button icon={Plus} onClick={() => setCreateOpen(true)}>
+                创建第一个空间
+              </Button>
+            }
+          />
+        ) : (
+          <>
+            {shared.length > 0 && (
+              <section className="mt-7">
+                <SpaceSectionHeader title="共享空间" count={shared.length} />
+                <SpaceStagger className="mt-3 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3.5 lg:space-y-0">
+                  {shared.map((s) => (
+                    <SpaceThemeScope key={s.id} type={s.spaceType}>
+                      <SpaceStaggerItem>
+                        <SpaceCard space={s} />
+                      </SpaceStaggerItem>
+                    </SpaceThemeScope>
+                  ))}
+                </SpaceStagger>
+              </section>
+            )}
+
+            {personal.length > 0 && (
+              <section className="mt-7">
+                <SpaceSectionHeader title="只有我" count={personal.length} />
+                <SpaceStagger className="mt-3 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3.5 lg:space-y-0" delay={0.04}>
+                  {personal.map((s) => (
+                    <SpaceThemeScope key={s.id} type={s.spaceType}>
+                      <SpaceStaggerItem>
+                        <SpaceCard space={{ ...s, isDefault: !s.description || s.description.includes('自动创建') }} />
+                      </SpaceStaggerItem>
+                    </SpaceThemeScope>
+                  ))}
+                </SpaceStagger>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* ── 创建空间 ── */}
+        <BottomSheet open={createOpen} onClose={() => setCreateOpen(false)} title="创建空间">
+          <form onSubmit={create} className="space-y-4">
+            <div>
+              <p className="mb-2 text-[13px] font-medium text-[var(--m-text)]">这是什么空间？</p>
+              <SpaceTypePicker
+                value={spaceType}
+                onChange={setSpaceType}
+                disabled={submitting}
+              />
+              <p className="mt-2 text-[11px] text-[var(--m-muted)]">
+                每种空间有自己的配色，创建后也可以在空间设置里改。
+              </p>
+            </div>
+
+            <Field
+              label="空间名称"
+              name="space-name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={SPACE_TYPE_NAME_HINTS[spaceType] || '给这个空间起个名字'}
+              maxLength={200}
+            />
+
+            <FieldTextarea
+              label="简介"
+              name="space-desc"
+              hint="可选，一句话说明这个空间用来记录什么"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="例如：2026 年全家的出行记录"
+              maxLength={500}
+            />
+
+            {error && <p className="text-[13px] text-[var(--danger-soft)]">{error}</p>}
+
+            <Button type="submit" block size="lg" loading={submitting} disabled={!name.trim()}>
+              创建空间
+            </Button>
+          </form>
+        </BottomSheet>
+
+        {/* ── 邀请码加入 ── */}
+        <BottomSheet open={joinOpen} onClose={() => setJoinOpen(false)} title="输入邀请码加入">
+          <form onSubmit={join} className="space-y-4">
+            <Field
+              label="邀请码"
+              name="join-code"
+              required
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              placeholder="形如 7XK2-M9PQ"
+              className="text-center"
+              hint={`${SPACE_ROLE_LABELS.MEMBER}可一起编辑旅行与相册`}
+            />
+            {error && <p className="text-[13px] text-[var(--danger-soft)]">{error}</p>}
+            <Button type="submit" block size="lg" loading={joining} disabled={!joinCode.trim()}>
+              加入空间
+            </Button>
+          </form>
+        </BottomSheet>
+      </div>
+    </MotionConfig>
+  )
+}
+
+/**
+ * 列表加载骨架：与真实卡片同构（92px 封面 + 两行正文 + 一行统计），
+ * 只让内容区"呼吸"，不整页重排；沿用详情页的 .m-skeleton 语言。
+ */
+function SpaceListSkeleton() {
+  return (
+    <div className="mt-7 space-y-3" role="status" aria-live="polite" aria-busy="true">
+      <span className="sr-only">正在加载空间…</span>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="overflow-hidden rounded-3xl bg-[var(--ui-social-surface)] ring-1 ring-[var(--ui-social-line)]"
+        >
+          <span className="m-skeleton block h-[92px] w-full" />
+          <div className="px-4 pb-3.5 pt-3">
+            <span className="m-skeleton block h-4 w-2/3" />
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="m-skeleton block h-4 w-28" />
+              <span className="m-skeleton block h-4 w-16" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

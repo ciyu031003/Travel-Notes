@@ -2,6 +2,8 @@
 @import './tokens.css';
 @import './mobile.css';
 @import './glass.css';
+@import './motion-tokens.css';
+@import './album-motion.css';
 @import './mobile-v6.css';
 @import './web-v4.css';
 @import './ticket-art.css';

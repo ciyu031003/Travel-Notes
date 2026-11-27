@@ -231,6 +231,17 @@ const ArtFlipBook = forwardRef<ArtFlipBookHandle, ArtFlipBookProps>(function Art
 
   useEffect(() => {
     if (!pendingEl) return
+    /**
+     * 每次（重新）绑定容器都是一个**新的生命周期**。
+     *
+     * disposedRef 由下面那个空依赖 effect 的 cleanup 置 true，用来丢弃"卸载之后才回来的"
+     * 异步 init。但 React 在开发模式的 StrictMode 下会「挂载 → 卸载 → 再挂载」跑一遍
+     * effect：空依赖 effect 的 cleanup 先把 disposedRef 置 true，随后本 effect 重跑时
+     * 若不复位，ensureRuntime() 的 then 里就会直接 return —— **翻页库永远不初始化**，
+     * 书页容器高度为 0，整本画册在开发环境完全空白（生产环境不复现，因此极易漏掉）。
+     * 这里在绑定容器时显式复位：真实卸载之后不会有新的 effect 运行，不会误放行。
+     */
+    disposedRef.current = false
     let cancelled = false
     let instance: PageFlipInstance | null = null
 

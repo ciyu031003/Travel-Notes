@@ -39,7 +39,14 @@ import {
  * 模块取回来并存进 state，用户点击时已经是**普通同步组件**，首开回到静态导入的水平，
  * 同时首屏仍然不背负阅读器体积。
  */
-type ReaderComponent = ComponentType<{ book: Book; onBack: () => void }>
+type ReaderComponent = ComponentType<{
+  book: Book
+  onBack: () => void
+  /** 续读位置（对开序号）：模式切换回画册时把书翻回原处 */
+  initialSpread?: number
+  /** 阅读进度回报：null = 已退出阅读器 */
+  onProgress?: (next: { bookKey: string; spread: number; total: number } | null) => void
+}>
 
 /** 模块级 Promise：同一次会话内只 import 一次（并发点击共享） */
 let readerModulePromise: Promise<ReaderComponent> | null = null
@@ -163,9 +170,15 @@ export type BookSummary = Omit<Book, 'chapters'>
 export default function TravelBook({
   onModeChange,
   initialBookKey,
+  initialSpread,
+  onProgress,
 }: {
   onModeChange: (m: Mode) => void
   initialBookKey?: string | null
+  /** 深链/续读时希望停在的对开序号（只在打开 initialBookKey 那本时生效） */
+  initialSpread?: number
+  /** 阅读进度上报（相册页据此记住"上次停在哪一屏"，切换视图回来续读） */
+  onProgress?: (next: { bookKey: string; spread: number; total: number } | null) => void
 }) {
   const [books, setBooks] = useState<BookSummary[] | null>(null)
   /** 与 state 同步的最近目录：load 失败时据此判断「是不是已经有本地快照在展示」 */
@@ -260,14 +273,19 @@ export default function TravelBook({
   }, [prefetchReader])
 
   // 深链直达：/album?book=<bookKey> 打开指定画册（首页画册目录 → 城市直达）
+  // 续读：同一个 key 但带了 initialSpread（模式切换回来）也走这里。
   const openedKeyRef = useRef('')
   useEffect(() => {
     if (!initialBookKey || openedKeyRef.current === initialBookKey) return
-    openedKeyRef.current = initialBookKey
     const summary = books?.find((b) => b.bookKey === initialBookKey)
+    // 【守卫必须在真正动手之后才写入】首帧 books 还是 null（目录在路上），
+    // 若此时就把 openedKeyRef 置成 key，等目录到了 effect 再跑就会被守卫挡掉 ——
+    // 深链 /album?book=xxx 于是**永远打不开**（实测：只有刷新两次才对）。
     if (summary) {
+      openedKeyRef.current = initialBookKey
       openBookByKey(summary)
     } else if (books && books.length > 0) {
+      openedKeyRef.current = initialBookKey
       // 摘要里没有（可能刚产生/缓存不同步）：尝试按 key 直接拉全书
       const requestId = ++requestIdRef.current
       setOpening(true)
@@ -375,7 +393,20 @@ export default function TravelBook({
     load()
   }, [load, applyBooks])
 
+  /**
+   * 墙的"回来"过渡：阅读器合书动画结束后整面墙淡入（U3）。
+   * 不这样处理的话，合上的书消失的那一帧墙是硬切进来的，视觉上很跳。
+   */
+  const [justClosed, setJustClosed] = useState(false)
+  const reenterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => {
+    if (reenterTimerRef.current) clearTimeout(reenterTimerRef.current)
+  }, [])
+
   const closeReader = useCallback(() => {
+    setJustClosed(true)
+    if (reenterTimerRef.current) clearTimeout(reenterTimerRef.current)
+    reenterTimerRef.current = setTimeout(() => setJustClosed(false), 340)
     setOpenBook(null)
     // 返回墙：恢复打开前的滚动位置
     let saved = 0
@@ -400,13 +431,22 @@ export default function TravelBook({
   }, [])
 
   if (openBook) {
-    return ReaderScreen ? <ReaderScreen book={openBook} onBack={closeReader} /> : <ReaderLoading />
+    // 只有"回到同一本书"才用续读位置；点开另一本时从封面开始
+    const resumeSpread =
+      typeof initialSpread === 'number' && initialSpread > 0 && initialBookKey && openBook.bookKey === initialBookKey
+        ? initialSpread
+        : undefined
+    return ReaderScreen ? (
+      <ReaderScreen book={openBook} onBack={closeReader} initialSpread={resumeSpread} onProgress={onProgress} />
+    ) : (
+      <ReaderLoading />
+    )
   }
 
 const firstBook = books && books.length > 0 ? books[0] : null
 
   return (
-    <div className="m2-screen min-h-dvh">
+    <div className={'m2-screen min-h-dvh' + (justClosed ? ' album-wall-reenter' : '')}>
       <header className="m2-gutter sticky top-0 z-40 border-b border-[var(--m-line)] bg-[color-mix(in_srgb,var(--m-bg)_88%,transparent)] pb-3 pt-[max(12px,env(safe-area-inset-top))] backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <Link

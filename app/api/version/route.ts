@@ -31,7 +31,7 @@ export async function GET() {
     version: APP_VERSION,
     buildNumber: APP_BUILD_NUMBER,
     downloadUrl: APP_DOWNLOAD_URL,
-    changelog: process.env.APP_CHANGELOG || '本地优先：图片/相册本地先存再传、有本地数据直接读本地不转圈（新鲜度 TTL + 结构版本 + 账号隔离的完整校验）；旅行圈先出缓存 10 篇边读边缓存；媒体读取本地优先；首页顶栏只留搜索，下滑每帧重栅格化 -75%',
+    changelog: process.env.APP_CHANGELOG || '体验精修：我的空间/旅行计划/新建旅行/相册统一动效语言与页面切换编排；相册真实书本开合、折角翻页、连翻惯性、3D 倾斜、长按放大；新建旅行分层进场与无跳变折叠；修复画册 StrictMode 空白、画册深链打不开、中文 slug 记录页打不开',
     forceUpdate,
     sha256: APP_APK_SHA256,
     size: APP_APK_SIZE,

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import dynamicImport from 'next/dynamic'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import AlbumCoverBanner from '@/components/album/AlbumCoverBanner'
 import TravelBook from '@/components/album/travel-book/TravelBook'
@@ -84,6 +85,14 @@ const WebAlbumWall = dynamicImport(() => import('@/components/web/album/WebAlbum
  * - 默认 book 模式；URL ?book= 深链只读一次；localStorage 仅恢复 pixel（space 不恢复）；
  * - 5 个重型渲染器继续 dynamic({ssr:false}) + ErrorBoundary 包裹；
  * - 模式切换写 localStorage、WebGL 失败降级到 pixel。
+ *
+ * 体验层（2026-11-28 · U3）：三种模式（画册 / 像素 / 银河）之间的切换不再硬切，
+ * 而是「交叉淡入 + 极轻微缩放」的整屏场景过渡（motion AnimatePresence mode="wait"，
+ * 只动 opacity/scale，退出 140ms、进入 220ms，且 reduce-motion 时只留淡入淡出）。
+ * 场景切换时**保留当前位置**：
+ *   · 画册：记住"上次读到哪一屏"（BookReader 上报），回到画册模式自动续读；
+ *   · 像素 / 银河：选中的城市（selectedCity）与照片浏览下标（viewerIndex）本来就存在本页面，
+ *     不随模式卸载而丢失。
  */
 export default function AlbumPage() {
   // SSR 与客户端首帧必须一致（默认画册模式），挂载后再读本地偏好，避免 hydration mismatch
@@ -135,6 +144,18 @@ export default function AlbumPage() {
     }
   }, [])
 
+  /**
+   * 画册续读锚点（U3）：BookReader 每次翻页上报「哪本书 / 第几屏」。
+   * 用 ref 而不是 state 是刻意的 —— 翻页是高频动作，让它触发整页 re-render
+   * 会把 page-flip 的动画帧挤掉；这里只在"切模式"这类低频动作发生时被读取。
+   */
+  const bookAnchorRef = useRef<{ bookKey: string; spread: number } | null>(null)
+  const handleBookProgress = useCallback((next: { bookKey: string; spread: number; total: number } | null) => {
+    // 合书（next === null）**不清**锚点：用户的阅读位置还在，"切到像素/银河看一眼再回来"
+    // 应该接着读，而不是被扔回画册墙。只有真正换一本书才会被新的上报覆盖。
+    if (next) bookAnchorRef.current = { bookKey: next.bookKey, spread: next.spread }
+  }, [])
+
   const changeMode = useCallback((next: AlbumViewMode) => {
     setViewMode(next)
     try {
@@ -167,10 +188,17 @@ export default function AlbumPage() {
 
   const handleWebGLFail = useCallback(() => setViewMode('pixel'), [])
 
-  // 旅行画册 2.0（Phase 2）：默认「旅行画册」模式，以 Travel 数据驱动，无需相册解锁。
-  // 性能（2026-11-21）：book 模式的数据来自 TravelBook 自己的 /api/travel-book，
-  // **不依赖** useAlbumData 的 /api/album。因此把它提到 checkingLock 之前渲染 —— 打开相册
-  // 不再被另一个接口的往返阻塞（此前每次进 /album 都要等 /api/album 才出第一屏）。
+  const reduceMotion = useReducedMotion()
+
+  /**
+   * 当前场景（把原来的多个 early-return 收成一个可切换的节点）。
+   * key 参与 AnimatePresence 的进出场判定：只有三种"模式场景"走过渡动画，
+   * 骨架 / 加载 / 解锁 / 留言这些中间态保持瞬时切换（它们本来就没有空间关系）。
+   */
+  let sceneKey: string
+  let sceneNode: ReactNode
+  let isModeScene = false
+
   if (viewMode === 'book') {
     // Web 相册（桌面专属，W2）：≥1024px 走 3D 卡片画册墙，<1024 保持原有移动端旅行画册。
     //
@@ -183,33 +211,41 @@ export default function AlbumPage() {
     //    桌面分支外面包 ErrorBoundary —— 画册墙渲染期抛错只降级成一块提示，
     //    不会把整页卸载成白屏（与页面里其它重渲染器的约定一致）。
     if (isDesktop === null) {
-      return <AlbumWallBoot key="mode-book-boot" />
-    }
-
-    if (isDesktop) {
-      return (
+      sceneKey = 'boot'
+      sceneNode = <AlbumWallBoot key="mode-book-boot" />
+    } else if (isDesktop) {
+      sceneKey = 'book-web'
+      isModeScene = true
+      sceneNode = (
         <div key="mode-book-web" className="wa-hide-on-mobile">
           <ErrorBoundary label="WebAlbumWall" fallback={<AlbumWallError />}>
             <WebAlbumWall onModeChange={changeMode} initialBookKey={initialBookKey} />
           </ErrorBoundary>
         </div>
       )
+    } else {
+      sceneKey = 'book-mobile'
+      isModeScene = true
+      // 续读：如果上次在画册里读到某一屏、并且中间切去过别的模式，回来直接接着读
+      const anchor = bookAnchorRef.current
+      sceneNode = (
+        <div key="mode-book" className="wa-hide-on-desktop">
+          <TravelBook
+            onModeChange={changeMode}
+            initialBookKey={anchor?.bookKey ?? initialBookKey}
+            initialSpread={anchor?.spread ?? 0}
+            onProgress={handleBookProgress}
+          />
+        </div>
+      )
     }
-
-    return (
-      <div key="mode-book" className="wa-hide-on-desktop motion-safe:animate-[fadeIn_.2s_ease-out]">
-        <TravelBook onModeChange={changeMode} initialBookKey={initialBookKey} />
-      </div>
-    )
-  }
-
-  // 非 book 模式才需要相册解锁状态：此时再等 checkingLock
-  if (checkingLock) {
-    return <ModeLoading label="正在翻开相册…" />
-  }
-
-  if (!isUnlocked) {
-    return (
+  } else if (checkingLock) {
+    // 非 book 模式才需要相册解锁状态：此时再等 checkingLock
+    sceneKey = 'lock-check'
+    sceneNode = <ModeLoading label="正在翻开相册…" />
+  } else if (!isUnlocked) {
+    sceneKey = 'unlock'
+    sceneNode = (
       <AlbumUnlockScreen
         viewMode={viewMode}
         showUnlockModal={showUnlockModal}
@@ -219,11 +255,10 @@ export default function AlbumPage() {
         onSelectPixel={() => changeMode('pixel')}
       />
     )
-  }
-
-  // 像素模式：书卷留言整页视图
-  if (view === 'chat' && chatPhoto && viewMode === 'pixel') {
-    return (
+  } else if (view === 'chat' && chatPhoto && viewMode === 'pixel') {
+    // 像素模式：书卷留言整页视图
+    sceneKey = 'pixel-chat'
+    sceneNode = (
       <PixelPhotoChat
         image={chatPhoto.url}
         imageKey={chatPhoto.key}
@@ -235,11 +270,11 @@ export default function AlbumPage() {
         }}
       />
     )
-  }
-
-  // 银河模式：360° 全景唱片空间（留言页作为覆盖层叠在上方，返回无需重建场景）
-  if (viewMode === 'space') {
-    return (
+  } else if (viewMode === 'space') {
+    // 银河模式：360° 全景唱片空间（留言页作为覆盖层叠在上方，返回无需重建场景）
+    sceneKey = 'space'
+    isModeScene = true
+    sceneNode = (
       <AlbumSpaceMode
         cities={cities}
         chatPhoto={chatPhoto}
@@ -257,90 +292,111 @@ export default function AlbumPage() {
         onExitMode={() => changeMode('book')}
       />
     )
+  } else {
+    sceneKey = 'pixel'
+    isModeScene = true
+    sceneNode = (
+      <div className="min-h-dvh album-pixel-root bg-album-bg1 relative overflow-hidden">
+        {/* 像素木屋桌面背景 */}
+        <PixelDeskBackground />
+
+        {/* 移动端新建相册入口（原生壳，模块内管理入口；Web 走后台 /admin/albums） */}
+        {isNativePlatform() && isUnlocked && (
+          <div className="fixed right-3 top-16 z-[120]">
+            <AlbumComposer onCreated={refresh} />
+          </div>
+        )}
+
+        <AlbumHeader
+          viewMode={viewMode}
+          onSelectMode={changeMode}
+          onToggleViewMode={toggleViewMode}
+          onOpenStarMap={() => setShowStarMap(true)}
+        />
+
+        <div className="relative z-10 pt-4 pb-[max(48px,env(safe-area-inset-bottom))] min-h-dvh md:pb-12">
+          {/* 相册封面横幅 */}
+          <AlbumCoverBanner cityCount={cities.length} photoCount={totalPhotos} />
+
+          <div className="max-w-6xl mx-auto px-4 grid lg:grid-cols-[280px_1fr] gap-5 items-start">
+            {/* 左侧：旅行书架 */}
+            <AlbumBookshelf
+              cities={cities}
+              selectedCity={selectedCity}
+              loading={loading}
+              onSelectCity={setSelectedCity}
+            />
+
+            {/* 右侧：拍立得照片墙 */}
+            <main className="min-w-0">
+              <AlbumPhotoWall
+                city={selectedCity}
+                onOpenArchive={() => setShowArchive(true)}
+                onOpenViewer={setViewerIndex}
+              />
+            </main>
+          </div>
+
+          {/* 纪念相册：后台 Album 实体（Stage 1.3 合并进前台唯一入口） */}
+          {albums.length > 0 && <AlbumGalleryGrid albums={albums} onRefresh={refresh} />}
+
+          {/* 旅行档案视图（Stage 1.4） */}
+          {showArchive && selectedCity && (
+            <TravelArchiveView
+              city={{
+                name: selectedCity.name,
+                province: selectedCity.province,
+                images: selectedCity.images,
+                date: formatDotDate(selectedCity.date),
+              }}
+              onClose={() => setShowArchive(false)}
+            />
+          )}
+
+          {/* 旅行星图（Stage 1.4） */}
+          {showStarMap && (
+            <AlbumStarMapOverlay
+              cities={starCities}
+              stats={{ cities: starCities.length, days: totalDays, photos: totalPhotos }}
+              onSelectCity={handleStarMapSelect}
+              onClose={() => setShowStarMap(false)}
+            />
+          )}
+          {viewerIndex !== null && selectedCity && (
+            <ErrorBoundary label="PhotoMorphViewer">
+              <PhotoMorphViewer
+                images={selectedCity.images}
+                initialIndex={viewerIndex}
+                onClose={() => setViewerIndex(null)}
+                cityName={selectedCity.name}
+                onChat={(url) => {
+                  setChatPhoto({ url, key: url, cityName: selectedCity.name, date: formatDotDate(selectedCity.date) })
+                  setView('chat')
+                }}
+              />
+            </ErrorBoundary>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-dvh album-pixel-root bg-album-bg1 relative overflow-hidden motion-safe:animate-[fadeIn_.2s_ease-out]">
-      {/* 像素木屋桌面背景 */}
-      <PixelDeskBackground />
-
-      {/* 移动端新建相册入口（原生壳，模块内管理入口；Web 走后台 /admin/albums） */}
-      {isNativePlatform() && isUnlocked && (
-        <div className="fixed right-3 top-16 z-[120]">
-          <AlbumComposer onCreated={refresh} />
-        </div>
-      )}
-
-      <AlbumHeader
-        viewMode={viewMode}
-        onSelectMode={changeMode}
-        onToggleViewMode={toggleViewMode}
-        onOpenStarMap={() => setShowStarMap(true)}
-      />
-
-      <div className="relative z-10 pt-4 pb-[max(48px,env(safe-area-inset-bottom))] min-h-dvh md:pb-12">
-        {/* 相册封面横幅 */}
-        <AlbumCoverBanner cityCount={cities.length} photoCount={totalPhotos} />
-
-        <div className="max-w-6xl mx-auto px-4 grid lg:grid-cols-[280px_1fr] gap-5 items-start">
-          {/* 左侧：旅行书架 */}
-          <AlbumBookshelf
-            cities={cities}
-            selectedCity={selectedCity}
-            loading={loading}
-            onSelectCity={setSelectedCity}
-          />
-
-          {/* 右侧：拍立得照片墙 */}
-          <main className="min-w-0">
-            <AlbumPhotoWall
-              city={selectedCity}
-              onOpenArchive={() => setShowArchive(true)}
-              onOpenViewer={setViewerIndex}
-            />
-          </main>
-        </div>
-
-        {/* 纪念相册：后台 Album 实体（Stage 1.3 合并进前台唯一入口） */}
-        {albums.length > 0 && <AlbumGalleryGrid albums={albums} onRefresh={refresh} />}
-
-        {/* 旅行档案视图（Stage 1.4） */}
-        {showArchive && selectedCity && (
-          <TravelArchiveView
-            city={{
-              name: selectedCity.name,
-              province: selectedCity.province,
-              images: selectedCity.images,
-              date: formatDotDate(selectedCity.date),
-            }}
-            onClose={() => setShowArchive(false)}
-          />
-        )}
-
-        {/* 旅行星图（Stage 1.4） */}
-        {showStarMap && (
-          <AlbumStarMapOverlay
-            cities={starCities}
-            stats={{ cities: starCities.length, days: totalDays, photos: totalPhotos }}
-            onSelectCity={handleStarMapSelect}
-            onClose={() => setShowStarMap(false)}
-          />
-        )}
-        {viewerIndex !== null && selectedCity && (
-          <ErrorBoundary label="PhotoMorphViewer">
-            <PhotoMorphViewer
-              images={selectedCity.images}
-              initialIndex={viewerIndex}
-              onClose={() => setViewerIndex(null)}
-              cityName={selectedCity.name}
-              onChat={(url) => {
-                setChatPhoto({ url, key: url, cityName: selectedCity.name, date: formatDotDate(selectedCity.date) })
-                setView('chat')
-              }}
-            />
-          </ErrorBoundary>
-        )}
-      </div>
-    </div>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={sceneKey}
+        className="album-mode-scene"
+        initial={isModeScene ? { opacity: 0, scale: reduceMotion ? 1 : 0.992 } : false}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={isModeScene ? { opacity: 0, scale: reduceMotion ? 1 : 0.994 } : { opacity: 0 }}
+        transition={
+          isModeScene
+            ? { duration: reduceMotion ? 0.14 : 0.22, ease: [0.22, 1, 0.36, 1] }
+            : { duration: 0 }
+        }
+      >
+        {sceneNode}
+      </motion.div>
+    </AnimatePresence>
   )
 }

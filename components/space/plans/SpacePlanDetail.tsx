@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/react'
 import {
   CalendarDays,
   CheckCircle2,
@@ -20,7 +21,6 @@ import { Icon } from '@/components/mobile/Icon'
 import { Button } from '@/components/mobile/Button'
 import { Checkbox } from '@/components/mobile/Checkbox'
 import { LargeTitle } from '@/components/mobile/LargeTitle'
-import { LoaderBlock } from '@/components/mobile/Loader'
 import { ActionSheet } from '@/components/mobile/ActionSheet'
 import { toast } from '@/lib/mobile/toast-store'
 import { apiUrl } from '@/lib/api-base'
@@ -28,6 +28,9 @@ import { travelDetailHref } from '@/lib/routes'
 import { spaceRoleLabelOf } from '@/lib/mobile/space-system'
 import type { SpaceOverviewMember } from '@/lib/modules/space/space-overview.types'
 import { SpacePlanComposer } from './SpacePlanComposer'
+import { SpaceReveal } from '../SpaceReveal'
+import { SPACE_DUR, SPACE_EASE_OUT } from '../space-motion'
+import { cn } from '@/lib/utils'
 import {
   PLAN_STATUSES,
   PLAN_TASK_KINDS,
@@ -76,6 +79,8 @@ export function SpacePlanDetail({
   members?: SpaceOverviewMember[]
 }) {
   const router = useRouter()
+  // 状态胶囊的滑动是布局投影（transform），减动效时要直接落位而不是滑过去
+  const reduceMotion = useReducedMotion()
   const [plan, setPlan] = useState<SpacePlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -222,10 +227,33 @@ export function SpacePlanDetail({
   /* ── 渲染 ─────────────────────────────────────────────────────────── */
 
   if (loading) {
+    // 骨架与真实详情同构（信息卡 + 状态胶囊 + 清单行），高度接近，内容出现时不跳
     return (
       <div className="m-gutter pb-24 pt-2">
         <LargeTitle title="旅行计划" eyebrow="甜途 · 旅行计划" back={spacePlansHref(spaceSlug)} />
-        <LoaderBlock label="正在打开计划…" />
+        <div className="mt-6 space-y-4" role="status" aria-live="polite" aria-busy="true">
+          <span className="sr-only">正在打开计划…</span>
+          <div className="rounded-2xl bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-space-hairline)]">
+            <div className="flex gap-2">
+              <span className="m-skeleton block h-6 w-16 rounded-full" />
+              <span className="m-skeleton block h-6 w-16 rounded-full" />
+              <span className="m-skeleton block h-6 w-16 rounded-full" />
+            </div>
+            <div className="mt-4 space-y-2.5">
+              <span className="m-skeleton block h-4 w-3/4" />
+              <span className="m-skeleton block h-4 w-1/2" />
+            </div>
+          </div>
+          <div className="rounded-2xl bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-space-hairline)]">
+            <span className="m-skeleton block h-5 w-24" />
+            <span className="m-skeleton mt-3 block h-1.5 w-full rounded-full" />
+            <div className="mt-4 space-y-2.5">
+              <span className="m-skeleton block h-4 w-2/3" />
+              <span className="m-skeleton block h-4 w-3/5" />
+              <span className="m-skeleton block h-4 w-1/2" />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -261,312 +289,349 @@ export function SpacePlanDetail({
   const converted = plan.convertedTravelId != null
 
   return (
-    <div className="pb-24">
-      <div className="m-gutter pt-2">
-        <LargeTitle
-          title={plan.title}
-          eyebrow="甜途 · 旅行计划"
-          subtitle={plan.destination ? `${plan.destination} · ${planStatusLabelOf(plan.status)}` : planStatusLabelOf(plan.status)}
-          back={spacePlansHref(spaceSlug)}
-          trailing={
-            canEdit ? (
-              <button
-                type="button"
-                aria-label="编辑计划信息"
-                onClick={() => setComposerOpen(true)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-space-accent-strong)] ring-1 ring-[var(--ui-social-line)]"
-              >
-                <Icon icon={Sparkles} size="md" />
-              </button>
-            ) : undefined
-          }
-          trailingLabel={canEdit ? '编辑' : undefined}
-        />
-      </div>
-
-      <div className="m-gutter pt-2">
-        {/* ── 基本信息 ── */}
-        <section className="rounded-2xl bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-space-hairline)]">
-          <div className="flex flex-wrap items-center gap-2">
-            {PLAN_STATUSES.map((s) => {
-              const active = plan.status === s
-              return (
+    <MotionConfig reducedMotion="user">
+      <div className="pb-24">
+        <div className="m-gutter pt-2">
+          <LargeTitle
+            title={plan.title}
+            eyebrow="甜途 · 旅行计划"
+            subtitle={plan.destination ? `${plan.destination} · ${planStatusLabelOf(plan.status)}` : planStatusLabelOf(plan.status)}
+            back={spacePlansHref(spaceSlug)}
+            trailing={
+              canEdit ? (
                 <button
-                  key={s}
                   type="button"
-                  disabled={!canEdit || active}
-                  onClick={async () => {
-                    if (!canEdit) return
-                    try {
-                      await patch({ status: s })
-                      toast.success(`已标记为${planStatusLabelOf(s)}`)
-                    } catch (e) {
-                      toast.error(errorMessageOf(e, '更新状态失败'))
-                    }
-                  }}
-                  className={
-                    active
-                      ? 'inline-flex items-center gap-1 rounded-full bg-[var(--ui-space-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ui-space-accent-text)] ring-1 ring-[var(--ui-space-accent)]'
-                      : 'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] disabled:opacity-60'
-                  }
-                  aria-pressed={active}
+                  aria-label="编辑计划信息"
+                  onClick={() => setComposerOpen(true)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ui-social-surface)] text-[var(--ui-space-accent-strong)] ring-1 ring-[var(--ui-social-line)]"
                 >
-                  <Icon icon={STATUS_CHIP_ICONS[s]} size="sm" />
-                  {planStatusLabelOf(s)}
+                  <Icon icon={Sparkles} size="md" />
                 </button>
-              )
-            })}
-          </div>
+              ) : undefined
+            }
+            trailingLabel={canEdit ? '编辑' : undefined}
+          />
+        </div>
 
-          <dl className="mt-3.5 space-y-2 text-[13px]">
-            <InfoRow icon={CalendarDays} label="日期">
-              {range || '还没定日期'}
-              {days != null && <span className="ml-1.5 text-[11px] text-[var(--ui-social-faint)]">{days} 天</span>}
-            </InfoRow>
-            <InfoRow icon={MapPin} label="目的地">
-              {plan.destination || '还没定'}
-            </InfoRow>
-            {plan.budget != null && (
-              <InfoRow icon={Sparkles} label="预算">
-                {fmtBudget(plan.budget)}
-              </InfoRow>
-            )}
-            {creatorLabel && (
-              <InfoRow icon={Users} label="发起人">
-                {creatorLabel}
-              </InfoRow>
-            )}
-          </dl>
-
-          {plan.note && (
-            <p className="mt-3 whitespace-pre-wrap rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface2)] p-3 text-[13px] leading-5 text-[var(--ui-social-text)]">
-              {plan.note}
-            </p>
-          )}
-        </section>
-
-        {/* ── 一键转成旅行记录 ── */}
-        <section className="mt-4">
-          {converted ? (
-            <div className="rounded-2xl bg-[var(--ui-space-accent-soft)] p-3.5">
-              <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--ui-space-accent-text)]">
-                <Icon icon={Sparkles} size="sm" />
-                已转成旅行记录
-              </p>
-              <p className="mt-1 text-[11px] text-[var(--ui-space-accent-text)] opacity-85">
-                计划的标题、日期、预算和备注都已带过去，进旅行里补行程与照片就行。
-              </p>
-              {convertedHref && (
-                <Link
-                  href={convertedHref}
-                  className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-medium text-[var(--ui-space-accent-strong)]"
-                >
-                  去看这条旅行
-                  <Icon icon={ChevronRight} size="sm" />
-                </Link>
-              )}
-            </div>
-          ) : (
-            canEdit && (
-              <Button block size="lg" icon={Plane} loading={converting} onClick={() => void convert()}>
-                把计划变成旅行记录
-              </Button>
-            )
-          )}
-        </section>
-
-        {/* ── 共享清单 ── */}
-        <section className="mt-6 rounded-2xl bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-space-hairline)]">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-[16px] font-semibold leading-6 tracking-[-0.01em] text-[var(--ui-social-text)]">
-              共享清单
-            </h2>
-            <span className="text-[11px] tabular-nums text-[var(--ui-social-faint)]">
-              {plan.taskDoneCount}/{plan.taskCount} 已完成
-            </span>
-          </div>
-
-          {plan.taskCount > 0 && (
-            <div
-              className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--ui-social-surface2)]"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={progress}
-              aria-label={`清单完成 ${progress}%`}
-            >
-              <span
-                className="block h-full rounded-full bg-[var(--ui-space-accent-strong)] transition-[width] duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
-
-          {plan.taskCount === 0 ? (
-            <p className="mt-3 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface-50)] px-3 py-4 text-center text-[13px] text-[var(--ui-social-muted)]">
-              清单还是空的。写下要办的事、要带的东西、想去的地方。
-            </p>
-          ) : (
-            <div className="mt-3 space-y-3">
-              {grouped.map((group) => (
-                <div key={group.kind}>
-                  <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold tracking-[0.06em] text-[var(--ui-social-faint)]">
-                    <Icon icon={PLAN_TASK_KIND_ICONS[group.kind]} size="sm" />
-                    {PLAN_TASK_KIND_LABELS[group.kind]}
-                  </p>
-                  <ul className="space-y-0.5">
-                    {group.items.map((task) => (
-                      <li key={task.id} className="flex items-center gap-1.5">
-                        <Checkbox
-                          bare
-                          checked={task.done}
-                          disabled={!canEdit || busyTaskId === task.id}
-                          onCheckedChange={(next) => void toggleTask(task.id, next)}
-                          label={task.text}
-                          className="flex-none"
+        <div className="m-gutter pt-2">
+          {/* ── 基本信息 ── */}
+          <SpaceReveal>
+            <section className="rounded-2xl bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-space-hairline)]">
+              {/* 状态胶囊：选中态的底色是一枚会"滑"过去的高亮块（layoutId 共享布局），
+                  比三个按钮各自换 background-color 更有"切换"的空间感；
+                  只做布局投影（transform）与透明度，不动 padding/宽度。 */}
+              <div className="flex flex-wrap items-center gap-2">
+                {PLAN_STATUSES.map((s) => {
+                  const active = plan.status === s
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={!canEdit || active}
+                      onClick={async () => {
+                        if (!canEdit) return
+                        try {
+                          await patch({ status: s })
+                          toast.success(`已标记为${planStatusLabelOf(s)}`)
+                        } catch (e) {
+                          toast.error(errorMessageOf(e, '更新状态失败'))
+                        }
+                      }}
+                      className={cn(
+                        'relative inline-flex items-center rounded-full px-2.5 py-1 text-[11px]',
+                        active
+                          ? 'font-semibold text-[var(--ui-space-accent-text)]'
+                          : 'text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)] disabled:opacity-60',
+                      )}
+                      aria-pressed={active}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="space-plan-status-pill"
+                          className="space-plan-status-pill absolute inset-0 rounded-full bg-[var(--ui-space-accent-soft)] ring-1 ring-[var(--ui-space-accent)]"
+                          transition={
+                            reduceMotion
+                              ? { duration: 0 }
+                              : { type: 'spring', stiffness: 420, damping: 34, mass: 0.9 }
+                          }
                         />
-                        <span className="min-w-0 flex-1 py-2">
-                          <span
-                            className={
-                              task.done
-                                ? 'block truncate text-[15px] text-[var(--ui-social-faint)] line-through'
-                                : 'block truncate text-[15px] text-[var(--ui-social-text)]'
-                            }
-                          >
-                            {task.text}
-                          </span>
-                          {task.done && task.doneBy && (
-                            <span className="block text-[11px] text-[var(--ui-social-faint)]">
-                              {task.doneBy} 勾掉
-                            </span>
-                          )}
-                        </span>
-                        {canEdit && (
-                          <button
-                            type="button"
-                            aria-label={`删除清单项：${task.text}`}
-                            disabled={busyTaskId === task.id}
-                            onClick={() => void removeTask(task.id)}
-                            className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[var(--ui-social-faint)] transition hover:text-[var(--danger-soft)] disabled:opacity-50"
-                          >
-                            <Icon icon={X} size="sm" />
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+                      )}
+                      <span className="relative inline-flex items-center gap-1">
+                        <Icon icon={STATUS_CHIP_ICONS[s]} size="sm" />
+                        {planStatusLabelOf(s)}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <dl className="mt-3.5 space-y-2 text-[13px]">
+                <InfoRow icon={CalendarDays} label="日期">
+                  {range || '还没定日期'}
+                  {days != null && <span className="ml-1.5 text-[11px] text-[var(--ui-social-faint)]">{days} 天</span>}
+                </InfoRow>
+                <InfoRow icon={MapPin} label="目的地">
+                  {plan.destination || '还没定'}
+                </InfoRow>
+                {plan.budget != null && (
+                  <InfoRow icon={Sparkles} label="预算">
+                    {fmtBudget(plan.budget)}
+                  </InfoRow>
+                )}
+                {creatorLabel && (
+                  <InfoRow icon={Users} label="发起人">
+                    {creatorLabel}
+                  </InfoRow>
+                )}
+              </dl>
+
+              {plan.note && (
+                <p className="mt-3 whitespace-pre-wrap rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface2)] p-3 text-[13px] leading-5 text-[var(--ui-social-text)]">
+                  {plan.note}
+                </p>
+              )}
+            </section>
+          </SpaceReveal>
+
+          {/* ── 一键转成旅行记录 ── */}
+          <section className="mt-4">
+            {converted ? (
+              <div className="rounded-2xl bg-[var(--ui-space-accent-soft)] p-3.5">
+                <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--ui-space-accent-text)]">
+                  <Icon icon={Sparkles} size="sm" />
+                  已转成旅行记录
+                </p>
+                <p className="mt-1 text-[11px] text-[var(--ui-space-accent-text)] opacity-85">
+                  计划的标题、日期、预算和备注都已带过去，进旅行里补行程与照片就行。
+                </p>
+                {convertedHref && (
+                  <Link
+                    href={convertedHref}
+                    className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-medium text-[var(--ui-space-accent-strong)]"
+                  >
+                    去看这条旅行
+                    <Icon icon={ChevronRight} size="sm" />
+                  </Link>
+                )}
+              </div>
+            ) : (
+              canEdit && (
+                <Button block size="lg" icon={Plane} loading={converting} onClick={() => void convert()}>
+                  把计划变成旅行记录
+                </Button>
+              )
+            )}
+          </section>
+
+          {/* ── 共享清单 ── */}
+          <SpaceReveal delay={0.06}>
+            <section className="mt-6 rounded-2xl bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-space-hairline)]">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-[16px] font-semibold leading-6 tracking-[-0.01em] text-[var(--ui-social-text)]">
+                  共享清单
+                </h2>
+                <span className="text-[11px] tabular-nums text-[var(--ui-social-faint)]">
+                  {plan.taskDoneCount}/{plan.taskCount} 已完成
+                </span>
+              </div>
+
+              {plan.taskCount > 0 && (
+                <div
+                  className="space-plan-progress mt-2"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progress}
+                  aria-label={`清单完成 ${progress}%`}
+                >
+                  {/* 进度用 scaleX（transform）而不是 width：勾选时这一条会从旧值滑到新值，
+                      连续勾选也不会触发一次重排。减动效时直接落到终值。 */}
+                  <motion.span
+                    className="space-plan-progress-fill"
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: progress / 100 }}
+                    transition={{ duration: SPACE_DUR.slow, ease: SPACE_EASE_OUT }}
+                  />
                 </div>
-              ))}
-            </div>
+              )}
+
+              {plan.taskCount === 0 ? (
+                <p className="mt-3 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface-50)] px-3 py-4 text-center text-[13px] text-[var(--ui-social-muted)]">
+                  清单还是空的。写下要办的事、要带的东西、想去的地方。
+                </p>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {grouped.map((group) => (
+                    <div key={group.kind}>
+                      <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold tracking-[0.06em] text-[var(--ui-social-faint)]">
+                        <Icon icon={PLAN_TASK_KIND_ICONS[group.kind]} size="sm" />
+                        {PLAN_TASK_KIND_LABELS[group.kind]}
+                      </p>
+                      <ul className="space-y-0.5">
+                        {/* 清单项：新增的一条会从下方 8px 淡入（initial 只对"后来出现的"生效，
+                            首屏的清单不演一遍入场，避免打开页面就满屏在动）；
+                            勾掉时删除项淡出，但不做高度动画（会顶动下面的内容）。 */}
+                        <AnimatePresence initial={false} mode="popLayout">
+                          {group.items.map((task) => (
+                            <motion.li
+                              key={task.id}
+                              initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
+                              transition={{ duration: SPACE_DUR.base, ease: SPACE_EASE_OUT }}
+                              className="flex items-center gap-1.5"
+                            >
+                              <Checkbox
+                                bare
+                                checked={task.done}
+                                disabled={!canEdit || busyTaskId === task.id}
+                                onCheckedChange={(next) => void toggleTask(task.id, next)}
+                                label={task.text}
+                                className="flex-none"
+                              />
+                              <span className="min-w-0 flex-1 py-2">
+                                {/* 划线是一根 ::after 的 scaleX(0→1)：真正的"划过去"，
+                                    而不是 text-decoration 直接出现（.plan-task-label 见 space.css） */}
+                                <span className={cn('plan-task-label text-[15px]', task.done && 'is-done')}>
+                                  {task.text}
+                                </span>
+                                {task.done && task.doneBy && (
+                                  <span className="block text-[11px] text-[var(--ui-social-faint)]">
+                                    {task.doneBy} 勾掉
+                                  </span>
+                                )}
+                              </span>
+                              {canEdit && (
+                                <button
+                                  type="button"
+                                  aria-label={`删除清单项：${task.text}`}
+                                  disabled={busyTaskId === task.id}
+                                  onClick={() => void removeTask(task.id)}
+                                  className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[var(--ui-social-faint)] transition hover:text-[var(--danger-soft)] disabled:opacity-50"
+                                >
+                                  <Icon icon={X} size="sm" />
+                                </button>
+                              )}
+                            </motion.li>
+                          ))}
+                        </AnimatePresence>
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="mt-3 border-t border-[var(--ui-social-line)] pt-3">
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      value={newTask}
+                      onChange={(e) => {
+                        setNewTask(e.target.value)
+                        setTaskError('')
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          void addTask()
+                        }
+                      }}
+                      placeholder={`添加${PLAN_TASK_KIND_SHORT[newTaskKind]}…`}
+                      maxLength={120}
+                      aria-label="新增清单项"
+                      className="h-11 min-w-0 flex-1 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface2)] px-3 text-[13px] text-[var(--ui-social-text)] outline-none placeholder:text-[var(--ui-social-faint)] focus-visible:ring-2 focus-visible:ring-[var(--ui-space-accent)]"
+                    />
+                    <Button
+                      size="sm"
+                      icon={Plus}
+                      loading={busyTaskId === '__add__'}
+                      disabled={!newTask.trim()}
+                      onClick={() => void addTask()}
+                    >
+                      添加
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex gap-1.5">
+                    {PLAN_TASK_KINDS.map((kind) => (
+                      <button
+                        key={kind}
+                        type="button"
+                        onClick={() => setNewTaskKind(kind)}
+                        aria-pressed={newTaskKind === kind}
+                        className={
+                          newTaskKind === kind
+                            ? 'rounded-full bg-[var(--ui-space-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ui-space-accent-text)]'
+                            : 'rounded-full px-2.5 py-1 text-[11px] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]'
+                        }
+                      >
+                        {PLAN_TASK_KIND_SHORT[kind]}
+                      </button>
+                    ))}
+                  </div>
+                  {taskError && <p className="mt-2 text-[13px] text-[var(--danger-soft)]">{taskError}</p>}
+                </div>
+              )}
+            </section>
+          </SpaceReveal>
+
+          {/* ── 参与成员（空间成员共享这个计划） ── */}
+          {members.length > 0 && (
+            <SpaceReveal delay={0.1}>
+              <section className="mt-6 rounded-2xl bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-space-hairline)]">
+                <h2 className="text-[16px] font-semibold leading-6 tracking-[-0.01em] text-[var(--ui-social-text)]">
+                  参与成员（{members.length}）
+                </h2>
+                <ul className="mt-2.5 space-y-1.5">
+                  {members.map((m) => (
+                    <li key={m.username} className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--ui-space-accent-soft)] text-[11px] font-semibold text-[var(--ui-space-accent-strong)]">
+                        {(m.nickname || m.username).slice(0, 1)}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--ui-social-text)]">
+                        {m.nickname || m.username}
+                      </span>
+                      <span className="flex-none text-[11px] text-[var(--ui-social-faint)]">
+                        {spaceRoleLabelOf(m.role)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </SpaceReveal>
           )}
 
           {canEdit && (
-            <div className="mt-3 border-t border-[var(--ui-social-line)] pt-3">
-              <div className="flex items-center gap-1.5">
-                <input
-                  value={newTask}
-                  onChange={(e) => {
-                    setNewTask(e.target.value)
-                    setTaskError('')
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      void addTask()
-                    }
-                  }}
-                  placeholder={`添加${PLAN_TASK_KIND_SHORT[newTaskKind]}…`}
-                  maxLength={120}
-                  aria-label="新增清单项"
-                  className="h-11 min-w-0 flex-1 rounded-[var(--m-radius-control)] bg-[var(--ui-social-surface2)] px-3 text-[13px] text-[var(--ui-social-text)] outline-none placeholder:text-[var(--ui-social-faint)] focus-visible:ring-2 focus-visible:ring-[var(--ui-space-accent)]"
-                />
-                <Button
-                  size="sm"
-                  icon={Plus}
-                  loading={busyTaskId === '__add__'}
-                  disabled={!newTask.trim()}
-                  onClick={() => void addTask()}
-                >
-                  添加
-                </Button>
-              </div>
-              <div className="mt-2 flex gap-1.5">
-                {PLAN_TASK_KINDS.map((kind) => (
-                  <button
-                    key={kind}
-                    type="button"
-                    onClick={() => setNewTaskKind(kind)}
-                    aria-pressed={newTaskKind === kind}
-                    className={
-                      newTaskKind === kind
-                        ? 'rounded-full bg-[var(--ui-space-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ui-space-accent-text)]'
-                        : 'rounded-full px-2.5 py-1 text-[11px] text-[var(--ui-social-muted)] ring-1 ring-[var(--ui-social-line)]'
-                    }
-                  >
-                    {PLAN_TASK_KIND_SHORT[kind]}
-                  </button>
-                ))}
-              </div>
-              {taskError && <p className="mt-2 text-[13px] text-[var(--danger-soft)]">{taskError}</p>}
-            </div>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              disabled={deleting}
+              className="m-pressable mt-6 flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-[13px] text-[var(--ui-social-faint)] transition-colors hover:text-[var(--danger-soft)] disabled:opacity-50"
+            >
+              <Icon icon={Delete} size="sm" />
+              删除这个计划
+            </button>
           )}
-        </section>
-
-        {/* ── 参与成员（空间成员共享这个计划） ── */}
-        {members.length > 0 && (
-          <section className="mt-6 rounded-2xl bg-[var(--ui-social-surface)] p-4 ring-1 ring-[var(--ui-space-hairline)]">
-            <h2 className="text-[16px] font-semibold leading-6 tracking-[-0.01em] text-[var(--ui-social-text)]">
-              参与成员（{members.length}）
-            </h2>
-            <ul className="mt-2.5 space-y-1.5">
-              {members.map((m) => (
-                <li key={m.username} className="flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--ui-space-accent-soft)] text-[11px] font-semibold text-[var(--ui-space-accent-strong)]">
-                    {(m.nickname || m.username).slice(0, 1)}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--ui-social-text)]">
-                    {m.nickname || m.username}
-                  </span>
-                  <span className="flex-none text-[11px] text-[var(--ui-social-faint)]">
-                    {spaceRoleLabelOf(m.role)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        </div>
 
         {canEdit && (
-          <button
-            type="button"
-            onClick={() => setDeleteOpen(true)}
-            disabled={deleting}
-            className="m-pressable mt-6 flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-[13px] text-[var(--ui-social-faint)] transition-colors hover:text-[var(--danger-soft)] disabled:opacity-50"
-          >
-            <Icon icon={Delete} size="sm" />
-            删除这个计划
-          </button>
+          <>
+            <SpacePlanComposer
+              open={composerOpen}
+              onClose={() => setComposerOpen(false)}
+              spaceId={spaceId}
+              plan={plan}
+              onSaved={(next) => setPlan(next)}
+            />
+            <ActionSheet
+              open={deleteOpen}
+              onClose={() => setDeleteOpen(false)}
+              title={`删除「${plan.title}」后，清单与计划信息都会消失（已转成的旅行记录会保留）`}
+              options={[{ label: '删除计划', destructive: true, onClick: () => void remove() }]}
+            />
+          </>
         )}
       </div>
-
-      {canEdit && (
-        <>
-          <SpacePlanComposer
-            open={composerOpen}
-            onClose={() => setComposerOpen(false)}
-            spaceId={spaceId}
-            plan={plan}
-            onSaved={(next) => setPlan(next)}
-          />
-          <ActionSheet
-            open={deleteOpen}
-            onClose={() => setDeleteOpen(false)}
-            title={`删除「${plan.title}」后，清单与计划信息都会消失（已转成的旅行记录会保留）`}
-            options={[{ label: '删除计划', destructive: true, onClick: () => void remove() }]}
-          />
-        </>
-      )}
-    </div>
+    </MotionConfig>
   )
 }
 

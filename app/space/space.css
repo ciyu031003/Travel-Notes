@@ -149,3 +149,172 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+/* ── 7. U1 动效层（2026-11-28）──────────────────────────────────────────────
+   统一消费 app/motion-tokens.css 的三档时长 / 三条缓动，不再各写一套：
+     --motion-fast 140ms · --motion-base 220ms · --motion-slow 360ms
+     --motion-ease-out（进场）/ -in（退场）/ -standard（位移缩放）
+     --motion-rise 12px · --motion-stagger 60ms
+   职责分工（改之前先想清楚该放哪）：
+     · 「跟随状态变化」的过渡 → CSS（本节）：进度条、划线、展开、悬停、按下；
+     · 「一次性入场 / 滚入」→ motion（SpaceReveal / SpaceSection / 计划卡），
+       因为它们要和 IntersectionObserver、layoutId 这些能力配合。
+   纪律：只动 transform / opacity / filter；唯二的布局轨道例外是
+   .space-disclosure（用户主动点开的一次性动作，见注释），其余一律不碰
+   width / height / top / left。所有新类都登记在文末的 reduce 清单里。 */
+
+/* 空间卡：悬停时封面轻提亮 + 右箭头右移 2px。
+   触摸设备没有真 hover，全部锁在 @media (hover: hover) 里，避免"点完还留着悬停态"。 */
+.space-card-cover {
+  transition: filter var(--motion-base) var(--motion-ease-out);
+}
+.space-card-chevron {
+  display: inline-flex;
+  transition: transform var(--motion-fast) var(--motion-ease-standard);
+}
+@media (hover: hover) and (pointer: fine) {
+  .space-card:hover .space-card-cover {
+    filter: saturate(1.04) brightness(1.02);
+  }
+  .space-card:hover .space-card-chevron {
+    transform: translateX(2px);
+  }
+}
+
+/* 详情页的可点瓦片（相册封面 / 成员砖 / 邀请砖）：悬停抬 2px，按下收到 0.98。
+   按下那档比全局 .m-pressable 的 0.96 轻一点 —— 瓦片是"内容卡"不是"按钮"。 */
+.space-press-tile {
+  transition:
+    transform var(--motion-base) var(--motion-ease-standard),
+    box-shadow var(--motion-base) var(--motion-ease-out);
+}
+.space-press-tile:active {
+  transform: scale(0.98);
+  transition-duration: var(--motion-fast);
+}
+@media (hover: hover) and (pointer: fine) {
+  .space-press-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ui-mobile-elev-2);
+  }
+}
+
+/* 计划进度条：用 transform: scaleX 表达进度。
+   为什么不用 width：width 每帧都会触发布局（勾选一次要重排整张卡片），
+   而 scaleX 只在合成层；圆角由 track 裁切，视觉一致。 */
+.space-plan-progress {
+  height: 6px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-social-surface2);
+}
+.space-plan-progress-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--ui-space-accent-strong);
+  transform-origin: left center;
+  /* 初值 0：SSR 首帧不会先画满再回缩（motion 随后接管到真实值） */
+  transform: scaleX(0);
+}
+
+/* 清单项的划线：::after 走 scaleX(0 → 1)，勾掉时是"一笔划过去"，
+   而不是整行字突然变灰 + 一条线凭空出现。文字仍保留可读（不像直接 line-through 跳过动画）。 */
+.plan-task-label {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+  color: var(--ui-social-text);
+  transition: color var(--motion-base) var(--motion-ease-out);
+}
+.plan-task-label::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+  transition:
+    transform var(--motion-base) var(--motion-ease-out),
+    opacity var(--motion-fast) linear;
+}
+.plan-task-label.is-done {
+  color: var(--ui-social-faint);
+}
+.plan-task-label.is-done::after {
+  opacity: 0.6;
+  transform: scaleX(1);
+}
+
+/* 计划卡左上角的图标块：用状态色区分"规划中 / 已敲定 / 已完成"。
+   状态色只出现在这一块 40×40 的图标底与胶囊徽标上，卡片正文仍是中性层 ——
+   否则列表里三张不同状态的卡片会变成三个色块，读起来像三个模块。 */
+.space-plan-tile {
+  background: var(--ui-space-accent-soft);
+  color: var(--ui-space-accent-strong);
+}
+.space-plan-tile[data-status='CONFIRMED'] {
+  background: var(--ui-mobile-tone-sun-bg);
+  color: var(--ui-mobile-tone-sun-fg);
+}
+.space-plan-tile[data-status='DONE'] {
+  background: var(--ui-mobile-tone-neutral-bg);
+  color: var(--ui-mobile-tone-neutral-fg);
+}
+
+/* 抽屉里的「预算与备注」展开区：grid-template-rows 0fr → 1fr。
+   这是全模块唯一一处布局轨道动画 —— 它只发生在用户主动点开的一次性动作里，
+   不在滚动 / 列表路径上，因此不会造成持续的 layout 抖动；
+   减动效时 transition 关掉，变成直接显隐（见文末清单）。
+   内层 padding 留 4px 给输入框的焦点环，否则 overflow: hidden 会把它裁掉。 */
+.space-disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--motion-base) var(--motion-ease-out);
+}
+.space-disclosure.is-open {
+  grid-template-rows: 1fr;
+}
+.space-disclosure-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+.space-disclosure-pad {
+  padding: 4px;
+}
+.space-disclosure-caret {
+  display: inline-flex;
+  transition: transform var(--motion-base) var(--motion-ease-standard);
+}
+.space-disclosure-caret.is-open {
+  transform: rotate(180deg);
+}
+
+/* 减动效全量兜底（维护约定：本节新增任何带动画/过渡的 .space-* / .plan-* 类，
+   必须同步登记到这里）。motion 侧的位移由页面根的 MotionConfig 处理，
+   CSS 侧由这里处理，两边都不留"还在动"的角落。 */
+@media (prefers-reduced-motion: reduce) {
+  .space-card-cover,
+  .space-card-chevron,
+  .space-card:hover .space-card-chevron,
+  .space-press-tile,
+  .space-press-tile:hover,
+  .space-plan-progress-fill,
+  .plan-task-label,
+  .plan-task-label::after,
+  .space-disclosure,
+  .space-disclosure-caret {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'motion/react'
 import { UserMinus, ShieldCheck } from '@/lib/mobile/icon-system'
 import { Icon } from '@/components/mobile/Icon'
 import { apiUrl } from '@/lib/api-base'
 import { SPACE_ROLE_HINTS, SPACE_ROLE_LABELS, spaceRoleLabelOf } from '@/lib/mobile/space-system'
 import { SpaceAvatar, type SpaceMemberPreview } from './SpaceAvatarStack'
+import { SPACE_DUR, SPACE_EASE_OUT } from './space-motion'
 
 export interface SpaceMemberRow extends SpaceMemberPreview {
   id: number
@@ -31,6 +33,12 @@ function joinedText(iso: string): string {
  * S2 视觉调整：成员行从「独立小卡」改成「软底行」，只在行内做层次；
  * 角色控件收成胶囊 select，与新的卡片体系（2xl + 发丝线）一致。
  * 交互契约不变：只有 OWNER 能调角色/移除，最后一个主人由服务端兜底拒绝。
+ *
+ * U1 微交互：
+ *  · 行按 40ms 错峰淡入上浮（打开成员面板时不是"啪"地出现一整列）；
+ *  · 角色改成功后，该行铺一层主题色薄光呼吸一次（opacity 关键帧），
+ *    明确告诉用户"是这一行变了"；失败则不变色，只出错误文案。
+ *  · 薄光只是 opacity 动画、pointer-events: none，不挡 select / 移除按钮的点击。
  */
 export function SpaceMemberList({
   spaceId,
@@ -45,6 +53,8 @@ export function SpaceMemberList({
 }) {
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
+  /** 刚改过角色的成员：行内薄光呼吸一次，避免"改了没反应" */
+  const [flashUser, setFlashUser] = useState<string | null>(null)
   const isOwner = myRole === 'OWNER'
 
   const changeRole = async (username: string, role: string) => {
@@ -59,9 +69,11 @@ export function SpaceMemberList({
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(j.error || '调整失败')
+      setFlashUser(username)
+      window.setTimeout(() => setFlashUser(null), 900)
       onChanged()
-    } catch (e: any) {
-      setError(e.message || '调整失败')
+    } catch (e) {
+      setError(e instanceof Error && e.message ? e.message : '调整失败')
     } finally {
       setBusy(null)
     }
@@ -81,8 +93,8 @@ export function SpaceMemberList({
       const j = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(j.error || '移除失败')
       onChanged()
-    } catch (e: any) {
-      setError(e.message || '移除失败')
+    } catch (e) {
+      setError(e instanceof Error && e.message ? e.message : '移除失败')
     } finally {
       setBusy(null)
     }
@@ -94,14 +106,26 @@ export function SpaceMemberList({
 
   return (
     <div className="space-y-2">
-      {members.map((m) => {
+      {members.map((m, i) => {
         const canManage = isOwner && m.role !== 'OWNER'
         return (
-          <div
+          <motion.div
             key={m.id}
-            className="rounded-2xl bg-[var(--ui-social-surface-50)] px-3 py-2.5"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: SPACE_DUR.base, ease: SPACE_EASE_OUT, delay: Math.min(i, 6) * 0.04 }}
+            className="relative overflow-hidden rounded-2xl bg-[var(--ui-social-surface-50)] px-3 py-2.5"
           >
-            <div className="flex items-center gap-2.5">
+            {flashUser === m.username && (
+              <motion.span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-[var(--ui-space-accent-soft)]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.75, 0] }}
+                transition={{ duration: 0.9, ease: 'easeOut' }}
+              />
+            )}
+            <div className="relative flex items-center gap-2.5">
               <SpaceAvatar member={m} size="md" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[15px] font-medium text-[var(--ui-social-text)]">
@@ -145,7 +169,7 @@ export function SpaceMemberList({
                 </button>
               )}
             </div>
-          </div>
+          </motion.div>
         )
       })}
 
