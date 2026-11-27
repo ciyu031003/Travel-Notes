@@ -32,14 +32,23 @@ function msToIso(ms: unknown): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-/** 读本地旅行圈 Feed（原生端 + 表非空才返回，否则 null 交给 readWithFallback 走远端） */
-export async function readLocalSocialFeed(): Promise<LocalSocialPost[] | null> {
+/**
+ * 读本地旅行圈 Feed（原生端 + 表非空才返回，否则 null 交给 readWithFallback 走远端）。
+ *
+ * @param options.limit 只取最近 N 篇（P2 预缓存：冷启动只需前 8–10 篇即可先渲染，
+ *   没必要把 60 篇全查出来再截断）。不传 = 保持旧语义（全量、publishedAt 倒序）。
+ */
+export async function readLocalSocialFeed(options?: { limit?: number }): Promise<LocalSocialPost[] | null> {
   if (!isNativePlatform()) return null
+  const rawLimit = options?.limit
+  const limit = rawLimit != null && Number.isFinite(rawLimit) && rawLimit > 0 ? Math.floor(rawLimit) : null
   try {
     const rows = await queryRows(
       'SELECT id, remoteId, title, summary, coverUrl, location, startDate, endDate, dayCount, photoCount, ' +
         'authorId, authorName, authorNickname, authorAvatar, likeCount, commentCount, favoriteCount, ' +
-        'isLiked, isFavorited, publishedAt FROM social_post WHERE deleted = 0 ORDER BY COALESCE(publishedAt, updatedAt) DESC',
+        'isLiked, isFavorited, publishedAt FROM social_post WHERE deleted = 0 ' +
+        'ORDER BY COALESCE(publishedAt, updatedAt) DESC' +
+        (limit ? ' LIMIT ' + limit : ''),
     )
     if (rows.length === 0) return null
     // 按列名取值：Android 返回的行是「列名对象」，键序无保证，位置取值会让整条 Feed 字段错位

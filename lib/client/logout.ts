@@ -37,6 +37,19 @@ export async function performLogout(): Promise<void> {
     clearPersistedCache()
     __resetUseApiSnapshots()
   } catch {}
+  /**
+   * P1 本地优先读取层（task-28）在 localStorage 之外还写了 IndexedDB
+   * （库 tiantu-local，key 带账号作用域前缀 lf:acc:<userId>:）。
+   * 只清 localStorage 会把上一个账号的首页/旅程/相册留在 IDB 里 —— 换账号后直接读到别人的数据
+   * （隐私问题，与上面 localStorage 快照是同一诉求，不能只清一半）。
+   *
+   * 这里用**动态 import**：只有真的退出登录才需要这段逻辑，不必把它压进首屏/路由的模块图；
+   * 万一新层没装好（老包/裁剪构建），catch 掉也不该把用户困在登录态里。
+   */
+  try {
+    const { clearLocalFirstCache } = await import('@/lib/modules/offline/local-first')
+    await clearLocalFirstCache()
+  } catch {}
   try {
     await fetch(apiUrl('/api/logout'), { method: 'POST', credentials: 'include' })
   } catch {}

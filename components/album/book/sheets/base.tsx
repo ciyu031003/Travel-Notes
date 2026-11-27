@@ -25,6 +25,7 @@ function CoverPage({ page }: { page: BookPage }) {
           {/* 封面是首屏图：eager + 高优先级，不等 IntersectionObserver */}
           <LazyArtImage
             src={photo.previewUrl || photo.thumbnailUrl}
+            mediaId={photo.mediaId}
             alt={page.title ?? '旅行画册封面'}
             placeholderUrl={photo.blurUrl}
             eager
@@ -131,6 +132,7 @@ function IndexThumb({ photo }: { photo: BookPhotoRef }) {
     <figure className="index-cell">
       <LazyArtImage
         src={photo.thumbnailUrl || photo.previewUrl}
+        mediaId={photo.mediaId}
         alt=""
         placeholderUrl={photo.blurUrl}
       />
@@ -163,6 +165,7 @@ function PhotoPage({ page }: { page: BookPage }) {
   const img = (
     <LazyArtImage
       src={photo.previewUrl || photo.thumbnailUrl}
+      mediaId={photo.mediaId}
       alt={alt}
       placeholderUrl={photo.blurUrl}
       className={isHalf ? 'spread-img' : undefined}

@@ -8,6 +8,7 @@ import TravelLocationBadge from './TravelLocationBadge'
 import TravelTimeline from './TravelTimeline'
 import { formatDotDate } from '@/lib/modules/album/presentation'
 import { resolveVariantUrl } from '@/lib/media/variant-url'
+import { useLocalMediaUrls } from '@/hooks/use-local-media-url'
 import type { AlbumCity } from '@/hooks/use-album-data'
 
 // Canvas 重组件继续按需加载（与拆分前一致：ssr:false，渲染时才拉）
@@ -28,6 +29,12 @@ export default function AlbumPhotoWall({
   onOpenArchive: () => void
   onOpenViewer: (index: number) => void
 }) {
+  /**
+   * P4：原地读本地缓存（一次 SQL 查完整面墙的 URL）。
+   * tile 只有 200×140 CSS 像素，用本机 320px 缩略图足够，离线也不会白成一片。
+   */
+  const localImages = useLocalMediaUrls(city?.images ?? [], { prefer: 'thumb' })
+
   if (!city) {
     return (
       <div className="flex flex-col items-center justify-center h-[420px] text-album-warm gap-3">
@@ -95,7 +102,8 @@ export default function AlbumPhotoWall({
              * 旧图无变体时 DriftWall 内部 <img> 失败即为空白 tile，属可接受的降级。
              */
             items={city.images.map((src, i) => ({
-              image: resolveVariantUrl(src, 'thumbnail'),
+              // 本地命中优先（file:// → convertFileSrc），否则退到 480px 远端变体
+              image: localImages[src] ?? resolveVariantUrl(src, 'thumbnail'),
               title: `${city.name} · ${i + 1}`,
               onClick: () => onOpenViewer(i),
             }))}

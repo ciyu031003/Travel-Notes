@@ -7,6 +7,7 @@ import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { Icon } from '@/components/mobile/Icon'
 import { Loader } from '@/components/mobile/Loader'
 import PhotoDeck from '@/components/mobile/PhotoDeck'
+import RemoteImage from '@/components/mobile/RemoteImage'
 import { apiUrl } from '@/lib/api-base'
 import { toast } from '@/lib/mobile/toast-store'
 import { base64ToBytes, extFromMime, pickImage, type PickedImage } from '@/lib/media/pick-image'
@@ -155,6 +156,8 @@ export default function TravelAlbumTab({
           <div className="mt-5">
             <PhotoDeck
               images={allPhotos.map((p) => p.url)}
+              // P4：下标一一对应的 mediaId（离线/未同步照片靠它读本地文件；拿不到的下标为 null）
+              mediaIds={allPhotos.map((p) => p.id ?? null)}
               alt="旅行照片"
               onOpen={(i) => onOpenViewer(allPhotos, i)}
             />
@@ -177,8 +180,17 @@ export default function TravelAlbumTab({
                       onClick={() => onOpenViewer(allPhotos, Math.max(0, index))}
                       className="relative aspect-square overflow-hidden rounded-xl bg-[var(--m-surface-2)]"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.url} alt="" width={400} height={400} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                      {/*
+                        P4：走 RemoteImage —— 原生端优先读本地文件（离线/尚未上传的照片也能显示），
+                        本地没有或已被 LRU 清理则回退到远端三级变体，全部失败才隐藏（父级底色兜底）。
+                      */}
+                      <RemoteImage
+                        src={p.url}
+                        mediaId={p.id}
+                        alt=""
+                        variant="thumbnail"
+                        fill
+                      />
                       {coverMediaId === p.id && (
                         <span className="absolute left-1.5 top-1.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-md">
                           封面

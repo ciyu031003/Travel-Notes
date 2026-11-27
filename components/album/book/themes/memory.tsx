@@ -31,6 +31,7 @@ function MemoryCover({ page }: PageBodyProps) {
           <figure className="mem-cover-photo">
             <LazyArtImage
               src={photo.previewUrl || photo.thumbnailUrl}
+              mediaId={photo.mediaId}
               alt={page.title ?? '旅行画册封面'}
               placeholderUrl={photo.blurUrl}
               eager
@@ -90,6 +91,7 @@ function MemoryPhoto({ page }: PageBodyProps) {
         <figure className="mem-photo-frame">
           <LazyArtImage
             src={photo.previewUrl || photo.thumbnailUrl}
+            mediaId={photo.mediaId}
             alt={alt}
             placeholderUrl={photo.blurUrl}
             className="mem-photo-img"
@@ -106,6 +108,7 @@ function MemoryPhoto({ page }: PageBodyProps) {
       <figure className="mem-photo-frame">
         <LazyArtImage
           src={photo.previewUrl || photo.thumbnailUrl}
+          mediaId={photo.mediaId}
           alt={alt}
           placeholderUrl={photo.blurUrl}
           className="mem-photo-img"
@@ -139,7 +142,7 @@ function MemoryBoard({ page }: PageBodyProps) {
               key={photo.mediaId}
               style={{ ['--mem-rot' as string]: `${((i * 37) % 7) - 3}deg` }}
             >
-              <LazyArtImage src={photo.thumbnailUrl || photo.previewUrl} alt="" placeholderUrl={photo.blurUrl} />
+              <LazyArtImage src={photo.thumbnailUrl || photo.previewUrl} mediaId={photo.mediaId} alt="" placeholderUrl={photo.blurUrl} />
             </figure>
           ))}
         </div>

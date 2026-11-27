@@ -37,6 +37,7 @@ function FilmCover({ page }: PageBodyProps) {
         {photo && (photo.previewUrl || photo.thumbnailUrl) && (
           <LazyArtImage
             src={photo.previewUrl || photo.thumbnailUrl}
+            mediaId={photo.mediaId}
             alt={page.title ?? '旅行画册封面'}
             placeholderUrl={photo.blurUrl}
             eager
@@ -89,6 +90,7 @@ function FilmPhoto({ page }: PageBodyProps) {
   const image = (
     <LazyArtImage
       src={photo.previewUrl || photo.thumbnailUrl}
+      mediaId={photo.mediaId}
       alt={alt}
       placeholderUrl={photo.blurUrl}
       className={isHalf ? 'film-negative-img' : 'film-negative-img film-negative-img--single'}
@@ -139,6 +141,7 @@ function FilmContactSheet({ page }: PageBodyProps) {
             <figure className="film-cs-cell" key={photo.mediaId}>
               <LazyArtImage
                 src={photo.thumbnailUrl || photo.previewUrl}
+                mediaId={photo.mediaId}
                 alt=""
                 placeholderUrl={photo.blurUrl}
               />

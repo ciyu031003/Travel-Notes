@@ -37,6 +37,12 @@ import { cn } from '@/lib/utils'
 export interface PhotoDeckProps {
   /** 照片 URL（与全屏查看器共用同一数组，下标必须一致） */
   images: string[]
+  /**
+   * 可选：与 images 同下标的媒体主键（P4）。
+   * 给了它，原生端就能直接读本地文件 —— 离线/刚拍还没上传的照片才有图可看。
+   * 拿不到 mediaId 的调用方不传即可（行为与之前完全一致）。
+   */
+  mediaIds?: (number | string | null | undefined)[]
   /** 图片替代文本前缀（通常传帖子标题） */
   alt: string
   className?: string
@@ -60,6 +66,7 @@ const TILT_Y = 12
 
 export default function PhotoDeck({
   images,
+  mediaIds,
   alt,
   className,
   onOpen,
@@ -231,6 +238,7 @@ export default function PhotoDeck({
                 >
                   <RemoteImage
                     src={images[photoIndex]}
+                    mediaId={mediaIds?.[photoIndex] ?? null}
                     alt={(alt ? alt + ' ' : '') + '第 ' + (photoIndex + 1) + ' 张'}
                     variant="preview"
                     fill
@@ -241,6 +249,7 @@ export default function PhotoDeck({
                 <div className="relative h-full w-full overflow-hidden rounded-2xl ring-1 ring-[var(--ui-social-line)] bg-[var(--ui-social-surface2)]">
                   <RemoteImage
                     src={images[photoIndex]}
+                    mediaId={mediaIds?.[photoIndex] ?? null}
                     alt={(alt ? alt + ' ' : '') + '第 ' + (photoIndex + 1) + ' 张'}
                     variant={depth <= 2 ? 'preview' : 'thumbnail'}
                     fill

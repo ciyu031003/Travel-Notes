@@ -19,6 +19,7 @@ import { useCloseOnBack } from '@/hooks/use-close-on-back'
 import { apiUrl } from '@/lib/api-base'
 import { readWithFallback } from '@/lib/modules/offline/repository'
 import { readLocalSocialPostById } from '@/lib/modules/offline/social-read'
+import { removeFeedCachePost } from '@/lib/modules/offline/social-feed-cache'
 import { circleUserHref, travelDetailHref } from '@/lib/routes'
 import { goBackOrHome } from '@/lib/navigation'
 import { MobilePageShell } from '@/components/mobile/MobilePageShell'
@@ -132,6 +133,8 @@ export default function PostDetail({ postId }: { postId: number }) {
           if (!res.ok) {
             const payload = await res.json().catch(() => ({}))
             if (res.status === 404) {
+              // 已删除/已下架：顺手把这篇从旅行圈本地缓存剔除，避免离线 Feed 继续展示死链
+              void removeFeedCachePost(postId)
               throw new PostDetailHttpError('not-found', payload.error || '这条旅行故事不存在或已取消公开')
             }
             if (res.status === 401) {

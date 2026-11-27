@@ -11,6 +11,7 @@ import QuickLike from '@/components/social/QuickLike'
 import { cn } from '@/lib/utils'
 import { hapticLight } from '@/lib/mobile/haptics'
 import { toggleFavorite } from '@/lib/modules/offline/social-write'
+import { useLocalMediaUrl } from '@/hooks/use-local-media-url'
 
 export interface SocialFilmAuthor {
   name: string
@@ -19,6 +20,11 @@ export interface SocialFilmAuthor {
 
 interface SocialFilmCardProps {
   coverUrl?: string | null
+  /**
+   * 可选：封面媒体主键（P4）。给了它，原生端就能直接读本地文件 ——
+   * 离线刷旅行圈时封面不是一片灰。拿不到 mediaId 的调用方不传即可（行为不变）。
+   */
+  coverMediaId?: number | string | null
   cityName?: string | null
   title?: string
   summary?: string | null
@@ -173,6 +179,7 @@ function QuickFavorite({
  */
 export default function SocialFilmCard({
   coverUrl,
+  coverMediaId,
   cityName,
   title,
   summary,
@@ -200,6 +207,17 @@ export default function SocialFilmCard({
    * 拿不到计数时**不渲染** —— 「拿不到数据」显示成「0 收藏」比不显示更糟。
    */
   const showFavorite = postId !== undefined && favoriteCount !== undefined
+
+  /**
+   * P4：封面本地优先（原生端命中本地文件时直接就是图，离线也能看；
+   * Web 端恒等于 coverUrl，next/image 行为与之前完全一致）。
+   */
+  const localCoverUrl = useLocalMediaUrl({ mediaId: coverMediaId ?? null, remoteUrl: coverUrl ?? null })
+  /**
+   * 只有在**真的命中本地文件**时才换地址：解析中的那一帧继续用远端封面，
+   * 避免原生端列表里每张卡先闪一下占位图标（社交封面本来也极少有本地副本）。
+   */
+  const displayCoverUrl = localCoverUrl || coverUrl
 
   /**
    * 统计行（只读）。
@@ -293,9 +311,9 @@ export default function SocialFilmCard({
 
   const cover = (aspectClass: string, overlay?: React.ReactNode) => (
     <div className={cn('relative w-full overflow-hidden bg-[var(--ui-social-surface2)]', aspectClass)}>
-      {coverUrl ? (
+      {displayCoverUrl ? (
         <Image
-          src={coverUrl}
+          src={displayCoverUrl}
           alt={title || cityName || '旅行封面'}
           fill
           sizes={variant === 'hero' ? '100vw' : '(max-width: 768px) 100vw, 33vw'}

@@ -2287,3 +2287,41 @@ html.low-end .m-liquid-glass::after { display: none; }
     display: none;
   }
 }
+
+/* ==========================================================================
+   首页 · 把「fixed 背景」改成固定定位图层（2026-11-27 · P3 首页滑动性能）
+   --------------------------------------------------------------------------
+   首页的樱花柔光原来自两处 background-attachment: fixed —— body（≤767px）与
+   .m2-screen（首页根节点）。fixed 背景在滚动时每一帧都要按新视口原点重新栅格化
+   整屏径向渐变：390×844、CPU 4× 降速下滑 3 屏的 Chromium trace 实测
+   RasterTask 587 次 / 573.8ms（≈3.8 块瓦片/帧）→ 改成固定图层后 148 次 / 242.8ms
+   （≈1 块/帧），主线程 paint 与 p95 帧间隔不变、亮暗截图逐像素差 0.003%。
+
+   改法（只动首页，其它 .m2-screen 页面不受影响）：
+     1) 首页根节点加 .m2-screen-home，自身背景置透明；
+     2) ::before 铺一层 position: fixed 的普通图层 —— 渐变只栅格化一次，滚动由
+        合成器搬运，不再逐帧重绘；
+     3) 首页这一屏不透明，body 上那份同款 fixed 渐变被整屏盖住、纯属白画，
+        因此「只在首页」把 body 背景降为纯色 --m-bg（:has 不支持时自动不生效，
+        退化成原来的多画一层，视觉与性能都不劣化）。
+
+   渐变取值与改前逐字一致，明暗主题仍由 html.dark 下的 --m-glow-* 驱动。
+   ========================================================================== */
+.m2-screen.m2-screen-home { background: transparent; }
+.m2-screen.m2-screen-home::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 60% at 0% 0%, var(--m-glow-1, #FFE4ED), transparent 55%),
+    radial-gradient(90% 45% at 100% 5%, var(--m-glow-2, #EAF8F4), transparent 52%),
+    radial-gradient(70% 35% at 50% 100%, var(--m-glow-3, #FFF4D6), transparent 55%),
+    var(--m-bg);
+}
+@media (max-width: 767px) {
+  /* 首页那一屏不透明，body 的同款 fixed 渐变永远看不见 —— 不再逐帧重画它 */
+  html:has(.m2-screen.m2-screen-home) body { background: var(--m-bg); }
+}
+

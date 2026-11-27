@@ -1,14 +1,17 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { isLocalMediaUsable, useLocalMediaSource } from '@/hooks/use-local-media-url'
 
 /* ==========================================================================
-   画册图片加载策略（Album 2.0 M2）
+   画册图片加载策略（Album 2.0 M2 + P4 本地优先）
    page-flip 会把**所有**页元素一次性载入 DOM（portrait 模式还会克隆页元素，
    上游 README 明说 "uses cloning of html elements"），因此「只渲染 current ± 1」
    在 page-flip 内部无法做到。等价的有效做法是控制**网络与解码**：
      · 只有进入（或接近）视口的图才设 src —— 其余保持占位，不发请求；
      · 当前跨页与前后各一跨页的图用 img.decode() 预热（见 lib/modules/album/book/preload）。
+   P4（2026-11）：画册照片带 mediaId 时，原生端优先读本地文件 ——
+   离线时已缓存的照片照样能翻，不必等网络；本地没有/被 LRU 清理则回退远端变体。
    ========================================================================== */
 
 /** 距视口多远开始加载（page-flip 的页在书的两侧铺开，留一屏余量） */
@@ -21,11 +24,13 @@ function canObserve(): boolean {
 /**
  * 视口内才加载的画册图片。
  * - 容器进入视口前不设 src（零请求）；
+ * - 给了 mediaId 时原生端优先本地文件（离线可看），本地不可用自动回退远端；
  * - 加载失败显示可见占位，不静默留白；
  * - 复用父级传入的 className，保证版式与主题样式不变。
  */
 export function LazyArtImage({
   src,
+  mediaId,
   alt,
   className,
   placeholderUrl,
@@ -34,6 +39,8 @@ export function LazyArtImage({
   onLoaded,
 }: {
   src: string | null | undefined
+  /** 可选：媒体主键（P4 本地优先读取用） */
+  mediaId?: number | string | null
   alt: string
   className?: string
   /** 进入视口前铺的模糊占位（BLUR 变体，约 16px 宽，代价极小） */
@@ -48,6 +55,15 @@ export function LazyArtImage({
   const [visible, setVisible] = useState(eager || !canObserve())
   const [loaded, setLoaded] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [localBroken, setLocalBroken] = useState(false)
+
+  // 本地优先（原生端）：命中就直接用本地文件，离线也能翻画册
+  const local = useLocalMediaSource({ mediaId: mediaId ?? null, remoteUrl: src ?? null }, { prefer: 'original' })
+  const usingLocal =
+    !localBroken && isLocalMediaUsable(local, { wantsLarge: true, hasRemote: Boolean(src) })
+  const effectiveSrc = usingLocal ? local.url : (src ?? '')
+  /** 本地还在查：先别设 src，否则会先发一个远端请求再被本地替换 */
+  const waitingLocal = local.source === 'pending'
 
   useEffect(() => {
     if (visible) return
@@ -69,27 +85,40 @@ export function LazyArtImage({
     return () => io.disconnect()
   }, [visible])
 
-  const showImage = visible && !!src && !failed
+  const showImage = visible && !!effectiveSrc && !failed && !waitingLocal
+  // 本地命中时不要再为 blur 变体发一次远端请求
+  const showBlur = !failed && !!placeholderUrl && !loaded && !usingLocal
+
+  const handleError = () => {
+    if (usingLocal) {
+      // 本地文件坏了（LRU 清理 / 拷贝损坏）：作废缓存并回退远端
+      setLocalBroken(true)
+      local.invalidate()
+      return
+    }
+    setFailed(true)
+  }
 
   return (
     <span ref={hostRef} className="art-img-host">
-      {!failed && placeholderUrl && !loaded && (
+      {showBlur && (
         <span className="photo-blur" style={{ backgroundImage: `url(${placeholderUrl})` }} aria-hidden="true" />
       )}
       {failed && <PhotoFailMark alt={alt} />}
       {showImage && (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
-          src={src as string}
+          src={effectiveSrc}
           alt={alt}
           decoding="async"
           fetchPriority={fetchPriority}
+          data-media-source={usingLocal ? 'local' : 'remote'}
           className={`${className ?? ''}${loaded ? ' is-img-loaded' : ''}`}
           onLoad={() => {
             setLoaded(true)
             onLoaded?.()
           }}
-          onError={() => setFailed(true)}
+          onError={handleError}
         />
       )}
     </span>

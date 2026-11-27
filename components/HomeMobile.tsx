@@ -13,7 +13,6 @@ import {
   Sparkles,
   BookOpen,
   PenLine,
-  Menu,
   Search,
   Wallet,
   Camera,
@@ -27,8 +26,6 @@ import { albumDeepLink } from '@/lib/album-deep-link'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Skeleton } from '@/components/mobile/Skeleton'
 import { Icon } from '@/components/mobile/Icon'
-// 顶栏明暗主题入口：BoardUI 的 ThemeToggle（真装源码，见 components/application/theme）
-import { ThemeToggle } from '@/components/application/theme/theme-toggle'
 import { toast } from '@/lib/mobile/toast-store'
 import type { HomeBookSummary, HomeMoment } from '@/lib/home/types'
 import TicketReveal from '@/components/mobile/ticket/TicketReveal'
@@ -40,7 +37,6 @@ import type { TicketData } from '@/lib/ticket/types'
 import { buildExpenseDeck } from '@/lib/expense-card/derive'
 import type { ExpenseDeckData } from '@/lib/expense-card/types'
 import { totalPhotoCount } from '@/lib/home/photo-count'
-import { runAfterFirstPaint } from '@/lib/client/persisted-cache'
 
 /**
  * 首页 Hero 足迹地图：懒加载。
@@ -52,24 +48,6 @@ const HeroFootprintMapLazy = dynamicImport(() => import('@/components/home/HeroF
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 })
-
-/**
- * 功能菜单抽屉懒加载（P1-19）：它依赖 motion/react。首页自 P1-18 起走服务端渲染，
- * 静态引用会把 motion 拉回首屏脚本；改为 dynamic 后只在点开菜单时下载。
- *
- * E1 追加（2026-11-21 · 首屏 JS 瘦身）：之前虽然用了 dynamic，但组件**一挂载就渲染**，
- * dynamic 会在首屏内容刚出来的同一刻去拉 motion chunk（实测 121KB raw / 40KB gz，
- * 与首屏内容、图片抢同一条带宽）。现在改成「首次点开菜单才挂载」，并在首帧之后的空闲里
- * **预取** chunk —— 既不进首屏关键路径，用户真的点开时模块也已经就绪。
- */
-const HomeMobileDrawer = dynamicImport(() => loadDrawerModule(), {
-  ssr: false,
-})
-
-/** 抽屉模块的共享加载入口：dynamic 的首屏加载、空闲预取、按下预取都复用它（模块只求值一次） */
-function loadDrawerModule() {
-  return import('@/components/home/HomeMobileDrawer')
-}
 
 interface PostMeta {
   slug: string
@@ -266,33 +244,12 @@ export default function HomeMobile({
   const recent = travelPosts.slice(0, 6)
   const totalPhotos = totalPhotoCount(travelPosts)
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  /** 抽屉是否已经挂载过（首次点开才挂载 → motion chunk 不进首屏） */
-  const [drawerMounted, setDrawerMounted] = useState(false)
   const [dailyStamp, setDailyStamp] = useState('')
 
   useEffect(() => {
     const d = new Date()
     setDailyStamp((d.getMonth() + 1) + '/' + String(d.getDate()).padStart(2, '0'))
   }, [])
-
-  /**
-   * 首帧之后（空闲）预取抽屉 chunk。
-   * 抽屉要等用户点「功能菜单」才挂载，但也不能让用户点下去才发现要下载 ——
-   * 这里在首屏内容稳定之后（rAF 之后 2.5s）悄悄把模块取回来，点开时是「已就绪」状态。
-   */
-  useEffect(() => {
-    // 2.5s：这时首屏内容早已上屏、图片也基本解码完，占用一点带宽不影响「内容出现」；
-    // 用户真去点菜单时模块已就绪（点击前的 pointerdown 还会再兜一次预取）。
-    return runAfterFirstPaint(() => {
-      void loadDrawerModule().catch(() => {})
-    }, { delayMs: 2500 })
-  }, [])
-
-  /** 手指按下/悬停就预取：从按下到抬手通常 80~150ms，足够把模块取回 */
-  const warmDrawer = () => {
-    void loadDrawerModule().catch(() => {})
-  }
 
   const active = draftTravels[0] ?? null
   const restDrafts = draftTravels.slice(1)
@@ -414,10 +371,13 @@ export default function HomeMobile({
   ]
 
   return (
-    <div className="relative m-mobile-page m-bottom-nav-safe m2-screen text-[var(--m-text)]">
+    <div className="relative m-mobile-page m-bottom-nav-safe m2-screen m2-screen-home text-[var(--m-text)]">
       <PullToRefresh onRefresh={onRefresh}>
         <div className="relative z-10">
-          {/* ── V6 品牌顶栏 + 编辑式导语 + 搜索 / 夜色 / 菜单 ── */}
+          {/* ── V6 品牌顶栏 + 编辑式导语 + 搜索 ──
+              顶栏只留搜索入口：明暗主题已收口到「我的 → 设置 · 深夜模式」
+              （app/me/settings/page.tsx，写同一个 localStorage.theme / html.dark），
+              功能菜单抽屉随之移除（唯一入口就是这里，抽屉模块与预取逻辑一并删掉）。 */}
           <header className="m2-gutter m-safe-top pb-2">
             <div className="v6-appbar">
               <Link href="/" className="v6-brand" aria-label="甜途 · 旅行记忆空间">
@@ -428,22 +388,6 @@ export default function HomeMobile({
                 <Link href="/search" aria-label="搜索旅行、城市与回忆" className="v6-icon">
                   <Icon icon={Search} size="md" />
                 </Link>
-                {/* BoardUI ThemeToggle（collapsed 皮肤）：写同一个 localStorage.theme +
-                    html.dark，跨刷新与其它入口一致；v6-icon 保持 44px 圆形触控位 */}
-                <ThemeToggle collapsed className="v6-icon boardui-scope" />
-                <button
-                  type="button"
-                  aria-label="打开功能菜单"
-                  onClick={() => {
-                    setDrawerMounted(true)
-                    setDrawerOpen(true)
-                  }}
-                  onPointerDown={warmDrawer}
-                  onPointerEnter={warmDrawer}
-                  className="v6-icon"
-                >
-                  <Icon icon={Menu} size="md" />
-                </button>
               </div>
             </div>
 
@@ -715,9 +659,6 @@ export default function HomeMobile({
           </main>
         </div>
       </PullToRefresh>
-
-      {/* 首次点开才挂载：motion chunk 不进首屏关键路径（chunk 已在首帧后空闲预取） */}
-      {drawerMounted && <HomeMobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
 
       {/* 完成归档 → 票据旋转揭晓（烟花/彩带） */}
       {revealTicket && (
