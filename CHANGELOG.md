@@ -1,3 +1,41 @@
+## [1.30.18] - 2026-11-28
+
+> **体验精修**：我的空间 / 旅行计划 / 新建旅行 / 相册四个模块加入统一的动效语言与页面切换编排，
+> 相册做出真实的书本开合、折角翻页、连翻惯性、3D tilt 与长按放大。已发版为 **1.30.18 / build 82**。
+
+### Added（动效语言）
+
+- 新共享动效 token `app/motion-tokens.css`：三档时长（140/220/360ms）+ 三条缓动 + 位移 12px + 错峰 60ms，全模块复用。
+- 空间侧：`space-motion.ts`（常量 + reduce 位移归零）、`SpaceReveal`（滚入一次渐显/错峰）、`SpaceSheetGroup`、`SpacePlanSkeleton`。
+- 相册侧：`BookOpenChoreography`（开合三段式）、`BookFilmstrip`（缩略图胶片条）、`useFlipInertia`、`usePressZoom`、`app/album-motion.css`。
+
+### Changed
+
+- **我的空间 / 旅行计划**：列表→详情共享元素感（Hero 同色放大淡入）、统计数字 count-up、Hero 视差 ≤12px、
+  区块滚入渐显、计划状态胶囊 `layoutId` 滑动、勾选划线动画、进度 `scaleX` 补间、抽屉分组错峰、
+  返回比进入轻一档（140ms 淡出后切路由）。
+- **新建旅行**：进场分层错峰（顶栏→卡片→CTA）、返回/创建成功反向离场后再跳转、
+  花销/更多信息用 `grid-template-rows` 做无跳变折叠、校验失败抖动 + 滚动聚焦、城市联想 combobox 无障碍导航、
+  CTA 三态（呼吸/扫光、禁用去饱和、提交中不定进度条）、键盘让位用 `--tn-kb`、成功玻璃遮罩 + 勾 spring；
+  记录页重做（照片插入光环、心情按压、提交进度、成功淡出）；顺带修复中文 slug 打不开记录页的旧 bug。
+- **相册**：书本开合三段式（封面上抬侧倾 → 绕书脊 −158° → 扉页扫光 → 内页 scale .968→1），关闭完全逆向；
+  折角翻页配书脊谷/页边渐变/斜光扫过/落定回弹；620ms 内 ≥3 次进入连翻惯性（560→308ms）；
+  桌面 3D tilt（≤4°/6°）、长按 420ms 以按点为原点 scale 1.62、胶片条 layoutId 指示器 + 点击绝对跳页；
+  画册⇄像素⇄银河 整屏交叉淡入 + 缩放 0.992→1，切走再回来原位续读。
+
+### Fixed
+
+- `ArtFlipBook`：`disposedRef` 在 StrictMode 挂载→卸载→再挂载后永久为 true，导致开发环境整本画册空白（0 高）。
+- `TravelBook`：深链 `/album?book=<key>` 的守卫在目录到达前就置位，导致深链永远打不开。
+- 记录页中文 slug 被二次 encode 导致「旅行不存在」。
+
+### Verified
+
+- 动效期间帧率：空间详情滚动 p50/p95 16.7/16.8ms（≈60fps）；相册单页翻页 p95 16.8ms、7 连翻 p95 33.4ms
+  （A/B 关掉本轮装饰层仍相同 → 瓶颈是 vendored page-flip 在 dev 的重绘）；新建旅行折叠 p95 33.4ms 单帧补帧。
+- reduce-motion 全量兜底（无位移/无缩放/无 tilt，仅淡入或直切）；键盘 ←/→/Esc、焦点回收、aria-live 已测。
+- tsc 0 · eslint 0 error · 空间/相册/新建旅行三域 console 0 error。
+
 ## [1.30.17] - 2026-11-27
 
 > **本地优先（local-first）**：图片/相册本地先存再传云端；页面有本地数据就直接读本地、不转圈；
