@@ -4,8 +4,10 @@
  * 产品形态：空间里「一起规划下一次旅行」——
  *   · 计划本身只有基本信息（标题/目的地/起止日期/预算/备注/状态）；
  *   · **共享清单**存在 tasks JSON 里，空间成员可各自勾选（单条 toggle，避免整表覆盖）；
- *   · 「一键转成旅行记录」用计划信息建一条 Travel 草稿（spaceId → 该空间）并回填
- *     convertedTravelId；重复调用幂等（convertedTravelId 即幂等锚点）。
+ *   · 「一键转成旅行记录」（P3）把计划**整棵结构**搬成旅行记录：天 → TravelDay、
+ *     块 → ItineraryItem、块级照片 → 按天 Memory，并回填 convertedTravelId；
+ *     重复调用幂等（convertedTravelId 即幂等锚点），全程一个事务；
+ *   · 转换时可选「同时公开到旅行圈」（publish=true → visibility=PUBLIC + TravelPost 投影）。
  *
  * 权限（与空间一致，全部走 lib/modules/space/permissions.ts）：
  *   · 列表/详情：OWNER/MEMBER/VIEWER 均可读（VIEWER 只读）；
@@ -13,11 +15,13 @@
  *   · 删除：空间 OWNER，或计划的发起人（createdById/createdBy）。
  */
 import { randomBytes, randomUUID } from 'crypto'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '../../db'
 import { requireSpaceMember, requireSpaceRole, SpaceAccessError } from './permissions'
 import { writeAuditLog } from '../audit/audit-log.service'
-import { travelService } from '../travel/space-travel.service'
+import { syncTravelPost } from '../social/travel-post.service'
 import { prismaTravelRepository } from '../travel/space-travel.repository'
+import { planTravelDayDates } from '../travel/travel.policy'
 import {
   PrismaSpacePlanRepository,
   prismaSpacePlanRepository,
@@ -32,12 +36,14 @@ import {
 import {
   prismaSpacePlanCollabRepository,
   dateToYmd,
+  dayDateToYmd,
+  toIsoOrNull,
   type SpacePlanDayRecord,
   type SpacePlanItemRecord,
 } from './space-plan-collab.repository'
 import { spacePlanCollabService, buildPlanMeta } from './space-plan-collab.service'
 import { SpacePlanNotFoundError } from './space-plan-errors'
-import { buildItinerary, type PlanEngineItinerary } from './plan-engine'
+import { buildItinerary, type PlanEngineItinerary, type PlanItemKind } from './plan-engine'
 
 const TITLE_MAX = 200
 const DEST_MAX = 200
@@ -192,6 +198,358 @@ function asciiSlugBase(title: string, planId: number): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 60)
   return base.length >= 2 ? base : `plan-${planId}`
+}
+
+// ============================================================
+// 转换映射（纯函数，可单测）
+// ============================================================
+
+/**
+ * 计划块类型 → 旅行行程项类型。
+ *
+ * Travel 侧 ItineraryItem.type 只有 SPOT/FOOD/HOTEL/TRANSPORT/ACTIVITY 五档
+ * （见 lib/mobile/icon-system.ts），计划侧的 FLEX（机动 / 自由活动）没有独立档位，
+ * 归到 ACTIVITY —— 宁可显示成"自由活动"，也不要丢掉这一块。
+ */
+export type TravelItineraryType = 'TRANSPORT' | 'HOTEL' | 'FOOD' | 'SPOT' | 'ACTIVITY'
+
+export const PLAN_ITEM_KIND_TO_TRAVEL_TYPE: Record<PlanItemKind, TravelItineraryType> = {
+  TRANSPORT: 'TRANSPORT',
+  HOTEL: 'HOTEL',
+  FOOD: 'FOOD',
+  SPOT: 'SPOT',
+  ACTIVITY: 'ACTIVITY',
+  FLEX: 'ACTIVITY',
+}
+
+const PLAN_ITEM_KINDS: PlanItemKind[] = ['TRANSPORT', 'HOTEL', 'FOOD', 'SPOT', 'ACTIVITY', 'FLEX']
+
+/** 计划块 kind 归一化：脏值/大小写/未知类型一律按 SPOT（与 P1 物化口径一致） */
+export function normalizePlanItemKind(value: unknown): PlanItemKind {
+  const kind = String(value ?? '').trim().toUpperCase() as PlanItemKind
+  return PLAN_ITEM_KINDS.includes(kind) ? kind : 'SPOT'
+}
+
+/** 转换输入：一块（与 SpacePlanItem 行同构，时间/照片已拍平成纯值，便于单测） */
+export interface ConvertiblePlanItem {
+  kind: string | null
+  title: string
+  /** 墙上时间的 ISO 串（UTC 字段即墙上时间，见 space-plan-collab.repository 约定） */
+  startAt: string | null
+  endAt: string | null
+  place: string | null
+  costCents: number | null
+  note: string | null
+  sortOrder: number
+  mediaIds: number[]
+}
+
+/** 转换输入：一天 */
+export interface ConvertiblePlanDay {
+  /** 'YYYY-MM-DD'（null = 还没排日期） */
+  date: string | null
+  title: string | null
+  theme: string | null
+  summary: string | null
+  sortOrder: number
+  items: ConvertiblePlanItem[]
+}
+
+/** 转换输出：要写的 TravelDay + 它的行程项 + 可选的当天回忆 */
+export interface ConvertedTravelDay {
+  date: Date | null
+  title: string | null
+  summary: string | null
+  sortOrder: number
+  items: ConvertedItineraryItem[]
+  /** 只有「有照片」或「有备注」才建；否则 null（不建空回忆） */
+  memory: { title: string; content: string | null; mediaIds: number[] } | null
+}
+
+export interface ConvertedItineraryItem {
+  type: TravelItineraryType
+  title: string
+  startTime: Date | null
+  endTime: Date | null
+  notes: string | null
+  sortOrder: number
+}
+
+/** 'YYYY-MM-DD' → 本地零点 Date（与 TravelDay.date 的既有约定一致；非法/空 → null） */
+export function planYmdToLocalDate(ymd: string | null | undefined): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd ?? '').trim().slice(0, 10))
+  if (!match) return null
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+/**
+ * 「天日期 + 块的墙上时间」→ ItineraryItem.startTime/endTime。
+ *
+ * 计划块的 startAt/endAt 是**墙上时间**（引擎写 'YYYY-MM-DDTHH:mm'，落库用 Date.UTC，
+ * 读回 getUTC* 即墙上时间）；ItineraryItem 的时间是同一条历史约定。
+ * 所以这里取「块的时分秒」+「当天的年月日」重组，而不是直接搬 ISO：
+ *   · 块只填了时间（1970 基准日）也能落到正确的那一天；
+ *   · 计划天的日期被改过时，块时间跟着天走，不会漂到前一天/后一天。
+ */
+export function combinePlanDayAndTime(dayYmd: string | null, value: string | Date | null | undefined): Date | null {
+  if (!value) return null
+  const wall = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(wall.getTime())) return null
+  const hours = wall.getUTCHours()
+  const minutes = wall.getUTCMinutes()
+  const seconds = wall.getUTCSeconds()
+  const dayDate = planYmdToLocalDate(dayYmd)
+  if (!dayDate) {
+    // 天没排日期：块自带真实年月日（>= 2000）就保留原值，1970 基准日的时间串丢弃
+    return wall.getUTCFullYear() >= 2000 ? wall : null
+  }
+  return new Date(Date.UTC(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), hours, minutes, seconds))
+}
+
+/** 分 → 元的展示串（整数不带小数，避免"¥146.00"这种噪声） */
+function formatYuan(cents: number): string {
+  const yuan = cents / 100
+  return Number.isInteger(yuan) ? String(yuan) : yuan.toFixed(2)
+}
+
+/**
+ * 块的「地点 / 花销 / 备注」压成 ItineraryItem.notes。
+ *
+ * ItineraryItem 没有 place/cost 列，直接丢会把用户填的"住哪、花了多少"抹掉；
+ * 拼进 notes 既保留信息，也不用改既有数据模型。
+ */
+export function composeItineraryNotes(item: ConvertiblePlanItem): string | null {
+  const parts: string[] = []
+  const note = (item.note ?? '').trim()
+  if (note) parts.push(note)
+  const place = (item.place ?? '').trim()
+  if (place) parts.push(`地点：${place}`)
+  if (typeof item.costCents === 'number' && item.costCents > 0) parts.push(`预算：¥${formatYuan(item.costCents)}`)
+  return parts.length > 0 ? parts.join('\n') : null
+}
+
+/** 计划里没有天骨架（老计划 / 只填了日期）→ 按旅行区间补出空天，至少让旅行有分天结构 */
+function daysFromPlanRange(plan: { startDate: string | null; endDate: string | null }): ConvertiblePlanDay[] {
+  if (!plan.startDate) return []
+  return planTravelDayDates(plan.startDate, plan.endDate).map((date, index) => ({
+    date: dayDateToYmd(date),
+    title: null,
+    theme: null,
+    summary: null,
+    sortOrder: index,
+    items: [],
+  }))
+}
+
+/**
+ * 计划的天 → 待写入的 TravelDay 列表（纯函数，转换的核心规则都在这里）。
+ *
+ * 规则：
+ *   · 块按其 sortOrder 排序后重新编号（0..n-1），天也重新编号，前端无需再排；
+ *   · kind 走 PLAN_ITEM_KIND_TO_TRAVEL_TYPE；FLEX → ACTIVITY；
+ *   · 时间 = 天日期 + 块的墙上时分秒（见 combinePlanDayAndTime）；
+ *   · 空天跳过：没有日期、没有标题/备注、也没有块的"天"建出来只是一行空壳；
+ *   · 回忆：当天有块级照片或有备注（summary）才建，标题回退「第 N 天」。
+ */
+export function buildConvertedTravelDays(
+  plan: { startDate: string | null; endDate: string | null },
+  days: ConvertiblePlanDay[],
+): ConvertedTravelDay[] {
+  const source = days.length > 0 ? days : daysFromPlanRange(plan)
+  const out: ConvertedTravelDay[] = []
+
+  for (const day of source) {
+    const ymd = day.date ? String(day.date).trim().slice(0, 10) || null : null
+    const items: ConvertedItineraryItem[] = [...(day.items ?? [])]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((item, index) => ({
+        type: PLAN_ITEM_KIND_TO_TRAVEL_TYPE[normalizePlanItemKind(item.kind)],
+        title: (item.title ?? '').trim().slice(0, 255) || '待定',
+        startTime: combinePlanDayAndTime(ymd, item.startAt),
+        endTime: combinePlanDayAndTime(ymd, item.endAt),
+        notes: composeItineraryNotes(item),
+        sortOrder: index,
+      }))
+
+    const title = day.title?.trim() || null
+    const summary = day.summary?.trim() || null
+    if (!ymd && !title && !summary && items.length === 0) continue
+
+    const mediaIds = Array.from(new Set((day.items ?? []).flatMap((item) => item.mediaIds ?? [])))
+    const memory = mediaIds.length > 0 || summary
+      ? { title: title || `第 ${out.length + 1} 天`, content: summary, mediaIds }
+      : null
+
+    out.push({
+      date: planYmdToLocalDate(ymd),
+      title,
+      summary,
+      sortOrder: out.length,
+      items,
+      memory,
+    })
+  }
+
+  return out
+}
+
+/**
+ * 转换时读的天/块/照片列。
+ * `satisfies` 让 prisma 的类型推导精确，避免手写行类型与 schema 漂移。
+ */
+const PLAN_DAY_CONVERT_SELECT = {
+  id: true,
+  date: true,
+  title: true,
+  theme: true,
+  summary: true,
+  sortOrder: true,
+  items: {
+    orderBy: { sortOrder: 'asc' },
+    select: {
+      id: true,
+      kind: true,
+      startAt: true,
+      endAt: true,
+      title: true,
+      place: true,
+      costCents: true,
+      note: true,
+      sortOrder: true,
+      media: { orderBy: { sortOrder: 'asc' }, select: { mediaId: true } },
+    },
+  },
+} satisfies Prisma.SpacePlanDaySelect
+
+type PlanDayConvertRow = Prisma.SpacePlanDayGetPayload<{ select: typeof PLAN_DAY_CONVERT_SELECT }>
+
+/** prisma 行 → 纯值（时间统一成 ISO，交给纯函数组合日期） */
+function toConvertiblePlanDay(row: PlanDayConvertRow): ConvertiblePlanDay {
+  return {
+    date: dayDateToYmd(row.date),
+    title: row.title,
+    theme: row.theme,
+    summary: row.summary,
+    sortOrder: row.sortOrder,
+    items: row.items.map((item) => ({
+      kind: String(item.kind),
+      title: item.title,
+      startAt: toIsoOrNull(item.startAt),
+      endAt: toIsoOrNull(item.endAt),
+      place: item.place,
+      costCents: item.costCents,
+      note: item.note,
+      sortOrder: item.sortOrder,
+      mediaIds: item.media.map((link) => link.mediaId),
+    })),
+  }
+}
+
+/** 转换选项：publish=true 时同时公开到旅行圈（默认 false，隐私优先） */
+export interface ConvertPlanOptions {
+  publish?: boolean
+}
+
+/** 转换结果（P3 起多了 published；其余字段与 P1 向后兼容） */
+export interface ConvertPlanResult {
+  travelId: number
+  travelSlug: string
+  alreadyConverted: boolean
+  /** 这条旅行当前是否已进入旅行圈（本次 publish 或此前已经公开） */
+  published: boolean
+  plan: SpacePlanRecord
+}
+
+/** 并发转换竞争：另一个请求先回填了 convertedTravelId → 回滚后复用对方结果 */
+class PlanConversionRaceError extends Error {
+  constructor() {
+    super('该计划已被另一个请求转换为旅行记录')
+    this.name = 'PlanConversionRaceError'
+  }
+}
+
+/** 幂等查询：转换目标旅行（含它是否已进入旅行圈） */
+async function findConvertedTravel(travelId: number) {
+  return prisma.travel.findUnique({
+    where: { id: travelId },
+    select: { id: true, slug: true, visibility: true, travelPost: { select: { id: true } } },
+  })
+}
+
+// ============================================================
+// 计划生成的回忆：可见性随旅行公开 / 取消公开同步
+// ============================================================
+
+/** 计划转换事件的动作名（SpacePlanEvent；payload 里记 memoryIds = 转换生成的回忆） */
+export const PLAN_CONVERT_EVENT_ACTION = 'plan.convert'
+
+/** 回忆可见性（与 Travel.visibility 同三档） */
+export type MemoryVisibility = 'PUBLIC' | 'SPACE' | 'PRIVATE'
+
+/** 从事件 payload 里解析 memoryIds（适配器 jsonStrings=true：payload 可能是字符串） */
+export function parseConvertedMemoryIds(payload: unknown): number[] {
+  let value: unknown = payload
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value)
+    } catch {
+      return []
+    }
+  }
+  if (!value || typeof value !== 'object') return []
+  const raw = (value as { memoryIds?: unknown }).memoryIds
+  if (!Array.isArray(raw)) return []
+  const out: number[] = []
+  for (const item of raw) {
+    const id = Number(item)
+    if (Number.isInteger(id) && id > 0 && !out.includes(id)) out.push(id)
+  }
+  return out.slice(0, 500)
+}
+
+type DbClient = Prisma.TransactionClient | typeof prisma
+
+/** 读「这条计划转换时生成了哪些回忆」（最新一次 plan.convert 事件） */
+async function loadConvertedMemoryIds(planId: number, db: DbClient = prisma): Promise<number[]> {
+  try {
+    const event = await db.spacePlanEvent.findFirst({
+      where: { planId, action: PLAN_CONVERT_EVENT_ACTION },
+      orderBy: { id: 'desc' },
+      select: { payload: true },
+    })
+    return parseConvertedMemoryIds(event?.payload)
+  } catch (error) {
+    // 事件只是「来源标记」：读不到就当没有（不影响公开本身，只是不同步回忆）
+    console.error('[space-plan] 读取转换事件失败:', (error as Error)?.message)
+    return []
+  }
+}
+
+/**
+ * 同步「由计划转换生成的回忆」的可见性（公开 / 取消公开时调用）。
+ *
+ * 边界（产品要求）：**只动 convert 事务里建的这批**——ids 来自 plan.convert 事件，
+ * 并用 travelId 再兜一次底（防止回忆被挪到别的旅行后误改）；用户手工建的回忆一律不受影响。
+ * 返回实际被更新的回忆条数（没有转换来源 / 已删除 → 0）。
+ */
+export async function syncConvertedTravelMemoryVisibility(
+  travelId: number,
+  visibility: MemoryVisibility,
+  db: DbClient = prisma,
+): Promise<number> {
+  const plan = await db.spaceTravelPlan.findUnique({
+    where: { convertedTravelId: travelId },
+    select: { id: true },
+  })
+  if (!plan) return 0
+  const memoryIds = await loadConvertedMemoryIds(plan.id, db)
+  if (memoryIds.length === 0) return 0
+  const result = await db.memory.updateMany({
+    where: { id: { in: memoryIds }, travelId },
+    data: { visibility },
+  })
+  return result.count
 }
 
 export class SpacePlanService {
@@ -408,32 +766,235 @@ export class SpacePlanService {
   }
 
   /**
-   * 一键转成旅行记录：用计划信息建 Travel 草稿（spaceId 关联该空间）。
+   * 一键转成旅行记录（P3：深度转换）。
    *
-   * 幂等：convertedTravelId 已存在时直接返回那条旅行（alreadyConverted=true），
-   * 不会重复建；若目标旅行已被删除（FK ON DELETE SET NULL 已把字段清空），
-   * 则会正常重建一条。
+   * 与 P1 的「只建一条空壳 Travel」不同，这里把计划的**结构**整棵搬过去：
+   *   · 每个 SpacePlanDay → TravelDay（date/title/summary/sortOrder）；
+   *   · 每个 SpacePlanItem → ItineraryItem（kind→type、天日期+startAt/endAt 组合墙上时间、title/notes）；
+   *   · 块级照片（SpacePlanItemMedia）→ 按天建一条 Memory（**无照片且无备注的天不建空回忆**）；
+   *   · 计划信息（标题/目的地/日期/预算/备注/封面/空间类型）落到 Travel。
+   *
+   * 幂等：convertedTravelId 是幂等锚点 —— 已转换直接返回（alreadyConverted=true）。
+   * 回填用 `WHERE convertedTravelId IS NULL` 的 CAS：并发重复点击只会留下一条旅行，
+   * 竞争失败方回滚后复用对方的结果。
+   *
+   * 全程一个事务：任一步失败整体回滚，绝不会留下「半本旅行」（P1 老实现是建完再补偿删除）。
+   * `publish=true` 时同事务把 visibility 置 PUBLIC 并写 TravelPost 投影，旅行立刻出现在旅行圈。
    */
   async convertPlan(
     actor: PlanActor,
     spaceId: number,
     planId: number,
-  ): Promise<{ travelId: number; travelSlug: string; alreadyConverted: boolean; plan: SpacePlanRecord }> {
+    options: ConvertPlanOptions = {},
+  ): Promise<ConvertPlanResult> {
     await requireSpaceRole(actor.username, spaceId, ['OWNER', 'MEMBER'])
+    const publish = options.publish === true
     const plan = await this.loadPlan(spaceId, planId)
 
+    // —— 幂等：已转换过（且目标旅行还在）→ 直接复用，不重复建天/块 ——
     if (plan.convertedTravelId != null) {
-      const existing = await prisma.travel.findUnique({
-        where: { id: plan.convertedTravelId },
-        select: { id: true, slug: true },
-      })
+      const existing = await findConvertedTravel(plan.convertedTravelId)
       if (existing) {
-        return { travelId: existing.id, travelSlug: existing.slug, alreadyConverted: true, plan }
+        const published = publish
+          ? await this.publishConvertedTravel(existing.id)
+          : existing.visibility === 'PUBLIC' || existing.travelPost != null
+        return {
+          travelId: existing.id,
+          travelSlug: existing.slug,
+          alreadyConverted: true,
+          published,
+          plan: await this.loadPlan(spaceId, planId),
+        }
       }
+      // 目标旅行已被删除（FK ON DELETE SET NULL 理论上会清字段，这里兜底重建）
     }
 
     const space = await prisma.space.findUnique({ where: { id: spaceId }, select: { spaceType: true } })
-    const base = asciiSlugBase(plan.title, plan.id)
+    const slug = await this.resolveTravelSlug(spaceId, plan.title, plan.id)
+
+    let created: { travelId: number; published: boolean }
+    try {
+      created = await prisma.$transaction(
+        async (tx) => {
+          const dayRows = await tx.spacePlanDay.findMany({
+            where: { planId },
+            orderBy: { sortOrder: 'asc' },
+            select: PLAN_DAY_CONVERT_SELECT,
+          })
+          const days = buildConvertedTravelDays(
+            { startDate: plan.startDate, endDate: plan.endDate },
+            dayRows.map(toConvertiblePlanDay),
+          )
+
+          // 计划封面在计划表上没有外键，可能指向已删除的媒体；
+          // 失效就不带过去（否则 Travel.coverMediaId 的 FK 会让整次转换失败）
+          const coverMedia =
+            plan.coverMediaId != null
+              ? await tx.media.findUnique({ where: { id: plan.coverMediaId }, select: { id: true } })
+              : null
+
+          const travel = await tx.travel.create({
+            data: {
+              spaceId,
+              // 作者归属转换发起人：旅行圈的帖子作者跟"是谁把计划变成记录"一致
+              ownerId: actor.userId ?? null,
+              title: plan.title,
+              slug,
+              description: plan.note ?? null,
+              location: plan.destination ?? null,
+              startDate: plan.startDate ? new Date(plan.startDate) : null,
+              endDate: plan.endDate ? new Date(plan.endDate) : null,
+              status: 'PLANNED',
+              // 默认留在空间内（隐私优先）；只有显式勾选「同时公开到旅行圈」才 PUBLIC
+              visibility: publish ? 'PUBLIC' : 'SPACE',
+              isPublic: publish,
+              travelType: travelTypeOfSpace(space?.spaceType),
+              budget: plan.budget ?? null,
+              coverMediaId: coverMedia?.id ?? null,
+            },
+            select: { id: true },
+          })
+
+          // 转换生成的回忆 id：写进 plan.convert 事件，之后公开/取消公开时据此同步可见性
+          const convertedMemoryIds: number[] = []
+          let convertedItemCount = 0
+
+          for (const day of days) {
+            const travelDay = await tx.travelDay.create({
+              data: {
+                travelId: travel.id,
+                date: day.date,
+                title: day.title,
+                summary: day.summary,
+                sortOrder: day.sortOrder,
+              },
+              select: { id: true },
+            })
+            for (const item of day.items) {
+              await tx.itineraryItem.create({
+                data: {
+                  travelDayId: travelDay.id,
+                  type: item.type,
+                  title: item.title,
+                  startTime: item.startTime,
+                  endTime: item.endTime,
+                  notes: item.notes,
+                  sortOrder: item.sortOrder,
+                },
+                select: { id: true },
+              })
+              convertedItemCount += 1
+            }
+            if (day.memory) {
+              const memory = await tx.memory.create({
+                data: {
+                  spaceId,
+                  travelId: travel.id,
+                  travelDayId: travelDay.id,
+                  title: day.memory.title,
+                  content: day.memory.content,
+                  happenedAt: day.date,
+                  // 与旅行同档：勾选「同时公开到旅行圈」时回忆（含照片）也随文章可见
+                  visibility: publish ? 'PUBLIC' : 'SPACE',
+                  createdBy: actor.username,
+                  createdById: actor.userId ?? null,
+                },
+                select: { id: true },
+              })
+              convertedMemoryIds.push(memory.id)
+              if (day.memory.mediaIds.length > 0) {
+                await tx.memoryMedia.createMany({
+                  data: day.memory.mediaIds.map((mediaId, index) => ({
+                    memoryId: memory.id,
+                    mediaId,
+                    sortOrder: index,
+                  })),
+                })
+              }
+            }
+          }
+
+          // CAS 回填：只有「还没被别的请求转换过」才成功；
+          // 否则抛错让整本旅行回滚（并发重复点击不产生第二本）
+          const linked = await tx.spaceTravelPlan.updateMany({
+            where: { id: planId, convertedTravelId: null },
+            data: { convertedTravelId: travel.id },
+          })
+          if (linked.count === 0) throw new PlanConversionRaceError()
+
+          let published = false
+          if (publish) {
+            // 与 travel.service 同口径：TravelPost 是 visibility 的投影，失败即回滚
+            const post = await syncTravelPost(travel.id, tx)
+            published = post?.published === true
+          }
+
+          // 记下「这次转换生成了哪些回忆」：公开开关之后还要按同一规则同步可见性
+          // （payload 走 JSON 列，适配器读出可能是字符串，见 parseConvertedMemoryIds）
+          await prismaSpacePlanCollabRepository.appendEvent(
+            tx,
+            planId,
+            actor.username,
+            PLAN_CONVERT_EVENT_ACTION,
+            {
+              travelId: travel.id,
+              travelSlug: slug,
+              published,
+              dayCount: days.length,
+              itemCount: convertedItemCount,
+              memoryIds: convertedMemoryIds,
+            },
+          )
+
+          return { travelId: travel.id, published }
+        },
+        { timeout: 20_000 },
+      )
+    } catch (error) {
+      if (error instanceof PlanConversionRaceError) {
+        // 别人先完成转换：返回他那本（幂等语义不变），不留孤儿
+        const fresh = await this.loadPlan(spaceId, planId)
+        if (fresh.convertedTravelId != null) {
+          const existing = await findConvertedTravel(fresh.convertedTravelId)
+          if (existing) {
+            const published = publish
+              ? await this.publishConvertedTravel(existing.id)
+              : existing.visibility === 'PUBLIC' || existing.travelPost != null
+            return {
+              travelId: existing.id,
+              travelSlug: existing.slug,
+              alreadyConverted: true,
+              published,
+              plan: fresh,
+            }
+          }
+        }
+      }
+      console.error('[space-plan] 转换旅行记录失败（事务已回滚）:', (error as Error)?.message)
+      throw new Error('转换失败，请重试')
+    }
+
+    await writeAuditLog({
+      username: actor.username,
+      action: 'CREATE',
+      resourceType: 'Travel',
+      resourceId: String(created.travelId),
+      spaceId,
+      metadata: { fromPlanId: planId, planTitle: plan.title, published: created.published },
+    }).catch(() => {})
+
+    return {
+      travelId: created.travelId,
+      travelSlug: slug,
+      alreadyConverted: false,
+      published: created.published,
+      plan: await this.loadPlan(spaceId, planId),
+    }
+  }
+
+  /** 计划标题 → 空间内唯一的旅行 slug（沿用 P1 规则：ASCII 派生失败回退 plan-<id>） */
+  private async resolveTravelSlug(spaceId: number, title: string, planId: number): Promise<string> {
+    const base = asciiSlugBase(title, planId)
     let slug = base
     for (let i = 0; i < 20; i++) {
       const candidate = i === 0 ? base : `${base.slice(0, 70)}-${i + 1}`
@@ -445,47 +1006,36 @@ export class SpacePlanService {
     if (await prismaTravelRepository.slugExists(spaceId, slug)) {
       slug = `${base.slice(0, 70)}-${randomBytes(2).toString('hex')}`
     }
+    return slug
+  }
 
-    const created = await travelService.createTravel(actor.username, {
-      spaceId,
-      title: plan.title,
-      slug,
-      description: plan.note ?? null,
-      startDate: plan.startDate,
-      endDate: plan.endDate,
-      status: 'PLANNED',
-      visibility: 'SPACE',
-      travelType: travelTypeOfSpace(space?.spaceType),
-    })
-
+  /**
+   * 把一本已转换的旅行公开（幂等）：visibility=PUBLIC + 计划生成的回忆 → PUBLIC + TravelPost 投影，同事务。
+   * 这样「转换时忘勾公开、之后再补公开」也能让文章里的照片一起可见。
+   */
+  private async publishConvertedTravel(travelId: number): Promise<boolean> {
     try {
-      // 预算不在 createTravel 的入参里（那是既有服务的稳定契约），单独回填
-      if (plan.budget != null) {
-        await prisma.travel.update({
-          where: { id: created.id },
-          data: { budget: plan.budget },
-          select: { id: true },
-        })
-      }
-      await this.repo.update(planId, { convertedTravelId: created.id })
+      const current = await prisma.travel.findUnique({
+        where: { id: travelId },
+        select: { visibility: true },
+      })
+      if (!current) return false
+      const post = await prisma.$transaction(async (tx) => {
+        if (current.visibility !== 'PUBLIC') {
+          await tx.travel.update({
+            where: { id: travelId },
+            data: { visibility: 'PUBLIC', isPublic: true },
+            select: { id: true },
+          })
+        }
+        await syncConvertedTravelMemoryVisibility(travelId, 'PUBLIC', tx)
+        return syncTravelPost(travelId, tx)
+      })
+      return post?.published === true
     } catch (error) {
-      // 补偿：回填失败就把刚建的草稿删掉，避免留下「没有任何计划引用」的孤儿旅行
-      console.error('[space-plan] 转换回填失败，回滚旅行草稿:', (error as Error)?.message)
-      await travelService.deleteTravel(actor.username, created.id).catch(() => {})
-      throw new Error('转换失败，请重试')
+      console.error('[space-plan] 已转换旅行公开失败:', (error as Error)?.message)
+      return false
     }
-
-    await writeAuditLog({
-      username: actor.username,
-      action: 'CREATE',
-      resourceType: 'Travel',
-      resourceId: String(created.id),
-      spaceId,
-      metadata: { fromPlanId: planId, planTitle: plan.title },
-    }).catch(() => {})
-
-    const updated = await this.loadPlan(spaceId, planId)
-    return { travelId: created.id, travelSlug: slug, alreadyConverted: false, plan: updated }
   }
 }
 

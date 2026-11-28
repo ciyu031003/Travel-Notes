@@ -70,6 +70,9 @@ export class PrismaTravelRepository {
         endDate: input.endDate ? new Date(input.endDate) : null,
         status: (input.status ?? 'PLANNED') as any,
         visibility: (input.visibility ?? 'SPACE') as any,
+        // visibility 与 isPublic 必须同时写：列表 where（isPublic）和读权限（canViewResource）
+        // 两个字段都会看，只写一个会出现「公开了但别人列表里没有」/「转私密了却还能被看到」
+        isPublic: (input.visibility ?? 'SPACE') === 'PUBLIC',
         travelType: (input.travelType ?? 'ALONE') as any,
         companions: input.companions ?? undefined,
       },
@@ -108,7 +111,11 @@ export class PrismaTravelRepository {
     if (patch.startDate !== undefined) data.startDate = patch.startDate ? new Date(patch.startDate) : null
     if (patch.endDate !== undefined) data.endDate = patch.endDate ? new Date(patch.endDate) : null
     if (patch.status !== undefined) data.status = patch.status as any
-    if (patch.visibility !== undefined) data.visibility = patch.visibility as any
+    if (patch.visibility !== undefined) {
+      data.visibility = patch.visibility as any
+      // 同步 isPublic（同 create 的说明）：publish / 取消发布都靠这一处保证两字段不各说各话
+      data.isPublic = patch.visibility === 'PUBLIC'
+    }
     if (patch.travelType !== undefined) data.travelType = patch.travelType as any
     if (patch.companions !== undefined) data.companions = patch.companions
     if (Object.keys(data).length === 0) return this.findById(id)
