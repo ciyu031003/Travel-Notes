@@ -33,6 +33,10 @@ export const PUBLIC_PATHS = [
   // 也必须能上报，否则最需要诊断的崩溃场景恰好被中间件拦掉。仅放行精确路径，
   // 见 EXACT_ONLY_PUBLIC_PATHS。
   '/api/diagnostics/client-error',
+  // P1a 协同：实时服务（独立 Node 进程，没有用户会话）提交 Yjs 快照 / 读取初始快照。
+  // 只放行这个**精确前缀**，端点内部用 x-collab-secret 常量时间比较自守卫（见
+  // app/api/internal/plan-doc/[planId]/route.ts）；不要泛化成 /api/internal/*。
+  '/api/internal/plan-doc',
   '/api/uploads',
   '/uploads',
   '/_next',

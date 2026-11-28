@@ -5,7 +5,8 @@
  * 日期先后、slug 唯一）仍在 service 层，避免两处规则漂移。
  */
 import { z } from 'zod'
-import { NullableDateStringSchema } from './common'
+import { NullableDateStringSchema, IdSchema } from './common'
+import { PlanEngineInputSchema } from './space-plan-item'
 
 export const PlanStatusSchema = z.enum(['PLANNING', 'CONFIRMED', 'DONE'], { message: '计划状态不合法' })
 
@@ -57,9 +58,11 @@ export const CreateSpacePlanSchema = z.object({
   note: z.string().max(5000, '备注最多 5000 个字符').nullable().optional(),
   status: PlanStatusSchema.optional(),
   tasks: PlanTasksSchema.optional(),
+  // P1a 规划引擎输入：给了起止日期时服务端据此生成天/块骨架
+  ...PlanEngineInputSchema,
 })
 
-/** PATCH /api/spaces/[id]/plans/[planId]：任意子集；或单条勾选 toggleTask */
+/** PATCH /api/spaces/[id]/plans/[planId]：任意子集；或单条勾选 toggleTask；或带 version 做乐观锁 */
 export const UpdateSpacePlanSchema = CreateSpacePlanSchema.partial().extend({
   toggleTask: z
     .object({
@@ -67,4 +70,10 @@ export const UpdateSpacePlanSchema = CreateSpacePlanSchema.partial().extend({
       done: z.boolean().optional(),
     })
     .optional(),
+  /** 计划级乐观锁：带上当前 version；不匹配 → 409 + 当前行 */
+  version: z.coerce.number({ message: 'version 不合法' }).int('version 不合法').min(0, 'version 不合法').optional(),
+  /** 计划封面媒体 id（P2 接入） */
+  coverMediaId: IdSchema.nullable().optional(),
+  /** 引擎输入与元信息（一般由创建时写入，PATCH 可整体替换） */
+  planMeta: z.record(z.string(), z.unknown()).nullable().optional(),
 })

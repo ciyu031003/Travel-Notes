@@ -7,7 +7,8 @@
  * 以单条 toggle 原子更新（见 service.updatePlan），够用且少一次 join。
  */
 import { prisma } from '../../db'
-import type { Prisma } from '@prisma/client'
+// 需要 Prisma.DbNull（JSON 列置空）作为运行时值，故不用 type-only import
+import { Prisma } from '@prisma/client'
 
 export type SpacePlanStatus = 'PLANNING' | 'CONFIRMED' | 'DONE'
 export type PlanTaskKind = 'TODO' | 'PACK' | 'PLACE'
@@ -19,6 +20,19 @@ export interface PlanTask {
   done: boolean
   doneBy: string | null
   doneAt: string | null
+}
+
+/** 引擎输入与元信息（planMeta JSON；一次写入、不参与协同） */
+export interface PlanMeta {
+  departureCity?: string | null
+  transportMode?: string | null
+  pace?: string | null
+  interests?: string[]
+  travelers?: string[]
+  budgetSplit?: Record<string, number> | null
+  engineVersion?: number
+  generatedAt?: string
+  [key: string]: unknown
 }
 
 export interface SpacePlanRecord {
@@ -35,6 +49,14 @@ export interface SpacePlanRecord {
   /** 清单项总数 / 已完成数（列表页直接展示进度，不必前端再算） */
   taskCount: number
   taskDoneCount: number
+  /** 引擎输入与元信息（老计划为 null） */
+  planMeta: PlanMeta | null
+  /** 计划封面媒体 id（P2 接入；老计划为 null） */
+  coverMediaId: number | null
+  /** Yjs 文档修订号（实时服务每次成功提交 +1） */
+  docRevision: number
+  /** 计划级乐观锁版本（PATCH 带 version 时必须一致） */
+  version: number
   createdById: number | null
   createdBy: string | null
   convertedTravelId: number | null
@@ -54,11 +76,15 @@ export interface CreatePlanInput {
   note: string | null
   status: SpacePlanStatus
   tasks: PlanTask[]
+  /** 引擎输入与元信息（创建计划时由 plan-engine 生成；不传 = 不写） */
+  planMeta?: PlanMeta | null
   createdById: number | null
   createdBy: string | null
 }
 
 export interface UpdatePlanPatch {
+  planMeta?: PlanMeta | null
+  coverMediaId?: number | null
   title?: string
   destination?: string | null
   startDate?: Date | null
@@ -124,6 +150,10 @@ const PLAN_SELECT = {
   note: true,
   status: true,
   tasks: true,
+  planMeta: true,
+  coverMediaId: true,
+  docRevision: true,
+  version: true,
   createdById: true,
   createdBy: true,
   convertedTravelId: true,
@@ -133,6 +163,25 @@ const PLAN_SELECT = {
 } satisfies Prisma.SpaceTravelPlanSelect
 
 type PlanRow = Prisma.SpaceTravelPlanGetPayload<{ select: typeof PLAN_SELECT }>
+
+/**
+ * planMeta 列的容错解析（与 parseTasks 同思路）。
+ *
+ * 适配器 jsonStrings=true → JSON 列可能以字符串或已解析对象出现；
+ * 历史数据/手写 SQL 也可能塞进 null 或非法 JSON —— 一律收敛成对象或 null。
+ */
+export function parsePlanMeta(raw: unknown): PlanMeta | null {
+  let value: unknown = raw
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value)
+    } catch {
+      return null
+    }
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  return value as PlanMeta
+}
 
 function serialize(row: PlanRow, tasks: PlanTask[]): SpacePlanRecord {
   const doneCount = tasks.filter((t) => t.done).length
@@ -149,6 +198,10 @@ function serialize(row: PlanRow, tasks: PlanTask[]): SpacePlanRecord {
     tasks,
     taskCount: tasks.length,
     taskDoneCount: doneCount,
+    planMeta: parsePlanMeta(row.planMeta),
+    coverMediaId: row.coverMediaId ?? null,
+    docRevision: typeof row.docRevision === 'number' ? row.docRevision : 0,
+    version: typeof row.version === 'number' ? row.version : 0,
     createdById: row.createdById ?? null,
     createdBy: row.createdBy ?? null,
     convertedTravelId: row.convertedTravelId ?? null,
@@ -160,6 +213,32 @@ function serialize(row: PlanRow, tasks: PlanTask[]): SpacePlanRecord {
 
 function toJsonTasks(tasks: PlanTask[]): Prisma.InputJsonValue {
   return tasks as unknown as Prisma.InputJsonValue
+}
+
+/**
+ * 计划级 PATCH 的字段映射（供普通更新与「version 乐观锁更新」共用，避免两处规则漂移）。
+ * planMeta/coverMediaId 是 P1 新增字段：老客户端不传 → 不写。
+ */
+export function buildPlanUpdateData(patch: UpdatePlanPatch): Prisma.SpaceTravelPlanUpdateInput {
+  const data: Prisma.SpaceTravelPlanUpdateInput = {}
+  if (patch.title !== undefined) data.title = patch.title
+  if (patch.destination !== undefined) data.destination = patch.destination
+  if (patch.startDate !== undefined) data.startDate = patch.startDate
+  if (patch.endDate !== undefined) data.endDate = patch.endDate
+  if (patch.budget !== undefined) data.budget = patch.budget
+  if (patch.note !== undefined) data.note = patch.note
+  if (patch.status !== undefined) data.status = patch.status
+  if (patch.tasks !== undefined) data.tasks = toJsonTasks(patch.tasks)
+  if (patch.planMeta !== undefined) {
+    data.planMeta = patch.planMeta == null ? Prisma.DbNull : (patch.planMeta as unknown as Prisma.InputJsonValue)
+  }
+  if (patch.coverMediaId !== undefined) data.coverMediaId = patch.coverMediaId
+  if (patch.convertedTravelId !== undefined) {
+    data.convertedTravel = patch.convertedTravelId == null
+      ? { disconnect: true }
+      : { connect: { id: patch.convertedTravelId } }
+  }
+  return data
 }
 
 export class PrismaSpacePlanRepository {
@@ -175,6 +254,7 @@ export class PrismaSpacePlanRepository {
         note: input.note,
         status: input.status,
         tasks: toJsonTasks(input.tasks),
+        planMeta: input.planMeta == null ? undefined : (input.planMeta as unknown as Prisma.InputJsonValue),
         createdById: input.createdById,
         createdBy: input.createdBy,
       },
@@ -203,20 +283,7 @@ export class PrismaSpacePlanRepository {
   }
 
   async update(planId: number, patch: UpdatePlanPatch): Promise<void> {
-    const data: Prisma.SpaceTravelPlanUpdateInput = {}
-    if (patch.title !== undefined) data.title = patch.title
-    if (patch.destination !== undefined) data.destination = patch.destination
-    if (patch.startDate !== undefined) data.startDate = patch.startDate
-    if (patch.endDate !== undefined) data.endDate = patch.endDate
-    if (patch.budget !== undefined) data.budget = patch.budget
-    if (patch.note !== undefined) data.note = patch.note
-    if (patch.status !== undefined) data.status = patch.status
-    if (patch.tasks !== undefined) data.tasks = toJsonTasks(patch.tasks)
-    if (patch.convertedTravelId !== undefined) {
-      data.convertedTravel = patch.convertedTravelId == null
-        ? { disconnect: true }
-        : { connect: { id: patch.convertedTravelId } }
-    }
+    const data = buildPlanUpdateData(patch)
     if (Object.keys(data).length === 0) return
     await prisma.spaceTravelPlan.update({ where: { id: planId }, data, select: { id: true } })
   }

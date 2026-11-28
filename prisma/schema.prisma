@@ -604,6 +604,8 @@ model Media {
   travels            Travel[]       @relation("TravelCover")
   variants           MediaVariant[]
   albums             AlbumMedia[]
+  /// 计划块级照片（P1 协同：照片挂在块上，可单独增删）
+  planItemMedia      SpacePlanItemMedia[]
 
   @@index([spaceId, type])
   @@index([memoryId])
@@ -1012,13 +1014,156 @@ model SpaceTravelPlan {
   createdBy         String?         @db.VarChar(255)
   /// 一键转成的旅行草稿 id（一对一；null = 还没转）
   convertedTravelId Int?            @unique
+  /// 规划引擎输入与元信息：{ departureCity, transportMode, pace, interests[], budgetSplit, engineVersion, generatedAt }
+  /// 一次写入、不参与协同（协同只发生在天/块上）；适配器 jsonStrings=true，读出可能是字符串，需容错解析。
+  planMeta          Json?
+  /// 计划封面媒体 id（P2 接入上传；复用 Media 体系，转换时写入 Travel.coverMediaId）
+  coverMediaId      Int?
+  /// Yjs 文档修订号：实时服务每次成功提交 plan-doc 后 +1（与 SpacePlanDoc.revision 一致）
+  docRevision       Int             @default(0)
+  /// 计划级乐观锁版本（PATCH 必须带 version；不一致 → 409 + 当前行）
+  version           Int             @default(0)
   createdAt         DateTime        @default(now()) @db.Timestamp(3)
   updatedAt         DateTime        @updatedAt @db.Timestamp(3)
 
   space           Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   convertedTravel Travel? @relation(fields: [convertedTravelId], references: [id], onDelete: SetNull)
+  /// 结构化行程（P1）：天 / 块 / 块级照片 / Yjs 快照 / 事件游标 / 在线状态
+  days            SpacePlanDay[]
+  doc             SpacePlanDoc?
+  events          SpacePlanEvent[]
+  presence        SpacePlanPresence[]
 
   @@index([spaceId, status])
   @@index([spaceId, startDate])
   @@index([updatedAt])
+}
+
+// ============================================================
+// P1 计划结构化 + 实时协同（docs/plan-p1-collab-spec.md §1）
+//
+// 设计要点（与「行程存 JSON」方案的取舍，见 docs/plan-space-itinerary-engine.md 修订 R1）：
+//   · 天/块拆表 → 行级原子写 + 行级 version，多人同时改不同块不会互相覆盖、也不产生 409；
+//   · SpacePlanEvent 是「增量广播 + 断线补播 + 审计」三合一，id 单调递增即游标；
+//   · SpacePlanDoc 是 Yjs 快照（字节）+ 事件游标，DB 行仍是权威副本（字级协同见 P1b）；
+//   · 全部新字段可空/带默认值 → 老计划（没有天/块）读取返回空数组，不报错。
+// ============================================================
+
+/// 计划块类型（映射到旅行记录的 ItineraryItem.type；FLEX → ACTIVITY）
+enum SpacePlanItemKind {
+  TRANSPORT
+  HOTEL
+  FOOD
+  SPOT
+  ACTIVITY
+  FLEX
+}
+
+/// 计划中的一天（顺序即展示顺序；unique(planId, sortOrder) 保证天序号不重复）
+model SpacePlanDay {
+  id        Int       @id @default(autoincrement())
+  planId    Int
+  /// 日历日（只取日期，不含时间；墙上时间语义）
+  date      DateTime? @db.Date
+  title     String?   @db.VarChar(120)
+  theme     String?   @db.VarChar(60)
+  summary   String?   @db.Text
+  sortOrder Int       @default(0)
+  /// 行级乐观锁（天级 PATCH 用；块级各自有 version）
+  version   Int       @default(0)
+  updatedBy String?   @db.VarChar(255)
+  updatedAt DateTime  @updatedAt @db.Timestamp(3)
+
+  plan  SpaceTravelPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  items SpacePlanItem[]
+
+  @@unique([planId, sortOrder])
+  @@index([planId, date])
+}
+
+/// 计划中的一块（交通/住宿/餐饮/景点/活动/机动）
+model SpacePlanItem {
+  id        Int               @id @default(autoincrement())
+  dayId     Int
+  kind      SpacePlanItemKind @default(SPOT)
+  /// 墙上时间：Date.UTC(年月日时分) 写入，读回用 getUTC*（与 Travel ItineraryItem 同约定）
+  startAt   DateTime?         @db.Timestamp(3)
+  endAt     DateTime?         @db.Timestamp(3)
+  title     String            @db.VarChar(200)
+  place     String?           @db.VarChar(200)
+  /// 金额用分（与 Expense 一致）；null = 未填
+  costCents Int?
+  note      String?           @db.Text
+  done      Boolean           @default(false)
+  doneBy    String?           @db.VarChar(255)
+  sortOrder Int               @default(0)
+  /// 行级乐观锁：PATCH/DELETE 必须带 version，不匹配 → 409 + 当前行
+  version   Int               @default(0)
+  updatedBy String?           @db.VarChar(255)
+  updatedAt DateTime          @updatedAt @db.Timestamp(3)
+
+  day   SpacePlanDay         @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  media SpacePlanItemMedia[]
+
+  @@index([dayId, sortOrder])
+}
+
+/// 块级照片（协同时可单独增删，不整块覆盖）
+model SpacePlanItemMedia {
+  id        Int @id @default(autoincrement())
+  itemId    Int
+  mediaId   Int
+  sortOrder Int @default(0)
+
+  item  SpacePlanItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  media Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, mediaId])
+  @@index([mediaId])
+}
+
+/// Yjs 文档快照（二进制）+ 事件游标。planId 即主键（一个计划一份文档）
+model SpacePlanDoc {
+  planId    Int      @id
+  /// Y.encodeStateAsUpdate(doc) 的字节；空 = 还没同步过
+  state     Bytes
+  /// 已同步的最大事件 id（客户端断线补播起点）
+  lastEvent Int      @default(0)
+  /// 快照修订号（每次成功提交 +1；与 SpaceTravelPlan.docRevision 一致）
+  revision  Int      @default(0)
+  updatedAt DateTime @updatedAt @db.Timestamp(3)
+
+  plan SpaceTravelPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+/// 计划事件（增量广播 / 断线补播 / 审计三合一；id 单调递增 = 游标）
+model SpacePlanEvent {
+  id        Int      @id @default(autoincrement())
+  planId    Int
+  actor     String   @db.VarChar(255)
+  /// plan.create / plan.update / day.update / item.create / item.update / item.delete / item.reorder / doc.sync
+  action    String   @db.VarChar(40)
+  /// 变化的行（含新 version）；doc.sync 只存 { revision, source } 等小对象
+  payload   Json
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  plan SpaceTravelPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, id])
+}
+
+/// 计划在线状态（谁正在看/谁正在编辑哪一块；实时服务心跳上报，15s 心跳 / 45s 过期）
+model SpacePlanPresence {
+  planId        Int
+  userId        Int
+  username      String    @db.VarChar(255)
+  nickname      String?   @db.VarChar(255)
+  editingItemId Int?
+  cursor        Int?
+  lastSeenAt    DateTime  @updatedAt @db.Timestamp(3)
+
+  plan SpaceTravelPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@id([planId, userId])
+  @@index([planId, lastSeenAt])
 }

@@ -364,7 +364,32 @@ function mysqlDateFormat(date: Date): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`
 }
 
-function convertArgToMySQLFormat(arg: unknown): unknown {
+/**
+ * Prisma 驱动适配器协议：Bytes 参数由查询引擎序列化成 **base64 字符串**送到 adapter，
+ * 由 adapter 自己转回二进制再交给驱动。这里此前漏了这一步 —— 结果是所有 Bytes 列
+ * （PostImage.data、SpacePlanDoc.state 等）都被写成「base64 文本」，读回来再编码一次
+ * 就变成双重编码（Yjs 快照因此无法 applyUpdate）。
+ *
+ * 处理规则：argTypes[i].scalarType === 'bytes' 且值是 string → base64 解成 Buffer；
+ * 已经是 Uint8Array/Buffer 的直接交给驱动；list 形态逐个转换。
+ */
+function convertBytesArg(value: unknown): unknown {
+  if (typeof value === 'string') {
+    // 允许 URL-safe base64（引擎固定输出标准 base64，这里兼容一下不影响结果）
+    const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
+    return Buffer.from(padded, 'base64')
+  }
+  if (value instanceof Uint8Array) {
+    return Buffer.isBuffer(value) ? value : Buffer.from(value)
+  }
+  return value
+}
+
+function convertArgToMySQLFormat(arg: unknown, argType?: ArgType): unknown {
+  if (argType?.scalarType === 'bytes') {
+    return Array.isArray(arg) ? arg.map(convertBytesArg) : convertBytesArg(arg)
+  }
   if (arg instanceof Date) {
     return mysqlDateFormat(arg)
   }
@@ -380,8 +405,8 @@ function convertArgToMySQLFormat(arg: unknown): unknown {
   return arg
 }
 
-function processArgs(args: Array<unknown>): Array<unknown> {
-  return args.map(convertArgToMySQLFormat)
+function processArgs(args: Array<unknown>, argTypes?: Array<ArgType>): Array<unknown> {
+  return args.map((arg, index) => convertArgToMySQLFormat(arg, argTypes?.[index]))
 }
 
 function processRows(rows: any, fields: FieldPacket[] | undefined): SqlResultSet {
@@ -418,13 +443,13 @@ function createAdapter(pool: Pool, databaseName: string): PrismaAdapter {
   const adapterName = '@prisma/adapter-mariadb' as const
 
   async function queryRaw(params: SqlQuery): Promise<SqlResultSet> {
-    const processedArgs = processArgs(params.args)
+    const processedArgs = processArgs(params.args, params.argTypes)
     const [rows, fields] = await pool.execute(params.sql, processedArgs as any)
     return processRows(rows, fields)
   }
 
   async function executeRaw(params: SqlQuery): Promise<number> {
-    const processedArgs = processArgs(params.args)
+    const processedArgs = processArgs(params.args, params.argTypes)
     const [result] = await pool.execute(params.sql, processedArgs as any)
     if (Array.isArray(result)) {
       return result.length
@@ -481,13 +506,13 @@ function createTransaction(conn: PoolConnection, databaseName: string): Transact
   const adapterName = '@prisma/adapter-mariadb' as const
 
   async function queryRaw(params: SqlQuery): Promise<SqlResultSet> {
-    const processedArgs = processArgs(params.args)
+    const processedArgs = processArgs(params.args, params.argTypes)
     const [rows, fields] = await conn.execute(params.sql, processedArgs as any)
     return processRows(rows, fields)
   }
 
   async function executeRaw(params: SqlQuery): Promise<number> {
-    const processedArgs = processArgs(params.args)
+    const processedArgs = processArgs(params.args, params.argTypes)
     const [result] = await conn.execute(params.sql, processedArgs as any)
     if (Array.isArray(result)) {
       return result.length
