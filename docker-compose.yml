@@ -106,8 +106,8 @@ services:
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
       # OTA 版本（/api/version 供 App 检查更新；默认值由 scripts/bump-version.cjs 同步，
       # verify-version.cjs 会校验它和 package.json 一致，避免漏配 .env 时下发 1.0.0 触发误强更）
-      APP_VERSION: ${APP_VERSION:-1.30.18}
-      APP_BUILD_NUMBER: ${APP_BUILD_NUMBER:-82}
+      APP_VERSION: ${APP_VERSION:-1.30.19}
+      APP_BUILD_NUMBER: ${APP_BUILD_NUMBER:-83}
       APP_DOWNLOAD_URL: ${APP_DOWNLOAD_URL:-https://travel-notes.yuanabd.cn/downloads/tiantu.apk}
       # 更新弹窗文案（app/api/version/route.ts 支持 APP_CHANGELOG 覆盖）。
       # 此前 compose 没转发这个变量 → 每次改文案都被迫改代码、重新构建镜像。
@@ -116,6 +116,11 @@ services:
       # 配置后限流/缓存切到 Redis（docker compose --profile redis up -d，再设
       # REDIS_URL=redis://redis:6379）；连接失败/超时 500ms 自动降级内存并告警一次。
       REDIS_URL: ${REDIS_URL:-}
+      # ===== 旅行计划实时协同（Yjs）— 必须与 realtime 服务同一把密钥 =====
+      # 缺失时 app 侧签发 collab-token 会拒绝（生产不允许回落 dev 密钥）
+      COLLAB_SECRET: ${COLLAB_SECRET:-}
+      # 前端拿 token 后连接的 WS 地址（生产经 nginx 同源反代：wss://<域名>/collab）
+      COLLAB_WS_URL: ${COLLAB_WS_URL:-}
       # 媒体分片/转码临时目录根（默认 os.tmpdir()）。多副本时指向共享卷，
       # 否则「init 在副本 A、chunk 落到副本 B」会找不到会话目录。
       MEDIA_TMP_DIR: ${MEDIA_TMP_DIR:-}
