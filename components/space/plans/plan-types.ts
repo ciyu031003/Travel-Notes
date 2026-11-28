@@ -14,6 +14,7 @@ import {
   Sparkles,
   type BadgeTone,
 } from '@/lib/mobile/icon-system'
+import type { PlanRecord } from '@/lib/client/plan-collab-types'
 
 export type PlanStatus = 'PLANNING' | 'CONFIRMED' | 'DONE'
 export type PlanTaskKind = 'TODO' | 'PACK' | 'PLACE'
@@ -27,26 +28,11 @@ export interface SpacePlanTask {
   doneAt: string | null
 }
 
-export interface SpacePlan {
-  id: number
-  spaceId: number
-  title: string
-  destination: string | null
-  startDate: string | null
-  endDate: string | null
-  budget: number | null
-  note: string | null
-  status: PlanStatus
-  tasks: SpacePlanTask[]
-  taskCount: number
-  taskDoneCount: number
-  createdById: number | null
-  createdBy: string | null
-  convertedTravelId: number | null
-  convertedTravelSlug: string | null
-  createdAt: string
-  updatedAt: string
-}
+/**
+ * 计划（P2 起 = 协同层的 PlanRecord：多了 planMeta / version / docRevision）。
+ * 保留 SpacePlan 这个名字，避免 SpacePlanCard / SpacePlanComposer / 列表页跟着改。
+ */
+export type SpacePlan = PlanRecord
 
 /* ── 状态 ─────────────────────────────────────────────────────────────── */
 

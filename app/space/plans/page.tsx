@@ -16,6 +16,8 @@ import { SpacePlanSkeleton } from '@/components/space/plans/SpacePlanSkeleton'
 // 空间模块视觉层：计划页不在 /space/[slug] 的 layout 下，需要自己引入才拿到
 // .space-plan-progress / .plan-task-label 这些动效类（Next 会去重，不会重复注入）
 import '../space.css'
+// 计划详情（P2）：天切换 / 时间轴 / 块编辑器 / 底部转换卡 的样式层
+import '../plan-collab.css'
 
 type LoadState = 'loading' | 'ready' | 'denied' | 'notfound' | 'unauthenticated' | 'error'
 
