@@ -1,0 +1,30 @@
+{
+  "name": "travel-notes-realtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "甜途 · 旅行计划实时协同服务（Yjs WebSocket + presence + 持久化回传）",
+  "main": "server.mjs",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "selftest": "node scripts/sync-selftest.mjs",
+    "test": "vitest run",
+    "compose:check": "node scripts/validate-compose.mjs",
+    "app:smoke": "node scripts/app-integration.mjs"
+  },
+  "dependencies": {
+    "lib0": "^0.2.120",
+    "ws": "^8.23.1",
+    "y-protocols": "^1.0.7",
+    "y-websocket": "^3.1.0",
+    "yjs": "^13.6.33"
+  },
+  "devDependencies": {
+    "vitest": "^5.1.2",
+    "yaml": "^2.9.1"
+  }
+}

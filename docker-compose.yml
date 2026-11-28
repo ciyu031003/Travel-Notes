@@ -154,5 +154,41 @@ services:
         max-size: "20m"
         max-file: "5"
 
+  # ===== P1b：实时协同（Yjs WebSocket，独立进程）=====
+  # 可选服务：不启动它 app/db 照旧工作，客户端只是没有实时协作（降级为纯 REST）。
+  # 必须设置 COLLAB_SECRET（与 app 签发 collab-token 用同一把密钥），否则容器拒绝启动（fail-fast）。
+  # 只把端口绑到宿主机回环，由 nginx 把 /collab 反代进来，不直接暴露到公网。
+  realtime:
+    build:
+      context: ./realtime
+      dockerfile: Dockerfile
+    container_name: travel-notes-realtime
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 1234
+      COLLAB_SECRET: ${COLLAB_SECRET:-}
+      APP_INTERNAL_URL: http://app:3000
+      COLLAB_SAVE_DEBOUNCE_MS: ${COLLAB_SAVE_DEBOUNCE_MS:-800}
+      COLLAB_ROOM_IDLE_TTL_MS: ${COLLAB_ROOM_IDLE_TTL_MS:-1800000}
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:${COLLAB_PORT:-1234}:1234"
+    healthcheck:
+      # 镜像里没有 curl，用 node 自带的 fetch（与 app 服务同一套写法）
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:1234/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   mysql-data:
