@@ -228,8 +228,9 @@ export function SpacePlanDetail({
 
   if (loading) {
     // 骨架与真实详情同构（信息卡 + 状态胶囊 + 清单行），高度接近，内容出现时不跳
+    // m-safe-top：/space/plans 不在 .space-route 壳里，自己让开系统状态栏（真机曾压住时间栏）
     return (
-      <div className="m-gutter pb-24 pt-2">
+      <div className="m-gutter m-safe-top pb-24">
         <LargeTitle title="旅行计划" eyebrow="甜途 · 旅行计划" back={spacePlansHref(spaceSlug)} />
         <div className="mt-6 space-y-4" role="status" aria-live="polite" aria-busy="true">
           <span className="sr-only">正在打开计划…</span>
@@ -260,7 +261,7 @@ export function SpacePlanDetail({
 
   if (error || !plan) {
     return (
-      <div className="m-gutter pb-24 pt-2">
+      <div className="m-gutter m-safe-top pb-24">
         <LargeTitle title="旅行计划" eyebrow="甜途 · 旅行计划" back={spacePlansHref(spaceSlug)} />
         <div className="mt-10 flex flex-col items-center text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface2)] text-[var(--ui-social-faint)]">
@@ -291,7 +292,7 @@ export function SpacePlanDetail({
   return (
     <MotionConfig reducedMotion="user">
       <div className="pb-24">
-        <div className="m-gutter pt-2">
+        <div className="m-gutter m-safe-top">
           <LargeTitle
             title={plan.title}
             eyebrow="甜途 · 旅行计划"

@@ -231,7 +231,9 @@ html.dark .tn-scene .lg-clouds--deep {
   margin: 0 auto;
   /* 键盘抬起时预留同高让位。这段 padding 不做补间：它是布局属性，
      逐帧补间会整页重排；键盘本身就弹得很突然，这里跟随即可 */
-  padding: 4px 16px calc(210px + env(safe-area-inset-bottom) + var(--tn-kb, 0px));
+  /* 2026-11-28 沉浸式：Tab 栏已隐藏，CTA 条（约 78px）+ 底部 8px 就是全部占位，
+     从 210px 收紧到 104px，避免页面底部空出一大条 */
+  padding: 4px 16px calc(104px + env(safe-area-inset-bottom) + var(--tn-kb, 0px));
 }
 .tn-form {
   display: flex;

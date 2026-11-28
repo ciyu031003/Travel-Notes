@@ -47,6 +47,12 @@ export default function LayoutContent({
    * 判定：/travel/<slug> 且不是 /travel/new（新建页仍需要主导航兜底）。
    */
   const isTravelDetailPage = /^\/travel\/[^/]+$/.test(pathname) && pathname !== '/travel/new'
+  /**
+   * 2026-11-28：新建旅行页改为**沉浸式**——底部不再挂主导航，由页面自己的
+   * 「开始记录」玻璃条占据原 Tab 栏的位置（用户要求：观感更统一，别两条底栏叠着）。
+   * 只影响 /travel/new；详情页仍按 isTravelDetailPage 处理。
+   */
+  const hideBottomNav = isTravelDetailPage || pathname === '/travel/new'
 
   /**
    * 这些页面是"沉浸式全屏流"，**自带返回/关闭**，因此不挂底部 tab：
@@ -78,7 +84,7 @@ export default function LayoutContent({
             <Footer />
           </div>
         </MobilePageTransition>
-        {!isTravelDetailPage && <MobileBottomNav />}
+        {!hideBottomNav && <MobileBottomNav />}
         {/* 全局左缘右滑返回：所有常规页面共享；组件内部按应用内历史栈判断能否退 */}
         <EdgeSwipeBack />
       </>

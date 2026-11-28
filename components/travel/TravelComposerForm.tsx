@@ -146,11 +146,11 @@ export default function TravelComposerForm({
   // 粘底保存条在移动 Web 下要自己避让键盘（原生壳里 insets 会压视口，值≈0 不干扰）
   const keyboardInset = useKeyboardInset()
   /**
-   * 主 CTA 的滚动收起：
-   *  · 之前是 sticky，表单内容不够长时按钮会停在屏幕中部（真机反馈"卡在偏上方"）；
-   *  · 现在固定在底部导航之上，向下滚动缩小淡出、向上滚动放大回来，到底部保持收起。
+   * 2026-11-28 起本页是沉浸式：底部主导航隐藏，主 CTA 条**就是**这一页的底部栏。
+   * 因此它不再随滚动收起（旧版是"浮在 Tab 栏之上"才允许收起）——收起会让页面底部
+   * 看起来空掉一块，且填完表单当场点不到。这里保留常量 false，仅用于类名兼容。
    */
-  const [ctaHidden, setCtaHidden] = useState(false)
+  const ctaHidden = false
   /** 滚动后顶栏加一层实底：玻璃太透时，下面滚过的文字会"穿"上来 */
   const [scrolled, setScrolled] = useState(false)
 
@@ -231,21 +231,14 @@ export default function TravelComposerForm({
   }
 
   useEffect(() => {
-    let lastY = window.scrollY
     let frame = 0
     const onScroll = () => {
       if (frame) return
       frame = window.requestAnimationFrame(() => {
         frame = 0
         const y = window.scrollY
-        const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
-        const delta = y - lastY
         setScrolled(y > 10)
-        if (y <= 8) setCtaHidden(false)
-        // 到底部时反而要出现：这里就是提交位置，藏起来会导致"填完了点不到"
-        else if (maxY - y <= 12) setCtaHidden(false)
-        else if (Math.abs(delta) >= 6) setCtaHidden(delta > 0)
-        lastY = y
+        // 沉浸式下 CTA 常驻（见 ctaHidden 注释），这里只跟踪"是否滚过顶部"
       })
     }
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -1110,9 +1103,10 @@ export default function TravelComposerForm({
           {/* ── 主 CTA：悬浮玻璃条 + 玻璃主按钮 ─────────────────
                 位置 = 底部 Tab 高度 + 系统安全区；软键盘用 transform 抬升（不逐帧改 bottom）
                 三态：可用（呼吸光晕）/ 禁用（灰玻璃 + 点击定位）/ 提交中（不定进度条） */}
+          {/* 沉浸式：CTA 条就是这一页的底部栏（Tab 栏已隐藏），贴 safe-area + 8px */}
           <div
             className={cn('tn-cta', ctaHidden && 'tn-cta--hidden')}
-            style={{ bottom: 'calc(var(--m-tab-h) + env(safe-area-inset-bottom) + 20px)' }}
+            style={{ bottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}
           >
             <div
               className={cn(

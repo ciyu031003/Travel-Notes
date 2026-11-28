@@ -182,7 +182,8 @@ export default function SpacePlansPage() {
         />
       ) : (
         <div className="pb-24">
-          <div className="m-gutter pt-2">
+          {/* m-safe-top：本路由不在 /space/[slug] 的 .space-route 壳里，必须自己让开系统状态栏 */}
+          <div className="m-gutter m-safe-top">
             <LargeTitle
               title="旅行计划"
               eyebrow="甜途 · 旅行计划"
@@ -209,7 +210,7 @@ function MessageState({
   action: React.ReactNode
 }) {
   return (
-    <div className="m-gutter pb-24 pt-2">
+    <div className="m-gutter m-safe-top pb-24">
       <LargeTitle title={title} back="/space" />
       <div className="mt-10 flex flex-col items-center text-center">
         <span className="flex h-14 w-14 items-center justify-center rounded-[var(--m-radius-card)] bg-[var(--ui-social-surface2)] text-[var(--ui-social-faint)]">
